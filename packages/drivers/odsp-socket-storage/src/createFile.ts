@@ -18,18 +18,10 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper } from "./odspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOrigin } from "./vroom";
-
-export interface INewFileInfo {
-    siteUrl: string;
-    driveId: string;
-    filename: string;
-    filePath: string;
-    callback?(itemId: string, filename: string): void;
-}
 
 export interface IFileCreateResponse {
     siteUrl: string;
