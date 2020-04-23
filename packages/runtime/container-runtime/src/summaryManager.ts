@@ -202,9 +202,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private setClientId(clientId: string | undefined): void {
         this.clientId = clientId;
         if (clientId !== undefined) {
-            this.latestClientId = this.clientId;
+            this.latestClientId = clientId;
             if (this.runningSummarizer !== undefined) {
-                this.runningSummarizer.updateOnBehalfOf(this.latestClientId);
+                this.runningSummarizer.updateOnBehalfOf(clientId);
             }
         }
     }
@@ -323,8 +323,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const runningSummarizerEvent = PerformanceEvent.start(this.logger,
             { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts });
         this.runningSummarizer = summarizer;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const clientId = this.latestClientId!;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(this.latestClientId).then(() => {
+        this.runningSummarizer.run(clientId).then(() => {
             runningSummarizerEvent.end();
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
