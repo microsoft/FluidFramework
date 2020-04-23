@@ -198,10 +198,10 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
 </head>
 <body style="margin: 0; padding: 0">
     <div>
-        <button id="attach-button" disabled>Attach!</button>
+        <button id="attach-button" name="attach-button" disabled>Attach!</button>
     </div>
     <div>
-        <textarea id="text" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
+        <textarea id="text" name="urltext" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
     </div>
     <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative">
     </div>
