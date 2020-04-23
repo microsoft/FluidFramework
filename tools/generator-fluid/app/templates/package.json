@@ -22,13 +22,13 @@
     "webpack:dev": "npm run dev"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.0-0",
-    "@microsoft/fluid-view-interfaces": "^0.16.0-0",
+    "@microsoft/fluid-aqueduct": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.16.0-0",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",
