@@ -27,10 +27,13 @@ export async function exec(cmd: string, dir: string, error?: string, pipeStdIn?:
 }
 
 export class GitRepo {
-    private readonly remote: string;
     constructor(public readonly resolvedRoot: string) {
-        // TODO: detect this
-        this.remote = "origin";
+    }
+
+    public async getRemotes() {
+        const result = await this.exec(`remote -v`, `getting remotes`);
+        const remoteLines = result.split(/\r?\n/);
+        return remoteLines.map(line => line.split(/\s+/));
     }
 
     /**
@@ -56,8 +59,8 @@ export class GitRepo {
      * Push a tag
      * 
      */
-    public async pushTag(tag: string) {
-        await this.exec(`push ${this.remote} ${tag}`);
+    public async pushTag(tag: string, remote: string) {
+        await this.exec(`push ${remote} ${tag}`);
     }
 
     /**

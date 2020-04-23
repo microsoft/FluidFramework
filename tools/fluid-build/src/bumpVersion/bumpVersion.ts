@@ -40,6 +40,7 @@ let paramBumpDep = false;
 let paramBumpDepClient = false;
 let paramBumpDepServer = false;
 let paramLocal = false;
+let paramClean = false;
 const paramBumpDepPackages = new Set<string>();
 
 function parseOptions(argv: string[]) {
@@ -65,7 +66,8 @@ function parseOptions(argv: string[]) {
         if (arg === "-d" || arg === "--dep") {
             const dep = process.argv[++i];
             if (dep === undefined) {
-                fatal("ERROR: Missing arguments for --dep");
+                console.error("ERROR: Missing arguments for --dep");
+                process.exit(-1);
             }
             if (dep.toLowerCase() === "client") {
                 paramBumpDepClient = true;
@@ -93,6 +95,11 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--cleanOnError")  {
+            paramClean = true;
+            continue;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -117,7 +124,11 @@ class BumpVersion {
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
-    constructor(private readonly gitRepo: GitRepo, private readonly originalBranchName: string) {
+    constructor(
+        private readonly gitRepo: GitRepo,
+        private readonly originalBranchName: string,
+        private readonly remote: string,
+    ) {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
@@ -212,7 +223,7 @@ class BumpVersion {
         // Determine the kind of bump
         const branchName = this.originalBranchName;
         if (branchName !== "master" && !branchName!.startsWith("release/")) {
-            fatal(`ERROR: Unrecognized branch '${branchName}'`);
+            fatal(`Unrecognized branch '${branchName}'`);
         }
         return branchName === "master" ? "minor" : "patch";
     }
@@ -371,7 +382,7 @@ class BumpVersion {
                 fatal("Operation stopped");
             }
         }
-        return this.gitRepo.pushTag(tag);
+        return this.gitRepo.pushTag(tag, this.remote);
     }
 
     /**
@@ -430,6 +441,7 @@ class BumpVersion {
                 }
             };
             process.stdin.on('data', listener);
+            process.stdin.resume();
         });
     }
 
@@ -443,11 +455,11 @@ class BumpVersion {
         console.log(`  Releasing ${packages.join(" ")}`);
 
         // Filter out the packages that need to be released
-        const packageToBump = new Set<Package>();
+        const packageToBump: Package[] = [];
         const packageNeedBumpName = new Set<string>();
         for (const pkg of packageNeedBump) {
             if (packages.includes(pkg.name)) {
-                packageToBump.add(pkg);
+                packageToBump.push(pkg);
                 packageNeedBumpName.add(pkg.name);
             }
         }
@@ -474,13 +486,15 @@ class BumpVersion {
         if (!paramLocal) {
             // Wait for packages
             for (const pkg of packageToBump) {
-                await this.ensurePublished(pkg);
+                if (!pkg.packageJson.private) {
+                    await this.ensurePublished(pkg);
+                }
             }
         }
 
         // Fix the pre-release dependency and update package lock
         console.log("    Fix pre-release dependencies");
-        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packages.join(" ")}`;
+        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packageToBump.map(pkg => pkg.name).join(" ")}`;
         return this.bumpDependencies(fixPrereleaseCommitMessage, false, false, packageNeedBumpName, !paramLocal, true);
     }
 
@@ -498,7 +512,9 @@ class BumpVersion {
 
             // Wait for packages
             for (const pkg of monoRepo.packages) {
-                await this.ensurePublished(pkg);
+                if (!pkg.packageJson.private) {
+                    await this.ensurePublished(pkg);
+                }
             }
         }
 
@@ -633,7 +649,7 @@ class BumpVersion {
         });
 
         if (bumpPackages.length === 0) {
-            fatal("ERROR: Unable to find dependencies to bump");
+            fatal("Unable to find dependencies to bump");
         }
 
         const changedPackages: Package[] = [];
@@ -652,7 +668,7 @@ class BumpVersion {
         if (changedPackages.length !== 0) {
             if (updateLock) {
                 // Fix package lock
-                await FluidRepoBase.ensureInstalled(changedPackages);
+                await FluidRepoBase.ensureInstalled(changedPackages, false);
             }
 
             let changedVersionString: string[] = [];
@@ -668,12 +684,14 @@ class BumpVersion {
     }
 
     public async cleanUp() {
-        await this.gitRepo.switchBranch(this.originalBranchName);
-        for (const branch of this.newBranches) {
-            await this.gitRepo.deleteBranch(branch);
-        }
-        for (const tag of this.newTags) {
-            await this.gitRepo.deleteTag(tag);
+        if (paramClean) {
+            await this.gitRepo.switchBranch(this.originalBranchName);
+            for (const branch of this.newBranches) {
+                await this.gitRepo.deleteBranch(branch);
+            }
+            for (const tag of this.newTags) {
+                await this.gitRepo.deleteTag(tag);
+            }
         }
     }
 };
@@ -686,7 +704,20 @@ async function main() {
 
     const resolvedRoot = await getResolvedFluidRoot();
     const gitRepo = new GitRepo(resolvedRoot);
-    const bv = new BumpVersion(gitRepo, await gitRepo.getCurrentBranchName());
+    const remotes = await gitRepo.getRemotes();
+    const url = "https://github.com/microsoft/fluidframework";
+    let remote: string | undefined;
+    for (const r of remotes) {
+        if (r[1] && r[1].toLowerCase().startsWith(url)) {
+            remote = r[0];
+            break;
+        }
+    }
+    if (!remote) {
+        fatal(`Unable to find remote for ${url}`)
+    }
+
+    const bv = new BumpVersion(gitRepo, await gitRepo.getCurrentBranchName(), remote);
 
     try {
         if (paramBumpDep) {
@@ -697,7 +728,7 @@ async function main() {
         }
     } catch (e) {
         if (!e.fatal) { throw e; }
-        console.error(e.message);
+        console.error(`ERROR: ${e.message}`);
         await bv.cleanUp();
         process.exit(-2);
     }
