@@ -376,12 +376,12 @@ export enum FlushMode {
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideHostRuntime>> { }
+    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
 
-export const IContainerRuntime: keyof IProvideHostRuntime = "IContainerRuntime";
+export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
-export interface IProvideHostRuntime {
+export interface IProvideContainerRuntime {
     IContainerRuntime: IContainerRuntime;
 }
 
@@ -393,7 +393,7 @@ export interface IContainerRuntime extends
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
     IProvideComponentRegistry,
-    IProvideHostRuntime {
+    IProvideContainerRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
