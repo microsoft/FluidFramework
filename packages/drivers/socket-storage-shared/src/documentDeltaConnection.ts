@@ -474,7 +474,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         socket.on(event, listener);
     }
 
-    public removeOrderedListener(event: string, socket: SocketIOClient.Socket, listener: (...args: any[]) => void) {
+    public removeOrderedListenerOnSocket(
+        event: string,
+        socket: SocketIOClient.Socket,
+        listener: (...args: any[]) => void)
+    {
         socket.off(event, listener);
     }
 
@@ -498,7 +502,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         for (const { event, connectionListener, orderedListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {
                 if (orderedListener) {
-                    this.removeOrderedListener(event, this.socket, listener);
+                    this.removeOrderedListenerOnSocket(event, this.socket, listener);
                 } else {
                     this.socket.off(event, listener);
                 }

@@ -271,27 +271,40 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         }
     }
 
+    private getAggregatorEventName(event: string) {
+        return `${event}-aggregator`;
+    }
+
     protected addOrderedConnectionListenerOnSocket(
         event: string,
         socket: SocketIOClient.Socket,
         listener: (...args: any[]) => void)
     {
-        const eventAggregator = `${event}-aggregator`;
+        const eventAggregator = this.getAggregatorEventName(event);
         if (!socket.hasListeners(event)) {
-            socket.on(event, (...args: any) => {
+            const handler = (...args: any) => {
                 const listeners = socket.listeners(eventAggregator);
                 if (listeners.length > 0) {
                     listeners[0](...args);
+                    // Note that removal is not required here, as DocumentDeltaConnection should
+                    // do proper cleanup. But if cleanup does not happen, it's nice to get back
+                    // to original clean state.
                     socket.removeListener(eventAggregator, listeners[0]);
                 }
-            });
+                if (listeners.length <= 1) {
+                    socket.off(event, handler);
+                }
+            };
+            socket.on(event, handler);
         }
         this.on(eventAggregator, listener);
     }
 
-    public removeOrderedListener(event: string, socket: SocketIOClient.Socket, listener: (...args: any[]) => void) {
-        const eventAggregator = `${event}-aggregator`;
-        socket.off(eventAggregator, listener);
+    public removeOrderedListenerOnSocket(
+        event: string,
+        socket: SocketIOClient.Socket,
+        listener: (...args: any[]) => void)
+    {
+        socket.off(this.getAggregatorEventName(event), listener);
     }
-
 }
