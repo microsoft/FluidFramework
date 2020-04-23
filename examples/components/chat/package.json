@@ -37,7 +37,7 @@
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.4",

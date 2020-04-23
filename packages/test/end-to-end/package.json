@@ -47,7 +47,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-agent-scheduler": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
