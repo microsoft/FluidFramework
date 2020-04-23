@@ -27,7 +27,7 @@
   "dependencies": {
     "@microsoft/fluid-file-driver": "^0.16.0",
     "@microsoft/fluid-merge-tree": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "lodash": "^4.17.11"

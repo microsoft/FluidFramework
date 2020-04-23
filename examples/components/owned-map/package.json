@@ -36,7 +36,7 @@
     "@microsoft/fluid-common-utils": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
