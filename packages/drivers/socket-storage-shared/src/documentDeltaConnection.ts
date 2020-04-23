@@ -379,7 +379,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                if (connectMessage.nonce && error.nonce && error.nonce !== connectMessage.nonce) {
+                if (connectMessage.nonce !== undefined && error.nonce !== undefined && error.nonce !== connectMessage.nonce) {
                     return;
                 }
 
@@ -402,7 +402,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
-                if (connectMessage.nonce && response.nonce && response.nonce !== connectMessage.nonce) {
+                if (connectMessage.nonce !== undefined && response.nonce !== undefined && response.nonce !== connectMessage.nonce) {
                     return;
                 }
 
