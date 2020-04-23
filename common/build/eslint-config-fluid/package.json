@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/eslint-config-fluid",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Shareable ESLint config for the Fluid Framework",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

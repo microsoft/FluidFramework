@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-local-test-utils";
-export const pkgVersion = "0.16.0";
+export const pkgVersion = "0.16.1";
