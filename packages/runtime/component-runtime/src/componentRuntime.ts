@@ -79,7 +79,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
     ): ComponentRuntime {
-        const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -119,7 +119,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get clientDetails(): IClientDetails {
-        return this.componentContext.hostRuntime.clientDetails;
+        return this.componentContext.containerRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -135,10 +135,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get routeContext(): IComponentHandleContext {
-        return this.componentContext.hostRuntime.IComponentHandleContext;
+        return this.componentContext.containerRuntime.IComponentHandleContext;
     }
 
-    public get IComponentSerializer() { return this.componentContext.hostRuntime.IComponentSerializer; }
+    public get IComponentSerializer() { return this.componentContext.containerRuntime.IComponentSerializer; }
 
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
@@ -229,7 +229,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
         if (request.url === "/_scheduler") {
-            return this.componentContext.hostRuntime.request(request);
+            return this.componentContext.containerRuntime.request(request);
         }
 
         // Parse out the leading slash
@@ -553,7 +553,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public notifyPendingMessages(): void {
         assert(!this.connected);
-        this.componentContext.hostRuntime.notifyPendingMessages();
+        this.componentContext.containerRuntime.notifyPendingMessages();
     }
 
     /**

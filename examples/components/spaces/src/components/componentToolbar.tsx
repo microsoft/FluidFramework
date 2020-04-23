@@ -52,7 +52,7 @@ export class ComponentToolbar extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
         if (registry) {
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
             if (registryDetails) {

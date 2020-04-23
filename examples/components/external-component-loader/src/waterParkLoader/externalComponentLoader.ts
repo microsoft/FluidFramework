@@ -157,7 +157,7 @@ export class ExternalComponentLoader extends PrimedComponent
             let componentRuntime: IComponentRuntime;
             const id = uuid();
             if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
@@ -166,7 +166,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                     ]);
             } else if (pkgReg?.IComponentFactory !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,

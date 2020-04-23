@@ -100,7 +100,7 @@ export abstract class PrimedComponent<P extends IComponent = object, E extends I
             url: `/_scheduler`,
         };
 
-        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.hostRuntime.request(request));
+        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime

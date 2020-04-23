@@ -26,9 +26,9 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
         return super.on(event, listener);
     }
 
-    public constructor(hostRuntime: IContainerRuntime) {
+    public constructor(containerRuntime: IContainerRuntime) {
         super();
-        this.quorum = hostRuntime.getQuorum();
+        this.quorum = containerRuntime.getQuorum();
 
         this.quorum.on("addMember", () => {
             this.emit("membersChanged");
@@ -74,9 +74,9 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
         IComponentSerializer,
         IComponentRegistry,
     },{});
-    const hostRuntime = await s.IContainerRuntime;
-    if (hostRuntime) {
-        return new UserInfo(hostRuntime);
+    const containerRuntime = await s.IContainerRuntime;
+    if (containerRuntime) {
+        return new UserInfo(containerRuntime);
     }
 
     return undefined;

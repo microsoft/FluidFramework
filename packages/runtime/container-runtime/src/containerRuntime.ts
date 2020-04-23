@@ -70,7 +70,7 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-    IExperimentalHostRuntime,
+    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -381,12 +381,12 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
-    IExperimentalRuntime, IExperimentalHostRuntime
+    IExperimentalRuntime, IExperimentalContainerRuntime
 {
     public get IContainerRuntime() { return this; }
 
     public readonly isExperimentalRuntime = true;
-    public readonly isExperimentalHostRuntime = true;
+    public readonly isExperimentalContainerRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.

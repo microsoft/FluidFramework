@@ -11,7 +11,7 @@
 - [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
-- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
+- [IContainerRuntime is now IContainerRuntime](#IContainerRuntime-is-now-IContainerRuntime)
 
 ### View interfaces moved to separate package
 
@@ -148,8 +148,8 @@ export const MyClickerFactory = new PrimedComponentFactory(
 
 See Aqueduct README for further details.
 
-### IHostRuntime is now IContainerRuntime
-The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+### IContainerRuntime is now IContainerRuntime
+The IContainerRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 
 ## 0.15 Breaking Changes
 
@@ -165,7 +165,7 @@ We've removed `getComponentRuntime` on `IComponentContext` and subsequently `Com
 can get it via a `request(...)` to the ContainerRuntime.
 
 If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
-`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+`...context.containerRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
 scenario.
 
 ### Container.reconnect, Container.reconnect changes

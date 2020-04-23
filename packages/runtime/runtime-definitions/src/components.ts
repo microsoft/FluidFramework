@@ -264,7 +264,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IContainerRuntime;
+    readonly containerRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -536,9 +536,9 @@ export interface IContainerRuntime extends
     submitSignal(type: string, content: any): void;
 }
 
-export interface IExperimentalHostRuntime extends IContainerRuntime {
+export interface IExperimentalContainerRuntime extends IContainerRuntime {
 
-    isExperimentalHostRuntime: true;
+    isExperimentalContainerRuntime: true;
 
     /**
      * It is false if the container is not attached to storage and the component is attached to container.

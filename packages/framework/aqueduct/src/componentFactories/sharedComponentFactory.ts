@@ -105,7 +105,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         // If the Container did not register the IContainerRuntime we can do it here to make sure services that need
         // it will have it.
         if (!dependencyContainer.has(IContainerRuntime)) {
-            dependencyContainer.register(IContainerRuntime, context.hostRuntime);
+            dependencyContainer.register(IContainerRuntime, context.containerRuntime);
         }
 
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
