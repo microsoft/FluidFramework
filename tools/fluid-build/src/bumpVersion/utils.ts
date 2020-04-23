@@ -36,6 +36,29 @@ export class GitRepo {
         return remoteLines.map(line => line.split(/\s+/));
     }
 
+    public async getCurrentSha() {
+        const result = await this.exec(`rev-parse HEAD`, `get current sha`);
+        return result.split(/\r?\n/)[0];
+    }
+    
+    public async getShaForBranch(branch: string) {
+        const result = await this.exec(`show-ref refs/heads/${branch}`);
+        const line = result.split(/\r?\n/)[0];
+        if (line) {
+            return line.split(" ")[0];
+        }
+        return undefined;
+    }
+
+    public async getShaForTag(tag: string) {
+        const result = await this.exec(`show-ref refs/tags/${tag}`);
+        const line = result.split(/\r?\n/)[0];
+        if (line) {
+            return line.split(" ")[0];
+        }
+        return undefined;
+    }
+    
     /**
      * Add a tag to the current commit
      * 
@@ -60,7 +83,7 @@ export class GitRepo {
      * 
      */
     public async pushTag(tag: string, remote: string) {
-        await this.exec(`push ${remote} ${tag}`);
+        await this.exec(`push ${remote} ${tag}`, `pushing tag`);
     }
 
     /**
@@ -68,7 +91,7 @@ export class GitRepo {
      */
     public async getCurrentBranchName() {
         const revParseOut = await this.exec("rev-parse --abbrev-ref HEAD", "get current branch");
-        return revParseOut.split("\n")[0];
+        return revParseOut.split(/\r?\n/)[0];
     }
 
     /**

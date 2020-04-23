@@ -14,7 +14,6 @@ import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec } from "./utils";
-import { resolveCname } from "dns";
 
 function printUsage() {
     console.log(
@@ -95,7 +94,7 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--cleanOnError")  {
+        if (arg === "--cleanOnError") {
             paramClean = true;
             continue;
         }
@@ -366,6 +365,9 @@ class BumpVersion {
     }
 
     private async createBranch(branchName: string) {
+        if (await this.gitRepo.getShaForBranch(branchName)) {
+            fatal(`${branchName} already exists. Failed to create.`)
+        }
         await this.gitRepo.createBranch(branchName);
         this.newBranches.push(branchName);
     }
@@ -420,24 +422,33 @@ class BumpVersion {
     private async prompt(message: string) {
         return new Promise((resolve, reject) => {
             process.stdout.write(`${message} [y/n] `);
+            process.stdin.setEncoding("utf8");
             if (process.stdin.setRawMode) {
-                process.stdin.setEncoding("utf8");
                 process.stdin.setRawMode(true);
             }
             const listener = (chunk: string) => {
-                let value: boolean | undefined;
+                let cleanup: boolean = false;
                 if (chunk[0] === "y") {
-                    value = true;
+                    resolve(true);
                     console.log("y");
+                    cleanup = true;
                 }
                 if (chunk[0] === "n") {
-                    value = false;
+                    resolve(false);
                     console.log("n");
+                    cleanup = true;
                 }
-                if (value !== undefined) {
-                    resolve(value);
+                if (chunk.charCodeAt(0) === 3) {
+                    reject(new Error("Ctrl-c abort"));
+                    console.log();
+                    cleanup = true;
+                }
+                if (cleanup) {
                     process.stdin.off('data', listener);
                     process.stdin.pause();
+                    if (process.stdin.setRawMode) {
+                        process.stdin.setRawMode(false);
+                    }
                 }
             };
             process.stdin.on('data', listener);
@@ -466,20 +477,21 @@ class BumpVersion {
 
         // Tagging release
         for (const pkg of packageToBump) {
-            if (await this.checkPublished(pkg)) {
-                if (await this.prompt(`>>> Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
-                    continue;
+            if (!await this.checkPublished(pkg)) {
+                let name = pkg.name.split("/").pop()!;
+                if (name.startsWith("fluid-")) {
+                    name = name.substring("fluid-".length);
                 }
-                fatal("Operation stopped.")
-            }
-            let name = pkg.name.split("/").pop()!;
-            if (name.startsWith("fluid-")) {
-                name = name.substring("fluid-".length);
-            }
-            const tagName = `${name}_v${pkg.version}`;
-            await this.addTag(tagName);
-            if (!paramLocal) {
-                await this.pushTag(tagName);
+                const tagName = `${name}_v${pkg.version}`;
+                await this.addTag(tagName);
+                if (!paramLocal) {
+                    await this.pushTag(tagName);
+                }
+            } else {
+                // Resumed
+                if (!await this.prompt(`>>> Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
+                    fatal("Operation stopped.");
+                }
             }
         }
 
@@ -502,14 +514,23 @@ class BumpVersion {
         const kind = MonoRepoKind[monoRepo.kind];
         console.log(`  Releasing ${kind.toLowerCase()}`);
 
-        // Tagging release
-        const oldVersion = oldVersions[kind];
-        const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
-        await this.addTag(tagName);
+        if (!await this.checkPublished(monoRepo.packages[0])) {
+            // Tagging release
+            const oldVersion = oldVersions[kind];
+            const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
+            await this.addTag(tagName);
+
+            if (!paramLocal) {
+                await this.pushTag(tagName);
+            }
+        } else {
+            // Resumed
+            if (!await this.prompt(`>>> ${kind} already published. Skip publish and bump version after?`)) {
+                fatal("Operation stopped.");
+            }
+        }
 
         if (!paramLocal) {
-            await this.pushTag(tagName);
-
             // Wait for packages
             for (const pkg of monoRepo.packages) {
                 if (!pkg.packageJson.private) {
@@ -533,11 +554,20 @@ class BumpVersion {
     }
 
     public async releaseGeneratorFluid() {
+        // TODO: switch to detect package publish instead when the CI change the version scheme
         const tagName = `generator-fluid_v${this.generatorPackage.version}`;
-        await this.addTag(tagName);
-        if (!paramLocal) {
-            await this.pushTag(tagName);
+        if (!await this.gitRepo.getShaForTag(tagName)) {
+            await this.addTag(tagName);
+            if (!paramLocal) {
+                await this.pushTag(tagName);
+            }
+        } else {
+            // Resumed
+            if (!await this.prompt(`>>> ${tagName} already exists. Skip publish and bump version after?`)) {
+                fatal("Operation stopped.");
+            }
         }
+
     }
 
     /**
@@ -565,7 +595,16 @@ class BumpVersion {
             const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
             releaseBranch = `release/${releaseBranchVersion}.x`;
             console.log(`Creating release development branch ${releaseBranch}`);
-            await this.createBranch(releaseBranch);
+            const commit = await this.gitRepo.getShaForBranch(releaseBranch);
+            if (commit) {
+                const current = await this.gitRepo.getCurrentSha();
+                if (current !== commit) {
+                    fatal(`${releaseBranch} already exists`);
+                }
+                // Reuse the existing branch at the same commit
+            } else {
+                await this.createBranch(releaseBranch);
+            }
         } else {
             releaseBranch = this.originalBranchName;
         }
@@ -576,8 +615,17 @@ class BumpVersion {
         console.log(`Creating release ${releaseVersion}`);
 
         const pendingReleaseBranch = `merge/${releaseVersion}`;
-        console.log(`  Creating temporary release branch ${pendingReleaseBranch}`)
-        await this.createBranch(pendingReleaseBranch);
+        console.log(`  Creating temporary release branch ${pendingReleaseBranch}`);
+        const commit = await this.gitRepo.getShaForBranch(pendingReleaseBranch);
+        if (commit) {
+            if (!await this.prompt(`>>> Branch ${pendingReleaseBranch} exist, resume progress?`)) {
+                fatal("Operation aborted");
+            }
+            await this.gitRepo.switchBranch(pendingReleaseBranch);
+            this.repo.reload();
+        } else {
+            await this.createBranch(pendingReleaseBranch);
+        }
 
         // TODO: Don't hard code order
         await this.releasePackage(packageNeedBump, ["@microsoft/eslint-config-fluid", "@microsoft/fluid-build-common"]);
@@ -619,6 +667,12 @@ class BumpVersion {
         allRepoState += `\n${patchRepoState}`;
 
         console.log("======================================================================================================");
+        console.log(`Please merge ${pendingReleaseBranch} to ${releaseBranch}`);
+        if (unreleased_branch) {
+            console.log(`and merge ${unreleased_branch} to ${this.originalBranchName}`);
+        }
+
+        console.log(`Current repo state:`);
         console.log(allRepoState);
     }
 
@@ -652,23 +706,26 @@ class BumpVersion {
             fatal("Unable to find dependencies to bump");
         }
 
-        const changedPackages: Package[] = [];
+        let changed = false;
+        const updateLockPackage: Package[] = [];
         const bumpPackageMap = new Map<string, Package>(bumpPackages.map(pkg => [pkg.name, pkg]));
         const changedVersion: VersionBag = {};
         for (const pkg of this.repo.packages.packages) {
             if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, changedVersion, release)) {
-                changedPackages.push(pkg);
+                updateLockPackage.push(pkg);
+                changed = true;
             }
         }
 
         if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, changedVersion, release)) {
-            changedPackages.push(this.templatePackage);
+            // Template package don't need to update lock
+            changed = true;
         }
 
-        if (changedPackages.length !== 0) {
+        if (updateLockPackage.length !== 0) {
             if (updateLock) {
                 // Fix package lock
-                await FluidRepoBase.ensureInstalled(changedPackages, false);
+                await FluidRepoBase.ensureInstalled(updateLockPackage, false);
             }
 
             let changedVersionString: string[] = [];
