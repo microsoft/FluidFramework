@@ -1,5 +1,13 @@
 # Breaking changes
 
+## 0.17 Breaking Changes
+
+- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
+
+### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
@@ -11,7 +19,7 @@
 - [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
-- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
+
 
 ### View interfaces moved to separate package
 
@@ -147,10 +155,6 @@ export const MyClickerFactory = new PrimedComponentFactory(
 ```
 
 See Aqueduct README for further details.
-
-### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
-The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
-The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
 
 ## 0.15 Breaking Changes
 
