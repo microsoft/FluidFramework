@@ -23,7 +23,10 @@ import {
 } from "./components";
 import { Spaces } from "./spaces";
 import {
-    IContainerComponentDetails, Templates,
+    IContainerComponentDetails,
+    Templates,
+    IComponentRegistryDetails,
+    IComponentRegistryTemplates,
 } from "./interfaces";
 
 export * from "./spaces";
@@ -32,9 +35,10 @@ export * from "./interfaces";
 
 export const SpacesComponentName = "spaces";
 
-export class InternalRegistry implements IComponentRegistry {
+export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }
     public get IComponentRegistryDetails() { return this; }
+    public get IComponentRegistryTemplates() {return this; }
 
     constructor(
         private readonly containerComponentArray: IContainerComponentDetails[],

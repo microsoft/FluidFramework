@@ -17,13 +17,13 @@ import {
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { Templates } from "../interfaces";
 import {
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
     IComponentToolbar,
     InternalRegistry,
+    Templates,
 } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
@@ -33,10 +33,10 @@ const editableButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh",
 };
 const templateButtonStyle: React.CSSProperties = {
-    width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
+    width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1,
 };
 const componentButtonStyle: React.CSSProperties = {
-    width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1,
+    width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
 };
 
 export const ComponentToolbarName = "componentToolbar";
@@ -81,8 +81,13 @@ export class ComponentToolbar extends PrimedComponent
         this.root.set("isEditable", isEditable);
     }
 
+    public toggleTemplates(isVisible: boolean) {
+        this.root.set("isTemplateVisible", isVisible);
+    }
+
     protected async componentInitializingFirstTime() {
         this.root.set("isEditable", true);
+        this.root.set("isTemplateVisible", false);
     }
 
     public setComponentCallbacks(callbacks: IComponentCallbacks) {
@@ -115,6 +120,7 @@ interface IComponentToolbarViewState {
     isEditable: boolean;
     isComponentListOpen: boolean;
     isTemplateListOpen: boolean;
+    isTemplateVisible: boolean;
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
@@ -127,10 +133,14 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             isEditable: props.root.get("isEditable"),
             isComponentListOpen: false,
             isTemplateListOpen: false,
+            isTemplateVisible: props.root.get("isTemplateVisible"),
         };
         props.root.on("valueChanged", (change, local) => {
             if (change.key === "isEditable") {
-                this.setState({ isEditable: props.root.get("isEditable") });
+                this.setState({
+                    isEditable: props.root.get("isEditable"),
+                    isTemplateVisible: props.root.get("isTemplateVisible"),
+                });
             }
         });
     }
@@ -186,38 +196,49 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 );
             }));
         }
-
-        const templatesButton = (
-            <Button
-                iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                style={menuButtonStyle}
-                onClick={() => this.setState({ isTemplateListOpen: !isTemplateListOpen })}
-            >
-                {"Add Templates"}
-            </Button>
-        );
-        const templateButtonList: JSX.Element[] = [];
-        if (isTemplateListOpen) {
-            // eslint-disable-next-line no-restricted-syntax
-            for (const template in Templates) {
-                if (template) {
-                    templateButtonList.push(
-                        <Button
-                            style={dropDownButtonStyle}
-                            key={`componentToolbarButton-${template}`}
-                            onClick={async () => {
-                                this.emitAddTemplateEvent(Templates[template]);
-                                this.setState({ isTemplateListOpen: false });
-                            }}
-                        >
-                            {Templates[template]}
-                        </Button>
-                        ,
-                    );
+        let templateCollapsible: JSX.Element | undefined;
+        if (this.state.isTemplateVisible) {
+            const templateButtonList: JSX.Element[] = [];
+            const templateButton = (
+                <Button
+                    iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                    style={menuButtonStyle}
+                    onClick={() => this.setState({ isTemplateListOpen: !isTemplateListOpen })}
+                >
+                    {"Add Templates"}
+                </Button>
+            );
+            if (isTemplateListOpen) {
+                // eslint-disable-next-line no-restricted-syntax
+                for (const template in Templates) {
+                    if (template) {
+                        templateButtonList.push(
+                            <Button
+                                style={dropDownButtonStyle}
+                                key={`componentToolbarButton-${template}`}
+                                onClick={async () => {
+                                    this.emitAddTemplateEvent(Templates[template]);
+                                    this.setState({ isTemplateListOpen: false });
+                                }}
+                            >
+                                {Templates[template]}
+                            </Button>
+                            ,
+                        );
+                    }
                 }
             }
+            templateCollapsible = (
+                <div style={templateButtonStyle}>
+                    <Collapsible
+                        open={isTemplateListOpen}
+                        trigger={templateButton}
+                    >
+                        {templateButtonList}
+                    </Collapsible>
+                </div>
+            );
         }
-
         return (
             <div style={componentToolbarStyle}>
                 <Button
@@ -230,14 +251,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 </Button>
                 {this.state.isEditable ?
                     <div>
-                        <div style={templateButtonStyle}>
-                            <Collapsible
-                                open={isTemplateListOpen}
-                                trigger={templatesButton}
-                            >
-                                {templateButtonList}
-                            </Collapsible>
-                        </div>
                         <div style={componentButtonStyle}>
                             <Collapsible
                                 open={isComponentListOpen}
@@ -246,6 +259,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                                 {componentButtonList}
                             </Collapsible>
                         </div>
+                        {templateCollapsible}
                     </div>
                     : undefined}
             </div>

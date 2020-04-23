@@ -21,8 +21,8 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, SpacesDataModel, ComponentToolbarUrlKey } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer, Templates, IComponentRegistryDetails } from "./interfaces";
-import { SpacesComponentName, InternalRegistry } from "./index";
+import { IComponentToolbarConsumer } from "./interfaces";
+import { SpacesComponentName, Templates } from ".";
 
 /**
  * Spaces is the Fluid
@@ -31,7 +31,7 @@ export class Spaces extends PrimedComponent
     implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
-    private registryDetails: IComponentRegistryDetails | undefined;
+    private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -110,12 +110,15 @@ export class Spaces extends PrimedComponent
         this.addToolbarListeners();
         const isEditable = this.dataModel.componentList.size - 1 === 0;
         this.dataModel.emit("editableUpdated", isEditable);
-        if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.changeEditState(isEditable);
-        }
         const registry = await this.context.hostRuntime.IComponentRegistry.get("");
         if (registry) {
-            this.registryDetails = (registry as IComponent).IComponentRegistryDetails;
+            this.registryDetails = registry as IComponent;
+        }
+        if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
+            this.componentToolbar.IComponentToolbar.changeEditState(isEditable);
+            if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
+                this.componentToolbar.IComponentToolbar.toggleTemplates(true);
+            }
         }
     }
 
@@ -144,8 +147,8 @@ export class Spaces extends PrimedComponent
     }
 
     private async addTemplateFromRegistry(template: Templates) {
-        if (this.registryDetails) {
-            const componentRegistryEntries = (this.registryDetails as InternalRegistry)
+        if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
+            const componentRegistryEntries = this.registryDetails.IComponentRegistryTemplates
                 .getFromTemplate(template);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             componentRegistryEntries.forEach(async (componentRegistryEntry) => {

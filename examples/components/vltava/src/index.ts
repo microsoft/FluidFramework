@@ -90,7 +90,7 @@ const generateFactory = () => {
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
             templates: {},
@@ -98,7 +98,7 @@ const generateFactory = () => {
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
             templates: {},

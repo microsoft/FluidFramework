@@ -21,4 +21,5 @@ export interface IProvideComponentToolbar {
  */
 export interface IComponentToolbar extends IProvideComponentToolbar {
     changeEditState(isEditable: boolean): void;
+    toggleTemplates(isVisible: boolean): void;
 }

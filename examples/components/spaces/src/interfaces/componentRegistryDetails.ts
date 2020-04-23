@@ -23,11 +23,6 @@ export interface IComponentRegistryDetails extends IProvideComponentRegistryDeta
     hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 
-export enum Templates {
-    CollaborativeCoding = "Collaborative Coding",
-    Classroom = "Classroom",
-}
-
 export interface IContainerComponentDetails {
     type: string;
     factory: Promise<IProvideComponentFactory>;
