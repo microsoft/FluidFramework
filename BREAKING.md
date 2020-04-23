@@ -11,6 +11,8 @@
 - [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
+- [Event Emitter Changes](#Event-Emitter-Changes)
+
 
 ### View interfaces moved to separate package
 
@@ -146,6 +148,11 @@ export const MyClickerFactory = new PrimedComponentFactory(
 ```
 
 See Aqueduct README for further details.
+
+
+
+
+### Event Emitter Changes
 
 ## 0.15 Breaking Changes
 
