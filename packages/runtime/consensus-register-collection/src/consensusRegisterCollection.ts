@@ -117,11 +117,10 @@ export class ConsensusRegisterCollection<T>
      * @returns Promise<true> if write was non-concurrent
      */
     public async write(key: string, value: T): Promise<boolean> {
-        const valueSer = this.serializeValue(value);
         const message: IRegisterOperation = {
             key,
             type: "write",
-            value: valueSer,
+            value: this.stringify(value),
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
 
@@ -171,20 +170,9 @@ export class ConsensusRegisterCollection<T>
     }
 
     public snapshot(): ITree {
-        // Use ILocalData<string> not <T> to clone the structure, but with serialized values
-        const serialized: { [key: string]: ILocalData<string> } = {};
-        this.data.forEach((data, key) => {
-            const serializedAtomic = this.snapshotItem(data.atomic);
-            const serializedVersions: ILocalRegister<string>[] = [];
-            for (const element of data.versions) {
-                serializedVersions.push(this.snapshotItem(element));
-            }
-            serialized[key] = {
-                atomic: serializedAtomic,
-                versions: serializedVersions,
-            };
-        });
-        // And then construct the tree for it
+        const dataObj: { [key: string]: ILocalData<T> } = {};
+        this.data.forEach((v, k) => { dataObj[k] = v; });
+
         const tree: ITree = {
             entries: [
                 {
@@ -192,7 +180,7 @@ export class ConsensusRegisterCollection<T>
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(serialized),
+                        contents: this.stringify(dataObj),
                         encoding: "utf-8",
                     },
                 },
@@ -208,21 +196,11 @@ export class ConsensusRegisterCollection<T>
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
         const header = await storage.read(snapshotFileName);
-        const serialized: { [key: string]: ILocalData<string> } =
-            header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
+        const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};
         //* todo: Why is it called header? And why are we converting from Base64 when snapshot didn't encode as Base64?
 
-        for (const key of Object.keys(serialized)) {
-            const serializedValue = serialized[key];
-            const loadedAtomic = await this.loadItem(serializedValue.atomic);
-            const loadedVersions: ILocalRegister<T>[] = [];
-            for (const element of serializedValue.versions) {
-                loadedVersions.push(await this.loadItem(element));
-            }
-            this.data.set(key, {
-                atomic: loadedAtomic,
-                versions: loadedVersions,
-            });
+        for (const key of Object.keys(dataObj)) {
+            this.data.set(key, dataObj[key]);
         }
     }
 
@@ -281,7 +259,7 @@ export class ConsensusRegisterCollection<T>
         local: boolean): boolean
     {
         let data = this.data.get(op.key);
-        const deserializedValue = this.deserializeValue(op.value);
+        const deserializedValue = this.parse(op.value);
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
         const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
         if (winner) {
@@ -341,30 +319,16 @@ export class ConsensusRegisterCollection<T>
         pending.resolve(winner);
     }
 
-    private snapshotItem(item: ILocalRegister<T>): ILocalRegister<string> {
-        return {
-            sequenceNumber: item.sequenceNumber,
-            value: this.serializeValue(item.value),
-        };
-    }
-
-    private async loadItem(item: ILocalRegister<string>): Promise<ILocalRegister<T>> {
-        return {
-            sequenceNumber: item.sequenceNumber,
-            value: this.deserializeValue(item.value),
-        };
-    }
-
-    private serializeValue(value: T): string {
+    private stringify(value: any): string {
         return this.runtime.IComponentSerializer.stringify(
             value,
             this.runtime.IComponentHandleContext,
             this.handle);
     }
 
-    private deserializeValue(content: string): T {
+    private parse(content: string): any {
         return this.runtime.IComponentSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext) as T;
+            this.runtime.IComponentHandleContext);
     }
 }
