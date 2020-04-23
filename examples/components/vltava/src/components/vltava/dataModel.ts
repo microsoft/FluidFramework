@@ -74,6 +74,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         members.forEach((value) => {
             if (value.client.details?.capabilities?.interactive) {
                 const user: IVltavaUserDetails = {
+                    // Casting IUser to any to get the name is ugly but currently there is no other way to do it.
+                    // Servers extend IUser in their own specific interface to add name but all of them do have it.
                     name: (value.client.user as any).name,
                     colorCode: refColorCode++,
                 };
@@ -94,6 +96,8 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
             return;
         }
 
+        // Casting IUser to any to get the name is ugly but currently there is no other way to do it.
+        // Servers extend IUser in their own specific interface to add name but all of them do have it.
         const userName = (lastEditedDetails.user as any).name;
         let colorCode = 0;
         this.users.forEach((userDetails: IVltavaUserDetails) => {

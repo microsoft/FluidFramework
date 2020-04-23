@@ -64,7 +64,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         });
     }
 
-    private async setLastEditedState() {
+    private setLastEditedState() {
         this.props.dataModel.getLastEditedState()
             .then((lastEditedState) => {
                 this.setState({ lastEditedState });
@@ -91,12 +91,8 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                 </div>
                 <div
                     style = {lastEditedStyle}
-                    onMouseOver = {async () => {
-                        await this.setLastEditedState();
-                    }}
-                    onMouseOut = {() => {
-                        this.resetLastEditedState();
-                    }}>
+                    onMouseOver = { this.setLastEditedState.bind(this) }
+                    onMouseOut = { this.resetLastEditedState.bind(this) }>
                     <LastEditedDisplay lastEditedState={this.state.lastEditedState}/>
                 </div>
                 {this.state.view}
