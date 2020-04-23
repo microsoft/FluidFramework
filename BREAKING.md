@@ -11,7 +11,7 @@
 - [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
-- [IContainerRuntime is now IContainerRuntime](#IContainerRuntime-is-now-IContainerRuntime)
+- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 
 ### View interfaces moved to separate package
 
