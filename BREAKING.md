@@ -20,7 +20,6 @@ The hostRuntime param in IComponentContext has also been updated to be called co
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
 
-
 ### View interfaces moved to separate package
 
 View-related interfaces have been moved to package `@microsoft/fluid-view-interfaces`.  This includes `IComponentHTMLView`, `IComponentHTMLVisual`, `IComponentHTMLOptions`, `IComponentReactViewable`, and their related "provide" interfaces.
