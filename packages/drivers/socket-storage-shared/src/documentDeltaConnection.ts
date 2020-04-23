@@ -379,6 +379,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                if (connectMessage.nonce && error.nonce && error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -398,6 +402,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                if (connectMessage.nonce && response.nonce && response.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 this.removeTrackedListeners(true);
                 resolve(response);
             });

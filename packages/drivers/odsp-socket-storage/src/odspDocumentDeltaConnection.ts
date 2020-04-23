@@ -18,6 +18,7 @@ import { FatalError, ThrottlingError } from "@microsoft/fluid-driver-utils";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
+import uuid from 'uuid/v4';
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -97,6 +98,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            nonce: uuid(),
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
