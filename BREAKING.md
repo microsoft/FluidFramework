@@ -148,8 +148,9 @@ export const MyClickerFactory = new PrimedComponentFactory(
 
 See Aqueduct README for further details.
 
-### IContainerRuntime is now IContainerRuntime
-The IContainerRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
 
 ## 0.15 Breaking Changes
 
