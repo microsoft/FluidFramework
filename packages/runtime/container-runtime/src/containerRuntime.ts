@@ -498,7 +498,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (expContainerContext?.isExperimentalContainerContext) {
             // back-compat: 0.15 isAttached
             // isAttached is replaced with isLocal.
-            return expContainerContext.isLocal ? expContainerContext.isLocal() : !expContainerContext.isAttached();
+            return expContainerContext.isLocal ? expContainerContext.isLocal() :
+                expContainerContext.isAttached ? !expContainerContext.isAttached() : false;
         } else {
             // back-compat: 0.15 isAttached
             // Need to return false if container is not experimental because then the result would depend on
@@ -1160,8 +1161,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = this.contexts.get(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext ? !expContainerContext.isLocal() : true) {
+        if (!this.isLocal()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
