@@ -32,7 +32,7 @@ export class PrimedComponentFactory<
 {
     constructor(
         type: string,
-        ctor: new (props: ISharedComponentProps<P>, initialState?: S) => PrimedComponent,
+        ctor: new (props: ISharedComponentProps<P>) => PrimedComponent<P, S>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,

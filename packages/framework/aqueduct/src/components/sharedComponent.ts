@@ -35,7 +35,7 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  * P - represents a type that will define optional providers that will be injected
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class SharedComponent<P extends IComponent = object, E extends IEvent= IEvent>
+export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent= IEvent>
     extends EventForwarder<E>
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
 {
@@ -92,10 +92,10 @@ export abstract class SharedComponent<P extends IComponent = object, E extends I
      * Allow inheritors to plugin to an initialize flow
      * We guarantee that this part of the code will only happen once
      */
-    public async initialize(): Promise<void> {
+    public async initialize(initialState?: S): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps);
+            this.initializeP = this.initializeInternal(this.context.createProps ?? initialState);
         }
 
         await this.initializeP;

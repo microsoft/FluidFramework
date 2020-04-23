@@ -38,7 +38,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>, initialState?: S) => SharedComponent,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
         sharedObjects: readonly ISharedObjectFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
@@ -119,8 +119,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
         // Create a new instance of our component
-        const instance = new this.ctor({ runtime, context, providers }, initialState);
-        await instance.initialize();
+        const instance = new this.ctor({ runtime, context, providers });
+        await instance.initialize(initialState);
         return instance;
     }
 

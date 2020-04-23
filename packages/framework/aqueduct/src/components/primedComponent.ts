@@ -28,8 +28,8 @@ import { SharedComponent } from "./sharedComponent";
  * P - represents a type that will define optional providers that will be injected
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent<P extends IComponent = object, E extends IEvent = IEvent>
-    extends SharedComponent<P, E>
+export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+    extends SharedComponent<P, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;

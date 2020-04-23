@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle, IComponentLoadable,
@@ -52,20 +52,13 @@ export class TodoItem extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
-    public constructor(
-        props: ISharedComponentProps<{}>,
-        private initialState?: ITodoItemInitialState,
-    ) {
-        super(props);
-    }
-
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime() {
+    protected async componentInitializingFirstTime(initialState?: ITodoItemInitialState) {
         // Set initial state if it was provided
-        const newItemText = this.initialState?.startingText ?? "New Item";
-        this.baseUrl = this.initialState?.baseUrl ?? "";
+        const newItemText = initialState?.startingText ?? "New Item";
+        this.baseUrl = initialState?.baseUrl ?? "";
 
         // The text of the todo item
         const text = SharedString.create(this.runtime);
@@ -81,8 +74,6 @@ export class TodoItem extends PrimedComponent
         const innerIdCell = SharedCell.create(this.runtime);
         innerIdCell.set(undefined);
         this.root.set(innerComponentKey, innerIdCell.handle);
-
-        this.initialState = undefined;
     }
 
     protected async componentHasInitialized() {

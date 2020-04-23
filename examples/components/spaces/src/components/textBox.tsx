@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-    ISharedComponentProps,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -39,26 +38,17 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
 
     private text: SharedString | undefined;
 
-    public constructor(
-        props: ISharedComponentProps<{}>,
-        private initialState?: string,
-    ) {
-        super(props);
-    }
-
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime() {
+    protected async componentInitializingFirstTime(initialState?: string) {
         // if initial state is provided then use it.
-        const newItemText = this.initialState ?? "Important Things";
+        const newItemText = initialState ?? "Important Things";
 
         // create a SharedString that will be use for the text entry
         const text = SharedString.create(this.runtime);
         text.insertText(0, newItemText);
         this.root.set("text", text.handle);
-
-        this.initialState = undefined;
     }
 
     protected async componentHasInitialized() {

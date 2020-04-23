@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
 import { CellRange } from "./cellrange";
@@ -24,7 +24,7 @@ export interface ITableSliceConfig {
 export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory<{}, ITableSliceConfig>(
         TableSliceType,
         TableSlice,
         [],
@@ -41,13 +41,6 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
-
-    constructor(
-        props: ISharedComponentProps<{}>,
-        private initialState?: ITableSliceConfig,
-    ) {
-        super(props);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
@@ -116,24 +109,22 @@ export class TableSlice extends PrimedComponent implements ITable {
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async componentInitializingFirstTime() {
-        if (!this.initialState) {
+    protected async componentInitializingFirstTime(initialState?: ITableSliceConfig) {
+        if (!initialState) {
             throw new Error("TableSlice must be created with initial state");
         }
 
-        this.root.set(ConfigKey.docId, this.initialState.docId);
-        this.root.set(ConfigKey.name, this.initialState.name);
-        this.maybeDoc = await this.getComponent_UNSAFE(this.initialState.docId);
-        this.root.set(this.initialState.docId, this.maybeDoc.handle);
+        this.root.set(ConfigKey.docId, initialState.docId);
+        this.root.set(ConfigKey.name, initialState.name);
+        this.maybeDoc = await this.getComponent_UNSAFE(initialState.docId);
+        this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(
-            this.initialState.minCol,
-            this.initialState.minRow,
-            this.initialState.maxCol,
-            this.initialState.maxRow,
+            initialState.minCol,
+            initialState.minRow,
+            initialState.maxCol,
+            initialState.maxRow,
         );
-
-        this.initialState = undefined;
     }
 
     protected async componentInitializingFromExisting() {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -24,26 +24,16 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
 
-    public constructor(
-        props: ISharedComponentProps,
-        private initialState?: IClickerInitialState,
-    ) {
-        super(props);
-    }
-
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async componentInitializingFirstTime(initialState?: IClickerInitialState) {
         let startingValue = 0;
-        if (this.initialState) {
-            startingValue = this.initialState.initialValue;
+        if (initialState) {
+            startingValue = initialState.initialValue;
         }
 
         this.root.createValueType("clicks", CounterValueType.Name, startingValue);
-
-        // Clear out initialState because we don't need it later
-        this.initialState = undefined;
     }
 
     // start IComponentHTMLView
