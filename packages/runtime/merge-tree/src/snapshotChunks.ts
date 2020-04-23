@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import {
     IComponentSerializer,
     IComponentHandleContext,
@@ -23,7 +27,6 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
     headerMetadata?: MergeTreeHeaderMetadata;
-
 }
 
 export interface MergeTreeHeaderChunkMetadata{
