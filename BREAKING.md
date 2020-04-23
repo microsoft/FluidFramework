@@ -12,6 +12,7 @@
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
 - [Event Emitter Changes](#Event-Emitter-Changes)
+- [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
 
 
 ### View interfaces moved to separate package
@@ -149,10 +150,22 @@ export const MyClickerFactory = new PrimedComponentFactory(
 
 See Aqueduct README for further details.
 
-
-
-
 ### Event Emitter Changes
+
+We are moving to event emitters which include strong typing. So far this has been done for the following interfaces
+ - IQuorum
+ - ISharedObject
+
+ For the updated interface we will now be only supporting a minimal interface for listening to events, which includes: once, on, and off
+ We recommend switching instances of addListener, and removeListener to on and off respectivly.
+
+### WebCodeLoader Resolver & Seeding
+The web code loader's constructor now take a resolver, and is no longer directly coupled to veradccio. To load from verdaccio you should pass in the a new SemVerCdnCodeResolver which encapsulates the logic for loading from cdn's that support semantic versioning, like verdaccio.
+
+In addition we have fixed bugs and simplfied how module seeding works in the web code loader. Previously, seeded modules did not have their entrypoint protected from
+overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
+
+See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
 
 ## 0.15 Breaking Changes
 
