@@ -7,8 +7,13 @@ import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, Deferred, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IPendingProposal } from "@microsoft/fluid-protocol-definitions";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+
+// subset of IHostRuntime used by UpgradeManager
+export interface IUpgradeRuntime {
+    getQuorum(): IQuorum;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+}
 
 export class UpgradeManager extends EventEmitter {
     private readonly logger: ITelemetryLogger;
@@ -16,7 +21,7 @@ export class UpgradeManager extends EventEmitter {
     // details of a delayed low priority upgrade
     private delayed: { code: IFluidCodeDetails, result: Deferred<boolean> } | undefined;
 
-    constructor(private readonly runtime: IHostRuntime, logger?: ITelemetryBaseLogger) {
+    constructor(private readonly runtime: IUpgradeRuntime, logger?: ITelemetryBaseLogger) {
         super();
         this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry:UpgradeManager", logger);
         runtime.getQuorum().on("addProposal", (proposal) => this.onAdd(proposal));

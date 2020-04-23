@@ -9,11 +9,7 @@ import { UpgradeManager } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import {
-    IComponentFactory,
-    IComponentRuntime,
-    IHostRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
@@ -87,7 +83,7 @@ describe("UpgradeManager", () => {
             c.runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
         });
 
-        const upgradeManagers = containers.map((c) => new UpgradeManager((c as any).context.runtime as IHostRuntime));
+        const upgradeManagers = containers.map((c) => new UpgradeManager((c as any).context.runtime));
 
         const succeededP = upgradeManagers.map(async (u) => new Promise<void>((res) => u.on("upgradeSucceeded", res)));
 
@@ -126,7 +122,7 @@ describe("UpgradeManager", () => {
         containerDeltaEventManager.registerDocuments(...components.map((c) => c.runtime));
         await containerDeltaEventManager.process();
 
-        const upgradeManager = new UpgradeManager((containers[0] as any).context.runtime as IHostRuntime);
+        const upgradeManager = new UpgradeManager((containers[0] as any).context.runtime);
 
         const upgradeP = new Promise<void>((resolve, reject) => {
             upgradeManager.on("upgradeInProgress", () => expected ? resolve() : reject());
