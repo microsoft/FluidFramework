@@ -498,9 +498,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         for (const { event, connectionListener, orderedListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {
                 if (orderedListener) {
-                    this.removeOrderedListener(event, listener);
+                    this.removeOrderedListener(event, this.socket, listener);
                 } else {
-                    this.socket.off(event, this.socket, listener);
+                    this.socket.off(event, listener);
                 }
             } else {
                 remaining.push({ event, connectionListener, orderedListener, listener });
