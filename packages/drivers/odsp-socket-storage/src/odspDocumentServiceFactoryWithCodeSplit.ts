@@ -8,6 +8,7 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -22,7 +23,10 @@ import { OdspDocumentService } from "./odspDocumentService";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory,
+    IExperimentalDocumentServiceFactory
+{
+    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
