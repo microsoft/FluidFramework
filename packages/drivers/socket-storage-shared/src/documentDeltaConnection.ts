@@ -47,6 +47,7 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
 interface IEventListener {
     event: string;
     connectionListener: boolean; // True if this event listener only needed while connection is in progress
+    orderedListener: boolean;
     listener(...args: any[]): void;
 }
 
@@ -393,7 +394,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 reject(createErrorObject("disconnect", reason));
             });
 
-            this.addConnectionListener("connect_document_success", (response: IConnected) => {
+            this.addOrderedConnectionListener("connect_document_success", (response: IConnected) => {
                 this.removeTrackedListeners(true);
                 resolve(response);
             });
@@ -412,7 +413,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 this.disconnect(true);
             }));
 
-            this.addConnectionListener("connect_document_error", ((error) => {
+            this.addOrderedConnectionListener("connect_document_error", ((error) => {
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
@@ -465,23 +466,44 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         }
     }
 
+    protected addOrderedConnectionListenerOnSocket(
+        event: string,
+        socket: SocketIOClient.Socket,
+        listener: (...args: any[]) => void)
+    {
+        socket.on(event, listener);
+    }
+
+    public removeOrderedListener(event: string, socket: SocketIOClient.Socket, listener: (...args: any[]) => void) {
+        socket.off(event, listener);
+    }
+
+    private addOrderedConnectionListener(event: string, listener: (...args: any[]) => void) {
+        this.addOrderedConnectionListenerOnSocket(event, this.socket, listener);
+        this.trackedListeners.push({ event, connectionListener: true, orderedListener: true, listener });
+    }
+
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: true, orderedListener: false, listener });
     }
 
     private addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: true, orderedListener: false, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {
         const remaining: IEventListener[] = [];
-        for (const { event, connectionListener, listener } of this.trackedListeners) {
+        for (const { event, connectionListener, orderedListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {
-                this.socket.off(event, listener);
+                if (orderedListener) {
+                    this.removeOrderedListener(event, listener);
+                } else {
+                    this.socket.off(event, this.socket, listener);
+                }
             } else {
-                remaining.push({ event, connectionListener, listener });
+                remaining.push({ event, connectionListener, orderedListener, listener });
             }
         }
         this.trackedListeners = remaining;

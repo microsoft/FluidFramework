@@ -270,4 +270,28 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             this.emit("disconnect", reason);
         }
     }
+
+    protected addOrderedConnectionListenerOnSocket(
+        event: string,
+        socket: SocketIOClient.Socket,
+        listener: (...args: any[]) => void)
+    {
+        const eventAggregator = `${event}-aggregator`;
+        if (!socket.hasListeners(event)) {
+            socket.on(event, (...args: any) => {
+                const listeners = socket.listeners(eventAggregator);
+                if (listeners.length > 0) {
+                    listeners[0](...args);
+                    socket.removeListener(eventAggregator, listeners[0]);
+                }
+            });
+        }
+        this.on(eventAggregator, listener);
+    }
+
+    public removeOrderedListener(event: string, socket: SocketIOClient.Socket, listener: (...args: any[]) => void) {
+        const eventAggregator = `${event}-aggregator`;
+        socket.off(eventAggregator, listener);
+    }
+
 }
