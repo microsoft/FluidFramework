@@ -510,8 +510,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public isLocal(): boolean {
         const expContainerContext = this.context as IExperimentalContainerContext;
-        assert(expContainerContext?.isExperimentalContainerContext);
-        return expContainerContext.isLocal();
+        if (expContainerContext?.isExperimentalContainerContext) {
+            // back-compat: 0.15 isAttached
+            // isAttached is replaced with isLocal.
+            return expContainerContext.isLocal ? expContainerContext.isLocal() : !expContainerContext.isAttached();
+        } else {
+            // back-compat: 0.15 isAttached
+            // Need to return false if container is not experimental because then the result would depend on
+            // whether the component is attached or not.
+            return false;
+        }
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
