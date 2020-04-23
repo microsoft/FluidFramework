@@ -196,7 +196,7 @@ export class PermutationVector extends Client {
 
                 for (const { position, length } of ranges) {
                     const removed = this.handles.splice(position, length);
-                    freed.splice(freed.splice.length, 0, ...removed.filter((handle) => handle !== Handle.unallocated));
+                    freed.splice(freed.length, 0, ...removed.filter((handle) => handle !== Handle.unallocated));
                 }
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
