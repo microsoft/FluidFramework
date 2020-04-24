@@ -98,6 +98,11 @@ The createComponent call in IComponentContext is now deprecated. Instead, users 
 
 ### ContainerRuntime and LocalComponentContext createProps removal
 
+⚠️ There are additional changes in this area in 0.17 that obsolete this guidance and should be used instead when available.
+
+<details>
+<summary>Expand old guidance</summary>
+
 Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
 1. Create an interface for the initial state that defines what may be provided to the component.
 ```typescript
@@ -131,6 +136,7 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
 }
 ```
 Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+</details>
 
 ### Providers in Aqueduct
 
