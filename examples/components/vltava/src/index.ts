@@ -14,7 +14,13 @@ import {
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
+    LastEditedTrackerComponentName,
+    LastEditedTrackerComponent,
+    setupLastEditedTrackerForContainer,
+} from "@microsoft/fluid-last-edited-experimental";
+import {
     IComponentRegistry,
+    IContainerRuntime,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -58,6 +64,31 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
             (containerComponent) => type === containerComponent.type,
         );
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
+    }
+}
+
+export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
+    constructor(
+        defaultComponentName: string,
+        registryEntries: NamedComponentRegistryEntries,
+    ) {
+        super(defaultComponentName, registryEntries);
+    }
+
+    /**
+     * {@inheritDoc BaseContainerRuntimeFactory.containerHasInitialized}
+     */
+    protected async containerHasInitialized(runtime: IContainerRuntime) {
+        // Load the last edited tracker component (done by the setup method below). This component provides container
+        // level tracking of last edit and has to be loaded before any other component.
+
+        // Right now this setup has to be done asynchronously because in the case where we load the Container from
+        // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
+        // We should be able to wait here after the create-new workflow is in place.
+        setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
+            .catch((error) => {
+                runtime.error(error);
+            });
     }
 }
 
@@ -110,9 +141,14 @@ const generateFactory = () => {
         containerComponents.push([value.type, value.factory]);
     });
 
+    // The last edited tracker component provides container level tracking of last edits. This is the first
+    // component that is loaded.
+    containerComponents.push(
+        [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ]);
+
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory()) ]);
+    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory()) ]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -120,8 +156,8 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new ContainerRuntimeFactoryWithDefaultComponent(
-        "anchor",
+    return new VltavaRuntimeFactory(
+        AnchorName,
         [
             ...containerComponents,
             ...containerRegistries,
