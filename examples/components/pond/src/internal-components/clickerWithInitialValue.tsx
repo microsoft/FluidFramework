@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { ClickerWithInitialValueFactory } from "./clickerWithInitialValueFactory";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
 
 export interface IClickerInitialState {
     initialValue: number;
@@ -25,12 +24,13 @@ export interface IClickerInitialState {
 export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
+
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps,
         private initialState?: IClickerInitialState,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     /**
@@ -59,34 +59,14 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         );
     }
 
-    // end IComponentHTMLView
-
-    // ----- COMPONENT SETUP STUFF -----
-
-    // ----- COMPONENT SETUP STUFF -----
-}
-
-export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
-    // Override the createComponent method to allow an initial value
-    public async createComponent(
-        context: IComponentContext,
-        initialState?: IClickerInitialState,
-    ): Promise<IComponent & IComponentLoadable> {
-        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
-            return new ClickerWithInitialValue(r, c, initialState);
-        };
-        return this.createComponentWithConstructorFn(context, ctorFn);
-    }
-
-    public static getFactory() { return ClickerWithInitialValueFactory.factory; }
+    public static getFactory() { return ClickerWithInitialValue.factory; }
 
     private static readonly factory = new ClickerWithInitialValueFactory(
-        ClickerWithInitialValueName,
+        ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],
-    );
+        {});
 }
-
 
 // ----- REACT STUFF -----
 
@@ -120,7 +100,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
     render() {
         return (
-            <div style={{border: "1px dotted red"}}>
+            <div style={{ border: "1px dotted red" }}>
                 <h3>Clicker With Initial Value</h3>
                 <h5>Created with initial value of 100. Increments 5.</h5>
                 <div>

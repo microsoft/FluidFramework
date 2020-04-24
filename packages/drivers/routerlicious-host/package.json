@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-routerlicious-host",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Routerlicious host interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,14 +24,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.16.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-driver-definitions": "^0.16.1",
     "@types/debug": "^0.0.31",
     "axios": "^0.18.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

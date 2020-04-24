@@ -71,7 +71,6 @@ class ProxySocketThing implements IOrdererConnectionFactory {
     public async connect(
         socket: IWebSocket,
         client: IClient): Promise<IOrdererConnection> {
-
         return this.node.connect(socket, this.tenantId, this.documentId, client);
     }
 }
@@ -91,7 +90,6 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         id: string,
         mongoManager: MongoManager,
         nodeCollectionName: string): Promise<RemoteNode> {
-
         // Connect to the given remote node
         const db = await mongoManager.getDatabase();
         const nodeCollection = db.collection<INode>(nodeCollectionName);
@@ -190,7 +188,6 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         tenantId: string,
         documentId: string,
         client: IClient): Promise<IOrdererConnection> {
-
         const cid = this.getNextCid();
         const connectMessage: IConnectMessage = {
             client,

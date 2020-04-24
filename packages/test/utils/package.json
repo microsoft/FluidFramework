@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-utils",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Utilities for fluid tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -46,21 +46,21 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.0",
-    "@microsoft/fluid-base-host": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-component-runtime": "^0.16.0",
-    "@microsoft/fluid-container-definitions": "^0.16.0",
-    "@microsoft/fluid-container-loader": "^0.16.0",
-    "@microsoft/fluid-local-driver": "^0.16.0",
-    "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0",
-    "@microsoft/fluid-server-local-server": "^0.1004.0-0",
-    "@microsoft/fluid-shared-object-base": "^0.16.0"
+    "@microsoft/fluid-aqueduct": "^0.16.1",
+    "@microsoft/fluid-base-host": "^0.16.1",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-component-runtime": "^0.16.1",
+    "@microsoft/fluid-container-definitions": "^0.16.1",
+    "@microsoft/fluid-container-loader": "^0.16.1",
+    "@microsoft/fluid-local-driver": "^0.16.1",
+    "@microsoft/fluid-map": "^0.16.1",
+    "@microsoft/fluid-runtime-definitions": "^0.16.1",
+    "@microsoft/fluid-server-local-server": "^0.1004.1",
+    "@microsoft/fluid-shared-object-base": "^0.16.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.5.1",

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -32,12 +31,24 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-
 export interface IExperimentalUrlResolver extends IUrlResolver {
     readonly isExperimentalUrlResolver: true;
-    // Creates a new document on the host with the provided options. Returns the resolved URL.
-    createContainer(
-        createNewSummary: ISummaryTree,
+    // Creates a url for the created container with any component path given in request.
+    requestUrl(
+        resolvedUrl: IResolvedUrl,
         request: IRequest,
-    ): Promise<IResolvedUrl>;
+    ): Promise<IResponse>;
+}
+
+export enum CreateNewHeader {
+    createNew = "createNew",
+}
+
+export interface ICreateNewHeader {
+    [CreateNewHeader.createNew]: any;
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ICreateNewHeader> { }
 }

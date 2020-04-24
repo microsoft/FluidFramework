@@ -21,7 +21,7 @@ yo fluid
 ````
 ---
 
-## NPM or VSTS Auth Issue and Private NPM Repositories
+## npm or Azure DevOps auth issues and private npm repositories
 
 If you run into an auth issue. Please set up your .npmrc.
 

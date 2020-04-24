@@ -116,8 +116,6 @@ class WriteError extends ErrorWithProps implements IWriteError {
     }
 }
 
-export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
-
 /**
  * Fatal error class - when the server encountered a fatal error
  */
@@ -151,3 +149,6 @@ export function createNetworkError(
     }
     return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
 }
+
+export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
+export const createFatalError = (errorMessage: string) => (new FatalError(errorMessage) as IError);

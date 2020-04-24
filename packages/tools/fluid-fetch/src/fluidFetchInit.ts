@@ -34,7 +34,6 @@ async function initializeODSPCore(
     server: string,
     clientConfig: IClientConfig,
 ) {
-
     const { driveId, itemId } = odspResolvedUrl;
 
     connectionInfo = {
@@ -106,6 +105,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
     return r11s.createDocumentService(
+        r11sResolvedUrl,
         r11sResolvedUrl.endpoints.ordererUrl,
         r11sResolvedUrl.endpoints.deltaStorageUrl,
         r11sResolvedUrl.endpoints.storageUrl,
@@ -115,7 +115,6 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
 }
 
 async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
-
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),

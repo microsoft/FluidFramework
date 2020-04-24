@@ -34,7 +34,6 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
-
         const collection = new ConsensusRegisterCollection(id, runtime, attributes);
         await collection.load(branchId, services);
         return collection;

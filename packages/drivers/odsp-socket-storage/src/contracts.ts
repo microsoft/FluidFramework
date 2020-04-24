@@ -6,12 +6,7 @@
 import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
-import { INewFileInfo } from "./createFile";
-
-export interface ICreateNewOptions {
-    createNewSummary?: api.ISummaryTree,
-    newFileInfoPromise: Promise<INewFileInfo>,
-}
+import { INewFileInfoHeader } from "./odspUtils";
 
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
@@ -19,7 +14,7 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
     // URL to send to fluid, contains the documentId and the path
     url: string;
 
-    createNewOptions?: ICreateNewOptions;
+    createNewOptions?: INewFileInfoHeader;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;
@@ -36,6 +31,8 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
     tokens: {};
+
+    fileName: string,
 }
 
 /**

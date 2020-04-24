@@ -9,7 +9,6 @@ import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
-
     public static create(
         from: number,
         to: number,

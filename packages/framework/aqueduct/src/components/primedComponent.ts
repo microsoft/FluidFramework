@@ -3,10 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
@@ -17,8 +23,14 @@ import { SharedComponent } from "./sharedComponent";
  * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
+ *
+ * Generics:
+ * P - represents a type that will define optional providers that will be injected
+ * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent extends SharedComponent {
+export abstract class PrimedComponent<P extends IComponent = object, E extends IEvent = IEvent>
+    extends SharedComponent<P, E>
+{
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";

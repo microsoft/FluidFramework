@@ -99,7 +99,6 @@ export class Chaincode implements IComponentFactory {
 }
 
 export class ChaincodeFactory implements IRuntimeFactory {
-
     public get IRuntimeFactory() { return this; }
 
     /**

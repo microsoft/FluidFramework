@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-utils",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "ODSP utilities",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "axios": "^0.18.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

@@ -12,7 +12,7 @@ import {
     IComponentHandle,
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     MergeTreeDeltaType,
@@ -194,10 +194,14 @@ class CodemirrorView implements IComponentHTMLView {
     }
 }
 
+/**
+ * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
+ * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ */
 export class CodeMirrorComponent
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
@@ -209,9 +213,12 @@ export class CodeMirrorComponent
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
     public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
+    private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -219,6 +226,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

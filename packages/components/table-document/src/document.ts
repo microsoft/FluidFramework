@@ -7,16 +7,15 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
+    SequenceDeltaEvent,
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { CellRange } from "./cellrange";
 import { TableDocumentType, TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -24,7 +23,14 @@ import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
 
-export class TableDocument extends PrimedComponent implements ITable {
+export interface ITableDocumentEvents extends IEvent{
+    (event: "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: SharedNumberSequence | SparseMatrix) => void);
+    (event: "sequenceDelta",
+        listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
+}
+
+export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -34,6 +40,7 @@ export class TableDocument extends PrimedComponent implements ITable {
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
+        {},
         undefined,
         true,
     );
@@ -48,10 +55,6 @@ export class TableDocument extends PrimedComponent implements ITable {
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
     private maybeWorkbook?: ISheetlet;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         try {
@@ -185,16 +188,10 @@ export class TableDocument extends PrimedComponent implements ITable {
                     }
                 }
             }
-
-            this.emit("op", op, local, target);
         });
-
-        this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
-        this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
-
-        this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
-        this.maybeCols.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
-        this.maybeRows.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+        this.forwardEvent(this.maybeCols, "op", "sequenceDelta");
+        this.forwardEvent(this.maybeRows, "op", "sequenceDelta");
+        this.forwardEvent(this.matrix, "op", "sequenceDelta");
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;

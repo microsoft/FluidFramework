@@ -29,7 +29,6 @@ export function create(
     producer: core.IProducer,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage): Router {
-
     const router: Router = Router();
 
     function returnResponse<T>(

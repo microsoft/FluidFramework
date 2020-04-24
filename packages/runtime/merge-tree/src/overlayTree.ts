@@ -23,7 +23,6 @@ function createTreeMarkerOps(
     id: string,
     nodeType: string,
     beginMarkerProps?: MergeLib.PropertySet): [MergeLib.IMergeTreeInsertMsg, MergeLib.IMergeTreeInsertMsg] {
-
     const endMarkerProps = MergeLib.createMap<any>();
     endMarkerProps[MergeLib.reservedMarkerIdKey] = endIdFromId(id);
     endMarkerProps[MergeLib.reservedRangeLabelsKey] = [treeRangeLabel];

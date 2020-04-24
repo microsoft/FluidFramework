@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-framework-experimental",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Experimental definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,12 +24,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-runtime-definitions": "^0.16.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

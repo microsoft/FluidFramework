@@ -49,7 +49,7 @@ We suggest you start by typing:
 npm start
 ```
 
-## NPM or VSTS Auth Issue
+## npm or Azure DevOps auth Issue
 
 [Stack Overflow Issue](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
@@ -57,4 +57,4 @@ If you run into an auth issue. Please set up your .npmrc. This is a common issue
 
 For windows: https://www.npmjs.com/package/vsts-npm-auth
 
-For mac you’ll need to add credentials to your npmrc manually. Go to this link, https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague, click on “Connect to Feed” select NPM on the left, and follow the instructions.
+For mac you’ll need to add credentials to your npmrc manually. Go to this link, https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague, click on “Connect to Feed” then select **npm** on the left, and follow the instructions.

@@ -123,7 +123,6 @@ export interface ITextAccumulator {
 }
 
 export class MergeTreeTextHelper {
-
     constructor(private readonly mergeTree: MergeTree) {}
 
     public getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number) {
@@ -271,7 +270,6 @@ export class MergeTreeTextHelper {
                     accumText.parallelText.push(accumText.textSegment.text);
                     accumText.textSegment.text = "";
                 }
-
             }
         }
 

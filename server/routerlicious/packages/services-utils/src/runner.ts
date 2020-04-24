@@ -68,7 +68,6 @@ export async function run<T extends IResources>(
     config: nconf.Provider,
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>) {
-
     const resources = await resourceFactory.create(config);
     const runner = await runnerFactory.create(resources);
 
@@ -95,7 +94,6 @@ export function runService<T extends IResources>(
     runnerFactory: IRunnerFactory<T>,
     group: string,
     configFile: string) {
-
     const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
     configureLogging(config.get("logger"));
 

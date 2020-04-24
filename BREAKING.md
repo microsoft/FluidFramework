@@ -10,6 +10,10 @@
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
 - [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [Providers in Aqueduct](#Providers-in-Aqueduct)
+- [Event Emitter Changes](#Event-Emitter-Changes)
+- [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
+
 
 ### View interfaces moved to separate package
 
@@ -127,6 +131,41 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
 }
 ```
 Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
+### Providers in Aqueduct
+
+Aqueduct now supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
+into the Container.
+
+Because of this change developers that consume `SharedComponentFactory` or `PrimedComponentFactory` now have to modify their signature to include the symbols for providers they are including. For integration there will be no symbols so it will be an empty object.
+
+```typescript
+export const MyClickerFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
+    Clicker,
+    [], // Distributed Data Structures
+    {}, // Provider Symbols
+);
+```
+
+See Aqueduct README for further details.
+
+### Event Emitter Changes
+
+We are moving to event emitters which include strong typing. So far this has been done for the following interfaces
+ - IQuorum
+ - ISharedObject
+
+ For the updated interface we will now be only supporting a minimal interface for listening to events, which includes: once, on, and off
+ We recommend switching instances of addListener, and removeListener to on and off respectivly.
+
+### WebCodeLoader Resolver & Seeding
+The web code loader's constructor now take a resolver, and is no longer directly coupled to veradccio. To load from verdaccio you should pass in the a new SemVerCdnCodeResolver which encapsulates the logic for loading from cdn's that support semantic versioning, like verdaccio.
+
+In addition we have fixed bugs and simplfied how module seeding works in the web code loader. Previously, seeded modules did not have their entrypoint protected from
+overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
+
+See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
 
 ## 0.15 Breaking Changes
 

@@ -30,7 +30,6 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.player = new Player(audioContext);
-
     }
 
     private player: Player | undefined;
@@ -105,6 +104,7 @@ export const MusicaInstantiationFactory = new PrimedComponentFactory(
     musicaName,
     Musica,
     [],
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

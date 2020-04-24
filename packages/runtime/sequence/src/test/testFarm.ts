@@ -318,7 +318,7 @@ export function TestPack(verbose = true) {
         }
 
         function checkTextMatch() {
-            //Console.log(`checking text match @${server.getCurrentSeq()}`);
+            // Console.log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
             const serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -336,8 +336,8 @@ export function TestPack(verbose = true) {
                 const cliText = client.getText();
                 if (cliText !== serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //Console.log(serverText);
-                    //console.log(cliText);
+                    // Console.log(serverText);
+                    // console.log(cliText);
                     const diffParts = JsDiff.diffChars(serverText, cliText);
                     for (const diffPart of diffParts) {
                         let annotes = "";
@@ -474,7 +474,6 @@ export function TestPack(verbose = true) {
             }
         }
 
-
         let errorCount = 0;
 
         // Function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
@@ -595,12 +594,10 @@ export function TestPack(verbose = true) {
                                 ordSuccess++;
                                 // Console.log(`happy ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} < ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                             }
-
                         } else {
                             // Console.log(`no seg for [${b},${e}) with len ${len}`);
                         }
                     }
-
                 }
                 if (measureRanges) {
                     const mt = random.engines.mt19937();
@@ -743,8 +740,8 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 }
-                //Console.log(server.getText());
-                //console.log(server.mergeTree.toString());
+                // Console.log(server.getText());
+                // console.log(server.mergeTree.toString());
             }
             return errorCount;
         }
@@ -851,8 +848,8 @@ export function TestPack(verbose = true) {
         function tail() {
             reportTiming(server);
             reportTiming(clients[2]);
-            //Console.log(server.getText());
-            //console.log(server.mergeTree.toString());
+            // Console.log(server.getText());
+            // console.log(server.mergeTree.toString());
         }
         return errorCount;
     }
@@ -862,7 +859,6 @@ export function TestPack(verbose = true) {
         const clientCountB = 2;
         const fileSegCount = 0;
         const initString = "don't ask for whom the bell tolls; it tolls for thee";
-
 
         const serverA = new TestServer();
         serverA.measureOps = true;
@@ -934,7 +930,7 @@ export function TestPack(verbose = true) {
         }
 
         function checkTextMatch(clients: TestClient[], server: TestServer) {
-            //Console.log(`checking text match @${server.getCurrentSeq()}`);
+            // Console.log(`checking text match @${server.getCurrentSeq()}`);
             const clockStart = clock();
             const serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -944,8 +940,8 @@ export function TestPack(verbose = true) {
                 const cliText = client.getText();
                 if (cliText !== serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //Console.log(serverText);
-                    //console.log(cliText);
+                    // Console.log(serverText);
+                    // console.log(cliText);
                     if (showDiff) {
                         const diffParts = JsDiff.diffChars(serverText, cliText);
                         for (const diffPart of diffParts) {
@@ -1118,8 +1114,8 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 }
-                //Console.log(server.getText());
-                //console.log(server.mergeTree.toString());
+                // Console.log(server.getText());
+                // console.log(server.mergeTree.toString());
             }
             return errorCount;
         }
@@ -1181,11 +1177,10 @@ export function TestPack(verbose = true) {
             reportTiming(serverA);
             reportTiming(clientsA[1]);
             reportTiming(clientsB[1]);
-            //Console.log(server.getText());
-            //console.log(server.mergeTree.toString());
+            // Console.log(server.getText());
+            // console.log(server.mergeTree.toString());
         }
         return errorCount;
-
     }
     const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 
@@ -1573,7 +1568,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -1628,7 +1622,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -1894,7 +1887,6 @@ export class DocumentTree {
                 const row = DocumentTree.generateRow(rowProbability);
                 items.push(row);
             }
-
         }
         return items;
     }

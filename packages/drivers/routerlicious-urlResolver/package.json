@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-routerlicious-urlresolver",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Url Resolver for routerlicious urls.",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -26,15 +26,15 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.16.0",
-    "@microsoft/fluid-driver-utils": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
-    "@microsoft/fluid-server-services-client": "^0.1004.0-0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-driver-definitions": "^0.16.1",
+    "@microsoft/fluid-driver-utils": "^0.16.1",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-server-services-client": "^0.1004.1",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/mocha": "^5.2.5",
     "@types/nconf": "^0.0.37",

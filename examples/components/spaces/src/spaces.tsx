@@ -41,6 +41,7 @@ export class Spaces extends PrimedComponent
         [
             SharedObjectSequence.getFactory(),
         ],
+        {},
         [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
     );
 
@@ -96,7 +97,6 @@ export class Spaces extends PrimedComponent
             (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
         }
     }
-
 
     private addToolbarListeners() {
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {

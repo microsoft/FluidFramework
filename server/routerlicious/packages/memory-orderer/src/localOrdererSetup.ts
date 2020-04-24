@@ -17,7 +17,6 @@ import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
-
     constructor(
         private readonly tenantId: string,
         private readonly documentId: string,

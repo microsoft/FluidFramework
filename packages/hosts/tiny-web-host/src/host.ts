@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
@@ -21,6 +21,7 @@ import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { v4 } from "uuid";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -55,7 +56,6 @@ export async function loadFluidContainer(
     clientSecret?: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
-
     let resolved: IResolvedUrl;
 
     const codeDetails = pkg ?? parseUrlToResolvedPackage(url);
@@ -93,7 +93,7 @@ export async function loadFluidContainer(
     return containerP;
 }
 
-export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails {
+export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails | undefined {
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
@@ -103,7 +103,11 @@ export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails {
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    if (chaincode.startsWith("http")) {
+    // This allows us to open up documents without specifying the chaincode,
+    // This is useful if the document has already been created with a chaincode and in the SPO scenario
+    if (!chaincode) {
+        return undefined;
+    } else if (chaincode.startsWith("http")) {
         codeDetails = {
             config: {
                 [`@gateway:cdn`]: chaincode,
@@ -142,7 +146,6 @@ async function loadContainer(
     secret: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
-
     let documentServiceFactory: IDocumentServiceFactory;
     const protocol = new URL(resolved.url).protocol;
     if (protocol === "fluid-odsp:") {
@@ -235,7 +238,6 @@ export async function loadIFramedFluidContainer(
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<void> {
-
     let scriptUrl: string;
     // main.bundle.js refers to the output of webpacking this file.
     if (packageJson.version.split(".")[2] === "0") {

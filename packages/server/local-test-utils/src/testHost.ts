@@ -17,8 +17,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
-    IComponentContext,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
@@ -47,12 +45,12 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
         config: {},
     };
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
-
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
+
+    public stop() {
+        return;
+    }
 
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
@@ -176,7 +174,11 @@ export class TestHost {
                 [
                     ...componentRegistry,
                     [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent.type, TestRootComponent, sharedObjectFactories),
+                        new PrimedComponentFactory(
+                            TestRootComponent.type,
+                            TestRootComponent,
+                            sharedObjectFactories,
+                            {}),
                     )],
                 ],
                 this.containerServiceRegistry),

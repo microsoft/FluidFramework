@@ -12,5 +12,6 @@ export const WaterParkLoaderInstantiationFactory: IComponentFactory = new Primed
     WaterParkLoaderName,
     ExternalComponentLoader,
     [],
+    {},
     [["url", Promise.resolve(new UrlRegistry())]],
 );

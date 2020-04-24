@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-merge-tree-client-replay",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,16 +25,16 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-file-driver": "^0.16.0",
-    "@microsoft/fluid-merge-tree": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0",
-    "@microsoft/fluid-sequence": "^0.16.0",
+    "@microsoft/fluid-file-driver": "^0.16.1",
+    "@microsoft/fluid-merge-tree": "^0.16.1",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-runtime-definitions": "^0.16.1",
+    "@microsoft/fluid-sequence": "^0.16.1",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

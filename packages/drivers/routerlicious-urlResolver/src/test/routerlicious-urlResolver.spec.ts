@@ -12,7 +12,6 @@ import { Provider } from "nconf";
 import { RouterliciousUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Url Resolver", () => {
-
     const token = "dummy";
     it("Should resolve the Routerlicious urls correctly", async () => {
         const urlResolver = new RouterliciousUrlResolver(undefined, async () => Promise.resolve(token), []);
@@ -58,7 +57,7 @@ describe("Routerlicious Url Resolver", () => {
         };
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
 
-        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+        const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://localhost:3001/repos/fluid", "Improperly Formed storageUrl");
         assert.equal(endpoints.deltaStorageUrl, "http://localhost:3003/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
@@ -87,7 +86,7 @@ describe("Routerlicious Url Resolver", () => {
         };
 
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
-        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+        const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
         assert.equal(endpoints.deltaStorageUrl, "http://alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
@@ -115,14 +114,13 @@ describe("Routerlicious Url Resolver", () => {
         };
 
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
-        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+        const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "http://smelly-wolf-historian:3000/repos/fluid", "Improperly Formed storageUrl");
         assert.equal(endpoints.deltaStorageUrl, "http://wiggly-wombat-alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
         assert.equal(endpoints.ordererUrl, "http://wiggly-wombat-alfred:3000", "Improperly Formed OrdererUrl");
         assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
     });
-
 
     it("Should handle deployed External request", async () => {
         const request: IRequest = {
@@ -145,7 +143,7 @@ describe("Routerlicious Url Resolver", () => {
         };
 
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
-        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+        const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
         assert.equal(endpoints.storageUrl, "https://historian.wu2-ppe.prague.office-int.com/repos/fluid", "Storage url does not match");
         assert.equal(endpoints.deltaStorageUrl, "https://alfred.wu2-ppe.prague.office-int.com/deltas/fluid/damp-competition", "Delta storage url does not match");

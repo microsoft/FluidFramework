@@ -27,6 +27,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
         [
             OwnedSharedMap.getFactory(),
         ],
+        {},
     );
 
     public ownedMap: OwnedSharedMap;
@@ -70,7 +71,6 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     }
 
     private doRender(host: HTMLElement) {
-
         let title = "Not Defined Yet!";
         let amOwner = false;
         let change = (e) => alert("Map Not defined");
@@ -85,7 +85,6 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
             } else {
                 console.log(" Non Owner");
             }
-
         }
 
         ReactDOM.render(

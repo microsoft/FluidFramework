@@ -147,7 +147,6 @@ export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, st
 export function buildHierarchy(
     flatTree: git.ITree,
     blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
-
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
