@@ -8,3 +8,4 @@ export * from "./facePile";
 export * from "./number";
 export * from "./textBox";
 export * from "./componentToolbar";
+export * from "./reactComponent";

@@ -4,16 +4,33 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { ITask } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ClickerAgent } from "./agent";
+import { FluidReactComponent } from "./fluidReactComponent";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
+
+// ----- REACT STUFF -----
+
+interface CounterState {
+    value: number;
+}
+
+class CounterReactView extends FluidReactComponent<{}, CounterState> {
+    render() {
+        return (
+            <div>
+                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                    {this.state.value}
+                </span>
+                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
+            </div>
+        );
+    }
+}
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -25,15 +42,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("clicks", CounterValueType.Name, 0);
-        if (!this.runtime.connected) {
-            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
-        }
-        this.setupAgent();
-    }
-
-    protected async componentInitializingFromExisting() {
-        this.setupAgent();
+        this.root.set("counterClicks", 0);
     }
 
     // #region IComponentHTMLView
@@ -42,67 +51,25 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-    // Get our counter object that we set in initialize and pass it in to the view.
-        const counter = this.root.get("clicks");
+        const rootToInitialStateMap = new Map<string, keyof CounterState>();
+        rootToInitialStateMap.set("counterClicks", "value");
+        const stateToRoot = new Map<keyof CounterState, string>();
+        stateToRoot.set("value", "counterClicks");
         ReactDOM.render(
-            <CounterReactView counter={counter} />,
+            <div>
+                <CounterReactView
+                    root={this.root}
+                    reactComponentProps={{}}
+                    rootToInitialState={rootToInitialStateMap}
+                    stateToRoot={stateToRoot}
+                />
+            </div>,
             div,
         );
         return div;
     }
 
     // #endregion IComponentHTMLView
-
-    public setupAgent() {
-        const counter: Counter = this.root.get("clicks");
-        const agentTask: ITask = {
-            id: "agent",
-            instance: new ClickerAgent(counter),
-        };
-        this.taskManager.register(agentTask);
-        this.taskManager.pick(this.url, "agent", true).then(() => {
-            console.log(`Picked`);
-        }, (err) => {
-            console.log(err);
-        });
-    }
-}
-
-// ----- REACT STUFF -----
-
-interface CounterProps {
-    counter: Counter;
-}
-
-interface CounterState {
-    value: number;
-}
-
-class CounterReactView extends React.Component<CounterProps, CounterState> {
-    constructor(props: CounterProps) {
-        super(props);
-
-        this.state = {
-            value: this.props.counter.value,
-        };
-    }
-
-    componentDidMount() {
-        this.props.counter.on("incremented", (incrementValue: number, currentValue: number) => {
-            this.setState({ value: currentValue });
-        });
-    }
-
-    render() {
-        return (
-            <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.value}
-                </span>
-                <button onClick={() => { this.props.counter.increment(1); }}>+</button>
-            </div>
-        );
-    }
 }
 
 // ----- FACTORY SETUP -----

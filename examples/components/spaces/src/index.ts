@@ -28,6 +28,8 @@ import {
     FriendlyNumberName,
     FriendlyFacePileName,
     FriendlyTextBoxName,
+    ReactComponent,
+    ReactComponentName
 } from "./components";
 import { Spaces } from "./spaces";
 import {
@@ -122,6 +124,13 @@ const generateFactory = () => {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
             friendlyName: "Prose Mirror",
+            fabricIconName: "Edit",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: ReactComponentName,
+            factory: Promise.resolve(ReactComponent.getFactory()),
+            friendlyName: "React",
             fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView"],
         },
