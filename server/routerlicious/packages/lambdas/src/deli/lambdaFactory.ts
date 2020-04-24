@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@microsoft/fluid-gitresources";
 import {
     ICollection,
     IContext,
@@ -15,6 +16,8 @@ import {
     ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
+import { ITreeEntry, TreeEntry, FileMode } from "@microsoft/fluid-protocol-definitions";
+import { IGitManager } from "@microsoft/fluid-server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { IDeliCheckpoint } from "./checkpointContext";
@@ -52,10 +55,17 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         super();
     }
 
+    // Cache for ref and last summary checkpoint.
+    private existingRef: IRef;
+    private summaryCheckpoint: IDeliCheckpoint;
+
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const documentId = config.get("documentId");
         const tenantId = config.get("tenantId");
         const leaderEpoch = config.get("leaderEpoch") as number;
+
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
@@ -77,25 +87,24 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`);
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
-            lastCheckpoint = dbObject.deli === "" ?
-                await this.loadStateFromSummary(tenantId, documentId, leaderEpoch, context.log) :
-                JSON.parse(dbObject.deli);
-
-            if (lastCheckpoint.epoch !== undefined && lastCheckpoint.term !== undefined) {
-                // Increment term if epoch changed since the last checkpoint. Epoch should always move forward
-                // but there is no need to enforce it.
-                if (leaderEpoch !== lastCheckpoint.epoch) {
-                    // TODO: Set sequence number to DSN when clients are updated to resubmit.
-                    ++lastCheckpoint.term;
-                    lastCheckpoint.epoch = leaderEpoch;
+            if (dbObject.deli === "") {
+                lastCheckpoint = await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
+                if (lastCheckpoint === undefined) {
+                    throw Error("Summary cannot be fetched");
                 }
             } else {
-                // Back-compat for old documents.
-                lastCheckpoint.epoch = leaderEpoch;
-                lastCheckpoint.term = 1;
-                lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
+                lastCheckpoint = JSON.parse(dbObject.deli);
             }
         }
+
+        await this.resetCheckpointOnEpochTick(
+            tenantId,
+            documentId,
+            gitManager,
+            context.log,
+            lastCheckpoint,
+            leaderEpoch,
+        );
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         return new DeliLambda(
@@ -121,31 +130,119 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
     }
 
-    // When deli cache is cleared, we need to hydrate from summary.
+    // Fetches last durable deli state from summary. Returns undefined if not present or on an error.
     private async loadStateFromSummary(
         tenantId: string,
         documentId: string,
-        leaderEpoch: number,
+        gitManager: IGitManager,
         logger: ILogger): Promise<IDeliCheckpoint> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
-        const gitManager = tenant.gitManager;
-
-        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-
-        if (!existingRef) {
-            logger.error(`No service summary present for ${tenantId}/${documentId}`);
-            return getDefaultCheckpooint(leaderEpoch);
-        } else {
-            try {
-                const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
-                return JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
-            } catch (exception) {
-                // We should really fail when no service summary is present.
-                // For now we are just logging it for better telemetry.
-                logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
-                logger.error(JSON.stringify(exception));
-                return getDefaultCheckpooint(leaderEpoch);
+        if (this.summaryCheckpoint === undefined) {
+            this.existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+            if (this.existingRef) {
+                try {
+                    const content = await gitManager.getContent(this.existingRef.object.sha, ".serviceProtocol/deli");
+                    this.summaryCheckpoint = JSON.parse(
+                        Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
+                } catch (exception) {
+                    logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
+                    logger.error(JSON.stringify(exception));
+                    return undefined;
+                }
             }
         }
+        return this.summaryCheckpoint;
+    }
+
+    // Check the current epoch with last epoch. If not matched, we need to flip the term.
+    // However, we need to store the current term and epoch reliably before we kick off the lambda.
+    // Hence we need to create another summary. Logically its an overwrite but in a git sense,
+    // its a new commit. I am wondering whether we should have an updateSummary() in the driver
+    // to hide these amongst storage providers?
+
+    // Another aspect is the starting summary. What happens when epoch ticks and we never had a prior summary?
+    // Creating a summary for every new document seems wasteful? For now, I am checking whether we had a
+    // summary before flipping the term. When we move to createNew() for creation, this should not be a
+    // problem anymore.
+    private async resetCheckpointOnEpochTick(
+        tenantId: string,
+        documentId: string,
+        gitManager: IGitManager,
+        logger: ILogger,
+        checkpoint: IDeliCheckpoint,
+        leaderEpoch: number) {
+        if (checkpoint.epoch !== undefined && checkpoint.term !== undefined) {
+            if (leaderEpoch !== checkpoint.epoch) {
+                const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
+                if (lastSummaryState === undefined) {
+                    checkpoint.epoch = leaderEpoch;
+                } else {
+                    checkpoint.epoch = leaderEpoch;
+                    checkpoint.term = lastSummaryState.term + 1;
+                    checkpoint.sequenceNumber = lastSummaryState.sequenceNumber;
+                    checkpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
+                    // Now create the summary.
+                    await this.createSummaryWithLatestTerm(gitManager, checkpoint, documentId);
+                }
+            }
+        } else {
+            // Back-compat for old documents.
+            checkpoint.epoch = leaderEpoch;
+            checkpoint.term = 1;
+            checkpoint.durableSequenceNumber = checkpoint.sequenceNumber;
+        }
+    }
+
+    private async createSummaryWithLatestTerm(
+        gitManager: IGitManager,
+        checkpoint: IDeliCheckpoint,
+        documentId: string) {
+        const serviceProtocolEntries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "deli",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(checkpoint),
+                    encoding: "utf-8",
+                },
+            },
+        ];
+        const lastCommit = await gitManager.getCommit(this.existingRef.object.sha);
+        const [deliTree, lastSummaryTree] = await Promise.all([
+            // eslint-disable-next-line no-null/no-null
+            gitManager.createTree({ entries: serviceProtocolEntries, id: null }),
+            gitManager.getTree(lastCommit.tree.sha, false),
+        ]);
+        // Add/update new deli tree
+        const newTreeEntries = lastSummaryTree.tree.map((value) => {
+            const createTreeEntry: ICreateTreeEntry = {
+                mode: value.mode,
+                path: value.path,
+                sha: value.sha,
+                type: value.type,
+            };
+            return createTreeEntry;
+        });
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".serviceProtocol/deli",
+            sha: deliTree.sha,
+            type: "tree",
+        });
+        const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: "Term_Flip_Summary",
+            parents: [lastCommit.sha],
+            tree: gitTree.sha,
+        };
+
+        // Finally commit the summary and update the ref.
+        const commit = await gitManager.createCommit(commitParams);
+        await gitManager.upsertRef(documentId, commit.sha);
     }
 }
