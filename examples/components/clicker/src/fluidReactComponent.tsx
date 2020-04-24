@@ -26,12 +26,12 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         super(props);
         const { root, rootToInitialState, reactComponentDefaultState, stateToRoot } = props;
         const state = reactComponentDefaultState;
-        if (rootToInitialState) {
+        if (rootToInitialState !== undefined) {
             rootToInitialState.forEach((stateKey, rootKey) => {
                 state[stateKey] = root.get(rootKey);
             });
         }
-        if (stateToRoot) {
+        if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
                     if (change.key === rootKey) {
@@ -52,7 +52,7 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
 
     public setState(newState: S) {
         super.setState(newState);
-        if (this.stateToRoot) {
+        if (this.stateToRoot !== undefined) {
             this.stateToRoot.forEach((rootKey, stateKey) => {
                 const rootData = this.root.get(rootKey);
                 if (rootData !==  newState[stateKey]) {
