@@ -14,10 +14,10 @@ import { IVltavaLastEditedState } from "./dataModel";
 
 const lastEditedBoxStyle: React.CSSProperties = {
     position: "relative",
-    top: 20,
-    left: -240,
-    height: 135,
-    width: 250,
+    top: 15,
+    left: -210,
+    height: 110,
+    width: 220,
     background: "white",
     border: "1px solid darkgray",
 };
@@ -27,13 +27,14 @@ const lastEditByStyle: React.CSSProperties = {
     fontFamily: "Calibri",
     fontSize: 16,
     textAlign: "center",
-    padding: "5px",
+    padding: "2px",
+    background: "#3D3D3D",
 };
 
 const lastEditedTimeStyle: React.CSSProperties = {
     color: "#505050",
     fontFamily: "Calibri",
-    fontSize: 14,
+    fontSize: 15,
     textAlign: "center",
 };
 
@@ -73,18 +74,14 @@ export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
 
     return (
         <div style = {lastEditedBoxStyle}>
-            <div style = {{ background: "#3D3D3D" }}>
-                <div style = {lastEditByStyle}>
-                    Last Edit By
-                </div>
+            <div style = {lastEditByStyle}>
+                Last Edit By
             </div>
-            <div>
-                <div style = {{ padding: "20px 30px" }}>
-                    <Facepile {...facepileProps} />
-                </div>
-                <div style = {lastEditedTimeStyle}>
-                    {props.lastEditedState.time}
-                </div>
+            <div style = {{ padding: "10px 30px" }}>
+                <Facepile {...facepileProps} />
+            </div>
+            <div style = {lastEditedTimeStyle}>
+                {props.lastEditedState.time}
             </div>
         </div>
     );

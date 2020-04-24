@@ -112,7 +112,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
                 name: userName,
                 colorCode,
             },
-            time: date.toUTCString(),
+            time: date.toLocaleString(),
         };
 
         return lastEditedState;
