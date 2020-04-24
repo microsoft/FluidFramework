@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { Package, Packages } from "../common/npmPackage";
-import {
-    globFn,
-    ExecAsyncResult,
-    execWithErrorAsync,
-} from "../common/utils";
+import { globFn } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
 import { FluidRepoBase } from "../common/fluidRepoBase";
 import { MonoRepoKind } from "../common/monoRepo";
