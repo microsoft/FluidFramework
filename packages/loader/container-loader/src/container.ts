@@ -31,6 +31,7 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
+    ErrorType,
     IDocumentService,
     IDocumentStorageService,
     IError,
@@ -144,18 +145,26 @@ export class Container
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
-            let alreadyRaisedError = false;
-            const onError = (err) => {
-                container.removeListener("error", onError);
+            const onError = (err?: IError) => {
+                container.removeListener("closed", onError);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                const error = createIError(err);
+                let error: IError;
+                if (err === undefined) {
+                    const message = "Container closed without an error";
+                    error = {
+                        errorType: ErrorType.generalError,
+                        message,
+                        error: new Error(message),
+                    };
+                } else {
+                    error = createIError(err);
+                }
                 container.close(error);
                 rej(error);
-                alreadyRaisedError = true;
             };
-            container.on("error", onError);
+            container.on("closed", onError);
 
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
@@ -164,16 +173,13 @@ export class Container
 
             container.load(version, !!pause)
                 .then((props) => {
-                    container.removeListener("error", onError);
+                    container.removeListener("closed", onError);
                     res(container);
                     perfEvent.end(props);
                 })
                 .catch((error) => {
                     perfEvent.cancel(undefined, error);
                     const err = createIError(error);
-                    if (!alreadyRaisedError) {
-                        container.logContainerError(err);
-                    }
                     onError(err);
                 });
         });
