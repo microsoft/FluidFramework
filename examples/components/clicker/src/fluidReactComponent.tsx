@@ -8,13 +8,14 @@ import { ISharedDirectory } from "@microsoft/fluid-map";
 
 interface ReactProps<P, S> {
     root: ISharedDirectory,
-    reactComponentProps: P
+    reactComponentProps: P,
+    reactComponentDefaultState: S,
     rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
 }
 
 /**
- * A component to allow you to share your location with others
+ * A react component with a root, initial props, and a root to state mapping
  */
 export abstract class FluidReactComponent<P,S> extends React.Component<ReactProps<P,S>, S> {
     readonly stateToRoot?: Map<keyof S, string>;
@@ -23,8 +24,8 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         props: ReactProps<P,S>,
     ) {
         super(props);
-        const { root, rootToInitialState, stateToRoot } = props;
-        const state: Partial<S> = {};
+        const { root, rootToInitialState, reactComponentDefaultState, stateToRoot } = props;
+        const state = reactComponentDefaultState;
         if (rootToInitialState) {
             rootToInitialState.forEach((stateKey, rootKey) => {
                 state[stateKey] = root.get(rootKey);
@@ -33,17 +34,19 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         if (stateToRoot) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
-                    const newData = root.get(rootKey);
-                    if (newData !== this.state[stateKey]) {
-                        const newState: S = this.state;
-                        newState[stateKey] = newData;
-                        this.setState(newState);
+                    if (change.key === rootKey) {
+                        const newData = root.get(rootKey);
+                        if (newData !== this.state[stateKey]) {
+                            const newState: S = this.state;
+                            newState[stateKey] = newData;
+                            this.setState(newState);
+                        }
                     }
                 });
             });
         }
         this.root = root;
-        this.state = state as S;
+        this.state = state;
         this.stateToRoot = stateToRoot;
     }
 

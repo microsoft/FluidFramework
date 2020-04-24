@@ -60,6 +60,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 <CounterReactView
                     root={this.root}
                     reactComponentProps={{}}
+                    reactComponentDefaultState={{ value: 0 }}
                     rootToInitialState={rootToInitialStateMap}
                     stateToRoot={stateToRoot}
                 />
