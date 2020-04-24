@@ -1149,8 +1149,8 @@ export class Container
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", () => {
-            this.close();
+        this._deltaManager.on("closed", (error?: IError) => {
+            this.close(error);
         });
 
         // If we're the outer frame, do we want to do this?

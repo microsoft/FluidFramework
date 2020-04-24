@@ -142,8 +142,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private connectFirstConnection = true;
 
-    private deltaStorageDelay: number | undefined;
-    private deltaStreamDelay: number | undefined;
+    private deltaStorageDelay: number = 0;
+    private deltaStreamDelay: number = 0;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -764,9 +764,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private emitDelayInfoCancel(retryEndpoint: number) {
         if (retryEndpoint === retryFor.DELTASTORAGE) {
-            this.deltaStorageDelay = undefined;
+            this.deltaStorageDelay = 0;
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
-            this.deltaStreamDelay = undefined;
+            this.deltaStreamDelay = 0;
         }
     }
 
@@ -776,21 +776,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
             this.deltaStreamDelay = delay;
         }
-        if (this.deltaStreamDelay && this.deltaStorageDelay) {
-            const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
-            if (delayTime > 0) {
-                // Is it an Error object?
-                let message = error?.message;
-                if (message === undefined) {
-                    message = `${error}`;
-                }
-                const throttlingError: IThrottlingError = {
-                    errorType: ErrorType.throttlingError,
-                    message: `Service busy/throttled: ${message}`,
-                    retryAfterSeconds: delayTime / 1000,
-                };
-                this.emit("error", throttlingError);
+
+        const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
+        if (delayTime > 0) {
+            // Is it an Error object?
+            let message = error?.message;
+            if (message === undefined) {
+                message = `${error}`;
             }
+            const throttlingError: IThrottlingError = {
+                errorType: ErrorType.throttlingError,
+                message: `Service busy/throttled: ${message}`,
+                retryAfterSeconds: delayTime / 1000,
+            };
+            this.emit("error", throttlingError);
         }
     }
 
