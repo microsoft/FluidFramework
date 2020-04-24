@@ -4,17 +4,38 @@
  */
 
 import * as assert from "assert";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    IBlob,
+    ITree,
+    ConnectionState,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { IDeltaConnection } from "@microsoft/fluid-runtime-definitions";
+import { strongAssert } from "@microsoft/fluid-runtime-utils";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
+    const snapshotFileName = "header";
+    const componentId = "consensus-register-collection";
+    const crcFactory = new ConsensusRegisterCollectionFactory();
     let crc: IConsensusRegisterCollection;
     let runtime: MockRuntime;
     let deltaConnFactory: MockDeltaConnectionFactory;
     let deltaConnection: IDeltaConnection;
+
+    beforeEach(() => {
+        runtime = new MockRuntime();
+        deltaConnFactory = new MockDeltaConnectionFactory();
+        deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+        runtime.services = {
+            deltaConnection,
+            objectStorage: new MockStorage(),
+        };
+        crc = crcFactory.create(runtime, componentId);
+    });
 
     describe("Api", () => {
         describe("Attached, connected", () => {
@@ -25,15 +46,6 @@ describe("ConsensusRegisterCollection", () => {
             }
 
             beforeEach(() => {
-                const crcFactory = new ConsensusRegisterCollectionFactory();
-                runtime = new MockRuntime();
-                deltaConnFactory = new MockDeltaConnectionFactory();
-                deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-                runtime.services = {
-                    deltaConnection,
-                    objectStorage: new MockStorage(),
-                };
-                crc = crcFactory.create(runtime, "consensus-register-collection");
                 crc.connect(runtime.services);
                 deltaConnection.state = ConnectionState.Connected;
             });
@@ -61,19 +73,53 @@ describe("ConsensusRegisterCollection", () => {
         });
     });
 
-    describe("reconnect", () => {
-        beforeEach(() => {
-            const crcFactory = new ConsensusRegisterCollectionFactory();
-            runtime = new MockRuntime();
-            deltaConnFactory = new MockDeltaConnectionFactory();
-            deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-            runtime.services = {
-                deltaConnection,
-                objectStorage: new MockStorage(),
-            };
-            crc = crcFactory.create(runtime, "consensus-register-collection");
+    describe("Summary", () => {
+        const expectedSerialization = JSON.stringify({
+            key1:{
+                atomic:{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } },
+                versions:[{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } }],
+            },
+        });
+        const buildTree = (serialized: string) => ({
+            entries: [
+                {
+                    mode: FileMode.File,
+                    path: snapshotFileName,
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: serialized,
+                        encoding: "utf-8",
+                    },
+                },
+            ],
+            // eslint-disable-next-line no-null/no-null
+            id: null,
         });
 
+        it.only("snapshot", async () => {
+            await crc.write("key1", "val1.1");
+            const tree: ITree = crc.snapshot();
+            assert(tree.entries.length === 1, "snapshot should return a tree with blob");
+            const serialized: string = (tree.entries[0]?.value as IBlob)?.contents;
+            strongAssert(serialized, "snapshot should return a tree with blob with contents");
+            assert.strictEqual(serialized, expectedSerialization);
+        });
+
+        it.only("load", async () => {
+            const tree: ITree = buildTree(expectedSerialization);
+            runtime.services.objectStorage = new MockStorage(tree);
+            const loadedCrc = await crcFactory.load(
+                runtime,
+                componentId,
+                runtime.services,
+                "master",
+                ConsensusRegisterCollectionFactory.Attributes,
+            );
+            assert.strictEqual(loadedCrc.read("key1"), "val1.1");
+        });
+    });
+
+    describe("reconnect", () => {
         it("message not sent before attach", async () => {
             const writeP =  crc.write("test", "test");
             const res = await writeP;

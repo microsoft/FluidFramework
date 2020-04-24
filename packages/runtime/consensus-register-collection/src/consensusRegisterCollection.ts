@@ -32,12 +32,24 @@ interface ILocalData<T> {
 }
 
 interface ILocalRegister<T> {
-    // Register value
-    value: T;
+    // Register value, wrapped for backwards compatibility with < 0.17
+    value: {
+        type: "Plain",
+        value: T,
+    };
 
     // The sequence number when last consensus was reached
     sequenceNumber: number;
 }
+
+const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> =>
+    ({
+        sequenceNumber,
+        value: {
+            type: "Plain",
+            value,
+        },
+    });
 
 /**
  * An operation for consensus register collection
@@ -164,7 +176,7 @@ export class ConsensusRegisterCollection<T>
 
     public readVersions(key: string): T[] | undefined {
         const data = this.data.get(key);
-        return data?.versions.map((element: ILocalRegister<T>) => element.value);
+        return data?.versions.map((element: ILocalRegister<T>) => element.value.value);
     }
 
     public keys(): string[] {
@@ -251,7 +263,7 @@ export class ConsensusRegisterCollection<T>
 
     private readAtomic(key: string): T | undefined {
         const data = this.data.get(key);
-        return data?.atomic.value;
+        return data?.atomic.value.value;
     }
 
     private processInboundWrite(
@@ -265,10 +277,10 @@ export class ConsensusRegisterCollection<T>
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
         const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
         if (winner) {
-            const atomicUpdate: ILocalRegister<T> = {
+            const atomicUpdate = newLocalRegister<T>(
                 sequenceNumber,
-                value: deserializedValue,
-            };
+                deserializedValue,
+            );
             if (data === undefined) {
                 data = {
                     atomic: atomicUpdate,
@@ -289,10 +301,10 @@ export class ConsensusRegisterCollection<T>
             data.versions.shift();
         }
 
-        const versionUpdate: ILocalRegister<T> = {
+        const versionUpdate = newLocalRegister<T>(
             sequenceNumber,
-            value: deserializedValue,
-        };
+            deserializedValue,
+        );
 
         assert(
             data.versions.length === 0 ||
