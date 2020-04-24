@@ -470,7 +470,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
-    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
