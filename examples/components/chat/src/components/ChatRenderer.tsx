@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Chat, Divider, Input, Layout } from "@stardust-ui/react";
+import { Chat, Divider, Input, Layout } from "@fluentui/react-northstar";
 import * as React from "react";
 
 interface IChatRendererProps {
@@ -14,10 +14,6 @@ interface IChatRendererProps {
 }
 
 export class ChatRenderer extends React.Component<IChatRendererProps> {
-    public componentDidUpdate() {
-        window.scrollTo(0, document.body.scrollHeight);
-    }
-
     public render() {
         const { messagesToRender, inputMessage, appendMessageCb, onChangeHandler } = this.props;
         return (
@@ -32,8 +28,8 @@ export class ChatRenderer extends React.Component<IChatRendererProps> {
                             value={inputMessage}
                             onChange={onChangeHandler}
                             placeholder="Message..."
-                            onKeyPress={(key, e) => {
-                                if (key.charCode === 13) {
+                            onKeyPress={(event) => {
+                                if (event.charCode === 13) {
                                     appendMessageCb();
                                 }
                             }}

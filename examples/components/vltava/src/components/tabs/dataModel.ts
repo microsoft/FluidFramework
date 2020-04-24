@@ -46,8 +46,6 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         private readonly internalRegistry: IComponentRegistryDetails,
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
         (pkg: string, props?: any) => Promise<T>,
-        private readonly createAndAttachComponentWithId:
-        <T extends IComponent & IComponentLoadable>(id: string, pkg: string, props?: any) => Promise<T>,
         private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
             id: string,
             directory: IDirectory,
@@ -78,20 +76,12 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        if (this.internalRegistry.hasCapability(type, "IComponentLoadable")) {
-            const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
-            this.tabs.set(newKey, {
-                type,
-                handleOrId: component.handle,
-            });
-        } else {
-            const newComponentId = uuid();
-            await this.createAndAttachComponentWithId(newComponentId, type);
-            this.tabs.set(newKey, {
-                type,
-                handleOrId: newComponentId,
-            });
-        }
+        const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
+        this.tabs.set(newKey, {
+            type,
+            handleOrId: component.handle,
+        });
+
         this.emit("newTab", true);
         return newKey;
     }

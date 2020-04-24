@@ -69,6 +69,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
+            templates: {},
         },
         {
             type: "tabs",
@@ -76,6 +77,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
+            templates: {},
         },
         {
             type: "spaces",
@@ -83,20 +85,23 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
+            templates: {},
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
+            templates: {},
         },
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
+            templates: {},
         },
     ];
 
