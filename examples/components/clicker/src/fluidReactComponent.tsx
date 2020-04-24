@@ -11,6 +11,7 @@ interface ReactProps<P, S> {
     reactComponentProps: P,
     reactComponentDefaultState: S,
     rootToInitialState?: Map<string, keyof S>
+    propToInitialState?: Map<keyof P, keyof S>,
     stateToRoot?: Map<keyof S, string>,
 }
 
@@ -24,11 +25,28 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         props: ReactProps<P,S>,
     ) {
         super(props);
-        const { root, rootToInitialState, reactComponentDefaultState, stateToRoot } = props;
+        const {
+            root,
+            propToInitialState,
+            rootToInitialState,
+            reactComponentDefaultState,
+            reactComponentProps,
+            stateToRoot,
+        } = props;
         const state = reactComponentDefaultState;
         if (rootToInitialState !== undefined) {
             rootToInitialState.forEach((stateKey, rootKey) => {
                 state[stateKey] = root.get(rootKey);
+            });
+        }
+        if (propToInitialState !== undefined) {
+            propToInitialState.forEach((stateKey, propKey) => {
+                const value = reactComponentProps[propKey];
+                if (typeof(value) === typeof(state[stateKey])) {
+                    state[stateKey] = reactComponentProps[propKey] as any;
+                } else {
+                    throw new Error(`Prop with key ${propKey} does not match the type for state with key ${stateKey}`);
+                }
             });
         }
         if (stateToRoot !== undefined) {
