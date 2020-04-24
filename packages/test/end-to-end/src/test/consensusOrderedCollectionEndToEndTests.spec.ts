@@ -232,27 +232,6 @@ function generate(
             assert.equal(sharedMap2Prime.get("test"), "sampleValue");
         });
 
-        it.only("Try store SharedObject directly", async () => {
-            // Set up the collection with two handles and add it to the map so other containers can find it
-            const collection1 = ctor.create(component1.runtime);
-            sharedMap1.set("test", "sampleValue");
-            sharedMap1.set("collection", collection1.handle);
-            await collection1.add(sharedMap1);
-            await collection1.add(sharedMap1);
-
-            // Pull the collection off of the 2nd container
-            const collection2Handle =
-                await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
-            const collection2 = await collection2Handle.get();
-
-            // acquire one handle in each container
-            const sharedMap1Prime = await acquireAndComplete(collection1) as ISharedMap;
-            const sharedMap2Prime = await acquireAndComplete(collection2) as ISharedMap;
-
-            assert.equal(sharedMap1Prime.get("test"), "sampleValue");
-            assert.equal(sharedMap2Prime.get("test"), "sampleValue");
-        });
-
         it("Can add and release data", async () => {
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("collection", collection1.handle);
