@@ -160,7 +160,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     ) {
         super();
 
-        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+        this.logger = ChildLogger.create(
+            parentLogger,
+            "SummaryManager",
+            undefined,
+            { clientId: () => this.latestClientId });
 
         this.connected = context.connected;
         if (this.connected) {
@@ -292,6 +296,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
             return;
         }
