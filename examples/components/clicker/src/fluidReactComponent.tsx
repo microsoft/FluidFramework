@@ -8,11 +8,15 @@ import { ISharedDirectory } from "@microsoft/fluid-map";
 
 interface ReactProps<P, S> {
     root: ISharedDirectory,
-    reactComponentProps: P,
     reactComponentDefaultState: S,
+    reactComponentProps?: ComponentProps<P, S>,
     rootToInitialState?: Map<string, keyof S>
-    propToInitialState?: Map<keyof P, keyof S>,
     stateToRoot?: Map<keyof S, string>,
+}
+
+interface ComponentProps<P, S> {
+    props: P;
+    propToInitialState?: Map<keyof P, keyof S>,
 }
 
 /**
@@ -27,7 +31,6 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         super(props);
         const {
             root,
-            propToInitialState,
             rootToInitialState,
             reactComponentDefaultState,
             reactComponentProps,
@@ -39,13 +42,14 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
                 state[stateKey] = root.get(rootKey);
             });
         }
-        if (propToInitialState !== undefined) {
-            propToInitialState.forEach((stateKey, propKey) => {
-                const value = reactComponentProps[propKey];
+        if (reactComponentProps !== undefined && reactComponentProps.propToInitialState !== undefined) {
+            reactComponentProps.propToInitialState.forEach((stateKey, propKey) => {
+                const value = reactComponentProps.props[propKey];
                 if (typeof value === typeof state[stateKey]) {
-                    state[stateKey] = reactComponentProps[propKey] as any;
+                    state[stateKey] = value as any;
                 } else {
-                    throw new Error(`Prop with key ${propKey} does not match the type for state with key ${stateKey}`);
+                    throw new Error(
+                        `Prop with key ${propKey} does not match the type for state with key ${stateKey}`);
                 }
             });
         }
