@@ -419,6 +419,16 @@ export class Container
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
+        // Backward compatibility - raise "critical" error
+        // Hosts should instead  listen for "closed" event.
+        // That said, when we remove it, we need to replace it with call to this.logContainerError()
+        // for telemetry to continue to flow.
+        if (error !== undefined) {
+            const criticalError = { ...error };
+            (criticalError as any).critical = true;
+            this.raiseContainerError(criticalError);
+        }
+
         this.emit("closed", error);
 
         this.removeAllListeners();
