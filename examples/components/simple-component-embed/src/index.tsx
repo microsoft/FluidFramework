@@ -57,7 +57,7 @@ export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFacto
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    simpleComponentEmbedName,
+    SimpleComponentEmbedInstantiationFactory.type,
     new Map([
         SimpleComponentEmbedInstantiationFactory.registryEntry,
         ClickerInstantiationFactory.registryEntry,

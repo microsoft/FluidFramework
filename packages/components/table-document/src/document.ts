@@ -17,7 +17,7 @@ import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { CellRange } from "./cellrange";
-import { TableDocumentType, TableSliceType } from "./componentTypes";
+import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
@@ -42,7 +42,7 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         ],
         {},
         [
-            [TableSliceType, Promise.resolve(TableSlice.getFactory())],
+            TableSlice.getFactory().registryEntry,
         ],
         true,
     );
