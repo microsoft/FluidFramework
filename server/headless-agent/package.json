@@ -18,7 +18,6 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@azure/storage-blob": "^12.0.2",
     "@microsoft/fluid-base-host": "^0.13.19190",
     "@microsoft/fluid-container-loader": "^0.13.19190",
     "@microsoft/fluid-driver-definitions": "^0.13.19190",

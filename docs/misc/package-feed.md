@@ -2,7 +2,7 @@
 uid: package-feed
 ---
 
-# Fluid private NPM feed
+# Fluid private npm feed
 
 Currently, our packages are published on our [VSTS npm feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague).
 
@@ -36,13 +36,13 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 **NOTE:**
 
 * You can add the registry setting to your project only instead of globally.
-  Just add the follow to your `.npmrc` in the root of your NPM package:
+  Just add the follow to your `.npmrc` in the root of your npm package:
 
-    ```
-    @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    @fluid-internal:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    @yo-fluid:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    ```
+  ```
+  @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+  @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+  @fluid-internal:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+  @yo-fluid:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+  ```
 
   Then run `vsts-npm-auth` in the same directory with no argument.

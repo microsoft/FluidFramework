@@ -22,7 +22,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-    IHostRuntime,
+    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
@@ -123,7 +123,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
         const requestUrl = request.url.length > 0 && request.url.startsWith("/")
             ? request.url.substr(1)
             : request.url;

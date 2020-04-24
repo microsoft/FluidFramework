@@ -326,7 +326,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
 
-        return this.context.hostRuntime.deltaManager.active;
+        return this.context.containerRuntime.deltaManager.active;
     }
 
     private initializeCore() {

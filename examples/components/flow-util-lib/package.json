@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/flow-util-lib",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Shared utility code for Flow-* packages.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -52,7 +52,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",

@@ -9,7 +9,9 @@ import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
-export function* generateStrings() {
+export const LocationBase: string = "src/test/snapshots/legacy/";
+
+export function* generateStrings(): Generator<[string, SharedString]> {
     const documentId = "fakeId";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
     const insertText = "text";
@@ -21,7 +23,7 @@ export function* generateStrings() {
         sharedString.insertText(0, `${insertText}${i}`);
     }
 
-    yield sharedString;
+    yield ["headerOnly", sharedString];
 
     sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
@@ -30,7 +32,7 @@ export function* generateStrings() {
         sharedString.insertText(0, `${insertText}${i}`);
     }
 
-    yield sharedString;
+    yield ["headerAndBody", sharedString];
 
     sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
@@ -39,7 +41,7 @@ export function* generateStrings() {
         sharedString.insertText(0, `${insertText}-${i}`);
     }
 
-    yield sharedString;
+    yield ["largeBody", sharedString];
 
     sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
@@ -56,7 +58,7 @@ export function* generateStrings() {
         });
     }
 
-    yield sharedString;
+    yield ["withMarkers", sharedString];
 
     sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
@@ -68,5 +70,5 @@ export function* generateStrings() {
         sharedString.annotateRange(i, i + 10, { bold: true });
     }
 
-    yield sharedString;
+    yield ["withAnnotations", sharedString];
 }

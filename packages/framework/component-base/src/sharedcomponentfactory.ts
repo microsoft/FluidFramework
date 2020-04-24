@@ -64,9 +64,9 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     }
 
     public create(parentContext: IComponentContext, props?: any) {
-        const { hostRuntime, packagePath } = parentContext;
+        const { containerRuntime, packagePath } = parentContext;
 
-        const childContext = hostRuntime.createComponentContext(
+        const childContext = containerRuntime.createComponentContext(
             packagePath.concat(this.type),
             props);
 

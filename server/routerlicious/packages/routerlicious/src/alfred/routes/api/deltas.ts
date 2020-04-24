@@ -109,7 +109,8 @@ export function create(
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
-    function stringToSequenceNumber(value: string): number {
+    function stringToSequenceNumber(value: any): number {
+        if (typeof value !== "string") { return undefined; }
         const parsedValue = parseInt(value, 10);
         return isNaN(parsedValue) ? undefined : parsedValue;
     }

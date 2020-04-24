@@ -422,6 +422,10 @@ export class Container
         return !this.attached;
     }
 
+    public isAttached(): boolean {
+        return this.attached;
+    }
+
     public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");

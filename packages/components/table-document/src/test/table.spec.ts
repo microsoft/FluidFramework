@@ -9,7 +9,7 @@ import * as assert from "assert";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
-import { TableDocumentType, TableSliceType } from "../componentTypes";
+import { TableDocumentType } from "../componentTypes";
 import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
@@ -18,7 +18,6 @@ describe("TableDocument", () => {
     before(() => {
         host = new TestHost([
             [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-            [TableSliceType, Promise.resolve(TableSlice.getFactory())],
         ]);
     });
 

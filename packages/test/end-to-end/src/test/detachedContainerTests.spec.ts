@@ -18,7 +18,7 @@ import { TestResolver } from "@microsoft/fluid-local-driver";
 import {
     IComponentContext,
     IExperimentalComponentContext,
-    IExperimentalHostRuntime,
+    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
 
@@ -101,9 +101,9 @@ describe("Detached Container", () => {
         assert(expComponentContext?.isExperimentalComponentContext);
         assert.equal(expComponentContext.isLocal(), true, "Component should be local!!");
 
-        const expHostRuntime = subComponent.context.hostRuntime as IExperimentalHostRuntime;
-        assert(expHostRuntime?.isExperimentalHostRuntime);
-        assert.equal(expHostRuntime.isLocal(), true, "Container should be local!!");
+        const expContainerRuntime = subComponent.context.containerRuntime as IExperimentalContainerRuntime;
+        assert(expContainerRuntime?.isExperimentalContainerRuntime);
+        assert.equal(expContainerRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -134,9 +134,9 @@ describe("Detached Container", () => {
         const expComponentContext = testComponent.context as IExperimentalComponentContext;
         assert(expComponentContext?.isExperimentalComponentContext);
         assert.equal(expComponentContext.isLocal(), false, "Component should not be local!!");
-        const expHostRuntime = testComponent.context.hostRuntime as IExperimentalHostRuntime;
-        assert(expHostRuntime?.isExperimentalHostRuntime);
-        assert.equal(expHostRuntime.isLocal(), false, "Container should be attached!!");
+        const expContainerRuntime = testComponent.context.containerRuntime as IExperimentalContainerRuntime;
+        assert(expContainerRuntime?.isExperimentalContainerRuntime);
+        assert.equal(expContainerRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {

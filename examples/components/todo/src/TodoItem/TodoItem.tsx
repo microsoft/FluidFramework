@@ -3,25 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ClickerName } from "@fluid-example/clicker";
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
-    IComponentHandle,
+    IComponentHandle, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IValueChanged } from "@microsoft/fluid-map";
-import { TextBoxName } from "../TextBox";
-import { TextListName } from "../TextList";
+import { TextBoxInstantiationFactory } from "../TextBox";
+import { TextListInstantiationFactory } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 export const TodoItemName = `${pkg.name as string}-item`;
+
+export interface ITodoItemInitialState {
+    startingText: string;
+    baseUrl?: string;
+}
 
 const checkedKey = "checked";
 const textKey = "text";
@@ -36,7 +41,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     implements
     IComponentHTMLView,
     IComponentReactViewable {
@@ -50,18 +55,10 @@ export class TodoItem extends PrimedComponent
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(props?: any) {
-        let newItemText = "New Item";
-
-        // If the creating component passed props with a startingText value then set it.
-        if (props) {
-            if (props.startingText) {
-                newItemText = props.startingText;
-            }
-            if (props.baseUrl) {
-                this.baseUrl = props.baseUrl;
-            }
-        }
+    protected async componentInitializingFirstTime(initialState?: ITodoItemInitialState) {
+        // Set initial state if it was provided
+        const newItemText = initialState?.startingText ?? "New Item";
+        this.baseUrl = initialState?.baseUrl ?? "";
 
         // The text of the todo item
         const text = SharedString.create(this.runtime);
@@ -108,6 +105,23 @@ export class TodoItem extends PrimedComponent
             }
         });
     }
+
+    public static getFactory() { return TodoItem.factory; }
+
+    private static readonly factory = new PrimedComponentFactory(
+        TodoItemName,
+        TodoItem,
+        [
+            SharedString.getFactory(),
+            SharedCell.getFactory(),
+        ],
+        {},
+        new Map([
+            TextBoxInstantiationFactory.registryEntry,
+            TextListInstantiationFactory.registryEntry,
+            ClickerInstantiationFactory.registryEntry,
+        ]),
+    );
 
     // start IComponentHTMLView
 
@@ -174,25 +188,27 @@ export class TodoItem extends PrimedComponent
      * @param type - component to be created
      * @param props - props to be passed into component creation
      */
-    public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
-        let componentType: string | undefined;
+    public async createInnerComponent(type: TodoItemSupportedComponents, baseUrl?: string): Promise<void> {
+        let component: IComponentLoadable;
         switch (type) {
             case "todo":
-                componentType = TodoItemName;
+                component = await TodoItem.getFactory().createComponent(
+                    this.context,
+                    { startingText: type, baseUrl },
+                );
                 break;
             case "clicker":
-                componentType = ClickerName;
+                component = await ClickerInstantiationFactory.createComponent(this.context);
                 break;
             case "textBox":
-                componentType = TextBoxName;
+                component = await TextBoxInstantiationFactory.createComponent(this.context, type);
                 break;
             case "textList":
-                componentType = TextListName;
+                component = await TextListInstantiationFactory.createComponent(this.context);
                 break;
             default:
         }
 
-        const component = await this.createAndAttachComponent(componentType, props);
         // Update the inner component id
         this.innerIdCell.set(component.handle);
 

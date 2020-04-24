@@ -29,7 +29,6 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
             undefined,
             undefined,
             undefined,
-            options.openMode === "detached" ? true : false,
         ),
         new RouterliciousDocumentServiceFactory(
             false,

@@ -28,7 +28,7 @@ The [`SharedComponent`](./src/components/sharedComponent.ts) provides the follow
 
 - Basic set of interface implementations to be loadable in a Fluid Container.
 - Functions for managing component lifecycle.
-  - `componentInitializingFirstTime(props: any)` - called only the first time a component is initialized
+  - `componentInitializingFirstTime(props: S)` - called only the first time a component is initialized
   - `componentInitializingFromExisting()` - called every time except the first time a component is initialized
   - `componentHasInitialized()` - called every time after `componentInitializingFirstTime` or `componentInitializingFromExisting` executes
 - Helper functions for creating and getting other Component Objects in the same Container.
@@ -41,6 +41,8 @@ In the below example we have a simple Component Object that will render a value 
 
 ```jsx
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
+
+    public static get ComponentName() { return "clicker"; }
 
     public get IComponentHTMLView() { return this; }
 
@@ -72,12 +74,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
 ### Component Factory Object Development
 
-The Component Factory Object is used to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
+The Component Factory Object is used to create a component and to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
 
 The Aqueduct offers a factory for each of the Component Objects provided.
 
 > [`SharedComponentFactory`](./src/componentFactories/sharedComponentFactory.ts) for the `SharedComponent`
-> [`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
+
+>[`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
 
 #### Component Factory Object Example
 
@@ -85,8 +88,77 @@ In the below example we build a Component Factory for the [`Clicker`](####Compon
 
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
     Clicker,
     [], // Distributed Data Structures
+    {}, // Provider Symbols see below
+);
+```
+This factory can then create Clickers when provided a creating component context.
+```typescript
+const myClicker = ClickerInstantiationFactory.createComponent(this.context) as Clicker;
+```
+
+#### Component Object/Factory with Initial State Example
+
+If we want to be able to create a component and provide an initial state, we amend our component example as follows to define an initial state type and to define this type as a generic on PrimedComponentFactory. We then allow `componentInitializingFirstTime` to take an initial state object.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+
+export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitialState> implements IComponentHTMLView {
+    protected async componentInitializingFirstTime(initialState?: IClickerInitialState) {
+        let startingValue = 0;
+        if (initialState) {
+            startingValue = initialState.initialValue;
+        }
+
+        this.root.createValueType("clicks", CounterValueType.Name, startingValue);
+    }
+
+    ...
+
+}
+```
+No changes are needed to the factory definition.  The same generics are defined in the factory, but are inferred from constructor arguments.  When creating a component this way, initial state may be optionally provided in the creation call.
+```typescript
+const myClickerWithValue = ClickerWithInitialValueFactory.createComponent(this.context, { initialValue: 2020 })
+```
+
+#### Providers in Components
+
+The `this.providers` object on `SharedComponent` is initialized in the constructor and is generated based on Providers provided by the Container. To access a specific provider you need to:
+
+1. Define the type in the generic on Primed/SharedComponent
+2. Add the symbol to your Factory (see [Component Factory Object Example](####Component-Factory-Object-Example) below)
+
+In the below example we have an `IComponentUserInfo` interface that looks like this:
+
+```typescript
+interface IComponentUserInfo {
+    readonly userCount: number;
+}
+```
+
+On our example we want to declare that we want the `IComponentUserInfo` Provider and get the `userCount` if the Container provides the `IComponentUserInfo` provider.
+
+```typescript
+export class MyExample extends PrimedComponent<IComponentUserInfo> {
+    protected async componentInitializingFirstTime() {
+        const userInfo = await this.providers.IComponentUserInfo;
+        if(userInfo) {
+            console.log(userInfo.userCount);
+        }
+    }
+}
+
+// Note: we have to define the symbol to the IComponentUserInfo that we declared above. This is compile time checked.
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
+    Clicker,
+    [], // Distributed Data Structures
+    {IComponentUserInfo}, // Provider Symbols see below
 );
 ```
 
@@ -107,28 +179,58 @@ In the below example we will write a Container that exposes the above [`Clicker`
 
 ```typescript
 export fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-  "clicker", // Default Component Type
-  ["clicker", Promise.resolve(ClickerInstantiationFactory)], // Component Registry
-  [], // Container Services
+  ClickerInstantiationFactory.type, // Default Component Type
+  ClickerInstantiationFactory.registryEntry, // Component Registry
+  [], // Provider Entries
   [], // Request Handler Routes
 );
 ```
 
-### Container Service Development
+### Provider Entries Development
 
-Container Services allow developers to write Components that don't use Distributed Data Structures. These types of Components are helpful when you want to share state among all the parts of a Container but you don't need to share the state outside the session. ContainerServices have the benefit of not being saved into the snapshot. This makes them lightweight compared to Runtime Components and easier to version.
+The Container developer can optionally provide a Registry of ProviderEntry objects into the Container. A ProviderEntry is defined as follows:
 
-An example of this could be a local clipboard service that manages the clipboard across all the Distributed Components in the Container but not across users.
+```typescript
+interface ProviderEntry<T extends keyof IComponent> {
+    type: T;
+    provider: ComponentProvider<T>
+}
+```
 
-The concept of Container Services is simple. We define a specific request route that when queried against returns and IComponent object. The Container Developer provides the list of Container Services that other Components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
+The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@microsoft/fluid-synthisize`
+package defines the follow `ComponentProvider` types:
 
-Container Services have the benefit of being able to access the `IHostRuntime` object which allows them to interact directly with the Container if they choose.
+```typescript
+type ComponentProvider<T extends keyof IComponent> =
+    IComponent[T]
+    | Promise<IComponent[T]>
+    | ((dependencyContainer: DependencyContainer) => IComponent[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+```
 
-The Aqueduct provides an optional base class for building Container Services. Components that extend `SharedComponent` also have a helper function `getService(id:string)` which will return service objects.
+```typescript
+IComponent[T]
+```
 
-#### BaseContainerService
+An object that implements the interface.
 
-The `BaseContainerService` class provides a starting class with a basic implementation if `IComponentRouter`.
+```typescript
+Promise<IComponent[T]>
+```
+
+A Promise to an object that implements the interface
+
+```typescript
+(dependencyContainer: DependencyContainer) => IComponent[T]
+```
+
+A factory that will return the object.
+
+```typescript
+(dependencyContainer: DependencyContainer) => Promise<IComponent[T]>
+```
+
+A factory that will return a Promise to the object.
 
 ### Container Level Request Handlers
 

@@ -10,7 +10,7 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { TodoItem, TodoItemName } from "../TodoItem/index";
+import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -99,9 +99,9 @@ export class Todo extends PrimedComponent implements
 
     // start public API surface for the Todo model, used by the view
 
-    public async addTodoItemComponent(props?: any) {
+    public async addTodoItemComponent(props?: ITodoItemInitialState) {
         // Create a new todo item
-        const component = await this.createAndAttachComponent(TodoItemName, props);
+        const component = await TodoItem.getFactory().createComponent(this.context, props);
 
         // Store the id of the component in our ids map so we can reference it later
         this.todoItemsMap.set(component.url, component.handle);
