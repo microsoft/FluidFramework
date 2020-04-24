@@ -42,7 +42,7 @@ export abstract class FluidReactComponent<P,S> extends React.Component<ReactProp
         if (propToInitialState !== undefined) {
             propToInitialState.forEach((stateKey, propKey) => {
                 const value = reactComponentProps[propKey];
-                if (typeof(value) === typeof(state[stateKey])) {
+                if (typeof value === typeof state[stateKey]) {
                     state[stateKey] = reactComponentProps[propKey] as any;
                 } else {
                     throw new Error(`Prop with key ${propKey} does not match the type for state with key ${stateKey}`);
