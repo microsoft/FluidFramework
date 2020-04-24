@@ -47,7 +47,8 @@ export interface IBadgeViewState {
     items: any;
 }
 
-export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState> {
+export class BadgeView
+    extends React.Component<IBadgeViewProps, IBadgeViewState> {
     private readonly defaultColor: string = "#fff";
     private readonly animation: string = "all 0.15s ease-in";
     private readonly cardPadding: string = "16px 24px";
@@ -115,11 +116,13 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
     private _setCurrent(newItem: IBadgeType): void {
         if (newItem.key !== this.state.current.key) {
             // Save current value into history
-            const len = this.props.historySequence.getItemCount();
-            this.props.historySequence.insert(len, [{
-                value: newItem,
-                timestamp: new Date(),
-            }]);
+            this.props.historySequence.insert(
+                this.props.historySequence.getItemCount(), [
+                {
+                    value: newItem,
+                    timestamp: new Date(),
+                }
+            ]);
 
             // Set new value
             this.props.currentCell.set(newItem);
@@ -302,11 +305,11 @@ function getRelativeDate(timestamp: Date): string {
     } else if (delta < 3 * minute) {
         return "a few minutes ago";
     } else if (delta < hour) {
-        return `${Math.floor(delta / minute)  } minutes ago`;
+        return `${Math.floor(delta / minute)} minutes ago`;
     } else if (Math.floor(delta / hour) < 3) {
         return "a few hours ago.";
     } else if (delta < day) {
-        return `${Math.floor(delta / hour)  } hours ago`;
+        return `${Math.floor(delta / hour)} hours ago`;
     } else if (delta < day * 2) {
         return "yesterday";
     } else {
