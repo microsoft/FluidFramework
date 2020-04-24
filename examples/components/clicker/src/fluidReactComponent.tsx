@@ -6,21 +6,21 @@
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 
-interface ReactProps {
+interface ReactProps<P, S> {
     root: ISharedDirectory,
-    reactComponentProps: any, // should be P
-    rootToInitialState?: any, // should be Map<string, keyof S>
-    stateToRoot?: any, // should be Map<keyof S, string>,
+    reactComponentProps: P
+    rootToInitialState?: Map<string, keyof S>
+    stateToRoot?: Map<keyof S, string>,
 }
 
 /**
  * A component to allow you to share your location with others
  */
-export abstract class FluidReactComponent<P,S> extends React.Component<ReactProps, S> {
+export abstract class FluidReactComponent<P,S> extends React.Component<ReactProps<P,S>, S> {
     readonly stateToRoot?: Map<keyof S, string>;
     readonly root: ISharedDirectory;
     constructor(
-        props: ReactProps,
+        props: ReactProps<P,S>,
     ) {
         super(props);
         const { root, rootToInitialState, stateToRoot } = props;
