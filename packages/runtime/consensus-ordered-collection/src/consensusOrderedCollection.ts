@@ -76,19 +76,13 @@ type IConsensusOrderedCollectionOperation =
  * A record of the pending operation
  */
 interface IPendingRecord<T> {
-    /**
-     * The resolve function to call after the operation is ack'ed
-     */
+    /** The resolve function to call after the operation is ack'ed */
     resolve: (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
 
-    /**
-     * The client sequence number of the operation. For assert only.
-     */
+    /** The client sequence number of the operation. For assert only. */
     clientSequenceNumber: number;
 
-    /**
-     * The original operation message. For assert only.
-     */
+    /** The original operation message. For assert only. */
     message: IConsensusOrderedCollectionOperation;
 }
 
@@ -105,7 +99,8 @@ const belongsToUnattached = undefined;
  */
 export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
-    private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
+    /** Queue of local messages awaiting ack from the server */
+    private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
 
     private jobTracking: jobTrackingType<T> = new Map();
 
@@ -294,7 +289,7 @@ export class ConsensusOrderedCollection<T = any>
 
     protected onConnect(pending: any[]) {
         // resubmit non-acked messages
-        for (const record of this.promiseResolveQueue) {
+        for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
@@ -352,9 +347,8 @@ export class ConsensusOrderedCollection<T = any>
 
                 default: unreachableCase(op);
             }
-            // If it is local operation, resolve the promise.
             if (local) {
-                this.processLocalMessage(message, value);
+                this.onLocalMessageAck(message, value);
             }
         }
     }
@@ -365,11 +359,11 @@ export class ConsensusOrderedCollection<T = any>
      * @param message - the message of the operation
      * @param value - the value related to the operation
      */
-    private processLocalMessage(
+    private onLocalMessageAck(
         message: ISequencedDocumentMessage,
         value: IConsensusOrderedCollectionValue<T> | undefined)
     {
-        const pending = this.promiseResolveQueue.shift();
+        const pending = this.pendingLocalMessages.shift();
         strongAssert(pending);
         assert(message.contents.opName === pending.message.opName);
         assert(message.clientSequenceNumber === pending.clientSequenceNumber);
@@ -384,7 +378,7 @@ export class ConsensusOrderedCollection<T = any>
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
+            this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
         });
     }
 

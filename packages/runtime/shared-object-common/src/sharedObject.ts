@@ -110,8 +110,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * Creates a JSON object with information about the shared object.
-     * @returns A JSON object containing the ValueType (always Shared) and the id of the shared object
+     * Not supported - use handles instead
      */
     public toJSON() {
         throw new Error("Only the handle can be converted to JSON");
@@ -248,19 +247,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             return -1;
         }
 
-        // Send if we are connected - otherwise just add to the sent list
         let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
             // This assert !isLocal above means services can't be undefined.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
-            //* todo - How is deltaConnection.submit not async?  And the comment above implies we should return here...
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
             this.runtime.notifyPendingMessages();
-            // Store the message for when it is ACKed and then submit to the server if connected
         }
 
+        // Store the message for when it is ACKed
         this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
     }

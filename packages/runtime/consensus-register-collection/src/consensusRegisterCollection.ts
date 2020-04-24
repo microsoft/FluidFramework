@@ -109,7 +109,6 @@ export class ConsensusRegisterCollection<T>
 
     private readonly data = new Map<string, ILocalData<T>>();
 
-    //* Todo: rename promiseResolveQueue in ordered collection too
     /** Queue of local messages awaiting ack from the server */
     private readonly pendingLocalMessages: IPendingRecord[] = [];
 
@@ -214,6 +213,9 @@ export class ConsensusRegisterCollection<T>
         const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};
 
         for (const key of Object.keys(dataObj)) {
+            assert(dataObj[key].atomic?.value.type !== "Shared",
+                "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17");
+
             this.data.set(key, dataObj[key]);
         }
     }
@@ -296,7 +298,6 @@ export class ConsensusRegisterCollection<T>
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
-        //* todo: ensure UTs
         while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
             data.versions.shift();
         }

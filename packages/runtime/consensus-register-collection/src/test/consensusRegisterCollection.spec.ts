@@ -80,6 +80,12 @@ describe("ConsensusRegisterCollection", () => {
                 versions:[{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } }],
             },
         });
+        const legacySharedObjectSerialization = JSON.stringify({
+            key1:{
+                atomic:{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } },
+                versions:[{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } }],
+            },
+        });
         const buildTree = (serialized: string) => ({
             entries: [
                 {
@@ -96,7 +102,7 @@ describe("ConsensusRegisterCollection", () => {
             id: null,
         });
 
-        it.only("snapshot", async () => {
+        it("snapshot", async () => {
             await crc.write("key1", "val1.1");
             const tree: ITree = crc.snapshot();
             assert(tree.entries.length === 1, "snapshot should return a tree with blob");
@@ -105,7 +111,7 @@ describe("ConsensusRegisterCollection", () => {
             assert.strictEqual(serialized, expectedSerialization);
         });
 
-        it.only("load", async () => {
+        it("load", async () => {
             const tree: ITree = buildTree(expectedSerialization);
             runtime.services.objectStorage = new MockStorage(tree);
             const loadedCrc = await crcFactory.load(
@@ -116,6 +122,18 @@ describe("ConsensusRegisterCollection", () => {
                 ConsensusRegisterCollectionFactory.Attributes,
             );
             assert.strictEqual(loadedCrc.read("key1"), "val1.1");
+        });
+
+        it("load with SharedObject not supported", async () => {
+            const tree: ITree = buildTree(legacySharedObjectSerialization);
+            runtime.services.objectStorage = new MockStorage(tree);
+            await assert.rejects(crcFactory.load(
+                runtime,
+                componentId,
+                runtime.services,
+                "master",
+                ConsensusRegisterCollectionFactory.Attributes,
+            ), "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized");
         });
     });
 

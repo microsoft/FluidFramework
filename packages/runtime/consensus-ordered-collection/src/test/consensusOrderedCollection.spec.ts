@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { strongAssert } from "@microsoft/fluid-runtime-utils";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
@@ -60,10 +61,14 @@ describe("ConsensusOrderedCollection", () => {
             it("Can add and remove a handle", async () => {
                 assert.strictEqual(await removeItem(), undefined);
                 const handle = testCollection.handle;
-                if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
+                strongAssert(handle, "Need an actual handle to test this case");
                 await addItem(handle);
+
                 const acquiredValue = await removeItem();
                 assert.strictEqual(acquiredValue.path, handle.path);
+                const component = await handle.get();
+                assert.strictEqual(component.url, testCollection.url);
+
                 assert.strictEqual(await removeItem(), undefined);
             });
 

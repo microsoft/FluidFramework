@@ -1,5 +1,16 @@
 # Breaking changes
 
+## 0.17 Breaking Changes
+
+- [ConsensusRegisterCollection prepped to store handles not SharedObjects](#ConsensusRegisterCollection-prepped-to-store-handles-not-SharedObjects)
+
+### ConsensusRegisterCollection prepped to store handles not SharedObjects
+`ConsensusRegisterCollection` can store handles, and will properly serialize/deserialize to/from summary files.
+However, it's recommended that you wait until 0.18 before actually storing handles, to avoid n/n-1 issues while rolling out 0.17.
+Also, note that storing a SharedObject directly is no longer supported,
+and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
+We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
