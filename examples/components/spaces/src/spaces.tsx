@@ -110,7 +110,7 @@ export class Spaces extends PrimedComponent
         this.addToolbarListeners();
         const isEditable = this.dataModel.componentList.size - 1 === 0;
         this.dataModel.emit("editableUpdated", isEditable);
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
         if (registry) {
             this.registryDetails = registry as IComponent;
         }
