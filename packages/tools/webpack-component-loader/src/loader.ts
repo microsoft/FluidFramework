@@ -19,6 +19,7 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
@@ -226,7 +227,8 @@ export async function start(
             codeDetails,
         );
     }
-
+    const reqParser = new RequestParser({url});
+    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
     attachButton.disabled = false;
     const urlDeferred = new Deferred<string>();
     // Side-by-side mode
@@ -234,7 +236,7 @@ export async function start(
         const leftDiv = makeSideBySideDiv("sbs-left");
         const rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
-        await startRendering(container1, "/", leftDiv);
+        await startRendering(container1, componentUrl, leftDiv);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         urlDeferred.promise.then(async (containerUrl) => {
             // New documentServiceFactory for right div, same everything else
@@ -253,10 +255,10 @@ export async function start(
                 codeDetails,
             );
 
-            await startRendering(container2, "/", rightDiv);
+            await startRendering(container2, componentUrl, rightDiv);
         });
     } else {
-        await startRendering(container1, "/", div);
+        await startRendering(container1, componentUrl, div);
     }
     if (!attached) {
         attachButton.onclick = async () => {

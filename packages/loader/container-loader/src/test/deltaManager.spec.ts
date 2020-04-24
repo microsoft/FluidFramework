@@ -89,7 +89,7 @@ describe("Loader", () => {
                 deltaManager.attachOpHandler(0, 0, {
                     process: (message) => intendedResult,
                     processSignal() {},
-                }, true);
+                });
             });
 
             afterEach(() => {

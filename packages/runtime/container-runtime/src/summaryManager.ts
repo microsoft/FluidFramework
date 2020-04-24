@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
@@ -68,11 +68,22 @@ enum SummaryManagerState {
     Off = 0,
     Starting = 1,
     Running = 2,
+    Stopping = 3,
+    Disabled = -1,
 }
 
 const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
+
+type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
+type ShouldSummarizeState = {
+    shouldSummarize: true;
+    shouldStart: boolean;
+} | {
+    shouldSummarize: false;
+    stopReason: StopReason;
+};
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
@@ -81,9 +92,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
+    private latestClientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
-    private runningSummarizer?: IComponentRunnable;
+    private runningSummarizer?: ISummarizer;
     private _disposed = false;
     private opsUntilFirstConnect: number | undefined;
 
@@ -95,17 +107,13 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         return this._disposed;
     }
 
-    private get shouldSummarize() {
-        return this.connected && !this.disposed && this.clientId === this.summarizer;
-    }
-
     constructor(
         private readonly context: IContainerContext,
         private readonly summariesEnabled: boolean,
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
         private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
-        private readonly nextSummarizerP?: Promise<Summarizer>,
+        private nextSummarizerP?: Promise<Summarizer>,
         immediateSummary: boolean = false,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
@@ -116,7 +124,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         this.connected = context.connected;
         if (this.connected) {
-            this.clientId = context.clientId;
+            this.setClientId(context.clientId);
         }
 
         const members = context.quorum.getMembers();
@@ -152,6 +160,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.updateConnected(false);
     }
 
+    private setClientId(clientId: string | undefined): void {
+        this.clientId = clientId;
+        if (clientId !== undefined) {
+            this.latestClientId = this.clientId;
+            if (this.runningSummarizer !== undefined) {
+                this.runningSummarizer.updateOnBehalfOf(this.latestClientId);
+            }
+        }
+    }
+
     public on(event: "summarizer", listener: (clientId: string) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
@@ -163,19 +181,27 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.connected = connected;
-        this.clientId = connected ? clientId : undefined;
+        this.setClientId(clientId);
         this.refreshSummarizer();
     }
 
-    private getStopReason(): string | undefined {
+    private getShouldSummarizeState(): ShouldSummarizeState {
         if (!this.connected) {
-            return "parentNotConnected";
+            return { shouldSummarize: false, stopReason: "parentNotConnected" };
         } else if (this.clientId !== this.summarizer) {
-            return "parentShouldNotSummarize";
+            return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
-            return "disposed";
+            return { shouldSummarize: false, stopReason: "disposed" };
+        } else if (this.nextSummarizerP !== undefined) {
+            // This client has just come from a context reload, which means its
+            // summarizer client did as well.  We need to call start to rebind them.
+            return { shouldSummarize: true, shouldStart: true };
+        } else if (this.quorumHeap.getSummarizerCount() > 0) {
+            // Need to wait for any other existing summarizer clients to close,
+            // because they can live longer than their parent container.
+            return { shouldSummarize: true, shouldStart: false };
         } else {
-            return undefined;
+            return { shouldSummarize: true, shouldStart: true };
         }
     }
 
@@ -190,9 +216,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         // Transition states depending on shouldSummarize, which is a calculated
         // property that is only true if this client is connected and has the
         // computed summarizer client id
+        const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
-                if (this.shouldSummarize) {
+                if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
                     this.start();
                 }
                 return;
@@ -203,17 +230,18 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 return;
             }
             case SummaryManagerState.Running: {
-                if (!this.shouldSummarize) {
-                    // Only need to check defined in case we are between
-                    // finally and then states; stopping should trigger
-                    // a change in states when the running summarizer closes
-
-                    if (this.runningSummarizer) {
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                        this.runningSummarizer.stop!(this.getStopReason());
-                    }
+                if (shouldSummarizeState.shouldSummarize === false) {
+                    this.stop(shouldSummarizeState.stopReason);
                 }
+                return;
+            }
+            case SummaryManagerState.Stopping: {
+                // Cannot take any action until running summarizer finishes
+                // state transition will occur after it stops
+                return;
+            }
+            case SummaryManagerState.Disabled: {
+                // Never switch away from disabled state
                 return;
             }
             default: {
@@ -223,12 +251,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private start(attempt: number = 1) {
-        if (this.quorumHeap.getSummarizerCount() > 0) {
-            // Need to wait for any other existing summarizer clients to close,
-            // because they can live longer than their parent container.
+        if (!this.summariesEnabled) {
+            // If we should never summarize, lock in disabled state
+            this.state = SummaryManagerState.Disabled;
             return;
         }
-
+        if (this.context.clientDetails.type === "summarizer") {
+            // Make sure that the summarizer client does not load another summarizer.
+            this.state = SummaryManagerState.Disabled;
+            return;
+        }
         if (attempt > this.maxRestarts) {
             this.logger.sendErrorEvent({ eventName: "MaxRestarts", maxRestarts: this.maxRestarts });
             this.state = SummaryManagerState.Off;
@@ -236,74 +268,71 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.state = SummaryManagerState.Starting;
-
-        // If we should never summarize, lock in starting state
-        if (!this.summariesEnabled) {
-            return;
-        }
-
-        if (this.context.clientDetails.type === "summarizer") {
-            // Make sure that the summarizer client does not load another summarizer.
-            return;
-        }
-
         // Back-off delay for subsequent retry starting.  The delay increase is linear,
         // increasing by 20ms each time: 0ms, 20ms, 40ms, 60ms, etc.
         const delayMs = (attempt - 1) * 20;
         this.createSummarizer(delayMs).then((summarizer) => {
-            if (summarizer === undefined) {
-                if (this.shouldSummarize) {
-                    this.start(attempt + 1);
-                } else {
-                    this.state = SummaryManagerState.Off;
-                }
-            } else if (this.shouldSummarize) {
-                this.setNextSummarizer(summarizer.setSummarizer());
-                this.run(summarizer);
-            } else {
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                summarizer.stop!(this.getStopReason());
-                this.state = SummaryManagerState.Off;
-            }
+            this.setNextSummarizer(summarizer.setSummarizer());
+            this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
-            if (this.shouldSummarize) {
-                this.start(attempt + 1);
-            } else {
-                this.state = SummaryManagerState.Off;
-            }
+            this.tryRestart(attempt + 1);
         });
     }
 
-    private run(summarizer: IComponentRunnable) {
+    private run(summarizer: ISummarizer) {
         this.state = SummaryManagerState.Running;
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(this.clientId).then(() => {
+        this.runningSummarizer.run(this.latestClientId).then(() => {
             runningSummarizerEvent.end();
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
         }).finally(() => {
             this.runningSummarizer = undefined;
-            if (this.shouldSummarize) {
-                this.start();
-            } else {
-                this.state = SummaryManagerState.Off;
-            }
+            this.nextSummarizerP = undefined;
+            this.tryRestart();
         });
+
+        const shouldSummarizeState = this.getShouldSummarizeState();
+        if (shouldSummarizeState.shouldSummarize === false) {
+            this.stop(shouldSummarizeState.stopReason);
+        }
+    }
+
+    private tryRestart(attempt?: number): void {
+        const shouldSummarizeState = this.getShouldSummarizeState();
+        if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
+            this.start(attempt);
+        } else {
+            this.state = SummaryManagerState.Off;
+        }
+    }
+
+    private stop(reason: string) {
+        this.state = SummaryManagerState.Stopping;
+
+        if (this.runningSummarizer) {
+            // Stopping the running summarizer client should trigger a change
+            // in states when the running summarizer closes
+            this.runningSummarizer.stop(reason);
+        } else {
+            // Should not be possible to hit this case
+            this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
+            this.state = SummaryManagerState.Off;
+        }
     }
 
     private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
-        await Promise.all([
-            this.opsUntilFirstConnect >= opsToBypassInitialDelay ? Promise.resolve() : this.initialDelayP,
-            delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
-        ]);
-
-        if (!this.shouldSummarize) {
-            return undefined;
+        const shouldDelay = delayMs > 0;
+        const shouldInitialDelay = this.opsUntilFirstConnect < opsToBypassInitialDelay;
+        if (shouldDelay || shouldInitialDelay) {
+            await Promise.all([
+                shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
+                shouldDelay ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+            ]);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises

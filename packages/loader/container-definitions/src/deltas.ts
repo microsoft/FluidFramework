@@ -111,14 +111,6 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     close(): void;
 
-    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
-
-    attachOpHandler(
-        minSequenceNumber: number,
-        sequenceNumber: number,
-        handler: IDeltaHandlerStrategy,
-        resume: boolean);
-
     submitSignal(content: any): void;
 
     on(event: "error", listener: (error: IError) => void);

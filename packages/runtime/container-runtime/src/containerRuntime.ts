@@ -68,6 +68,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
+    IExperimentalHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -368,9 +369,12 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
+    IExperimentalRuntime, IExperimentalHostRuntime
+{
 
     public readonly isExperimentalRuntime = true;
+    public readonly isExperimentalHostRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -487,6 +491,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
+    }
+
+    public isLocal(): boolean {
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext) {
+            // back-compat: 0.15 isAttached
+            // isAttached is replaced with isLocal.
+            return expContainerContext.isLocal ? expContainerContext.isLocal() :
+                expContainerContext.isAttached ? !expContainerContext.isAttached() : false;
+        } else {
+            // back-compat: 0.15 isAttached
+            // Need to return false if container is not experimental because then the result would depend on
+            // whether the component is attached or not.
+            return false;
+        }
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -1142,8 +1161,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = this.contexts.get(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+        if (!this.isLocal()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);

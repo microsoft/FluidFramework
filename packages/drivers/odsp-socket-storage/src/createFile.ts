@@ -18,18 +18,10 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper } from "./odspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOrigin } from "./vroom";
-
-export interface INewFileInfo {
-    siteUrl: string;
-    driveId: string;
-    fileName: string;
-    filePath: string;
-    callback?(itemId: string, filename: string): void;
-}
 
 export interface IFileCreateResponse {
     siteUrl: string;
@@ -44,7 +36,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
-    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.fileName}`;
+    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.filename}`;
 }
 
 /**
@@ -68,7 +60,7 @@ export async function createNewFluidFile(
         return responseP;
     }
     // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.fileName)) {
+    if (isInvalidFileName(newFileInfo.filename)) {
         throw new Error("Invalid filename. Please try again.");
     }
     let containerSnapshot: ISnapshotTree | undefined;
@@ -109,7 +101,7 @@ async function createNewFluidFileHelper(
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
 
-        const encodedFilename = encodeURIComponent(`${newFileInfo.fileName}.fluid`);
+        const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
         let fetchResponse;
         if (containerSnapshot) {
@@ -137,7 +129,7 @@ async function createNewFluidFileHelper(
                 itemId: content.itemId,
                 siteUrl: newFileInfo.siteUrl,
                 driveId: newFileInfo.driveId,
-                filename: newFileInfo.fileName,
+                filename: newFileInfo.filename,
             };
         } else {
             const initialUrl =

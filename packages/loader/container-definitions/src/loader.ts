@@ -51,6 +51,12 @@ export interface IExperimentalContainer extends IContainer {
     /**
      * Flag indicating if the given container has been attached to a host service.
      */
+    isLocal(): boolean;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     * @deprecated - It will be replaced with isLocal.
+     */
     isAttached(): boolean;
 
     /**

@@ -82,6 +82,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                         {this.state.innerComponentVisible ? "▲" : "▼"}
                     </button>
                     <button
+                        name="OpenSubComponent"
+                        id={this.itemUrl}
                         style={this.buttonStyle}
                         onClick={() => window.open(this.itemUrl, "_blank")}>↗
                     </button>

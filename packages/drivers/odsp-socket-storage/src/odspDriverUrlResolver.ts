@@ -11,8 +11,8 @@ import {
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
-import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
-import { getHashedDocumentId } from "./odspUtils";
+import { IOdspResolvedUrl } from "./contracts";
+import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
@@ -39,7 +39,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
         if (request.headers) {
             if (request.headers.newFileInfoPromise) {
-                const createNewOptions: ICreateNewOptions = {
+                const createNewOptions: INewFileInfoHeader = {
                     newFileInfoPromise: request.headers.newFileInfoPromise,
                 };
                 const [, queryString] = request.url.split("?");
