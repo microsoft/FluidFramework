@@ -54,7 +54,9 @@ interface IRegisterOperation {
     refSeq?: number;
 }
 
-/** A record of the pending operation awaiting ack */
+/**
+ * A record of the pending operation awaiting ack
+ */
 interface IPendingRecord {
     /** The resolve function to call after the local operation is ack'ed */
     resolve: (winner: boolean) => void;
@@ -131,7 +133,7 @@ export class ConsensusRegisterCollection<T>
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
-            // Note that clientSequenceNumber and message are only used for asserts and isn't strictly necessary.
+            // Note that clientSequenceNumber and message are only used for asserts and aren't strictly necessary.
             this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
         });
     }
@@ -198,7 +200,6 @@ export class ConsensusRegisterCollection<T>
     ): Promise<void> {
         const header = await storage.read(snapshotFileName);
         const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};
-        //* todo: Why is it called header? And why are we converting from Base64 when snapshot didn't encode as Base64?
 
         for (const key of Object.keys(dataObj)) {
             this.data.set(key, dataObj[key]);
@@ -316,7 +317,6 @@ export class ConsensusRegisterCollection<T>
         strongAssert(pending);
         assert(message.clientSequenceNumber === pending.clientSequenceNumber,
             "ConsensusRegistryCollection: unexpected ack");
-        //* todo: Add other asserts comparing incoming/pending op itself? If not, remove the op from IPendingRecord
         pending.resolve(winner);
     }
 
