@@ -22,7 +22,7 @@ import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collectio
 import {
     IComponentContext,
     IComponentFactory,
-    IHostRuntime,
+    IContainerRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
@@ -106,7 +106,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         const trimmed = request.url
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));

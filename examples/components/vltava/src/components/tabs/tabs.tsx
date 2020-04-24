@@ -49,7 +49,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
     }
 
     protected async componentHasInitialized() {
-        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const registryDetails = (registry as IComponent).IComponentRegistryDetails!;
         this.dataModelInternal =

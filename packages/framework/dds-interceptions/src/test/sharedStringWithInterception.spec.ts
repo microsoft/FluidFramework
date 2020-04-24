@@ -54,7 +54,7 @@ describe("Shared String with Interception", () => {
             runtime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {

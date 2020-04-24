@@ -10,7 +10,7 @@ import {
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
-import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import {
     generateContainerServicesRequestHandler,
     ContainerServiceRegistryEntries,
@@ -64,7 +64,7 @@ export class SimpleContainerRuntimeFactory {
      * @param pkg - package name for the new component
      */
     public static async createAndAttachComponent<T>(
-        runtime: IHostRuntime,
+        runtime: IContainerRuntime,
         id: string,
         pkg: string,
     ): Promise<T> {
@@ -87,7 +87,7 @@ export class SimpleContainerRuntimeFactory {
 }
 
 export const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             return componentRuntimeRequestHandler(
                 new RequestParser({

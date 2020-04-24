@@ -44,7 +44,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         // infinite recursion.
         assert(executingCallback === false, "set called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             directory = subDirectory.set(key, value);
             executingCallback = true;
             try {
