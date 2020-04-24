@@ -35,7 +35,7 @@ This package also provides a `setupLastEditedTrackerForContainer` method that ca
 ```
 async function setupLastEditedTrackerForContainer(
     componentId: string,
-    runtime: IHostRuntime,
+    runtime: IContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 )
 ```

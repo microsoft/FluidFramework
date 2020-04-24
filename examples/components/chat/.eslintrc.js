@@ -9,6 +9,6 @@ module.exports = {
     ],
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off"
+        "@typescript-eslint/strict-boolean-expressions": "off",
     }
 }

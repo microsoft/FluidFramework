@@ -10,7 +10,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
     NamedComponentRegistryEntry,
@@ -111,10 +111,10 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
 
-        // If the Container did not register the IHostRuntime we can do it here to make sure services that need
+        // If the Container did not register the IContainerRuntime we can do it here to make sure services that need
         // it will have it.
-        if (!dependencyContainer.has(IHostRuntime)) {
-            dependencyContainer.register(IHostRuntime, context.hostRuntime);
+        if (!dependencyContainer.has(IContainerRuntime)) {
+            dependencyContainer.register(IContainerRuntime, context.containerRuntime);
         }
 
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});

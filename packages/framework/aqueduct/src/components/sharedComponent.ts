@@ -223,7 +223,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
             url: `/${id}`,
         };
 
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.containerRuntime.request(request));
     }
 
     /**
@@ -235,7 +235,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
             url: `/${serviceRoutePathRoot}/${id}`,
         };
 
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.containerRuntime.request(request));
     }
 
     /**

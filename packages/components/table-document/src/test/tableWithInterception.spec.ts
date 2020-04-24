@@ -82,7 +82,7 @@ describe("Table Document with Interception", () => {
             tableDocument = response.value;
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         it("should be able to intercept TableDocument methods by the interception", async () => {

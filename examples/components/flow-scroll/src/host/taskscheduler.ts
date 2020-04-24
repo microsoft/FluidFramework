@@ -21,7 +21,7 @@ export class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
+        const hostTokens = (this.componentContext.containerRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         if (intelTokens?.key?.length > 0) {
             const intelTask: ITask = {

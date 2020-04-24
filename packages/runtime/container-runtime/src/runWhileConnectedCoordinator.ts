@@ -4,13 +4,13 @@
  */
 
 import { Deferred } from "@microsoft/fluid-common-utils";
-import { ContainerRuntime } from "./containerRuntime";
 
 /**
  * Start result indicating that the start was successful.
  */
 export interface IStartedResult {
     started: true;
+    clientId: string;
 }
 
 /**
@@ -18,7 +18,14 @@ export interface IStartedResult {
  */
 export interface INotStartedResult {
     started: false;
-    message: string;
+    message: "DisconnectedBeforeRun" | "NeverConnectedBeforeRun";
+}
+
+export interface IConnectableRuntime {
+    readonly connected: boolean;
+    readonly clientId: string | undefined;
+    once(event: "connected", listener: () => void): this;
+    on(event: "disconnected", listener: () => void): this;
 }
 
 /**
@@ -30,7 +37,7 @@ export class RunWhileConnectedCoordinator {
     private everConnected = false;
     private readonly stopDeferred = new Deferred<void>();
 
-    public constructor(private readonly runtime: ContainerRuntime) {
+    public constructor(private readonly runtime: IConnectableRuntime) {
         // Try to determine if the runtime has ever been connected
         if (this.runtime.connected) {
             this.everConnected = true;
@@ -53,39 +60,35 @@ export class RunWhileConnectedCoordinator {
      */
     public async waitStart(): Promise<IStartedResult | INotStartedResult> {
         if (!this.runtime.connected) {
-            if (!this.everConnected) {
-                const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
-                await Promise.race([waitConnected, this.stopDeferred.promise]);
-                if (!this.runtime.connected) {
-                    // If still not connected, no need to start running
-                    return {
-                        started: false,
-                        message: "NeverConnectedBeforeRun",
-                    };
-                }
-            } else {
+            if (this.everConnected) {
                 // We will not try to reconnect, so we are done running
-                return {
-                    started: false,
-                    message: "DisconnectedBeforeRun",
-                };
+                return { started: false, message: "DisconnectedBeforeRun" };
+            }
+            const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
+            await Promise.race([waitConnected, this.stopDeferred.promise]);
+            if (!this.runtime.connected) {
+                // If still not connected, no need to start running
+                return { started: false, message: "NeverConnectedBeforeRun" };
             }
         }
-        return { started: true };
+
+        if (this.runtime.clientId === undefined) {
+            throw Error("clientId should be defined if connected.");
+        }
+        return { started: true, clientId: this.runtime.clientId };
     }
 
     /**
-     * Returns a prommise that resolves once stopped either externally or by disconnect.
+     * Returns a promise that resolves once stopped either externally or by disconnect.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public waitStopped(): Promise<void> {
+    public async waitStopped(): Promise<void> {
         return this.stopDeferred.promise;
     }
 
     /**
      * Stops running.
      */
-    public stop() {
+    public stop(): void {
         this.stopDeferred.resolve();
     }
 }
