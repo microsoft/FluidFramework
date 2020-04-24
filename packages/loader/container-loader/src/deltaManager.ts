@@ -616,7 +616,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success = false;
                 retryAfter = this.getRetryDelayFromError(error);
 
-                if (retryAfter && retryAfter >= 0) {
+                if (retryAfter !== undefined && retryAfter >= 0) {
                     // Emit throttling info only if we get it from error.
                     this.emitDelayInfo(retryFor.DELTASTORAGE, retryAfter, error);
                 }
@@ -751,7 +751,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
-            if (delayTime >= 0) {
+            if (delayTime > 0) {
                 // Is it an Error object?
                 let message = error?.message;
                 if (message === undefined) {
