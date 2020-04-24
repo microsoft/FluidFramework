@@ -985,6 +985,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
+        assert(!this.contexts.has(id), "Creating component with existing ID");
+
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -1189,6 +1191,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
+
                     // Resolve pending gets and store off any new ones
                     const deferred = this.ensureContextDeferred(attachMessage.id);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
