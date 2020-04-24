@@ -101,7 +101,7 @@ describe("Loader", () => {
             });
 
             describe("Update Minimum Sequence Number", () => {
-                const expectedTimeout = 100;
+                const expectedTimeout = 2000;
 
                 // helper function asserting that there is exactly one well-formed no-op
                 function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {
