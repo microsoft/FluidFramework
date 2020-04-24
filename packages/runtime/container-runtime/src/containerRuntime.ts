@@ -1003,7 +1003,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
-        assert(!this.contexts.has(id)); // there should be no collisions!
         const context = new LocalComponentContext(
             id,
             pkg,
