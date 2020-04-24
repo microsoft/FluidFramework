@@ -91,5 +91,5 @@ export class BaseContainerRuntimeFactory implements
      * This likely includes loading any components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerHasInitialized(runtime: IHostRuntime) { }
+    protected async containerHasInitialized(runtime: IContainerRuntime) { }
 }

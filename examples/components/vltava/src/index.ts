@@ -20,7 +20,7 @@ import {
 } from "@microsoft/fluid-last-edited-experimental";
 import {
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -78,7 +78,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerHasInitialized}
      */
-    protected async containerHasInitialized(runtime: IHostRuntime) {
+    protected async containerHasInitialized(runtime: IContainerRuntime) {
         // Load the last edited tracker component (done by the setup method below). This component provides container
         // level tracking of last edit and has to be loaded before any other component.
 

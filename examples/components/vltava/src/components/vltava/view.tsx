@@ -12,7 +12,7 @@ import { LastEditedDisplay } from "./lastEditedDisplay";
 
 const viewStyle: React.CSSProperties = {
     width: "100%",
-    height: "50px",
+    height: 50,
     textAlign: "center",
     borderBottom:"1px solid lightgray",
     boxSizing:"border-box",
@@ -27,9 +27,6 @@ const lastEditedStyle: React.CSSProperties = {
     borderLeft: "7px solid transparent",
     borderRight: "7px solid transparent",
     borderTop: "7px solid #3B3B3B",
-    marginTop: "5px",
-    marginLeft: "5px",
-    cursor: "pointer",
     zIndex: 20,
 };
 
@@ -88,12 +85,12 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                         </h2>
                     </div>
                     <VltavaFacepile users={this.state.users}/>
-                </div>
-                <div
-                    style = {lastEditedStyle}
-                    onMouseOver = { this.setLastEditedState.bind(this) }
-                    onMouseOut = { this.resetLastEditedState.bind(this) }>
-                    <LastEditedDisplay lastEditedState={this.state.lastEditedState}/>
+                    <div
+                        style = {lastEditedStyle}
+                        onMouseOver = { this.setLastEditedState.bind(this) }
+                        onMouseOut = { this.resetLastEditedState.bind(this) }>
+                        <LastEditedDisplay lastEditedState={this.state.lastEditedState}/>
+                    </div>
                 </div>
                 {this.state.view}
             </div>
