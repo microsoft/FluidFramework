@@ -11,8 +11,7 @@ import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
-import { TableSlice } from "../slice";
-import { TableDocumentType, TableSliceType } from "../componentTypes";
+import { TableDocumentType } from "../componentTypes";
 import { createTableWithInterception } from "../interception";
 
 describe("Table Document with Interception", () => {
@@ -69,7 +68,6 @@ describe("Table Document with Interception", () => {
                 TableDocumentType,
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-                    [TableSliceType, Promise.resolve(TableSlice.getFactory())],
                 ]),
             );
 

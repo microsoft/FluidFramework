@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-import { ClickerWithInitialValueFactory } from "./clickerWithInitialValueFactory";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -21,31 +19,21 @@ export interface IClickerInitialState {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
+export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitialState> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
 
-    public constructor(
-        props: ISharedComponentProps,
-        private initialState?: IClickerInitialState,
-    ) {
-        super(props);
-    }
-
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime() {
+    protected async componentInitializingFirstTime(initialState?: IClickerInitialState) {
         let startingValue = 0;
-        if (this.initialState) {
-            startingValue = this.initialState.initialValue;
+        if (initialState) {
+            startingValue = initialState.initialValue;
         }
 
         this.root.createValueType("clicks", CounterValueType.Name, startingValue);
-
-        // Clear out initialState because we don't need it later
-        this.initialState = undefined;
     }
 
     // start IComponentHTMLView
@@ -61,7 +49,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new ClickerWithInitialValueFactory(
+    private static readonly factory = new PrimedComponentFactory(
         ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],

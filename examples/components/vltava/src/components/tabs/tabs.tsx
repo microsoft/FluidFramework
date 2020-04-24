@@ -34,7 +34,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
 
     public get IComponentHTMLView() { return this; }
 
-    protected async componentInitializingFirstTime(props: any) {
+    protected async componentInitializingFirstTime() {
         // create the tabs directory
         this.root.createSubDirectory("tab-ids");
     }

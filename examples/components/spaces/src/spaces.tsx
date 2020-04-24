@@ -75,7 +75,7 @@ export class Spaces extends PrimedComponent
             div);
     }
 
-    protected async componentInitializingFirstTime(props?: any) {
+    protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
