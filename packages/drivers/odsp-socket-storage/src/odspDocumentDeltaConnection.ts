@@ -258,7 +258,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         super(socket, documentId);
 
         // when possible emit nacks only when it targets this specific client/document
-        this.on("nack", (clientIdOrDocumentId: string, message: INack[]) => {
+        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
             if (!clientIdOrDocumentId ||
                 clientIdOrDocumentId.length === 0 ||
                 clientIdOrDocumentId == documentId ||
@@ -271,6 +271,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         if (!this.nonForwardEvents.includes(event)) {
             super.addTrackedListener(event, listener);
+        } else {
+            // this is a "nonforward" event
+            // don't directly link up this socket event to the listener
+            // we will handle the event from a listener in the constructor
         }
     }
 
