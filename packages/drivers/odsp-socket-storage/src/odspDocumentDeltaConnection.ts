@@ -259,10 +259,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         // when possible emit nacks only when it targets this specific client/document
         super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
-            if (!clientIdOrDocumentId ||
-                clientIdOrDocumentId.length === 0 ||
+            if (clientIdOrDocumentId.length === 0 ||
                 clientIdOrDocumentId === documentId ||
-                clientIdOrDocumentId === this.clientId) {
+                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
                 this.emit("nack", clientIdOrDocumentId, message);
             }
         });
