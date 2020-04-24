@@ -11,7 +11,7 @@ export enum ErrorType {
     // Some non-categorized (below) networking error
     genericNetworkError,
 
-    // Access denied - user does not have enough privileges to open a file, or continue to operate on a file 
+    // Access denied - user does not have enough privileges to open a file, or continue to operate on a file
     accessDeniedError,
 
     // File not found, or file deleted during session

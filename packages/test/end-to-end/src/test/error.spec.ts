@@ -194,7 +194,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createNetworkError("Test Error", true /*canRetry*/);
+        const networkError = createNetworkError("Test Error", true /* canRetry */);
         const error1 = createIError(networkError);
         const error2 = createIError(error1);
         assert.equal(error1, error2, "Both errors should be same!!");
