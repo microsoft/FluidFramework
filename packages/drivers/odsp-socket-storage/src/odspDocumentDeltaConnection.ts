@@ -261,8 +261,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
             if (!clientIdOrDocumentId ||
                 clientIdOrDocumentId.length === 0 ||
-                clientIdOrDocumentId == documentId ||
-                clientIdOrDocumentId == this.clientId) {
+                clientIdOrDocumentId === documentId ||
+                clientIdOrDocumentId === this.clientId) {
                 this.emit("nack", clientIdOrDocumentId, message);
             }
         });
