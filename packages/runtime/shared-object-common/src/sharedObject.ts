@@ -185,7 +185,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
-        return (!this.isLocal() || this.registered);
+        return (!!this.services || this.registered);
     }
 
     /**
