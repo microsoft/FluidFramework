@@ -29,7 +29,7 @@ interface CounterState {
 
 interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
-class CounterReactView extends FluidReactComponent<{}, CounterState, {}, {}> {
+class CounterReactView extends FluidReactComponent<{}, CounterState> {
     render() {
         return (
             <div>
@@ -42,9 +42,9 @@ class CounterReactView extends FluidReactComponent<{}, CounterState, {}, {}> {
     }
 }
 
-function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState, {}, {}>) {
+function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, setState] = useStateFluid<{}, CounterFunctionalState, {}, {}>(props);
+    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
 
     return (
         <div>
@@ -67,6 +67,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFirstTime() {
         this.root.set("counterClicks", 0);
+        this.root.set("counterClicksFunctional", 0);
     }
 
     // #region IComponentHTMLView
@@ -79,6 +80,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         rootToInitialState.set("counterClicks", "value");
         const stateToRoot = new Map<keyof CounterState, string>();
         stateToRoot.set("value", "counterClicks");
+
+        const rootToInitialStateFunctional = new Map<string, keyof CounterState>();
+        rootToInitialStateFunctional.set("counterClicksFunctional", "value");
+        const stateToRootFunctional = new Map<keyof CounterState, string>();
+        stateToRootFunctional.set("value", "counterClicksFunctional");
+
         ReactDOM.render(
             <div>
                 <CounterReactView
@@ -90,8 +97,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 <CounterReactFunctional
                     root={this.root}
                     reactComponentDefaultState={{ value: 0, isInitialized: false }}
-                    rootToInitialState={rootToInitialState}
-                    stateToRoot={stateToRoot}
+                    rootToInitialState={rootToInitialStateFunctional}
+                    stateToRoot={stateToRootFunctional}
                 />
             </div>,
             div,

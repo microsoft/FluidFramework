@@ -6,14 +6,12 @@
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 
-export interface FluidProps<P, S, Q, M> {
+export interface FluidProps<P, S> {
     root: ISharedDirectory;
     reactComponentDefaultState: S,
     reactComponentProps?: ComponentProps<P, S>,
     rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
-    rootQueries?: Q;
-    rootMutations?: M;
 }
 
 interface ComponentProps<P, S> {
@@ -21,7 +19,7 @@ interface ComponentProps<P, S> {
     propToInitialState?: Map<keyof P, keyof S>,
 }
 
-function initializeState<P,S,Q,M>(props: FluidProps<P,S,Q,M>) {
+function initializeState<P,S>(props: FluidProps<P,S>) {
     const {
         root,
         rootToInitialState,
@@ -51,26 +49,20 @@ function initializeState<P,S,Q,M>(props: FluidProps<P,S,Q,M>) {
 /**
  * A react component with a root, initial props, and a root to state mapping
  */
-export abstract class FluidReactComponent<P,S,Q,M> extends React.Component<FluidProps<P,S,Q,M>, S> {
+export abstract class FluidReactComponent<P,S> extends React.Component<FluidProps<P,S>, S> {
     private readonly _root: ISharedDirectory;
     readonly stateToRoot?: Map<keyof S, string>;
-    readonly rootQueries?: Q;
-    readonly rootMutations?: M;
     constructor(
-        props: FluidProps<P,S,Q,M>,
+        props: FluidProps<P,S>,
     ) {
         super(props);
         const {
             stateToRoot,
             root,
-            rootQueries,
-            rootMutations,
         } = props;
 
         this.state = initializeState(props);
         this.stateToRoot = stateToRoot;
-        this.rootQueries = rootQueries;
-        this.rootMutations = rootMutations;
         this._root = root;
         if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
@@ -79,8 +71,14 @@ export abstract class FluidReactComponent<P,S,Q,M> extends React.Component<Fluid
                         const newData = this.getFromRoot(rootKey);
                         if (newData !== this.state[stateKey]) {
                             const newState: S = this.state;
-                            newState[stateKey] = newData;
-                            this.setState(newState);
+                            if (typeof newState[stateKey] === typeof newData) {
+                                newState[stateKey] = newData as any;
+                                this.setState(newState);
+                            } else {
+                                throw new Error(
+                                    `Root value with key ${rootKey} does not
+                                     match the type for state with key ${stateKey}`);
+                            }
                         }
                     }
                 });
@@ -88,8 +86,21 @@ export abstract class FluidReactComponent<P,S,Q,M> extends React.Component<Fluid
         }
     }
 
-    public getFromRoot = (key: string) => this._root.get(key);
-    public setOnRoot = (key: string, value: any) => this._root.set(key, value);
+    public getFromRoot<T, A>(key: string, getter?: (root: ISharedDirectory, args?: A) => T, args?: A): T {
+        return getter === undefined ? this._root.get<T>(key) : getter(this._root, args);
+    }
+
+    public setOnRoot<T, A>(
+        key: string,
+        value: T,
+        setter?: (root: ISharedDirectory, value: T, args?: A) => void,
+        args?: A): void {
+        if (setter === undefined) {
+            this._root.set<T>(key, value);
+        } else {
+            setter(this._root, value, args);
+        }
+    }
 
     public setState(newState: S) {
         super.setState(newState);
@@ -108,7 +119,7 @@ export interface FluidFunctionalComponentState {
     isInitialized: boolean;
 }
 
-export function useStateFluid<P,S extends FluidFunctionalComponentState,Q,M>(props: FluidProps<P,S,Q,M>):
+export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
 [S, ((newState: S) => void)] {
     const [ reactState, reactSetState ] = React.useState<S>(props.reactComponentDefaultState);
     const { root, stateToRoot } = props;
