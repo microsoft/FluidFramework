@@ -114,24 +114,24 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
         }
     }, [root, stateToRoot, reactState, reactSetState]);
 
-    if (stateToRoot !== undefined) {
-        stateToRoot.forEach((rootKey, stateKey) => {
-            root.on("valueChanged", (change, local) => {
-                if (change.key === rootKey) {
-                    const newData = root.get(rootKey);
-                    if (newData !== reactState[stateKey]) {
-                        const newState: S = reactState;
-                        newState[stateKey] = newData;
-                        fluidSetState(newState);
-                    }
-                }
-            });
-        });
-    }
-
     let nextState: S = reactState;
     if (!reactState.isInitialized) {
         nextState = { ...initializeState(props), isInitialized: true };
+
+        if (stateToRoot !== undefined) {
+            stateToRoot.forEach((rootKey, stateKey) => {
+                root.on("valueChanged", (change, local) => {
+                    if (change.key === rootKey) {
+                        const newData = root.get(rootKey);
+                        if (newData !== reactState[stateKey]) {
+                            const newState: S = reactState;
+                            newState[stateKey] = newData;
+                            fluidSetState(newState);
+                        }
+                    }
+                });
+            });
+        }
     }
 
     return [nextState, fluidSetState];

@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import {
+    FluidProps,
+    FluidFunctionalComponentState,
+    FluidReactComponent,
+    useStateFluid,
+} from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { FluidProps, useStateFluid, FluidFunctionalComponentState, FluidReactComponent } from "./fluidReactComponent";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");

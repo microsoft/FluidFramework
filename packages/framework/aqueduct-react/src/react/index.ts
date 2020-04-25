@@ -6,3 +6,4 @@
 export * from "./collaborativeTextArea";
 export * from "./collaborativeCheckbox";
 export * from "./collaborativeInput";
+export * from "./reactComponent";
