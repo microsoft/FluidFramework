@@ -51,7 +51,6 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
-
     private readonly nonForwardEvents = ["nack"];
 
     /**
