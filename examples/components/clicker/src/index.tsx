@@ -7,7 +7,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { FluidReactComponent } from "./fluidReactComponent";
+import { FluidProps, useStateFluid, FluidFunctionalComponentState, FluidReactComponent } from "./fluidReactComponent";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -18,6 +18,8 @@ export const ClickerName = pkg.name as string;
 interface CounterState {
     value: number;
 }
+
+interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
 class CounterReactView extends FluidReactComponent<{}, CounterState> {
     render() {
@@ -30,6 +32,20 @@ class CounterReactView extends FluidReactComponent<{}, CounterState> {
             </div>
         );
     }
+}
+
+function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+    // Declare a new state variable, which we'll call "count"
+    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+
+    return (
+        <div>
+            <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                {state.value}
+            </span>
+            <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+        </div>
+    );
 }
 
 /**
@@ -51,8 +67,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        const rootToInitialStateMap = new Map<string, keyof CounterState>();
-        rootToInitialStateMap.set("counterClicks", "value");
+        const rootToInitialState = new Map<string, keyof CounterState>();
+        rootToInitialState.set("counterClicks", "value");
         const stateToRoot = new Map<keyof CounterState, string>();
         stateToRoot.set("value", "counterClicks");
         ReactDOM.render(
@@ -60,7 +76,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 <CounterReactView
                     root={this.root}
                     reactComponentDefaultState={{ value: 0 }}
-                    rootToInitialState={rootToInitialStateMap}
+                    rootToInitialState={rootToInitialState}
+                    stateToRoot={stateToRoot}
+                />
+                <CounterReactFunctional
+                    root={this.root}
+                    reactComponentDefaultState={{ value: 0, isInitialized: false }}
+                    rootToInitialState={rootToInitialState}
                     stateToRoot={stateToRoot}
                 />
             </div>,
@@ -73,12 +95,5 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 }
 
 // ----- FACTORY SETUP -----
-
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    ClickerName,
-    Clicker,
-    [],
-    {},
-);
-
+export const ClickerInstantiationFactory = new PrimedComponentFactory(ClickerName, Clicker, [], {});
 export const fluidExport = ClickerInstantiationFactory;
