@@ -29,7 +29,7 @@ interface CounterState {
 
 interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
-class CounterReactView extends FluidReactComponent<{}, CounterState> {
+class CounterReactView extends FluidReactComponent<{}, CounterState, {}, {}> {
     render() {
         return (
             <div>
@@ -42,9 +42,9 @@ class CounterReactView extends FluidReactComponent<{}, CounterState> {
     }
 }
 
-function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState, {}, {}>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+    const [state, setState] = useStateFluid<{}, CounterFunctionalState, {}, {}>(props);
 
     return (
         <div>

@@ -6,12 +6,14 @@
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 
-export interface FluidProps<P, S> {
-    root: ISharedDirectory,
+export interface FluidProps<P, S, Q, M> {
+    root: ISharedDirectory;
     reactComponentDefaultState: S,
     reactComponentProps?: ComponentProps<P, S>,
     rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
+    rootQueries?: Q;
+    rootMutations?: M;
 }
 
 interface ComponentProps<P, S> {
@@ -19,7 +21,7 @@ interface ComponentProps<P, S> {
     propToInitialState?: Map<keyof P, keyof S>,
 }
 
-function initializeState<P,S>(props: FluidProps<P,S>) {
+function initializeState<P,S,Q,M>(props: FluidProps<P,S,Q,M>) {
     const {
         root,
         rootToInitialState,
@@ -49,27 +51,32 @@ function initializeState<P,S>(props: FluidProps<P,S>) {
 /**
  * A react component with a root, initial props, and a root to state mapping
  */
-export abstract class FluidReactComponent<P,S> extends React.Component<FluidProps<P,S>, S> {
+export abstract class FluidReactComponent<P,S,Q,M> extends React.Component<FluidProps<P,S,Q,M>, S> {
+    private readonly _root: ISharedDirectory;
     readonly stateToRoot?: Map<keyof S, string>;
-    readonly root: ISharedDirectory;
+    readonly rootQueries?: Q;
+    readonly rootMutations?: M;
     constructor(
-        props: FluidProps<P,S>,
+        props: FluidProps<P,S,Q,M>,
     ) {
         super(props);
         const {
-            root,
             stateToRoot,
+            root,
+            rootQueries,
+            rootMutations,
         } = props;
 
-        this.root = root;
         this.state = initializeState(props);
         this.stateToRoot = stateToRoot;
-
+        this.rootQueries = rootQueries;
+        this.rootMutations = rootMutations;
+        this._root = root;
         if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
                     if (change.key === rootKey) {
-                        const newData = root.get(rootKey);
+                        const newData = this.getFromRoot(rootKey);
                         if (newData !== this.state[stateKey]) {
                             const newState: S = this.state;
                             newState[stateKey] = newData;
@@ -81,13 +88,16 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
         }
     }
 
+    public getFromRoot = (key: string) => this._root.get(key);
+    public setOnRoot = (key: string, value: any) => this._root.set(key, value);
+
     public setState(newState: S) {
         super.setState(newState);
         if (this.stateToRoot !== undefined) {
             this.stateToRoot.forEach((rootKey, stateKey) => {
-                const rootData = this.root.get(rootKey);
+                const rootData = this.getFromRoot(rootKey);
                 if (rootData !==  newState[stateKey]) {
-                    this.root.set(rootKey, newState[stateKey]);
+                    this.setOnRoot(rootKey, newState[stateKey]);
                 }
             });
         }
@@ -98,7 +108,7 @@ export interface FluidFunctionalComponentState {
     isInitialized: boolean;
 }
 
-export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
+export function useStateFluid<P,S extends FluidFunctionalComponentState,Q,M>(props: FluidProps<P,S,Q,M>):
 [S, ((newState: S) => void)] {
     const [ reactState, reactSetState ] = React.useState<S>(props.reactComponentDefaultState);
     const { root, stateToRoot } = props;
@@ -117,7 +127,6 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
     let nextState: S = reactState;
     if (!reactState.isInitialized) {
         nextState = { ...initializeState(props), isInitialized: true };
-
         if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
