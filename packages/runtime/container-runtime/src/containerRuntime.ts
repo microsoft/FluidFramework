@@ -153,9 +153,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    // Experimental flag that will generate summaries if connected to a service that supports them.
+    // Flag that will generate summaries if connected to a service that supports them.
     // This defaults to true and must be explicitly set to false to disable.
-    generateSummaries: boolean;
+    generateSummaries?: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
     enableWorker?: boolean;
