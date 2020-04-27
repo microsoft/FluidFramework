@@ -119,7 +119,8 @@ export class ConsensusRegisterCollection<T>
     public constructor(
         id: string,
         runtime: IComponentRuntime,
-        attributes: IChannelAttributes) {
+        attributes: IChannelAttributes,
+    ) {
         super(id, runtime, attributes);
     }
 
@@ -154,10 +155,6 @@ export class ConsensusRegisterCollection<T>
 
     /**
      * Returns the most recent local value of a register.
-     *
-     * TODO: This read does not guarantee most up to date value. We probably want to have a version
-     * that submits a read message and returns when the message is acked. That way we are guaranteed
-     * to read the most recent linearizable value for that register.
      * @param key - The key to read
      * @param readPolicy - The ReadPolicy to apply. Defaults to Atomic.
      */
