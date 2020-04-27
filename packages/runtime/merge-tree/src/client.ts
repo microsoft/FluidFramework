@@ -844,7 +844,7 @@ export class Client {
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
         assert(collabWindow.currentSeq <= seq, "Incoming op sequence# < local collabWindow's currentSequence#");
         collabWindow.currentSeq = seq;
-        assert(min <= seq, "Incoming op minSequence# > sequence#");
+        assert(min <= seq, "Incoming op sequence# < minSequence#");
         this.updateMinSeq(min);
     }
 
