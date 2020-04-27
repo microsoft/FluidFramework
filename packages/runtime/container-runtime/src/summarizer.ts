@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentLoadable,
@@ -50,6 +51,10 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
     stop(reason?: string): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
+    /**
+     * An event indicating that the Summarizer is having problems summarizing
+     */
+    on(event: "summarizingError", listener: (description: string) => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -168,6 +173,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
+        summarizingError: (description: string) => void,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -178,7 +184,8 @@ export class RunningSummarizer implements IDisposable {
             generateSummary,
             lastOpSeqNumber,
             firstAck,
-            immediateSummary);
+            immediateSummary,
+            summarizingError);
 
         await summarizer.waitStart();
 
@@ -211,6 +218,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
+        private readonly summarizingError: (description: string) => void,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -225,6 +233,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             this.configuration.maxAckWaitTime,
             () => {
+                this.summarizingError("SummaryAckWaitTimeout");
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
@@ -421,6 +430,7 @@ export class RunningSummarizer implements IDisposable {
 
             return true;
         } else {
+            this.summarizingError("SummaryNack");
             return false;
         }
     }
@@ -487,7 +497,7 @@ export class RunningSummarizer implements IDisposable {
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
-export class Summarizer implements ISummarizer {
+export class Summarizer extends EventEmitter implements ISummarizer {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
@@ -513,6 +523,7 @@ export class Summarizer implements ISummarizer {
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         summaryCollection?: SummaryCollection,
     ) {
+        super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         if (summaryCollection) {
@@ -632,6 +643,7 @@ export class Summarizer implements ISummarizer {
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
             this.immediateSummary,
+            (description: string) => this.emit("summarizingError", description),
         );
         this.runningSummarizer = runningSummarizer;
 

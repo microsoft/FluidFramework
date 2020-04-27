@@ -62,6 +62,10 @@ export interface ISummarizingError {
     readonly errorType: ErrorType.summarizingError;
     readonly description: string;
     critical?: boolean;
+    /**
+     * Whether this error was raised by summarizer container or parent. Used to avoid logging errors twice.
+     */
+    readonly raisedOnSummarizer?: boolean;
 }
 
 export interface IWriteError {

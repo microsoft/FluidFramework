@@ -42,6 +42,7 @@ import {
     IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -370,7 +371,14 @@ export class Container
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
-        this.on("error", (error: any) => {
+        this.on("error", (error: IError | string) => {
+            // don't log errors raised by summarizer since summarizer already logged them
+            if (typeof error === "object" &&
+                error?.errorType === ErrorType.summarizingError &&
+                error.raisedOnSummarizer &&
+                this.client.details.type !== "summarizer") {
+                return;
+            }
             this.logContainerError(error);
         });
 
