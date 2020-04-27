@@ -39,7 +39,7 @@ describe("ConsensusRegisterCollection", () => {
 
     describe("Api", () => {
         describe("Attached, connected", () => {
-            async function write(k, v) {
+            async function writeAndProcessMsg(k, v) {
                 const waitP = crc.write(k, v);
                 deltaConnFactory.processAllMessages();
                 return waitP;
@@ -56,7 +56,7 @@ describe("ConsensusRegisterCollection", () => {
 
             it("Can add and remove data", async () => {
                 assert.strictEqual(crc.read("key1"), undefined);
-                const writeResult = await write("key1", "val1");
+                const writeResult = await writeAndProcessMsg("key1", "val1");
                 assert.strictEqual(crc.read("key1"), "val1");
                 assert.strictEqual(writeResult, true, "No concurrency expected");
             });
@@ -65,10 +65,22 @@ describe("ConsensusRegisterCollection", () => {
                 assert.strictEqual(crc.read("key1"), undefined);
                 const handle = crc.handle;
                 if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
-                const writeResult = await write("key1", handle);
+                const writeResult = await writeAndProcessMsg("key1", handle);
                 const readValue = crc.read("key1");
                 assert.strictEqual(readValue.path, handle.path);
                 assert.strictEqual(writeResult, true, "No concurrency expected");
+            });
+
+            it.only("Change events emit the right key/value", async () => {
+                crc.on("atomicChanged", (key: string, value: any, local: boolean) => {
+                    assert.strictEqual(key, "key1", "atomicChanged event emitted the wrong key");
+                    assert.strictEqual(value, "val1", "atomicChanged event emitted the wrong value");
+                });
+                crc.on("versionChanged", (key: string, value: any, local: boolean) => {
+                    assert.strictEqual(key, "key1", "versionChanged event emitted the wrong key");
+                    assert.strictEqual(value, "val1", "versionChanged event emitted the wrong value");
+                });
+                await writeAndProcessMsg("key1", "val1");
             });
         });
     });
