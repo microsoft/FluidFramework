@@ -116,7 +116,7 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
 }
 
 export interface FluidFunctionalComponentState {
-    isInitialized: boolean;
+    isInitialized?: boolean;
 }
 
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):

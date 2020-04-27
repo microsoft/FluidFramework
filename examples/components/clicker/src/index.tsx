@@ -48,7 +48,7 @@ function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
 
     return (
         <div>
-            <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+            <span className="clicker-value-class-functional" id={`clicker-functional-value-${Date.now().toString()}`}>
                 {state.value}
             </span>
             <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
@@ -96,7 +96,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                 />
                 <CounterReactFunctional
                     root={this.root}
-                    reactComponentDefaultState={{ value: 0, isInitialized: false }}
+                    reactComponentDefaultState={{ value: 0 }}
                     rootToInitialState={rootToInitialStateFunctional}
                     stateToRoot={stateToRootFunctional}
                 />
