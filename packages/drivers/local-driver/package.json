@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
     "@microsoft/fluid-container-definitions": "^0.15.0",
     "@microsoft/fluid-driver-definitions": "^0.15.0",
