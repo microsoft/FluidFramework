@@ -511,7 +511,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(this.isLoaded);
+        assert(this.isLoaded, "Snapshot called when not fully loaded");
 
         const minSeq = this.runtime.deltaManager
             ? this.runtime.deltaManager.minimumSequenceNumber
