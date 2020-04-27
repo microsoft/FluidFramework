@@ -7,6 +7,21 @@
 import * as sha1 from "sha.js/sha1";
 
 /**
+ * Create Hash (Github hashes the string with blob and size)
+ *
+ * @param file - The contents of the file in a buffer
+ * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
+ */
+export function gitHashFile(file: Buffer): string {
+    const size = file.byteLength;
+    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
+    const engine = new sha1();
+    return engine.update(filePrefix)
+        .update(file)
+        .digest("hex");
+}
+
+/**
  * Hash a file. Consistent within a session, but should not be persisted and
  * is not consistent with git.
  *
@@ -22,28 +37,18 @@ export async function hashFile(file: Buffer): Promise<string> {
         return engine.update(file).digest("hex");
     }
 
-    const hash = await crypto.subtle.digest("SHA-1", file);
-    const hashArray = new Uint8Array(hash);
-    const hashHex = Array.prototype.map.call(hashArray, function(byte) {
-        return byte.toString(16).padStart(2, "0");
-    }).join("");
+    // Fallback to sha.js library if subtlecrypto fails for whatever reason
+    // (while this workaround exists, we must also use the same alg in both places)
+    return Promise.resolve(crypto.subtle.digest("SHA-1", file)).then((hash) => {
+        const hashArray = new Uint8Array(hash);
+        const hashHex = Array.prototype.map.call(hashArray, function(byte) {
+            return byte.toString(16).padStart(2, "0");
+        }).join("");
 
-    return hashHex;
-}
-
-/**
- * Create Hash (Github hashes the string with blob and size)
- *
- * @param file - The contents of the file in a buffer
- * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
- */
-export function gitHashFile(file: Buffer): string {
-    const size = file.byteLength;
-    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-    const engine = new sha1();
-    return engine.update(filePrefix)
-        .update(file)
-        .digest("hex");
+        return hashHex;
+    }).catch((error) => {
+        return gitHashFile(file);
+    });
 }
 
 /**
