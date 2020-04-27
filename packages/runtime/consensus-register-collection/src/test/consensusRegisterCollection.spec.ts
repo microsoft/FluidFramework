@@ -71,7 +71,7 @@ describe("ConsensusRegisterCollection", () => {
                 assert.strictEqual(writeResult, true, "No concurrency expected");
             });
 
-            it.only("Change events emit the right key/value", async () => {
+            it("Change events emit the right key/value", async () => {
                 crc.on("atomicChanged", (key: string, value: any, local: boolean) => {
                     assert.strictEqual(key, "key1", "atomicChanged event emitted the wrong key");
                     assert.strictEqual(value, "val1", "atomicChanged event emitted the wrong value");

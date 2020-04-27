@@ -130,17 +130,20 @@ export class ConsensusRegisterCollection<T>
      * @returns Promise<true> if write was non-concurrent
      */
     public async write(key: string, value: T): Promise<boolean> {
+        const serializedValue = this.stringify(value);
+
+        if (this.isLocal()) {
+            // JSON-roundtrip value even for local writes
+            this.processInboundWrite(key, this.parse(serializedValue), 0, 0, true);
+            return true;
+        }
+
         const message: IRegisterOperation = {
             key,
             type: "write",
-            value: this.stringify(value),
+            value: serializedValue,
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
-
-        if (this.isLocal()) {
-            this.processInboundWrite(0, 0, message, true);
-            return true;
-        }
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
@@ -244,14 +247,17 @@ export class ConsensusRegisterCollection<T>
                     if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;
                     }
-                    // Message can be delivered with delay - resubmitted on reconnect.
-                    // we use refSeq not message.referenceSequenceNumber, to reference seq # at the time op was created
-                    // not later when op was actually sent over wire (as client can ingest ops in between).
-                    assert(op.refSeq <= message.referenceSequenceNumber);
+                    // Message can be delivered with delay - e.g. resubmitted on reconnect.
+                    // We need the refSeq from both when the op was created, and when it was transmitted
+                    const refSeqWhenCreated = op.refSeq;
+                    const refSeqWhenTransmitted = message.referenceSequenceNumber;
+                    assert(refSeqWhenCreated <= refSeqWhenTransmitted);
+
                     const winner = this.processInboundWrite(
-                        op.refSeq,
-                        message.sequenceNumber,
-                        op,
+                        op.key,
+                        this.parse(op.value),
+                        refSeqWhenCreated,
+                        refSeqWhenTransmitted,
                         local);
                     if (local) {
                         this.onLocalMessageAck(message, winner);
@@ -269,26 +275,26 @@ export class ConsensusRegisterCollection<T>
     }
 
     private processInboundWrite(
-        refSeq: number,
-        sequenceNumber: number,
-        op: IRegisterOperation,
-        local: boolean): boolean
-    {
-        let data = this.data.get(op.key);
-        const deserializedValue = this.parse(op.value);
+        key: string,
+        value: T,
+        refSeqWhenCreated: number,
+        refSeqWhenTransmitted: number,
+        local: boolean,
+    ): boolean {
+        let data = this.data.get(key);
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
-        const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
+        const winner = data === undefined || refSeqWhenCreated >= data.atomic.sequenceNumber;
         if (winner) {
             const atomicUpdate = newLocalRegister<T>(
-                sequenceNumber,
-                deserializedValue,
+                refSeqWhenTransmitted,
+                value,
             );
             if (data === undefined) {
                 data = {
                     atomic: atomicUpdate,
                     versions: [], // we'll update versions next, leave it empty for now
                 };
-                this.data.set(op.key, data);
+                this.data.set(key, data);
             } else {
                 data.atomic = atomicUpdate;
             }
@@ -298,19 +304,19 @@ export class ConsensusRegisterCollection<T>
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
-        while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
+        while (data.versions.length > 0 && refSeqWhenCreated >= data.versions[0].sequenceNumber) {
             data.versions.shift();
         }
 
         const versionUpdate = newLocalRegister<T>(
-            sequenceNumber,
-            deserializedValue,
+            refSeqWhenTransmitted,
+            value,
         );
 
         assert(
             data.versions.length === 0 ||
-            (this.isLocal() && sequenceNumber === 0) ||
-            sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
+            (this.isLocal() && refSeqWhenTransmitted === 0) ||
+            refSeqWhenTransmitted > data.versions[data.versions.length - 1].sequenceNumber,
             "Invalid incoming sequence number");
 
         // Push the new element.
@@ -318,9 +324,9 @@ export class ConsensusRegisterCollection<T>
 
         // Raise events at the end, to avoid reentrancy issues
         if (winner) {
-            this.emit("atomicChanged", op.key, op.value, local);
+            this.emit("atomicChanged", key, value, local);
         }
-        this.emit("versionChanged", op.key, op.value, local);
+        this.emit("versionChanged", key, value, local);
 
         return winner;
     }
