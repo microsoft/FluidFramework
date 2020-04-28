@@ -43,6 +43,7 @@ function generate(
         let deltaConnectionServer: ILocalDeltaConnectionServer;
         let containerDeltaEventManager: DocumentDeltaEventManager;
         let component1: ITestFluidComponent;
+        let component2: ITestFluidComponent;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
@@ -72,7 +73,7 @@ function generate(
             sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer();
-            const component2 = await getComponent("default", container2);
+            component2 = await getComponent("default", container2);
             sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer();
@@ -245,6 +246,30 @@ function generate(
             });
 
             assert.equal(await waitAcquireAndComplete(collection2), "testValue");
+            assert.equal(await acquireAndComplete(collection1), undefined);
+            assert.equal(await acquireAndComplete(collection2), undefined);
+        });
+
+        it.only("cancel wait on close", async () => {
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
+
+            const collection2Handle =
+                await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+            const collection2 = await collection2Handle.get();
+
+            const p2 = waitAcquireAndComplete(collection2);
+            component2.runtime.deltaManager.close();
+            //* todo: this fails badly too:
+            // component1.runtime.deltaManager.close();
+
+            await collection1.add("testValue");
+            await collection1.acquire(async (value) => {
+                assert.strictEqual(value, "testValue");
+                return ConsensusResult.Release;
+            });
+
+            assert.equal(await p2, "testValue");
             assert.equal(await acquireAndComplete(collection1), undefined);
             assert.equal(await acquireAndComplete(collection2), undefined);
         });
