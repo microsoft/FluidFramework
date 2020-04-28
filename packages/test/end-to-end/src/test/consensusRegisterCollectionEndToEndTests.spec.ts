@@ -74,16 +74,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
         });
 
-        it("Should not work before attach", async () => {
-            const collection1 = ctor.create(component1.runtime);
-            collection1.write("test-key", "test-value").then(() => {
-                assert(false, "Writing to local did not fail");
-            }).catch((reason) => {
-                assert(true, "Writing to local should fail");
-            });
-        });
-
-        it("Should work after attach", async () => {
+        it("Basic functionality", async () => {
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");
