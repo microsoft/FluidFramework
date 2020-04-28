@@ -13,7 +13,7 @@ export interface IViewActions {
   setAvailability: (
     personKey: number,
     dateKey: number,
-    value: string | number
+    value: number
   ) => void;
   setName: (personKey: number, value: string) => void;
   setDate: (dateKey: number, date: Date) => void;
