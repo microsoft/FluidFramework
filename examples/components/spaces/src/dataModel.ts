@@ -14,7 +14,7 @@ import { Layout } from "react-grid-layout";
 const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<void>;
+    setComponentToolbar(id: string, type: string, handle: IComponentHandle): void;
     setComponent(id: string, handle: IComponentHandle, url: string): Promise<IComponent>;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
@@ -114,20 +114,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return this.root.get<string>(ComponentToolbarUrlKey);
     }
 
-    public async setComponentToolbar(
+    public setComponentToolbar(
         url: string,
         type: string,
-        handle: IComponentHandle): Promise<void> {
+        handle: IComponentHandle): void {
         this.removeComponent(this.componentToolbarUrl);
-        const component = await handle.get();
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
             handle,
         };
-        if (component === undefined) {
-            throw new Error(`Runtime does not contain component with url: ${url}`);
-        }
 
         this.root.set(ComponentToolbarUrlKey, url);
         this.componentSubDirectory.set(url, defaultModel);
