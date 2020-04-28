@@ -9,15 +9,14 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { TestResolver } from "../testResolver";
 
 describe("Local Driver Resolver", () => {
-
     const tenantId = "tenantId";
     const fileName = "fileName";
     let resolver: TestResolver;
     let request: IRequest;
 
     beforeEach(() => {
-        resolver = new TestResolver(fileName);
-        request = resolver.createCreateNewRequest();
+        resolver = new TestResolver();
+        request = resolver.createCreateNewRequest(fileName);
     });
 
     it("Create New Request", async () => {

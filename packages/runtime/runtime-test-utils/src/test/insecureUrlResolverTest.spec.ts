@@ -10,7 +10,6 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
-
     const hostUrl = "https://localhost";
     const ordererUrl = "https://localhost.orderer";
     const storageUrl = "https://localhost.storage";
