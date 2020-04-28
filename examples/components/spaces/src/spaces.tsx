@@ -114,8 +114,13 @@ export class Spaces extends PrimedComponent
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({
                 addComponent: (type: string, w?: number, h?: number) => {
-                    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
-                    this.dataModel.addComponent(type, w, h);
+                    this.createAndAttachComponent(type)
+                        .then((component) => {
+                            this.dataModel.setComponentWithLayout(component, type, { w, h });
+                        })
+                        .catch((error) => {
+                            console.error(`Error while creating component: ${type}`, error);
+                        });
                 },
                 addTemplate: this.addTemplateFromRegistry.bind(this),
                 saveLayout: () => this.dataModel.saveLayout(),
