@@ -20,10 +20,12 @@ import { IComponentCallable, IComponentCallbacks, IComponentOptions } from "@flu
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
-const extraComponents = [
-    "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
-    "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
-];
+// extraComponents facilitates local component development.  Make sure the path points to a directory containing
+// the package.json for the package, and also make sure you've run webpack there first.
+// const extraComponents = [
+//     "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
+//     "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
+// ];
 
 /**
  * Component that loads extneral components via their url
@@ -90,11 +92,11 @@ export class ExternalComponentLoader extends PrimedComponent
                 option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);
             });
-            extraComponents.forEach((url) => {
-                const option = document.createElement("option");
-                option.value = `${url}`;
-                dataList.append(option);
-            });
+            // extraComponents.forEach((url) => {
+            //     const option = document.createElement("option");
+            //     option.value = `${url}`;
+            //     dataList.append(option);
+            // });
 
             const input = document.createElement("input");
             inputDiv.append(input);
