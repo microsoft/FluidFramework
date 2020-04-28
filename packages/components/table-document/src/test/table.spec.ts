@@ -30,7 +30,7 @@ describe("TableDocument", () => {
         return id;
     }
 
-    const createTable = async () => host.createAndAttachComponent(TableDocumentType);
+    const createTable = async () => host.createAndAttachComponent(makeId(TableDocumentType), TableDocumentType);
 
     let table: TableDocument;
     beforeEach(async () => {
