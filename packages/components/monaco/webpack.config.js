@@ -83,7 +83,7 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            before: (app, server) => fluidRoute.before(app, server),
+            before: (app, server) => fluidRoute.before(app, server, env),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         },
         plugins: [
