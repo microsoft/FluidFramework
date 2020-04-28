@@ -3,7 +3,9 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { DataModel } from "./FluidModel";
 
-export const fluidExport = new PrimedComponentFactory(DataModel, [
+export const fluidExport = new PrimedComponentFactory(
+  "ScheduleIt",
+  DataModel, [
   SharedMap.getFactory(),
   SharedObjectSequence.getFactory(),
-]);
+], {});

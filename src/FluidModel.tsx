@@ -1,8 +1,8 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
-  IComponentHandle,
-  IComponentHTMLVisual,
+  IComponentHandle
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { BadArray, defaultDatesNumbers, defaultPeople } from "./utils";
@@ -15,7 +15,7 @@ import {
   IViewActions,
   IViewSelectors,
 } from "./provider";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { SharedObjectSequence, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ScheduleIt } from "./View";
 import { App } from "./ReactModel";
 
@@ -27,7 +27,7 @@ import { App } from "./ReactModel";
 // }
 
 export class DataModel extends PrimedComponent
-  implements IViewProps, IComponentHTMLVisual {
+  implements IViewProps, IComponentHTMLView {
   private _datesKey = "dates";
   private _peopleKey = "people";
   private _commentsKey = "comment";
@@ -38,7 +38,7 @@ export class DataModel extends PrimedComponent
 
   private _selectors;
 
-  public get IComponentHTMLVisual() {
+  public get IComponentHTMLView() {
     return this;
   }
 
@@ -63,14 +63,14 @@ export class DataModel extends PrimedComponent
   protected async componentHasInitialized() {
     // set up local refs to the DDSes so they're easily accessible from synchronous code
     this._dates = await this.root
-      .get<IComponentHandle>(this._datesKey)
-      .get<SharedObjectSequence<number>>();
+      .get<IComponentHandle<SharedObjectSequence<number>>>(this._datesKey)
+      .get();
     this._people = await this.root
-      .get<IComponentHandle>(this._peopleKey)
-      .get<SharedObjectSequence<IPersonType>>();
+      .get<IComponentHandle<SharedObjectSequence<IPersonType>>>(this._peopleKey)
+      .get();
     this._comments = await this.root
-      .get<IComponentHandle>(this._commentsKey)
-      .get<SharedObjectSequence<ICommentType>>();
+      .get<IComponentHandle<SharedObjectSequence<ICommentType>>>(this._commentsKey)
+      .get();
   }
 
   private setPerson = (index: number, person: IPersonType): void => {
@@ -210,32 +210,34 @@ export class DataModel extends PrimedComponent
       rerender();
     });
     if (this._people) {
-      this._people.on("sequenceDelta", (event) => {
+      this._people.on("sequenceDelta", (event: SequenceDeltaEvent) => {
         console.log(
           `${this.runtime.clientId} people sequenceDelta: op[${
-            event.deltaOperation
+          event.deltaOperation
           }] args[${JSON.stringify(event.deltaArgs.operation)}]`
         );
         this._selectors = this.selectors;
         rerender();
       });
     }
+
     if (this._dates) {
-      this._dates.on("sequenceDelta", (event) => {
+      this._dates.on("sequenceDelta", (event: SequenceDeltaEvent) => {
         console.log(
           `${this.runtime.clientId} dates sequenceDelta: op[${
-            event.deltaOperation
+          event.deltaOperation
           }] args[${JSON.stringify(event.deltaArgs.operation)}]`
         );
         this._selectors = this.selectors;
         rerender();
       });
     }
+
     if (this._comments) {
-      this._comments.on("sequenceDelta", (event) => {
+      this._comments.on("sequenceDelta", (event: SequenceDeltaEvent) => {
         console.log(
           `${this.runtime.clientId} dates sequenceDelta: op[${
-            event.deltaOperation
+          event.deltaOperation
           }] args[${JSON.stringify(event.deltaArgs.operation)}]`
         );
         this._selectors = this.selectors;
