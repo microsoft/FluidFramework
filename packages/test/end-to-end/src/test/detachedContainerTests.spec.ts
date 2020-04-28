@@ -156,8 +156,7 @@ describe("Detached Container", () => {
 
         // Now load the container from another loader.
         const loader2 = createLocalLoader([[ pkg, factory ]], testDeltaConnectionServer) as Loader;
-        const container2 = await loader2.resolve({ url:
-            (await testResolver.requestUrl(container.resolvedUrl, { url : "" })).value });
+        const container2 = await loader2.resolve(testRequest);
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });
