@@ -54,11 +54,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
-        private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
-            id: string,
-            directory: IDirectory,
-            getObjectFromDirectory: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
-        Promise<T | undefined>,
         private _componentToolbarUrl: string,
     ) {
         super();
@@ -140,7 +135,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             const defaultModel: ISpacesModel = {
                 type,
                 layout: { x: 0, y: 0, w: 6, h: 2 },
-                handleOrId: handle,
+                handle,
             };
             if (component) {
                 this.root.set(ComponentToolbarUrlKey, url);
@@ -161,7 +156,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
-            handleOrId: handle,
+            handle,
         };
         return handle.get()
             .then((returnedComponent) => {
@@ -201,13 +196,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         const model = {
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
-            handleOrId: currentEntry.handleOrId,
+            handle: currentEntry.handle,
         };
         this.componentSubDirectory.set(id, model);
     }
 
     public async getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined> {
-        return this.getComponentFromDirectory<T>(id, this.componentSubDirectory, this.getObjectFromDirectory);
+        return this.componentSubDirectory.get<ISpacesModel>(id)?.handle.get() as Promise<T>;
     }
 
     public getLayout(id: string): Layout {
@@ -239,20 +234,18 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         }
     }
 
-    private getObjectFromDirectory(id: string, directory: IDirectory): string | IComponentHandle | undefined {
-        const data = directory.get<ISpacesModel>(id);
-        return data?.handleOrId;
-    }
-
     private async addComponentInternal<T extends IComponent & IComponentLoadable>(
         type: string,
         layout: Layout): Promise<T> {
+        const component = await this.createAndAttachComponent<T>(type);
+        if (component.handle === undefined) {
+            throw new Error(`Component must have a handle: ${type}`);
+        }
         const defaultModel: ISpacesModel = {
             type,
             layout,
+            handle: component.handle,
         };
-        const component = await this.createAndAttachComponent<T>(type);
-        defaultModel.handleOrId = component.handle;
         this.componentSubDirectory.set(component.url, defaultModel);
         return component;
     }
@@ -261,5 +254,5 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 interface ISpacesModel {
     type: string;
     layout: Layout;
-    handleOrId?: IComponentHandle | string;
+    handle: IComponentHandle;
 }

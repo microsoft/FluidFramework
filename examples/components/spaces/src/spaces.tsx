@@ -141,7 +141,6 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
-                this.getComponentFromDirectory.bind(this),
                 this.root.get(ComponentToolbarUrlKey),
             );
     }
