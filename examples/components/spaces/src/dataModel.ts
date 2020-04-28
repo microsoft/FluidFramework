@@ -17,6 +17,7 @@ export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
     setComponent(component: IComponent & IComponentLoadable, type: string): void;
+    setComponentWithLayout(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
         type: string,

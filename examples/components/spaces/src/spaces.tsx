@@ -76,14 +76,7 @@ export class Spaces extends PrimedComponent
     protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
-        const componentToolbar =
-            await this.dataModel.addComponent<ComponentToolbar>(
-                ComponentToolbarName,
-                4,
-                4,
-                0,
-                0,
-            );
+        const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
         componentToolbar.changeEditState(true);
         this.setComponentToolbar(
             componentToolbar.url,
