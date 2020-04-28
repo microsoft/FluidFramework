@@ -52,16 +52,17 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
         return;
     }
 
-    // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any,
+        id: string, type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(type, props);
+        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+            this.root.set(id, component.handle);
+            return component;
+        });
     }
 
-    // Make this function public so TestHost can use them
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
-        return super.getComponent_UNSAFE<T>(id);
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        return this.root.get<IComponentHandle<T>>(id).get();
     }
 
     /**
@@ -215,24 +216,25 @@ export class TestHost {
      * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param services component services for query interface
+     * @param props optional props to be passed to the component on creation
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string,
         type: string,
         props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(type, props);
+        return root.createAndAttachComponent<T>(id, type, props);
     }
 
     /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent_UNSAFE<T>(id);
+        return root.getComponent<T>(id);
     }
 
     /**
