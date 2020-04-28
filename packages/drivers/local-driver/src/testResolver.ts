@@ -75,7 +75,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         assert(documentId);
         const response: IResponse = {
             mimeType: "text/plain",
-            value: `https://localhost:3000/${documentId}/${url}`,
+            value: `https://localhost:3000/${this.tenantId}/${documentId}/${url}`,
             status: 200,
         };
         return response;
