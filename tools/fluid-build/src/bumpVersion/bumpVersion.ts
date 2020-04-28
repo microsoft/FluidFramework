@@ -13,7 +13,7 @@ import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
-import { GitRepo, fatal, exec } from "./utils";
+import { GitRepo, fatal, exec, execNoError } from "./utils";
 
 function printUsage() {
     console.log(
@@ -392,7 +392,8 @@ class BumpVersion {
      * @param pkg package to check if it is published
      */
     private async checkPublished(pkg: Package) {
-        const ret = await exec(`npm view ${pkg.name}@${pkg.version} version`, this.repo.resolvedRoot);
+        const ret = await execNoError(`npm view ${pkg.name}@${pkg.version} version`, this.repo.resolvedRoot);
+        if (!ret) { return false; }
         const publishedVersion = ret.split("\n")[0];
         return publishedVersion === pkg.version;
     }
@@ -463,7 +464,7 @@ class BumpVersion {
      * @param packages the package that to be released now if needed
      */
     private async releasePackage(packageNeedBump: Set<Package>, packages: string[]) {
-        console.log(`  Releasing ${packages.join(" ")}`);
+        
 
         // Filter out the packages that need to be released
         const packageToBump: Package[] = [];
@@ -475,6 +476,12 @@ class BumpVersion {
             }
         }
 
+        if (packageToBump.length === 0) {
+            return;
+        }
+
+        console.log(`  Releasing ${packages.join(" ")}`);
+        
         // Tagging release
         for (const pkg of packageToBump) {
             if (!await this.checkPublished(pkg)) {
