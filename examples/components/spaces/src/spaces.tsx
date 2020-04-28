@@ -70,9 +70,7 @@ export class Spaces extends PrimedComponent
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel}/>,
-            div);
+        ReactDOM.render(<SpacesGridView dataModel={this.dataModel}/>, div);
     }
 
     protected async componentInitializingFirstTime() {
