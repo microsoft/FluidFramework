@@ -75,7 +75,7 @@ export const ScheduleIt = () => {
             ]}
             selectedKey={value}
             onChange={(e, o) => {
-              setAvailability(key, i, o.key);
+              setAvailability(key, i, o.key as number);
             }}
           />
         </div>

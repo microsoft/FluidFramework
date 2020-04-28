@@ -97,11 +97,11 @@ export class DataModel extends PrimedComponent
   public setAvailability: IViewActions["setAvailability"] = (
     personIndex: number,
     dayIndex: number,
-    value: number | string
+    value: number
   ) => {
     if (this._people) {
       let person = BadArray.get(this._people, personIndex);
-      person.availability[dayIndex] = AvailabilityType[value];
+      person.availability[dayIndex] = value;
       this.setPerson(personIndex, person);
     }
   };
