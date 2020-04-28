@@ -183,18 +183,16 @@ export class ConsensusOrderedCollection<T = any>
      * Wait for a value to be available and acquire it from the consensus collection
      */
     public async waitAndAcquire(callback: ConsensusCallback<T>): Promise<void> {
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
+        this.runtime.deltaManager.once("closed", () => {
+            throw new Error("deltaManager closed");
+        });
+
+        while (!(await this.acquire(callback))) {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
                 await new Promise((resolve) => {
                     this.once("add", resolve);
                 });
-            }
-
-            const res = await this.acquire(callback);
-            if (res) {
-                return;
             }
         }
     }
@@ -406,8 +404,7 @@ export class ConsensusOrderedCollection<T = any>
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         if (this.isLocal()) {
             // can be undefined if queue is empty
-            const value = this.acquireCore(uuid(), belongsToUnattached);
-            return Promise.resolve(value);
+            return this.acquireCore(uuid(), belongsToUnattached);
         }
 
         return this.submit<IConsensusOrderedCollectionAcquireOperation>({
