@@ -60,7 +60,7 @@ export class Spaces extends PrimedComponent
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    public async setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable) {
+    public setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable) {
         this.dataModel.setComponentToolbar(id, type, toolbarComponent);
         this.componentToolbar = toolbarComponent;
         this.addToolbarListeners();
@@ -88,7 +88,7 @@ export class Spaces extends PrimedComponent
                 0,
             );
         componentToolbar.changeEditState(true);
-        await this.setComponentToolbar(
+        this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
             componentToolbar);

@@ -109,18 +109,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         url: string,
         type: string,
         toolbarComponent: IComponent & IComponentLoadable): void {
-        if (toolbarComponent.handle === undefined) {
-            throw new Error(`Component must have a handle: ${type}`);
-        }
         this.removeComponent(this.componentToolbarUrl);
+        this.setComponent(toolbarComponent, type);
         this.root.set(ComponentToolbarUrlKey, url);
-
-        const model: ISpacesModel = {
-            type,
-            layout: { x: 0, y: 0, w: 6, h: 2 },
-            handle: toolbarComponent.handle,
-        };
-        this.componentSubDirectory.set(url, model);
     }
 
     public async getComponentToolbar(): Promise<IComponent> {
