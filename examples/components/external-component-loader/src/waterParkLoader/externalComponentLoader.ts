@@ -197,9 +197,8 @@ export class ExternalComponentLoader extends PrimedComponent
                 component = component.IComponentCollection.createCollectionItem();
             }
             viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
-                handle: component.IComponentHandle,
+                component: component as IComponent & IComponentLoadable,
                 type: value,
-                url: component.IComponentLoadable?.url,
             });
         } catch (error) {
             this.error = error;

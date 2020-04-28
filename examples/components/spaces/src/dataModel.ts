@@ -10,12 +10,13 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
+import { IComponentOptions } from "./interfaces";
 
 const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): void;
-    setComponent(id: string, handle: IComponentHandle, url: string): Promise<IComponent>;
+    setComponent(component: IComponent & IComponentLoadable, type: string): void;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
         type: string,
@@ -34,12 +35,6 @@ export interface ISpacesDataModel extends EventEmitter {
     IComponentCollection: IComponentCollection;
     createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
     removeCollectionItem(item: IComponent): void;
-}
-
-export interface IComponentOptions {
-    url?: string;
-    handle?: IComponentHandle;
-    type?: string;
 }
 
 /**
@@ -70,15 +65,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
         const options = rawOptions as IComponentOptions;
-        if (!options.handle || !options.type || !options.url) {
+        if (!options.type || !options.component) {
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.setComponent(options.url, options.handle, options.type);
-        // This is okay as we are not using the value returned from this function call anywhere
-        // Instead, setComponent adds it to the sequence to be synchronously loaded
-        const emptyComponent: IComponent = {};
-        return emptyComponent;
+        this.setComponent(options.component, options.type);
+        return options.component;
     }
 
     public removeCollectionItem(instance: IComponent): void {
@@ -119,14 +110,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         handle: IComponentHandle): void {
         this.removeComponent(this.componentToolbarUrl);
-        const defaultModel: ISpacesModel = {
+        const model: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
             handle,
         };
 
         this.root.set(ComponentToolbarUrlKey, url);
-        this.componentSubDirectory.set(url, defaultModel);
+        this.componentSubDirectory.set(url, model);
     }
 
     public async getComponentToolbar(): Promise<IComponent> {
@@ -134,21 +125,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return component as IComponent;
     }
 
-    public async setComponent(url: string, handle: IComponentHandle, type: string): Promise<IComponent> {
-        const defaultModel: ISpacesModel = {
+    public setComponent(component: IComponent & IComponentLoadable, type: string): void {
+        if (component.handle === undefined) {
+            throw new Error(`Component must have a handle: ${type}`);
+        }
+        const model: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
-            handle,
+            handle: component.handle,
         };
-        const returnedComponent = await handle.get();
-        if (returnedComponent === undefined) {
-            throw new Error(`Runtime does not contain component with id: ${url}`);
-        }
-        if (returnedComponent.IComponentLoadable === undefined) {
-            throw new Error("Component is not an instance of IComponentLoadable!!");
-        }
-        this.componentSubDirectory.set(returnedComponent.url, defaultModel);
-        return returnedComponent;
+        this.componentSubDirectory.set(component.url, model);
     }
 
     public async addComponent<T extends IComponent & IComponentLoadable>(
@@ -215,12 +201,12 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         if (component.handle === undefined) {
             throw new Error(`Component must have a handle: ${type}`);
         }
-        const defaultModel: ISpacesModel = {
+        const model: ISpacesModel = {
             type,
             layout,
             handle: component.handle,
         };
-        this.componentSubDirectory.set(component.url, defaultModel);
+        this.componentSubDirectory.set(component.url, model);
         return component;
     }
 }
