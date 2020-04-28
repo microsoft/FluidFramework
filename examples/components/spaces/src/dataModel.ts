@@ -15,7 +15,7 @@ import { IComponentOptions } from "./interfaces";
 const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    setComponentToolbar(id: string, type: string, handle: IComponentHandle): void;
+    setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
     setComponent(component: IComponent & IComponentLoadable, type: string): void;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
@@ -108,15 +108,18 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     public setComponentToolbar(
         url: string,
         type: string,
-        handle: IComponentHandle): void {
+        toolbarComponent: IComponent & IComponentLoadable): void {
+        if (toolbarComponent.handle === undefined) {
+            throw new Error(`Component must have a handle: ${type}`);
+        }
         this.removeComponent(this.componentToolbarUrl);
+        this.root.set(ComponentToolbarUrlKey, url);
+
         const model: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
-            handle,
+            handle: toolbarComponent.handle,
         };
-
-        this.root.set(ComponentToolbarUrlKey, url);
         this.componentSubDirectory.set(url, model);
     }
 
