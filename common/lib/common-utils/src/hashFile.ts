@@ -7,21 +7,6 @@
 import * as sha1 from "sha.js/sha1";
 
 /**
- * Create Hash (Github hashes the string with blob and size)
- *
- * @param file - The contents of the file in a buffer
- * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
- */
-export function gitHashFile(file: Buffer): string {
-    const size = file.byteLength;
-    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-    const engine = new sha1();
-    return engine.update(filePrefix)
-        .update(file)
-        .digest("hex");
-}
-
-/**
  * Hash a file. Consistent within a session, but should not be persisted and
  * is not consistent with git.
  *
@@ -47,8 +32,24 @@ export async function hashFile(file: Buffer): Promise<string> {
 
         return hashHex;
     }).catch((error) => {
-        return gitHashFile(file);
+        const engine = new sha1();
+        return engine.update(file).digest("hex");
     });
+}
+
+/**
+ * Create Hash (Github hashes the string with blob and size)
+ *
+ * @param file - The contents of the file in a buffer
+ * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
+ */
+export function gitHashFile(file: Buffer): string {
+    const size = file.byteLength;
+    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
+    const engine = new sha1();
+    return engine.update(filePrefix)
+        .update(file)
+        .digest("hex");
 }
 
 /**
