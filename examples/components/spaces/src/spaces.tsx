@@ -61,7 +61,8 @@ export class Spaces extends PrimedComponent
     public get IComponentToolbarConsumer() { return this; }
 
     public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
+        await this.dataModel.setComponentToolbar(id, type, handle);
+        const componentToolbar = await this.dataModel.getComponentToolbar();
         this.componentToolbar = componentToolbar;
         this.addToolbarListeners();
     }

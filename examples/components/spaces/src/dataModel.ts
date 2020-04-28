@@ -14,7 +14,7 @@ import { Layout } from "react-grid-layout";
 const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<IComponent>;
+    setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<void>;
     setComponent(id: string, handle: IComponentHandle, url: string): Promise<IComponent>;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
@@ -117,7 +117,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     public async setComponentToolbar(
         url: string,
         type: string,
-        handle: IComponentHandle): Promise<IComponent> {
+        handle: IComponentHandle): Promise<void> {
         this.removeComponent(this.componentToolbarUrl);
         const component = await handle.get();
         const defaultModel: ISpacesModel = {
@@ -131,7 +131,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
         this.root.set(ComponentToolbarUrlKey, url);
         this.componentSubDirectory.set(url, defaultModel);
-        return component;
     }
 
     public async getComponentToolbar(): Promise<IComponent> {
@@ -163,8 +162,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         x: number = 0,
         y: number = 0,
     ): Promise<T> {
-        const defaultLayout = { x, y, w, h };
-        return this.addComponentInternal<T>(type, defaultLayout);
+        const layout = { x, y, w, h };
+        return this.addComponentInternal<T>(type, layout);
     }
 
     public removeComponent(id: string) {
