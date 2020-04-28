@@ -12,6 +12,8 @@ import {
     IClient,
     IConnect,
     INack,
+    ISequencedDocumentMessage,
+    ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
@@ -51,8 +53,6 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
-    private readonly nonForwardEvents = ["nack"];
-
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -250,24 +250,59 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId);
-
-        // when possible emit nacks only when it targets this specific client/document
-        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
-            if (clientIdOrDocumentId.length === 0 ||
-                clientIdOrDocumentId === documentId ||
-                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
-                this.emit("nack", clientIdOrDocumentId, message);
-            }
-        });
     }
 
+    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+        if (this.documentId === documentId) {
+            debug("Queued early ops", msgs.length);
+            this.queuedMessages.push(...msgs);
+        }
+    };
+
+    protected earlySignalHandler?= (msg: ISignalMessage, documentId?: string) => {
+        if (!documentId || documentId === this.documentId) {
+            debug("Queued early signals");
+            this.queuedSignals.push(msg);
+        }
+    };
+
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
-        if (!this.nonForwardEvents.includes(event)) {
-            super.addTrackedListener(event, listener);
-        } else {
-            // this is a "nonforward" event
-            // don't directly link up this socket event to the listener
-            // we will handle the event from a listener in the constructor
+        // override some event listeners in order to support multiple documents/clients over the same websocket
+        switch (event) {
+            case "op":
+                // per document op handling
+                super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+                    if (this.documentId === documentId) {
+                        // only pass through ops meant for this document
+                        listener(documentId, msgs);
+                    }
+                });
+                break;
+
+            case "signal":
+                // per document signal handling
+                super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
+                    if (!documentId || documentId === this.documentId) {
+                        // pass through signals meant for this document when possible
+                        listener(msg, documentId);
+                    }
+                });
+                break;
+
+            case "nack":
+                // per client / document nack handling
+                super.addTrackedListener(event, (clientIdOrDocumentId: string, message: INack[]) => {
+                    if (clientIdOrDocumentId.length === 0 ||
+                        clientIdOrDocumentId === this.documentId ||
+                        (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                        this.emit("nack", clientIdOrDocumentId, message);
+                    }
+                });
+                break;
+
+            default:
+                super.addTrackedListener(event, listener);
+                break;
         }
     }
 

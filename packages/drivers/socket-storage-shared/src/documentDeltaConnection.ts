@@ -99,9 +99,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     // Listen for ops sent before we receive a response to connect_document
-    private readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     private readonly queuedContents: IContentMessage[] = [];
-    private readonly queuedSignals: ISignalMessage[] = [];
+    protected readonly queuedSignals: ISignalMessage[] = [];
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
@@ -428,17 +428,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         });
     }
 
-    private earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
-    private earlyContentHandler ?= (msg: IContentMessage) => {
+    protected earlyContentHandler ?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     };
 
-    private earlySignalHandler ?= (msg: ISignalMessage) => {
+    protected earlySignalHandler ?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     };
