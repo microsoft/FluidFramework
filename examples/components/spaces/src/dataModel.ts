@@ -31,7 +31,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getLayout(id: string): Layout;
     saveLayout(): void;
     setTemplate(): Promise<void>;
-    componentToolbarUrl: string;
+    readonly componentToolbarUrl: string;
     IComponentCollection: IComponentCollection;
     createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
     removeCollectionItem(item: IComponent): void;
@@ -59,7 +59,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             directory: IDirectory,
             getObjectFromDirectory: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
         Promise<T | undefined>,
-        public componentToolbarUrl: string,
+        private _componentToolbarUrl: string,
     ) {
         super();
 
@@ -118,6 +118,10 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return response;
     }
 
+    public get componentToolbarUrl(): string {
+        return this._componentToolbarUrl;
+    }
+
     public async addFormattedComponents(componentsToAdd: ISpacesModel[]): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         componentsToAdd.forEach(async (componentTemplate) => {
@@ -131,7 +135,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         handle: IComponentHandle): Promise<IComponent> {
         return this.removeComponent(this.componentToolbarUrl).then(async () => {
-            this.componentToolbarUrl = url;
+            this._componentToolbarUrl = url;
             const component = await handle.get();
             const defaultModel: ISpacesModel = {
                 type,
