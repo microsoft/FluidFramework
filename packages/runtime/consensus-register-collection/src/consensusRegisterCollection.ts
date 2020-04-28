@@ -60,9 +60,9 @@ interface IRegisterOperation {
     value: string;
 
     // Message can be delivered with delay - resubmitted on reconnect.
-    // As such, refSeq needs to reference seq # at the time op was created (here),
-    // not when op was actually sent over wire (as client can ingest ops in between)
-    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+    // As such, refSeq needs to reference seq # at the time op was created,
+    // not when op was actually sent over wire (ISequencedDocumentMessage.referenceSequenceNumber),
+    // as client can ingest ops in between.
     refSeq?: number;
 }
 
@@ -245,16 +245,15 @@ export class ConsensusRegisterCollection<T>
                         op.refSeq = message.referenceSequenceNumber;
                     }
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
-                    // We need the refSeq from both when the op was created, and when it was transmitted
+                    // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;
-                    const refSeqWhenTransmitted = message.referenceSequenceNumber;
-                    assert(refSeqWhenCreated <= refSeqWhenTransmitted);
+                    assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
                     const winner = this.processInboundWrite(
                         op.key,
                         this.parse(op.value),
                         refSeqWhenCreated,
-                        refSeqWhenTransmitted,
+                        message.sequenceNumber,
                         local);
                     if (local) {
                         this.onLocalMessageAck(message, winner);
@@ -271,19 +270,28 @@ export class ConsensusRegisterCollection<T>
         return data?.atomic.value.value;
     }
 
+    /**
+     * Process an inbound write op
+     * @param key - Key that was written to
+     * @param value - Incoming value
+     * @param refSeq - RefSeq at the time of write on the remote client
+     * @param sequenceNumber - Sequence Number of this write op
+     * @param local - Did this write originate on this client
+     */
     private processInboundWrite(
         key: string,
         value: T,
-        refSeqWhenCreated: number,
-        refSeqWhenTransmitted: number,
+        refSeq: number,
+        sequenceNumber: number,
         local: boolean,
     ): boolean {
         let data = this.data.get(key);
-        // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
-        const winner = data === undefined || refSeqWhenCreated >= data.atomic.sequenceNumber;
+        // Atomic update if it's a new register or the write was not concurrent,
+        // meaning our state was known to the remote client at the time of write
+        const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
         if (winner) {
             const atomicUpdate = newLocalRegister<T>(
-                refSeqWhenTransmitted,
+                sequenceNumber,
                 value,
             );
             if (data === undefined) {
@@ -300,21 +308,24 @@ export class ConsensusRegisterCollection<T>
             strongAssert(data);
         }
 
-        // Keep removing versions where incoming refseq is greater than or equals to current.
-        while (data.versions.length > 0 && refSeqWhenCreated >= data.versions[0].sequenceNumber) {
+        // Remove versions that were known to the remote client at the time of write
+        while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
             data.versions.shift();
         }
 
         const versionUpdate = newLocalRegister<T>(
-            refSeqWhenTransmitted,
+            sequenceNumber,
             value,
         );
 
-        assert(
-            data.versions.length === 0 ||
-            (this.isLocal() && refSeqWhenTransmitted === 0) ||
-            refSeqWhenTransmitted > data.versions[data.versions.length - 1].sequenceNumber,
-            "Invalid incoming sequence number");
+        // Asserts for data integrity
+        if (this.isLocal()) {
+            assert(refSeq === 0 && sequenceNumber === 0, "sequence numbersare expected to be 0 when unattached");
+        }
+        else if (data.versions.length > 0) {
+            assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
+                "Versions should naturally be ordered by sequenceNumber");
+        }
 
         // Push the new element.
         data.versions.push(versionUpdate);
