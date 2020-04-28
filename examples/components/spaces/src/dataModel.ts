@@ -104,7 +104,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     public setComponentToolbar(
         url: string,
         type: string,
-        toolbarComponent: IComponent & IComponentLoadable): void {
+        toolbarComponent: IComponent & IComponentLoadable,
+    ): void {
         this.removeComponent(this.componentToolbarUrl);
         this.addComponent(toolbarComponent, type, { x: 0, y: 0, w: 6, h: 2 });
         this.root.set(ComponentToolbarUrlKey, url);
