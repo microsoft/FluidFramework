@@ -120,12 +120,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public setComponent(component: IComponent & IComponentLoadable, type: string): void {
+        this.setComponentWithLayout(component, type, { x: 0, y: 0, w: 6, h: 2 });
+    }
+
+    public setComponentWithLayout(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {
         if (component.handle === undefined) {
             throw new Error(`Component must have a handle: ${type}`);
         }
         const model: ISpacesModel = {
             type,
-            layout: { x: 0, y: 0, w: 6, h: 2 },
+            layout,
             handle: component.handle,
         };
         this.componentSubDirectory.set(component.url, model);
@@ -139,7 +143,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         y: number = 0,
     ): Promise<T> {
         const layout = { x, y, w, h };
-        return this.addComponentInternal<T>(type, layout);
+        const component = await this.createAndAttachComponent<T>(type);
+        this.setComponentWithLayout(component, type, layout);
+        return component;
     }
 
     public removeComponent(id: string) {
@@ -181,27 +187,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         if (templateString) {
             const templateItems = JSON.parse(templateString) as ISpacesModel[];
             const promises = templateItems.map(async (templateItem) => {
-                return this.addComponentInternal(templateItem.type, templateItem.layout);
+                const component = await this.createAndAttachComponent(templateItem.type);
+                this.setComponentWithLayout(component, templateItem.type, templateItem.layout);
+                return component;
             });
 
             await Promise.all(promises);
         }
-    }
-
-    private async addComponentInternal<T extends IComponent & IComponentLoadable>(
-        type: string,
-        layout: Layout): Promise<T> {
-        const component = await this.createAndAttachComponent<T>(type);
-        if (component.handle === undefined) {
-            throw new Error(`Component must have a handle: ${type}`);
-        }
-        const model: ISpacesModel = {
-            type,
-            layout,
-            handle: component.handle,
-        };
-        this.componentSubDirectory.set(component.url, model);
-        return component;
     }
 }
 
