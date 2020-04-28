@@ -13,7 +13,7 @@ import { Layout } from "react-grid-layout";
 
 export const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
-    componentList: Map<string, Layout>;
+    readonly componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<IComponent>;
     setComponent(id: string, handle: IComponentHandle, url: string): Promise<IComponent>;
     getComponentToolbar(): Promise<IComponent>;
