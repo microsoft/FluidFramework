@@ -18,6 +18,7 @@ export interface ISpacesDataModel extends EventEmitter {
     addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
+    addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
     setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
     getComponentToolbar(): Promise<IComponent>;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -96,6 +97,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public get componentToolbarUrl(): string {
         return this.root.get<string>(ComponentToolbarUrlKey);
+    }
+
+    public async addFormattedComponents(componentModels: ISpacesModel[]): Promise<void> {
+        const components = await Promise.all(componentModels.map(async (model) => model.handle.get()));
+        components.forEach((component, index) => {
+            this.addComponent(component, componentModels[index].type, componentModels[index].layout);
+        });
     }
 
     public setComponentToolbar(
