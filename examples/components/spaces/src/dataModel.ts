@@ -119,21 +119,20 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         url: string,
         type: string,
         handle: IComponentHandle): Promise<IComponent> {
-        return this.removeComponent(this.componentToolbarUrl).then(async () => {
-            const component = await handle.get();
-            const defaultModel: ISpacesModel = {
-                type,
-                layout: { x: 0, y: 0, w: 6, h: 2 },
-                handle,
-            };
-            if (component) {
-                this.root.set(ComponentToolbarUrlKey, url);
-                this.componentSubDirectory.set(url, defaultModel);
-                return component;
-            } else {
-                throw new Error(`Runtime does not contain component with url: ${url}`);
-            }
-        });
+        await this.removeComponent(this.componentToolbarUrl);
+        const component = await handle.get();
+        const defaultModel: ISpacesModel = {
+            type,
+            layout: { x: 0, y: 0, w: 6, h: 2 },
+            handle,
+        };
+        if (component === undefined) {
+            throw new Error(`Runtime does not contain component with url: ${url}`);
+        }
+
+        this.root.set(ComponentToolbarUrlKey, url);
+        this.componentSubDirectory.set(url, defaultModel);
+        return component;
     }
 
     public async getComponentToolbar(): Promise<IComponent> {
@@ -147,22 +146,15 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             layout: { x: 0, y: 0, w: 6, h: 2 },
             handle,
         };
-        return handle.get()
-            .then((returnedComponent) => {
-                if (returnedComponent) {
-                    if (returnedComponent.IComponentLoadable) {
-                        this.componentSubDirectory.set(returnedComponent.url, defaultModel);
-                        return returnedComponent;
-                    } else {
-                        throw new Error("Component is not an instance of IComponentLoadable!!");
-                    }
-                } else {
-                    throw new Error(`Runtime does not contain component with id: ${url}`);
-                }
-            })
-            .catch((error) => {
-                throw error;
-            });
+        const returnedComponent = await handle.get();
+        if (returnedComponent === undefined) {
+            throw new Error(`Runtime does not contain component with id: ${url}`);
+        }
+        if (returnedComponent.IComponentLoadable === undefined) {
+            throw new Error("Component is not an instance of IComponentLoadable!!");
+        }
+        this.componentSubDirectory.set(returnedComponent.url, defaultModel);
+        return returnedComponent;
     }
 
     public async addComponent<T extends IComponent & IComponentLoadable>(
