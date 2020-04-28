@@ -66,7 +66,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         if (parsedUrl.pathname === undefined) {
             throw new Error("Url should contain tenant and docId!!");
         }
-        const [, , documentId] = parsedUrl.pathname?.split("/");
+        const [, , documentId] = parsedUrl.pathname.split("/");
         assert(documentId, "The resolvedUrl must have a documentId");
 
         const response: IResponse = {
