@@ -15,19 +15,11 @@ import { IComponentOptions } from "./interfaces";
 const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
-    setComponent(component: IComponent & IComponentLoadable, type: string): void;
-    setComponentWithLayout(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
-    getComponentToolbar(): Promise<IComponent>;
-    addComponent<T extends IComponent & IComponentLoadable>(
-        type: string,
-        w?: number,
-        h?: number,
-        x?: number,
-        y?: number,
-    ): Promise<T>;
+    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
+    setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
+    getComponentToolbar(): Promise<IComponent>;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
     saveLayout(): void;
@@ -69,7 +61,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         if (!options.type || !options.component) {
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
-        this.setComponent(options.component, options.type);
+        this.addComponent(options.component, options.type, { x: 0, y: 0, w: 6, h: 2 });
         return options.component;
     }
 
@@ -111,7 +103,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         toolbarComponent: IComponent & IComponentLoadable): void {
         this.removeComponent(this.componentToolbarUrl);
-        this.setComponent(toolbarComponent, type);
+        this.addComponent(toolbarComponent, type, { x: 0, y: 0, w: 6, h: 2 });
         this.root.set(ComponentToolbarUrlKey, url);
     }
 
@@ -120,11 +112,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return component as IComponent;
     }
 
-    public setComponent(component: IComponent & IComponentLoadable, type: string): void {
-        this.setComponentWithLayout(component, type, { x: 0, y: 0, w: 6, h: 2 });
-    }
-
-    public setComponentWithLayout(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {
+    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {
         if (component.handle === undefined) {
             throw new Error(`Component must have a handle: ${type}`);
         }
@@ -134,19 +122,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             handle: component.handle,
         };
         this.componentSubDirectory.set(component.url, model);
-    }
-
-    public async addComponent<T extends IComponent & IComponentLoadable>(
-        type: string,
-        w: number = 6,
-        h: number = 2,
-        x: number = 0,
-        y: number = 0,
-    ): Promise<T> {
-        const layout = { x, y, w, h };
-        const component = await this.createAndAttachComponent<T>(type);
-        this.setComponentWithLayout(component, type, layout);
-        return component;
     }
 
     public removeComponent(id: string) {
@@ -189,7 +164,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             const templateItems = JSON.parse(templateString) as ISpacesModel[];
             const promises = templateItems.map(async (templateItem) => {
                 const component = await this.createAndAttachComponent(templateItem.type);
-                this.setComponentWithLayout(component, templateItem.type, templateItem.layout);
+                this.addComponent(component, templateItem.type, templateItem.layout);
                 return component;
             });
 

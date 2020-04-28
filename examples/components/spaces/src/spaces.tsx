@@ -116,7 +116,7 @@ export class Spaces extends PrimedComponent
                 addComponent: (type: string, w?: number, h?: number) => {
                     this.createAndAttachComponent(type)
                         .then((component) => {
-                            this.dataModel.setComponentWithLayout(component, type, { w, h, x: 0, y: 0 });
+                            this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
                         })
                         .catch((error) => {
                             console.error(`Error while creating component: ${type}`, error);
@@ -147,7 +147,7 @@ export class Spaces extends PrimedComponent
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 templateLayouts.forEach(async (templateLayout: Layout) => {
                     const component = await this.createAndAttachComponent(componentRegistryEntry.type);
-                    this.dataModel.setComponentWithLayout(component, componentRegistryEntry.type, templateLayout);
+                    this.dataModel.addComponent(component, componentRegistryEntry.type, templateLayout);
                 });
             });
         }
