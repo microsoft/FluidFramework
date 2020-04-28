@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/type-race",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "Typing race",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -30,16 +30,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.1",
-    "@microsoft/fluid-map": "^0.16.1",
-    "@microsoft/fluid-view-interfaces": "^0.16.1",
+    "@microsoft/fluid-aqueduct": "^0.16.2",
+    "@microsoft/fluid-map": "^0.16.2",
+    "@microsoft/fluid-view-interfaces": "^0.16.2",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.16.1",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.2",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

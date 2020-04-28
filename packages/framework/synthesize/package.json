@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-synthesize",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "A library for synthesizing scope objects.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,14 +51,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
-    "@microsoft/fluid-component-runtime": "^0.16.1",
-    "@microsoft/fluid-container-definitions": "^0.16.1",
-    "@microsoft/fluid-container-runtime": "^0.16.1",
-    "@microsoft/fluid-framework-interfaces": "^0.16.1",
-    "@microsoft/fluid-map": "^0.16.1",
-    "@microsoft/fluid-runtime-definitions": "^0.16.1",
-    "@microsoft/fluid-shared-object-base": "^0.16.1",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
+    "@microsoft/fluid-component-runtime": "^0.16.2",
+    "@microsoft/fluid-container-definitions": "^0.16.2",
+    "@microsoft/fluid-container-runtime": "^0.16.2",
+    "@microsoft/fluid-framework-interfaces": "^0.16.2",
+    "@microsoft/fluid-map": "^0.16.2",
+    "@microsoft/fluid-runtime-definitions": "^0.16.2",
+    "@microsoft/fluid-shared-object-base": "^0.16.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
