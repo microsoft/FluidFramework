@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-runtime-utils",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "Collection of utility functions for Fluid Runtime",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -49,9 +49,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
     "@microsoft/fluid-protocol-definitions": "^0.1004.1",
-    "@microsoft/fluid-runtime-definitions": "^0.16.1"
+    "@microsoft/fluid-runtime-definitions": "^0.16.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
