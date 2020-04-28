@@ -55,9 +55,10 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     public async createAndAttachComponent<T extends IComponentLoadable>(
         id: string, type: string, props?: any,
     ): Promise<T> {
-        const component = await super.createAndAttachComponent<T>(type, props);
-        this.root.set(id, component.handle);
-        return component;
+        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+            this.root.set(id, component.handle);
+            return component;
+        });
     }
 
     public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
