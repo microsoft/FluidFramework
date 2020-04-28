@@ -204,10 +204,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const template = JSON.parse(templateString) as ISpacesModel[];
-            const promises: Promise<IComponent>[] = [];
-            template.forEach((value) => {
-                promises.push(this.addComponentInternal(value.type, value.layout));
+            const templateItems = JSON.parse(templateString) as ISpacesModel[];
+            const promises = templateItems.map(async (templateItem) => {
+                return this.addComponentInternal(templateItem.type, templateItem.layout);
             });
 
             await Promise.all(promises);
