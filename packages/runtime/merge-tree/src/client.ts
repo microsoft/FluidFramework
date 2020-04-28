@@ -443,8 +443,10 @@ export class Client {
                 this.localOps++;
             }
         } else {
-            assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber);
-            assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber);
+            assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber,
+                "Incoming remote op sequence# <= local collabWindow's currentSequence#");
+            assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
+                "Incoming remote op minSequence# < local collabWindow's minSequence#");
             if (clockStart) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
@@ -827,9 +829,9 @@ export class Client {
     public updateSeqNumbers(min: number, seq: number) {
         const collabWindow = this.mergeTree.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
-        assert(collabWindow.currentSeq <= seq);
+        assert(collabWindow.currentSeq <= seq, "Incoming op sequence# < local collabWindow's currentSequence#");
         collabWindow.currentSeq = seq;
-        assert(min <= seq);
+        assert(min <= seq, "Incoming op sequence# < minSequence#");
         this.updateMinSeq(min);
     }
 
