@@ -85,7 +85,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         let componentUrl: string;
         if (instance.IComponentLoadable) {
             componentUrl = instance.IComponentLoadable.url;
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.removeComponent(componentUrl);
         }
     }
@@ -119,7 +118,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         url: string,
         type: string,
         handle: IComponentHandle): Promise<IComponent> {
-        await this.removeComponent(this.componentToolbarUrl);
+        this.removeComponent(this.componentToolbarUrl);
         const component = await handle.get();
         const defaultModel: ISpacesModel = {
             type,
@@ -168,7 +167,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return this.addComponentInternal<T>(type, defaultLayout);
     }
 
-    public async removeComponent(id: string) {
+    public removeComponent(id: string) {
         this.componentSubDirectory.delete(id);
     }
 
