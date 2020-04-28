@@ -9,7 +9,6 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 
 describe("Odsp Driver Resolver", () => {
-
     const siteUrl = "www.localhost.xxx";
     const driveId = "driveId";
     const filePath = "path";
