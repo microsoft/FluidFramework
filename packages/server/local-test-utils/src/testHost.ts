@@ -54,14 +54,16 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
 
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any,
+        id: string, type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(type, props);
+        const component = await super.createAndAttachComponent<T>(type, props);
+        this.root.set(id, component.handle);
+        return component;
     }
 
     // Make this function public so TestHost can use them
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
-        return super.getComponent_UNSAFE<T>(id);
+    public async getComponent<T>(id: string): Promise<T> {
+        return this.root.get<IComponentHandle<T>>(id).get();
     }
 
     /**
@@ -230,9 +232,9 @@ export class TestHost {
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+    public async getComponent<T>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent_UNSAFE<T>(id);
+        return root.getComponent<T>(id);
     }
 
     /**
