@@ -18,7 +18,7 @@ import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfac
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
+import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
@@ -85,7 +85,7 @@ export class Spaces extends PrimedComponent
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
-            await this.dataModel.setTemplate();
+            await this.setTemplate();
         }
     }
 
@@ -123,18 +123,14 @@ export class Spaces extends PrimedComponent
                         });
                 },
                 addTemplate: this.addTemplateFromRegistry.bind(this),
-                saveLayout: () => this.dataModel.saveLayout(),
+                saveLayout: () => this.saveLayout(),
                 toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
         }
     }
 
     private initializeDataModel() {
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-            );
+        this.dataModelInternal = new SpacesDataModel(this.root);
     }
 
     private async addTemplateFromRegistry(template: Templates) {
@@ -150,6 +146,29 @@ export class Spaces extends PrimedComponent
                     this.dataModel.addComponent(component, componentRegistryEntry.type, templateLayout);
                 });
             });
+        }
+    }
+
+    public saveLayout(): void {
+        localStorage.setItem("spacesTemplate", JSON.stringify(this.dataModel.getModels()));
+    }
+
+    public async setTemplate(): Promise<void> {
+        if (this.dataModel.componentList.size > 0) {
+            console.log("Can't set template because there is already components");
+            return;
+        }
+
+        const templateString = localStorage.getItem("spacesTemplate");
+        if (templateString) {
+            const templateItems = JSON.parse(templateString) as ISpacesModel[];
+            const promises = templateItems.map(async (templateItem) => {
+                const component = await this.createAndAttachComponent(templateItem.type);
+                this.dataModel.addComponent(component, templateItem.type, templateItem.layout);
+                return component;
+            });
+
+            await Promise.all(promises);
         }
     }
 }

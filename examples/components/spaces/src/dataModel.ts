@@ -22,9 +22,7 @@ export interface ISpacesDataModel extends EventEmitter {
     setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
     getComponentToolbar(): Promise<IComponent>;
     updateGridItem(id: string, newLayout: Layout): void;
-    getLayout(id: string): Layout;
-    saveLayout(): void;
-    setTemplate(): Promise<void>;
+    getModels(): ISpacesModel[]
     readonly componentToolbarUrl: string;
     IComponentCollection: IComponentCollection;
     createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
@@ -39,9 +37,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
-            pkg: string,
-            props?: any) => Promise<T>,
     ) {
         super();
 
@@ -150,38 +145,12 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return this.componentSubDirectory.get<ISpacesModel>(id)?.handle.get() as Promise<T>;
     }
 
-    public getLayout(id: string): Layout {
-        const entry = this.componentSubDirectory.get<ISpacesModel>(id);
-        return entry.layout;
-    }
-
-    public saveLayout(): void {
-        const value = this.componentSubDirectory.values();
-        localStorage.setItem("spacesTemplate", JSON.stringify([...value]));
-    }
-
-    public async setTemplate(): Promise<void> {
-        const size = this.componentSubDirectory.size;
-        if (size > 0) {
-            console.log("Can't set template because there is already components");
-            return;
-        }
-
-        const templateString = localStorage.getItem("spacesTemplate");
-        if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesModel[];
-            const promises = templateItems.map(async (templateItem) => {
-                const component = await this.createAndAttachComponent(templateItem.type);
-                this.addComponent(component, templateItem.type, templateItem.layout);
-                return component;
-            });
-
-            await Promise.all(promises);
-        }
+    public getModels(): ISpacesModel[] {
+        return [...this.componentSubDirectory.values()];
     }
 }
 
-interface ISpacesModel {
+export interface ISpacesModel {
     type: string;
     layout: Layout;
     handle: IComponentHandle;
