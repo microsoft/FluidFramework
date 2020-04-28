@@ -7,6 +7,7 @@ import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
 import { Serializable } from '@microsoft/fluid-runtime-definitions';
+import { IMatrixReader } from '@tiny-calc/nano';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
@@ -51,7 +52,7 @@ export function check<T extends IArray2D<U>, U>(
  * Extracts the contents of the given `SharedMatrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.
  */
-export function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
+export function extract<T extends Serializable>(actual: IMatrixReader<T>): ReadonlyArray<ReadonlyArray<T>> {
     const m: T[][] = [];
     for (let r = 0; r < actual.numRows; r++) {
         const row: T[] = [];
