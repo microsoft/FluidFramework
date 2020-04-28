@@ -18,7 +18,7 @@ import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfac
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesDataModel, SpacesDataModel, ComponentToolbarUrlKey } from "./dataModel";
+import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
@@ -87,11 +87,11 @@ export class Spaces extends PrimedComponent
                 0,
                 0,
             );
+        componentToolbar.changeEditState(true);
         await this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
             componentToolbar.handle);
-        (this.componentToolbar as ComponentToolbar).changeEditState(true);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -102,8 +102,7 @@ export class Spaces extends PrimedComponent
     protected async componentInitializingFromExisting() {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(
-            this.root.get(ComponentToolbarUrlKey));
+        this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
 
     protected async componentHasInitialized() {
@@ -141,7 +140,6 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
-                this.root.get(ComponentToolbarUrlKey),
             );
     }
 

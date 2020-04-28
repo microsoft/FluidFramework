@@ -11,7 +11,7 @@ import {
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 
-export const ComponentToolbarUrlKey = "component-toolbar-url";
+const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<IComponent>;
@@ -53,7 +53,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
-        private _componentToolbarUrl: string,
     ) {
         super();
 
@@ -113,7 +112,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public get componentToolbarUrl(): string {
-        return this._componentToolbarUrl;
+        return this.root.get<string>(ComponentToolbarUrlKey);
     }
 
     public async setComponentToolbar(
@@ -121,7 +120,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         handle: IComponentHandle): Promise<IComponent> {
         return this.removeComponent(this.componentToolbarUrl).then(async () => {
-            this._componentToolbarUrl = url;
             const component = await handle.get();
             const defaultModel: ISpacesModel = {
                 type,
