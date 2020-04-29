@@ -25,6 +25,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:bohemia": "echo \"Run 'npm run webpack' to build and rebuild your component\" && bohemia-intercept",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
