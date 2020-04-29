@@ -590,17 +590,23 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = snapshotChannel(channel);
+        assert(this.isAttached, "Component should be attached to attach the channel.");
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients. If the container is attached and component is not attached we will never reach here.
+        if (!this.isLocal()) {
+            // Get the object snapshot and include it in the initial attach
+            const snapshot = snapshotChannel(channel);
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.attributes.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            const message: IAttachMessage = {
+                id: channel.id,
+                snapshot,
+                type: channel.attributes.type,
+            };
+            this.pendingAttach.set(channel.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
