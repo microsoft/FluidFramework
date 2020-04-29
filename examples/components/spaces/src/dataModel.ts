@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
-import { IComponentOptions, SpacesCompatibleToolbar } from "./interfaces";
+import { IComponentOptions, IComponentCollector, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
 
 const ComponentToolbarUrlKey = "component-toolbar-url";
 
@@ -26,14 +26,18 @@ export interface ISpacesDataModel extends EventEmitter {
     getModels(): ISpacesModel[]
     readonly componentToolbarUrl: string;
     IComponentCollection: IComponentCollection;
+    IComponentCollector: IComponentCollector<ISpacesCollectible>;
     createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
     removeCollectionItem(item: IComponent): void;
+    addItem(key: string, item: ISpacesCollectible): void;
+    removeItem(key: string): void;
 }
 
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
-export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, IComponentCollection {
+export class SpacesDataModel extends EventEmitter
+    implements ISpacesDataModel, IComponentCollection, IComponentCollector<ISpacesCollectible> {
     private readonly componentSubDirectory: IDirectory;
 
     constructor(
@@ -52,6 +56,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public get IComponentCollection() { return this; }
+    public get IComponentCollector() { return this; }
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
         const options = rawOptions as IComponentOptions;
@@ -68,6 +73,12 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             componentUrl = instance.IComponentLoadable.url;
             this.removeComponent(componentUrl);
         }
+    }
+
+    public addItem(key: string, item: ISpacesCollectible) {
+    }
+
+    public removeItem(key: string) {
     }
 
     /**

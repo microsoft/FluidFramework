@@ -12,19 +12,19 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 export const IComponentCollector: keyof IProvideComponentCollector = "IComponentCollector";
 
-export interface IProvideComponentCollector {
-    readonly IComponentCollector: IComponentCollector;
+export interface IProvideComponentCollector<T = any> {
+    readonly IComponentCollector: IComponentCollector<T>;
 }
 
 /**
- * An IComponentCollector is a component that manages a collection of components.
+ * An IComponentCollector is a component that manages a collection of things.
  */
-export interface IComponentCollector extends IProvideComponentCollector {
-    addComponent(component: ICollectionAddition): void;
-    removeComponent(): void;
+export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
+    addItem(key: string, item: T): void;
+    removeItem(key: string): void;
 }
 
-export interface ICollectionAddition {
+export interface ISpacesCollectible {
     component: IComponent & IComponentLoadable;
     type: string;
 }

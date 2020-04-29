@@ -20,14 +20,18 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer, SpacesCompatibleToolbar } from "./interfaces";
+import { IComponentToolbarConsumer, IProvideComponentCollector, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent
-    implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
+export class Spaces extends PrimedComponent implements
+    IComponentHTMLView,
+    IProvideComponentCollection,
+    IComponentToolbarConsumer,
+    IProvideComponentCollector<ISpacesCollectible>
+{
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
@@ -57,6 +61,7 @@ export class Spaces extends PrimedComponent
 
     public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this.dataModel; }
+    public get IComponentCollector() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
     public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
