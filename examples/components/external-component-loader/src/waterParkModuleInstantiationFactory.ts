@@ -6,9 +6,8 @@
 import {
     ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-import { SpacesComponentName } from "@fluid-example/spaces";
+import { IComponentToolbarConsumer, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, ValidViewComponent, WaterParkLoaderName } from "./waterParkLoader";
 
@@ -49,13 +48,13 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const viewComponent = await createAndAttachComponent<ValidViewComponent>(
+        const viewComponent = await createAndAttachComponent<ValidViewComponent & Partial<IComponentToolbarConsumer>>(
             runtime, ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, this.viewComponentName);
         const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
             runtime, uuid(), this.loaderComponentName);
 
         // Only add the component toolbar if the view component supports it
-        (viewComponent as IComponent).IComponentToolbarConsumer?.setComponentToolbar(
+        viewComponent.IComponentToolbarConsumer?.setComponentToolbar(
             loaderComponent.id,
             this.loaderComponentName,
             loaderComponent,
