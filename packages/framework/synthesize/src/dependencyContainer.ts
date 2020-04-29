@@ -6,12 +6,14 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
-    AsyncOptionalComponentProvider,
-    AsyncRequiredComponentProvider,
+    AsyncComponentProvider,
     ComponentSymbolProvider,
     ComponentProvider,
+    ComponentKey,
 } from "./types";
-import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
+import {
+    IComponentDependencySynthesizer,
+} from "./IComponentDependencySynthesizer";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
@@ -23,16 +25,16 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     public get IComponentDependencySynthesizer() { return this; }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).registeredTypes}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IComponent)> {
         return this.providers.keys();
     }
 
-    public constructor(public parent: DependencyContainer | undefined = undefined) { }
+    public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).register}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).register}
      */
     public register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void {
         if (this.has(type)) {
@@ -43,7 +45,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).unregister}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).unregister}
      */
     public unregister<T extends keyof IComponent>(type: T): void {
         if (this.providers.has(type)) {
@@ -52,14 +54,14 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).synthesize}
      */
     public synthesize<
-        O extends keyof IComponent,
-        R extends keyof IComponent>(
+        O extends IComponent,
+        R extends IComponent = {}>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R> {
+    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -74,7 +76,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).has}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).has}
      */
     public has(...types: (keyof IComponent)[]): boolean {
         return types.every((type) => {
@@ -83,7 +85,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).getProvider}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).getProvider}
      */
     public getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined {
         // If we have the provider return it
@@ -99,7 +101,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         return undefined;
     }
 
-    private generateRequired<T extends keyof IComponent>(
+    private generateRequired<T extends IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
         const values: (keyof IComponent)[] = Object.values(types);
@@ -113,7 +115,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         }));
     }
 
-    private generateOptional<T extends keyof IComponent>(
+    private generateOptional<T extends IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
         const values: (keyof IComponent)[] = Object.values(types);

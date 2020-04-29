@@ -16,7 +16,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as GraphiQL from "graphiql";
@@ -153,7 +153,7 @@ const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(
     TourOfHeroesType,
     TourOfHeroes,
     [],
-);
+    {});
 class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
     public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this; }
@@ -186,7 +186,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
         return runtime;
     }
 
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         const componentRuntime = await runtime.getComponentRuntime("app", true);
         const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
 

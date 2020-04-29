@@ -14,7 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
+import { IComponentCallable, IComponentCallbacks, IComponentOptions } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -157,7 +157,7 @@ export class ExternalComponentLoader extends PrimedComponent
             let componentRuntime: IComponentRuntime;
             const id = uuid();
             if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
@@ -166,7 +166,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                     ]);
             } else if (pkgReg?.IComponentFactory !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
@@ -179,14 +179,17 @@ export class ExternalComponentLoader extends PrimedComponent
 
             const response: IResponse = await componentRuntime.request({ url: "/" });
             let component: IComponent = response.value as IComponent;
+            if (component.IComponentLoadable === undefined) {
+                throw new Error(`${value} needs to implement the IComponentLoadable interface to be loaded here`);
+            }
             componentRuntime.attach();
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollection.createCollectionItem({
+            viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
                 handle: component.IComponentHandle,
                 type: value,
-                id,
+                url: component.IComponentLoadable?.url,
             });
         } catch (error) {
             this.error = error;

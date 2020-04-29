@@ -23,12 +23,10 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     SequenceDeltaEvent,
     SequenceMaintenanceEvent,
     SharedString,
-    SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
@@ -140,7 +138,7 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
-export class FlowDocument extends PrimedComponent<IFlowDocumentEvents> {
+export class FlowDocument extends PrimedComponent<{}, {}, IFlowDocumentEvents> {
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {
@@ -157,14 +155,10 @@ export class FlowDocument extends PrimedComponent<IFlowDocumentEvents> {
 
     private maybeSharedString?: SharedString;
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
-
     public async getComponentFromMarker(marker: Marker) {
         const url = marker.properties.url as string;
 
-        const response = await this.context.hostRuntime.request({ url });
+        const response = await this.context.containerRuntime.request({ url });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return Promise.reject("Not found");
         }
@@ -510,5 +504,6 @@ export class FlowDocument extends PrimedComponent<IFlowDocumentEvents> {
 export const flowDocumentFactory = new PrimedComponentFactory(
     FlowDocumentType,
     FlowDocument,
-    [new SharedStringFactory()],
+    [SharedString.getFactory()],
+    {},
 );

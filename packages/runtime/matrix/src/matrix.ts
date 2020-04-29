@@ -88,17 +88,25 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     public get numCols() { return this.cols.getLength(); }
 
     public read(row: number, col: number): T | undefined | null {
-        assert((0 <= row && row < this.numRows)
-            && (0 <= col && col < this.numCols));
-
         // Map the logical (row, col) to associated storage handles.
         const rowHandle = this.rows.handles[row];
-        if (rowHandle === Handle.unallocated) {
+
+        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
+        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
+        //       assert with range check on node v12 x64)
+        if (!(rowHandle >= Handle.valid)) {
+            assert(rowHandle === Handle.unallocated, "'row' out of range.");
+            assert(0 <= col && col < this.numCols, "'col' out of range.");
             return undefined;
         }
 
         const colHandle = this.cols.handles[col];
-        if (colHandle === Handle.unallocated) {
+
+        // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
+        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
+        //       assert with range check on node v12 x64)
+        if (!(colHandle >= Handle.valid)) {
+            assert(colHandle === Handle.unallocated, "'col' out of range.");
             return undefined;
         }
 

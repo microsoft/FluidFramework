@@ -31,7 +31,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, mock);
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -43,7 +43,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, Promise.resolve(mock));
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -56,7 +56,7 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IComponentLoadable, factory);
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -69,7 +69,7 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IComponentLoadable, factory);
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -81,7 +81,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, mock);
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -93,7 +93,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, Promise.resolve(mock));
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -106,7 +106,7 @@ describe("Routerlicious", () => {
                 const factory = () => mock;
                 dc.register(IComponentLoadable, factory);
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -119,7 +119,7 @@ describe("Routerlicious", () => {
                 const factory = async () => mock;
                 dc.register(IComponentLoadable, factory);
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -133,7 +133,8 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize({ IComponentLoadable, IComponentConfiguration }, {});
+                const s = dc.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    { IComponentLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -148,7 +149,8 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IComponentLoadable, loadableMock);
 
-                const s = dc.synthesize({ IComponentLoadable, IComponentConfiguration }, {});
+                const s = dc.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    { IComponentLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -160,7 +162,8 @@ describe("Routerlicious", () => {
             it(`Two Optional Modules none registered`, async () => {
                 const dc = new DependencyContainer();
 
-                const s = dc.synthesize({ IComponentLoadable, IComponentConfiguration }, {});
+                const s = dc.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    { IComponentLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(!loadable, "Optional IComponentLoadable was not registered");
                 const config = await s.IComponentConfiguration;
@@ -174,7 +177,8 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize({}, { IComponentLoadable, IComponentConfiguration });
+                const s = dc.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                    {}, { IComponentLoadable, IComponentConfiguration });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -187,7 +191,7 @@ describe("Routerlicious", () => {
             it(`Required Provider not registered should throw`, async () => {
                 const dc = new DependencyContainer();
 
-                assert.throws(() => dc.synthesize(
+                assert.throws(() => dc.synthesize<{}, IComponentLoadable>(
                     {},
                     { IComponentLoadable },
                 ), Error);
@@ -199,7 +203,7 @@ describe("Routerlicious", () => {
                 parentDc.register(IComponentLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -214,7 +218,8 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize({ IComponentLoadable, IComponentConfiguration }, {});
+                const s = dc.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    { IComponentLoadable, IComponentConfiguration }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -231,7 +236,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IComponentLoadable, loadableMock);
 
-                const s = dc.synthesize({ IComponentLoadable }, {});
+                const s = dc.synthesize<IComponentLoadable>({ IComponentLoadable }, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -243,7 +248,7 @@ describe("Routerlicious", () => {
                 parentDc.register(IComponentLoadable, mock);
                 const dc = new DependencyContainer(parentDc);
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === mock, "IComponentLoadable is expected");
@@ -258,7 +263,8 @@ describe("Routerlicious", () => {
                 const configMock = new MockComponentConfiguration();
                 dc.register(IComponentConfiguration, configMock);
 
-                const s = dc.synthesize({}, { IComponentLoadable, IComponentConfiguration });
+                const s = dc.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                    {}, { IComponentLoadable, IComponentConfiguration });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
@@ -275,7 +281,7 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IComponentLoadable, loadableMock);
 
-                const s = dc.synthesize({}, { IComponentLoadable });
+                const s = dc.synthesize<{}, IComponentLoadable>({}, { IComponentLoadable });
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
                 assert(loadable === loadableMock, "IComponentLoadable is expected");

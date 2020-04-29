@@ -46,4 +46,5 @@ export const IncrementorInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     Incrementor,
     [],
+    {},
 );

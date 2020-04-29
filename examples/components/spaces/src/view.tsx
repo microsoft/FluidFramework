@@ -13,8 +13,8 @@ const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
-    id: string;
-    getComponent: (componentId: string) => Promise<IComponent | undefined>;
+    url: string;
+    getComponent: (componentUrl: string) => Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -34,7 +34,7 @@ const buttonStyle: React.CSSProperties = {
     height: "2rem",
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
+const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight: "3000px", width: "100%" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -49,7 +49,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
     }
 
     async componentDidMount() {
-        const component = await this.props.getComponent(this.props.id);
+        const component = await this.props.getComponent(this.props.url);
         if (component) {
             const element = <ReactViewAdapter component={component} />;
             this.setState({ element });
@@ -88,7 +88,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarId)) {
+            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarUrl)) {
                 this.setState({
                     componentMap: newMap,
                     isEditable: this.props.dataModel.componentList.size - 1 === 0,
@@ -131,10 +131,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const layouts: Layout[] = [];
         let componentToolbar: JSX.Element | undefined;
 
-        this.state.componentMap.forEach((layout, id) => {
-            const editable = this.state.isEditable && id !== this.props.dataModel.componentToolbarId;
+        this.state.componentMap.forEach((layout, url) => {
+            const editable = this.state.isEditable && url !== this.props.dataModel.componentToolbarUrl;
             // Do some CSS stuff depending on if the user is editing or not
-            const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
+            const editableStyle: React.CSSProperties = { padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
             };
@@ -142,21 +142,21 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
                 editableStyle.boxSizing = "border-box";
-                editableStyle.overflow = "visible";
+                editableStyle.overflow = "hidden";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }
-            if (id !== this.props.dataModel.componentToolbarId) {
-                embeddedComponentStyle.overflow = "scroll";
+            if (url !== this.props.dataModel.componentToolbarUrl && !editable) {
+                editableStyle.overflow = "scroll";
             }
 
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
-            const key = `${id}`;
+            const key = `${url}`;
             layout.i = key;
             layouts.push(layout);
 
-            const componentUrl = `${window.location.href}/${id}`;
+            const componentUrl = `${window.location.href}/${url}`;
             const element =
                 <div className="text" key={key} style={editableStyle} >
                     {
@@ -164,7 +164,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         <div style={buttonContainerStyle}>
                             <button
                                 style={buttonStyle}
-                                onClick={() => this.props.dataModel.removeComponent(id)}
+                                onClick={() => this.props.dataModel.removeComponent(url)}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
                                 }}
@@ -200,13 +200,13 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     }
                     <div style={embeddedComponentStyle}>
                         <EmbeddedComponentWrapper
-                            id={id}
-                            getComponent={async (componentId: string) =>
-                                this.props.dataModel.getComponent(componentId)}
+                            url={url}
+                            getComponent={async (compUrl: string) =>
+                                this.props.dataModel.getComponent(compUrl)}
                         />
                     </div>
                 </div>;
-            if (id !== this.props.dataModel.componentToolbarId) {
+            if (url !== this.props.dataModel.componentToolbarUrl) {
                 components.push(element);
             } else {
                 componentToolbar = element;
@@ -229,6 +229,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             cols={36}
                             rowHeight={50}
                             width={1800}
+                            height={10000}
                             // eslint-disable-next-line no-null/no-null
                             compactType={null} // null is required for the GridLayout
                             isDroppable={this.state.isEditable}

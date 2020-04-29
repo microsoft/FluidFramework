@@ -12,14 +12,11 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import {
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import {
-    generateContainerServicesRequestHandler,
-    ContainerServiceRegistryEntries,
-} from "../containerServices";
+import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
@@ -40,7 +37,7 @@ export class BaseContainerRuntimeFactory implements
      */
     constructor(
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         this.registry = new ComponentRegistry(registryEntries);
@@ -52,27 +49,47 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
+        const parentDependencyContainer = context.scope.IComponentDependencySynthesizer;
+        const dc = new DependencyContainer(parentDependencyContainer);
+        for (const entry of Array.from(this.providerEntries)) {
+            dc.register(entry.type, entry.provider);
+        }
+
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             [
-                generateContainerServicesRequestHandler(this.serviceRegistry),
                 ...this.requestHandlers,
                 componentRuntimeRequestHandler,
-            ]);
+            ],
+            undefined,
+            dc);
 
-        // On first boot create the base component
+        // we register the runtime so developers of providers can use it in the factory pattern.
+        dc.register(IContainerRuntime, runtime);
+
         if (!runtime.existing) {
+            // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
         }
+
+        // This always gets called at the end of initialize on first time or from existing.
+        await this.containerHasInitialized(runtime);
 
         return runtime;
     }
 
     /**
      * Subclasses may override containerInitializingFirstTime to perform any setup steps at the time the container
-     * is created.  This likely includes creating any initial components that are expected to be there at the outset.
+     * is created. This likely includes creating any initial components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
+
+    /**
+     * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
+     * This likely includes loading any components that are expected to be there at the outset.
+     * @param runtime - The container runtime for the container being initialized
+     */
+    protected async containerHasInitialized(runtime: IContainerRuntime) { }
 }

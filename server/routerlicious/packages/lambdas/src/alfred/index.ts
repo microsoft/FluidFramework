@@ -22,6 +22,7 @@ import {
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 
 import * as jwt from "jsonwebtoken";
+import * as safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
@@ -226,7 +227,7 @@ export function configureWebSocketServices(
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    logger.error(`Disconnecting socket on connection error: ${JSON.stringify(error)}`);
+                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`);
                     socket.disconnect(true);
                 });
 
@@ -286,7 +287,7 @@ export function configureWebSocketServices(
                     }
                 },
                 (error) => {
-                    logger.error(`Connect Document error: ${JSON.stringify(error)}`);
+                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`);
                     socket.emit("connect_document_error", error);
                 });
         });

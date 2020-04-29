@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 
@@ -21,7 +21,7 @@ export class RuntimeRequestHandlerBuilder {
         }
     }
 
-    public async handleRequest(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+    public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
         const parser = new RequestParser(request);
         for (const handler of this.handlers) {
             const response = await handler(parser, runtime);

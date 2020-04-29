@@ -181,7 +181,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
-        return (!this.isLocal() || this.registered);
+        // If the dds is attached to the component then it should be registered irrespective of
+        // whether the container is attached/detached. If it is attached to its component, it will
+        // have its services. This will lead to get the dds summarized. It should also be registered
+        // if somebody called register on dds explicitly without attaching it which will set
+        // this.registered to be true.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        return (!!this.services || this.registered);
     }
 
     /**

@@ -52,7 +52,7 @@ Part.
 The [Fluid tutorials](../examples/README.md) include npm script wrappers around the gulp commands above. If you do not
 wish to install gulp globally, you can use the npm scripts instead. For example:
 
-| NPM Script       | Command                                     |
+| npm Script       | Command                                     |
 | ---------------- | ------------------------------------------- |
 | `build`          | `npm run bundle && npm run package`         |
 | `build:dev`      | `npm run bundle:dev && npm run package:dev` |

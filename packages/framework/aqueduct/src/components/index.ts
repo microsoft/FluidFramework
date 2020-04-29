@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { PrimedComponent } from "./primedComponent";
-export { SharedComponent } from "./sharedComponent";
 export { BlobHandle } from "./blobHandle";
+export { PrimedComponent } from "./primedComponent";
+export {
+    ISharedComponentProps,
+    SharedComponent,
+} from "./sharedComponent";
