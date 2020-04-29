@@ -17,7 +17,8 @@ export interface IProvideComponentToolbarConsumer {
 }
 
 /**
- * An IComponentCallable is a component that has a roster of functions defined by T that other components can use
+ * An IComponentToolbarConsumer is a component that takes another to use as a toolbar.  That toolbar may implement
+ * other interfaces such as IComponentToolbar or IComponentCallable.
  */
 export interface IComponentToolbarConsumer extends IProvideComponentToolbarConsumer {
     setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
