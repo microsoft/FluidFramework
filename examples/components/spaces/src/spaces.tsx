@@ -13,7 +13,6 @@ import {
 import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
@@ -28,7 +27,6 @@ import { SpacesComponentName, Templates } from ".";
  */
 export class Spaces extends PrimedComponent implements
     IComponentHTMLView,
-    IProvideComponentCollection,
     IComponentToolbarConsumer,
     IProvideComponentCollector<ISpacesCollectible>
 {
@@ -60,7 +58,6 @@ export class Spaces extends PrimedComponent implements
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollection() { return this.dataModel; }
     public get IComponentCollector() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 

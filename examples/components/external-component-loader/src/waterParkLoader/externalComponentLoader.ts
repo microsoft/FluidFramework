@@ -14,7 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallbacks, IComponentOptions, SpacesCompatibleToolbar } from "@fluid-example/spaces";
+import { IComponentCallbacks, SpacesCompatibleToolbar } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -160,7 +160,7 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             const viewComponent = await this.viewComponentP;
-            if (viewComponent.IComponentCollection === undefined || this.runtime.IComponentRegistry === undefined) {
+            if (viewComponent.IComponentCollector === undefined || this.runtime.IComponentRegistry === undefined) {
                 throw new Error("View component is empty or is not an IComponentCollection!!");
             }
 
@@ -202,7 +202,7 @@ export class ExternalComponentLoader extends PrimedComponent
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
+            viewComponent.IComponentCollector.addItem("foobar", {
                 component: component as IComponent & IComponentLoadable,
                 type: value,
             });
