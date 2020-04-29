@@ -14,7 +14,12 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallbacks, SpacesCompatibleToolbar } from "@fluid-example/spaces";
+import {
+    IComponentCallbacks,
+    ISpacesCollectible,
+    IProvideComponentCollector,
+    SpacesCompatibleToolbar
+} from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -27,6 +32,8 @@ const localComponents = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
 ];
+
+export type ValidViewComponent = IComponentHandle & IComponentLoadable & IProvideComponentCollector<ISpacesCollectible>;
 
 /**
  * Component that loads extneral components via their url
@@ -44,7 +51,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<IComponent> | undefined;
+    private viewComponentP: Promise<ValidViewComponent> | undefined;
 
     private savedElement: HTMLElement | undefined;
     private error: string | undefined;
@@ -53,7 +60,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    public setViewComponent(component: IComponent & IComponentLoadable) {
+    public setViewComponent(component: ValidViewComponent) {
         this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
@@ -139,7 +146,7 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
+        const viewComponentHandle = this.root.get<IComponentHandle<ValidViewComponent>>(this.viewComponentMapID);
         if (viewComponentHandle !== undefined) {
             this.viewComponentP = viewComponentHandle.get();
         }
@@ -161,7 +168,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
             const viewComponent = await this.viewComponentP;
             if (viewComponent.IComponentCollector === undefined || this.runtime.IComponentRegistry === undefined) {
-                throw new Error("View component is empty or is not an IComponentCollection!!");
+                throw new Error("View component is empty or is not an IComponentCollector!!");
             }
 
             const urlReg = await this.runtime.IComponentRegistry.get("url");
