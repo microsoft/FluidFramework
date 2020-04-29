@@ -20,8 +20,19 @@ export interface IProvideComponentCollector<T = any> {
  * An IComponentCollector is a component that manages a collection of things.
  */
 export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
-    addItem(key: string, item: T): void;
+    /**
+     * Adds the given item to the collector.
+     * @param item - The item to add.
+     * @returns A unique key corresponding to the added item.
+     */
+    addItem(item: T): string;
+    /**
+     * Removes the item specified by the given key.
+     * @param key - The key referring to the item to remove.
+     */
     removeItem(key: string): void;
+
+    // could add an enumeration here, or a remove all
 }
 
 export interface ISpacesCollectible {

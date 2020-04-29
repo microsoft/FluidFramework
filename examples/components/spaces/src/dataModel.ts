@@ -15,7 +15,7 @@ const ComponentToolbarUrlKey = "component-toolbar-url";
 
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
+    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
@@ -25,7 +25,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getModels(): ISpacesModel[]
     readonly componentToolbarUrl: string;
     IComponentCollector: IComponentCollector<ISpacesCollectible>;
-    addItem(key: string, item: ISpacesCollectible): void;
+    addItem(item: ISpacesCollectible): string;
     removeItem(key: string): void;
 }
 
@@ -53,8 +53,8 @@ export class SpacesDataModel extends EventEmitter
 
     public get IComponentCollector() { return this; }
 
-    public addItem(key: string, item: ISpacesCollectible) {
-        this.addComponent(item.component, item.type, { x: 0, y: 0, w: 6, h: 2 });
+    public addItem(item: ISpacesCollectible) {
+        return this.addComponent(item.component, item.type, { x: 0, y: 0, w: 6, h: 2 });
     }
 
     public removeItem(key: string) {
@@ -108,7 +108,7 @@ export class SpacesDataModel extends EventEmitter
         return component;
     }
 
-    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {
+    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string {
         if (component.handle === undefined) {
             throw new Error(`Component must have a handle: ${type}`);
         }
@@ -118,6 +118,7 @@ export class SpacesDataModel extends EventEmitter
             handle: component.handle,
         };
         this.componentSubDirectory.set(component.url, model);
+        return component.url;
     }
 
     public removeComponent(id: string) {

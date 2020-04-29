@@ -202,7 +202,7 @@ export class ExternalComponentLoader extends PrimedComponent
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollector.addItem("foobar", {
+            viewComponent.IComponentCollector.addItem({
                 component: component as IComponent & IComponentLoadable,
                 type: value,
             });
