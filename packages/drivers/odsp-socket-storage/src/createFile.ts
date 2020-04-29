@@ -111,9 +111,7 @@ async function createNewFluidFileHelper(
                 `:/opStream/snapshots/snapshot`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
-            // Currently the api to create new file with snapshot is under a feature gate. So we have to
-            // add this header to enter into that gate.
-            headers["X-Tempuse-Allow-Singlepost"] = "1";
+
             const postBody = JSON.stringify(containerSnapshot);
             fetchResponse = await fetchHelper(url, {
                 body: postBody,
