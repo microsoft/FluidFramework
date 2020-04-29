@@ -13,7 +13,7 @@ import {
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     createLocalLoader,
@@ -181,6 +181,127 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const versions6 = collection2.readVersions("key1");
             assert.strictEqual(versions6.length, 1, "Happened after value did not overwrite");
             assert.strictEqual(versions6[0], "value10", "Happened after value did not overwrite");
+        });
+
+        /**
+         * Creates named DDS or Component
+         * Resolves conflicts by concurrently created multiple items and resolving conflict
+         * via "first wins" merge conflict resolution policy.
+         * Requires active r/w connection (blocks and waits in offline until connected)
+         *
+         * Pre-conditions:
+         *   Writes & Reads should be done to live (attached) content.
+         *   Operating on detached DDSs / Components will not work!
+         * Side-effects:
+         *   If operation is interrupted (container closed, network error), and destination
+         *   is un-rooted (and GC'd in future), a reference in CRC can be leaked forever.
+         *
+         * State transitions:
+         *      <CRC>,           <MAP Local>,   <MAP File>
+         *      ------------------------------------------
+         *  #1: undefined,       undefined,     undefined
+         *  #2: value,           undefined,     undefined
+         *  #3: value,           value,         undefined
+         *  #4: undefined,       value,         value
+         *
+         *  Args:
+         * @param runtime - IContainerRuntime
+         * @param crc -  global CRC object to use. Should be removed - need tp get CRC from runtime.
+         * @param path - path uniquely identifying an object. If it's "global" / "singleton" object, then it can be
+         *               a name / stable ID of that object. If this API is used to create objects in some random
+         *               component, path should include path (URI) of that component in container plus path to a
+         *               storage within this component. For example, if we are created a component on a marker in
+         *               Sequence that is part of Scriptor component, then path takes form of
+         *               <URI of Scriptor component>/<ID of Sequence DDS>/<Unique marker ID within Sequence>
+         *               The most important property here is that all clients should agree on a path - it should be
+         *               the same when referring to same component, and different when creating different instances
+         *               of components.
+         * @param create - callback that create component
+         * @param write - callback that writes handle to created component to its final destination (defined by a path)
+         * @param read - tests whether final destination has received component handle.
+         */
+        async function createNamedItem(
+            runtime: IContainerRuntime,
+            crc: IConsensusRegisterCollection,
+            path: string,
+            create: () => IComponentHandle,
+            write: (handle: IComponentHandle) => void,
+            read: () => IComponentHandle,
+        ) {
+            // Test for state #4
+            let value = read();
+            if (value !== undefined) {
+                return value;
+            }
+
+            // Test for state #1
+            value = crc.read(path);
+            if (value === undefined) {
+                // Transition to state #2
+                // Note that we can transition to #2 due to other client bitting us,
+                // but it's same state we get to.
+                value = create();
+                assert(value !== undefined);
+                // this waits until write round-trips
+                // This client may win or lose that battle!
+                await crc.write(path, value);
+            }
+
+            // We can be already in state #4!
+            // Have to check first final destination - it's possible CRC has been already cleared!
+            value = read();
+            if (value !== undefined) {
+                return value;
+            }
+
+            // Ok, it's state #2 or #3.
+            // #3 can be either another client transitioning system to #3, or
+            // it can be this same client calling this function multiple times in parallel.
+            // CRC has to have a value, as it has not yet propagated to final destination
+            value = crc.read(path);
+            assert(value);
+
+            // Now "move" it to final destination.
+            // We rely on batching to transition ownership in one atomic step!
+            let p1: Promise<boolean>;
+            runtime.orderSequentially(() => {
+                write(value);
+                p1 = crc.write(path, undefined);
+            });
+
+            // It's important that local value in CRC continues to reflect state before "move"
+            // I.e. if we were to repeat these steps, we can't overwrite it with new value!
+            // This check likely does not work properly for detached container (logic needs to be adjusted for that)
+            // It will catch detached CRC, which should not happen as logic would be broken!
+            assert(crc.read(path) === value);
+
+            // In practical terms, we can skip / not wait for this step. For all purposes,
+            // the value is already in the system. It will either stay on CRC (if OPs above are lost),
+            // or move to destination. So we may skip waiting here, but that makes error handling harder.
+            await p1;
+
+            // This condition should be true from now on...
+            assert(read() === value);
+            assert(value !== undefined);
+            return value;
+        }
+
+        it("CRC", async () => {
+            // That should be global CRC retrieved from TaskManager
+            const collection1 = ctor.create(component1.runtime);
+
+            const key = "collection";
+
+            const value = await createNamedItem(
+                undefined, // TODO: we need to get to IContainerRuntime somehow.
+                collection1,
+                `${collection1.id}/${mapId}/${key}`,
+                () => SharedMap.create(component1.runtime).handle,
+                (handle) => { sharedMap1.set(key, handle); },
+                () => sharedMap1.get(key),
+            );
+
+            assert(sharedMap1.get(key) === value);
         });
 
         afterEach(async () => {
