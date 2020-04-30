@@ -8,10 +8,13 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    FluidProps,
+    // FluidProps,
+    FluidReducerProps,
     FluidFunctionalComponentState,
-    FluidReactComponent,
-    useStateFluid,
+    // FluidReactComponent,
+    // useStateFluid,
+    useReducerFluid,
+    IFluidReducer,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -27,31 +30,62 @@ interface CounterState {
     value: number;
 }
 
+// class CounterReactView extends FluidReactComponent<{}, CounterState> {
+//     render() {
+//         return (
+//             <div>
+//                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+//                     {this.state.value}
+//                 </span>
+//                 <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
+//             </div>
+//         );
+//     }
+// }
+
 interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
-class CounterReactView extends FluidReactComponent<{}, CounterState> {
-    render() {
-        return (
-            <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.value}
-                </span>
-                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
-            </div>
-        );
+// function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+//     // Declare a new state variable, which we'll call "count"
+//     const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+
+//     return (
+//         <div>
+//             <span className="clicker-value-class-functional"
+// id={`clicker-functional-value-${Date.now().toString()}`}>
+//                 {state.value}
+//             </span>
+//             <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+//         </div>
+//     );
+// }
+
+interface IActionReducer extends IFluidReducer<CounterFunctionalState>{
+    increment: {
+        action: (oldState: CounterFunctionalState) => CounterFunctionalState,
+        changedStateKeys: [keyof CounterFunctionalState]
     }
 }
 
-function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+const ActionReducer: IActionReducer = {
+    increment: {
+        action: (oldState: CounterFunctionalState) => {
+            return { value: oldState.value + 1 };
+        },
+        changedStateKeys: ["value"],
+    },
+};
+
+function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctionalState, IActionReducer>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer>(props);
 
     return (
         <div>
-            <span className="clicker-value-class-functional" id={`clicker-functional-value-${Date.now().toString()}`}>
+            <span className="clicker-value-class-reducer" id={`clicker-reducer-value-${Date.now().toString()}`}>
                 {state.value}
             </span>
-            <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+            <button onClick={() => { dispatch({ type: "increment" }); }}>+</button>
         </div>
     );
 }
@@ -68,6 +102,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         this.root.set("counterClicks", 0);
         this.root.set("counterClicksFunctional", 0);
+        this.root.set("counterClicksReducer", 0);
     }
 
     // #region IComponentHTMLView
@@ -76,6 +111,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
+        const initialState: CounterState = { value: 0 };
+
         const rootToInitialState = new Map<string, keyof CounterState>();
         rootToInitialState.set("counterClicks", "value");
         const stateToRoot = new Map<keyof CounterState, string>();
@@ -86,19 +123,31 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         const stateToRootFunctional = new Map<keyof CounterState, string>();
         stateToRootFunctional.set("value", "counterClicksFunctional");
 
+        const rootToInitialStateReducer = new Map<string, keyof CounterState>();
+        rootToInitialStateReducer.set("counterClicksReducer", "value");
+        const stateToRootReducer = new Map<keyof CounterState, string>();
+        stateToRootReducer.set("value", "counterClicksReducer");
+
         ReactDOM.render(
             <div>
-                <CounterReactView
+                {/* <CounterReactView
                     root={this.root}
-                    reactComponentDefaultState={{ value: 0 }}
+                    reactComponentDefaultState={initialState}
                     rootToInitialState={rootToInitialState}
                     stateToRoot={stateToRoot}
                 />
                 <CounterReactFunctional
                     root={this.root}
-                    reactComponentDefaultState={{ value: 0 }}
+                    reactComponentDefaultState={initialState}
                     rootToInitialState={rootToInitialStateFunctional}
                     stateToRoot={stateToRootFunctional}
+                /> */}
+                <CounterReactFunctionalReducer
+                    root={this.root}
+                    initialState={initialState}
+                    rootToInitialState={rootToInitialStateReducer}
+                    stateToRoot={stateToRootReducer}
+                    reducer={ActionReducer}
                 />
             </div>,
             div,

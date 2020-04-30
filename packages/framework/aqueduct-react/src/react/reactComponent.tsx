@@ -116,7 +116,88 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
 }
 
 export interface FluidFunctionalComponentState {
-    isInitialized?: boolean;
+    isInitialized?: boolean
+}
+
+export interface IFluidReducer<S> {
+    [key: string]: {
+        action: (oldState: S, args?: any) => S,
+        changedStateKeys: [keyof S]
+    }
+}
+
+export interface FluidReducerProps<S extends FluidFunctionalComponentState, A extends IFluidReducer<S>> {
+    root: ISharedDirectory,
+    initialState: S,
+    reducer: A,
+    rootToInitialState?: Map<string, keyof S>
+    stateToRoot?: Map<keyof S, string>,
+}
+
+export interface Action {type: string}
+
+export function useReducerFluid<S extends FluidFunctionalComponentState, A extends IFluidReducer<S>>(
+    props: FluidReducerProps<S, A>,
+): [S, React.Dispatch<Action>] {
+    const {
+        root,
+        rootToInitialState,
+        stateToRoot,
+    } = props;
+
+    const initReducerState = (initialState: S): S => {
+        const combinedState = initialState;
+        if (rootToInitialState !== undefined) {
+            rootToInitialState.forEach((stateKey, rootKey) => {
+                combinedState[stateKey] = root.get(rootKey);
+            });
+        }
+        return combinedState;
+    };
+
+    const combinedReducer = (currentState: S, action: Action, args?: any): S => {
+        const actionInfo =  props.reducer[(action.type)];
+        if (actionInfo) {
+            const newState = actionInfo.action(currentState, args);
+            const changedStateKeys = actionInfo.changedStateKeys;
+            if (stateToRoot && changedStateKeys) {
+                changedStateKeys.forEach((stateKey: keyof S) => {
+                    const rootKey = stateToRoot.get(stateKey);
+                    if (rootKey) {
+                        root.set(rootKey, newState[stateKey]);
+                    }
+                });
+                return newState;
+            } else {
+                return newState;
+            }
+        } else if (action.type.includes("setLocalState") && stateToRoot) {
+            const newState = currentState;
+            stateToRoot.forEach((rootKey, stateKey) => {
+                const newData = root.get(rootKey);
+                if (newData !== newState[stateKey]) {
+                    newState[stateKey] = newData;
+                }
+            });
+            newState.isInitialized = true;
+            return newState;
+        } else {
+            throw new Error(
+                `Action with key ${action} does not
+                 exist in the reducers provided`);
+        }
+    };
+    props.initialState.isInitialized = true;
+    const [reducerState, reducer] = React.useReducer(combinedReducer, props.initialState, initReducerState);
+    if (stateToRoot !== undefined && !reducerState.isInitialized) {
+        stateToRoot.forEach((rootKey, stateKey) => {
+            root.on("valueChanged", (change, local) => reducer({ type: "setLocalState" }));
+        });
+    }
+
+    reducerState.isInitialized = true;
+
+    return [reducerState, reducer];
 }
 
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
@@ -146,6 +227,7 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
                         if (newData !== reactState[stateKey]) {
                             const newState: S = reactState;
                             newState[stateKey] = newData;
+                            newState.isInitialized = true;
                             fluidSetState(newState);
                         }
                     }
