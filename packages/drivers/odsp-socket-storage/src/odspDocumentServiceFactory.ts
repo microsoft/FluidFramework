@@ -40,6 +40,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 
