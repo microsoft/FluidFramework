@@ -229,11 +229,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         async function createNamedItem(
             runtime: IContainerRuntime,
             crc: IConsensusRegisterCollection,
-            path: string,
+            pathArg: string,
             create: () => IComponentHandle,
             write: (handle: IComponentHandle) => void,
             read: () => IComponentHandle,
         ) {
+            // Create unique name not to collide with other users of same CRC.
+            const path = `createNamedItem_${pathArg}`;
+
             // Test for states #3 or #4
             // #3 can be because same client already called this API for same path.
             // In this case (being same client), we know it is still alive and doing #3 -> #4 move,
