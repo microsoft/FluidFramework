@@ -57,7 +57,7 @@ describe("loader/runtime compatibility", () => {
 
     async function createContainer(
         factory: IRuntimeFactory,
-        deltaConnectionServer: ILocalDeltaConnectionServer
+        deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<Container> {
         const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
@@ -65,7 +65,7 @@ describe("loader/runtime compatibility", () => {
 
     async function createOldContainer(
         factory: IRuntimeFactory,
-        deltaConnectionServer: ILocalDeltaConnectionServer
+        deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<old.Container> {
         const loader = old.createLocalLoader([[ codeDetails, factory ]] as any, deltaConnectionServer);
         return old.initializeLocalContainer(id, loader, codeDetails);
@@ -89,7 +89,7 @@ describe("loader/runtime compatibility", () => {
             this.component._root.set(test[0], test[1]);
             assert.strictEqual(await this.component._root.wait(test[0]), test[1]);
         });
-    }
+    };
 
     describe("old loader, new runtime", function() {
         beforeEach(async function() {
@@ -111,7 +111,9 @@ describe("loader/runtime compatibility", () => {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create();
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
-            this.container = await createContainer(OldTestComponent.getRuntimeFactory() as unknown as IRuntimeFactory, this.deltaConnectionServer);
+            this.container = await createContainer(
+                OldTestComponent.getRuntimeFactory() as unknown as IRuntimeFactory,
+                this.deltaConnectionServer);
             this.component = await getComponent<OldTestComponent>("default", this.container);
             this.containerDeltaEventManager.registerDocuments(this.component._runtime);
         });
