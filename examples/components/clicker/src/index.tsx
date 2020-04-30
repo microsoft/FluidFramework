@@ -61,18 +61,12 @@ interface CounterFunctionalState extends FluidFunctionalComponentState, CounterS
 // }
 
 interface IActionReducer extends IFluidReducer<CounterFunctionalState>{
-    increment: {
-        action: (oldState: CounterFunctionalState) => CounterFunctionalState,
-        changedStateKeys: [keyof CounterFunctionalState]
-    }
+    increment:  (oldState: CounterFunctionalState, args?: {step: number}) => CounterFunctionalState
 }
 
 const ActionReducer: IActionReducer = {
-    increment: {
-        action: (oldState: CounterFunctionalState) => {
-            return { value: oldState.value + 1 };
-        },
-        changedStateKeys: ["value"],
+    increment:  (oldState: CounterFunctionalState, args?: {step: number}) => {
+        return { value: args === undefined ? oldState.value + 1  : oldState.value + args.step };
     },
 };
 
@@ -86,6 +80,7 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
                 {state.value}
             </span>
             <button onClick={() => { dispatch({ type: "increment" }); }}>+</button>
+            <button onClick={() => { dispatch({ type: "increment", args: { step: 2 } }); }}>+</button>
         </div>
     );
 }
