@@ -138,12 +138,12 @@ export class SharedTextRunner
             }
             this.rootView.set("text", newString.handle);
 
-            const hostRuntime = this.context.hostRuntime;
+            const containerRuntime = this.context.containerRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(hostRuntime._createComponentWithProps("@fluid-example/progress-bars")),
-                getHandle(hostRuntime._createComponentWithProps("@fluid-example/math")),
-                getHandle(hostRuntime._createComponentWithProps("@fluid-example/video-players")),
-                getHandle(hostRuntime._createComponentWithProps("@fluid-example/image-collection")),
+                getHandle(containerRuntime._createComponentWithProps("@fluid-example/progress-bars")),
+                getHandle(containerRuntime._createComponentWithProps("@fluid-example/math")),
+                getHandle(containerRuntime._createComponentWithProps("@fluid-example/video-players")),
+                getHandle(containerRuntime._createComponentWithProps("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);
@@ -272,7 +272,7 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
+        const hostTokens = (this.componentContext.containerRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;

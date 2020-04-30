@@ -34,6 +34,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
         case MessageType.Propose:
         case MessageType.Reject:
         case MessageType.NoOp:
+        case MessageType.NoClient:
         case MessageType.Summarize:
         case MessageType.SummaryAck:
         case MessageType.SummaryNack:

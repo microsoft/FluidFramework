@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { Templates } from "..";
+
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentCallable>> { }
@@ -10,6 +13,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
+    addTemplate?(template: Templates): void;
     saveLayout?(): void;
     toggleEditable?(isEditable?: boolean): void;
 }
@@ -27,4 +31,10 @@ export interface IProvideComponentCallable {
  */
 export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
+}
+
+export interface IComponentOptions {
+    url?: string;
+    handle?: IComponentHandle;
+    type?: string;
 }

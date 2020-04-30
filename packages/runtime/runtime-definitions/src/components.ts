@@ -264,7 +264,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IHostRuntime;
+    readonly containerRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -376,24 +376,24 @@ export enum FlushMode {
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideHostRuntime>> { }
+    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
 
-export const IHostRuntime: keyof IProvideHostRuntime = "IHostRuntime";
+export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
-export interface IProvideHostRuntime {
-    IHostRuntime: IHostRuntime;
+export interface IProvideContainerRuntime {
+    IContainerRuntime: IContainerRuntime;
 }
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends
+export interface IContainerRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
     IProvideComponentRegistry,
-    IProvideHostRuntime {
+    IProvideContainerRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -536,9 +536,9 @@ export interface IHostRuntime extends
     submitSignal(type: string, content: any): void;
 }
 
-export interface IExperimentalHostRuntime extends IHostRuntime {
+export interface IExperimentalContainerRuntime extends IContainerRuntime {
 
-    isExperimentalHostRuntime: true;
+    isExperimentalContainerRuntime: true;
 
     /**
      * It is false if the container is not attached to storage and the component is attached to container.
