@@ -4,10 +4,9 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleContainerRuntimeFactory,
-    ContainerServiceRegistryEntries,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -21,6 +20,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
@@ -162,29 +162,24 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
-        private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly containerServiceRegistry: DependencyContainerRegistry = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
-        const runtimeFactory = {
-            IRuntimeFactory: undefined,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                context,
-                TestRootComponent.type,
-                [
-                    ...componentRegistry,
-                    [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(
-                            TestRootComponent.type,
-                            TestRootComponent,
-                            sharedObjectFactories,
-                            {}),
-                    )],
-                ],
-                this.containerServiceRegistry),
-        };
-        runtimeFactory.IRuntimeFactory = runtimeFactory;
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+            TestRootComponent.type,
+            [
+                ...componentRegistry,
+                [TestRootComponent.type, Promise.resolve(
+                    new PrimedComponentFactory(
+                        TestRootComponent.type,
+                        TestRootComponent,
+                        sharedObjectFactories,
+                        {}),
+                )],
+            ],
+            this.containerServiceRegistry,
+        );
 
         const store = new TestDataStore(
             new TestCodeLoader([
