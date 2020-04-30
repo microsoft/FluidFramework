@@ -184,8 +184,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         /**
-         * Creates named DDS or Component
-         * Resolves conflicts by concurrently created multiple items and resolving conflict
+         * Helper method to creates named DDS or Component
+         * It uses concurrent creation and relies on GC.
+         * Benefit of this approach is that process moves with the speed of fastest client on the wire.
+         * The alternative is to use locking (synchronization), where all clients waits for "leader"
+         * (or owner of a lock). In such system we avoid multiple creations of component instances,
+         * but whole system moves with the speed of slowest client on the wire.
+         *
+         * Implementation resolves conflicts by concurrently created multiple items and resolving conflict
          * via "first wins" merge conflict resolution policy.
          * Requires active r/w connection (blocks and waits in offline until connected)
          *
@@ -228,7 +234,12 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             write: (handle: IComponentHandle) => void,
             read: () => IComponentHandle,
         ) {
-            // Test for state #4
+            // Test for states #3 or #4
+            // #3 can be because same client already called this API for same path.
+            // In this case (being same client), we know it is still alive and doing #3 -> #4 move,
+            // so there is nothing to do for this invocation - prior invocation will either succeed,
+            // or this client will die losing this op, and some future invocation will finish the "move",
+            // but all clients will return the same value from this point in time.
             let value = read();
             if (value !== undefined) {
                 return value;
@@ -245,21 +256,21 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
                 // this waits until write round-trips
                 // This client may win or lose that battle!
                 await crc.write(path, value);
-            }
 
-            // We can be already in state #4!
-            // Have to check first final destination - it's possible CRC has been already cleared!
-            value = read();
-            if (value !== undefined) {
-                return value;
-            }
+                // We can be already in state #4!
+                // Have to check first final destination - it's possible CRC has been already cleared!
+                value = read();
+                if (value !== undefined) {
+                    return value;
+                }
 
-            // Ok, it's state #2 or #3.
-            // #3 can be either another client transitioning system to #3, or
-            // it can be this same client calling this function multiple times in parallel.
-            // CRC has to have a value, as it has not yet propagated to final destination
-            value = crc.read(path);
-            assert(value);
+                // Ok, it's state #2 or #3.
+                // #3 can be either another client transitioning system to #3, or
+                // it can be this same client calling this function multiple times in parallel.
+                // CRC has to have a value, as it has not yet propagated to final destination
+                value = crc.read(path);
+                assert(value !== undefined);
+            }
 
             // Now "move" it to final destination.
             // We rely on batching to transition ownership in one atomic step!
@@ -278,11 +289,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             // In practical terms, we can skip / not wait for this step. For all purposes,
             // the value is already in the system. It will either stay on CRC (if OPs above are lost),
             // or move to destination. So we may skip waiting here, but that makes error handling harder.
-            await p1;
+            p1.then(() => {
+                // This condition should be true from now on...
+                assert(read() === value);
+                assert(crc.read(path) === undefined);
+            }).catch((error) => {
+                runtime.logger.sendErrorEvent({ eventName: "CRCError", error});
+            });
 
-            // This condition should be true from now on...
-            assert(read() === value);
-            assert(value !== undefined);
             return value;
         }
 
