@@ -48,6 +48,7 @@ export class CreationServerMessagesHandler {
 
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
+    private clientSequenceNumber: number = 1;
     private totalClients: number = 0;
 
     private readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
@@ -217,7 +218,7 @@ export class CreationServerMessagesHandler {
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
             clientId: clientDetail.clientId,
-            clientSequenceNumber: 0,
+            clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,
