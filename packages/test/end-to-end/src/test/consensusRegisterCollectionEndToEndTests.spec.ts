@@ -286,9 +286,9 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             // It will catch detached CRC, which should not happen as logic would be broken!
             assert(crc.read(path) === value);
 
-            // In practical terms, we can skip / not wait for this step. For all purposes,
-            // the value is already in the system. It will either stay on CRC (if OPs above are lost),
-            // or move to destination. So we may skip waiting here, but that makes error handling harder.
+            // We can skip waiting for this step. For all purposes, the value is already in the system.
+            // It will either move to destination or stay on CRC (if OPs above are lost, but future invocation
+            // of this API will fetch it from CRC and finish process of moving).
             p1.then(() => {
                 // This condition should be true from now on...
                 assert(read() === value);
