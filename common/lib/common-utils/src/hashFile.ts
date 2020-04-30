@@ -24,17 +24,18 @@ export async function hashFile(file: Buffer): Promise<string> {
 
     // Fallback to sha.js library if subtlecrypto fails for whatever reason
     // (while this workaround exists, we must also use the same alg in both places)
-    return Promise.resolve(crypto.subtle.digest("SHA-1", file)).then((hash) => {
+    try {
+        const hash = await crypto.subtle.digest("SHA-1", file)
         const hashArray = new Uint8Array(hash);
         const hashHex = Array.prototype.map.call(hashArray, function(byte) {
             return byte.toString(16).padStart(2, "0");
         }).join("");
 
         return hashHex;
-    }).catch((error) => {
+    } catch(error) {
         const engine = new sha1();
         return engine.update(file).digest("hex");
-    });
+    };
 }
 
 /**
