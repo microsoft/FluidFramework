@@ -12,7 +12,7 @@ import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,
 } from "@microsoft/fluid-framework-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
 
 import { MatchMaker } from "../src/containerServices";
 
@@ -62,7 +62,7 @@ describe("Routerlicious", () => {
     describe("Aqueduct", () => {
         describe("MatchMaker", () => {
             it(`MatchMaker register discoverable after discover`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered = false;
                 discoverProvider.on("discovered", () => {
@@ -77,7 +77,7 @@ describe("Routerlicious", () => {
             });
 
             it(`MatchMaker register discover after discoverable`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
@@ -96,7 +96,7 @@ describe("Routerlicious", () => {
             });
 
             it(`MatchMaker register multiple discoverable`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider1 = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider1);
@@ -116,7 +116,7 @@ describe("Routerlicious", () => {
             });
 
             it(`MatchMaker register discover after discoverable multiple interfaces`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider =
                     new MockComponentDiscoverableInterfaces(["IComponentLoadable", "IComponentHandle"]);
@@ -141,7 +141,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Registering interface without implementing throws`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider =
                     new MockComponentDiscoverableInterfaces(["IComponentRegistry"]);
@@ -150,7 +150,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Can register for both Discover and Discoverable`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentHandle"]);
                 matchMaker.registerComponentInterfaces(discoverableProvider);
@@ -185,7 +185,7 @@ describe("Routerlicious", () => {
             });
 
             it(`When registering for Discover and Discoverable does not alert discover of itself`, async () => {
-                const matchMaker = new MatchMaker({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IContainerRuntime);
 
                 const discoverableAndDiscoverProvider =
                     new MockComponentDiscoverableAndDiscoverInterfaces(

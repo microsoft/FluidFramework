@@ -7,20 +7,23 @@ const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
+const pkg = require("./package.json");
+const componentName = pkg.name.slice(1);
+
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
 
     return merge({
         entry: {
-            main: "./src/index.ts"
+            main: "./src/main.tsx",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
             }]
         },
         output: {
@@ -29,20 +32,13 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: "chaincode/chat",
-            libraryTarget: "umd"
-        },
-        node: {
-            dgram: 'empty',
-            fs: 'empty',
-            net: 'empty',
-            tls: 'empty',
-            child_process: 'empty',
+            devtoolNamespace: componentName,
+            libraryTarget: "umd",
         },
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            before: fluidRoute.before,
+            before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction

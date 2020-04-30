@@ -18,7 +18,7 @@ import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 export const MatchMakerContainerServiceId = "matchMaker";
 
 const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
-    const response = await context.hostRuntime.request({
+    const response = await context.containerRuntime.request({
         url:`/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
     if (response.status === 200 && response.mimeType === "fluid/component") {

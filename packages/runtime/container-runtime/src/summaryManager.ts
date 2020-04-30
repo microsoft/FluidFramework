@@ -84,14 +84,14 @@ type ShouldSummarizeState = {
     stopReason: StopReason;
 };
 
-const defaultThrottleMaxDelayMs = 30 * 1000;
 const defaultThrottleDelayWindowMs = 60 * 1000;
+const defaultThrottleMaxDelayMs = 30 * 1000;
+// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
 const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 /**
  * Used to give increasing delay times for throttling a single functionality.
  * Delay is based on previous attempts within specified time window, ignoring actual delay time.
- * Default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc) up to max delay (default 30s)
  */
 class Throttler {
     private startTimes: number[] = [];
@@ -128,13 +128,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
+    private latestClientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
     private readonly startThrottler = new Throttler(
-        defaultThrottleMaxDelayMs,
         defaultThrottleDelayWindowMs,
+        defaultThrottleMaxDelayMs,
         defaultThrottleDelayFunction,
     );
     private opsUntilFirstConnect = -1;
@@ -159,11 +160,15 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     ) {
         super();
 
-        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+        this.logger = ChildLogger.create(
+            parentLogger,
+            "SummaryManager",
+            undefined,
+            { clientId: () => this.latestClientId });
 
         this.connected = context.connected;
         if (this.connected) {
-            this.clientId = context.clientId;
+            this.setClientId(context.clientId);
         }
 
         const members = context.quorum.getMembers();
@@ -198,6 +203,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.updateConnected(false);
     }
 
+    private setClientId(clientId: string | undefined): void {
+        this.clientId = clientId;
+        if (clientId !== undefined) {
+            this.latestClientId = clientId;
+            if (this.runningSummarizer !== undefined) {
+                this.runningSummarizer.updateOnBehalfOf(clientId);
+            }
+        }
+    }
+
     public on(event: "summarizer", listener: (clientId: string) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
@@ -209,7 +224,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.connected = connected;
-        this.clientId = connected ? clientId : undefined;
+        this.setClientId(clientId);
         this.refreshSummarizer();
     }
 
@@ -281,6 +296,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
             return;
         }
@@ -312,8 +328,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const runningSummarizerEvent = PerformanceEvent.start(this.logger,
             { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts });
         this.runningSummarizer = summarizer;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const clientId = this.latestClientId!;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(this.clientId).then(() => {
+        this.runningSummarizer.run(clientId).then(() => {
             runningSummarizerEvent.end();
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);

@@ -17,7 +17,7 @@ import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { CellRange } from "./cellrange";
-import { TableDocumentType, TableSliceType } from "./componentTypes";
+import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
@@ -30,7 +30,7 @@ export interface ITableDocumentEvents extends IEvent{
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> implements ITable {
+export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -41,7 +41,9 @@ export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> impl
             SharedNumberSequence.getFactory(),
         ],
         {},
-        undefined,
+        [
+            TableSlice.getFactory().registryEntry,
+        ],
         true,
     );
 
@@ -94,8 +96,10 @@ export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> impl
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await super.createAndAttachComponent<TableSlice>(TableSliceType,
-            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
+        const component = await TableSlice.getFactory().createComponent(
+            this.context,
+            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
+        ) as TableSlice;
         this.root.set(sliceId, component.handle);
         return component;
     }

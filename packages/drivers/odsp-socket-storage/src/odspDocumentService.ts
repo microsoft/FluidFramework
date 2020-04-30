@@ -21,7 +21,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
-import { createNewFluidFile, INewFileInfo } from "./createFile";
+import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache } from "./odspCache";
@@ -29,7 +29,7 @@ import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 
@@ -69,7 +69,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
-        createNewFlag: boolean,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
@@ -77,19 +76,16 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             logger,
             { docId: odspResolvedUrl.hashedDocumentId });
         if (odspResolvedUrl.createNewOptions) {
-            const createNewOptions = odspResolvedUrl.createNewOptions;
-            const createNewSummary = createNewOptions.createNewSummary;
             const event = PerformanceEvent.start(templogger,
                 {
                     eventName: "CreateNew",
-                    isWithSummaryUpload: createNewSummary ? true : false,
+                    isWithSummaryUpload: false,
                 });
             try {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache,
-                    createNewSummary);
+                    cache);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
@@ -111,7 +107,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             socketIOClientP,
             cache,
             isFirstTimeDocumentOpened,
-            createNewFlag,
         );
     }
 
@@ -198,7 +193,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
-        private readonly createNewFlag: boolean,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
@@ -270,7 +264,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
-            this.createNewFlag,
         );
 
         return new OdspDocumentStorageService(this.storageManager);

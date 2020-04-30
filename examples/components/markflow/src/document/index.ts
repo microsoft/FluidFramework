@@ -138,7 +138,7 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
-export class FlowDocument extends PrimedComponent<{}, IFlowDocumentEvents> {
+export class FlowDocument extends PrimedComponent<{}, {}, IFlowDocumentEvents> {
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {
@@ -158,7 +158,7 @@ export class FlowDocument extends PrimedComponent<{}, IFlowDocumentEvents> {
     public async getComponentFromMarker(marker: Marker) {
         const url = marker.properties.url as string;
 
-        const response = await this.context.hostRuntime.request({ url });
+        const response = await this.context.containerRuntime.request({ url });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return Promise.reject("Not found");
         }
