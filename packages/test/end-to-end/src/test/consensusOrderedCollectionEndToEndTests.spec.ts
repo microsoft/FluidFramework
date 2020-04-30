@@ -240,12 +240,14 @@ function generate(
             const collection2 = await collection2Handle.get();
 
             await collection1.add("testValue");
-            await collection1.acquire(async (value) => {
+            const acquireReleaseP = collection1.acquire(async (value) => {
                 assert.strictEqual(value, "testValue");
                 return ConsensusResult.Release;
             });
+            const waitAcquireCompleteP = waitAcquireAndComplete(collection2);
 
-            assert.equal(await waitAcquireAndComplete(collection2), "testValue");
+            assert.equal(await acquireReleaseP, true);
+            assert.equal(await waitAcquireCompleteP, "testValue");
             assert.equal(await acquireAndComplete(collection1), undefined);
             assert.equal(await acquireAndComplete(collection2), undefined);
         });
@@ -258,17 +260,19 @@ function generate(
                 await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
             const collection2 = await collection2Handle.get();
 
-            const p2 = waitAcquireAndComplete(collection2);
-            // await new Promise((res) => setImmediate(res));
+            let rejected = false;
+            myWaitAcquireAndComplete(collection2)
+                .catch(() => { rejected = true; });
             component2.runtime.deltaManager.close();
             //* todo: this fails badly too:
             // component1.runtime.deltaManager.close();
 
             await collection1.add("testValue");
-            await collection1.acquire(async (value) => {
-                assert.strictEqual(value, "testValue");
-                return ConsensusResult.Release;
-            });
+
+            assert(rejected, "Closing the runtime while waiting should cause promise reject");
+            //* todo: This deadlocks, since it's waiting for the op to come back...
+            // assert.equal(await acquireAndComplete(collection2), undefined);
+            assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
 
             await assert.rejects(p2, "Closing the runtime while waiting should cause promise reject");
             assert.equal(await acquireAndComplete(collection1), undefined);
