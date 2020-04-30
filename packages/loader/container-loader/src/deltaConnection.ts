@@ -3,25 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import {
     IConnectionDetails,
 } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentService,
+    IDocumentDeltaConnectionEvents,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEventProvider } from "@microsoft/fluid-common-definitions";
 
-export class DeltaConnection extends EventEmitter {
+export interface IDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents>{
+    readonly details: IConnectionDetails;
+    readonly nacked: boolean;
+    readonly connected: boolean;
+
+    /**
+     * Closes the delta connection. This disconnects the socket and clears any listeners
+     */
+    close(): void;
+    submit(messages: IDocumentMessage[]): void;
+    submitAsync(messages: IDocumentMessage[]): Promise<void>;
+    submitSignal(message: any): void;
+}
+
+export class DeltaConnection
+    extends EventForwarder<IDocumentDeltaConnectionEvents>
+    implements IDeltaConnection {
     public static async connect(
         service: IDocumentService,
-        client: IClient) {
+        client: IClient): Promise<IDeltaConnection> {
         const connection = await service.connectToDeltaStream(client);
         return new DeltaConnection(connection);
     }
@@ -40,9 +57,6 @@ export class DeltaConnection extends EventEmitter {
 
     private readonly _details: IConnectionDetails;
     private _nacked = false;
-
-    private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
-    private readonly nonForwardEvents = ["nack", "disconnect"];
 
     private _connection?: IDocumentDeltaConnection;
 
@@ -75,25 +89,29 @@ export class DeltaConnection extends EventEmitter {
         connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
-            this.emit("nack", message[0]);
+            this.emit("nack", documentId, message);
         });
 
         connection.on("disconnect", (reason) => {
             this.emit("disconnect", reason);
             this.close();
         });
+
+        // A number of events that are pass-through.
+        // Note that we delay subscribing to op / op-content / signal on purpose, as
+        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
+        // to these events, and thus stop accumulating ops / signals in early handlers.
+        this.forwardEvent(connection, "op", "op-content", "signal", "error", "pong");
     }
 
-    /**
-     * Closes the delta connection. This disconnects the socket and clears any listeners
-     */
     public close() {
         if (this._connection) {
             const connection = this._connection;
             this._connection = undefined;
             connection.disconnect();
         }
-        this.removeAllListeners();
+        // this will clear all event listeners
+        this.dispose();
     }
 
     public submit(messages: IDocumentMessage[]): void {
@@ -106,36 +124,5 @@ export class DeltaConnection extends EventEmitter {
 
     public submitSignal(message: any): void {
         return this.connection.submitSignal(message);
-    }
-
-    /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        // Register for the event on connection
-
-        // A number of events that are pass-through.
-        // Note that we delay subscribing to op / op-content / signal on purpose, as
-        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
-        // to these events, and thus stop accumulating ops / signals in early handlers.
-        if (this.forwardEvents.includes(event)) {
-            assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
-            this.connection.on(
-                event,
-                (...args: any[]) => {
-                    this.emit(event, ...args);
-                });
-        } else {
-            // These are events that we already subscribed to and already emit on object.
-            assert(this.nonForwardEvents.includes(event));
-        }
-
-        // And then add the listener to our event emitter
-        super.on(event, listener);
-
-        return this;
     }
 }

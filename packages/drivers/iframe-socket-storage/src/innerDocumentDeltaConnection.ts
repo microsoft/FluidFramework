@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { Deferred, TypedEventEmitter } from "@microsoft/fluid-common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -29,7 +29,9 @@ export interface IOuterDocumentDeltaConnectionProxy {
 /**
  * Represents a connection to a stream of delta updates
  */
-export class InnerDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class InnerDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -168,26 +170,17 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
     private constructor(
         public details: IConnected,
         public outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>,
-        private readonly tempEmitter: EventEmitter) {
+        tempEmitter: EventEmitter) {
         super();
-    }
 
-    /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.tempEmitter.on(
-            event,
-            (...args: any[]) => {
-                this.emit(event, ...args);
-                listener(...args);
-            });
-        super.on(event, listener);
-
-        return this;
+        this.on("newListener",(event, listener)=>{
+            tempEmitter.on(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                    listener(...args);
+                });
+        });
     }
 
     /**

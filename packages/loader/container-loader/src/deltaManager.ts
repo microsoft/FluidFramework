@@ -4,15 +4,15 @@
  */
 
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
     IDeltaManager,
+    IDeltaManagerEvents,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent, TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -41,7 +41,7 @@ import {
 import { createIError, createWriteError, createNetworkError, createFatalError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
-import { DeltaConnection } from "./deltaConnection";
+import { DeltaConnection, IDeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 
@@ -83,7 +83,9 @@ export interface IConnectionArgs {
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+export class DeltaManager
+    extends TypedEventEmitter<IDeltaManagerEvents>
+    implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
     public readonly clientDetails: IClientDetails;
@@ -127,7 +129,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
     private connectionP: Promise<IConnectionDetails> | undefined;
-    private connection: DeltaConnection | undefined;
+    private connection: IDeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     private closed = false;
@@ -297,21 +299,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal.pause();
     }
 
-    on(event: "error", listener: (error: IError) => void);
-    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
-    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
-    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: IError) => void);
-    on(event: "pong" | "processTime", listener: (latency: number) => void);
-    on(event: "connect", listener: (details: IConnectionDetails) => void);
-    on(event: "disconnect", listener: (reason: string) => void);
-    on(event: "readonly", listener: (readonly: boolean) => void);
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     public dispose() {
         assert.fail("Not implemented.");
         this.isDisposed = true;
@@ -396,7 +383,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
-            let connection: DeltaConnection | undefined;
+            let connection: IDeltaConnection | undefined;
             let delay = InitialReconnectDelay;
             let connectRepeatCount = 0;
             const connectStartTime = performanceNow();
@@ -795,7 +782,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * initial messages.
      * @param connection - The newly established connection
      */
-    private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
+    private setupNewSuccessfulConnection(connection: IDeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -838,7 +825,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Always connect in write mode after getting nacked.
-        connection.on("nack", (message: INack) => {
+        connection.on("nack", (documentId: string, messages: INack[]) => {
+            const message = messages[0];
             // check message.content for back-compat with old service.
             const nackMessage = message.content ? message.content.message : "";
             const nackReason = `Nacked: ${nackMessage}`;
@@ -949,7 +937,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     private async reconnectOnError(
         reason: string,
-        connection: DeltaConnection,
+        connection: IDeltaConnection,
         requestedMode: ConnectionMode,
         error?: any,
         autoReconnect: boolean = true,

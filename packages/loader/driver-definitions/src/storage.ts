@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { IEventProvider, IErrorEvent } from "@microsoft/fluid-common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -22,6 +22,7 @@ import {
     ITokenProvider,
     ITree,
     IVersion,
+    INack,
 } from "@microsoft/fluid-protocol-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IResolvedUrl } from "./urlResolver";
@@ -115,7 +116,16 @@ export interface IDocumentStorageService {
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
-export interface IDocumentDeltaConnection extends EventEmitter {
+export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
+    (event: "nack", listener: (documentId: string, message: INack[]) => void);
+    (event: "disconnect", listener: (reason: any) => void);
+    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
+    (event: "op-content", listener: (message: IContentMessage) => void);
+    (event: "signal", listener: (message: ISignalMessage) => void);
+    (event: "pong", listener: (latency: number) => void);
+}
+
+export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
     /**
      * ClientID for the connection
      */
@@ -196,6 +206,24 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Disconnects the given delta connection
      */
     disconnect();
+
+    /**
+     * Emits and event from this document delta connection
+     * @param event - The event to emit
+     * @param args - The arguments for the event
+     */
+    emit(event: string, ...args: any[]): boolean;
+
+    /**
+     * Gets the listeners for an event
+     * @param event - The name of the event
+     */
+    listeners(event: string): Function[];
+
+    /**
+     * Removes all listeners from all events
+     */
+    removeAllListeners(): void;
 }
 
 export interface IDocumentService {
