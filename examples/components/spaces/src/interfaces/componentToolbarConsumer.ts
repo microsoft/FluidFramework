@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { SpacesCompatibleToolbar } from ".";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -21,5 +21,5 @@ export interface IProvideComponentToolbarConsumer {
  * other interfaces such as IComponentToolbar or IComponentCallable.
  */
 export interface IComponentToolbarConsumer extends IProvideComponentToolbarConsumer {
-    setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
+    setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;
 }

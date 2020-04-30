@@ -10,17 +10,18 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
-import { IComponentOptions } from "./interfaces";
+import { IComponentOptions, SpacesCompatibleToolbar } from "./interfaces";
 
 const ComponentToolbarUrlKey = "component-toolbar-url";
+
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
     addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
-    setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable): void;
-    getComponentToolbar(): Promise<IComponent>;
+    setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;
+    getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined>;
     updateGridItem(id: string, newLayout: Layout): void;
     getModels(): ISpacesModel[]
     readonly componentToolbarUrl: string;
@@ -104,16 +105,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     public setComponentToolbar(
         url: string,
         type: string,
-        toolbarComponent: IComponent & IComponentLoadable,
+        toolbarComponent: SpacesCompatibleToolbar,
     ): void {
         this.removeComponent(this.componentToolbarUrl);
         this.addComponent(toolbarComponent, type, { x: 0, y: 0, w: 6, h: 2 });
         this.root.set(ComponentToolbarUrlKey, url);
     }
 
-    public async getComponentToolbar(): Promise<IComponent> {
-        const component = await this.getComponent(this.componentToolbarUrl);
-        return component as IComponent;
+    public async getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined> {
+        const component = await this.getComponent<SpacesCompatibleToolbar>(this.componentToolbarUrl);
+        return component;
     }
 
     public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {

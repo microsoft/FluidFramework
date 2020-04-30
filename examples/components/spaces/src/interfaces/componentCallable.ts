@@ -33,6 +33,8 @@ export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
 }
 
+export type SpacesCompatibleToolbar = IComponent & IComponentLoadable & IComponentCallable<IComponentCallbacks>;
+
 export interface IComponentOptions {
     component?: IComponent & IComponentLoadable;
     type?: string;

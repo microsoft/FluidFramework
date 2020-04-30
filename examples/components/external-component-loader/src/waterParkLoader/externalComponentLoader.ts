@@ -14,7 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentCallbacks, IComponentOptions } from "@fluid-example/spaces";
+import { IComponentCallbacks, IComponentOptions, SpacesCompatibleToolbar } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -32,7 +32,7 @@ const localComponents = [
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
+    implements IComponentHTMLView, SpacesCompatibleToolbar {
     private static readonly defaultComponents = [
         "@fluid-example/todo",
         "@fluid-example/math",

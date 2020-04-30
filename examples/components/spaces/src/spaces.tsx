@@ -12,7 +12,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -21,7 +20,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer } from "./interfaces";
+import { IComponentToolbarConsumer, SpacesCompatibleToolbar } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
 /**
@@ -30,7 +29,7 @@ import { SpacesComponentName, Templates } from ".";
 export class Spaces extends PrimedComponent
     implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private componentToolbar: IComponent | undefined;
+    private componentToolbar: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
@@ -60,7 +59,7 @@ export class Spaces extends PrimedComponent
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    public setComponentToolbar(id: string, type: string, toolbarComponent: IComponent & IComponentLoadable) {
+    public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
         this.dataModel.setComponentToolbar(id, type, toolbarComponent);
         this.componentToolbar = toolbarComponent;
         this.addToolbarListeners();
@@ -111,7 +110,7 @@ export class Spaces extends PrimedComponent
     }
 
     private addToolbarListeners() {
-        if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
+        if (this.componentToolbar) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({
                 addComponent: (type: string, w?: number, h?: number) => {
                     this.createAndAttachComponent(type)
