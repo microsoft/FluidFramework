@@ -176,6 +176,7 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A exten
     props: FluidReducerProps<S, A>,
 ): [S, (action: ActionInfo) => void] {
     const {
+        reducer,
         root,
         rootToInitialState,
         stateToRoot,
@@ -189,8 +190,8 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A exten
         stateToRoot,
     });
 
-    const combinedReducer = (actionInfo: ActionInfo) => {
-        const action =  props.reducer[(actionInfo.type)];
+    const combinedReducer = React.useCallback((actionInfo: ActionInfo) => {
+        const action =  reducer[(actionInfo.type)];
         if (action) {
             setState(action(state, actionInfo.args));
         } else {
@@ -198,7 +199,7 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A exten
                 `Action with key ${action} does not
                  exist in the reducers provided`);
         }
-    };
+    }, [reducer, state, setState]);
 
     return [state, combinedReducer];
 }
