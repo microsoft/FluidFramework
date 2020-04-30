@@ -8,11 +8,11 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    // FluidProps,
+    FluidProps,
     FluidReducerProps,
     FluidFunctionalComponentState,
-    // FluidReactComponent,
-    // useStateFluid,
+    FluidReactComponent,
+    useStateFluid,
     useReducerFluid,
     IFluidReducer,
 } from "@microsoft/fluid-aqueduct-react";
@@ -30,35 +30,37 @@ interface CounterState {
     value: number;
 }
 
-// class CounterReactView extends FluidReactComponent<{}, CounterState> {
-//     render() {
-//         return (
-//             <div>
-//                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-//                     {this.state.value}
-//                 </span>
-//                 <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
-//             </div>
-//         );
-//     }
-// }
+class CounterReactView extends FluidReactComponent<{}, CounterState> {
+    render() {
+        return (
+            <div>
+                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                    {`Regular Component: ${this.state.value}`}
+                </span>
+                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
+            </div>
+        );
+    }
+}
 
 interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
-// function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
-//     // Declare a new state variable, which we'll call "count"
-//     const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+    // Declare a new state variable, which we'll call "count"
+    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
 
-//     return (
-//         <div>
-//             <span className="clicker-value-class-functional"
-// id={`clicker-functional-value-${Date.now().toString()}`}>
-//                 {state.value}
-//             </span>
-//             <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
-//         </div>
-//     );
-// }
+    return (
+        <div>
+            <span
+                className="clicker-value-class-functional"
+                id={`clicker-functional-value-${Date.now().toString()}`}
+            >
+                {`Functional Component: ${state.value}`}
+            </span>
+            <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+        </div>
+    );
+}
 
 interface IActionReducer extends IFluidReducer<CounterFunctionalState>{
     increment:  (oldState: CounterFunctionalState, args?: {step: number}) => CounterFunctionalState
@@ -77,10 +79,10 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
     return (
         <div>
             <span className="clicker-value-class-reducer" id={`clicker-reducer-value-${Date.now().toString()}`}>
-                {state.value}
+                {`Functional Reducer Component: ${state.value}`}
             </span>
             <button onClick={() => { dispatch({ type: "increment" }); }}>+</button>
-            <button onClick={() => { dispatch({ type: "increment", args: { step: 2 } }); }}>+</button>
+            <button onClick={() => { dispatch({ type: "increment", args: { step: 2 } }); }}>++</button>
         </div>
     );
 }
@@ -125,7 +127,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
         ReactDOM.render(
             <div>
-                {/* <CounterReactView
+                <CounterReactView
                     root={this.root}
                     reactComponentDefaultState={initialState}
                     rootToInitialState={rootToInitialState}
@@ -136,7 +138,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                     reactComponentDefaultState={initialState}
                     rootToInitialState={rootToInitialStateFunctional}
                     stateToRoot={stateToRootFunctional}
-                /> */}
+                />
                 <CounterReactFunctionalReducer
                     root={this.root}
                     initialState={initialState}
