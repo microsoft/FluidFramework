@@ -86,23 +86,32 @@ interface IPendingRecord<T> {
     message: IConsensusOrderedCollectionOperation;
 }
 
-type jobTrackingType<T> = Map<string, {value: T, clientId: string | undefined}>;
-const belongsToUnattached = undefined;
+/**
+ * For job tracking, we need to keep track of which client "owns" a given value.
+ * Key is the acquireId from when it was acquired
+ * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
+ */
+type JobTrackingInfo<T> = Map<string, {value: T, ownerId: string | undefined}>;
+const unattachedOwnerId = undefined;
 
 /**
  * Implementation of a consensus collection shared object
  *
+ * Implements the shared object's communication, and the semantics around the
+ * release/complete mechanism following acquire.
+ *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * Implements the shared object's communication, handles the sending/processing
- * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     /** Queue of local messages awaiting ack from the server */
     private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
 
-    private jobTracking: jobTrackingType<T> = new Map();
+    /**
+     * The set of values that have been acquired but not yet completed or released
+     */
+    private jobTracking: JobTrackingInfo<T> = new Map();
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -116,20 +125,15 @@ export class ConsensusOrderedCollection<T = any>
     ) {
         super(id, runtime, attributes);
 
-        // It's likely not safe to call this.removeClient(this.runtime.clientId) in here
-        // The fact that client recorded disconnect does not mean much in terms of the order
-        // server will record disconnects from multiple clients. And order matters because
-        // it defines the order items go back to the queue.
-        // So we put items back to queue only when we process our own removeMember event.
-        /*
-        runtime.on("disconnected", () => {
-            this.removeClient(this.runtime.clientId);
-        });
-        */
+        //* todo: Reconcile this removeOwner call with onDisconnect
 
+        // We can't simply call this.removeOwner(this.runtime.clientId) in on runtime disconnected,
+        // because other clients may disconnect concurrently.
+        // Disconnect order matters because it defines the order items go back to the queue.
+        // So we put items back to queue only when we process our own removeMember event.
         runtime.getQuorum().on("removeMember", (clientId: string) => {
             assert(clientId);
-            this.removeClient(clientId);
+            this.removeOwner(clientId);
         });
     }
 
@@ -201,7 +205,7 @@ export class ConsensusOrderedCollection<T = any>
     public snapshot(): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
-        this.removeClient(belongsToUnattached);
+        this.removeOwner(unattachedOwnerId);
 
         const tree: ITree = {
             entries: [
@@ -300,7 +304,7 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
             const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
-            this.jobTracking = new Map(content) as jobTrackingType<T>;
+            this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
         assert(this.data.size() === 0);
@@ -316,8 +320,8 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected onDisconnect() {
-        for (const [, { value, clientId }] of this.jobTracking) {
-            if (clientId === this.runtime.clientId) {
+        for (const [, { value, ownerId }] of this.jobTracking) {
+            if (ownerId === this.runtime.clientId) {
                 this.emit("localRelease", value, false /* intentional */);
             }
         }
@@ -386,7 +390,7 @@ export class ConsensusOrderedCollection<T = any>
         this.emit("add", value, true /* newlyAdded */);
     }
 
-    private acquireCore(acquireId: string, clientId?: string): IConsensusOrderedCollectionValue<T> | undefined {
+    private acquireCore(acquireId: string, ownerId?: string): IConsensusOrderedCollectionValue<T> | undefined {
         if (this.data.size() === 0) {
             return undefined;
         }
@@ -396,16 +400,16 @@ export class ConsensusOrderedCollection<T = any>
             acquireId,
             value,
         };
-        this.jobTracking.set(value2.acquireId, { value, clientId });
+        this.jobTracking.set(value2.acquireId, { value, ownerId });
 
-        this.emit("acquire", value, clientId);
+        this.emit("acquire", value, ownerId);
         return value2;
     }
 
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         if (this.isLocal()) {
             // can be undefined if queue is empty
-            return this.acquireCore(uuid(), belongsToUnattached);
+            return this.acquireCore(uuid(), unattachedOwnerId);
         }
 
         return this.submit<IConsensusOrderedCollectionAcquireOperation>({
@@ -414,16 +418,17 @@ export class ConsensusOrderedCollection<T = any>
         });
     }
 
-    private removeClient(clientIdToRemove?: string) {
+    private removeOwner(ownerIdToRemove?: string) {
         const added: T[] = [];
-        for (const [acquireId, { value, clientId }] of this.jobTracking) {
-            if (clientId === clientIdToRemove) {
+        for (const [acquireId, { value, ownerId }] of this.jobTracking) {
+            if (ownerId === ownerIdToRemove) {
                 this.jobTracking.delete(acquireId);
                 this.data.add(value);
                 added.push(value);
             }
         }
 
+        //* todo: shoud we also emit localRelease if ownerIdToRemove is us?
         // Raise all events only after all state changes are completed,
         // to guarantee same ordering of operations if collection is manipulated from events.
         added.map((value) => this.emit("add", value, false /* newlyAdded */));
