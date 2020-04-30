@@ -259,6 +259,7 @@ function generate(
             const collection2 = await collection2Handle.get();
 
             const p2 = waitAcquireAndComplete(collection2);
+            // await new Promise((res) => setImmediate(res));
             component2.runtime.deltaManager.close();
             //* todo: this fails badly too:
             // component1.runtime.deltaManager.close();
@@ -269,7 +270,7 @@ function generate(
                 return ConsensusResult.Release;
             });
 
-            assert.equal(await p2, "testValue");
+            await assert.rejects(p2, "Closing the runtime while waiting should cause promise reject");
             assert.equal(await acquireAndComplete(collection1), undefined);
             assert.equal(await acquireAndComplete(collection2), undefined);
         });

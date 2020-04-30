@@ -189,18 +189,19 @@ export class ConsensusOrderedCollection<T = any>
      * Wait for a value to be available and acquire it from the consensus collection
      */
     public async waitAndAcquire(callback: ConsensusCallback<T>): Promise<void> {
-        this.runtime.deltaManager.once("closed", () => {
-            throw new Error("deltaManager closed");
-        });
-
-        while (!(await this.acquire(callback))) {
+        do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await new Promise((resolve) => {
+                await new Promise((resolve, reject) => {
                     this.once("add", resolve);
+                    //* todo: get rid of "as any" (i.e. figure out the right event that's available or fix the proxy)
+                    //* todo: Deal with the UnhandledPromiseRejectionWarning showing up in the test
+                    (this.runtime.deltaManager as any).deltaManager.on("closed", () => {
+                        reject(new Error("Delta Manager closed while waiting"));
+                    });
                 });
             }
-        }
+        } while (!(await this.acquire(callback)));
     }
 
     public snapshot(): ITree {
