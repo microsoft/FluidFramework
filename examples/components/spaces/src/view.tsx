@@ -101,18 +101,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         });
     }
 
-    // This is kinda hacky. Is there a better way?
-    // Maybe instead of passing the model we pass a callback to get a model. In that scenario model changes
-    // shouldn't trigger a re-render
-    shouldComponentUpdate(_nextProps, nextState) {
-        if (nextState !== this.state) {
-            return true;
-        }
-
-        // We don't want to trigger re-render on data model changes since the component already handles them.
-        return false;
-    }
-
     onGridChangeEvent(
         layout: Layout[],
         oldItem: Layout,
@@ -167,17 +155,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         );
     }
 
-    getToolbarElement(): JSX.Element | undefined {
-        return (
-            <div className="text" style={{ padding: 2 }} >
-                <div style={{ height: "100%" }}>
-                    <EmbeddedComponentWrapper componentP={ this.props.dataModel.getComponentToolbar() } />
-                </div>
-            </div>
-        );
-    }
-
-    getNonToolbarElement(url: string): JSX.Element {
+    getComponentElement(url: string): JSX.Element {
         // Do some CSS stuff depending on if the user is editing or not
         const editableStyle: React.CSSProperties = { padding: 2 };
         const embeddedComponentStyle: React.CSSProperties = {
@@ -195,7 +173,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         }
 
         return (
-            <div className="text" key={url} style={editableStyle} >
+            <div key={url} style={editableStyle} >
                 {
                     this.state.isEditable &&
                     this.generateEditControls(url)
@@ -216,7 +194,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             // without passing in a new layout doesn't trigger a re-render.
             layout.i = url;
             layouts.push(layout);
-            components.push(this.getNonToolbarElement(url));
+            components.push(this.getComponentElement(url));
         });
 
         return [components, layouts];
@@ -226,7 +204,11 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const [components, layouts] = this.generateViewState();
         return (
             <div>
-                {this.getToolbarElement()}
+                <div style={{ padding: 2 }} >
+                    <div style={{ height: "100%" }}>
+                        <EmbeddedComponentWrapper componentP={ this.props.dataModel.getComponentToolbar() } />
+                    </div>
+                </div>
                 {
                     this.state.componentMap.size > 0 &&
                         <ReactGridLayout
