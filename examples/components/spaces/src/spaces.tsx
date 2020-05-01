@@ -102,17 +102,14 @@ export class Spaces extends PrimedComponent implements
 
     protected async componentHasInitialized() {
         this.addToolbarListeners();
-        const isEditable = this.dataModel.componentList.size - 1 === 0;
+        const isEditable = this.dataModel.componentList.size === 1;
         this.dataModel.emit("editableUpdated", isEditable);
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
-        if (registry) {
-            this.registryDetails = registry as IComponent;
-        }
+        this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
         if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
             this.componentToolbar.IComponentToolbar.changeEditState(isEditable);
-            if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
-                this.componentToolbar.IComponentToolbar.toggleTemplates(true);
-            }
+            this.componentToolbar.IComponentToolbar.toggleTemplates(
+                this.registryDetails?.IComponentRegistryTemplates !== undefined,
+            );
         }
     }
 
