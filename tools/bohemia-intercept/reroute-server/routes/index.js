@@ -2,12 +2,12 @@ var express = require('express');
 var fs = require('fs');
 var router = express.Router();
 
-let pkgGlobal = "C:\\Users\\sumbhatt\\FluidFramework\\examples\\components\\badge\\package.json";
 let pkgMain = "dist/main.bundle.js";
 const localhostURL = "http://localhost:8080/";
 
 async function getPackage() {
-    const pkgString = await fs.readFileSync(pkgGlobal);
+    const executedDir = process.cwd();
+    const pkgString = await fs.readFileSync(`${executedDir}/package.json`);
     return JSON.parse(pkgString);
 }
 

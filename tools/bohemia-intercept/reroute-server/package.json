@@ -1,10 +1,15 @@
 {
-  "name": "server",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@microsoft/bohemia-intercept-reroute-server",
+  "version": "1.0.6",
+  "description": "Lightweight express server for intercepting Bohemia's request for client side packages",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "bohemia-intercept-reroute-server": "./bin/www"
+  },
+  "license": "ISC",
   "dependencies": {
     "btoa": "^1.2.1",
     "cookie-parser": "~1.4.4",

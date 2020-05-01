@@ -31,6 +31,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@microsoft/bohemia-intercept-reroute-server": "^1.0.5",
     "@microsoft/fluid-aqueduct": "^0.17.0",
     "@microsoft/fluid-cell": "^0.17.0",
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
