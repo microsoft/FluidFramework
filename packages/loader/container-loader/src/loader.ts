@@ -16,7 +16,6 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
-    IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
@@ -100,6 +99,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container");
+    }
+
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -129,12 +132,10 @@ function createCachedResolver(resolver: IUrlResolver) {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
+export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-
-    public readonly isExperimentalLoader = true;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],

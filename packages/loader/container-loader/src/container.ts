@@ -21,7 +21,6 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -105,11 +104,8 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container
-    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
-
-    public readonly isExperimentalContainer = true;
 
     /**
      * Load container.
@@ -420,10 +416,6 @@ export class Container
 
     public isLocal(): boolean {
         return !this.attached;
-    }
-
-    public isAttached(): boolean {
-        return this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {

@@ -193,13 +193,9 @@ export interface IComponentRuntime extends
      * Errors raised by distributed data structures
      */
     error(err: any): void;
-}
-
-export interface IExperimentalComponentRuntime extends IComponentRuntime {
-    readonly isExperimentalComponentRuntime: true;
 
     /**
-     * Indicates whether the container is attached to storage.
+     * True if the container is detached from the storage or the component is unattached.
      */
     isLocal(): boolean;
 }
@@ -347,10 +343,6 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
-}
-
-export interface IExperimentalComponentContext extends IComponentContext {
-    readonly isExperimentalComponentContext: true;
 
     /**
      * It is false if the container is not attached to storage and the component is attached to container.
@@ -534,11 +526,6 @@ export interface IContainerRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-}
-
-export interface IExperimentalContainerRuntime extends IContainerRuntime {
-
-    isExperimentalContainerRuntime: true;
 
     /**
      * It is false if the container is not attached to storage and the component is attached to container.

@@ -10,11 +10,7 @@ import { Loader } from "@microsoft/fluid-container-loader";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import {
-    IComponentContext,
-    IExperimentalComponentContext,
-    IExperimentalContainerRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     LocalCodeLoader,
@@ -109,13 +105,9 @@ describe("Detached Container", () => {
         const testChannel = await subComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
         assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
-        const expComponentContext = subComponent.context as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), true, "Component should be local!!");
+        assert.equal(subComponent.context.isLocal(), true, "Component should be local!!");
 
-        const expContainerRuntime = subComponent.context.containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        assert.equal(expContainerRuntime.isLocal(), true, "Container should be local!!");
+        assert.equal(subComponent.context.containerRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -143,12 +135,9 @@ describe("Detached Container", () => {
         const testChannel = await testComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
         assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
-        const expComponentContext = testComponent.context as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), false, "Component should not be local!!");
-        const expContainerRuntime = testComponent.context.containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        assert.equal(expContainerRuntime.isLocal(), false, "Container should be attached!!");
+
+        assert.equal(testComponent.context.isLocal(), false, "Component should not be local!!");
+        assert.equal(testComponent.context.containerRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {

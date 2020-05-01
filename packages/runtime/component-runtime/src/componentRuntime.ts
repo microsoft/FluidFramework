@@ -45,8 +45,6 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
-    IExperimentalComponentRuntime,
-    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -63,10 +61,7 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
-    IExperimentalComponentRuntime, IComponentHandleContext
-{
-    public readonly isExperimentalComponentRuntime = true;
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -323,9 +318,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public isLocal(): boolean {
-        const expComponentContext = this.componentContext as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        return expComponentContext.isLocal();
+        return this.componentContext.isLocal();
     }
 
     /**
