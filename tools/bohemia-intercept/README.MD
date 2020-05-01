@@ -35,3 +35,4 @@ npm run start
 5) Open Bohemia (https://fluidpreview.office.net) and load a new/existing document. You should see the Fluid waterdrop icon on the top right turn blue. when you navigate to this domain.
 
 6) Click on the + button on the left side of the document editor. You should see your new Fluid component there for you to select.
+WARNING: It is best to add local components to new documents that will not be used later to avoid corrupting them, as your local components will not be available when other users remotely load that document.
