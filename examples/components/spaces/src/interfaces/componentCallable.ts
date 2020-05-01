@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { Templates } from "..";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -33,8 +33,9 @@ export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
 }
 
+export type SpacesCompatibleToolbar = IComponent & IComponentLoadable & IComponentCallable<IComponentCallbacks>;
+
 export interface IComponentOptions {
-    url?: string;
-    handle?: IComponentHandle;
+    component?: IComponent & IComponentLoadable;
     type?: string;
 }

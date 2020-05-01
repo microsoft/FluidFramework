@@ -14,17 +14,25 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentCallbacks, IComponentOptions } from "@fluid-example/spaces";
+import { IComponentCallbacks, IComponentOptions, SpacesCompatibleToolbar } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
+// localComponents facilitates local component development.  Make sure the path points to a directory containing
+// the package.json for the package, and also make sure you've run webpack there first.  These will only be
+// available when running on localhost.
+const localComponents = [
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
+];
+
 /**
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
+    implements IComponentHTMLView, SpacesCompatibleToolbar {
     private static readonly defaultComponents = [
         "@fluid-example/todo",
         "@fluid-example/math",
@@ -85,6 +93,14 @@ export class ExternalComponentLoader extends PrimedComponent
                 option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);
             });
+            // When running on localhost, add entries for local component development.
+            if (window.location.hostname === "localhost") {
+                localComponents.forEach((url) => {
+                    const option = document.createElement("option");
+                    option.value = `${url}`;
+                    dataList.append(option);
+                });
+            }
 
             const input = document.createElement("input");
             inputDiv.append(input);
@@ -187,9 +203,8 @@ export class ExternalComponentLoader extends PrimedComponent
                 component = component.IComponentCollection.createCollectionItem();
             }
             viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
-                handle: component.IComponentHandle,
+                component: component as IComponent & IComponentLoadable,
                 type: value,
-                url: component.IComponentLoadable?.url,
             });
         } catch (error) {
             this.error = error;

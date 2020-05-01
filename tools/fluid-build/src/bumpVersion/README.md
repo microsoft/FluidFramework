@@ -51,3 +51,58 @@ bump-version -d server
 ```
 
 All the dependencies to packages in the server repo be changed to `^0.1006.3-0`, package lock files will be update, and the change will be committed. `fluid-build --symlink:full` will now connect the packages/monorepo to do local development`
+
+## Example output
+
+This is an example output for releasing a patched version (0.16.1).  This is just a client release only with no dependencies to other monorepo/packages. So there is no need to fix any pre-release dependencies and update any lock file.  It only need to push a tag and bump the version afterward.
+
+```tex
+D:\src\FluidFramework>npm run bump-version
+
+> root@0.14.0 bump-version D:\src\FluidFramework
+> node ./tools/fluid-build/dist/bumpVersion/bumpVersion.js --root .
+
+Bumping patch version
+Release Versions:
+           @microsoft/fluid-build-common:     0.14.0 (old)
+          @microsoft/eslint-config-fluid:     0.16.0 (old)
+     @microsoft/fluid-common-definitions:     0.16.0 (old)
+           @microsoft/fluid-common-utils:     0.16.0 (old)
+                                  Server:   0.1004.1 (old)
+                                  Client:     0.16.1 (new)
+              @microsoft/generator-fluid:     0.16.1 (new)
+                   @yo-fluid/dice-roller:     0.16.1 (new)
+
+Creating release 0.16.1
+  Creating temporary release branch merge/0.16.1
+  Releasing client
+    Tagging release client_v0.16.1
+>>> Push tag client_v0.16.1 to remote? [y/n] y
+    Waiting for package to publish @fluid-example/badge@0.16.1...720s
+    Waiting for package to publish @microsoft/fluid-blob-manager@0.16.1...83s
+    Waiting for package to publish @fluid-example/canvas@0.16.1...
+...cut for brevity...
+    Waiting for package to publish @microsoft/fluid-tool-utils@0.16.1...
+    Waiting for package to publish @microsoft/fluid-odsp-utils@0.16.1...
+    Fix pre-release dependencies
+    No dependencies need to be updated
+    Tagging release generator-fluid_v0.16.1
+>>> Push tag generator-fluid_v0.16.1 to remote? [y/n] y
+Creating bump patch version for development in branch merge/0.16.1
+  Bumping client version
+  Bumping generator version
+  Committing version bump to 0.16.2 into merge/0.16.1
+======================================================================================================
+Please merge merge/0.16.1 to release/0.16.x
+Current repo state:
+
+Repo Versions in branch merge/0.16.1:
+           @microsoft/fluid-build-common:     0.16.0 (unchanged)
+          @microsoft/eslint-config-fluid:     0.16.1 (unchanged)
+     @microsoft/fluid-common-definitions:     0.16.1 (unchanged)
+           @microsoft/fluid-common-utils:     0.16.1 (unchanged)
+                                  Server:   0.1004.2 (unchanged)
+                                  Client:     0.16.1 -> 0.16.2
+              @microsoft/generator-fluid:     0.16.1 -> 0.16.2
+                   @yo-fluid/dice-roller:     0.16.1 -> 0.16.2
+```
