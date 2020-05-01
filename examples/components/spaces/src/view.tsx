@@ -78,7 +78,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: this.props.dataModel.componentList.size - 1 === 0,
+            isEditable: this.props.dataModel.componentList.size === 1,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -88,10 +88,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarUrl)) {
+            if (this.props.dataModel.getComponentToolbar() === undefined) {
                 this.setState({
                     componentMap: newMap,
-                    isEditable: this.props.dataModel.componentList.size - 1 === 0,
+                    isEditable: this.props.dataModel.componentList.size === 1,
                 });
             } else {
                 this.setState({ componentMap: newMap });
