@@ -10,7 +10,7 @@ import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { generateStrings } from "./generateSharedStrings";
+import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 /* tslint:disable:non-literal-fs-path */
 
@@ -21,12 +21,12 @@ describe("SharedString Snapshot Version", () => {
         "and then run npm test:newsnapfiles to create new snapshot test files.";
 
     before(() => {
-        filebase = path.join(__dirname, "../../src/test/sequenceTestSnapshot");
+        filebase = path.join(__dirname, `../../${LocationBase}`);
     });
 
-    function generateSnapshotRebuildTest(testString: SharedString, i: number) {
-        it(`string ${i + 1}`, async () => {
-            const filename = `${filebase}${i + 1}.json`;
+    function generateSnapshotRebuildTest(name: string, testString: SharedString) {
+        it(name, async () => {
+            const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
@@ -82,21 +82,19 @@ describe("SharedString Snapshot Version", () => {
     }
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
-            let index = 0;
             for (const str of generateStrings()) {
-                generateSnapshotRebuildTest(str, index);
-                index++;
+                generateSnapshotRebuildTest(str[0], str[1]);
             }
         });
     }
     generateSnapshotRebuildTests();
 
-    function generateSnapshotDiffTest(testString: SharedString, i: number) {
-        it(`string ${i + 1}`, async () => {
-            const filename = `${filebase}${i + 1}.json`;
+    function generateSnapshotDiffTest(name: string, testString: SharedString) {
+        it(name, async () => {
+            const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
-            const testData = JSON.stringify(testString.snapshot());
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1);
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }
@@ -105,10 +103,8 @@ describe("SharedString Snapshot Version", () => {
 
     function generateSnapshotDiffTests() {
         describe("Snapshot diff", () => {
-            let index = 0;
             for (const str of generateStrings()) {
-                generateSnapshotDiffTest(str, index);
-                index++;
+                generateSnapshotDiffTest(str[0], str[1]);
             }
         });
     }

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# The script is used by the build server to set up and publish to a NPM registry
+# The script is used by the build server to set up and publish to a npm registry
 # First argument of the script is expected to be the registry URL
 
 if test "$1" = ""

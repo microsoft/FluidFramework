@@ -4,11 +4,11 @@
  */
 
 import * as assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
 import { IFluidCodeDetails, IFluidPackage, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
@@ -20,10 +20,11 @@ abstract class TestComponent extends PrimedComponent {
         return this.root;
     }
 
-    constructor(
-        public readonly runtime: IComponentRuntime,
-        context: IComponentContext) {
-        super(runtime, context);
+    public runtime: IComponentRuntime;
+
+    constructor(props: ISharedComponentProps) {
+        super(props);
+        this.runtime = props.runtime;
     }
 }
 
@@ -35,6 +36,7 @@ class TestComponentV1 extends TestComponent {
         TestComponentV1.type,
         TestComponentV1,
         [],
+        {},
     );
 }
 
@@ -49,6 +51,7 @@ class TestComponentV2 extends TestComponent {
         TestComponentV2.type,
         TestComponentV2,
         [],
+        {},
     );
 
     protected async componentHasInitialized() {

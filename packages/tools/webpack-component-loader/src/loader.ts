@@ -21,6 +21,7 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
@@ -86,7 +87,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
             ]),
         );
         return {
-            fluidExport:{
+            fluidExport: {
                 IRuntimeFactory: runtimeFactory,
                 IComponentFactory: componentFactory,
             },
@@ -110,7 +111,7 @@ function makeSideBySideDiv(divId?: string) {
 }
 
 class WebpackCodeResolver implements IFluidCodeResolver {
-    constructor(private readonly options: IBaseRouteOptions) {}
+    constructor(private readonly options: IBaseRouteOptions) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
         let pkg = details.package;
@@ -129,7 +130,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
         }
         const parse = extractPackageIdentifierDetails(details.package);
         return {
-            config:details.config,
+            config: details.config,
             package: details.package,
             resolvedPackage: pkg,
             resolvedPackageCacheId: parse.fullId,
@@ -165,8 +166,8 @@ export async function start(
     const urlResolver = new MultiUrlResolver(window.location.origin, finalDocId, options);
 
     const codeDetails: IFluidCodeDetails = {
-        package:packageJson,
-        config:{},
+        package: packageJson,
+        config: {},
     };
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
@@ -191,8 +192,8 @@ export async function start(
         );
     }
 
-    const urlParts = new URL(url).pathname.split("/");
-    const componentUrl = `/${urlParts[2] === undefined ? "" : urlParts[2]}`;
+    const reqParser = new RequestParser({ url });
+    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
     attachButton.disabled = false;
     const urlDeferred = new Deferred<string>();
     // Side-by-side mode
@@ -210,7 +211,7 @@ export async function start(
             // New documentServiceFactory for right div, same everything else
             const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(finalDocId, options);
             const hostConf2 =
-            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
+                { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
             // This will create a new Loader/Container/Component from the BaseHost above. This is
             // intentional because we want to emulate two clients collaborating with each other.
@@ -244,8 +245,7 @@ export async function start(
                     textArea.innerText = text;
                     urlDeferred.resolve(text);
                     attachButton.style.display = "none";
-                },
-                (error) => {
+                }, (error) => {
                     throw new Error(error);
                 });
         };

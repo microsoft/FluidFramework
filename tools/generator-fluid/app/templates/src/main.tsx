@@ -3,6 +3,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+const pkg = require("../package.json");
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -63,6 +64,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+    pkg.name as string,
     DiceRoller,
     [],
+    {}
 );

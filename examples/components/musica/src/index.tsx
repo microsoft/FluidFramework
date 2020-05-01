@@ -104,6 +104,7 @@ export const MusicaInstantiationFactory = new PrimedComponentFactory(
     musicaName,
     Musica,
     [],
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

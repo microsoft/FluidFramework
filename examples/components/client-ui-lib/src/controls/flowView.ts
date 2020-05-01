@@ -814,7 +814,7 @@ function renderSegmentIntoLine(
                 if (!componentMarker.instance) {
                     // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!componentMarker.instanceP) {
-                        componentMarker.instanceP = lineContext.flowView.collabDocument.context.hostRuntime
+                        componentMarker.instanceP = lineContext.flowView.collabDocument.context.containerRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
                                 if (response.status !== 200 || response.mimeType !== "fluid/component") {

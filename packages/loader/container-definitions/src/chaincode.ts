@@ -40,7 +40,7 @@ export interface IPerson {
 }
 
 /**
- * Typescript interface definition for fields within a NPM module's package.json.
+ * Typescript interface definition for fields within a npm module's package.json.
  */
 export interface IPackage {
     // General access for extended fields
@@ -170,7 +170,7 @@ export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    createSummary(): Promise<ISummaryTree>;
+    createSummary(): ISummaryTree;
 }
 
 export interface IMessageScheduler {
@@ -229,11 +229,20 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 export interface IExperimentalContainerContext extends IContainerContext {
     isExperimentalContainerContext: true;
 
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     */
+    isLocal(): boolean;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     * @deprecated - It will be replaced with isLocal.
+     */
     isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    createSummary(): Promise<ISummaryTree>;
+    createSummary(): ISummaryTree;
 }
 
 export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";

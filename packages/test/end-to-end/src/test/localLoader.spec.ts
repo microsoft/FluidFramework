@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -31,14 +31,20 @@ export class TestComponent extends PrimedComponent {
         TestComponent.type,
         TestComponent,
         [],
+        {},
     );
 
     private counter!: Counter;
 
-    constructor(
-        public readonly runtime: IComponentRuntime,
-        context: IComponentContext) {
-        super(runtime, context);
+    /**
+     * Expose the runtime for testing purposes.
+     */
+
+    public runtime: IComponentRuntime;
+
+    public constructor(props: ISharedComponentProps) {
+        super(props);
+        this.runtime = props.runtime;
     }
 
     /**
@@ -66,6 +72,7 @@ const testComponentFactory = new PrimedComponentFactory(
     TestComponent.type,
     TestComponent,
     [ SharedString.getFactory() ],
+    {},
 );
 
 describe("LocalLoader", () => {

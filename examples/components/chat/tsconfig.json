@@ -1,4 +1,4 @@
-{
+{    
     "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
@@ -6,13 +6,9 @@
     ],
     "compilerOptions": {
         "target": "es6",
+        "module": "esnext",
         "outDir": "dist",
-        "jsx": "react",
-        "lib": [
-            "es2017",
-            "dom"
-        ],
-        "types": []
+        "jsx": "react"
     },
     "include": [
         "src/**/*"

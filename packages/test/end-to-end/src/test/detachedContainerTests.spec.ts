@@ -5,31 +5,35 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Loader } from "@microsoft/fluid-container-loader";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import {
+    IComponentContext,
+    IExperimentalComponentContext,
+    IExperimentalContainerRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
-    createLocalLoader,
+    LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@microsoft/fluid-test-utils";
-import { TestResolver } from "@microsoft/fluid-local-driver";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
-    let testResolver: TestResolver;
-    let testRequest: IRequest;
     const pkg: IFluidCodeDetails = {
         package: "detachedContainerTestPackage",
         config: {},
     };
 
-    let factory: TestFluidComponentFactory;
+    let request: IRequest;
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
+
     const createAndAttachComponent = (async (
         componentContext: IComponentContext,
         componentId: string,
@@ -39,17 +43,29 @@ describe("Detached Container", () => {
         doc.attach();
     });
 
+    function createTestLoader(urlResolver: IUrlResolver): Loader {
+        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([]);
+        const codeLoader = new LocalCodeLoader([[ pkg, factory ]]);
+        const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
+        return new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            {},
+            {},
+            new Map<string, IProxyLoaderFactory>());
+    }
+
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver();
-        testRequest = testResolver.createCreateNewRequest(documentId);
-        factory = new TestFluidComponentFactory([]);
-        loader = createLocalLoader([[ pkg, factory ]], testDeltaConnectionServer) as Loader;
+        const urlResolver = new TestResolver();
+        request = urlResolver.createCreateNewRequest(documentId);
+        loader = createTestLoader(urlResolver);
     });
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.equal(container.isAttached(), false, "Container should be detached");
+        assert.equal(container.isLocal(), true, "Container should be detached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.equal(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
@@ -62,8 +78,8 @@ describe("Detached Container", () => {
 
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        await container.attach(testRequest);
-        assert.equal(container.isAttached(), true, "Container should be attached");
+        await container.attach(request);
+        assert.equal(container.isLocal(), false, "Container should be attached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.equal(container.id, documentId, "Doc id is not matching!!");
@@ -86,12 +102,20 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const subComponent = subResponse.value as ITestFluidComponent;
+        assert.equal(subComponent.context.storage, undefined, "No storage should be there!!");
         assert.equal(subComponent.runtime.isAttached, true, "Component should be attached!!");
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), false, "Channel should be registered!!");
+        assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
+        const expComponentContext = subComponent.context as IExperimentalComponentContext;
+        assert(expComponentContext?.isExperimentalComponentContext);
+        assert.equal(expComponentContext.isLocal(), true, "Component should be local!!");
+
+        const expContainerRuntime = subComponent.context.containerRuntime as IExperimentalContainerRuntime;
+        assert(expContainerRuntime?.isExperimentalContainerRuntime);
+        assert.equal(expContainerRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -105,7 +129,7 @@ describe("Detached Container", () => {
         await createAndAttachComponent(component.context, newComponentId, "default");
 
         // Now attach the container
-        await container.attach(testRequest);
+        await container.attach(request);
 
         // Get the sub component and verify that it is attached.
         const testResponse = await container.request({ url: `/${newComponentId}` });
@@ -118,7 +142,13 @@ describe("Detached Container", () => {
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), false, "Channel should be registered!!");
+        assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
+        const expComponentContext = testComponent.context as IExperimentalComponentContext;
+        assert(expComponentContext?.isExperimentalComponentContext);
+        assert.equal(expComponentContext.isLocal(), false, "Component should not be local!!");
+        const expContainerRuntime = testComponent.context.containerRuntime as IExperimentalContainerRuntime;
+        assert(expContainerRuntime?.isExperimentalContainerRuntime);
+        assert.equal(expContainerRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
@@ -132,14 +162,16 @@ describe("Detached Container", () => {
         await createAndAttachComponent(component.context, subCompId, "default");
 
         // Now attach the container and get the sub component.
-        await container.attach(testRequest);
+        await container.attach(request);
         const response1 = await container.request({ url: `/${subCompId}` });
         const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
-        const loader2 = createLocalLoader([[ pkg, factory ]], testDeltaConnectionServer) as Loader;
-        const container2 = await loader2.resolve({ url:
-            (await testResolver.requestUrl(container.resolvedUrl, { url : "" })).value });
+        const urlResolver2 = new TestResolver();
+        const loader2 = createTestLoader(urlResolver2);
+        // Create a new request url from the resolvedUrl of the first container.
+        const requestUrl2 = await urlResolver2.requestUrl(container.resolvedUrl, { url : "" });
+        const container2 = await loader2.resolve({ url: requestUrl2.value });
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });

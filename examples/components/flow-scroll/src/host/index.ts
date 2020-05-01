@@ -105,9 +105,9 @@ export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IC
     }
 
     private init(insights: SharedMap, doc: FlowDocument) {
-        this.context.hostRuntime.setFlushMode(FlushMode.Manual);
+        this.context.containerRuntime.setFlushMode(FlushMode.Manual);
 
-        const runtimeEmitter = this.context.hostRuntime;
+        const runtimeEmitter = this.context.containerRuntime;
 
         let messages = [];
         let count = 0;
@@ -142,7 +142,7 @@ export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IC
 
         this.intelViewer = new FlowIntelViewer(insights);
 
-        this.context.hostRuntime.request({ url: "_scheduler" }).then((response) => {
+        this.context.containerRuntime.request({ url: "_scheduler" }).then((response) => {
             assert.equal(response.status, 200);
             assert.equal(response.mimeType, "fluid/component");
 

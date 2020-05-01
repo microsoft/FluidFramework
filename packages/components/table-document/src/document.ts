@@ -7,10 +7,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
@@ -21,7 +17,7 @@ import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { CellRange } from "./cellrange";
-import { TableDocumentType, TableSliceType } from "./componentTypes";
+import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
@@ -34,7 +30,7 @@ export interface ITableDocumentEvents extends IEvent{
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<ITableDocumentEvents> implements ITable {
+export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -44,7 +40,10 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
-        undefined,
+        {},
+        [
+            TableSlice.getFactory().registryEntry,
+        ],
         true,
     );
 
@@ -58,10 +57,6 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
     private maybeWorkbook?: ISheetlet;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         try {
@@ -101,8 +96,10 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await super.createAndAttachComponent<TableSlice>(TableSliceType,
-            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
+        const component = await TableSlice.getFactory().createComponent(
+            this.context,
+            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
+        ) as TableSlice;
         this.root.set(sliceId, component.handle);
         return component;
     }

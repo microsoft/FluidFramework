@@ -33,9 +33,12 @@ export class FluidSudoku extends PrimedComponent
     /**
      * This is where you define all which Distributed Data Structures your component will use
      */
-    private static readonly factory = new PrimedComponentFactory(FluidSudokuName, FluidSudoku, [
-        SharedMap.getFactory(),
-    ]);
+    private static readonly factory = new PrimedComponentFactory(
+        FluidSudokuName,
+        FluidSudoku,
+        [SharedMap.getFactory()],
+        {}
+    );
 
     public static getFactory() {
         return FluidSudoku.factory;
