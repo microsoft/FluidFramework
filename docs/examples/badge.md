@@ -33,15 +33,6 @@ The history of the Badge is also shown on hover, so users can see how the status
 
 ![Status history UI](./badge-history.png)
 
-### Data model
-
-Badge uses the following distributed data structures:
-
-- SharedDirectory - root
-- SharedMap - stores the status options for the Badge
-- SharedCell - represents the Badge's current state
-- SharedObjectSequence - stores the history of status changes
-
 ## Set up your dev environment
 
 If you haven't already, [set up your Fluid Framework development
@@ -57,7 +48,7 @@ First, clone the Badge repository here: <https://github.com/microsoft/fluid-tuto
 <vue-markdown v-else>
 
 First, clone the Badge repository here:
-   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
+<https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
 
 </vue-markdown>
 
@@ -78,3 +69,102 @@ a local dev environment for testing and debugging. Visit <http://localhost:8080/
 development server, which will load two instances of the component side by side.
 
 !!!include(browsers.md)!!!
+
+## Deep dive
+
+Badge has two primary pieces: a React component, and a PrimedComponent. We'll discuss the PrimedComponent piece first.
+
+### PrimedComponent
+
+PrimedComponent is a base class "primed" with a `root` SharedDirectory property. PrimedComponent ensures that this SharedDirectory
+is initialized and available to the developer at initialization time. We can then store other distributed data
+structures' handles in the SharedDirectory to create our distributed data model.
+
+#### Distributed data structures
+
+Badge uses the following distributed data structures to support the features described above:
+
+**SharedMap**
+
+:   Stores the status options for the Badge.
+
+    By storing this data in a SharedMap, we can easily support custom statuses. When users add new options, they're stored
+    in the SharedMap and are thus available to all clients.
+
+**SharedCell**
+
+:   Stores the Badge's current status.
+
+    A SharedCell enables us to store an object within it and then listen for changes to that object. As the current status is
+    changed, the SharedCell triggers an event notifying listeners that the data has changed.
+
+**SharedObjectSequence**
+
+:   Stores the history of status changes.
+
+
+PrimedComponent also provides _lifecycle methods_ that we can override in our subclass. This is where we can initialize
+our data model.
+
+<mermaid>
+stateDiagram
+  state "Is initialized?" as Uninitialized
+  state "componentInitializingFirstTime()" as componentInitializingFirstTime
+  state "componentInitializingFromExisting()" as componentInitializingFromExisting
+  state "componentHasInitialized()" as componentHasInitialized
+  [*] --> Uninitialized
+  Uninitialized --> componentInitializingFirstTime : YES
+  Uninitialized --> componentInitializingFromExisting : NO
+  componentInitializingFirstTime --> componentHasInitialized
+  componentInitializingFromExisting --> componentHasInitialized
+  componentHasInitialized --> [*]
+</mermaid>
+
+::: important
+All lifecycle methods are `async`.
+:::
+
+`componentInitializingFirstTime()` is called _exactly once_ during the life of a component. Thus, you can override it to
+create distributed data structures and store them within the `root` SharedDirectory.
+
+```typescript
+export class Badge extends PrimedComponent
+  implements IComponentHTMLView, IComponentReactViewable {
+  currentCell: SharedCell;
+  optionsMap: SharedMap;
+  historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+
+  // ...
+
+  protected async componentInitializingFirstTime() {
+    // Create a cell to represent the Badge's current state
+    const current = SharedCell.create(this.runtime);
+    current.set(this.defaultOptions[0]);
+    this.root.set(this.currentId, current.handle);
+
+    // Create a map to represent the options for the Badge
+    const options = SharedMap.create(this.runtime);
+    this.defaultOptions.forEach((v) => options.set(v.key, v));
+    this.root.set(this.optionsId, options.handle);
+
+    // Create a sequence to store the badge's history
+    const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
+    history.insert(0, [{
+      value: current.get(),
+      timestamp: new Date(),
+    }]);
+    this.root.set(this.historyId, history.handle);
+  }
+}
+```
+
+In the `componentInitializingFirstTime` method we're creating the data model. Each DDS is created using the `create()`
+method, populated with default data, then stored within the `root` SharedDirectory. Note that we do not store the DDS
+itself; instead, we store the *handle* to the DDS. We'll talk about handles in more detail a little later.
+
+Until a DDS is stored within another DDS (via its handle), the data within it is not distributed to other clients. In a
+sense, the DDS is "offline" in this case. This means that you can safely populate distributed data structures with
+default data without concerning yourself with concurrency until you call `this.root.set`.
+
+```typescript
+```
