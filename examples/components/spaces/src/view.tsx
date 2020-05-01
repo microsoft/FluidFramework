@@ -13,8 +13,7 @@ const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
-    url: string;
-    getComponent: (componentUrl: string) => Promise<IComponent | undefined>;
+    componentP: Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -49,7 +48,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
     }
 
     async componentDidMount() {
-        const component = await this.props.getComponent(this.props.url);
+        const component = await this.props.componentP;
         if (component) {
             const element = <ReactViewAdapter component={component} />;
             this.setState({ element });
@@ -126,102 +125,112 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.updateGridItem(id, newItem);
     }
 
-    generateViewState(): [JSX.Element, any[], Layout[]] {
+    generateEditControls(url: string): JSX.Element {
+        const componentUrl = `${window.location.href}/${url}`;
+        return (
+            <div style={buttonContainerStyle}>
+                <button
+                    style={buttonStyle}
+                    onClick={() => this.props.dataModel.removeComponent(url)}
+                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                    }}
+                >
+                    {"❌"}
+                </button>
+                <button
+                    style={buttonStyle}
+                    onClick={
+                        () => {
+                            navigator.clipboard.writeText(componentUrl).then(() => {
+                                console.log("Async: Copying to clipboard was successful!");
+                            }, (err) => {
+                                console.error("Async: Could not copy text: ", err);
+                            });
+                        }}
+                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                    }}
+                >
+                    {"📎"}
+                </button>
+                <button
+                    style={buttonStyle}
+                    onClick={() => window.open(componentUrl, "_blank")}
+                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                    }}
+                >
+                    {"↗️"}
+                </button>
+            </div>
+        );
+    }
+
+    getToolbarElement(): JSX.Element | undefined {
+        return (
+            <div className="text" style={{ padding: 2 }} >
+                <div style={{ height: "100%" }}>
+                    <EmbeddedComponentWrapper componentP={ this.props.dataModel.getComponentToolbar() } />
+                </div>
+            </div>
+        );
+    }
+
+    getNonToolbarElement(url: string): JSX.Element {
+        const editable = this.state.isEditable && url !== this.props.dataModel.componentToolbarUrl;
+        // Do some CSS stuff depending on if the user is editing or not
+        const editableStyle: React.CSSProperties = { padding: 2 };
+        const embeddedComponentStyle: React.CSSProperties = {
+            height: "100%",
+        };
+        if (editable) {
+            editableStyle.border = "1px solid black";
+            editableStyle.backgroundColor = "#d3d3d3";
+            editableStyle.boxSizing = "border-box";
+            editableStyle.overflow = "hidden";
+            embeddedComponentStyle.pointerEvents = "none";
+            embeddedComponentStyle.opacity = 0.5;
+        }
+        if (url !== this.props.dataModel.componentToolbarUrl && !editable) {
+            editableStyle.overflow = "scroll";
+        }
+
+        return (
+            <div className="text" key={url} style={editableStyle} >
+                {
+                    editable &&
+                    this.generateEditControls(url)
+                }
+                <div style={embeddedComponentStyle}>
+                    <EmbeddedComponentWrapper componentP={ this.props.dataModel.getComponent(url) } />
+                </div>
+            </div>
+        );
+    }
+
+    generateViewState(): [any[], Layout[]] {
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        let componentToolbar: JSX.Element | undefined;
 
         this.state.componentMap.forEach((layout, url) => {
-            const editable = this.state.isEditable && url !== this.props.dataModel.componentToolbarUrl;
-            // Do some CSS stuff depending on if the user is editing or not
-            const editableStyle: React.CSSProperties = { padding: 2 };
-            const embeddedComponentStyle: React.CSSProperties = {
-                height: "100%",
-            };
-            if (editable) {
-                editableStyle.border = "1px solid black";
-                editableStyle.backgroundColor = "#d3d3d3";
-                editableStyle.boxSizing = "border-box";
-                editableStyle.overflow = "hidden";
-                embeddedComponentStyle.pointerEvents = "none";
-                embeddedComponentStyle.opacity = 0.5;
-            }
-            if (url !== this.props.dataModel.componentToolbarUrl && !editable) {
-                editableStyle.overflow = "scroll";
-            }
-
-            // We use separate layout from array because using GridLayout
-            // without passing in a new layout doesn't trigger a re-render.
-            const key = `${url}`;
-            layout.i = key;
-            layouts.push(layout);
-
-            const componentUrl = `${window.location.href}/${url}`;
-            const element =
-                <div className="text" key={key} style={editableStyle} >
-                    {
-                        editable &&
-                        <div style={buttonContainerStyle}>
-                            <button
-                                style={buttonStyle}
-                                onClick={() => this.props.dataModel.removeComponent(url)}
-                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                    event.stopPropagation();
-                                }}
-                            >
-                                {"❌"}
-                            </button>
-                            <button
-                                style={buttonStyle}
-                                onClick={
-                                    () => {
-                                        navigator.clipboard.writeText(componentUrl).then(() => {
-                                            console.log("Async: Copying to clipboard was successful!");
-                                        }, (err) => {
-                                            console.error("Async: Could not copy text: ", err);
-                                        });
-                                    }}
-                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                    event.stopPropagation();
-                                }}
-                            >
-                                {"📎"}
-                            </button>
-                            <button
-                                style={buttonStyle}
-                                onClick={() => window.open(componentUrl, "_blank")}
-                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                    event.stopPropagation();
-                                }}
-                            >
-                                {"↗️"}
-                            </button>
-                        </div>
-                    }
-                    <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper
-                            url={url}
-                            getComponent={async (compUrl: string) =>
-                                this.props.dataModel.getComponent(compUrl)}
-                        />
-                    </div>
-                </div>;
             if (url !== this.props.dataModel.componentToolbarUrl) {
-                components.push(element);
-            } else {
-                componentToolbar = element;
+                // We use separate layout from array because using GridLayout
+                // without passing in a new layout doesn't trigger a re-render.
+                layout.i = url;
+                layouts.push(layout);
+                components.push(this.getNonToolbarElement(url));
             }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return [componentToolbar!, components, layouts];
+        return [components, layouts];
     }
 
     render() {
-        const [componentToolbar, components, layouts] = this.generateViewState();
+        const [components, layouts] = this.generateViewState();
         return (
             <div>
-                {componentToolbar}
+                {this.getToolbarElement()}
                 {
                     this.state.componentMap.size > 0 &&
                         <ReactGridLayout
