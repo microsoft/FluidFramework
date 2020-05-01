@@ -9,12 +9,21 @@ import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
-export const LocationBase: string = "src/test/snapshots/legacy/";
+export const LocationBase: string = "src/test/snapshots/";
+
+export const supportedVersions = new Map<string, any>([
+    ["legacy",{}],
+    ["v1",{newMergeTreeSnapshotFormat:true}]]);
 
 export function* generateStrings(): Generator<[string, SharedString]> {
-    const documentId = "fakeId";
-    const runtime: mocks.MockRuntime = new mocks.MockRuntime();
-    const insertText = "text";
+    for(const [version, options] of supportedVersions){
+
+        const documentId = "fakeId";
+        const runtime: mocks.MockRuntime = new mocks.MockRuntime();
+        for(const key of Object.keys(options)){
+            runtime.options[key] = options[key];
+        }
+        const insertText = "text";
 
         let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
@@ -23,7 +32,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-    yield ["headerOnly", sharedString];
+        yield [`${version}/headerOnly`, sharedString];
 
         sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
@@ -32,7 +41,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-    yield ["headerAndBody", sharedString];
+        yield [`${version}/headerAndBody`, sharedString];
 
         sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
@@ -41,7 +50,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.insertText(0, `${insertText}-${i}`);
         }
 
-    yield ["largeBody", sharedString];
+        yield [`${version}/largeBody`, sharedString];
 
         sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
@@ -58,7 +67,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             });
         }
 
-    yield ["withMarkers", sharedString];
+        yield [`${version}/withMarkers`, sharedString];
 
         sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
@@ -70,5 +79,15 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             sharedString.annotateRange(i, i + 10, { bold: true });
         }
 
-    yield ["withAnnotations", sharedString];
-}
+        yield [`${version}/withAnnotations`, sharedString];
+
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // Very big sharedString
+        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
+            sharedString.insertText(0, `${insertText}-${i}`);
+        }
+
+        yield [`${version}/largeBody`, sharedString];
+    }
+    }
