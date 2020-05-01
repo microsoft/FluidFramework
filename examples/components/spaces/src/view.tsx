@@ -65,7 +65,7 @@ interface ISpaceGridViewProps {
 }
 
 interface ISpaceGridViewState {
-    isEditable: boolean;
+    editable: boolean;
     componentMap: Map<string, Layout>;
 }
 
@@ -77,7 +77,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: this.props.dataModel.componentList.size === 0,
+            editable: this.props.dataModel.componentList.size === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -90,14 +90,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             if (this.props.dataModel.getComponentToolbar() === undefined) {
                 this.setState({
                     componentMap: newMap,
-                    isEditable: this.props.dataModel.componentList.size === 0,
+                    editable: this.props.dataModel.componentList.size === 0,
                 });
             } else {
                 this.setState({ componentMap: newMap });
             }
         });
         this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
-            this.setState({ isEditable: isEditable || !this.state.isEditable });
+            this.setState({ editable: isEditable || !this.state.editable });
         });
     }
 
@@ -161,7 +161,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const embeddedComponentStyle: React.CSSProperties = {
             height: "100%",
         };
-        if (this.state.isEditable) {
+        if (this.state.editable) {
             editableStyle.border = "1px solid black";
             editableStyle.backgroundColor = "#d3d3d3";
             editableStyle.boxSizing = "border-box";
@@ -175,7 +175,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         return (
             <div key={url} style={editableStyle} >
                 {
-                    this.state.isEditable &&
+                    this.state.editable &&
                     this.generateEditControls(url)
                 }
                 <div style={embeddedComponentStyle}>
@@ -219,9 +219,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             height={10000}
                             // eslint-disable-next-line no-null/no-null
                             compactType={null} // null is required for the GridLayout
-                            isDroppable={this.state.isEditable}
-                            isDraggable={this.state.isEditable}
-                            isResizable={this.state.isEditable}
+                            isDroppable={this.state.editable}
+                            isDraggable={this.state.editable}
+                            isResizable={this.state.editable}
                             preventCollision={true}
                             isRearrangeable={false}
                             onResizeStop={this.onGridChangeEvent}

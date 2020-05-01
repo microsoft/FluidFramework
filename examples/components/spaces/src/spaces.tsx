@@ -83,7 +83,7 @@ export class Spaces extends PrimedComponent implements
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
         const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        componentToolbar.changeEditState(true);
+        componentToolbar.setEditable(true);
         this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
@@ -106,8 +106,8 @@ export class Spaces extends PrimedComponent implements
         this.dataModel.emit("editableUpdated", isEditable);
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
         if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.changeEditState(isEditable);
-            this.componentToolbar.IComponentToolbar.toggleTemplates(
+            this.componentToolbar.IComponentToolbar.setEditable(isEditable);
+            this.componentToolbar.IComponentToolbar.setTemplatesVisible(
                 this.registryDetails?.IComponentRegistryTemplates !== undefined,
             );
         }
