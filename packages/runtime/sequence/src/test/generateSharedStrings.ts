@@ -13,14 +13,13 @@ export const LocationBase: string = "src/test/snapshots/";
 
 export const supportedVersions = new Map<string, any>([
     ["legacy",{}],
-    ["v1",{newMergeTreeSnapshotFormat:true}]]);
+    ["v1",{ newMergeTreeSnapshotFormat: true }]]);
 
 export function* generateStrings(): Generator<[string, SharedString]> {
-    for(const [version, options] of supportedVersions){
-
+    for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const runtime: mocks.MockRuntime = new mocks.MockRuntime();
-        for(const key of Object.keys(options)){
+        for (const key of Object.keys(options)) {
             runtime.options[key] = options[key];
         }
         const insertText = "text";
@@ -90,4 +89,4 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/largeBody`, sharedString];
     }
-    }
+}

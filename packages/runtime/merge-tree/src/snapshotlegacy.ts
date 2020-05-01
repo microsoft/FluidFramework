@@ -73,14 +73,14 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex  = 0): MergeTreeChunkLegacy {
+        startIndex = 0): MergeTreeChunkLegacy {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
-        while ((sequenceLength < approxSequenceLength) && ((startIndex  + segCount) < allSegments.length)) {
-            const pseg = allSegments[startIndex  + segCount];
+        while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
+            const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
-            sequenceLength += allLengths[startIndex  + segCount];
+            sequenceLength += allLengths[startIndex + segCount];
             segCount++;
         }
         return {

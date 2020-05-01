@@ -26,11 +26,11 @@ export class MockStorage implements IObjectStorageService {
                         return MockStorage.readCore(entry.value as ITree, paths.slice(1));
                     }
                     // eslint-disable-next-line prefer-rest-params
-                    assert(false, JSON.stringify({ ...arguments }));
+                    assert.fail(JSON.stringify({ ...arguments }));
                 }
             }
             // eslint-disable-next-line prefer-rest-params
-            assert(false, JSON.stringify({ ...arguments }));
+            assert.fail(JSON.stringify({ ...arguments }));
         }
     }
 
