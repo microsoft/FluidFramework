@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { execWithErrorAsync } from "../common/utils";
+import { execWithErrorAsync, execAsync } from "../common/utils";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -18,10 +18,25 @@ export function fatal(error: string): never {
  * @param dir dir the directory to execute on
  * @param error description of command line to print when error happens
  */
-export async function exec(cmd: string, dir: string, error?: string, pipeStdIn?: string) {
-    const result = await execWithErrorAsync(cmd, { cwd: dir }, "ERROR", false, pipeStdIn);
-    if (error && result.error) {
-        fatal(`ERROR: Unable to ${error}`);
+export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
+    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+    if (result.error) {
+        fatal(`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`);
+    }
+    return result.stdout;
+}
+
+/**
+ * Execute a command. If there is an error, print error message and exit process
+ * 
+ * @param cmd Command line to execute
+ * @param dir dir the directory to execute on
+ * @param error description of command line to print when error happens
+ */
+export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) {
+    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+    if (result.error) {
+        return undefined;
     }
     return result.stdout;
 }
@@ -42,19 +57,23 @@ export class GitRepo {
     }
     
     public async getShaForBranch(branch: string) {
-        const result = await this.exec(`show-ref refs/heads/${branch}`);
-        const line = result.split(/\r?\n/)[0];
-        if (line) {
-            return line.split(" ")[0];
+        const result = await this.execNoError(`show-ref refs/heads/${branch}`);
+        if (result) {
+            const line = result.split(/\r?\n/)[0];
+            if (line) {
+                return line.split(" ")[0];
+            }
         }
         return undefined;
     }
 
     public async getShaForTag(tag: string) {
-        const result = await this.exec(`show-ref refs/tags/${tag}`);
-        const line = result.split(/\r?\n/)[0];
-        if (line) {
-            return line.split(" ")[0];
+        const result = await this.execNoError(`show-ref refs/tags/${tag}`);
+        if (result) {
+            const line = result.split(/\r?\n/)[0];
+            if (line) {
+                return line.split(" ")[0];
+            }
         }
         return undefined;
     }
@@ -75,7 +94,7 @@ export class GitRepo {
      * @param tag the tag to add
      */
     public async deleteTag(tag: string) {
-        await this.exec(`tag -d ${tag}`);
+        await this.execNoError(`tag -d ${tag}`);
     }
 
     /**
@@ -110,7 +129,7 @@ export class GitRepo {
      * @param branchName name of the new branch
      */
     public async deleteBranch(branchName: string) {
-        await this.exec(`branch -D ${branchName}`);
+        await this.execNoError(`branch -D ${branchName}`);
     }
 
     /**
@@ -137,8 +156,17 @@ export class GitRepo {
      * @param command the git command
      * @param error description of command line to print when error happens
      */
-    private async exec(command: string, error?: string, pipeStdIn?: string) {
+    private async exec(command: string, error: string, pipeStdIn?: string) {
         return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
     }
 
+    /**
+     * Execute git command
+     * 
+     * @param command the git command
+     * @param error description of command line to print when error happens
+     */
+    private async execNoError(command: string, pipeStdIn?: string) {
+        return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
+    }
 }
