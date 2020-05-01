@@ -18,7 +18,7 @@ import {
     IComponentCallbacks,
     ISpacesCollectible,
     IProvideComponentCollector,
-    SpacesCompatibleToolbar
+    SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports

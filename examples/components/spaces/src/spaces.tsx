@@ -19,7 +19,12 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer, IProvideComponentCollector, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
+import {
+    IComponentToolbarConsumer,
+    IProvideComponentCollector,
+    ISpacesCollectible,
+    SpacesCompatibleToolbar,
+} from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
 /**
