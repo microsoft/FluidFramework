@@ -65,6 +65,7 @@ interface ISpaceGridViewProps {
 }
 
 interface ISpaceGridViewState {
+    toolbarComponent: IComponent | undefined;
     editable: boolean;
     componentMap: Map<string, Layout>;
 }
@@ -77,6 +78,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
+            toolbarComponent: undefined,
             editable: this.props.dataModel.componentList.size === 0,
             componentMap: this.props.dataModel.componentList,
         };
@@ -86,6 +88,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     componentDidMount() {
+        // Need an event for when the component toolbar changes
+        this.props.dataModel.getComponentToolbar()
+            .then((toolbarComponent) => {
+                this.setState({ toolbarComponent });
+            })
+            .catch((error) => {
+                console.error(`Error getting toolbar component`, error);
+            });
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
             if (this.props.dataModel.getComponentToolbar() === undefined) {
                 this.setState({
@@ -206,7 +216,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             <div>
                 <div style={{ padding: 2 }} >
                     <div style={{ height: "100%" }}>
-                        <EmbeddedComponentWrapper componentP={ this.props.dataModel.getComponentToolbar() } />
+                        {
+                            this.state.toolbarComponent !== undefined &&
+                            <ReactViewAdapter component={ this.state.toolbarComponent } />
+                        }
                     </div>
                 </div>
                 {
