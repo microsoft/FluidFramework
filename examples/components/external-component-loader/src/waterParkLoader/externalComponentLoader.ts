@@ -33,7 +33,8 @@ const localComponents = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
 ];
 
-export type ValidViewComponent = IComponentHandle & IComponentLoadable & IProvideComponentCollector<ISpacesCollectible>;
+export type WaterParkCompatibleView =
+    IComponentHandle & IComponentLoadable & IProvideComponentCollector<ISpacesCollectible>;
 
 /**
  * Component that loads extneral components via their url
@@ -51,7 +52,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<ValidViewComponent> | undefined;
+    private viewComponentP: Promise<WaterParkCompatibleView> | undefined;
 
     private savedElement: HTMLElement | undefined;
     private error: string | undefined;
@@ -60,7 +61,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    public setViewComponent(component: ValidViewComponent) {
+    public setViewComponent(component: WaterParkCompatibleView) {
         this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
@@ -146,7 +147,7 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const viewComponentHandle = this.root.get<IComponentHandle<ValidViewComponent>>(this.viewComponentMapID);
+        const viewComponentHandle = this.root.get<IComponentHandle<WaterParkCompatibleView>>(this.viewComponentMapID);
         if (viewComponentHandle !== undefined) {
             this.viewComponentP = viewComponentHandle.get();
         }

@@ -9,7 +9,7 @@ import {
 import { IContainerRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { IComponentToolbarConsumer, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
-import { ExternalComponentLoader, ValidViewComponent, WaterParkLoaderName } from "./waterParkLoader";
+import { ExternalComponentLoader, WaterParkCompatibleView, WaterParkLoaderName } from "./waterParkLoader";
 
 /**
  * Calls create, initialize, and attach on a new component.
@@ -48,8 +48,12 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const viewComponent = await createAndAttachComponent<ValidViewComponent & Partial<IComponentToolbarConsumer>>(
-            runtime, ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, this.viewComponentName);
+        const viewComponent =
+            await createAndAttachComponent<WaterParkCompatibleView & Partial<IComponentToolbarConsumer>>(
+                runtime,
+                ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
+                this.viewComponentName,
+            );
         const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
             runtime, uuid(), this.loaderComponentName);
 
