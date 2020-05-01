@@ -18,6 +18,7 @@ import {
     HoverCard,
     HoverCardType,
     Icon,
+    initializeIcons,
     ColorPicker,
     getColorFromHSV,
     getColorFromString,
@@ -70,6 +71,8 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
         this._setCurrent = this._setCurrent.bind(this);
         this._getCurrentTimestamp = this._getCurrentTimestamp.bind(this);
         this._onRenderCard = this._onRenderCard.bind(this);
+
+        initializeIcons();
     }
 
     private _onClick(_, item: IContextualMenuItem): void {

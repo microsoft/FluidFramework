@@ -11,18 +11,11 @@ import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
-import { initializeIcons } from "office-ui-fabric-react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const BadgeName = pkg.name as string;
-
-initializeIcons();
 
 export class Badge extends PrimedComponent implements
     IComponentHTMLView,
