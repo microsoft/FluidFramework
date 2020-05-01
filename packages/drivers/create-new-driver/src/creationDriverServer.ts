@@ -216,8 +216,8 @@ export class CreationServerMessagesHandler {
      */
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: clientDetail.clientId,
-            clientSequenceNumber: 1,
+            clientId: "",
+            clientSequenceNumber: -1,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,
