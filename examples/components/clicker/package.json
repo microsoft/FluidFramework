@@ -31,8 +31,7 @@
     "test:jest": "jest",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development",
-    "start:bohemia": "echo \"Run 'npm run webpack' to build and rebuild your component\" && bohemia-intercept"
+    "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.17.0",
