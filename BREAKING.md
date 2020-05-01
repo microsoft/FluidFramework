@@ -5,8 +5,10 @@
 - [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
+- [ConsensusRegisterCollection able to store handles not SharedObjects](#ConsensusRegisterCollection-able-to-store-handles-not-SharedObjects)
 
 ### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+
 The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
 
@@ -42,6 +44,14 @@ As with previous guidance, components should ensure that only strongly typed ini
 ### `SimpleContainerRuntimeFactory` removed
 
 `SimpleContainerRuntimeFactory` was deprecated in 0.16, and has now been removed in 0.17.
+
+### ConsensusRegisterCollection prepped to store handles not SharedObjects
+
+`ConsensusRegisterCollection` can store handles, and will properly serialize/deserialize to/from summary files.
+Please take care to ensure 0.17 is fully deployed before incorporating any change that writes handles to this data structure to avoid n/n-1 issues.
+Also, note that storing a SharedObject directly is no longer supported,
+and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
+We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
 
 ## 0.16 Breaking Changes
 
