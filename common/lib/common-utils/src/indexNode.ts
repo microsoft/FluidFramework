@@ -4,4 +4,4 @@
  */
 
 export * from "./index";
-export * from "./performanceNowBrowser";
+export * from "./performanceNowNode";
