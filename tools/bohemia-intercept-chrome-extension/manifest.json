@@ -6,7 +6,10 @@
     "webRequest",
     "webRequestBlocking",
     "https://*.fluidpreview.office.net/*",
-    "https://*.microsoft.sharepoint-df.com/*"
+    "https://*.microsoft.sharepoint-df.com/*",
+    "https://*.microsofteur-my.sharepoint.com/*",
+    "http://localhost:8080/*",
+    "http://localhost:3000/*"
   ],
   "icons": {
     "16": "images/get_started16.png",
@@ -21,6 +24,7 @@
     "persistent": true
   },
   "web_accessible_resources": [
-    "localhost:3000"
+    "localhost:3000",
+    "localhost:8080"
   ]
 }
