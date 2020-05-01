@@ -7,8 +7,7 @@ import * as assert from "assert";
 import {
     IExperimentalDocumentServiceFactory,
     IExperimentalDocumentService,
-    IError,
-    ErrorType,
+    IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
@@ -38,23 +37,20 @@ describe("Odsp Create Container Test", () => {
         };
 
         const fetchWrapperMock: IFetchWrapper = {
-            get: async (url: string, _: string, headers: HeadersInit) => new Promise(
-                (resolve, reject) => {
-                    reject("not implemented");
-                }),
-            post: async (url: string, postBody: string, headers: HeadersInit) => new Promise(
-                (resolve, reject) => {
-                    resolve({
-                        content: expectedResponse,
-                        headers: new Map(),
-                    });
+            get: async (url: string, _: string, headers: HeadersInit) => {
+                throw new Error("not implemented");
+            },
+            post: async (url: string, postBody: string, headers: HeadersInit) =>
+                ({
+                    content: expectedResponse,
+                    headers: new Map(),
                 }),
         };
 
         const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
             "dummy",
-            async (url: string, refresh: boolean) => Promise.resolve("token"),
-            async (refresh: boolean) => Promise.resolve("token"),
+            async (url: string, refresh: boolean) => "token",
+            async (refresh: boolean) => "token",
             DebugLogger.create("fluid:createContainer"),
             fetchWrapperMock);
         return odspDocumentServiceFactory as IExperimentalDocumentServiceFactory;
@@ -85,6 +81,16 @@ describe("Odsp Create Container Test", () => {
         return summary;
     };
 
+    const createService = async (
+        odspDocumentServiceFactory: IExperimentalDocumentServiceFactory,
+        summary: ISummaryTree,
+        resolved: IOdspResolvedUrl): Promise<IDocumentService> => {
+        return odspDocumentServiceFactory.createContainer(
+            summary,
+            resolved,
+            DebugLogger.create("fluid:createContainer"));
+    };
+
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
         request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
@@ -100,18 +106,18 @@ describe("Odsp Create Container Test", () => {
             summary,
             resolved,
             DebugLogger.create("fluid:createContainer"))) as IExperimentalDocumentService;
-        assert(expDocService, "Service should be experimental");
+        assert(expDocService?.isExperimentalDocumentService, "Service should be experimental");
         const finalResolverUrl = expDocService.resolvedUrl as IOdspResolvedUrl;
-        assert.equal(finalResolverUrl.driveId, driveId, "Drive Id should match");
-        assert.equal(finalResolverUrl.itemId, itemId, "ItemId should match");
-        assert.equal(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
-        assert.equal(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
+        assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
+        assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
+        assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
+        assert.strictEqual(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
 
         const url = `fluid-odsp://placeholder/placeholder/${
             docID}/?driveId=${driveId}&itemId=${itemId}&path=${encodeURIComponent("/")}`;
         const snapshotUrl = `${siteUrl}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
-        assert.equal(finalResolverUrl.url, url, "Url should match");
-        assert.equal(finalResolverUrl.endpoints.snapshotStorageUrl, snapshotUrl, "Snapshot url should match");
+        assert.strictEqual(finalResolverUrl.url, url, "Url should match");
+        assert.strictEqual(finalResolverUrl.endpoints.snapshotStorageUrl, snapshotUrl, "Snapshot url should match");
     });
 
     it("No App Summary", async () => {
@@ -119,15 +125,8 @@ describe("Odsp Create Container Test", () => {
         const itemId = "fakeItemId";
         const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(false, true, 0);
-        await odspDocumentServiceFactory.createContainer(
-            summary,
-            resolved,
-            DebugLogger.create("fluid:createContainer"))
-            .then(() => {
-                assert.fail("Doc service should not be created because there was no app summary");
-            }).catch((error) => {
-                assert(true, "Doc service should not be created");
-            });
+        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+            "Doc service should not be created because there was no app summary");
     });
 
     it("Wrong Seq No in Protocol Summary", async () => {
@@ -135,15 +134,8 @@ describe("Odsp Create Container Test", () => {
         const itemId = "fakeItemId";
         const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 1);
-        await odspDocumentServiceFactory.createContainer(
-            summary,
-            resolved,
-            DebugLogger.create("fluid:createContainer"))
-            .then(() => {
-                assert.fail("Doc service should not be created because seq no was wrong");
-            }).catch((error) => {
-                assert(true, "Doc service should not be created");
-            });
+        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+            "Doc service should not be created because seq no was wrong");
     });
 
     it("No item id in response from server", async () => {
@@ -152,20 +144,7 @@ describe("Odsp Create Container Test", () => {
         const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 0);
 
-        async function createService() {
-            try {
-                await odspDocumentServiceFactory.createContainer(
-                    summary,
-                    resolved,
-                    DebugLogger.create("fluid:createContainer"));
-                assert.fail("Not reached - throwOdspNetworkError should have thrown");
-            } catch (error) {
-                return error as IError;
-            }
-        }
-
-        const error1 = await createService();
-        assert.equal(error1.errorType, ErrorType.genericNetworkError,
-            "Error should be a network error");
+        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+            "Doc service should not be created because no Item id is there");
     });
 });
