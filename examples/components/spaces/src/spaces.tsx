@@ -102,7 +102,7 @@ export class Spaces extends PrimedComponent implements
 
     protected async componentHasInitialized() {
         this.addToolbarListeners();
-        const isEditable = this.dataModel.componentList.size === 1;
+        const isEditable = this.dataModel.componentList.size === 0;
         this.dataModel.emit("editableUpdated", isEditable);
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
         if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {

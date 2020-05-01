@@ -77,7 +77,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: this.props.dataModel.componentList.size === 1,
+            isEditable: this.props.dataModel.componentList.size === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -90,7 +90,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             if (this.props.dataModel.getComponentToolbar() === undefined) {
                 this.setState({
                     componentMap: newMap,
-                    isEditable: this.props.dataModel.componentList.size === 1,
+                    isEditable: this.props.dataModel.componentList.size === 0,
                 });
             } else {
                 this.setState({ componentMap: newMap });
@@ -178,28 +178,26 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     getNonToolbarElement(url: string): JSX.Element {
-        const editable = this.state.isEditable && url !== this.props.dataModel.componentToolbarUrl;
         // Do some CSS stuff depending on if the user is editing or not
         const editableStyle: React.CSSProperties = { padding: 2 };
         const embeddedComponentStyle: React.CSSProperties = {
             height: "100%",
         };
-        if (editable) {
+        if (this.state.isEditable) {
             editableStyle.border = "1px solid black";
             editableStyle.backgroundColor = "#d3d3d3";
             editableStyle.boxSizing = "border-box";
             editableStyle.overflow = "hidden";
             embeddedComponentStyle.pointerEvents = "none";
             embeddedComponentStyle.opacity = 0.5;
-        }
-        if (url !== this.props.dataModel.componentToolbarUrl && !editable) {
+        } else {
             editableStyle.overflow = "scroll";
         }
 
         return (
             <div className="text" key={url} style={editableStyle} >
                 {
-                    editable &&
+                    this.state.isEditable &&
                     this.generateEditControls(url)
                 }
                 <div style={embeddedComponentStyle}>
@@ -214,13 +212,11 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const layouts: Layout[] = [];
 
         this.state.componentMap.forEach((layout, url) => {
-            if (url !== this.props.dataModel.componentToolbarUrl) {
-                // We use separate layout from array because using GridLayout
-                // without passing in a new layout doesn't trigger a re-render.
-                layout.i = url;
-                layouts.push(layout);
-                components.push(this.getNonToolbarElement(url));
-            }
+            // We use separate layout from array because using GridLayout
+            // without passing in a new layout doesn't trigger a re-render.
+            layout.i = url;
+            layouts.push(layout);
+            components.push(this.getNonToolbarElement(url));
         });
 
         return [components, layouts];
