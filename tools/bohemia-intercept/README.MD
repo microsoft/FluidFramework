@@ -31,6 +31,7 @@ bohemia-intercept-reroute-server
 
 4) On another terminal window, start your Fluid component locally as per normal:
 npm run start
+NOTE: Ensure it is running on localhost:8080/*
 
 5) Open Bohemia (https://fluidpreview.office.net) and load a new/existing document. You should see the Fluid waterdrop icon on the top right turn blue. when you navigate to this domain.
 
