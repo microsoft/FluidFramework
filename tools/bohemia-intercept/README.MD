@@ -16,6 +16,7 @@ This is an npm package containing a lightweight express server. It will be run f
 1) Make sure your root .npmrc contains the following line:
 @microsoft:registry=https://packages.wu2.prague.office-int.com
 @microsoft:always-auth=true
+Alternatively, you can also install the package from the bohemia-intercept/reroute-server package if you do not have access to the feed.
 
 2) Open Google Chrome, navigate to Settings -> Extensions
     a) Enable the "Developer mode" toggle on the top right corner of the page
