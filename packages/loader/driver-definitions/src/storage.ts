@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent } from "@microsoft/fluid-common-definitions";
+import { IEventProvider, IErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -24,7 +24,6 @@ import {
     IVersion,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
 /**

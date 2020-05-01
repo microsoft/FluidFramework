@@ -112,6 +112,9 @@ export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
 
+    public get Data() { return this.data; }
+    public get Runtime() { return this.runtime; }
+
     /**
      * The set of values that have been acquired but not yet completed or released
      */
@@ -199,7 +202,7 @@ export class ConsensusOrderedCollection<T = any>
                 await new Promise((resolve, reject) => {
                     this.once("add", resolve);
                     //* todo: figure out the right event that's available or fix the proxy
-                    (this.runtime.deltaManager as any).deltaManager.on(
+                    (this.runtime.deltaManager).on(
                         "closed",
                         () => reject(new Error("Delta Manager closed while waiting")));
                 });

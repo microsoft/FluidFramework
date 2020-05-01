@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+// import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
@@ -13,6 +14,8 @@ import {
     acquireAndComplete,
     ConsensusQueue,
     ConsensusResult,
+    ConsensusOrderedCollection,
+    ConsensusCallback,
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
 } from "@microsoft/fluid-ordered-collection";
@@ -252,7 +255,46 @@ function generate(
             assert.equal(await acquireAndComplete(collection2), undefined);
         });
 
+        async function myWaitAndAcquire(callback: ConsensusCallback<any>, coc: ConsensusOrderedCollection) {
+            do {
+                if (coc.Data.size() === 0) {
+                    // Wait for new entry before trying to acquire again
+                    await new Promise((resolve, reject) => {
+                        coc.once("add", resolve);
+                        //* todo: figure out the right event that's available or fix the proxy
+                        coc.Runtime.deltaManager.on("closed",
+                        //  (coc.Runtime.deltaManager as any).deltaManager.on(
+                        //     "closed",
+                            () => reject(new Error("Delta Manager closed while waiting")));
+                    });
+                }
+            } while (!(await coc.acquire(callback)));
+        }
+
+        /**
+         * Helper method to acquire and complete an item
+         * Should be used in test code only
+         */
+        async function myWaitAcquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T> {
+            let res: T | undefined;
+            await myWaitAndAcquire(
+                async (value: T) => {
+                    res = value;
+                    return ConsensusResult.Complete;
+                },
+                collection as ConsensusOrderedCollection<T>,
+            );
+            return res;
+        }
+
+        it("blah", async () => {
+            const collection1 = ctor.create(component1.runtime);
+            await myWaitAcquireAndComplete(collection1);
+        });
+
         it.only("cancel wait on close", async () => {
+            // const clock: SinonFakeTimers = useFakeTimers();
+
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
@@ -274,9 +316,7 @@ function generate(
             // assert.equal(await acquireAndComplete(collection2), undefined);
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
 
-            await assert.rejects(p2, "Closing the runtime while waiting should cause promise reject");
-            assert.equal(await acquireAndComplete(collection1), undefined);
-            assert.equal(await acquireAndComplete(collection2), undefined);
+            // clock.restore();
         });
 
         it("Events", async () => {
