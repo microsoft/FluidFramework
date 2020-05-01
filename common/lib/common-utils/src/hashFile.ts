@@ -17,7 +17,8 @@ export async function hashFile(file: Buffer): Promise<string> {
     // Use the browser native Web Crypto API when available for perf
     // Node doesn't support this API and doesn't appear to have any interest in doing so:
     // https://github.com/nodejs/node/issues/2833
-    if (typeof crypto !== "object" || crypto === null) {
+    // crypto.subtle is not available when not under secure context (https)
+    if (typeof crypto !== "object" || crypto === null || typeof(crypto.subtle) !== "function") {
         const engine = new sha1();
         return engine.update(file).digest("hex");
     }
