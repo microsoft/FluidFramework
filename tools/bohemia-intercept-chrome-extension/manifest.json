@@ -5,8 +5,8 @@
   "permissions": [
     "webRequest",
     "webRequestBlocking",
-    "<all_urls>",
-    "https://*/*","http://*/*"
+    "https://*.fluidpreview.office.net/*",
+    "https://*.microsoft.sharepoint-df.com/*"
   ],
   "icons": {
     "16": "images/get_started16.png",
