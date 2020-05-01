@@ -7,7 +7,6 @@ import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 
-// TODO: Why does ComponentToolbar need to be added here
 export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([
         [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
