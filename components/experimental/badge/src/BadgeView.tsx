@@ -118,11 +118,12 @@ export class BadgeView
             // Save current value into history
             this.props.historySequence.insert(
                 this.props.historySequence.getItemCount(), [
-                {
-                    value: newItem,
-                    timestamp: new Date(),
-                }
-            ]);
+                    {
+                        value: newItem,
+                        timestamp: new Date(),
+                    },
+                ],
+            );
 
             // Set new value
             this.props.currentCell.set(newItem);
