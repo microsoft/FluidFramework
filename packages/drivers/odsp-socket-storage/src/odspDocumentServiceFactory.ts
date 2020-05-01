@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
@@ -19,11 +21,27 @@ import { OdspDocumentService } from "./odspDocumentService";
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
     private readonly cache: IOdspCache;
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        createNewResolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        return OdspDocumentService.createContainer(
+            createNewSummary,
+            createNewResolvedUrl,
+            logger ?? this.logger,
+            this.cache,
+            this.getStorageToken,
+            this,
+        );
+    }
 
     /**
    * @param appId - app id used for telemetry for network requests.
@@ -44,7 +62,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         permanentCache?: ICache,
-        private readonly createNewFlag: boolean = false,
     ) {
         this.cache = new OdspCache(permanentCache);
     }
@@ -68,7 +85,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             Promise.resolve(getSocketIo()),
             this.cache,
             isFirstTimeDocumentOpened,
-            this.createNewFlag,
         );
     }
 }

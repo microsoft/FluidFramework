@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { Templates } from "..";
+
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentCallable>> { }
@@ -10,6 +13,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
+    addTemplate?(template: Templates): void;
     saveLayout?(): void;
     toggleEditable?(isEditable?: boolean): void;
 }
@@ -27,4 +31,11 @@ export interface IProvideComponentCallable {
  */
 export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
+}
+
+export type SpacesCompatibleToolbar = IComponent & IComponentLoadable & IComponentCallable<IComponentCallbacks>;
+
+export interface IComponentOptions {
+    component?: IComponent & IComponentLoadable;
+    type?: string;
 }

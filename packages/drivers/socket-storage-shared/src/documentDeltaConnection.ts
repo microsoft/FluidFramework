@@ -110,6 +110,10 @@ export class DocumentDeltaConnection
 
     private trackedListeners: IEventListener[] = [];
 
+    protected get hasDetails(): boolean {
+        return !!this._details;
+    }
+
     private get details(): IConnected {
         if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
@@ -455,9 +459,9 @@ export class DocumentDeltaConnection
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
-    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {

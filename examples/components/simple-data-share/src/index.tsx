@@ -97,14 +97,15 @@ export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     SimpleDataSharing,
     [],
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    chaincodeName,
+    SimpleDataSharingInstantiationFactory.type,
     new Map([
-        [chaincodeName, Promise.resolve(SimpleDataSharingInstantiationFactory)],
-        [Button.chaincodeName, Promise.resolve(ButtonInstantiationFactory)],
-        [TextDisplay.chaincodeName, Promise.resolve(TextDisplayInstantiationFactory)],
-        [Incrementor.chaincodeName, Promise.resolve(IncrementorInstantiationFactory)],
+        SimpleDataSharingInstantiationFactory.registryEntry,
+        ButtonInstantiationFactory.registryEntry,
+        TextDisplayInstantiationFactory.registryEntry,
+        IncrementorInstantiationFactory.registryEntry,
     ]),
 );

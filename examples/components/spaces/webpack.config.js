@@ -33,6 +33,13 @@ module.exports = env => {
                 ]
             },]
         },
+        node: {
+            dgram: 'empty',
+            fs: 'empty',
+            net: 'empty',
+            tls: 'empty',
+            child_process: 'empty',
+        },
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),

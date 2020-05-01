@@ -21,30 +21,18 @@ describe("Matrix", () => {
          * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
          */
         const expect = async () => {
-            try {
-                await TestHost.sync(...hosts);
+            await TestHost.sync(...hosts);
 
-                const matrix0 = matrices[0];
-                const actual0 = extract(matrix0);
+            const matrix0 = matrices[0];
+            const actual0 = extract(matrix0);
 
-                for (let i = 1; i < matrices.length; i++) {
-                    const matrixN = matrices[i];
-                    const actualN = extract(matrixN);
-                    assert.deepEqual(actual0, actualN);
+            for (let i = 1; i < matrices.length; i++) {
+                const matrixN = matrices[i];
+                const actualN = extract(matrixN);
+                assert.deepEqual(actual0, actualN);
 
-                    // Vet that empty matrices have identical dimensions (see notes on `expectSize`).
-                    expectSize(matrixN, matrix0.numRows, matrix0.numCols);
-                }
-            } catch (error) {
-                for (const s of trace) {
-                    console.log(s);
-                }
-
-                for (const m of matrices) {
-                    console.log(m.toString());
-                }
-
-                throw error;
+                // Vet that empty matrices have identical dimensions (see notes on `expectSize`).
+                expectSize(matrixN, matrix0.numRows, matrix0.numCols);
             }
         };
 
@@ -54,7 +42,7 @@ describe("Matrix", () => {
          *
          * 'seed' is the 32-bit integer used to seed the PRNG.
          */
-        async function stress(numClients: number, numIterations: number, syncProbability: number, seed: number) {
+        async function stress(numClients: number, numOps: number, syncProbability: number, seed: number) {
             try {
                 trace = [];
 
@@ -84,24 +72,30 @@ describe("Matrix", () => {
                     .fill(0)
                     .map(() => int32(100));
 
+                // Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
+                const setCells = (matrixIndex: number, row: number, col: number, numCols: number, values: any[]) => {
+                    const matrix = matrices[matrixIndex];
+                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* numCols: */ ${numCols}, ${JSON.stringify(values)});    // numRows: ${matrix.numRows} numCols: ${matrix.numCols} stride: ${matrix.numCols} length: ${values.length}`);
+                    matrix.setCells(row, col, numCols, values);
+                }
+
                 // Initialize with [0..5] row and [0..5] cols, filling the cells.
                 {
                     const numRows = int32(5);
                     if (numRows > 0) {
-                        matrix0.insertRows(0, numRows);
                         trace?.push(`matrix1.insertRows(0,${numRows});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
+                        matrix0.insertRows(0, numRows);
                     }
 
                     const numCols = int32(5);
                     if (numCols > 0) {
-                        matrix0.insertCols(0, numCols);
                         trace?.push(`matrix1.insertCols(0,${numCols});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
+                        matrix0.insertCols(0, numCols);
                     }
 
                     if (numCols > 0 && numRows > 0) {
-                        const v = new Array(numCols * numRows).fill(0).map((_, index) => index);
-                        matrix0.setCells(0, 0, numCols, v);
-                        trace?.push(`matrix1.setCells(0, 0, ${numCols}, ${JSON.stringify(v)});`);
+                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, numCols,
+                            new Array(numCols * numRows).fill(0).map((_, index) => index));
                     }
                 }
 
@@ -114,7 +108,7 @@ describe("Matrix", () => {
                 //
                 // Following each operation, there is a `syncProbability` chance that clients will exchange
                 // ops and vet convergence.
-                for (let i = 0; i < numIterations; i++) {
+                for (let i = 0; i < numOps; i++) {
                     // Choose a client to perform the operation.
                     const matrixIndex = int32(matrices.length);
                     const matrix = matrices[matrixIndex];
@@ -132,8 +126,8 @@ describe("Matrix", () => {
                                     ? int32(numRows - row - 1) + 1
                                     : 1;
 
+                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // numRows: ${matrix.numRows - numRemoved}, numCols: ${matrix.numCols}`);
                                 matrix.removeRows(row, numRemoved);
-                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols}`);
                             }
                             break;
                         }
@@ -146,8 +140,8 @@ describe("Matrix", () => {
                                     ? int32(numCols - col - 1) + 1
                                     : 1;
 
+                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols - numRemoved}`);
                                 matrix.removeCols(col, numRemoved);
-                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols}`);
                             }
                             break;
                         }
@@ -158,15 +152,14 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
+                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // numRows: ${matrix.numRows + numInserted}, numCols: ${matrix.numCols}`);
                             matrix.insertRows(row, numInserted);
-                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols}`);
 
                             // 90% probability of filling the newly inserted row with values.
                             if (float64() < 0.9) {
                                 if (numCols > 0) {
-                                    const v = values(matrix.numCols * numInserted);
-                                    matrix.setCells(row, 0, matrix.numCols, v);
-                                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ 0, /* numCols: */ ${matrix.numCols}, ${JSON.stringify(v)});`);
+                                    setCells(matrixIndex, row, /* col: */ 0, matrix.numCols,
+                                        values(matrix.numCols * numInserted));
                                 }
                             }
                             break;
@@ -178,15 +171,14 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
+                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols + numInserted}`);
                             matrix.insertCols(col, numInserted);
-                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols}`);
 
                             // 90% probability of filling the newly inserted col with values.
                             if (float64() < 0.9) {
                                 if (numRows > 0) {
-                                    const v = values(matrix.numRows * numInserted);
-                                    matrix.setCells(0, col, numInserted, v);
-                                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ 0, /* col: */ ${col}, /* numCols: */ 1, ${JSON.stringify(v)});`);
+                                    setCells(matrixIndex, /* row: */ 0, col, numInserted,
+                                        values(matrix.numRows * numInserted));
                                 }
                             }
                             break;
@@ -197,9 +189,7 @@ describe("Matrix", () => {
                             if (numRows > 0 && numCols > 0) {
                                 const stride = int32(numCols - col - 1) + 1;
                                 const length = (int32(numRows - row - 1) + 1) * stride;
-                                const v = values(length);
-                                matrix.setCells(row, col, stride, v);
-                                trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* numCols: */ ${stride}, ${JSON.stringify(v)});`);
+                                setCells(matrixIndex, row, col, stride, values(length));
                             }
                             break;
                         }
@@ -208,13 +198,29 @@ describe("Matrix", () => {
                     // Clients periodically exchanging ops, at which point we verify they have converged
                     // on the same state.
                     if (float64() < syncProbability) {
+                        trace?.push("await expect();");
                         await expect();
-                        trace?.push("await expect()");
                     }
                 }
 
                 // Test is finished.  Drain pending ops and vet that clients converged.
                 await expect();
+            } catch (error) {
+                // If an error occurs, dump the repro instructions.
+                for (const s of trace) {
+                    console.log(s);
+                }
+
+                // Append an 'await expect();' to the log.
+                console.log("await expect();");
+
+                // Also dump the current state of the matrices.
+                for (const m of matrices) {
+                    console.log(m.toString());
+                }
+
+                // Finally, rethrow the original error.
+                throw error;
             } finally {
                 for (const host of hosts) {
                     await host.close();
@@ -222,13 +228,18 @@ describe("Matrix", () => {
             }
         }
 
-        function test(numClients: number, numIterations: number, syncProbability: number, seed: number = (Math.random() * 0x100000000) >>> 0) {
-            it(`Stress (numClients=${numClients} numIterations=${numIterations} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`, async () => {
-                await stress(numClients, numIterations, syncProbability, seed);
-            });
-        }
+        for (const { numClients, numOps, syncProbability, seed } of [
+            { numClients: 2, numOps: 200, syncProbability: 0.3, seed: 0x84d43a0a },
+            { numClients: 3, numOps: 200, syncProbability: 0.1, seed: 0x655c763b },
+            { numClients: 5, numOps: 200, syncProbability: 0.0, seed: 0x2f98736d },
+        ]) {
+            it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
+                async function () {
+                    this.timeout(10000);
 
-        test(/* numClients: */ 3, /* numIterations: */ 500, /* syncProbability: */ 0.1, 0xa42c4fe5);
+                    await stress(numClients, numOps, syncProbability, seed);
+                });
+        }
 
         it.skip("stress-loop", async function() {
             console.log("\n*** Begin Stress-Loop ***");
@@ -236,7 +247,7 @@ describe("Matrix", () => {
 
             const start = Date.now();
             while (true) {
-                await stress(/* numClients: */ 5, /* numIterations: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
+                await stress(/* numClients: */ 5, /* numOps: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
                 console.log(matrices[0].toString());
                 console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
             }

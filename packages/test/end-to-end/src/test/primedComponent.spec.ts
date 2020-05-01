@@ -8,7 +8,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-// import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
@@ -38,7 +37,7 @@ describe("PrimedComponent", () => {
         let component: Component;
 
         async function createContainer(): Promise<Container> {
-            const factory = new PrimedComponentFactory(PrimedType, Component, []);
+            const factory = new PrimedComponentFactory(PrimedType, Component, [], {});
             const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }

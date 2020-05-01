@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y build-essential libssl-dev python libcu
 
 # Copy over and build the server
 WORKDIR /home/node/server
-ARG NPM_TOKEN
 COPY .npmrc .
 COPY package.json .
 COPY package-lock.json .

@@ -66,10 +66,11 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHostRuntime,
+    IContainerRuntime,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
+    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -152,9 +153,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    // Experimental flag that will generate summaries if connected to a service that supports them.
+    // Flag that will generate summaries if connected to a service that supports them.
     // This defaults to true and must be explicitly set to false to disable.
-    generateSummaries: boolean;
+    generateSummaries?: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
     enableWorker?: boolean;
@@ -358,7 +359,7 @@ export class ScheduleManager {
 
 export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
             return componentRuntimeRequestHandler(request, runtime);
         }
@@ -379,8 +380,13 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
+    IExperimentalRuntime, IExperimentalContainerRuntime
+{
+    public get IContainerRuntime() { return this; }
+
     public readonly isExperimentalRuntime = true;
+    public readonly isExperimentalContainerRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -500,6 +506,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
+    }
+
+    public isLocal(): boolean {
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext) {
+            // back-compat: 0.15 isAttached
+            // isAttached is replaced with isLocal.
+            return expContainerContext.isLocal ? expContainerContext.isLocal() :
+                expContainerContext.isAttached ? !expContainerContext.isAttached() : false;
+        } else {
+            // back-compat: 0.15 isAttached
+            // Need to return false if container is not experimental because then the result would depend on
+            // whether the component is attached or not.
+            return false;
+        }
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -964,6 +985,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
+        assert(!this.contexts.has(id), "Creating component with existing ID");
+
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -994,7 +1017,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             pkg,
             this,
             this.storage,
-            this.context.scope,
+            this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
@@ -1168,6 +1191,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
+
                     // Resolve pending gets and store off any new ones
                     const deferred = this.ensureContextDeferred(attachMessage.id);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1192,8 +1217,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = this.getContext(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+        if (!this.isLocal()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1229,12 +1253,33 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return context;
     }
 
-    public async createSummary(): Promise<ISummaryTree> {
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
-        const treeWithStats = await this.summarize(true);
+    public createSummary(): ISummaryTree {
+        const summaryTree: ISummaryTree = {
+            tree: {},
+            type: SummaryType.Tree,
+        };
 
-        return treeWithStats.summaryTree;
+        // Iterate over each component and ask it to snapshot
+        Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = value.generateAttachMessage().snapshot;
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    true,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+            });
+        if (this.chunkMap.size > 0) {
+            summaryTree.tree[".chunks"] = {
+                content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
+        }
+        return summaryTree;
     }
 
     private async generateSummary(

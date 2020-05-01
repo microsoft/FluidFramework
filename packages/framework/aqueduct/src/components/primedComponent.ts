@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -18,8 +23,15 @@ import { SharedComponent } from "./sharedComponent";
  * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
+ *
+ * Generics:
+ * P - represents a type that will define optional providers that will be injected
+ * S - the initial state type that the produced component may take during creation
+ * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent<TEvents extends IEvent = IEvent> extends SharedComponent<TEvents> {
+export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+    extends SharedComponent<P, S, E>
+{
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
@@ -89,7 +101,7 @@ export abstract class PrimedComponent<TEvents extends IEvent = IEvent> extends S
             url: `/_scheduler`,
         };
 
-        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.hostRuntime.request(request));
+        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime

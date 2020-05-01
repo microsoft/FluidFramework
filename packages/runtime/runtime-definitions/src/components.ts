@@ -195,6 +195,15 @@ export interface IComponentRuntime extends
     error(err: any): void;
 }
 
+export interface IExperimentalComponentRuntime extends IComponentRuntime {
+    readonly isExperimentalComponentRuntime: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isLocal(): boolean;
+}
+
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -255,7 +264,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IHostRuntime;
+    readonly containerRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -340,6 +349,15 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 }
 
+export interface IExperimentalComponentContext extends IComponentContext {
+    readonly isExperimentalComponentContext: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
+}
+
 /**
  * Runtime flush mode handling
  */
@@ -356,14 +374,26 @@ export enum FlushMode {
     Manual,
 }
 
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
+}
+
+export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
+
+export interface IProvideContainerRuntime {
+    IContainerRuntime: IContainerRuntime;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends
+export interface IContainerRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
-    IProvideComponentRegistry {
+    IProvideComponentRegistry,
+    IProvideContainerRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -504,4 +534,14 @@ export interface IHostRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+}
+
+export interface IExperimentalContainerRuntime extends IContainerRuntime {
+
+    isExperimentalContainerRuntime: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
 }

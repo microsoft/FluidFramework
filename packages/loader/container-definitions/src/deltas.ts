@@ -125,14 +125,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
     close(): void;
 
-    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
-
-    attachOpHandler(
-        minSequenceNumber: number,
-        sequenceNumber: number,
-        handler: IDeltaHandlerStrategy,
-        resume: boolean);
-
     submitSignal(content: any): void;
 }
 

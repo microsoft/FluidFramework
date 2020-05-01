@@ -6,7 +6,7 @@ Simple service that listens to the Fluid Kafka topics and then exports metrics t
 
 ## Building and running
 
-To begin you'll need to connect to the Fluid private NPM repository. Instructions can be found [here](../../docs/get-started/package-feed.md)
+To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../../docs/get-started/package-feed.md)
 
 You can build the production container by running.
 

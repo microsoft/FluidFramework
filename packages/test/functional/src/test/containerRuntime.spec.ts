@@ -123,7 +123,7 @@ describe("Container Runtime", () => {
                     return {};
                 },
                 processSignal() {},
-            }, true);
+            });
         });
 
         afterEach(() => {

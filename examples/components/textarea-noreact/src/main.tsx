@@ -15,10 +15,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     SequenceDeltaEvent,
     SharedString,
 } from "@microsoft/fluid-sequence";
@@ -47,24 +43,13 @@ interface ITextareaState {
 export class TextareaNoReact extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    protected textareaState: ITextareaState;
-    protected textareaRootKey: string;
-    protected textareaID: string;
-
-    constructor(runtime: IComponentRuntime,
-                context: IComponentContext) {
-        super(runtime, context);
-        console.log("textarea-noreact: constructor call");
-
-        this.textareaState = {
-            selectionEnd: 0,
-            selectionStart: 0,
-            text: "",
-        };
-
-        this.textareaID = "<unset dom ID>";
-        this.textareaRootKey = "textareaString";
-    }
+    protected textareaState: ITextareaState = {
+        selectionEnd: 0,
+        selectionStart: 0,
+        text: "",
+    };
+    protected textareaRootKey: string = "textareaString";
+    protected textareaID: string = "<unset dom ID>";
 
     // One-time component setup:
 
@@ -74,8 +59,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
      * the PrimedComponent base class). This method is called only once.
      */
     protected async componentInitializingFirstTime() {
-        // Calling super.componentInitializingFirstTime() creates a root SharedMap.
-        await super.componentInitializingFirstTime();
         console.log("textarea-noreact: first time call");
 
         this.root.set(this.textareaRootKey,
@@ -344,29 +327,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
 
         host.appendChild(textareaElement);
     }
-
-    // Component loading and export:
-
-    /**
-     * Final (static!) load function that allows the runtime to make async calls
-     * while creating the object.
-     *
-     * Primarily boilerplate code.
-     */
-    public static async load(
-        runtime: IComponentRuntime,
-        context: IComponentContext): Promise<TextareaNoReact> {
-        console.log("textarea-noreact: load call");
-        const fluidComponent = new TextareaNoReact(runtime, context);
-        await fluidComponent.initialize();
-
-        return fluidComponent;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public componentHasInitialized(): Promise<void> {
-        return super.componentHasInitialized();
-    }
 } // end class
 
 /**
@@ -392,4 +352,4 @@ export const TextareaNoReactInstantiationFactory =
         [
             SharedString.getFactory(),
         ],
-    );
+        {});

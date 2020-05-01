@@ -11,11 +11,15 @@ import {
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
+    IExperimentalDocumentService,
+    IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
@@ -25,7 +29,7 @@ import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 
@@ -39,7 +43,8 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService {
+export class OdspDocumentService implements IDocumentService, IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -64,7 +69,6 @@ export class OdspDocumentService implements IDocumentService {
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
-        createNewFlag: boolean,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
@@ -72,19 +76,16 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             { docId: odspResolvedUrl.hashedDocumentId });
         if (odspResolvedUrl.createNewOptions) {
-            const createNewOptions = odspResolvedUrl.createNewOptions;
-            const createNewSummary = createNewOptions.createNewSummary;
             const event = PerformanceEvent.start(templogger,
                 {
                     eventName: "CreateNew",
-                    isWithSummaryUpload: createNewSummary ? true : false,
+                    isWithSummaryUpload: false,
                 });
             try {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache,
-                    createNewSummary);
+                    cache);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
@@ -97,11 +98,7 @@ export class OdspDocumentService implements IDocumentService {
         }
         return new OdspDocumentService(
             appId,
-            odspResolvedUrl.hashedDocumentId,
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            odspResolvedUrl,
             getStorageToken,
             getWebsocketToken,
             logger,
@@ -110,8 +107,55 @@ export class OdspDocumentService implements IDocumentService {
             socketIOClientP,
             cache,
             isFirstTimeDocumentOpened,
-            createNewFlag,
         );
+    }
+
+    public static async createContainer(
+        createNewSummary: ISummaryTree,
+        createNewResolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+        cache: IOdspCache,
+        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        factory: IDocumentServiceFactory,
+    ): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(createNewResolvedUrl);
+        let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
+        const [, queryString] = odspResolvedUrl.url.split("?");
+
+        const searchParams = new URLSearchParams(queryString);
+        const filePath = searchParams.get("path");
+        if (!filePath) {
+            throw new Error("File path should be provided!!");
+        }
+        const newFileParams: INewFileInfo = {
+            driveId: odspResolvedUrl.driveId,
+            siteUrl: odspResolvedUrl.siteUrl,
+            filePath,
+            filename: odspResolvedUrl.fileName,
+        };
+        const event = PerformanceEvent.start(logger,
+            {
+                eventName: "CreateNew",
+                isWithSummaryUpload: true,
+            });
+        try {
+            odspResolvedUrl = await createNewFluidFile(
+                getStorageToken,
+                Promise.resolve(newFileParams),
+                cache,
+                createNewSummary);
+            const props = {
+                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                itemId: odspResolvedUrl.itemId,
+            };
+
+            const docService = factory.createDocumentService(odspResolvedUrl);
+            event.end(props);
+            return docService;
+        } catch (error) {
+            event.cancel(undefined, error);
+            throw error;
+        }
     }
 
     private storageManager?: OdspDocumentStorageManager;
@@ -125,14 +169,10 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
+    private readonly isOdc: boolean;
+
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
-     * this string contains no end user identifiable information.
-     * @param siteUrl - the url of the site that hosts this container
-     * @param driveId - the id of the drive that hosts this container
-     * @param itemId - the id of the container within the drive
-     * @param snapshotStorageUrl - the URL where snapshots should be obtained from
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
      * to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
@@ -144,11 +184,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         private readonly appId: string,
-        private readonly hashedDocumentId: string,
-        private readonly siteUrl: string,
-        private readonly driveId: string,
-        private readonly itemId: string,
-        private readonly snapshotStorageUrl: string,
+        public readonly odspResolvedUrl: IOdspResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryBaseLogger,
@@ -157,14 +193,16 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
-        private readonly createNewFlag: boolean,
     ) {
-        this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
-
+        this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
+        this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcOrigin(new URL(snapshotStorageUrl).origin) });
+            {
+                docId: this.odspResolvedUrl.hashedDocumentId,
+                odc: this.isOdc,
+            });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -177,7 +215,7 @@ export class OdspDocumentService implements IDocumentService {
                 { eventName: `${name || "OdspDocumentService"}_GetToken` });
             let token: string | null;
             try {
-                token = await getStorageToken(this.siteUrl, refresh);
+                token = await getStorageToken(this.odspResolvedUrl.siteUrl, refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;
@@ -204,6 +242,10 @@ export class OdspDocumentService implements IDocumentService {
         this.localStorageAvailable = isLocalStorageAvailable();
     }
 
+    public get resolvedUrl(): IResolvedUrl {
+        return this.odspResolvedUrl;
+    }
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *
@@ -213,8 +255,8 @@ export class OdspDocumentService implements IDocumentService {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
-            this.hashedDocumentId,
-            this.snapshotStorageUrl,
+            this.odspResolvedUrl.hashedDocumentId,
+            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
             this.getStorageToken,
@@ -222,7 +264,6 @@ export class OdspDocumentService implements IDocumentService {
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
-            this.createNewFlag,
         );
 
         return new OdspDocumentStorageService(this.storageManager);
@@ -252,13 +293,15 @@ export class OdspDocumentService implements IDocumentService {
     /**
      * Connects to a delta stream endpoint for emitting ops.
      *
-     * @returns returns the document delta stream service for sharepoint driver.
+     * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
+            // For ODC, we just use the token from joinsession
+            const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh);
             const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+                await Promise.all([this.joinSession(), socketTokenPromise, this.socketIOClientP]);
 
             // This check exists because of a typescript bug.
             // Issue: https://github.com/microsoft/TypeScript/issues/33752
@@ -301,9 +344,9 @@ export class OdspDocumentService implements IDocumentService {
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         return getSocketStorageDiscovery(
             this.appId,
-            this.driveId,
-            this.itemId,
-            this.siteUrl,
+            this.odspResolvedUrl.driveId,
+            this.odspResolvedUrl.itemId,
+            this.odspResolvedUrl.siteUrl,
             this.logger,
             this.getStorageToken,
             this.cache,

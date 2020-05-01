@@ -5,6 +5,7 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { Layout } from "react-grid-layout";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -28,4 +29,5 @@ export interface IContainerComponentDetails {
     capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
+    templates: {[key: string]: Layout[]};
 }

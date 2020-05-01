@@ -14,17 +14,25 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
+import { IComponentCallbacks, IComponentOptions, SpacesCompatibleToolbar } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
+// localComponents facilitates local component development.  Make sure the path points to a directory containing
+// the package.json for the package, and also make sure you've run webpack there first.  These will only be
+// available when running on localhost.
+const localComponents = [
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
+];
+
 /**
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
+    implements IComponentHTMLView, SpacesCompatibleToolbar {
     private static readonly defaultComponents = [
         "@fluid-example/todo",
         "@fluid-example/math",
@@ -85,6 +93,14 @@ export class ExternalComponentLoader extends PrimedComponent
                 option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);
             });
+            // When running on localhost, add entries for local component development.
+            if (window.location.hostname === "localhost") {
+                localComponents.forEach((url) => {
+                    const option = document.createElement("option");
+                    option.value = `${url}`;
+                    dataList.append(option);
+                });
+            }
 
             const input = document.createElement("input");
             inputDiv.append(input);
@@ -157,7 +173,7 @@ export class ExternalComponentLoader extends PrimedComponent
             let componentRuntime: IComponentRuntime;
             const id = uuid();
             if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
@@ -166,7 +182,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                     ]);
             } else if (pkgReg?.IComponentFactory !== undefined) {
-                componentRuntime = await this.context.hostRuntime.createComponent(
+                componentRuntime = await this.context.containerRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
@@ -179,14 +195,16 @@ export class ExternalComponentLoader extends PrimedComponent
 
             const response: IResponse = await componentRuntime.request({ url: "/" });
             let component: IComponent = response.value as IComponent;
+            if (component.IComponentLoadable === undefined) {
+                throw new Error(`${value} needs to implement the IComponentLoadable interface to be loaded here`);
+            }
             componentRuntime.attach();
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollection.createCollectionItem({
-                handle: component.IComponentHandle,
+            viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
+                component: component as IComponent & IComponentLoadable,
                 type: value,
-                id,
             });
         } catch (error) {
             this.error = error;

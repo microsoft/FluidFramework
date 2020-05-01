@@ -25,7 +25,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-    IHostRuntime,
+    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
@@ -455,7 +455,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            [async (request: IRequest, containerRuntime: IHostRuntime) => {
+            [async (request: IRequest, containerRuntime: IContainerRuntime) => {
                 console.log(request.url);
 
                 const requestUrl = request.url.length > 0 && request.url.startsWith("/")

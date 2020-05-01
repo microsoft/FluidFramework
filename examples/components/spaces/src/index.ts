@@ -5,31 +5,28 @@
 
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
+import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { Chat } from "@fluid-example/chat/src/main";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     ComponentToolbar,
     ComponentToolbarName,
-    Button,
-    ButtonName,
-    Number,
-    NumberName,
     TextBox,
     TextBoxName,
-    FacePile,
-    FacePileName,
-    FriendlyButtonName,
-    FriendlyNumberName,
-    FriendlyFacePileName,
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
 import {
     IContainerComponentDetails,
+    Templates,
+    IComponentRegistryDetails,
+    IComponentRegistryTemplates,
 } from "./interfaces";
 
 export * from "./spaces";
@@ -38,9 +35,10 @@ export * from "./interfaces";
 
 export const SpacesComponentName = "spaces";
 
-export class InternalRegistry implements IComponentRegistry {
+export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }
     public get IComponentRegistryDetails() { return this; }
+    public get IComponentRegistryTemplates() {return this; }
 
     constructor(
         private readonly containerComponentArray: IContainerComponentDetails[],
@@ -70,44 +68,64 @@ export class InternalRegistry implements IComponentRegistry {
         );
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
+
+    public getFromTemplate(template: Templates): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) =>
+            componentDetails.templates[template] !== undefined);
+    }
 }
 
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
+        {
+            type: "chat",
+            factory: Promise.resolve(Chat.getFactory()),
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            friendlyName: "Chat",
+            fabricIconName: "ChatInviteFriend",
+            templates: {
+                [Templates.CollaborativeCoding]: [{ x: 26, y: 0, w: 10, h: 12 }],
+                [Templates.Classroom]: [{ x: 26, y: 0, w: 10, h: 12 }],
+            },
+        },
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
             friendlyName: "Clicker",
             fabricIconName: "Touch",
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            templates: {},
         },
         {
-            type: ButtonName as string,
-            factory: Promise.resolve(Button.getFactory()),
-            friendlyName: FriendlyButtonName,
-            fabricIconName: "ButtonControl",
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-        },
-        {
-            type: NumberName as string,
-            factory: Promise.resolve(Number.getFactory()),
-            friendlyName: FriendlyNumberName,
-            fabricIconName: "NumberField",
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-        },
-        {
-            type: FacePileName as string,
-            factory: Promise.resolve(FacePile.getFactory()),
-            friendlyName: FriendlyFacePileName,
-            fabricIconName: "People",
-            capabilities: ["IComponentHTMLView"],
+            friendlyName: "Code",
+            fabricIconName: "Code",
+            templates: {
+                [Templates.CollaborativeCoding]: [{ x: 0, y: 12, w: 26, h: 6 }],
+            },
         },
         {
             type: TextBoxName as string,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
-            fabricIconName: "TextField",
-            capabilities: ["IComponentHTMLView"],
+            fabricIconName: "Edit",
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            templates: {
+                [Templates.CollaborativeCoding]: [{ x: 26, y: 12, w: 10, h: 6 }],
+                [Templates.Classroom]: [{ x: 26, y: 12, w: 10, h: 6 }],
+            },
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            friendlyName: "Rich Text",
+            fabricIconName: "FabricTextHighlight",
+            templates: {
+                [Templates.Classroom]: [{ x: 0, y: 12, w: 26, h: 6 }],
+            },
         },
     ];
 

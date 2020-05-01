@@ -443,8 +443,10 @@ export class Client {
                 this.localOps++;
             }
         } else {
-            assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber);
-            assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber);
+            assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber,
+                "Incoming remote op sequence# <= local collabWindow's currentSequence#");
+            assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
+                "Incoming remote op minSequence# < local collabWindow's minSequence#");
             if (clockStart) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
@@ -827,9 +829,9 @@ export class Client {
     public updateSeqNumbers(min: number, seq: number) {
         const collabWindow = this.mergeTree.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
-        assert(collabWindow.currentSeq <= seq);
+        assert(collabWindow.currentSeq <= seq, "Incoming op sequence# < local collabWindow's currentSequence#");
         collabWindow.currentSeq = seq;
-        assert(min <= seq);
+        assert(min <= seq, "Incoming op sequence# < minSequence#");
         this.updateMinSeq(min);
     }
 
@@ -1023,14 +1025,11 @@ export class Client {
         return this.getCollabWindow().clientId;
     }
 
-    getLength() {
-        const segmentWindow = this.getCollabWindow();
-        return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
-    }
+    getLength() { return this.mergeTree.length; }
 
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
         // we should always have a client id if we are collaborating
-        // if the client id is undefined we are likley bound to a detached
+        // if the client id is undefined we are likely bound to a detached
         // container, so we should keep going in local mode. once
         // the container attaches this will be called again on connect with the
         // client id

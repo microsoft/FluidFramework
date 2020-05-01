@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import {
     IFacepileProps,
     Facepile,
@@ -11,22 +11,23 @@ import {
     IFacepilePersona,
 } from "office-ui-fabric-react/lib/Facepile";
 import { PersonaInitialsColor } from "office-ui-fabric-react";
+import { IVltavaUserDetails } from "./dataModel";
 
 const facepileStyle: React.CSSProperties = {
     position: "absolute",
     top: 17,
-    right : 20,
+    right : 45,
     cursor: "pointer",
 };
 
 interface IVltavaFacepileProps {
-    users: string[]
+    users: IVltavaUserDetails[]
 }
 
 export const VltavaFacepile = (props: IVltavaFacepileProps) => {
     const facepilePersonas: IFacepilePersona[] = [];
-    let count = 0;
-    props.users.forEach((personaName) => {
+    props.users.forEach((user: IVltavaUserDetails) => {
+        const personaName = user.name;
         // Split the names on spaces and underscores
         const nameParts = personaName.split(" ")
             .reduce((acc: string[], val) => { acc.push(...val.split("_")); return acc; }, []);
@@ -34,7 +35,7 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
         // This is just a way to iterate through all colors in PersonaInitialColor in order
         const initialsColor =
             PersonaInitialsColor[
-                PersonaInitialsColor[count++ % Object.keys(PersonaInitialsColor).length]
+                PersonaInitialsColor[user.colorCode % Object.keys(PersonaInitialsColor).length]
             ];
         const persona: IFacepilePersona = {
             imageInitials,

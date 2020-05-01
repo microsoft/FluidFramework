@@ -22,7 +22,7 @@ export const FriendlyTextBoxName = "Text Box";
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent implements IComponentHTMLView, IComponentReactViewable {
+export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView, IComponentReactViewable {
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
@@ -30,7 +30,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
         TextBoxName,
         TextBox,
         [SharedString.getFactory()],
-    );
+        {});
 
     public static getFactory() {
         return TextBox.factory;
@@ -41,13 +41,9 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(props?: any) {
-        let newItemText = "Important Things";
-
-        // if the creating component passed props with a startingText value then set it.
-        if (props && props.startingText) {
-            newItemText = props.startingText;
-        }
+    protected async componentInitializingFirstTime(initialState?: string) {
+        // if initial state is provided then use it.
+        const newItemText = initialState ?? "Important Things";
 
         // create a SharedString that will be use for the text entry
         const text = SharedString.create(this.runtime);
