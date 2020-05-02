@@ -221,14 +221,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const [components, layouts] = this.generateViewState();
         return (
             <div>
-                <div style={{ padding: 2 }} >
-                    <div style={{ height: "100%" }}>
-                        {
-                            this.state.toolbarComponent !== undefined &&
-                            <ReactViewAdapter component={ this.state.toolbarComponent } />
-                        }
-                    </div>
-                </div>
+                {
+                    this.state.toolbarComponent !== undefined &&
+                        <ReactViewAdapter component={ this.state.toolbarComponent } />
+                }
                 {
                     this.state.componentMap.size > 0 &&
                         <ReactGridLayout
