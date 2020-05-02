@@ -18,26 +18,23 @@ interface ISpacesEditButtonProps {
     clickCallback(): void;
 }
 
-function SpacesEditButton(props: ISpacesEditButtonProps) {
-    return (
-        <button
-            className="spaces-edit-button"
-            onClick={props.clickCallback}
-            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                event.stopPropagation();
-            }}
-        >
-            {props.label}
-        </button>
-    );
-}
+const SpacesEditButton = (props: ISpacesEditButtonProps) =>
+    <button
+        className="spaces-edit-button"
+        onClick={props.clickCallback}
+        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation();
+        }}
+    >
+        {props.label}
+    </button>;
 
 interface ISpacesEditPaneProps {
     url: string;
     removeComponent(): void;
 }
 
-function SpacesEditPane(props: ISpacesEditPaneProps) {
+const SpacesEditPane = (props: ISpacesEditPaneProps) => {
     const componentUrl = `${window.location.href}/${props.url}`;
     return (
         <div className="spaces-edit-pane">
@@ -55,7 +52,7 @@ function SpacesEditPane(props: ISpacesEditPaneProps) {
             <SpacesEditButton label="↗️" clickCallback={() => window.open(componentUrl, "_blank")} />
         </div>
     );
-}
+};
 
 interface ISpacesComponentViewProps {
     url: string;
