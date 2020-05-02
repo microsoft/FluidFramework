@@ -13,6 +13,50 @@ const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 import "./style.css";
 
+interface ISpacesEditButtonProps {
+    label: string;
+    clickCallback(): void;
+}
+
+function SpacesEditButton(props: ISpacesEditButtonProps) {
+    return (
+        <button
+            className="spaces-edit-button"
+            onClick={props.clickCallback}
+            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                event.stopPropagation();
+            }}
+        >
+            {props.label}
+        </button>
+    );
+}
+
+interface ISpacesEditPaneProps {
+    url: string;
+    removeComponent(): void;
+}
+
+function SpacesEditPane(props: ISpacesEditPaneProps) {
+    const componentUrl = `${window.location.href}/${props.url}`;
+    return (
+        <div className="spaces-edit-pane">
+            <SpacesEditButton label="❌" clickCallback={props.removeComponent} />
+            <SpacesEditButton
+                label="📎"
+                clickCallback={() => {
+                    navigator.clipboard.writeText(componentUrl).then(() => {
+                        console.log("Async: Copying to clipboard was successful!");
+                    }, (err) => {
+                        console.error("Async: Could not copy text: ", err);
+                    });
+                }}
+            />
+            <SpacesEditButton label="↗️" clickCallback={() => window.open(componentUrl, "_blank")} />
+        </div>
+    );
+}
+
 interface ISpacesComponentViewProps {
     url: string;
     editable: boolean;
@@ -30,48 +74,6 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
         this.state = { component: undefined };
     }
 
-    generateEditControls(url: string): JSX.Element {
-        const componentUrl = `${window.location.href}/${url}`;
-        return (
-            <div className="spaces-edit-button-container">
-                <button
-                    className="spaces-edit-button"
-                    onClick={() => this.props.removeComponent()}
-                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                        event.stopPropagation();
-                    }}
-                >
-                    {"❌"}
-                </button>
-                <button
-                    className="spaces-edit-button"
-                    onClick={
-                        () => {
-                            navigator.clipboard.writeText(componentUrl).then(() => {
-                                console.log("Async: Copying to clipboard was successful!");
-                            }, (err) => {
-                                console.error("Async: Could not copy text: ", err);
-                            });
-                        }}
-                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                        event.stopPropagation();
-                    }}
-                >
-                    {"📎"}
-                </button>
-                <button
-                    className="spaces-edit-button"
-                    onClick={() => window.open(componentUrl, "_blank")}
-                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                        event.stopPropagation();
-                    }}
-                >
-                    {"↗️"}
-                </button>
-            </div>
-        );
-    }
-
     componentDidMount() {
         this.props.getComponent()
             .then((component) => this.setState({ component }))
@@ -83,7 +85,7 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
             <div className="spaces-component-view">
                 {
                     this.props.editable &&
-                    this.generateEditControls(this.props.url)
+                    <SpacesEditPane url={this.props.url} removeComponent={this.props.removeComponent} />
                 }
                 <div className="spaces-embedded-component-wrapper">
                     {
