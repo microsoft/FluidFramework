@@ -11,21 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
-
-const buttonContainerStyle: React.CSSProperties = {
-    opacity: 1,
-    backgroundColor: "none",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-};
-
-const buttonStyle: React.CSSProperties = {
-    width: "2rem",
-    height: "2rem",
-};
-
-const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight: "3000px", width: "100%" };
+import "./style.css";
 
 interface ISpacesComponentViewProps {
     url: string;
@@ -47,9 +33,9 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
     generateEditControls(url: string): JSX.Element {
         const componentUrl = `${window.location.href}/${url}`;
         return (
-            <div style={buttonContainerStyle}>
+            <div className="spaces-edit-button-container">
                 <button
-                    style={buttonStyle}
+                    className="spaces-edit-button"
                     onClick={() => this.props.removeComponent()}
                     onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                         event.stopPropagation();
@@ -58,7 +44,7 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
                     {"❌"}
                 </button>
                 <button
-                    style={buttonStyle}
+                    className="spaces-edit-button"
                     onClick={
                         () => {
                             navigator.clipboard.writeText(componentUrl).then(() => {
@@ -74,7 +60,7 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
                     {"📎"}
                 </button>
                 <button
-                    style={buttonStyle}
+                    className="spaces-edit-button"
                     onClick={() => window.open(componentUrl, "_blank")}
                     onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                         event.stopPropagation();
@@ -93,28 +79,19 @@ class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISp
     }
 
     public render() {
-        // Do some CSS stuff depending on if the user is editing or not
-        const embeddedComponentStyle: React.CSSProperties = {
-            height: "100%",
-        };
-        if (this.props.editable) {
-            embeddedComponentStyle.pointerEvents = "none";
-            embeddedComponentStyle.opacity = 0.5;
-        }
-
         return (
-            <>
+            <div className="spaces-component-view">
                 {
                     this.props.editable &&
                     this.generateEditControls(this.props.url)
                 }
-                <div style={embeddedComponentStyle}>
+                <div className="spaces-embedded-component-wrapper">
                     {
                         this.state.component &&
                         <ReactViewAdapter component={ this.state.component } />
                     }
                 </div>
-            </>
+            </div>
         );
     }
 }
@@ -185,25 +162,13 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     generateViewState(): [any[], Layout[]] {
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
-
-        // Do some CSS stuff depending on if the user is editing or not
-        const editableStyle: React.CSSProperties = { padding: 2 };
-        if (this.state.editable) {
-            editableStyle.border = "1px solid black";
-            editableStyle.backgroundColor = "#d3d3d3";
-            editableStyle.boxSizing = "border-box";
-            editableStyle.overflow = "hidden";
-        } else {
-            editableStyle.overflow = "scroll";
-        }
-
         this.state.componentMap.forEach((layout, url) => {
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
             layout.i = url;
             layouts.push(layout);
             components.push(
-                <div key={url} style={editableStyle}>
+                <div key={url} className="spaces-component-view-wrapper">
                     <SpacesComponentView
                         url={url}
                         editable={this.state.editable}
@@ -220,7 +185,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     render() {
         const [components, layouts] = this.generateViewState();
         return (
-            <div>
+            <div className={`spaces-grid-view${ this.state.editable ? " editable" : "" }`}>
                 {
                     this.state.toolbarComponent !== undefined &&
                         <ReactViewAdapter component={ this.state.toolbarComponent } />
@@ -228,7 +193,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 {
                     this.state.componentMap.size > 0 &&
                         <ReactGridLayout
-                            className="layout"
+                            className="spaces-component-grid"
                             cols={36}
                             rowHeight={50}
                             width={1800}
@@ -243,7 +208,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             onResizeStop={this.onGridChangeEvent}
                             onDragStop={this.onGridChangeEvent}
                             layout={layouts}
-                            style={gridContainerStyle}
                         >
                             {components}
                         </ReactGridLayout>
