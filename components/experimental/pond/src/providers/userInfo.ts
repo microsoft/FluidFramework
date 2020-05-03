@@ -11,10 +11,8 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { DependencyContainer } from "@microsoft/fluid-synthesize";
-import {
-    IComponentRegistry,
-    IContainerRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
 
@@ -73,7 +71,7 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
         IComponentHandleContext,
         IComponentSerializer,
         IComponentRegistry,
-    },{});
+    }, {});
     const containerRuntime = await s.IContainerRuntime;
     if (containerRuntime) {
         return new UserInfo(containerRuntime);

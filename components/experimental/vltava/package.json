@@ -38,6 +38,8 @@
     "@fluid-example/spaces": "^0.17.0",
     "@microsoft/fluid-aqueduct": "^0.17.0",
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.17.0",
+    "@microsoft/fluid-container-runtime-definitions": "^0.17.0",
     "@microsoft/fluid-framework-interfaces": "^0.17.0",
     "@microsoft/fluid-last-edited-experimental": "^0.17.0",
     "@microsoft/fluid-map": "^0.17.0",

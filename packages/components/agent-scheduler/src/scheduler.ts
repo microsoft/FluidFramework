@@ -18,10 +18,12 @@ import { LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
+import {
     IAgentScheduler,
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
     ITask,
     ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
@@ -326,7 +328,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
         // to consumers to make a choice, or centrally make this call here.
 
-        return this.context.containerRuntime.deltaManager.active;
+        return this.context.deltaManager.active;
     }
 
     private initializeCore() {

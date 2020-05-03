@@ -50,6 +50,7 @@
     "@microsoft/fluid-base-host": "^0.17.0",
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
     "@microsoft/fluid-component-runtime": "^0.17.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.17.0",
     "@microsoft/fluid-container-definitions": "^0.17.0",
     "@microsoft/fluid-container-loader": "^0.17.0",
     "@microsoft/fluid-local-driver": "^0.17.0",

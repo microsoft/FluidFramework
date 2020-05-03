@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";

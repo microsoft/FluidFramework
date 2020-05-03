@@ -24,7 +24,7 @@ import {
     SharedMap,
 } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntimeBase, IComponentContext, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import {
     IProvideSharedString,
     SharedNumberSequence,
@@ -43,7 +43,7 @@ const debug = require("debug")("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<IComponentHandle> {
+async function getHandle(runtimeP: Promise<IComponentRuntimeBase>): Promise<IComponentHandle> {
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 

@@ -7,13 +7,13 @@ import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Loader } from "@microsoft/fluid-container-loader";
+import { IExperimentalContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
     IExperimentalComponentContext,
-    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {

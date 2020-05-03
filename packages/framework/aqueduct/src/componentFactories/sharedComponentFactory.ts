@@ -6,11 +6,11 @@
 import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+// import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
     NamedComponentRegistryEntry,
@@ -30,8 +30,9 @@ import {
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class SharedComponentFactory<P extends IComponent, S = undefined>
-implements IComponentFactory, Partial<IProvideComponentRegistry>
+export class SharedComponentFactory<P extends IComponent, S = undefined> implements
+    IComponentFactory,
+    Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
@@ -110,14 +111,15 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         initialState?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
-
+        /*
+        TODO: REVIEW!!!
         // If the Container did not register the IContainerRuntime we can do it here to make sure services that need
         // it will have it.
         if (!dependencyContainer.has(IContainerRuntime)) {
             dependencyContainer.register(IContainerRuntime, context.containerRuntime);
         }
-
-        const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
+        */
+        const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
         await instance.initialize(initialState);

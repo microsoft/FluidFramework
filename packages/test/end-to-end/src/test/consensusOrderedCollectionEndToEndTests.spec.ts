@@ -16,7 +16,7 @@ import {
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
 } from "@microsoft/fluid-ordered-collection";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     createLocalLoader,

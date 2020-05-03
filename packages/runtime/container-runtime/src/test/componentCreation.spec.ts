@@ -4,10 +4,10 @@
  */
 import * as assert from "assert";
 import {
+    IComponentRuntimeBase,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => { };
+        const attachCb = (mR: IComponentRuntimeBase) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";

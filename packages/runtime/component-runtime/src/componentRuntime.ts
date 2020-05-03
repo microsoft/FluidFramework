@@ -39,15 +39,17 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
-    IChannel,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
-    IExperimentalComponentRuntime,
     IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannel,
+    IComponentRuntime,
+    IExperimentalComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";

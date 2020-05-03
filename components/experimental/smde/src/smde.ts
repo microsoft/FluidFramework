@@ -22,7 +22,8 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
