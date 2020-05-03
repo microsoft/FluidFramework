@@ -53,7 +53,6 @@
     "@microsoft/fluid-runtime-definitions": "^0.17.0",
     "@microsoft/fluid-runtime-utils": "^0.17.0",
     "@microsoft/fluid-shared-object-base": "^0.17.0",
-    "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -61,7 +60,6 @@
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@microsoft/fluid-test-runtime-utils": "^0.17.0",
-    "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

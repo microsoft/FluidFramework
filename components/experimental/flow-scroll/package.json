@@ -39,7 +39,6 @@
     "@fluid-example/image-collection": "^0.17.0",
     "@fluid-example/math": "^0.17.0",
     "@fluid-example/search-menu": "^0.17.0",
-    "@fluid-example/table-document": "^0.17.0",
     "@fluid-example/table-view": "^0.17.0",
     "@fluid-example/video-players": "^0.17.0",
     "@fluid-example/webflow": "^0.17.0",
