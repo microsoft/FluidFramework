@@ -12,16 +12,15 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesDataModel, SpacesDataModel, ComponentToolbarUrlKey } from "./dataModel";
+import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer } from "./interfaces";
+import { IComponentToolbarConsumer, SpacesCompatibleToolbar } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
 /**
@@ -30,7 +29,7 @@ import { SpacesComponentName, Templates } from ".";
 export class Spaces extends PrimedComponent
     implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private componentToolbar: IComponent | undefined;
+    private componentToolbar: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
@@ -60,9 +59,9 @@ export class Spaces extends PrimedComponent
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
-        this.componentToolbar = componentToolbar;
+    public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
+        this.dataModel.setComponentToolbar(id, type, toolbarComponent);
+        this.componentToolbar = toolbarComponent;
         this.addToolbarListeners();
     }
 
@@ -70,40 +69,28 @@ export class Spaces extends PrimedComponent
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel}/>,
-            div);
+        ReactDOM.render(<SpacesGridView dataModel={this.dataModel}/>, div);
     }
 
     protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
-        const componentToolbar =
-            await this.dataModel.addComponent<ComponentToolbar>(
-                ComponentToolbarName,
-                4,
-                4,
-                0,
-                0,
-            );
-        await this.setComponentToolbar(
+        const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
+        componentToolbar.changeEditState(true);
+        this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
-            componentToolbar.handle);
-        (this.componentToolbar as ComponentToolbar).changeEditState(true);
+            componentToolbar);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
-            await this.dataModel.setTemplate();
+            await this.setTemplate();
         }
     }
 
     protected async componentInitializingFromExisting() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(
-            this.root.get(ComponentToolbarUrlKey));
+        this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
 
     protected async componentHasInitialized() {
@@ -123,27 +110,26 @@ export class Spaces extends PrimedComponent
     }
 
     private addToolbarListeners() {
-        if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
+        if (this.componentToolbar) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({
                 addComponent: (type: string, w?: number, h?: number) => {
-                    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
-                    this.dataModel.addComponent(type, w, h);
+                    this.createAndAttachComponent(type)
+                        .then((component) => {
+                            this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
+                        })
+                        .catch((error) => {
+                            console.error(`Error while creating component: ${type}`, error);
+                        });
                 },
                 addTemplate: this.addTemplateFromRegistry.bind(this),
-                saveLayout: () => this.dataModel.saveLayout(),
+                saveLayout: () => this.saveLayout(),
                 toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
         }
     }
 
-    private async initializeDataModel() {
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponentFromDirectory.bind(this),
-                this.root.get(ComponentToolbarUrlKey),
-            );
+    private initializeDataModel() {
+        this.dataModelInternal = new SpacesDataModel(this.root);
     }
 
     private async addTemplateFromRegistry(template: Templates) {
@@ -155,15 +141,33 @@ export class Spaces extends PrimedComponent
                 const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 templateLayouts.forEach(async (templateLayout: Layout) => {
-                    await this.dataModel.addComponent(
-                        componentRegistryEntry.type,
-                        templateLayout.w,
-                        templateLayout.h,
-                        templateLayout.x,
-                        templateLayout.y,
-                    );
+                    const component = await this.createAndAttachComponent(componentRegistryEntry.type);
+                    this.dataModel.addComponent(component, componentRegistryEntry.type, templateLayout);
                 });
             });
+        }
+    }
+
+    public saveLayout(): void {
+        localStorage.setItem("spacesTemplate", JSON.stringify(this.dataModel.getModels()));
+    }
+
+    public async setTemplate(): Promise<void> {
+        if (this.dataModel.componentList.size > 0) {
+            console.log("Can't set template because there is already components");
+            return;
+        }
+
+        const templateString = localStorage.getItem("spacesTemplate");
+        if (templateString) {
+            const templateItems = JSON.parse(templateString) as ISpacesModel[];
+            const promises = templateItems.map(async (templateItem) => {
+                const component = await this.createAndAttachComponent(templateItem.type);
+                this.dataModel.addComponent(component, templateItem.type, templateItem.layout);
+                return component;
+            });
+
+            await Promise.all(promises);
         }
     }
 }
