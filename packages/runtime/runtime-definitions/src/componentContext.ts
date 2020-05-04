@@ -49,6 +49,10 @@ export enum FlushMode {
     Manual,
 }
 
+/**
+ * A reduced set of functionality of IContainerRuntime that a component/component runtime will need
+ * TODO: this should be merged into IComponentContext
+ */
 export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideComponentHandleContext,
@@ -59,18 +63,6 @@ export interface IContainerRuntimeBase extends
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
-
-    /* REVIEW [curtism]: here for user usage  Should this be here? */
-    /**
-     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
-     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
-     *
-     * @param pkg - Package path for the component to be created
-     * @param props - Properties to be passed to the instantiateComponent thru the context
-     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
-     *  or to the factory method rather than be stored in/passed from the context
-     */
-    createComponentContext(pkg: string[], props?: any): IComponentContext;
 
     /**
      * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
@@ -91,12 +83,12 @@ export interface IContainerRuntimeBase extends
     setFlushMode(mode: FlushMode): void;
 
     /**
-     * Executes a request against the runtime
+     * Executes a request against the container runtime
      */
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Submits the signal to be sent to other clients.
+     * Submits a container runtime level signal to be sent to other clients.
      * @param type - Type of the signal.
      * @param content - Content of the signal.
      */
@@ -107,7 +99,17 @@ export interface IContainerRuntimeBase extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
 
-    /* REVIEW [curtism]: still used by shared-text */
+    /**
+     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
+     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
+     *
+     * @param pkg - Package path for the component to be created
+     * @param props - Properties to be passed to the instantiateComponent thru the context
+     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
+     *  or to the factory method rather than be stored in/passed from the context
+     */
+    createComponentContext(pkg: string[], props?: any): IComponentContext;
+
     /**
      * @deprecated 0.16 Issue #1537
      *  Properties should be passed to the component factory method rather than to the runtime
@@ -122,7 +124,6 @@ export interface IContainerRuntimeBase extends
      */
     _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeBase>;
 
-    /* REVIEW [curtism]: still used by external-component-loader */
     /**
      * @deprecated
      * Creates a new component.
@@ -219,43 +220,62 @@ export interface ISummaryTracker {
 }
 
 /**
- * Represents the context for the component. This context is passed to the component runtime.
+ * Represents the context for the component. It is used by the component runtime to 
+ * get information and call functionality to the container.
  */
 export interface IComponentContext extends EventEmitter {
-    readonly documentId: string;
-    readonly id: string;
     /**
-     * The package path of the component as per the package factory.
+     * TODO: should remove after detachedNew is in place
      */
-    readonly packagePath: readonly string[];
     readonly existing: boolean;
+
+    /**
+     * TODO: Remove and merge IContainerRuntimeBase into IComponentContext
+     */
+    readonly containerRuntime: IContainerRuntimeBase;
+
     readonly options: any;
-    readonly clientId: string | undefined;
-    readonly parentBranch: string | null;
+    readonly documentId: string;
+    readonly loader: ILoader;
     readonly connected: boolean;
+    readonly clientId: string | undefined;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
-    readonly storage: IDocumentStorageService;
+    readonly blobManager: IBlobManager
     readonly connectionState: ConnectionState;
     readonly branch: string;
+    readonly parentBranch: string | null;
+
+    readonly id: string;
+    readonly storage: IDocumentStorageService;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly loader: ILoader;
-    readonly containerRuntime: IContainerRuntimeBase;
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
      * Use containerRuntime instead of hostRuntime
      */
     readonly hostRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly createProps?: any;
+
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
 
     /**
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
 
+    /**
+     * REVIEW [curtism]: ComponentRuntime only use getId and createOrGetChild, there rest of the functionality is
+     * abstract by the context. Should be shim those so we don't have to expose ISummaryTracker as a compat interface?
+     */
     readonly summaryTracker: ISummaryTracker;
+
+    /**
+     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+     */
+    readonly createProps?: any;
 
     /**
      * Returns the current quorum.
@@ -267,7 +287,28 @@ export interface IComponentContext extends EventEmitter {
      */
     getAudience(): IAudience;
 
+    /**
+     * Report error in that happend in the component runtime layer to the container runtime layer
+     * @param err the error object.
+     */
     error(err: any): void;
+
+    /**
+     * Binds a runtime to the context.
+     */
+    bindRuntime(componentRuntime: IComponentRuntimeBase): void;
+
+    /**
+     * Attaches the runtime to the container
+     * @param componentRuntime - runtime to attach
+     */
+    attach(componentRuntime: IComponentRuntimeBase): void;
+
+    /**
+     * Call by IComponentRuntimeBase, indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
+     */
+    setChannelDirty(address: string): void;
 
     /**
      * Submits the message to be sent to other clients.
@@ -284,6 +325,18 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
+     * Create a new component using subregistries with fallback.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
+    createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable>;
+
+    /**
      * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
@@ -297,41 +350,6 @@ export interface IComponentContext extends EventEmitter {
         pkg?: string | string[],
         props?: any,
     ): Promise<IComponentRuntimeBase>;
-
-    /**
-     * Create a new component using subregistries with fallback.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
-     */
-    createComponentWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
-
-    /**
-     * Make request to the component.
-     * @param request - Request.
-     */
-    request(request: IRequest): Promise<IResponse>;
-
-    /**
-     * Binds a runtime to the context.
-     */
-    bindRuntime(componentRuntime: IComponentRuntimeBase): void;
-
-    /**
-     * Attaches the runtime to the container
-     * @param componentRuntime - runtime to attach
-     */
-    attach(componentRuntime: IComponentRuntimeBase): void;
-
-    /**
-     * Indicates that a channel is dirty and needs to be part of the summary.
-     * @param address - The address of the channe that is dirty.
-     */
-    setChannelDirty(address: string): void;
 }
 
 export interface IExperimentalComponentContext extends IComponentContext {
@@ -341,4 +359,16 @@ export interface IExperimentalComponentContext extends IComponentContext {
      * It is false if the container is not attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+}
+
+/**
+ * Legacy API to be removed from IComponentContext
+ */
+export interface IComponentContextLegacy extends IComponentContext {
+    /**
+     * @deprecated 0.18. Should call IComponentRuntimeBase.request directly
+     * Make request to the component.
+     * @param request - Request.
+     */
+    request(request: IRequest): Promise<IResponse>;
 }

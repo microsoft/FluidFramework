@@ -408,6 +408,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return { entries, id: null };
     }
 
+    /**
+     * @deprecated 0.18.Should call request on the runtime directly
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const runtime = await this.realize();
         return runtime.request(request);
