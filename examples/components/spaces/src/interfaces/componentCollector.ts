@@ -19,6 +19,7 @@ export interface IProvideComponentCollector<T = any> {
 
 /**
  * An IComponentCollector is a component that manages a collection of things.
+ * @alpha
  */
 export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
     /**
@@ -33,7 +34,7 @@ export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
      */
     removeItem(key: string): void;
 
-    // could add an enumeration here, or a remove all
+    // Could add more functionality here, e.g. get, enumeration, remove all
 }
 
 /**
