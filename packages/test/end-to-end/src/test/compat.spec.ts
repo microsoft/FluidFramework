@@ -19,13 +19,11 @@ import * as old from "./previousMinorVersion";
 class TestComponent extends PrimedComponent {
     public static readonly type = "@chaincode/test-component";
 
-    public static getFactory() { return TestComponent.factory; }
-    private static readonly factory = new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
+    public static readonly componentFactory = new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
 
-    public static getRuntimeFactory() { return TestComponent.runtimeFactory; }
-    private static readonly runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+    public static readonly runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
         TestComponent.type,
-        [[TestComponent.type, Promise.resolve(TestComponent.getFactory())]],
+        [[TestComponent.type, Promise.resolve(TestComponent.componentFactory)]],
     );
 
     public get _runtime() { return this.runtime; }
@@ -35,13 +33,16 @@ class TestComponent extends PrimedComponent {
 class OldTestComponent extends old.PrimedComponent {
     public static readonly type = "@chaincode/old-test-component";
 
-    public static getFactory() { return OldTestComponent.factory; }
-    private static readonly factory = new old.PrimedComponentFactory(OldTestComponent.type, OldTestComponent, [], {});
-
-    public static getRuntimeFactory() { return OldTestComponent.runtimeFactory; }
-    private static readonly runtimeFactory = new old.ContainerRuntimeFactoryWithDefaultComponent(
+    public static readonly componentFactory = new old.PrimedComponentFactory(
         OldTestComponent.type,
-        [[OldTestComponent.type, Promise.resolve(OldTestComponent.getFactory())]],
+        OldTestComponent,
+        [],
+        {},
+    );
+
+    public static readonly runtimeFactory = new old.ContainerRuntimeFactoryWithDefaultComponent(
+        OldTestComponent.type,
+        [[OldTestComponent.type, Promise.resolve(OldTestComponent.componentFactory)]],
     );
 
     public get _runtime() { return this.runtime; }
@@ -95,7 +96,7 @@ describe("loader/runtime compatibility", () => {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create();
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
-            this.container = await createOldContainer(TestComponent.getRuntimeFactory(), this.deltaConnectionServer);
+            this.container = await createOldContainer(TestComponent.runtimeFactory, this.deltaConnectionServer);
             this.component = await getComponent<TestComponent>("default", this.container as unknown as Container);
             this.containerDeltaEventManager.registerDocuments(this.component._runtime);
         });
@@ -112,7 +113,7 @@ describe("loader/runtime compatibility", () => {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create();
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainer(
-                OldTestComponent.getRuntimeFactory() as unknown as IRuntimeFactory,
+                OldTestComponent.runtimeFactory as unknown as IRuntimeFactory,
                 this.deltaConnectionServer);
             this.component = await getComponent<OldTestComponent>("default", this.container);
             this.containerDeltaEventManager.registerDocuments(this.component._runtime);
