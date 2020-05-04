@@ -3,21 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { parse } from "url";
 import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
-export class MultiDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
-    public readonly isExperimentalDocumentServiceFactory = true;
-
+export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
         if (Array.isArray(documentServiceFactory)) {
             const factories: IDocumentServiceFactory[] = [];
@@ -74,8 +70,6 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory, IEx
         if (factory === undefined) {
             throw new Error("Unknown fluid protocol");
         }
-        const expFactory = factory as IExperimentalDocumentServiceFactory;
-        assert(expFactory?.isExperimentalDocumentServiceFactory);
-        return expFactory.createContainer(createNewSummary, createNewResolvedUrl, logger);
+        return factory.createContainer(createNewSummary, createNewResolvedUrl, logger);
     }
 }

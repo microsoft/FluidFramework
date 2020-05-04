@@ -18,6 +18,10 @@ export class FileDocumentService implements api.IDocumentService {
         private readonly deltaConnection: api.IDocumentDeltaConnection) {
     }
 
+    public get resolvedUrl(): api.IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return this.storage;
     }

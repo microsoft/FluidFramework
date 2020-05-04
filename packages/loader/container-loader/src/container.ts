@@ -36,9 +36,6 @@ import {
     IFluidResolvedUrl,
     IUrlResolver,
     IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory,
-    IExperimentalDocumentService,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
@@ -443,21 +440,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         try {
             // Actually go and create the resolved document
-            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
-            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
-            this.service = await expDocFactory.createContainer(
+            this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
                 ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
             );
-            const expDocService = this.service as IExperimentalDocumentService;
-            assert(expDocService?.isExperimentalDocumentService);
-            const resolvedUrl = expDocService.resolvedUrl;
+            const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-            assert(expUrlResolver?.isExperimentalUrlResolver);
-            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
             if (response.status !== 200) {
                 throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
             }

@@ -9,7 +9,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
@@ -29,10 +28,7 @@ import { TokenProvider } from "./tokens";
  * Factory for creating the routerlicious document service. Use this if you want to
  * use the routerlicious implementation.
  */
-export class RouterliciousDocumentServiceFactory implements
-    IDocumentServiceFactory, IExperimentalDocumentServiceFactory
-{
-    public readonly isExperimentalDocumentServiceFactory = true;
+export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     constructor(
         private readonly useDocumentService2: boolean = false,

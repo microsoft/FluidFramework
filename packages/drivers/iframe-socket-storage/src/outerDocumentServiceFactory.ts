@@ -13,12 +13,15 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IUrlResolver,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     IVersion,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import * as Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
@@ -107,6 +110,14 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         this.clients[clientId] = combinedDriver;
 
         return clientId;
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 
     public async connected(): Promise<void> {

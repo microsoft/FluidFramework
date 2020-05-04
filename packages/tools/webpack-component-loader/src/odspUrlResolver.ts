@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
 import {
@@ -11,8 +11,7 @@ import {
     getDriveItemByRootFileName,
 } from "@microsoft/fluid-odsp-utils";
 
-export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
-    public readonly isExperimentalUrlResolver = true;
+export class OdspUrlResolver implements IUrlResolver {
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(

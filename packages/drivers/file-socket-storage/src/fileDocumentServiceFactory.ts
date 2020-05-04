@@ -10,6 +10,8 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 
@@ -33,5 +35,13 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
      */
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
         return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

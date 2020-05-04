@@ -8,8 +8,11 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
     IFluidResolvedUrl,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import * as Comlink from "comlink";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { InnerUrlResolver } from "./innerUrlResolver";
@@ -68,5 +71,13 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const outerDocumentServiceProxy = await this.outerProxy.createDocumentService();
 
         return InnerDocumentService.create(this.outerProxy.clients[outerDocumentServiceProxy]);
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

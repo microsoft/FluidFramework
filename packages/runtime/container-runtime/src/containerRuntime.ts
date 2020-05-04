@@ -583,7 +583,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,

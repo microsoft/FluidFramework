@@ -21,6 +21,10 @@ export class CreationDocumentService implements api.IDocumentService {
         this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
     }
 
+    public get resolvedUrl(): api.IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new CreationDocumentStorageService();
     }

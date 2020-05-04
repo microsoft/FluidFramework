@@ -8,6 +8,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { Remote } from "comlink";
@@ -38,6 +39,10 @@ export class InnerDocumentService implements IDocumentService {
             storage: IDocumentStorageService
         }>,
         public clientId: string) { }
+
+    public get resolvedUrl(): IResolvedUrl {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Connects to a storage endpoint for snapshot service.

@@ -4,7 +4,7 @@
  */
 
 import {
-    IRequest,
+    IRequest, IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IResolvedUrl,
@@ -48,5 +48,12 @@ export class ContainerUrlResolver implements IUrlResolver {
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.cache.get(request.url)!;
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }

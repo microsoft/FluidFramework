@@ -11,7 +11,6 @@ import {
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
-    IExperimentalDocumentService,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -43,8 +42,7 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService, IExperimentalDocumentService {
-    public readonly isExperimentalDocumentService = true;
+export class OdspDocumentService implements IDocumentService {
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is

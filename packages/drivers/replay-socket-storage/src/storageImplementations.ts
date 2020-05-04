@@ -18,7 +18,9 @@ import {
     ISnapshotTree,
     ITree,
     IVersion,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -137,6 +139,10 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    public get resolvedUrl(): IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<IDocumentStorageService> {
         return this.storage;
     }
@@ -165,5 +171,13 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

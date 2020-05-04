@@ -8,7 +8,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -21,8 +20,7 @@ import { OdspDocumentService } from "./odspDocumentService";
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
-    public readonly isExperimentalDocumentServiceFactory = true;
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
