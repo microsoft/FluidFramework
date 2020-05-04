@@ -112,8 +112,8 @@ We've checked in [VS Code configuration](https://github.com/microsoft/FluidFrame
 
 _This will use an in-memory implementation of the Fluid Server to sync between the two panes in the browser window._
 
-* Choose a component under `/examples/components/`
-* Navigate to the component's directory, e.g. `/examples/components/clicker`
+* Choose a component under `/components`
+* Navigate to the component's directory, e.g. `/components/experimental/clicker`
 * `npm run start`
 * Browse to <http://localhost:8080> to interact with two copies of the component side-by-side
 
@@ -121,7 +121,7 @@ _This will use an in-memory implementation of the Fluid Server to sync between t
 
 _This will run the local Fluid Server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
 
-First, start Tinylicous by running these commands from `server/tinylicous`:
+First, start Tinylicous by running these commands from `/server/tinylicous`:
 
 ```bash
 npm install
