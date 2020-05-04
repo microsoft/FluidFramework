@@ -4,6 +4,8 @@
  */
 
 import * as assert from "assert";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -74,11 +76,6 @@ export class CreationServerMessagesHandler {
             }, Number.MAX_VALUE);
     }
 
-
-    private createClientId() {
-        return `newFileCreationClient${this.totalClients}`;
-    }
-
     /**
      * Messages to be processed by the server.
      * @param messages - List of messages to be stamped.
@@ -130,7 +127,7 @@ export class CreationServerMessagesHandler {
                 maxAckWaitTime: 600000,
             },
         };
-        const clientId: string = this.createClientId();
+        const clientId: string = uuid();
         const clientDetail: IClientJoin = {
             clientId,
             detail: connectMessage.client,
