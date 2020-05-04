@@ -33,6 +33,9 @@ const localComponents = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
 ];
 
+/**
+ * The view component must support certain interfaces to work with the waterpark.
+ */
 export type WaterParkCompatibleView =
     IComponentHandle & IComponentLoadable & IProvideComponentCollector<ISpacesCollectible>;
 

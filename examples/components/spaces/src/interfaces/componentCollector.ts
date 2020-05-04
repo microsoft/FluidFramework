@@ -35,6 +35,10 @@ export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
     // could add an enumeration here, or a remove all
 }
 
+/**
+ * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
+ * supporting export to template.
+ */
 export interface ISpacesCollectible {
     component: IComponent & IComponentLoadable;
     type: string;

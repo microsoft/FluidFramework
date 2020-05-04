@@ -52,11 +52,11 @@ export class SpacesDataModel extends EventEmitter
 
     public get IComponentCollector() { return this; }
 
-    public addItem(item: ISpacesCollectible) {
+    public addItem(item: ISpacesCollectible): string {
         return this.addComponent(item.component, item.type, { x: 0, y: 0, w: 6, h: 2 });
     }
 
-    public removeItem(key: string) {
+    public removeItem(key: string): void {
         this.removeComponent(key);
     }
 
