@@ -14,7 +14,7 @@ import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
-import * as old from "./previousMinorVersion";
+import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@chaincode/test-component";
@@ -30,6 +30,11 @@ class TestComponent extends PrimedComponent {
     public get _root() { return this.root; }
 }
 
+// This class represents an old-version component used for testing
+// loader-runtime compatibility. This class should only be changed when the old
+// dependencies are updated as part of a minor version bump. Otherwise, changes
+// between loader and runtime should be backwards-compatible and changing this
+// class should not be necessary.
 class OldTestComponent extends old.PrimedComponent {
     public static readonly type = "@chaincode/old-test-component";
 

@@ -5,10 +5,10 @@
 
 /* eslint-disable import/no-extraneous-dependencies */
 export {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    ContainerRuntimeFactoryWithDefaultComponent,
-} from "previous-minor-aqueduct";
-export { Container } from "previous-minor-container-loader";
-export { createLocalLoader, initializeLocalContainer } from "previous-minor-test-utils";
+} from "old-aqueduct";
+export { Container } from "old-container-loader";
+export { createLocalLoader, initializeLocalContainer } from "old-test-utils";
 /* eslint-enable import/no-extraneous-dependencies */
