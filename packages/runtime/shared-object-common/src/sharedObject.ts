@@ -110,8 +110,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * Creates a JSON object with information about the shared object.
-     * @returns A JSON object containing the ValueType (always Shared) and the id of the shared object
+     * Not supported - use handles instead
      */
     public toJSON() {
         throw new Error("Only the handle can be converted to JSON");
@@ -181,7 +180,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
-        return (!this.isLocal() || this.registered);
+        // If the dds is attached to the component then it should be registered irrespective of
+        // whether the container is attached/detached. If it is attached to its component, it will
+        // have its services. This will lead to get the dds summarized. It should also be registered
+        // if somebody called register on dds explicitly without attaching it which will set
+        // this.registered to be true.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        return (!!this.services || this.registered);
     }
 
     /**
@@ -248,7 +253,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             return -1;
         }
 
-        // Send if we are connected - otherwise just add to the sent list
         let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
             // This assert !isLocal above means services can't be undefined.
@@ -257,9 +261,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
             this.runtime.notifyPendingMessages();
-            // Store the message for when it is ACKed and then submit to the server if connected
         }
 
+        // Store the message for when it is ACKed
         this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
     }

@@ -36,7 +36,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
 
     public get IComponentHTMLView() { return this; }
 
-    protected async componentInitializingFirstTime(props: any) {
+    protected async componentInitializingFirstTime() {
         const tabsComponent = await this.createAndAttachComponent("tabs");
         this.root.set("tabs-component-id", tabsComponent.handle);
     }

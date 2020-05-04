@@ -15,8 +15,8 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import {
     Clicker,
-    ExampleUsingProviders,
     ClickerWithInitialValue,
+    ExampleUsingProviders,
     IClickerInitialState,
 } from "./internal-components";
 import { IComponentUserInformation } from "./interfaces";
@@ -121,9 +121,9 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         [SharedDirectory.getFactory()],
         {},
         new Map([
-            [Clicker.ComponentName, Promise.resolve(Clicker.getFactory())],
-            [ClickerWithInitialValue.ComponentName, Promise.resolve(ClickerWithInitialValue.getFactory())],
-            [ExampleUsingProviders.ComponentName, Promise.resolve(ExampleUsingProviders.getFactory())],
+            Clicker.getFactory().registryEntry,
+            ClickerWithInitialValue.getFactory().registryEntry,
+            ExampleUsingProviders.getFactory().registryEntry,
         ]),
     );
 }
@@ -131,9 +131,9 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 // ----- CONTAINER SETUP STUFF -----
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    PondName,
+    Pond.getFactory().type,
     new Map([
-        [PondName, Promise.resolve(Pond.getFactory())],
+        Pond.getFactory().registryEntry,
     ]),
     [
         {

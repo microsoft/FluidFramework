@@ -69,7 +69,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
-        createNewFlag: boolean,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
@@ -86,7 +85,8 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache);
+                    cache,
+                    storageFetchWrapper);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
@@ -108,7 +108,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             socketIOClientP,
             cache,
             isFirstTimeDocumentOpened,
-            createNewFlag,
         );
     }
 
@@ -119,6 +118,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
+        storageFetchWrapper: IFetchWrapper,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
@@ -145,6 +145,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 getStorageToken,
                 Promise.resolve(newFileParams),
                 cache,
+                storageFetchWrapper,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,
@@ -195,7 +196,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
-        private readonly createNewFlag: boolean,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
@@ -267,7 +267,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
-            this.createNewFlag,
         );
 
         return new OdspDocumentStorageService(this.storageManager);

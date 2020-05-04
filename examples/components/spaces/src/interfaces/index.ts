@@ -4,5 +4,7 @@
  */
 
 export * from "./componentCallable";
+export * from "./componentToolbar";
 export * from "./componentToolbarConsumer";
 export * from "./componentRegistryDetails";
+export * from "./componentRegistryTemplates";

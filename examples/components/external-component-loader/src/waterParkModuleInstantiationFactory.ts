@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
@@ -20,7 +20,7 @@ import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader"
  * @param pkg - package name for the new component
  */
 async function createAndAttachComponent<T>(
-    runtime: IHostRuntime,
+    runtime: IContainerRuntime,
     id: string,
     pkg: string,
 ): Promise<T> {
@@ -48,7 +48,7 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
         super(viewComponentName, entries);
     }
 
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) {
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const viewComponent = await createAndAttachComponent<IComponent & IComponentLoadable>(
             runtime, ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, this.viewComponentName);
         const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
@@ -56,8 +56,8 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
 
         // Only add the component toolbar if the view component supports it
         if (viewComponent.IComponentToolbarConsumer !== undefined) {
-            await viewComponent.IComponentToolbarConsumer
-                .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.handle);
+            viewComponent.IComponentToolbarConsumer
+                .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent);
         }
         loaderComponent.setViewComponent(viewComponent);
     }

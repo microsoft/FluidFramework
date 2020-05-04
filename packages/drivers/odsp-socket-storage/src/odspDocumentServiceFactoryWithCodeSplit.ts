@@ -44,6 +44,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 
@@ -66,7 +67,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         permanentCache?: ICache,
-        private readonly createNewFlag: boolean = false,
     ) {
         this.cache = new OdspCache(permanentCache);
     }
@@ -90,7 +90,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             import("./getSocketIo").then((m) => m.getSocketIo()),
             this.cache,
             isFirstTimeDocumentOpened,
-            this.createNewFlag,
         );
     }
 }

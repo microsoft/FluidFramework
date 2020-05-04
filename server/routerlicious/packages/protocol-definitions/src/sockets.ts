@@ -41,6 +41,11 @@ export interface IConnect {
      * Connection mode of client.
      */
     mode: ConnectionMode;
+
+    /**
+     * An optional nonce used during connection to identify connection attempts
+     */
+    nonce?: string;
 }
 
 /**
@@ -111,4 +116,9 @@ export interface IConnected {
      * Connection mode of client.
      */
     mode: ConnectionMode;
+
+    /**
+     * An optional nonce used during connection to identify connection attempts
+     */
+    nonce?: string;
 }

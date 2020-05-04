@@ -14,7 +14,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
@@ -87,7 +87,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         console.log(request.url);
 
         //

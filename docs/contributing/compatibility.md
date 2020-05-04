@@ -88,7 +88,7 @@ our own container-level runtime code can load our own component-level runtime co
 
 Specific interfaces to monitor:
 
-- `IHostRuntime` - interfaces container runtime to loaded component runtime
+- `IContainerRuntime` - interfaces container runtime to loaded component runtime
 - `IComponentContext` - interfaces component context to loaded component runtime
 - `IComponentRuntime` - interfaces loaded component runtime to its context
 
