@@ -187,6 +187,6 @@ describe("Detached Container", () => {
         assert.strictEqual(testChannel2.isLocal(), false, "Channel should be registered!!");
         assert.strictEqual(testChannel2.isRegistered(), testChannel1.isRegistered(),
             "Value for registration should be same!!");
-        assert.strict(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
+        assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
     });
 });
