@@ -106,18 +106,36 @@ Badge uses the following distributed data structures to support the features des
 PrimedComponent also provides _lifecycle methods_ that we can override in our subclass. This is where we can initialize
 our data model.
 
+##### Option A
+
 <mermaid>
 stateDiagram
-  state "Is initialized?" as Uninitialized
-  state "componentInitializingFirstTime()" as componentInitializingFirstTime
-  state "componentInitializingFromExisting()" as componentInitializingFromExisting
-  state "componentHasInitialized()" as componentHasInitialized
-  [*] --> Uninitialized
-  Uninitialized --> componentInitializingFirstTime : YES
-  Uninitialized --> componentInitializingFromExisting : NO
-  componentInitializingFirstTime --> componentHasInitialized
-  componentInitializingFromExisting --> componentHasInitialized
-  componentHasInitialized --> [*]
+  state "IComponentFactory.instantiateComponent()" as Start
+  state "Does component exist?" as AskExist
+  <!-- state "Uninitialized" as Uninitialized -->
+  [*] --> Start
+  Start --> AskExist
+  AskExist --> Exists : Yes
+  Exists --> Initialized : componentInitializingFromExisting()
+  AskExist --> Uninitialized : No
+  Uninitialized --> Initializing : componentInitializingFirstTime()
+  Initializing --> Initialized
+  Initialized --> [*] : componentHasInitialized()
+</mermaid>
+
+##### Option B
+
+<mermaid>
+stateDiagram
+  state "IComponentFactory.instantiateComponent()" as Start
+  <!-- state "Exists" as Exists -->
+  <!-- state "Uninitialized" as Uninitialized -->
+  [*] --> Start
+  Start --> Exists
+  Exists --> Uninitialized : componentInitializingFromExisting()
+  Start --> Uninitialized : componentInitializingFirstTime()
+  Uninitialized --> Initialized
+  Initialized --> [*] : componentHasInitialized()
 </mermaid>
 
 ::: important
@@ -166,5 +184,13 @@ Until a DDS is stored within another DDS (via its handle), the data within it is
 sense, the DDS is "offline" in this case. This means that you can safely populate distributed data structures with
 default data without concerning yourself with concurrency until you call `this.root.set`.
 
+Once the component has initialized, the `componentHasInitialized` method will be called. It will be called every time
+the component loads, even if it already exists.
+
 ```typescript
+protected async componentHasInitialized() {
+  this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
+  this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
+  this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+}
 ```
