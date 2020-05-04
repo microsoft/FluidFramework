@@ -265,6 +265,11 @@ export interface IComponentContext extends EventEmitter {
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     readonly containerRuntime: IContainerRuntime;
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    readonly hostRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 

@@ -142,6 +142,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._containerRuntime;
     }
 
+    public get hostRuntime(): IContainerRuntime {
+        return this._containerRuntime;
+    }
+
     public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
     }
