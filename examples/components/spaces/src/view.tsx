@@ -158,7 +158,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.updateGridItem(id, newItem);
     }
 
-    generateViewState(): [any[], Layout[]] {
+    generateViewState(): [JSX.Element | undefined, any[], Layout[]] {
+        const toolbar = this.state.toolbarComponent !== undefined
+            ? <ReactViewAdapter component={ this.state.toolbarComponent } />
+            : undefined;
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
         this.state.componentMap.forEach((layout, url) => {
@@ -178,17 +181,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             );
         });
 
-        return [components, layouts];
+        return [toolbar, components, layouts];
     }
 
     render() {
-        const [components, layouts] = this.generateViewState();
+        const [toolbar, components, layouts] = this.generateViewState();
         return (
             <div className={`spaces-grid-view${ this.state.editable ? " editable" : "" }`}>
-                {
-                    this.state.toolbarComponent !== undefined &&
-                        <ReactViewAdapter component={ this.state.toolbarComponent } />
-                }
+                { toolbar }
                 {
                     this.state.componentMap.size > 0 &&
                         <ReactGridLayout
