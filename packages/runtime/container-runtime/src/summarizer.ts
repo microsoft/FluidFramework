@@ -670,7 +670,7 @@ export class Summarizer implements ISummarizer {
             this.runtime.deltaManager.inbound.off("op", this.systemOpListener);
         }
         if (this.opListener) {
-            //* this.runtime.off("batchEnd", this.opListener);
+            this.runtime.off("batchEnd", this.opListener);
         }
     }
 
