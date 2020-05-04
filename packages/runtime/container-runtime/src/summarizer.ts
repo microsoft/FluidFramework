@@ -61,7 +61,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(error?: IError): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "disconnected", listener: () => void): this;
-    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    off(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /**
