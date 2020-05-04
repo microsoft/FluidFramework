@@ -40,6 +40,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 

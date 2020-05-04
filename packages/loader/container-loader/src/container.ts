@@ -101,6 +101,13 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+export interface IContainerConfig {
+    resolvedUrl?: IResolvedUrl;
+    canReconnect?: boolean;
+    originalRequest?: IRequest;
+    id?: string;
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -127,13 +134,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             serviceFactory,
             urlResolver,
-            request,
-            decodeURI(docId),
+            {
+                originalRequest: request,
+                id: decodeURI(docId),
+                resolvedUrl,
+                canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
+            },
             logger);
 
-        container._resolvedUrl = resolvedUrl;
         container._scopes = container.getScopes(resolvedUrl);
-        container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
@@ -189,8 +198,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             serviceFactory,
             urlResolver,
-            undefined,
-            undefined,
+            {},
             logger);
         await container.createDetached(source);
 
@@ -211,7 +219,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
     private _clientId: string | undefined;
+    private _id: string | undefined;
     private _scopes: string[] | undefined;
+    private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
@@ -336,12 +346,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
-        private originalRequest: IRequest | undefined,
-        private _id: string | undefined,
+        config: IContainerConfig,
         logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
+
+        // Initialize from config
+        this.originalRequest = config.originalRequest;
+        this._id = config.id;
+        this._resolvedUrl = config.resolvedUrl;
+        if (config.canReconnect !== undefined) {
+            this._canReconnect = config.canReconnect;
+        }
 
         // Create logger for components to use
         const type = this.client.details.type;

@@ -38,6 +38,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 

@@ -83,7 +83,8 @@ export class OdspDocumentService implements IDocumentService {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache);
+                    cache,
+                    storageFetchWrapper);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
@@ -115,6 +116,7 @@ export class OdspDocumentService implements IDocumentService {
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
+        storageFetchWrapper: IFetchWrapper,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
@@ -141,6 +143,7 @@ export class OdspDocumentService implements IDocumentService {
                 getStorageToken,
                 Promise.resolve(newFileParams),
                 cache,
+                storageFetchWrapper,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,
