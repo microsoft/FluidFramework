@@ -95,11 +95,8 @@ describe("In Memory Driver", () => {
 
     async function createContainer(): Promise<Container> {
         const loader: Loader = createInMemoryDriverLoader();
-
         const container = await loader.resolve({ url: id });
-
         await initializeContainerCode(container, {} as any as IFluidCodeDetails);
-
         return container;
     }
 
