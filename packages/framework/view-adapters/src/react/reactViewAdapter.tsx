@@ -9,7 +9,6 @@ import * as React from "react";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;
-    style?: React.CSSProperties;
 }
 
 /**
@@ -57,7 +56,6 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
 
 interface IHTMLViewProps {
     component: IComponentHTMLView;
-    style?: React.CSSProperties;
 }
 
 /**
@@ -80,13 +78,12 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, { }> {
     }
 
     public render() {
-        return <div style={this.props.style} ref={this.ref}></div>;
+        return <div ref={this.ref}></div>;
     }
 }
 
 interface IHTMLVisualProps {
     component: IComponentHTMLVisual;
-    style?: React.CSSProperties;
 }
 
 /**
@@ -110,6 +107,6 @@ class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }>
     }
 
     public render() {
-        return <div style={this.props.style} ref={this.ref}></div>;
+        return <div ref={this.ref}></div>;
     }
 }
