@@ -29,8 +29,8 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
 // the package.json for the package, and also make sure you've run webpack there first.  These will only be
 // available when running on localhost.
 const localComponents = [
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
 /**
