@@ -117,7 +117,8 @@ export function configureWebSocketServices(
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
-    maxNumberOfClientsPerDocument: number = 1000000) {
+    maxNumberOfReadClientsPerDocument: number = 1000000,
+    maxNumberOfWriteClientsPerDocument: number = 1000000) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -205,12 +206,32 @@ export function configureWebSocketServices(
 
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
-            if (clients.length > maxNumberOfClientsPerDocument) {
-                return Promise.reject({
-                    code: 400,
-                    message: "Too many clients are already connected to this document.",
-                    retryAfter: 5 * 60,
-                });
+            const writer = isWriter(messageClient.scopes, details.existing, message.mode);
+
+            if (writer) {
+                const existingWriters =
+                    clients.filter((c) => isWriter(c.client.scopes, true, c.client.mode)).length;
+
+                if (existingWriters > maxNumberOfWriteClientsPerDocument) {
+                    return Promise.reject({
+                        code: 400,
+                        message:
+                            "Too many write-enabled clients are already connected to this document.",
+                        retryAfter: 5 * 60,
+                    });
+                }
+            } else {
+                const existingReaders =
+                    clients.filter((c) => !isWriter(c.client.scopes, true, c.client.mode)).length;
+
+                if (existingReaders > maxNumberOfReadClientsPerDocument) {
+                    return Promise.reject({
+                        code: 400,
+                        message:
+                            "Too many read-only clients are already connected to this document.",
+                        retryAfter: 5 * 60,
+                    });
+                }
             }
 
             await clientManager.addClient(
@@ -220,7 +241,7 @@ export function configureWebSocketServices(
                 messageClient as IClient);
 
             let connectedMessage: IConnected;
-            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
+            if (writer) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);

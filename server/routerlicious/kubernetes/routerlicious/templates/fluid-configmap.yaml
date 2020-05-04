@@ -54,7 +54,8 @@ data:
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
-            "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "maxNumberOfWriteClientsPerDocument": {{ .Values.alfred.maxNumberOfWriteClientsPerDocument }},
+            "maxNumberOfReadClientsPerDocument": {{ .Values.alfred.maxNumberOfReadClientsPerDocument }},
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

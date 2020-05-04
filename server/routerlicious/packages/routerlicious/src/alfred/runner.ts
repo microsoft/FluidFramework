@@ -60,7 +60,8 @@ export class AlfredRunner implements utils.IRunner {
 
         const httpServer = this.server.httpServer;
 
-        const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const maxNumberOfWriteClientsPerDocument = this.config.get("alfred:maxNumberOfWriteClientsPerDocument");
+        const maxNumberOfReadClientsPerDocument = this.config.get("alfred:maxNumberOfReadClientsPerDocument");
         // Register all the socket.io stuff
         configureWebSocketServices(
             this.server.webSocketServer,
@@ -71,7 +72,8 @@ export class AlfredRunner implements utils.IRunner {
             this.clientManager,
             createMetricClient(this.metricClientConfig),
             winston,
-            maxNumberOfClientsPerDocument);
+            maxNumberOfReadClientsPerDocument,
+            maxNumberOfWriteClientsPerDocument);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
