@@ -42,7 +42,7 @@
     "@types/supertest": "^2.0.7",
     "@types/winston": "^2.4.4",
     "async": "^2.5.0",
-    "mocha": "^5.2.0",
+    "mocha": "^7.1.2",
     "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "supertest": "^3.3.0",
