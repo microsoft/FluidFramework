@@ -4,6 +4,7 @@
  */
 
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { Layout } from "react-grid-layout";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -42,4 +43,5 @@ export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
 export interface ISpacesCollectible {
     component: IComponent & IComponentLoadable;
     type: string;
+    layout?: Layout;
 }
