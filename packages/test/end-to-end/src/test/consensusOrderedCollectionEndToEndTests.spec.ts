@@ -264,10 +264,12 @@ function generate(
                     await new Promise((resolve, reject) => {
                         coc.once("add", resolve);
                         //* todo: figure out the right event that's available or fix the proxy
-                        coc.Runtime.deltaManager.on("closed",
-                        //  (coc.Runtime.deltaManager as any).deltaManager.on(
-                        //     "closed",
-                            () => reject(new Error("Delta Manager closed while waiting")));
+                        coc.Runtime.deltaManager.on(
+                        // (coc.Runtime.deltaManager as any).deltaManager.on(
+                            "closed",
+                            () => {
+                                console.log("REJECT"); reject(new Error("Delta Manager closed while waiting"));
+                            });
                     });
                 }
             } while (!(await coc.acquire(callback)));
