@@ -170,17 +170,26 @@ export class Badge extends PrimedComponent
 }
 ```
 
-In the `componentInitializingFirstTime` method we're creating the data model. Each DDS is created using the `create()`
+In the `componentInitializingFirstTime` method we're creating the data model. Each DDS is created using its `create()`
 method, populated with default data, then stored within the `root` SharedDirectory. Note that we do not store the DDS
-itself; instead, we store the *handle* to the DDS. We'll talk about handles in more detail a little later.
+itself; instead, we store the *handle* to the DDS.
+
+What are handles? And why do we store them in the `root` SharedDirectory instead of the data structures themselves? The
+underlying reasons are beyond the scope of this example, but the important thing to remember is this:
+
+::: important
+When you store a distributed data structure within another distributed data structure, you store the _handle_ to the
+DDS, not the DDS itself. Similarly, when loading a DDS that is stored within another DDS, you must first get the DDS
+handle, then get the full DDS from the handle.
+:::
 
 Until a DDS is stored within another DDS (via its handle), the data within it is not distributed to other clients. In a
 sense, the DDS is "offline" in this case. This means that you can safely populate distributed data structures with
 default data without concerning yourself with concurrency until you call `this.root.set`.
 
 Once the component has initialized, the `componentHasInitialized` method will be called. It will be called _every time
-the component loads_, even if it already exists and contains data. This is where you can handle any common logic that
-should be run on every component load.
+the component loads_, even if the component already exists and contains data. This is where you can handle any common
+logic that should be run on every component load.
 
 In Badge, we use the `componentHasInitialized` method to store local references to the distributed data structures so
 they're accessible from synchronous code.
@@ -198,16 +207,6 @@ protected async componentHasInitialized() {
 
 The third lifecycle method, `componentInitializingFromExisting`, is the opposite of the `componentInitializingFirstTime`
 method. It is called _each time the component is loaded *except* the first time_. Badge doesn't override this method.
-
-##### A note about component handles
-
-You probably noticed some confusing code above. What are handles? Why do we store the SharedMap's _handle_ in the `root`
-SharedDirectory instead of the SharedMap itself? The underlying reasons are beyond the scope of this example, but the
-important thing to remember is this:
-
-**When you store a distributed data structure within another distributed data structure, you store the _handle_ to the
-DDS, not the DDS itself. Similarly, when loading a DDS that is stored within another DDS, you must first get the DDS
-handle, then get the full DDS from the handle.**
 
 ### React component
 
@@ -314,23 +313,40 @@ are changed, either by local code or remote clients, the event handlers will be 
 (that is, the React component's local state) will update, which will in turn cause React to re-render the UI as needed
 to reflect the new state.
 
+### Component factory
 
-```ts
-export interface IBadgeViewState {
-  isDialogVisible: boolean;
-  customText: string;
-  customColor: IColor;
-  current: IBadgeType;
-  items: any;
-}
+In order for the Fluid runtime to create our component, we need to provide it a factory that it can use for that
+purpose. This factory can be created using the `PrimedComponentFactory` class.
+
+
+```ts{7-9}
+import { Badge } from "./Badge";
+
+export const BadgeInstantiationFactory = new PrimedComponentFactory(
+  BadgeName, // name of the component; string
+  Badge, // component class
+  [ // array of DDS factories
+    SharedMap.getFactory(),
+    SharedCell.getFactory(),
+    SharedObjectSequence.getFactory(),
+  ],
+  {}, // optional propProvider
+);
+
 ```
+
+Note that you must provide an array of DDS factories as well -- one for each of the distributed data structures that you
+are using. Since Badge uses SharedMap, SharedCell, and SharedObjectSequence, we pass those factories to the
+PrimedComponentFactory constructor.
+
+The Fluid runtime looks for a specific named export, `fluidExport`, to find the factory for a component. Thus you must
+ensure that you're exporting your component factory as `fluidExport`.
 
 <!-- Links -->
 
-[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
-[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
 [PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedCell]: ../api/fluid-cell.sharedcell.md
 [SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedObjectSequence]: ../api/fluid-sequence.sharedobjectsequence.md
 [SharedMap]: ../api/fluid-map.sharedmap.md
 [undo-redo]: ../api/fluid-undo-redo.md
