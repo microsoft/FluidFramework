@@ -1348,7 +1348,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 const parents = versions.map((version) => version.id);
                 await this.refreshLatestSummaryAck(
                     { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.deltaManager.referenceSequenceNumber);
+                    this.summaryTracker.referenceSequenceNumber);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
