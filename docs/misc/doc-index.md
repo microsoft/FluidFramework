@@ -15,7 +15,6 @@ uid: doc-index
 ### Tutorials
 
 - [Component tutorials](../examples/README.md)
-- [Scoreboard tutorial](https://microsoft.sharepoint.com/:w:/t/Prague/Ec6Ox0Kak9ZBqgTcl_vgTL0Biat3iq9xKj_xqjSY7Vl-FA?e=RukAyu)
 - [Literate Host Sample](https://github.com/microsoft/FluidFramework/tree/master/examples/hosts/literate) (GitHub)
 
 ### Advanced

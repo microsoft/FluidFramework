@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "@microsoft/fluid-runtime-definitions": "^0.17.0"
   },
   "devDependencies": {
