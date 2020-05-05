@@ -61,39 +61,31 @@ interface ISpacesComponentViewProps {
     removeComponent(): void;
 }
 
-interface ISpacesComponentViewState {
-    component: IComponent | undefined;
-}
+const SpacesComponentView: React.FunctionComponent<ISpacesComponentViewProps> =
+    (props: React.PropsWithChildren<ISpacesComponentViewProps>) => {
+        const [component, setComponent] = React.useState<IComponent | undefined>(undefined);
 
-class SpacesComponentView extends React.Component<ISpacesComponentViewProps, ISpacesComponentViewState> {
-    constructor(props: ISpacesComponentViewProps) {
-        super(props);
-        this.state = { component: undefined };
-    }
+        React.useEffect(() => {
+            props.getComponent()
+                .then(setComponent)
+                .catch((error) => console.error(`Error in getting component`, error));
+        });
 
-    componentDidMount() {
-        this.props.getComponent()
-            .then((component) => this.setState({ component }))
-            .catch((error) => console.error(`Error in getting component`, error));
-    }
-
-    public render() {
         return (
             <div className="spaces-component-view">
                 {
-                    this.props.editable &&
-                    <SpacesEditPane url={this.props.url} removeComponent={this.props.removeComponent} />
+                    props.editable &&
+                    <SpacesEditPane url={props.url} removeComponent={props.removeComponent} />
                 }
                 <div className="spaces-embedded-component-wrapper">
                     {
-                        this.state.component &&
-                        <ReactViewAdapter component={ this.state.component } />
+                        component &&
+                        <ReactViewAdapter component={ component } />
                     }
                 </div>
             </div>
         );
-    }
-}
+    };
 
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
