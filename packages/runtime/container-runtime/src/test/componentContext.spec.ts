@@ -41,7 +41,10 @@ describe("Component Context Tests", () => {
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {
@@ -101,7 +104,10 @@ describe("Component Context Tests", () => {
             registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registryWithSubRegistries,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
                 ["TestComp", "SubComp"],
@@ -147,7 +153,10 @@ describe("Component Context Tests", () => {
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
         });
 
         it("Check RemotedComponent Attributes", async () => {
