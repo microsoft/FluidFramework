@@ -35,6 +35,12 @@ Container can be closed directly by host by calling `Container.close()`. Once cl
 
 Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
 
+When container is closed, the following is true (in no particular order):
+1. Container.closed property is set to true
+2. "closed" event fires on container with optional error object (indicating reason for closure; if missing - closure was due to host closing container)
+3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true)  indicating to all components that container is read-only, and components should not allow local edits, as they are not going to make it.
+4. "disconnected" event fires, if connection was active at the moment of container closure.
+
 ## Audience
 `Container.audience` exposes an object that tracks all connected clients to same document.
 - `getMembers()` can be used to retrieve current set of users
