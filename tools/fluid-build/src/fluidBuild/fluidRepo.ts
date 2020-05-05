@@ -92,7 +92,7 @@ export class FluidRepo extends FluidRepoBase {
     public async symlink(options: ISymlinkOptions) {
         // Only do parallel if we are checking only
         const result = await this.packages.forEachAsync(pkg => symlinkPackage(this, pkg, this.createPackageMap(), options), !options.symlink);
-        return result.reduce((sum, value) => sum + value);
+        return Packages.clean(result.filter(entry => entry.count).map(entry => entry.pkg), true);
     }
 
     public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {

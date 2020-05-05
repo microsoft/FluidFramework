@@ -4,7 +4,9 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
+        "strict": true,
+        "strictNullChecks": true,
+        "target": "es2017",
         "noImplicitAny": false,
         "noUnusedLocals": true,
         "module": "esnext",

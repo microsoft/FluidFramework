@@ -172,7 +172,7 @@
                 "dot": false,
                 "dirs": [
                     "packages/components/",
-                    "examples/components/",
+                    "components/",
                     "packages/agent/",
                     "packages/server/tools-core"
                 ],
