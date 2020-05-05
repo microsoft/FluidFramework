@@ -30,6 +30,8 @@ The following environment variables can be defined when running webpack-dev-serv
 | `detached` | Start the container in detached mode. Attach the container when user clicks on attach button |
 | `attached`   | Starts container in attached mode |
 
+To use the detach flow for spo-df, you need to provide driveId also. eg. --env.driveId value
+
 To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be
 provided in the following ways (looked for in the following order):
 
