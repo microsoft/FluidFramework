@@ -21,7 +21,7 @@ import {
     IThrottlingError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
-import { isSystemType } from "@microsoft/fluid-protocol-base";
+import { isSystemType, isSystemMessage } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -132,6 +132,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private clientSequenceNumberObserved = 0;
     private closed = false;
     private connectionStartingTime: number = 0;
+
+    // track clientId used last time when we sent any ops
+    private lastSubmittedClientId: string | undefined;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
@@ -369,7 +372,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         const fetchOpsFromStorage = args.fetchOpsFromStorage ?? true;
-        const requestedMode = args.mode ?? this.defaultReconnectionMode;
+        let requestedMode = args.mode ?? this.defaultReconnectionMode;
+
+        // if we have any non-acked ops from last connection, reconnect as "write".
+        // without that we would connect in view-only mode, which will result in immediate
+        // firing of "connected" event from Container and switch of current clientId (as tracked
+        // by all DDSs). This will make it impossible to figure out if ops actually made it through,
+        // so DDSs will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
+        if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
+            requestedMode = "write";
+        }
 
         // Note: There is race condition here.
         // We want to issue request to storage as soon as possible, to
@@ -500,6 +512,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.readonly) {
             this.logger.sendErrorEvent({ eventName: "SubmitOpReadOnly", type });
             return -1;
+        }
+
+        // reset clientSequenceNumber if we are using new clientId.
+        // we keep info about old connection as long as possible to be able to account for all non-acked ops
+        // that we pick up on next connection.
+        assert(this.connection);
+        if (this.lastSubmittedClientId !== this.connection?.details.clientId) {
+            this.lastSubmittedClientId = this.connection?.details.clientId;
+            this.clientSequenceNumber = 0;
+            this.clientSequenceNumberObserved = 0;
         }
 
         // Start adding trace for the op.
@@ -816,10 +838,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this._outbound.systemResume();
+        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
+        // but it's safe to assume (until better design is put into place) that batches should not exist
+        // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
+        // state. As requirements change, so should these checks.
+        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on new connection");
 
-        this.clientSequenceNumber = 0;
-        this.clientSequenceNumberObserved = 0;
+        this._outbound.systemResume();
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
@@ -926,6 +952,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (!connection) {
             return;
         }
+
+        // We cancel all ops on lost of connectivity, and rely on DDSs to resubmit them.
+        // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
+        // but it's safe to assume (until better design is put into place) that batches should not exist
+        // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
+        // state. As requirements change, so should these checks.
+        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
 
         // Avoid any re-entrancy - clear object reference
         this.connection = undefined;
@@ -1066,7 +1099,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
 
-        if (this.connection && this.connection.details.clientId === message.clientId) {
+        // All non-system messages are coming from some client, and should have clientId
+        // System messages may have no clientId (but some do, like propose, noop, summarize)
+        // Note: NoClient has not been added yet to isSystemMessage (in 0.16.x branch)
+        assert(message.clientId || isSystemMessage(message) || message.type === MessageType.NoClient,
+            "non-system message have to have clientId");
+
+        // if we have connection, and message is local, then we better treat is as local!
+        assert(!this.connection || this.connection.details.clientId !== message.clientId ||
+            this.lastSubmittedClientId === message.clientId, "Not accounting local messages correctly");
+
+        if (this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
             assert(this.clientSequenceNumberObserved < clientSequenceNumber, "client seq# not growing");
