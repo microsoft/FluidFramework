@@ -11,7 +11,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import Axios from "axios";
+import { default as Axios, AxiosInstance } from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
     private readonly cache = new PromiseCache<string, IResolvedUrl>();
@@ -20,6 +20,7 @@ export class ContainerUrlResolver implements IUrlResolver {
         private readonly baseUrl: string,
         private readonly jwt: string,
         cache?: Map<string, IResolvedUrl>,
+        private readonly axios: AxiosInstance = Axios,
     ) {
         if (cache !== undefined) {
             for (const [key, value] of cache) {
@@ -33,7 +34,7 @@ export class ContainerUrlResolver implements IUrlResolver {
             const headers = {
                 Authorization: `Bearer ${this.jwt}`,
             };
-            const resolvedUrl = await Axios.post<IResolvedUrl>(
+            const resolvedUrl = await this.axios.post<IResolvedUrl>(
                 `${this.baseUrl}/api/v1/load`,
                 {
                     url: request.url,
