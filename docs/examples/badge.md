@@ -120,40 +120,6 @@ our data model. There are three lifecycle methods that can be overridden:
 All lifecycle methods are `async`.
 :::
 
-##### Option A
-
-<mermaid>
-stateDiagram
-  state "IComponentFactory.instantiateComponent()" as Start
-  state "Does component exist?" as AskExists
-  <!-- state "Uninitialized" as Uninitialized -->
-  [*] --> Start
-  Start --> AskExists
-  AskExists --> Exists : Yes
-  Exists --> Initialized : componentInitializingFromExisting()
-  AskExists --> Uninitialized : No
-  Uninitialized --> Initializing : componentInitializingFirstTime()
-  Initializing --> Initialized
-  Initialized --> [*] : componentHasInitialized()
-</mermaid>
-
-##### Option B
-
-<mermaid>
-stateDiagram
-  state "IComponentFactory.instantiateComponent()" as Start
-  <!-- state "Exists" as Exists -->
-  <!-- state "Uninitialized" as Uninitialized -->
-  [*] --> Start
-  Start --> Exists
-  Exists --> Uninitialized : componentInitializingFromExisting()
-  Start --> Uninitialized : componentInitializingFirstTime()
-  Uninitialized --> Initialized
-  Initialized --> [*] : componentHasInitialized()
-</mermaid>
-
-##### Option C
-
 <mermaid>
 stateDiagram
   state "IComponentFactory.instantiateComponent()" as Constructor
