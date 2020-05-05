@@ -22,7 +22,7 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
+    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, Promise<IFluidModule> | IFluidModule]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
 
@@ -59,7 +59,7 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, Promise<IFluidModule> | IFluidModule]>,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,

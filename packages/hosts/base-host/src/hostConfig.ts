@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@microsoft/fluid-container-definitions";
+import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver, ICodeLoader } from "@microsoft/fluid-container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
