@@ -4,7 +4,6 @@
  */
 
 import * as assert from "assert";
-// eslint-disable-next-line import/no-internal-modules
 import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
