@@ -132,6 +132,24 @@ describe("loader/runtime compatibility", () => {
         });
     });
 
+    describe("old ContainerRuntime, new ComponentRuntime", function() {
+        beforeEach(async function() {
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.container = await createOldContainer(
+                TestComponent.componentFactory,
+                this.deltaConnectionServer);
+            this.component = await getComponent<OldTestComponent>("default", this.container);
+            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
+        });
+
+        tests();
+
+        afterEach(async function() {
+            await this.deltaConnectionServer.webSocketServer.close();
+        });
+    });
+
     describe("new ContainerRuntime, old ComponentRuntime", function() {
         beforeEach(async function() {
             this.deltaConnectionServer = LocalDeltaConnectionServer.create();
