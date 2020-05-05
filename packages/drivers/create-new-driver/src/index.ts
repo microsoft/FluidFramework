@@ -9,3 +9,4 @@ export * from "./creationDocumentServiceFactory";
 export * from "./creationDocumentDeltaConnection";
 export * from "./creationDocumentStorageService";
 export * from "./creationDriverServer";
+export * from "./creationDriverUrlResolver";
