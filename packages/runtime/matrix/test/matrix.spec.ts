@@ -287,8 +287,6 @@ describe("Matrix", () => {
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
-        // TODO: Vet IMatrixConsumers w/multiple clients
-
         const expect = async (expected?: readonly (readonly any[])[]) => {
             await TestHost.sync(host1, host2);
 
