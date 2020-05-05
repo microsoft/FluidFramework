@@ -41,7 +41,7 @@ import {
 import { createIError, createWriteError, createNetworkError, createFatalError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
-import { DeltaConnection, IDeltaConnection } from "./deltaConnection";
+import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 
@@ -129,7 +129,7 @@ export class DeltaManager
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
     private connectionP: Promise<IConnectionDetails> | undefined;
-    private connection: IDeltaConnection | undefined;
+    private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     private closed = false;
@@ -383,7 +383,7 @@ export class DeltaManager
 
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
-            let connection: IDeltaConnection | undefined;
+            let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelay;
             let connectRepeatCount = 0;
             const connectStartTime = performanceNow();
@@ -782,7 +782,7 @@ export class DeltaManager
      * initial messages.
      * @param connection - The newly established connection
      */
-    private setupNewSuccessfulConnection(connection: IDeltaConnection, requestedMode: ConnectionMode) {
+    private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -937,7 +937,7 @@ export class DeltaManager
      */
     private async reconnectOnError(
         reason: string,
-        connection: IDeltaConnection,
+        connection: DeltaConnection,
         requestedMode: ConnectionMode,
         error?: any,
         autoReconnect: boolean = true,
