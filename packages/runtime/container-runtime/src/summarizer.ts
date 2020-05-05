@@ -61,7 +61,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(error?: IError): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "disconnected", listener: () => void): this;
-    off(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /**
@@ -679,7 +679,7 @@ export class Summarizer implements ISummarizer {
             this.runtime.deltaManager.inbound.off("op", this.systemOpListener);
         }
         if (this.opListener) {
-            this.runtime.off("batchEnd", this.opListener);
+            this.runtime.removeListener("batchEnd", this.opListener);
         }
     }
 
