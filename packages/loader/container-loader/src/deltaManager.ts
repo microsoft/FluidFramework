@@ -79,6 +79,19 @@ export interface IConnectionArgs {
     reason?: string;
 }
 
+interface INackReconnectInfoBase {
+    nackReason: string;
+    canReconnect: boolean;
+}
+interface INackReconnectableInfo extends INackReconnectInfoBase {
+    canReconnect: true;
+    reconnectDelayMs?: number;
+}
+interface INackNotReconnectableInfo extends INackReconnectInfoBase {
+    canReconnect: false;
+}
+type NackReconnectInfo = INackReconnectableInfo | INackNotReconnectableInfo;
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -865,24 +878,28 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Always connect in write mode after getting nacked.
         connection.on("nack", (message: INack) => {
-            // check message.content for back-compat with old service.
-            const nackMessage = message.content ? message.content.message : "";
-            const nackReason = `Nacked: ${nackMessage}`;
-
             // TODO: we should remove this check when service updates?
             if (this.readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
+
             // check message.content for back-compat with old service.
-            if (message.content && !this.shouldReconnectOnNack(message.content)) {
-                this.close(createFatalError(nackReason));
+            const reconnectInfo: NackReconnectInfo = message.content
+                ? this.parseNackReconnectInfo(message.content)
+                : { canReconnect: true, nackReason: "", reconnectDelayMs: 0 };
+
+            if (!reconnectInfo.canReconnect) {
+                this.close(createFatalError(reconnectInfo.nackReason));
             }
             if (!this.autoReconnect) {
-                const nackError = `reason: ${nackReason}`;
-                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", nackError, mode: this.connectionMode });
+                this.logger.sendErrorEvent({
+                    eventName: "NackWithNoReconnect",
+                    nackError: `reason: ${reconnectInfo.nackReason}`,
+                    mode: this.connectionMode,
+                });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.reconnectOnError(nackReason, connection, "write");
+            this.reconnectOnError(reconnectInfo.nackReason, connection, "write");
         });
 
         // Connection mode is always read on disconnect/error unless the system mode was write.
@@ -1261,15 +1278,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     /**
-     * Determines whether the received nack is retryable or not.
+     * Determines whether the received nack is retryable or not, and
+     * how long of a delay to wait before retrying.
      */
-    private shouldReconnectOnNack(nackContent: INackContent): boolean {
+    private parseNackReconnectInfo(nackContent: INackContent): NackReconnectInfo {
+        const nackReason = `Nacked: ${nackContent.message}`;
+
         if (nackContent.code === 403) {
-            return false;
+            return { canReconnect: false, nackReason };
         }
         if (nackContent.code === 429 && nackContent.type === "LimitExceededError") {
-            return false;
+            return { canReconnect: false, nackReason };
         }
-        return true;
+        return {
+            canReconnect: true,
+            nackReason,
+            reconnectDelayMs: nackContent.retryAfter ? nackContent.retryAfter * 1000 : undefined,
+        };
     }
 }
