@@ -12,7 +12,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { Chat } from "@fluid-example/chat/src/main";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     ComponentToolbar,
@@ -77,17 +76,6 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
-        {
-            type: "chat",
-            factory: Promise.resolve(Chat.getFactory()),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-            friendlyName: "Chat",
-            fabricIconName: "ChatInviteFriend",
-            templates: {
-                [Templates.CollaborativeCoding]: [{ x: 26, y: 0, w: 10, h: 12 }],
-                [Templates.Classroom]: [{ x: 26, y: 0, w: 10, h: 12 }],
-            },
-        },
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
