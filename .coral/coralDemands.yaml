@@ -1,3 +1,0 @@
-demands:
- - name: ServiceTree
-   properties: {EnableRegisteredServiceSelection: true}
