@@ -14,45 +14,45 @@ import { ISpacesDataModel } from "./dataModel";
 import "./style.css";
 
 interface ISpacesEditButtonProps {
-    label: string;
     clickCallback(): void;
 }
 
-const SpacesEditButton = (props: ISpacesEditButtonProps) =>
-    <button
-        className="spaces-edit-button"
-        onClick={props.clickCallback}
-        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-            event.stopPropagation();
-        }}
-    >
-        {props.label}
-    </button>;
+const SpacesEditButton: React.FunctionComponent<ISpacesEditButtonProps> =
+    (props: React.PropsWithChildren<ISpacesEditButtonProps>) =>
+        <button
+            className="spaces-edit-button"
+            onClick={props.clickCallback}
+            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                event.stopPropagation();
+            }}
+        >
+            {props.children}
+        </button>;
 
 interface ISpacesEditPaneProps {
     url: string;
     removeComponent(): void;
 }
 
-const SpacesEditPane = (props: ISpacesEditPaneProps) => {
-    const componentUrl = `${window.location.href}/${props.url}`;
-    return (
-        <div className="spaces-edit-pane">
-            <SpacesEditButton label="❌" clickCallback={props.removeComponent} />
-            <SpacesEditButton
-                label="📎"
-                clickCallback={() => {
-                    navigator.clipboard.writeText(componentUrl).then(() => {
-                        console.log("Async: Copying to clipboard was successful!");
-                    }, (err) => {
-                        console.error("Async: Could not copy text: ", err);
-                    });
-                }}
-            />
-            <SpacesEditButton label="↗️" clickCallback={() => window.open(componentUrl, "_blank")} />
-        </div>
-    );
-};
+const SpacesEditPane: React.FunctionComponent<ISpacesEditPaneProps> =
+    (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
+        const componentUrl = `${window.location.href}/${props.url}`;
+        return (
+            <div className="spaces-edit-pane">
+                <SpacesEditButton clickCallback={props.removeComponent}>❌</SpacesEditButton>
+                <SpacesEditButton
+                    clickCallback={() => {
+                        navigator.clipboard.writeText(componentUrl).then(() => {
+                            console.log("Async: Copying to clipboard was successful!");
+                        }, (err) => {
+                            console.error("Async: Could not copy text: ", err);
+                        });
+                    }}
+                >📎</SpacesEditButton>
+                <SpacesEditButton clickCallback={() => window.open(componentUrl, "_blank")}>↗️</SpacesEditButton>
+            </div>
+        );
+    };
 
 interface ISpacesComponentViewProps {
     url: string;
