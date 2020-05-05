@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-urlresolver",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Url Resolver for odsp urls.",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
-    "@microsoft/fluid-driver-definitions": "^0.16.2",
-    "@microsoft/fluid-odsp-driver": "^0.16.2"
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
+    "@microsoft/fluid-driver-definitions": "^0.16.3",
+    "@microsoft/fluid-odsp-driver": "^0.16.3"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",

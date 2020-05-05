@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-driver-utils";
-export const pkgVersion = "0.16.2";
+export const pkgVersion = "0.16.3";

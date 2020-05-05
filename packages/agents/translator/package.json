@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/translator-agent",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Translator for sharedString",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,11 +21,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
-    "@microsoft/fluid-map": "^0.16.2",
-    "@microsoft/fluid-merge-tree": "^0.16.2",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2-0",
-    "@microsoft/fluid-sequence": "^0.16.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
+    "@microsoft/fluid-map": "^0.16.3",
+    "@microsoft/fluid-merge-tree": "^0.16.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
+    "@microsoft/fluid-sequence": "^0.16.3",
     "request": "^2.88.0"
   },
   "devDependencies": {
