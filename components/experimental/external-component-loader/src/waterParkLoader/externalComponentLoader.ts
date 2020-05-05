@@ -40,7 +40,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/image-collection",
         "@fluid-example/pond",
         "@fluid-example/clicker",
-        "@fluid-example/shared-map-visualizer",
+        "@fluid-example/primitives",
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
