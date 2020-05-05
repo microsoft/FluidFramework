@@ -157,11 +157,11 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         }
     }
 
-    public emitToggleEditable() {
+    public emitSetEditable() {
         const newIsEditable = !this.state.isEditable;
         this.setState({ isEditable: newIsEditable });
-        if (this.props.callbacks.toggleEditable) {
-            this.props.callbacks.toggleEditable(newIsEditable);
+        if (this.props.callbacks.setEditable) {
+            this.props.callbacks.setEditable(newIsEditable);
         }
     }
 
@@ -245,7 +245,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     id="edit"
                     style={editableButtonStyle}
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
-                    onClick={() => this.emitToggleEditable()}
+                    onClick={() => this.emitSetEditable()}
                 >
                     {`Edit: ${isEditable}`}
                 </Button>

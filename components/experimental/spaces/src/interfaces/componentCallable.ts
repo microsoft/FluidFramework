@@ -15,7 +15,7 @@ export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
-    toggleEditable?(isEditable?: boolean): void;
+    setEditable?(isEditable?: boolean): void;
 }
 
 export const IComponentCallable: keyof IProvideComponentCallable = "IComponentCallable";

@@ -27,7 +27,7 @@ import {
 import { SpacesComponentName, Templates } from ".";
 
 /**
- * Spaces is the Fluid
+ * Spaces is a component which maintains a collection of other components and a grid-based layout for rendering.
  */
 export class Spaces extends PrimedComponent implements
     IComponentHTMLView,
@@ -113,22 +113,20 @@ export class Spaces extends PrimedComponent implements
     }
 
     private addToolbarListeners() {
-        if (this.componentToolbar) {
-            this.componentToolbar.IComponentCallable.setComponentCallbacks({
-                addComponent: (type: string, w?: number, h?: number) => {
-                    this.createAndAttachComponent(type)
-                        .then((component) => {
-                            this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
-                        })
-                        .catch((error) => {
-                            console.error(`Error while creating component: ${type}`, error);
-                        });
-                },
-                addTemplate: this.addTemplateFromRegistry.bind(this),
-                saveLayout: () => this.saveLayout(),
-                toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
-            });
-        }
+        this.componentToolbar?.IComponentCallable.setComponentCallbacks({
+            addComponent: (type: string, w?: number, h?: number) => {
+                this.createAndAttachComponent(type)
+                    .then((component) => {
+                        this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
+                    })
+                    .catch((error) => {
+                        console.error(`Error while creating component: ${type}`, error);
+                    });
+            },
+            addTemplate: this.addTemplateFromRegistry.bind(this),
+            saveLayout: () => this.saveLayout(),
+            setEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
+        });
     }
 
     private initializeDataModel() {

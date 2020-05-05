@@ -135,8 +135,8 @@ export class ExternalComponentLoader extends PrimedComponent
             inputDiv.append(editableButton);
             editableButton.textContent = "Toggle Edit";
             editableButton.onclick = () => {
-                if (this.callbacks?.toggleEditable !== undefined) {
-                    this.callbacks.toggleEditable();
+                if (this.callbacks?.setEditable !== undefined) {
+                    this.callbacks.setEditable();
                 }
             };
 
