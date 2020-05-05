@@ -72,13 +72,13 @@ development server, which will load two instances of the component side by side.
 
 ## Deep dive
 
-Badge has two primary pieces: a React component, and a PrimedComponent. We'll discuss the PrimedComponent piece first.
+Badge has two primary pieces: a React component, and a [PrimedComponent][]. We'll discuss the PrimedComponent piece first.
 
 ### PrimedComponent
 
-PrimedComponent is a base class "primed" with a `root` SharedDirectory property. PrimedComponent ensures that this SharedDirectory
-is initialized and available to the developer at initialization time. We can then store other distributed data
-structures' handles in the SharedDirectory to create our distributed data model.
+[PrimedComponent][] is a base class "primed" with a `root` [SharedDirectory][] property. PrimedComponent ensures that
+this SharedDirectory is initialized and available to the developer at initialization time. We can then store other
+distributed data structures' handles in the SharedDirectory to create our distributed data model.
 
 #### Distributed data structures
 
@@ -103,21 +103,35 @@ Badge uses the following distributed data structures to support the features des
 :   Stores the history of status changes.
 
 
+#### Lifecycle methods
+
 PrimedComponent also provides _lifecycle methods_ that we can override in our subclass. This is where we can initialize
-our data model.
+our data model. There are three lifecycle methods that can be overridden:
+
+1. `componentInitializingFirstTime` -- Called exactly once during the life of a component; useful to initialize distributed
+   data structures.
+1. `componentInitializingFromExisting` -- Called each time the component is initialized *except* the first time.
+1. `componentHasInitialized` -- Called each time the component is initialized, after either
+   `componentInitializingFirstTime` or `componentInitializingFromExisting` are called.
+
+
+
+::: important
+All lifecycle methods are `async`.
+:::
 
 ##### Option A
 
 <mermaid>
 stateDiagram
   state "IComponentFactory.instantiateComponent()" as Start
-  state "Does component exist?" as AskExist
+  state "Does component exist?" as AskExists
   <!-- state "Uninitialized" as Uninitialized -->
   [*] --> Start
-  Start --> AskExist
-  AskExist --> Exists : Yes
+  Start --> AskExists
+  AskExists --> Exists : Yes
   Exists --> Initialized : componentInitializingFromExisting()
-  AskExist --> Uninitialized : No
+  AskExists --> Uninitialized : No
   Uninitialized --> Initializing : componentInitializingFirstTime()
   Initializing --> Initialized
   Initialized --> [*] : componentHasInitialized()
@@ -138,14 +152,28 @@ stateDiagram
   Initialized --> [*] : componentHasInitialized()
 </mermaid>
 
-::: important
-All lifecycle methods are `async`.
-:::
+##### Option C
+
+<mermaid>
+stateDiagram
+  state "IComponentFactory.instantiateComponent()" as Constructor
+  state "Does component exist?" as Exists
+  state "componentHasInitialized()" as Initialized
+  state "componentInitializingFirstTime()" as FirstTime
+  state "componentInitializingFromExisting()" as FromExisting
+  [*] --> Constructor
+  Constructor --> Exists
+  Exists --> FirstTime : No
+  Exists --> FromExisting : Yes
+  FirstTime --> Initialized
+  FromExisting --> Initialized
+  Initialized --> [*]
+</mermaid>
 
 `componentInitializingFirstTime()` is called _exactly once_ during the life of a component. Thus, you can override it to
 create distributed data structures and store them within the `root` SharedDirectory.
 
-```typescript
+```typescript{9-27}
 export class Badge extends PrimedComponent
   implements IComponentHTMLView, IComponentReactViewable {
   currentCell: SharedCell;
@@ -184,13 +212,159 @@ Until a DDS is stored within another DDS (via its handle), the data within it is
 sense, the DDS is "offline" in this case. This means that you can safely populate distributed data structures with
 default data without concerning yourself with concurrency until you call `this.root.set`.
 
-Once the component has initialized, the `componentHasInitialized` method will be called. It will be called every time
-the component loads, even if it already exists.
+Once the component has initialized, the `componentHasInitialized` method will be called. It will be called _every time
+the component loads_, even if it already exists and contains data. This is where you can handle any common logic that
+should be run on every component load.
+
+In Badge, we use the `componentHasInitialized` method to store local references to the distributed data structures so
+they're accessible from synchronous code.
 
 ```typescript
 protected async componentHasInitialized() {
-  this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
-  this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
-  this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+  this.currentCell =
+    await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
+  this.optionsMap =
+    await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
+  this.historySequence =
+    await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
 }
 ```
+
+The third lifecycle method, `componentInitializingFromExisting`, is the opposite of the `componentInitializingFirstTime`
+method. It is called _each time the component is loaded *except* the first time_. Badge doesn't override this method.
+
+##### A note about component handles
+
+You probably noticed some confusing code above. What are handles? Why do we store the SharedMap's _handle_ in the `root`
+SharedDirectory instead of the SharedMap itself? The underlying reasons are beyond the scope of this example, but the
+important thing to remember is this:
+
+**When you store a distributed data structure within another distributed data structure, you store the _handle_ to the
+DDS, not the DDS itself. Similarly, when loading a DDS that is stored within another DDS, you must first get the DDS
+handle, then get the full DDS from the handle.**
+
+### React component
+
+In order to render the Badge, we use a React component called `BadgeView`. It's a standard class-based React component
+that is "Fluid-aware." That is, `BadgeView` expects to be passed Fluid distributed data structures as props that it will
+use directly. This design is simple and makes it easier to see how Fluid works, but is not typical React code. For a
+more typical design see [React context and Fluid]().
+
+```typescript{7,8}
+export interface IBadgeViewProps {
+  currentCell: ISharedCell;
+  optionsMap: ISharedMap;
+  historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+}
+
+export class BadgeView
+  extends React.Component<IBadgeViewProps, IBadgeViewState>
+```
+
+As described earlier, the data model is composed of three distributed data structures, so all three are passed as props.
+
+#### Handling events from distributed data structures
+
+Distributed data structures can be changed by both local code and remote clients. In the `componentDidMount` method, we
+also register a function to be called each time the current selected cell changes, or when any of the options -- the
+items in the [SharedMap][] -- are changed. When that happens, we update the internal state of the component and React
+re-renders the visual component as needed.
+
+```typescript
+public async componentDidMount(): Promise<void> {
+  this.props.currentCell.on("valueChanged", () => {
+    this.setState({ current: this.props.currentCell.get() });
+  });
+
+  this.props.optionsMap.on("valueChanged", () => {
+    this.setState({ items: this._getItemsFromOptionsMap(this.props.optionsMap) });
+  });
+}
+```
+
+#### Updating distributed data structures
+
+In the previous step we showed how to use event listeners with distributed data structures to respond to remote data
+changes. But how do we update the data based on _user_ input? To do that, we need to listen to some DOM events as users
+interact with the component. Since the `BadgeView` class handles the rendering, that's where the DOM events will be
+handled.
+
+For example, consider the custom status UI:
+
+![Color picker and custom status UI](./badge-color-picker.png)
+
+When a user adds a new status and saves it, the `_onSave` method is called within the React component:
+
+```typescript{15,16}
+private _onSave(): void {
+  if (this.state.customText !== "") {
+    const newItem: IBadgeType = {
+      key: this.state.customText,
+      text: this.state.customText,
+      iconProps: {
+        iconName: "Contact",
+        style: {
+          color: this.state.customColor.str,
+        },
+      },
+    };
+
+    // Add to the badge options
+    this.props.optionsMap.set(this.state.customText, newItem);
+    this._setCurrent(newItem);
+    this.setState({ customText: "" });
+  }
+
+  this._closeDialog();
+}
+
+// ...
+
+private _setCurrent(newItem: IBadgeType): void {
+  if (newItem.key !== this.state.current.key) {
+    // Save current value into history
+    this.props.historySequence.insert(
+      this.props.historySequence.getItemCount(), // insert at end
+      [
+        {
+          value: newItem,
+          timestamp: new Date(),
+        },
+      ],
+    );
+
+    // Set new value
+    this.props.currentCell.set(newItem);
+  }
+}
+```
+
+This method creates the new status from the data entered by the user, then, in line 15, that new status is stored within
+the [SharedMap][] that was passed in as a prop. The `_setCurrent` method is also called, which saves the currently selected
+status into the history [SharedObjectSequence][] and updates the [SharedCell][] to contain the newly created status.
+
+Because of the event handlers we registered in the `componentDidMount` method, as the Fluid distributed data structures
+are changed, either by local code or remote clients, the event handlers will be called and the internal component state
+(that is, the React component's local state) will update, which will in turn cause React to re-render the UI as needed
+to reflect the new state.
+
+
+```ts
+export interface IBadgeViewState {
+  isDialogVisible: boolean;
+  customText: string;
+  customColor: IColor;
+  current: IBadgeType;
+  items: any;
+}
+```
+
+<!-- Links -->
+
+[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
+[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
+[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedMap]: ../api/fluid-map.sharedmap.md
+[undo-redo]: ../api/fluid-undo-redo.md
