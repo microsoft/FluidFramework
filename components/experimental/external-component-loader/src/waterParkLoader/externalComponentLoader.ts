@@ -24,20 +24,7 @@ import {
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
-// localComponents facilitates local component development.  Make sure the path points to a directory containing
-// the package.json for the package, and also make sure you've run webpack there first.  These will only be
-// available when running on localhost.
-const localComponents = [
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
-];
-
-/**
- * The view component must support certain interfaces to work with the waterpark.
- */
-export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
-
+// defaultComponents are the component options that are always available in the waterpark.
 const defaultComponents = [
     "@fluid-example/todo",
     "@fluid-example/math",
@@ -48,6 +35,20 @@ const defaultComponents = [
     "@fluid-example/primitives",
     "@fluid-example/table-view",
 ];
+
+// localComponents facilitates local component development.  Make sure the path points to a directory containing
+// the package.json for the package, and also make sure you've run webpack there first.  These will only be
+// available when running on localhost.
+const localComponents = [
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
+    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
+];
+
+/**
+ * The view component must support certain interfaces to work with the waterpark.
+ */
+export type WaterParkCompatibleView =
+    IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
 
 /**
  * Component that loads extneral components via their url
@@ -83,65 +84,63 @@ export class ExternalComponentLoader extends PrimedComponent
 
         this.savedElement = element;
 
-        if (this.savedElement !== undefined) {
-            const mainDiv = document.createElement("div");
-            this.savedElement.appendChild(mainDiv);
+        const mainDiv = document.createElement("div");
+        this.savedElement.appendChild(mainDiv);
 
-            const inputDiv = document.createElement("div");
-            mainDiv.appendChild(inputDiv);
-            const dataList = document.createElement("datalist");
-            inputDiv.append(dataList);
-            dataList.id = uuid();
+        const inputDiv = document.createElement("div");
+        mainDiv.appendChild(inputDiv);
+        const dataList = document.createElement("datalist");
+        inputDiv.append(dataList);
+        dataList.id = uuid();
 
-            // When locally developing, want to load the latest available patch version by default
-            const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
-            defaultComponents.forEach((url) => {
+        // When locally developing, want to load the latest available patch version by default
+        const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
+        defaultComponents.forEach((url) => {
+            const option = document.createElement("option");
+            option.value = `${url}@${defaultVersionToLoad}`;
+            dataList.append(option);
+        });
+        // When running on localhost, add entries for local component development.
+        if (window.location.hostname === "localhost") {
+            localComponents.forEach((url) => {
                 const option = document.createElement("option");
-                option.value = `${url}@${defaultVersionToLoad}`;
+                option.value = `${url}`;
                 dataList.append(option);
             });
-            // When running on localhost, add entries for local component development.
-            if (window.location.hostname === "localhost") {
-                localComponents.forEach((url) => {
-                    const option = document.createElement("option");
-                    option.value = `${url}`;
-                    dataList.append(option);
-                });
+        }
+
+        const input = document.createElement("input");
+        inputDiv.append(input);
+        input.setAttribute("list", dataList.id);
+        input.type = "text";
+        input.placeholder = "@fluid-example/component-name@version";
+        input.style.width = "100%";
+        inputDiv.onkeyup = (event: KeyboardEvent) => {
+            if (event.keyCode === 13) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.inputClick(input);
             }
+        };
 
-            const input = document.createElement("input");
-            inputDiv.append(input);
-            input.setAttribute("list", dataList.id);
-            input.type = "text";
-            input.placeholder = "@fluid-example/component-name@version";
-            input.style.width = "100%";
-            inputDiv.onkeyup = (event: KeyboardEvent) => {
-                if (event.keyCode === 13) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.inputClick(input);
-                }
-            };
+        const counterButton = document.createElement("button");
+        inputDiv.appendChild(counterButton);
+        counterButton.textContent = "Add Component";
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        counterButton.onclick = () => this.inputClick(input);
 
-            const counterButton = document.createElement("button");
-            inputDiv.appendChild(counterButton);
-            counterButton.textContent = "Add Component";
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            counterButton.onclick = () => this.inputClick(input);
-
-            const editableButton = document.createElement("button");
-            inputDiv.append(editableButton);
-            editableButton.textContent = "Toggle Edit";
-            editableButton.onclick = () => {
-                if (this.callbacks?.setEditable !== undefined) {
-                    this.callbacks.setEditable();
-                }
-            };
-
-            if (this.error !== undefined) {
-                const errorDiv = document.createElement("div");
-                inputDiv.appendChild(errorDiv);
-                errorDiv.innerText = this.error;
+        const editableButton = document.createElement("button");
+        inputDiv.append(editableButton);
+        editableButton.textContent = "Toggle Edit";
+        editableButton.onclick = () => {
+            if (this.callbacks?.setEditable !== undefined) {
+                this.callbacks.setEditable();
             }
+        };
+
+        if (this.error !== undefined) {
+            const errorDiv = document.createElement("div");
+            inputDiv.appendChild(errorDiv);
+            errorDiv.innerText = this.error;
         }
     }
 
