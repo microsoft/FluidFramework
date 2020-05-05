@@ -104,13 +104,15 @@ export class DeltaConnection
         });
     }
 
+    /**
+     * Closes the delta connection. This disconnects the socket and clears any listeners
+     */
     public close() {
         if (this._connection) {
             const connection = this._connection;
             this._connection = undefined;
             connection.disconnect();
         }
-        // this will clear all event listeners
         this.removeAllListeners();
     }
 
