@@ -11,6 +11,7 @@
 
 The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+IComponentContext still has the hostRuntime param but it is now marked with a deprecated flag and will be removed in 0.18
 
 ### Updates to ContainerRuntime and LocalComponentContext createProps removal
 
