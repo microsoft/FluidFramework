@@ -276,7 +276,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (refresh) {
                     // This is the most critical code path for boot.
                     // If we get incorrect / expired token first time, that adds up to latency of boot
-                    this.logger.sendErrorEvent({eventName: "TreeLatest_SecondCall"});
+                    this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
@@ -537,7 +537,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             appTree = trees[1];
 
             hierarchicalProtocolTree = buildHierarchy(protocolTree);
-
         } else {
             appTree = await this.readTree(appTreeId);
 
@@ -713,13 +712,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     id,
                     value,
                 };
-
             } else if (id) {
                 entry = {
                     ...baseEntry,
                     id,
                 };
-
             } else {
                 throw new Error(`Invalid tree entry for ${summaryObject.type}`);
             }

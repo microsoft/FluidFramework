@@ -9,7 +9,6 @@ import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
-
     const router: Router = Router();
 
     router.get("/:tenantId?/:id", (request, response, next) => {
@@ -91,7 +90,6 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
                 response.status(400).json(error);
             });
     });
-
 
     return router;
 }

@@ -36,7 +36,7 @@ export function throwOdspNetworkError(
         message,
         canRetry,
         statusCode,
-        undefined /*retryAfterSeconds*/,
+        undefined /* retryAfterSeconds */,
         online);
     (networkError as any).sprequestguid = sprequestguid;
     throw networkError;
@@ -190,4 +190,21 @@ export function isLocalStorageAvailable(): boolean {
         debug(`LocalStorage not available due to ${e}`);
         return false;
     }
+}
+
+export interface INewFileInfo {
+    siteUrl: string;
+    driveId: string;
+    filename: string;
+    filePath: string;
+    callback?(itemId: string, filename: string): void;
+}
+
+export interface INewFileInfoHeader {
+    newFileInfoPromise: Promise<INewFileInfo>,
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
 }

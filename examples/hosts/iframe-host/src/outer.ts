@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
 import {
     DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
 } from "@microsoft/fluid-routerlicious-driver";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
@@ -36,7 +36,7 @@ const getTinyliciousDocumentServiceFactory =
         true,
         undefined);
 
-export async function loadFrame(iframeId: string, logId: string){
+export async function loadFrame(iframeId: string, logId: string) {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     const urlResolver = getTinyliciousResolver();
@@ -50,18 +50,18 @@ export async function loadFrame(iframeId: string, logId: string){
 
     const proxyContainer = await host.load(createRequest(), iframe);
 
-
     const text = document.getElementById(logId) as HTMLDivElement;
     const quorum = proxyContainer.getQuorum();
 
-    const log = (emitter: EventEmitter, name: string, ...events: string[]) =>{
-        events.forEach((event)=>
-            emitter.on(event, (...args)=>{
-                text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
-            }));
-    };
+    const log =
+        (emitter: {on(event: string, listener: (...args: any[]) => void)}, name: string, ...events: string[]) => {
+            events.forEach((event)=>
+                emitter.on(event, (...args)=>{
+                    text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
+                }));
+        };
 
-    quorum.getMembers().forEach((client)=>text.innerHTML+=`Quorum: client: ${JSON.stringify(client)}<br/>`);
+    quorum.getMembers().forEach((client)=>text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
     log(quorum, "Quorum", "error", "addMember", "removeMember");
     log(proxyContainer, "Container", "error", "connected","disconnected");
 }
@@ -76,7 +76,7 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
     view.render(div, { display: "block" });
 }
 
-export async function loadDiv(divId: string){
+export async function loadDiv(divId: string) {
     const div = document.getElementById(divId) as HTMLDivElement;
 
     const urlResolver = getTinyliciousResolver();
@@ -107,12 +107,9 @@ export async function loadDiv(divId: string){
     });
 }
 
-export async function runOuter(iframeId: string, divId: string, logId: string){
-
+export async function runOuter(iframeId: string, divId: string, logId: string) {
     await Promise.all([
         loadFrame(iframeId, logId),
         loadDiv(divId).catch(),
     ]);
-
 }
-

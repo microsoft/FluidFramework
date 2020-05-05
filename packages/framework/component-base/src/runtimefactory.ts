@@ -70,7 +70,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
-        if (!runtime.existing) {
+        if (!runtime.existing && this.defaultComponent.type) {
             await runtime
                 .createComponent(defaultComponentId, this.defaultComponent.type)
                 .then((componentRuntime) => { componentRuntime.attach(); })

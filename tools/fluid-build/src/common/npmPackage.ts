@@ -17,6 +17,8 @@ import {
     writeFileAsync,
     ExecAsyncResult,
     readJsonSync,
+    existsSync,
+    lookUpDir,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
@@ -171,6 +173,39 @@ export class Package {
         await unlinkAsync(npmRC);
 
         return result;
+    }
+
+    public async checkInstall(print: boolean = true) {
+        if (this.combinedDependencies.next().done) {
+            // No dependencies
+            return true;
+        }
+        if (!existsSync(path.join(this.directory, "node_modules"))) {
+            if (print) {
+                console.error(`${this.nameColored}: node_modules not installed`);
+            }
+            return false;
+        }
+        let succeeded = true;
+        for (const dep of this.combinedDependencies) {
+            if (!await lookUpDir(this.directory, (currentDir) => {
+                // TODO: check semver as well
+                return existsSync(path.join(currentDir, "node_modules", dep.name));
+            })) {
+                succeeded = false;
+                if (print) {
+                    console.error(`${this.nameColored}: dependency ${dep.name} not found`);
+                }
+            }
+        }
+        return succeeded;
+    }
+
+    public async install() {
+        if (this.monoRepo) { throw new Error("Package in a monorepo shouldn't be installed"); }
+        console.log(`${this.nameColored}: Installing - npm i`);
+        const installScript = "npm i";
+        return execWithErrorAsync(installScript, { cwd: this.directory }, this.directory);
     }
 };
 

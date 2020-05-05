@@ -45,6 +45,8 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
+    IExperimentalComponentRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -61,7 +63,10 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
+    IExperimentalComponentRuntime, IComponentHandleContext
+{
+    public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -74,7 +79,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
     ): ComponentRuntime {
-        const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
+        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -114,7 +119,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get clientDetails(): IClientDetails {
-        return this.componentContext.hostRuntime.clientDetails;
+        return this.componentContext.containerRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -122,7 +127,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get isAttached(): boolean {
-        return !this.isLocal;
+        return this._isAttached;
     }
 
     public get path(): string {
@@ -130,10 +135,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get routeContext(): IComponentHandleContext {
-        return this.componentContext.hostRuntime.IComponentHandleContext;
+        return this.componentContext.containerRuntime.IComponentHandleContext;
     }
 
-    public get IComponentSerializer() { return this.componentContext.hostRuntime.IComponentSerializer; }
+    public get IComponentSerializer() { return this.componentContext.containerRuntime.IComponentSerializer; }
 
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
@@ -146,7 +151,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private isLocal: boolean;
+    private _isAttached: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -198,7 +203,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         this.attachListener();
-        this.isLocal = !existing;
+        this._isAttached = existing;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -221,16 +226,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("dispose");
     }
 
-    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
-        newComponentRuntime.attach();
-        return newComponentRuntime;
-    }
-
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
         if (request.url === "/_scheduler") {
-            return this.componentContext.hostRuntime.request(request);
+            return this.componentContext.containerRuntime.request(request);
         }
 
         // Parse out the leading slash
@@ -277,6 +276,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
+        assert(!this.contexts.has(id), "createChannel() with existing ID");
+
         const context = new LocalChannelContext(
             id,
             this.sharedObjectRegistry,
@@ -307,7 +308,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      */
     public registerChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (!this.isLocal) {
+        if (this._isAttached) {
             this.attachChannel(channel);
             return;
         } else {
@@ -321,6 +322,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
     }
 
+    public isLocal(): boolean {
+        const expComponentContext = this.componentContext as IExperimentalComponentContext;
+        assert(expComponentContext?.isExperimentalComponentContext);
+        return expComponentContext.isLocal();
+    }
+
     /**
      * Attaches this runtime to the container
      * This includes the following:
@@ -328,7 +335,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * 2. Attaching registered channels
      */
     public attach() {
-        if (!this.isLocal) {
+        if (this._isAttached) {
             return;
         }
 
@@ -349,7 +356,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             channel.attach();
         });
 
-        this.isLocal = false;
+        this._isAttached = true;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }
@@ -443,9 +450,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 // If a non-local operation then go and create the object
                 // Otherwise mark it as officially attached.
                 if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
+                    assert(this.pendingAttach.has(attachMessage.id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    assert(!this.contexts.has(attachMessage.id), "Unexpected attach channel OP");
+
                     // Create storage service that wraps the attach data
                     const origin = message.origin?.id ?? this.documentId;
 
@@ -544,7 +553,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public notifyPendingMessages(): void {
         assert(!this.connected);
-        this.componentContext.hostRuntime.notifyPendingMessages();
+        this.componentContext.containerRuntime.notifyPendingMessages();
     }
 
     /**

@@ -483,12 +483,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract toJSONObject(): any;
 
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
-
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert.equal(currentSegmentGroup, segmentGroup);
 
         switch (opArgs.op.type) {
-
             case ops.MergeTreeDeltaType.ANNOTATE:
                 assert(this.propertyManager);
                 this.propertyManager.ackPendingProperties(opArgs.op);
@@ -678,7 +676,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     nestBuddy: Marker;
     public static make(
         refType: ops.ReferenceType, props?: Properties.PropertySet) {
-
         const marker = new Marker(refType);
         if (props) {
             marker.addProperties(props);
@@ -1069,7 +1066,6 @@ function recordTileStart(
 function tileShift(
     node: IMergeNode, segpos: number, refSeq: number, clientId: number,
     offset: number, end: number, searchInfo: IReferenceSearchInfo) {
-
     if (node.isLeaf()) {
         const seg = node;
         if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
@@ -1088,7 +1084,6 @@ function tileShift(
         if (marker !== undefined) {
             searchInfo.tile = marker;
         }
-
     }
     return true;
 }
@@ -1111,7 +1106,6 @@ export type LocalReferenceMapper = (id: string) => LocalReference;
 
 // Represents a sequence of text segments
 export class MergeTree {
-
     // Maximum length of text segment to be considered to be merged with other segment.
     // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
     // The bigger it is, the more expensive it is to break segment into sub-segments (on edits)
@@ -1373,7 +1367,6 @@ export class MergeTree {
                         prevSegment = undefined;
                     } else {
                         if (segment.seq <= this.collabWindow.minSeq) {
-
                             const canAppend = prevSegment
                                 && prevSegment.canAppend(segment)
                                 && Properties.matchProperties(prevSegment.properties, segment.properties)
@@ -1631,6 +1624,11 @@ export class MergeTree {
         return this.blockLength(this.root, refSeq, clientId);
     }
 
+    /**
+     * Returns the current length of the MergeTree for the local client.
+     */
+    public get length() { return this.root.cachedLength; }
+
     getPosition(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
@@ -1651,7 +1649,6 @@ export class MergeTree {
     }
 
     cloneSegments(refSeq: number, clientId: number, start = 0, end?: number) {
-
         const gatherSegment = (
             segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
             end: number, accumSegments: SegmentAccumulator) => {
@@ -2015,7 +2012,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker>this.getMarkerFromId(relativePos.id);
+            marker = <Marker> this.getMarkerFromId(relativePos.id);
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);
@@ -2029,7 +2026,6 @@ export class MergeTree {
                     pos -= relativePos.offset;
                 }
             }
-
         }
         return pos;
     }
@@ -2066,7 +2062,6 @@ export class MergeTree {
     }
 
     public insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void {
-
         if (insertSegment.cachedLength === 0) {
             return;
         }
@@ -2176,7 +2171,6 @@ export class MergeTree {
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: number): number {
-
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
             remoteClientRefSeq,
@@ -2196,7 +2190,6 @@ export class MergeTree {
     }
 
     private insertChildNode(block: IMergeBlock, child: IMergeNode, childIndex: number) {
-
         assert(block.childCount < MaxNodesInBlock);
 
         for (let i = block.childCount; i > childIndex; i--) {
@@ -2263,7 +2256,6 @@ export class MergeTree {
         // TODO: build tree from segs and insert all at once
         let insertPos = pos;
         for (const newSegment of newSegments) {
-
             segIsLocal = false;
             if (newSegment.cachedLength > 0) {
                 newSegment.seq = seq;
@@ -2277,6 +2269,14 @@ export class MergeTree {
 
                 const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq,
                     { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
+
+                if (newSegment.parent === undefined) {
+                    throw new Error(`MergeTree insert failed: ${JSON.stringify({
+                        currentSeq: this.collabWindow.currentSeq,
+                        minSeq: this.collabWindow.minSeq,
+                        segSeq: newSegment.seq,
+                    })}`);
+                }
 
                 this.updateRoot(splitNode);
                 saveIfLocal(newSegment);
@@ -2563,7 +2563,6 @@ export class MergeTree {
             if (child.ordinal) {
                 if (olen !== (child.ordinal.length - 1)) {
                     console.log("node integrity issue");
-
                 }
                 if (i > 0) {
                     if (child.ordinal <= block.children[i - 1].ordinal) {
@@ -2577,7 +2576,6 @@ export class MergeTree {
             } else {
                 console.log(`node child ordinal not set ${i}`);
                 console.log(`??: prnt ${ordinalToArray(block.ordinal)}`);
-
             }
         }
     }

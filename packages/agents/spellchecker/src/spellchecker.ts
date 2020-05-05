@@ -86,7 +86,6 @@ class Speller {
             } else if (MergeTree.TextSegment.is(segment)) {
                 pgText += segment.text;
             } else {
-
                 throw new Error("Unknown SegmentType");
             }
             return true;

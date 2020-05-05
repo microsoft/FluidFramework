@@ -7,7 +7,6 @@ import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
 import { IClientManager } from "@microsoft/fluid-server-services-core";
 
 export class TestClientManager implements IClientManager {
-
     private readonly clients: Map<string, Map<string, Map<string, IClient>>> = new Map();
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {

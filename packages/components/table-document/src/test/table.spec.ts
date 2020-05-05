@@ -9,7 +9,7 @@ import * as assert from "assert";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
-import { TableDocumentType, TableSliceType } from "../componentTypes";
+import { TableDocumentType } from "../componentTypes";
 import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
@@ -18,7 +18,6 @@ describe("TableDocument", () => {
     before(() => {
         host = new TestHost([
             [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-            [TableSliceType, Promise.resolve(TableSlice.getFactory())],
         ]);
     });
 
@@ -30,7 +29,7 @@ describe("TableDocument", () => {
         return id;
     }
 
-    const createTable = async () => host.createAndAttachComponent(TableDocumentType);
+    const createTable = async () => host.createAndAttachComponent(makeId(TableDocumentType), TableDocumentType);
 
     let table: TableDocument;
     beforeEach(async () => {
@@ -78,7 +77,7 @@ describe("TableDocument", () => {
 
     describe("local get/set", () => {
         // GitHub Issue #1683 - Cannot roundtrip non-finite numbers.
-        for (const value of ["", "string", 0 /*, -Infinity, +Infinity */]) {
+        for (const value of ["", "string", 0 /* , -Infinity, +Infinity */]) {
             it(`roundtrip ${JSON.stringify(value)}`, async () => {
                 table.insertRows(0, 1);
                 table.insertCols(0, 1);

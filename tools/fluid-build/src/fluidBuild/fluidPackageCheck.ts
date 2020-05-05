@@ -299,7 +299,7 @@ export class FluidPackageCheck {
             }
         } else {
             const content = await readFileAsync(filename, "utf8");
-            const split = content.split("\n");
+            const split = content.split(/\r?\n/);
             if (split.length !== 0 && split[split.length - 1] === "") {
                 split.pop();
             }

@@ -55,7 +55,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
 
             // If the event is our own then just insert the text
             if (event.isLocal) {
-                this.setState({text: newText});
+                this.setState({ text: newText });
                 return;
             }
 
@@ -108,7 +108,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
                 }
             }
 
-            this.setState({text: newText});
+            this.setState({ text: newText });
             this.setCaretPosition(newCaretStart, newCaretEnd);
         });
     }
@@ -125,7 +125,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
     // }
 
     public render() {
-        return(
+        return (
             // There are a lot of different ways content can be inserted into a textarea
             // and not all of them trigger a onBeforeInput event. To ensure we are grabbing
             // the correct selection before we modify the shared string we need to make sure
@@ -149,7 +149,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
         // We need to set the value here to keep the input responsive to the user
         const newText = ev.currentTarget.value;
         const charactersModifiedCount = this.state.text.length - newText.length;
-        this.setState({text: newText});
+        this.setState({ text: newText });
 
         // Get the new caret position and use that to get the text that was inserted
         const newPosition = ev.currentTarget.selectionStart ? ev.currentTarget.selectionStart : 0;
@@ -180,6 +180,6 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
 
         const selectionEnd = this.ref.current.selectionEnd ? this.ref.current.selectionEnd : 0;
         const selectionStart = this.ref.current.selectionStart ? this.ref.current.selectionStart : 0;
-        this.setState({selectionEnd, selectionStart});
+        this.setState({ selectionEnd, selectionStart });
     }
 }

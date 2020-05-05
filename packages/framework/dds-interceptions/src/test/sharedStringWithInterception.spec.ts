@@ -17,7 +17,7 @@ describe("Shared String with Interception", () => {
      * information to the passed properties and returns it.
      */
     describe("Simple User Attribution", () => {
-        const userAttributes = { userId: "Fake User"};
+        const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
         let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
@@ -54,7 +54,7 @@ describe("Shared String with Interception", () => {
             runtime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {
@@ -69,7 +69,7 @@ describe("Shared String with Interception", () => {
 
             // Replace text in the shared string.
             text = "aaa";
-            syleProps = { style: "italics "};
+            syleProps = { style: "italics " };
             sharedStringWithInterception.replaceText(2, 3, "aaa", syleProps);
             verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...userAttributes }, 2);
 
@@ -92,7 +92,7 @@ describe("Shared String with Interception", () => {
 
             // Replace text via the shared string with interception wrapper.
             text = "aaa";
-            syleProps = { style: "italics "};
+            syleProps = { style: "italics " };
             sharedStringWithInterception.replaceText(2, 3, "aaa", syleProps);
             // Verify the text and properties via the underlying shared string.
             verifyString(sharedString, "12aaa", { ...syleProps, ...userAttributes }, 2);
@@ -117,7 +117,7 @@ describe("Shared String with Interception", () => {
 
             // Replace text via the underlying shared string.
             text = "aaa";
-            syleProps = { style: "italics "};
+            syleProps = { style: "italics " };
             sharedString.replaceText(2, 3, "aaa", syleProps);
             // Verify the text and properties via the interception wrapper. It should not have the user attributes.
             verifyString(sharedStringWithInterception, "12aaa", syleProps, 2);
@@ -126,7 +126,7 @@ describe("Shared String with Interception", () => {
             const colorProps = { color: "green" };
             sharedString.annotateRange(0, 5, colorProps);
             // Verify the text and properties via the interception wrapper. It should not have the user attributes.
-            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps}, 2);
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps }, 2);
         });
 
         /**

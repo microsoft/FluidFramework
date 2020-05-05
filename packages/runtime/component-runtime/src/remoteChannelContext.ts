@@ -49,7 +49,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
-    ){
+    ) {
         this.services = createServiceEndpoints(
             this.id,
             this.componentContext.connectionState,
@@ -107,13 +107,15 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel);
     }
 
-
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        let attributes = await readAndParse<IChannelAttributes | undefined>(
-            this.services.objectStorage,
-            ".attributes");
+        let attributes: IChannelAttributes | undefined;
+        if (this.services.objectStorage.contains(".attributes")) {
+            attributes = await readAndParse<IChannelAttributes | undefined>(
+                this.services.objectStorage,
+                ".attributes");
+        }
 
         let factory: ISharedObjectFactory | undefined;
         // this is a back-compat case where
@@ -121,8 +123,8 @@ export class RemoteChannelContext implements IChannelContext {
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
         // this as long as we support old attach messages
-        if (attributes === undefined){
-            if(this.attachMessageType === undefined){
+        if (attributes === undefined) {
+            if (this.attachMessageType === undefined) {
                 throw new Error("Channel type not available");
             }
             factory = this.registry.get(this.attachMessageType);

@@ -29,9 +29,7 @@ export interface SnapChunk {
     buffer?: Buffer;
 }
 
-
 export class SnapshotLegacy {
-
     public static readonly header = "header";
     public static readonly body = "body";
     public static readonly tardis = "tardis";
@@ -63,7 +61,6 @@ export class SnapshotLegacy {
         allLengths: number[],
         approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
-
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;

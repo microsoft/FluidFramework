@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-replay-tool",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,20 +25,20 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.16.0",
-    "@microsoft/fluid-common-definitions": "^0.13.0",
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-container-definitions": "^0.16.0",
-    "@microsoft/fluid-container-loader": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.16.0",
-    "@microsoft/fluid-file-driver": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
-    "@microsoft/fluid-replay-driver": "^0.16.0"
+    "@fluid-internal/client-api": "^0.17.0",
+    "@microsoft/fluid-common-definitions": "^0.16.0",
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
+    "@microsoft/fluid-container-definitions": "^0.17.0",
+    "@microsoft/fluid-container-loader": "^0.17.0",
+    "@microsoft/fluid-driver-definitions": "^0.17.0",
+    "@microsoft/fluid-file-driver": "^0.17.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-replay-driver": "^0.17.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

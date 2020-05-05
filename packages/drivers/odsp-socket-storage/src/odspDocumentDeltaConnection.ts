@@ -11,6 +11,7 @@ import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-defini
 import {
     IClient,
     IConnect,
+    INack,
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
@@ -50,6 +51,8 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+    private readonly nonForwardEvents = ["nack"];
+
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -72,7 +75,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-
         const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
@@ -150,7 +152,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socketReference.clearTimer();
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
-
         } else {
             const socket = io(
                 url,
@@ -176,7 +177,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
                 // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, error);
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /* socketProtocolError */, error);
             });
 
             socketReference = new SocketReference(socket);
@@ -249,6 +250,25 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId);
+
+        // when possible emit nacks only when it targets this specific client/document
+        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
+            if (clientIdOrDocumentId.length === 0 ||
+                clientIdOrDocumentId === documentId ||
+                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                this.emit("nack", clientIdOrDocumentId, message);
+            }
+        });
+    }
+
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+        if (!this.nonForwardEvents.includes(event)) {
+            super.addTrackedListener(event, listener);
+        } else {
+            // this is a "nonforward" event
+            // don't directly link up this socket event to the listener
+            // we will handle the event from a listener in the constructor
+        }
     }
 
     /**

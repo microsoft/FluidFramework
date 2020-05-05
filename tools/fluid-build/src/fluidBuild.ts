@@ -84,7 +84,7 @@ async function main() {
             }
         }
 
-        // Install
+        // Install or check install
         if (options.install) {
             console.log("Installing packages");
             if (!await repo.install(options.nohoist)) {
@@ -96,11 +96,7 @@ async function main() {
 
         // Symlink check
         const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-        const updated = await repo.symlink(options);
-        if (updated) {
-            logStatus(`${updated} symlink updated. Running clean script.`);
-            repo.clean();
-        }
+        await repo.symlink(options);
         timer.time(`${symlinkTaskName} completed`, options.symlink);
 
         // Check scripts
@@ -114,6 +110,13 @@ async function main() {
             // build the graph
             const buildGraph = repo.createBuildGraph(options, options.buildScriptNames);
             timer.time("Build graph creation completed");
+
+            // Check install
+            if (!await buildGraph.checkInstall()) {
+                console.error("ERROR: Dependency not installed. Use --install to fix.");
+                process.exit(-10);
+            }
+            timer.time("Check install completed");
 
             if (options.clean) {
                 if (!await buildGraph.clean()) {

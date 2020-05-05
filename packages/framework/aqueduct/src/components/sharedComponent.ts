@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
@@ -13,22 +12,56 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
+import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
+
+export interface ISharedComponentProps<P extends IComponent = object> {
+    readonly runtime: IComponentRuntime,
+    readonly context: IComponentContext,
+    readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>,
+}
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
+ *
+ * Generics:
+ * P - represents a type that will define optional providers that will be injected
+ * S - the initial state type that the produced component may take during creation
+ * E - represents events that will be available in the EventForwarder
  */
-// eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent= IEvent>
+    extends EventForwarder<E>
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
+{
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
+
+    /**
+     * This is your ComponentRuntime object
+     */
+    protected readonly runtime: IComponentRuntime;
+
+    /**
+     * This context is used to talk up to the ContainerRuntime
+     */
+    protected readonly context: IComponentContext;
+
+    /**
+     * Providers are IComponent keyed objects that provide back a promise to the corresponding IComponent or undefined.
+     * Providers injected/provided by the Container and/or HostingApplication
+     *
+     * To define providers set IComponent interfaces in the generic O type for your Component
+     */
+    protected readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>;
+
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
@@ -41,12 +74,13 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
-    public constructor(
-        protected readonly runtime: IComponentRuntime,
-        protected readonly context: IComponentContext,
-    ) {
+    public constructor(props: ISharedComponentProps<P>) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.runtime = props.runtime;
+        this.context = props.context;
+        this.providers = props.providers;
+
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {
@@ -59,10 +93,10 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Allow inheritors to plugin to an initialize flow
      * We guarantee that this part of the code will only happen once
      */
-    public async initialize(): Promise<void> {
+    public async initialize(initialState?: S): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps);
+            this.initializeP = this.initializeInternal(this.context.createProps as S ?? initialState);
         }
 
         await this.initializeP;
@@ -120,7 +154,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(props?: S): Promise<void> {
         if (!this.runtime.existing) {
             // If it's the first time through
             await this.componentInitializingFirstTime(props);
@@ -189,7 +223,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             url: `/${id}`,
         };
 
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.containerRuntime.request(request));
     }
 
     /**
@@ -201,13 +235,14 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             url: `/${serviceRoutePathRoot}/${id}`,
         };
 
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.containerRuntime.request(request));
     }
 
     /**
      * Called the first time the component is initialized.
      *
      * @param props - Optional props to be passed in on create
+     * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
     protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
@@ -224,5 +259,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Called when the host container closes and disposes itself
      */
-    protected dispose(): void { }
+    public dispose(): void {
+        super.dispose();
+    }
 }

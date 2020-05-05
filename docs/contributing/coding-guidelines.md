@@ -12,4 +12,6 @@ automatically.
 ## Comments
 
 Use [TSDoc comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) for `functions`, `interfaces`,
-`enums` and `classes`.
+`enums` and `classes`. These comments will be built into API reference documentation
+
+[Read more about the Fluid documentation system](../contributing/doc-system.md)

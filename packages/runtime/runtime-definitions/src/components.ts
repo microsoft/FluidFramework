@@ -28,6 +28,7 @@ import {
     ConnectionState,
     IClientDetails,
     IDocumentMessage,
+    IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -36,6 +37,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { IInboundSignalMessage } from "./protocol";
 import { IChannel } from ".";
 
 /**
@@ -193,6 +195,15 @@ export interface IComponentRuntime extends
     error(err: any): void;
 }
 
+export interface IExperimentalComponentRuntime extends IComponentRuntime {
+    readonly isExperimentalComponentRuntime: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isLocal(): boolean;
+}
+
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -253,7 +264,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IHostRuntime;
+    readonly containerRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -291,6 +302,7 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
@@ -298,7 +310,8 @@ export interface IComponentContext extends EventEmitter {
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createComponent(pkgOrId: string | undefined, pkg?: string | string[], props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
+    Promise<IComponentRuntime>;
 
     /**
      * Create a new component using subregistries with fallback.
@@ -336,6 +349,15 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 }
 
+export interface IExperimentalComponentContext extends IComponentContext {
+    readonly isExperimentalComponentContext: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
+}
+
 /**
  * Runtime flush mode handling
  */
@@ -352,14 +374,26 @@ export enum FlushMode {
     Manual,
 }
 
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
+}
+
+export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
+
+export interface IProvideContainerRuntime {
+    IContainerRuntime: IContainerRuntime;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends
+export interface IContainerRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
-    IProvideComponentRegistry {
+    IProvideComponentRegistry,
+    IProvideContainerRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -381,6 +415,18 @@ export interface IHostRuntime extends
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
 
+    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
+    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    on(
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
+        listener: () => void): this;
+    on(
+        event: "connected" | "leader" | "noleader",
+        listener: (clientId?: string) => void): this;
+    on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+
     /**
      * Returns the runtime of the component.
      * @param id - Id supplied during creating the component.
@@ -389,24 +435,27 @@ export interface IHostRuntime extends
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated
      * Creates a new component.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated 0.16 Issue #1537
+     *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
-     * @param id - id of the component.
-     *
+     * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
      * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying
@@ -426,6 +475,8 @@ export interface IHostRuntime extends
      *
      * @param pkg - Package path for the component to be created
      * @param props - Properties to be passed to the instantiateComponent thru the context
+     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
+     *  or to the factory method rather than be stored in/passed from the context
      */
     createComponentContext(pkg: string[], props?: any): IComponentContext;
 
@@ -488,4 +539,14 @@ export interface IHostRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+}
+
+export interface IExperimentalContainerRuntime extends IContainerRuntime {
+
+    isExperimentalContainerRuntime: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
 }

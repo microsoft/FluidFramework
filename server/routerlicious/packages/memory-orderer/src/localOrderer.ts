@@ -254,7 +254,6 @@ export class LocalOrderer implements IOrderer {
         socket: IWebSocket,
         clientId: string,
         client: IClient): Promise<IOrdererConnection> {
-
         const socketSubscriber = new WebSocketSubscriber(socket);
         const orderer = this.connectInternal(socketSubscriber, clientId, client);
         return orderer;

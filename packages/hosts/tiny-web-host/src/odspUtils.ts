@@ -41,7 +41,6 @@ export async function spoGetResolvedUrl(
     id: string,
     serverTokens: { [server: string]: IOdspTokens } | undefined,
     clientConfig: IClientConfig) {
-
     const server = getSpoServer(tenantId);
     if (server === undefined) {
         return Promise.reject(`Invalid SPO tenantId ${tenantId}`);

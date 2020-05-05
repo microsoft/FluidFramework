@@ -18,18 +18,11 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper } from "./odspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOrigin } from "./vroom";
-
-export interface INewFileInfo {
-    siteUrl: string;
-    driveId: string;
-    filename: string;
-    filePath: string;
-    callback?(itemId: string, filename: string): void;
-}
+import { IFetchWrapper } from "./fetchWrapper";
 
 export interface IFileCreateResponse {
     siteUrl: string;
@@ -54,6 +47,7 @@ export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfoPromise: Promise<INewFileInfo> | undefined,
     cache: IOdspCache,
+    storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
     if (!newFileInfoPromise) {
@@ -82,7 +76,11 @@ export async function createNewFluidFile(
     cache.sessionStorage.put(key, odspResolvedUrlDeferred.promise);
     let fileResponse: IFileCreateResponse;
     try {
-        fileResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken, containerSnapshot);
+        fileResponse = await createNewFluidFileHelper(
+            newFileInfo,
+            getStorageToken,
+            storageFetchWrapper,
+            containerSnapshot);
         const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
         const resolver = new OdspDriverUrlResolver();
         resolvedUrl = await resolver.resolve({ url: odspUrl });
@@ -104,6 +102,7 @@ export async function createNewFluidFile(
 async function createNewFluidFileHelper(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+    storageFetchWrapper: IFetchWrapper,
     containerSnapshot?: ISnapshotTree,
 ): Promise<IFileCreateResponse> {
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
@@ -119,19 +118,13 @@ async function createNewFluidFileHelper(
                 `:/opStream/snapshots/snapshot`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
-            // Currently the api to create new file with snapshot is under a feature gate. So we have to
-            // add this header to enter into that gate.
-            headers["X-Tempuse-Allow-Singlepost"] = "1";
+
             const postBody = JSON.stringify(containerSnapshot);
-            fetchResponse = await fetchHelper(url, {
-                body: postBody,
-                method: "POST",
-                headers,
-            });
+            fetchResponse = await storageFetchWrapper.post(url, postBody, headers);
 
             const content = await fetchResponse.content;
             if (!content || !content.itemId) {
-                throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
+                throwOdspNetworkError("Could not parse item from Vroom response", fetchResponse.status, false);
             }
             return {
                 itemId: content.itemId,

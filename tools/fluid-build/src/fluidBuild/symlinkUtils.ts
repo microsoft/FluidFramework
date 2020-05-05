@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { Package } from "../common/npmPackage";
-import { logVerbose } from "../common/logging";
+import { logVerbose, logStatus } from "../common/logging";
 import {
     existsSync,
     mkdirAsync,
@@ -125,7 +125,7 @@ export interface ISymlinkOptions {
 };
 
 export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
-    let changed = 0;
+    let count = 0;
     const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 
     if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
@@ -133,7 +133,7 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         if (options.symlink) {
             console.warn(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`)
         }
-        return 0;
+        return { pkg, count };
     }
 
     for (const { name: dep, version } of pkg.combinedDependencies) {
@@ -142,7 +142,9 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         // TODO: check of extranous symlinks
         if (depBuildPackage) {
             const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
-            if (!semver.satisfies(depBuildPackage.version, version)) {
+            const satisfied = semver.satisfies(depBuildPackage.version, version);
+            logVerbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
+            if (!satisfied) {
                 if (sameMonoRepo) {
                     console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
                 }
@@ -174,7 +176,7 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
                                 } else if (!options.fullSymlink) {
                                     if (options.symlink) {
                                         await revertSymlink(symlinkPath, pkg, depBuildPackage);
-                                        changed++;
+                                        count++;
                                     } else {
                                         console.warn(`${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`);
                                     }
@@ -205,11 +207,11 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
                     symlinkPath = localSymlinkPath;
                 }
                 await fixSymlink(stat, symlinkPath, pkg, depBuildPackage);
-                changed++;
+                count++;
             } catch (e) {
                 throw new Error(`symlink failed on ${localSymlinkPath}.\n ${e}`);
             }
         }
     }
-    return changed;
+    return { pkg, count };
 }

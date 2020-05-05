@@ -62,6 +62,11 @@ export class CacheBase {
 
     public put(key: string, value: any, expiryTime?: number) {
         this.cache.set(key, value);
+        if (value instanceof Promise) {
+            value.catch(() => {
+                this.remove(key);
+            });
+        }
         if (expiryTime) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.gc(key, expiryTime);
@@ -75,7 +80,6 @@ export class CacheBase {
             this.cache.delete(key);
         }
     }
-
 }
 
 export class LocalCache extends CacheBase implements ICache {
@@ -89,7 +93,6 @@ export class SessionCache extends CacheBase implements ISessionCache {
         return this.cache.get(key);
     }
 }
-
 
 export class OdspCache implements IOdspCache {
     public readonly localStorage: ICache;

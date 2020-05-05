@@ -83,10 +83,10 @@
                 its UI accordingly.
             </p>
 
-            <h4>NPM packages</h4>
+            <h4>npm packages</h4>
             <p>
                 Clients of a Prague document establish a quorum that defines the code to be included with the document.
-                NPM is used to store these code packages. We make use of a private NPM repository to store our document
+                npm is used to store these code packages. We make use of a private npm repository to store our document
                 code - which we refer to as chaincode - which can be found via the link below.
             </p>
             <p>
@@ -140,7 +140,7 @@
             <h2>SharePoint (DEPRECATED)</h2>
             <p>
                 SharePoint is setup to host Prague documents - both the original shared text demo as well as dynamically
-                loaded Prague documents. SharePoint consumes the Prague server code via an NPM package and then implements
+                loaded Prague documents. SharePoint consumes the Prague server code via an npm package and then implements
                 Prague server side storage interfaces to write data back to SharePoint. This allows them to use the same
                 server side lambda functions (alfred, deli, scriptorium, etc...) as the reference implementation. Just
                 backed by their own storage infrastructure.

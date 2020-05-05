@@ -7,7 +7,7 @@
 import * as assert from "assert";
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "@microsoft/fluid-container-runtime";
 
 import {
@@ -17,7 +17,6 @@ import {
 } from "../containerServices";
 
 class ContainerServiceMock extends BaseContainerService {
-
     public route: string = "";
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -35,9 +34,9 @@ describe("Routerlicious", () => {
         describe("generateContainerServicesRequestHandler", () => {
             it(`Request to ${serviceRoutePathRoot} and no id should fail`, async () => {
                 const requestHandler = generateContainerServicesRequestHandler([]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 400, "Returned 400 Status Code");
@@ -45,9 +44,9 @@ describe("Routerlicious", () => {
 
             it("Unknown service should return 404 with no services", async () => {
                 const requestHandler = generateContainerServicesRequestHandler([]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 404, "Returned 404 Status Code");
@@ -57,9 +56,9 @@ describe("Routerlicious", () => {
                 const requestHandler = generateContainerServicesRequestHandler([
                     ["id1",async (r) => new ContainerServiceMock(r)],
                 ]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id2`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id2` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 404, "Returned 404 Status Code");
@@ -69,22 +68,22 @@ describe("Routerlicious", () => {
                 const requestHandler = generateContainerServicesRequestHandler([
                     ["id1",async (r) => {return {};}],
                 ]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1/subroute`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1/subroute` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 400, "Returned 400 Status Code");
             });
 
             it("Correct service should be returned with single service", async () => {
-                const service1 = new ContainerServiceMock({} as IHostRuntime);
+                const service1 = new ContainerServiceMock({} as IContainerRuntime);
                 const serviceMap = new Map();
                 serviceMap.set("id1", async (r) => service1);
                 const requestHandler = generateContainerServicesRequestHandler(serviceMap);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code");
@@ -95,23 +94,23 @@ describe("Routerlicious", () => {
                 const requestHandler = generateContainerServicesRequestHandler([
                     ["id1", async (r) => new ContainerServiceMock(r)],
                 ]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1` });
 
-                const response1 = await requestHandler(requestParser, {} as IHostRuntime);
-                const response2 = await requestHandler(requestParser, {} as IHostRuntime);
+                const response1 = await requestHandler(requestParser, {} as IContainerRuntime);
+                const response2 = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response1?.value === response2?.value, "Returned same service twice");
             });
 
             it("Correct service should be returned with multiple services", async () => {
-                const service2 = new ContainerServiceMock({} as IHostRuntime);
+                const service2 = new ContainerServiceMock({} as IContainerRuntime);
                 const requestHandler = generateContainerServicesRequestHandler([
                     ["id1", async (r) => new ContainerServiceMock(r)],
                     ["id2", async (r) => service2],
                 ]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id2`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id2` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code");
@@ -119,7 +118,7 @@ describe("Routerlicious", () => {
             });
 
             it("Last registered service should be returned with multiple services of the same name", async () => {
-                const service1 = new ContainerServiceMock({} as IHostRuntime);
+                const service1 = new ContainerServiceMock({} as IContainerRuntime);
                 const requestHandler = generateContainerServicesRequestHandler([
                     ["id1", async (r) => new ContainerServiceMock(r)],
                     ["id1", async (r) => new ContainerServiceMock(r)],
@@ -128,9 +127,9 @@ describe("Routerlicious", () => {
                     ["id1", async (r) => new ContainerServiceMock(r)],
                     ["id1", async (r) => service1],
                 ]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code");
@@ -138,11 +137,11 @@ describe("Routerlicious", () => {
             });
 
             it("Sub-route should be persisted through", async () => {
-                const service1 = new ContainerServiceMock({} as IHostRuntime);
+                const service1 = new ContainerServiceMock({} as IContainerRuntime);
                 const requestHandler = generateContainerServicesRequestHandler([["id1", async (r) => service1]]);
-                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1/sub1`});
+                const requestParser = new RequestParser({ url:`/${serviceRoutePathRoot}/id1/sub1` });
 
-                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                const response = await requestHandler(requestParser, {} as IContainerRuntime);
 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code");

@@ -17,10 +17,12 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 
 import * as jwt from "jsonwebtoken";
+import * as safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
@@ -30,7 +32,6 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
-
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
@@ -117,19 +118,21 @@ export function configureWebSocketServices(
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000) {
-
-
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, IRoom>();
+        // Map from client Ids to scope.
+        const scopeMap = new Map<string, string[]>();
 
         // Back-compat map for storing clientIds with latest protocol versions.
         const versionMap = new Set<string>();
 
+        const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
+
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
-            if (canWrite(scopes) || canSummarize(scopes)) {
+            if (hasWriteAccess(scopes)) {
                 // New document needs a writer to boot.
                 if (!existing) {
                     return true;
@@ -182,6 +185,9 @@ export function configureWebSocketServices(
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
 
+            // Cache the scopes.
+            scopeMap.set(clientId, messageClient.scopes);
+
             // Join the room to receive signals.
             roomMap.set(clientId, room);
             // Iterate over the version ranges provided by the client and select the best one that works
@@ -203,7 +209,7 @@ export function configureWebSocketServices(
                 return Promise.reject({
                     code: 400,
                     message: "Too many clients are already connected to this document.",
-                    retryAfter: 5*60,
+                    retryAfter: 5 * 60,
                 });
             }
 
@@ -221,7 +227,7 @@ export function configureWebSocketServices(
 
                 // Eventually we will send disconnect reason as headers to client.
                 connection.once("error", (error) => {
-                    logger.error(`Disconnecting socket on connection error: ${JSON.stringify(error)}`);
+                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`);
                     socket.disconnect(true);
                 });
 
@@ -281,7 +287,7 @@ export function configureWebSocketServices(
                     }
                 },
                 (error) => {
-                    logger.error(`Connect Document error: ${JSON.stringify(error)}`);
+                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`);
                     socket.emit("connect_document_error", error);
                 });
         });
@@ -292,7 +298,10 @@ export function configureWebSocketServices(
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    socket.emit("nack", "", [createNackMessage()]);
+                    const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
+                        createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
+                        createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                    socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
 
@@ -330,7 +339,10 @@ export function configureWebSocketServices(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                socket.emit("nack", "", [createNackMessage()]);
+                const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
+                    createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
+                    createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                socket.emit("nack", "", [nackMessage]);
             } else {
                 const broadCastMessage: IContentMessage = {
                     clientId,

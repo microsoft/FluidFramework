@@ -18,11 +18,10 @@ import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-con
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
-import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IComponentContext,
     IComponentFactory,
-    IHostRuntime,
+    IContainerRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
@@ -48,7 +47,6 @@ export class Chaincode implements IComponentFactory {
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
         const consensusQueueFactory = ConsensusQueue.getFactory();
-        const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
         const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
@@ -62,7 +60,6 @@ export class Chaincode implements IComponentFactory {
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);
         modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
@@ -99,7 +96,6 @@ export class Chaincode implements IComponentFactory {
 }
 
 export class ChaincodeFactory implements IRuntimeFactory {
-
     public get IRuntimeFactory() { return this; }
 
     /**
@@ -107,12 +103,12 @@ export class ChaincodeFactory implements IRuntimeFactory {
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         const trimmed = request.url
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
-        const componentId = trimmed !== "" ? trimmed : "root";
+        const componentId = trimmed !== "" ? trimmed : rootMapId;
 
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
@@ -137,7 +133,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@fluid-internal/client-api")
+            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })

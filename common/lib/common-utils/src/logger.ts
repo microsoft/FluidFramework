@@ -289,7 +289,6 @@ export class ChildLogger extends TelemetryLogger {
         namespace?: string,
         properties?: object,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
-
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,

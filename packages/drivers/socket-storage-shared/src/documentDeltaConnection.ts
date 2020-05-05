@@ -71,7 +71,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-
         const socket = io(
             url,
             {
@@ -109,6 +108,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private _details: IConnected | undefined;
 
     private trackedListeners: IEventListener[] = [];
+
+    protected get hasDetails(): boolean {
+        return !!this._details;
+    }
 
     private get details(): IConnected {
         if (!this._details) {
@@ -466,9 +469,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
-    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {

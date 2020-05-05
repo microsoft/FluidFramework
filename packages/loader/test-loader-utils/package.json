@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-loader-utils",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -22,11 +22,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-driver-definitions": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0"
+    "@microsoft/fluid-driver-definitions": "^0.17.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

@@ -4,10 +4,9 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleContainerRuntimeFactory,
-    ContainerServiceRegistryEntries,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -17,12 +16,11 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
-    IComponentContext,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
@@ -47,30 +45,24 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
         config: {},
     };
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
-
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
 
-    // Make this function public so TestHost can use them
-    public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any, id?: string,
-    ): Promise<T> {
-        if (id) {
-            const componentRuntime = await this.context.createComponent(id, type, props);
-            const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-            componentRuntime.attach();
-            return component;
-        } else {
-            return super.createAndAttachComponent<T>(type, props);
-        }
+    public stop() {
+        return;
     }
 
-    // Make this function public so TestHost can use them
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
-        return super.getComponent_UNSAFE<T>(id);
+    public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string, type: string, props?: any,
+    ): Promise<T> {
+        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+            this.root.set(id, component.handle);
+            return component;
+        });
+    }
+
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        return this.root.get<IComponentHandle<T>>(id).get();
     }
 
     /**
@@ -170,25 +162,24 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
-        private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly containerServiceRegistry: DependencyContainerRegistry = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
-        const runtimeFactory = {
-            IRuntimeFactory: undefined,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                context,
-                TestRootComponent.type,
-                [
-                    ...componentRegistry,
-                    [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent.type, TestRootComponent, sharedObjectFactories),
-                    )],
-                ],
-                this.containerServiceRegistry),
-        };
-        runtimeFactory.IRuntimeFactory = runtimeFactory;
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+            TestRootComponent.type,
+            [
+                ...componentRegistry,
+                [TestRootComponent.type, Promise.resolve(
+                    new PrimedComponentFactory(
+                        TestRootComponent.type,
+                        TestRootComponent,
+                        sharedObjectFactories,
+                        {}),
+                )],
+            ],
+            this.containerServiceRegistry,
+        );
 
         const store = new TestDataStore(
             new TestCodeLoader([
@@ -220,25 +211,25 @@ export class TestHost {
      * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param services component services for query interface
+     * @param props optional props to be passed to the component on creation
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string,
         type: string,
         props?: any,
-        id?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(type, props, id);
+        return root.createAndAttachComponent<T>(id, type, props);
     }
 
     /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent_UNSAFE<T>(id);
+        return root.getComponent<T>(id);
     }
 
     /**

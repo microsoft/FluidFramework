@@ -16,7 +16,13 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
+import {
+    makeHandlesSerializable,
+    parseHandles,
+    SharedObject,
+    ISharedObjectEvents,
+} from "@microsoft/fluid-shared-object-base";
+import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -32,10 +38,17 @@ const cloneDeep = require("lodash/cloneDeep");
 const snapshotFileName = "header";
 const contentPath = "content";
 
-export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-    extends SharedObject
-    implements ISharedIntervalCollection<SequenceInterval> {
+export interface ISharedSegmentSequenceEvents
+    extends ISharedObjectEvents {
 
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
+    (event: "maintenance",
+        listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
+}
+
+export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
+    extends SharedObject<ISharedSegmentSequenceEvents>
+    implements ISharedIntervalCollection<SequenceInterval> {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
@@ -152,18 +165,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     /**
-     * Registers a listener on the specified events
-     */
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void): this;
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
@@ -211,7 +212,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * @param register - The name of the register to store the range in
      */
     public copy(start: number, end: number, register: string) {
-
         const insertOp = this.client.copyLocal(start, end, register);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
@@ -221,7 +221,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
         this.submitSequenceMessage(groupOp);
-
     }
 
     public getContainingSegment(pos: number) {
@@ -253,7 +252,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         end: number,
         props: MergeTree.PropertySet,
         combiningOp?: MergeTree.ICombiningOp) {
-
         const annotateOp =
             this.client.annotateRangeLocal(start, end, props, combiningOp);
         if (annotateOp) {
@@ -304,7 +302,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             remoteClientPosition,
             remoteClientRefSeq,
             remoteClientId);
-
     }
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
@@ -350,7 +347,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         handler: MergeTree.ISegmentAction<TClientData>,
         start?: number, end?: number, accum?: TClientData,
         splitRange: boolean = false) {
-
         return this.client.walkSegments<TClientData>(handler, start, end, accum, splitRange);
     }
 
@@ -447,16 +443,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected onConnect(pending: any[]) {
-
         for (const message of pending) {
             this.intervalMapKernel.trySubmitMessage(message);
         }
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.client.getCollabWindow().collaborating) {
-            this.client.updateCollaboration(this.runtime.clientId);
-        }
-
+        this.client.startOrUpdateCollaboration(this.runtime.clientId);
         const groupOp = this.client.resetPendingSegmentsToOp();
         if (groupOp) {
             this.submitSequenceMessage(groupOp);
@@ -470,7 +462,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
@@ -506,7 +497,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             }
         }
 
-        this.client.startCollaboration(this.runtime.clientId);
+        this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
     protected initializeLocalCore() {
@@ -516,7 +507,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(this.isLoaded);
+        assert(this.isLoaded, "Snapshot called when not fully loaded");
 
         const minSeq = this.runtime.deltaManager
             ? this.runtime.deltaManager.minimumSequenceNumber
@@ -563,7 +554,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
             this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
         }
-
     }
 
     private getIntervalCollectionPath(label: string) {
@@ -595,7 +585,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private initializeIntervalCollections() {
-
         // Listen and initialize new SharedIntervalCollections
         this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
