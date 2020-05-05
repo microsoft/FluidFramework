@@ -87,76 +87,59 @@ const SpacesComponentView: React.FunctionComponent<ISpacesComponentViewProps> =
         );
     };
 
-interface ISpaceGridViewProps {
+interface ISpacesGridViewProps {
     dataModel: ISpacesDataModel;
 }
 
-interface ISpaceGridViewState {
-    toolbarComponent: IComponent | undefined;
-    editable: boolean;
-    componentMap: Map<string, Layout>;
-}
+export const SpacesGridView: React.FunctionComponent<ISpacesGridViewProps> =
+    (props: React.PropsWithChildren<ISpacesGridViewProps>) => {
+        const [toolbarComponent, setToolbarComponent] = React.useState<IComponent | undefined>(undefined);
+        const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
+        const [componentMap, setComponentMap] = React.useState<Map<string, Layout>>(props.dataModel.componentList);
 
-/**
- * The view is a React Component that knows how to interact with a
- * specific data model and doesn't have any dependencies on fluid.
- */
-export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridViewState> {
-    constructor(props) {
-        super(props);
-        this.state = {
-            toolbarComponent: undefined,
-            editable: this.props.dataModel.componentList.size === 0,
-            componentMap: this.props.dataModel.componentList,
+        React.useEffect(() => {
+            // Need an event for when the component toolbar changes
+            props.dataModel.getComponentToolbar()
+                .then(setToolbarComponent)
+                .catch((error) => {
+                    console.error(`Error getting toolbar component`, error);
+                });
+        });
+
+        React.useEffect(() => {
+            props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
+                setComponentMap(newMap);
+                if (props.dataModel.getComponentToolbar() === undefined) {
+                    setEditable(props.dataModel.componentList.size === 0);
+                }
+            });
+        });
+
+        React.useEffect(() => {
+            props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
+                setEditable(isEditable || !editable);
+            });
+        });
+
+        const onGridChangeEvent = (
+            layout: Layout[],
+            oldItem: Layout,
+            newItem: Layout,
+            placeholder: Layout,
+            event: MouseEvent,
+            element: HTMLElement,
+        ) => {
+            const id = newItem.i.split("_")[0];
+            props.dataModel.updateGridItem(id, newItem);
         };
 
-        this.onGridChangeEvent = this.onGridChangeEvent.bind(this);
-        this.generateViewState = this.generateViewState.bind(this);
-    }
-
-    componentDidMount() {
-        // Need an event for when the component toolbar changes
-        this.props.dataModel.getComponentToolbar()
-            .then((toolbarComponent) => {
-                this.setState({ toolbarComponent });
-            })
-            .catch((error) => {
-                console.error(`Error getting toolbar component`, error);
-            });
-        this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            if (this.props.dataModel.getComponentToolbar() === undefined) {
-                this.setState({
-                    componentMap: newMap,
-                    editable: this.props.dataModel.componentList.size === 0,
-                });
-            } else {
-                this.setState({ componentMap: newMap });
-            }
-        });
-        this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
-            this.setState({ editable: isEditable || !this.state.editable });
-        });
-    }
-
-    onGridChangeEvent(
-        layout: Layout[],
-        oldItem: Layout,
-        newItem: Layout,
-        placeholder: Layout,
-        event: MouseEvent,
-        element: HTMLElement,
-    ) {
-        const id = newItem.i.split("_")[0];
-        this.props.dataModel.updateGridItem(id, newItem);
-    }
-
-    generateViewState(): [JSX.Element | undefined, any[], Layout[]] {
-        const toolbar = this.state.toolbarComponent !== undefined
-            ? <ReactViewAdapter component={ this.state.toolbarComponent } />
+        const toolbar = toolbarComponent !== undefined
+            ? <ReactViewAdapter component={ toolbarComponent } />
             : undefined;
+
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        this.state.componentMap.forEach((layout, url) => {
+        componentMap.forEach((layout, url) => {
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
             layout.i = url;
@@ -165,24 +148,19 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 <div key={url} className="spaces-component-view-wrapper">
                     <SpacesComponentView
                         url={url}
-                        editable={this.state.editable}
-                        getComponent={async () => this.props.dataModel.getComponent(url)}
-                        removeComponent={() => this.props.dataModel.removeComponent(url)}
+                        editable={editable}
+                        getComponent={async () => props.dataModel.getComponent(url)}
+                        removeComponent={() => props.dataModel.removeComponent(url)}
                     />
                 </div>,
             );
         });
 
-        return [toolbar, components, layouts];
-    }
-
-    render() {
-        const [toolbar, components, layouts] = this.generateViewState();
         return (
-            <div className={`spaces-grid-view${ this.state.editable ? " editable" : "" }`}>
+            <div className={`spaces-grid-view${ editable ? " editable" : "" }`}>
                 { toolbar }
                 {
-                    this.state.componentMap.size > 0 &&
+                    componentMap.size > 0 &&
                         <ReactGridLayout
                             className="spaces-component-grid"
                             cols={36}
@@ -191,13 +169,13 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             height={10000}
                             // eslint-disable-next-line no-null/no-null
                             compactType={null} // null is required for the GridLayout
-                            isDroppable={this.state.editable}
-                            isDraggable={this.state.editable}
-                            isResizable={this.state.editable}
+                            isDroppable={editable}
+                            isDraggable={editable}
+                            isResizable={editable}
                             preventCollision={true}
                             isRearrangeable={false}
-                            onResizeStop={this.onGridChangeEvent}
-                            onDragStop={this.onGridChangeEvent}
+                            onResizeStop={onGridChangeEvent}
+                            onDragStop={onGridChangeEvent}
                             layout={layouts}
                         >
                             {components}
@@ -205,5 +183,4 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 }
             </div>
         );
-    }
-}
+    };
