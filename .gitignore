@@ -1,0 +1,17 @@
+.cache-loader
+node_modules
+dist
+nyc
+*.log
+.DS_Store
+
+# Rush: Temporary files
+common/temp
+
+# Rush: Incremental build state (must ignore, see 'rush build -h')
+package-deps.json
+
+*.tsbuildinfo
+
+# Temporary api-extractor build artifacts
+**/_api-extractor-temp/**

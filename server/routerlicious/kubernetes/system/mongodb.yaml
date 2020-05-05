@@ -1,0 +1,4 @@
+persistence:
+  storageClass: managed-premium
+  size: 2048Gi
+usePassword: false

@@ -1,0 +1,296 @@
+{
+    // Use IntelliSense to learn about possible Node.js debug attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Matrix Tests",
+            "cwd": "${workspaceFolder}/packages/runtime/matrix",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-r",
+                "ts-node/register",
+                "-r",
+                "source-map-support/register",
+                "--no-timeouts",
+                // "test/**/matrix.spec.ts",
+                "test/**/matrix.stress.spec.ts",
+                // "-f",
+                // "stress failure",
+                "--exit"
+            ],
+            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            // "skipFiles": ["<node_internals>/**"],
+            "console": "integratedTerminal",
+            "smartStep": true,
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Flow-Util Tests",
+            "cwd": "${workspaceFolder}/packages/components/flow-util-lib",
+            "program": "${workspaceFolder}/packages/components/flow-util-lib/node_modules/ts-mocha/bin/ts-mocha",
+            "args": [
+                // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
+                //       'index.ts' files if there is an 'index.css' in the same directory.
+                "-r",
+                "ignore-styles",
+                "--no-timeouts",
+                "test/**/*.spec.ts",
+                //"test/**/layout.spec.ts",
+                "--exit"
+            ],
+            "env": {
+                // "DEBUG": "flow:*",
+                "TS_NODE_PROJECT": "tsconfig.json",
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Table Tests",
+            "cwd": "${workspaceFolder}/packages/components/table-test-lib",
+            "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-r",
+                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
+                "--no-timeouts",
+                "src/**/*.spec.ts",
+                // "src/**/table.spec.ts",
+                // "src/**/sparsematrix.spec.ts",
+                "--exit"
+            ],
+            "env": {
+                // "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
+                "RUSH_ROOT": "${workspaceFolder}",
+                "TS_NODE_PROJECT": "tsconfig.json"
+            },
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Tests",
+            "cwd": "${workspaceFolder}/",
+            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--recursive",
+                "dist/test/",
+                "--grep Checked"
+            ],
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Chrome",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "sourceMaps": true,
+            "url": "localhost:3000/sharedText/oct18-3",
+            "pathMapping": {
+                "/public/scripts/dist/src/" : "${workspaceFolder}/dist"
+            }
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "sourceMaps": true,
+            "protocol": "inspector",
+            "name": "Mocha attach",
+            "port": 9229
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Beast",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol": "inspector",
+            "program": "${workspaceFolder}/dist/test/merge-tree/beastTest.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "MathFarm",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceFolder}/packages/components/math/dist/test/*.js" ],
+            "protocol": "inspector",
+            "program": "${workspaceFolder}/packages/components/math/dist/test/testFarm.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Farm",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js" ],
+            "protocol": "inspector",
+            "program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to alfred",
+            "address": "localhost",
+            "port": 5858,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to gateway",
+            "address": "localhost",
+            "port": 5866,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to delieh",
+            "address": "localhost",
+            "port": 5867,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to broadcastereh",
+            "address": "localhost",
+            "port": 5868,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceRoot}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to deli",
+            "address": "localhost",
+            "port": 5859,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to paparazzi",
+            "address": "localhost",
+            "port": 5860,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to scriptorium",
+            "address": "localhost",
+            "port": 5861,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to copier",
+            "address": "localhost",
+            "port": 5867,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to foreman",
+            "address": "localhost",
+            "port": 5862,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to routemaster",
+            "address": "localhost",
+            "port": 5863,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current Test",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "stopOnEntry": false,
+            "env": {
+                "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
+            },
+            "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
+            "cwd": "${workspaceFolder}"
+        }
+
+    ]
+}

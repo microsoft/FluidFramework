@@ -1,0 +1,242 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "gateway": {
+        "url": "http://localhost:3000"
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "deltas": "deltas",
+            "rawdeltas": "rawdeltas",
+            "documents": "documents",
+            "partitions": "partitions",
+            "tenants": "tenants",
+            "nodes": "nodes",
+            "reservations": "reservations",
+            "scribeDeltas": "scribeDeltas"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "kafka:9092"
+        },
+        "maxMessageSize": "1MB"
+    },
+    "zookeeper": {
+        "endpoint": "zookeeper:2181"
+    },
+    "alfred": {
+        "kafkaClientId": "alfred",
+        "maxMessageSize": "16KB",
+        "maxNumberOfClientsPerDocument": 1000000,
+        "topic": "rawdeltas",
+        "bucket": "snapshots",
+        "restJsonSize": "50mb",
+        "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+        "tenants": [
+            {
+                "id": "fluid",
+                "key": "create-new-tenants-if-going-to-production"
+            },
+            {
+                "id": "github",
+                "key": "0bea3f87c186991a69245a29dc3f61d2"
+            },
+            {
+                "id": "local",
+                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+            }
+        ]
+    },
+    "client": {
+        "type": "browser",
+        "permission": []
+    },
+    "login": {
+        "enabled": false,
+        "microsoft": {
+            "clientId": "",
+            "secret": ""
+        },
+        "accounts": [
+        ]
+    },
+    "deli": {
+        "topics": {
+            "receive": "rawdeltas",
+            "send": "deltas"
+        },
+        "kafkaClientId": "deli",
+        "groupId": "deli",
+        "checkpointBatchSize": 10,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "scribe": {
+        "kafkaClientId": "scribe"
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "auth": {
+        "endpoint": "http://riddler:5000"
+    },
+    "routemaster": {
+        "topics": {
+            "receive": "deltas",
+            "send": "rawdeltas"
+        },
+        "clientId": "routemaster",
+        "groupId": "routemaster"
+    },
+    "lambdas": {
+        "deli": {
+            "group": "deli",
+            "topic": "rawdeltas"
+        },
+        "routemaster": {
+            "group": "routemaster",
+            "topic": "deltas"
+        },
+        "scriptorium": {
+            "group": "scriptorium",
+            "topic": "deltas"
+        },
+        "copier": {
+            "group": "copier",
+            "topic": "rawdeltas"
+        },
+        "scribe": {
+            "group": "scribe",
+            "topic": "deltas"
+        },
+        "serviceGraph": {
+            "group": "serviceGraph",
+            "topic": "deltas"
+        },
+        "foreman": {
+            "group": "foreman",
+            "topic": "deltas"
+        }
+    },
+    "scriptorium": {
+        "topic": "deltas",
+        "kafkaClientId": "scriptorium",
+        "groupId": "scriptorium",
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "copier": {
+        "topic": "rawdeltas",
+        "kafkaClientId": "copier",
+        "groupId": "copier",
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "foreman": {
+        "alfred": "http://alfred:3000",
+        "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
+        "permissions": {
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+            "augloopQueue": ["augmentation"],
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+        }
+    },
+    "paparazzi": {
+        "queue": "paparazziQueue"
+    },
+    "rabbitmq": {
+        "connectionString": "amqp://rabbitmq"
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
+    "redis2": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
+    },
+    "worker": {
+        "intelligence": {
+            "textAnalytics": {
+                "key": ""
+            },
+            "translation": {
+                "key": ""
+            }
+        },
+        "alfredUrl": "http://alfred:3000",
+        "serverUrl": "http://localhost:3003",
+        "blobStorageUrl": "http://historian:3000",
+        "internalBlobStorageUrl": "http://historian:3000",
+        "repository": "prague",
+        "npm": "https://pragueauspkn-3873244262.azureedge.net",
+        "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
+        "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+    },
+    "tenantConfig": [
+        {
+            "_id": "fluid",
+            "key": "create-new-tenants-if-going-to-production",
+            "storage": {
+                "historianUrl": "http://localhost:3001",
+                "internalHistorianUrl": "http://historian:3000",
+                "url": "http://gitrest:3000",
+                "owner": "fluid",
+                "repository": "fluid"
+            }
+        },
+        {
+            "_id": "github",
+            "key": "0bea3f87c186991a69245a29dc3f61d2",
+            "storage": {
+                "historianUrl": "http://localhost:3001",
+                "internalHistorianUrl": "http://historian:3000",
+                "url": "https://api.github.com",
+                "owner": "kurtb",
+                "repository": "praguedocs",
+                "credentials": {
+                    "user": "praguegit",
+                    "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                }
+            }
+        },
+        {
+            "_id": "local",
+            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "storage": {
+                "historianUrl": "http://localhost:3001",
+                "internalHistorianUrl": "http://historian:3000",
+                "url": "http://gitrest:3000",
+                "owner": "prague",
+                "repository": "local"
+            },
+            "orderer": {
+                "type": "memory",
+                "url": "http://localhost:3003"
+            }
+        }
+    ],
+    "minio": {
+        "endpoint": "minio",
+        "port": 9000,
+        "accessKey": "prague",
+        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+        "bucket": "agents"
+    }
+}

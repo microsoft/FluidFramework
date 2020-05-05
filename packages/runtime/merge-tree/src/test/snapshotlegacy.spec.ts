@@ -1,0 +1,77 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as assert from "assert";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { SnapshotLegacy } from "../snapshotlegacy";
+import { TestClient } from ".";
+
+describe("snapshot", () => {
+    it("header only", async () => {
+        const client1 = new TestClient();
+        client1.startOrUpdateCollaboration("0");
+        for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; i++) {
+            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
+            const msg = client1.makeOpMessage(op, i + 1);
+            msg.minimumSequenceNumber = i + 1;
+            client1.applyMsg(msg);
+        }
+
+        const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
+        snapshot.extractSync();
+        const snapshotTree = snapshot.emit([]);
+        const services = new MockStorage(snapshotTree);
+
+        const client2 = new TestClient(undefined);
+        const runtime: Partial<IComponentRuntime> = {
+            logger: client2.logger,
+            clientId: "1",
+        };
+        await client2.load(runtime as IComponentRuntime, services);
+
+        assert.equal(client2.getLength(), client1.getLength());
+        assert.equal(client2.getText(), client1.getText());
+    })
+        // tslint:disable-next-line: mocha-no-side-effect-code
+        .timeout(5000);
+
+    it("header and body", async () => {
+        const clients = [new TestClient(), new TestClient(), new TestClient()];
+        clients[0].startOrUpdateCollaboration("0");
+        for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
+            const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i });
+            const msg = clients[0].makeOpMessage(op, i + 1);
+            msg.minimumSequenceNumber = i + 1;
+            clients[0].applyMsg(msg);
+        }
+
+        for (let i = 0; i < clients.length - 1; i++) {
+            const client1 = clients[i];
+            const client2 = clients[i + 1];
+            const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
+            snapshot.extractSync();
+            const snapshotTree = snapshot.emit([]);
+            const services = new MockStorage(snapshotTree);
+            const runtime: Partial<IComponentRuntime> = {
+                logger: client2.logger,
+                clientId: (i + 1).toString(),
+            };
+            await client2.load(runtime as IComponentRuntime, services);
+
+            const client2Len = client2.getLength();
+            assert.equal(
+                client2Len,
+                client1.getLength(),
+                `client${client2.longClientId} and client${client1.longClientId} lengths don't match`);
+
+            assert.equal(
+                client2.getText(SnapshotLegacy.sizeOfFirstChunk - 1),
+                client1.getText(SnapshotLegacy.sizeOfFirstChunk - 1));
+        }
+    })
+        // tslint:disable-next-line: mocha-no-side-effect-code
+        .timeout(5000);
+});

@@ -1,0 +1,12 @@
+
+.blinking {
+    animation:blinkrecipe 1s linear 15;
+}
+
+.brieflyBlinking {
+    animation:blinkrecipe 1s linear 2;
+}
+
+@keyframes blinkrecipe{
+    50%{    opacity: 0.0; }
+}

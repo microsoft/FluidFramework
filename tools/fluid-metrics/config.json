@@ -1,0 +1,33 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
+    },
+    "lambdas": {
+        "fluid-metrics": {
+            "group": "fluid-metrics",
+            "topic": "rawdeltas"
+        }
+    },
+    "tenantId": "",
+    "eventName": "rawdeltas",
+    "environment": "localhost"
+}

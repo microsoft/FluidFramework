@@ -1,0 +1,4 @@
+[submodule "packages/test/snapshots/content"]
+	path = packages/test/snapshots/content
+	url = https://github.com/microsoft/FluidFrameworkTestData
+	branch = master

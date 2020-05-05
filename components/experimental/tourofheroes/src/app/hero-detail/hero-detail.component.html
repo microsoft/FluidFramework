@@ -1,0 +1,14 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<div *ngIf="hero">
+    <h2>{{hero.name | uppercase}} Details</h2>
+    <img src="https://tracyvanderschyff.files.wordpress.com/2017/07/2017-07-30-10_00_18-images-for-social-media-powerpoint.png">
+    <div><span>id: </span>{{hero.id}}</div>
+    <div>
+        <label>name:
+            <input [(ngModel)]="hero.name" placeholder="name" />
+        </label>
+    </div>
+    <button title="save" (click)="save(hero)">Save</button>
+</div>

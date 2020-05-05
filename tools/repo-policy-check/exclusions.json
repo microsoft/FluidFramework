@@ -1,0 +1,5 @@
+[
+    "server/routerlicious/packages/services-client/src/dockerNames.ts",
+    "tools/generator-fluid/app/templates/package.json",
+    "tools/generator-fluid/app/templates/src/"
+]

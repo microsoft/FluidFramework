@@ -1,0 +1,19 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { ITrace } from "@microsoft/fluid-protocol-definitions";
+
+export interface ILatencyMessage {
+    // Latency traces.
+    traces: ITrace[];
+}
+
+export interface IPingMessage {
+    // Whether ping is acked or not.
+    acked: boolean;
+
+    // Traces for the ping.
+    traces: ITrace[];
+}

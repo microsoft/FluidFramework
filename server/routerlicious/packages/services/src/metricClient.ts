@@ -1,0 +1,59 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { ITrace } from "@microsoft/fluid-protocol-definitions";
+import * as telegraf from "telegrafjs";
+import { DefaultMetricClient, IMetricClient } from  "@microsoft/fluid-server-services-core";
+
+class TelegrafClient implements IMetricClient {
+    private readonly telegrafClient: any;
+    private connected: boolean = false;
+
+    constructor(config: any) {
+        this.telegrafClient = new telegraf.TelegrafTCPClient({
+            host: config.host,
+            port: config.port,
+        });
+        this.telegrafClient.connect().then(() => {
+            this.connected = true;
+        });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
+        if (!this.connected || !traces || traces.length === 0) {
+            return Promise.resolve();
+        } else {
+            return this.writeToTelegraf(series, this.createTelegrafRow(traces));
+        }
+    }
+
+    private createTelegrafRow(traces: ITrace[]): any {
+        const row = new Object();
+        const Float = telegraf.Float;
+        for (const trace of traces) {
+            // tslint:disable prefer-template
+            const column = `${trace.service}${trace.action ? `-${trace.action}` : ""}`;
+            row[column] = new Float(trace.timestamp);
+        }
+        return row;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    private writeToTelegraf(series: string, row: any): Promise<void> {
+        const Measurement = telegraf.Measurement;
+
+        return this.telegrafClient.sendMeasurement(new Measurement(
+            series,
+            {},
+            row,
+        ));
+    }
+}
+
+export function createMetricClient(config: any): IMetricClient {
+    // eslint-disable-next-line max-len
+    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultMetricClient();
+}

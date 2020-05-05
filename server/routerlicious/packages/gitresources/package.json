@@ -1,0 +1,38 @@
+{
+  "name": "@microsoft/fluid-gitresources",
+  "version": "0.1005.0",
+  "description": "Git resource definitions",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.16.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
+    "rimraf": "^2.6.2",
+    "typescript": "~3.7.4"
+  }
+}

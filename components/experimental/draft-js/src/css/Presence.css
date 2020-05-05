@@ -1,0 +1,19 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+.presence-cursor {
+    display: inline;
+    position: relative;
+}
+
+.presence-cursor::after {
+    content: " ";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1.1px;
+    background-color: inherit;
+    height: 1em;
+}

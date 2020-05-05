@@ -1,0 +1,52 @@
+{
+  "name": "historian",
+  "version": "0.1.0",
+  "description": "Git REST API",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/www.js",
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "start": "node dist/www.js",
+    "test": "nyc --all --temp-directory nyc/.nyc_output --cache-dir nyc/.cache --report-dir nyc/report -x dist/test/**/* mocha dist/test",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "body-parser": "^1.17.2",
+    "compression": "^1.7.3",
+    "cors": "^2.8.5",
+    "debug": "^4.1.1",
+    "express": "^4.16.4",
+    "lodash": "^4.17.14",
+    "morgan": "^1.9.1",
+    "nconf": "^0.10.0",
+    "redis": "^2.8.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5",
+    "split": "^1.0.0",
+    "winston": "^2.4.4"
+  },
+  "devDependencies": {
+    "@types/compression": "0.0.36",
+    "@types/cors": "^2.8.4",
+    "@types/debug": "0.0.31",
+    "@types/lodash": "^4.14.119",
+    "@types/mocha": "^2.2.48",
+    "@types/morgan": "^1.7.32",
+    "@types/nconf": "0.0.37",
+    "@types/redis": "^2.8.10",
+    "@types/request": "^2.48.1",
+    "@types/request-promise-native": "^1.0.15",
+    "@types/supertest": "^2.0.7",
+    "@types/winston": "^2.4.4",
+    "async": "^2.5.0",
+    "mocha": "^7.1.2",
+    "moniker": "^0.1.2",
+    "nyc": "^15.0.0",
+    "supertest": "^3.3.0",
+    "tslint": "^5.12.0",
+    "typescript": "~3.4.5"
+  }
+}

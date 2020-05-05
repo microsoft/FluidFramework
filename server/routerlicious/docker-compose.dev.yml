@@ -1,0 +1,26 @@
+version: '3.4'
+services:
+    alfred:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    deli:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    scriptorium:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    copier:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    scribe:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    foreman:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    routemaster:
+        volumes:
+            - .:/usr/src/server/server/routerlicious
+    riddler:
+        volumes:
+            - .:/usr/src/server/server/routerlicious

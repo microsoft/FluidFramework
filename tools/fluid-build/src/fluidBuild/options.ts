@@ -1,0 +1,269 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as os from "os";
+import { commonOptionString, parseOption } from "../common/commonOptions"
+import { IPackageMatchedOptions } from "./fluidRepo";
+import { ISymlinkOptions } from "./symlinkUtils";
+
+interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
+    nolint: boolean;
+    lintonly: boolean;
+    showExec: boolean;
+    clean: boolean;
+    matchedOnly: boolean
+    buildScriptNames: string[];
+    build?: boolean;
+    vscode: boolean;
+    symlink: boolean;
+    fullSymlink: boolean | undefined;
+    depcheck: boolean;
+    force: boolean;
+    install: boolean
+    nohoist: boolean;
+    uninstall: boolean;
+    concurrency: number;
+    samples: boolean;
+    fix: boolean;
+}
+
+// defaults
+export const options: FastBuildOptions = {
+    nolint: false,
+    lintonly: false,
+    showExec: false,
+    clean: false,
+    match: [],
+    matchedOnly: true,
+    buildScriptNames: [],
+    vscode: false,
+    symlink: false,
+    fullSymlink: undefined,
+    depcheck: false,
+    force: false,
+    install: false,
+    nohoist: false,
+    uninstall: false,
+    concurrency: os.cpus().length, // TODO: argument?
+    samples: true,
+    fix: false,
+    all: false,
+    server: false,
+};
+
+function printUsage() {
+    console.log(
+        `
+Usage: fluid-build <options> [<package regexp> ...]
+  [<package regexp> ...] Regexp to match the package name (default: all packages)
+Options:
+     --all            Operate on all packages/monorepo (default: client monorepo)
+  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix            Auto fix warning from package check if possible
+  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help           Print this message
+     --install        Run npm install for all packages/monorepo
+  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall      Same as --uninstall --install
+     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+  -s --script <name>  npm script to execute (default:build)
+     --server         Operate on the server monorepo
+     --symlink        Fix symlink between packages within monorepo (isolate mode)
+     --symlink:full   Fix symlink between packages across monorepo (full mode)
+     --uninstall      Clean all node_modules
+     --vscode         Output error message to work with default problem matcher in vscode
+${commonOptionString}
+`);
+}
+
+function setClean(build: boolean) {
+    options.force = true;
+    options.clean = true;
+    setBuild(build);
+}
+
+function setBuild(build: boolean) {
+    if (build || options.build === undefined) {
+        options.build = build;
+    }
+}
+
+function setReinstall(nohoist: boolean) {
+    options.uninstall = true;
+    setInstall(nohoist);
+}
+
+function setInstall(nohoist: boolean) {
+    options.install = true;
+    options.nohoist = nohoist;
+    setBuild(false);
+}
+
+function setUninstall() {
+    options.uninstall = true;
+    setBuild(false);
+}
+
+function setSymlink(fullSymlink: boolean) {
+    options.symlink = true;
+    options.fullSymlink = fullSymlink;
+    setBuild(false);
+}
+
+export function parseOptions(argv: string[]) {
+    let error = false;
+    for (let i = 2; i < argv.length; i++) {
+        const argParsed = parseOption(argv, i);
+        if (argParsed < 0) {
+            error = true;
+            break;
+        }
+        if (argParsed > 0) {
+            i += argParsed - 1;
+            continue;
+        }
+
+        const arg = process.argv[i];
+
+        if (arg === "-?" || arg === "--help") {
+            printUsage();
+            process.exit(0);
+        }
+
+        if (arg === "-d" || arg === "--dep") {
+            options.matchedOnly = false;
+            continue;
+        }
+
+        if (arg === "-r" || arg === "--rebuild") {
+            setClean(true);
+            continue;
+        }
+
+        if (arg === "-c" || arg === "--clean") {
+            setClean(false);
+            continue;
+        }
+
+        if (arg === "-f" || arg === "--force") {
+            options.force = true;
+            continue;
+        }
+
+        if (arg === "--nosamples") {
+            options.samples = false;
+            continue;
+        }
+
+        if (arg === "--fix") {
+            options.fix = true;
+            setBuild(false);
+            continue;
+        }
+
+        if (arg === "--install") {
+            setInstall(false);
+            continue;
+        }
+
+        if (arg === "--install:nohoist") {
+            setInstall(true);
+            continue;
+        }
+
+        if (arg === "--reinstall") {
+            setReinstall(false);
+            continue;
+        }
+
+        if (arg === "--reinstall:nohoist") {
+            setReinstall(true);
+            continue;
+        }
+
+        if (arg === "--uninstall") {
+            setUninstall();
+            continue;
+        }
+
+        if (arg === "--all") {
+            options.all = true;
+            continue;
+        }
+
+        if (arg === "--server") {
+            options.server = true;
+            continue;
+        }
+
+        if (arg === "-s" || arg === "--script") {
+            if (i !== process.argv.length - 1) {
+                options.buildScriptNames.push(process.argv[++i]);
+                setBuild(true);
+                continue;
+            }
+            console.error("ERROR: Missing argument for --script");
+            error = true;
+            break;
+        }
+
+        if (arg === "--vscode") {
+            options.vscode = true;
+            continue;
+        }
+
+        if (arg === "--symlink") {
+            setSymlink(false);
+            continue;
+        }
+
+        if (arg === "--symlink:full") {
+            setSymlink(true);
+            continue;
+        }
+
+        if (arg === "--depcheck") {
+            options.depcheck = true;
+            setBuild(false);
+            continue;
+        }
+
+        // These options are not public
+        if (arg === "--nolint") {
+            options.nolint = true;
+            continue;
+        }
+
+        if (arg === "--lintonly") {
+            options.lintonly = true;
+            continue;
+        }
+
+        if (arg === "--showExec") {
+            options.showExec = true;
+            continue;
+        }
+
+        // Package regexp
+        if (!arg.startsWith("-")) {
+            options.match.push(arg);
+            continue;
+        }
+
+        console.error(`ERROR: Invalid arguments ${arg}`);
+        error = true;
+        break;
+    }
+
+    if (error) {
+        printUsage();
+        process.exit(-1);
+    }
+
+    if (options.buildScriptNames.length === 0) {
+        options.buildScriptNames = ["build"];
+    }
+}

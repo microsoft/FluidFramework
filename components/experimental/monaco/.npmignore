@@ -1,0 +1,4 @@
+dist/**/*.map
+nyc
+*.log
+**/*.tsbuildinfo

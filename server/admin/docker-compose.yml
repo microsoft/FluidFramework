@@ -1,0 +1,19 @@
+version: '3'
+services:
+    server:
+        build: .
+        ports:
+            - "7000:3000"
+        command: node dist/www.js
+        environment:
+            - DEBUG=admin:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - .:/usr/src/server
+        networks:
+            - routerlicious_default
+
+networks:
+    routerlicious_default:
+        external: true

@@ -1,0 +1,19 @@
+version: '3'
+services:
+    gitrest:
+        image: gitrest
+        ports:
+            - "3000:3000"
+        volumes:
+            - git:/home/node/documents
+        restart: always
+    git:
+        image: prague.azurecr.io/gitssh:654
+        ports:
+            - "3022:22"
+        volumes:
+            - git:/home/git
+        restart: always
+volumes:
+  git:
+    driver: local

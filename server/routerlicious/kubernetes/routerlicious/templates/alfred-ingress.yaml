@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "alfred.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.alfred.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/websocket-services: {{ template "alfred.fullname" . }}
+    nginx.org/proxy-send-timeout: "7200s"
+    nginx.org/proxy-read-timeout: "7200s"
+    nginx.org/client-max-body-size: "100m"
+    ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.alfred.host }}
+    secretName: {{ .Values.alfred.cert }}
+  rules:
+  - host: {{ .Values.alfred.host }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: {{ template "alfred.fullname" . }}
+          servicePort: 80

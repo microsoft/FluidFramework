@@ -1,0 +1,23 @@
+{
+  "name": "logger",
+  "version": "1.0.0",
+  "description": "An express app built to log events from routerlicious to Aria",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "src/ariaLogger.js",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*'",
+    "start": "node dist/ariaLogger.js",
+    "start:full": "npm run build:full && npm run start"
+  },
+  "dependencies": {
+    "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz",
+    "commander": "^2.15.1"
+  },
+  "devDependencies": {
+    "@types/node": "^8.10.17",
+    "tslint": "^5.10.0",
+    "typescript": "~3.4.5"
+  }
+}

@@ -1,0 +1,28 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+        <link href="//cdnjs.cloudflare.com/ajax/libs/gitgraph.js/1.11.4/gitgraph.css" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container-fluid">
+            <div id="commitsView"></div>
+            <div id="parent-canvas">
+                <canvas id="gitGraph" class="graph-canvas" width="5000" height="5000"></canvas>
+            </div>
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/commits.js{{/hfurl}}"></script>
+        <script>
+            var versions = {{{ versions }}};
+            controllers.commits.load(
+                "{{ type }}",
+                "{{ pathPostfix }}",
+                "{{ tenantId }}",
+                "{{ documentId }}",
+                versions);
+        </script>
+    {{/scripts}}
+{{/layout}}

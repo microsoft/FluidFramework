@@ -1,0 +1,63 @@
+{
+    "app": {
+        "riddlerUrl": "http://riddler:5000",
+        "gitUrl": "http://gitrest:3000",
+        "cobaltUrl": "http://cobalt",
+        "historianUrl": "http://localhost:3001",
+        "alfredUrl": "http://localhost:3000",
+        "jarvisUrl": "http://localhost:3030"
+    },
+    "login": {
+        "enabled": false,
+        "microsoft": {
+            "clientId": "",
+            "secret": ""
+        }
+    },
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "tenants": "tenantCollection",
+            "users": "userCollection",
+            "orgs": "orgCollection"
+        }
+    },
+    "kafka": {
+        "lib": {
+            "name": "kafka-node",
+            "endpoint": "zookeeper:2181"
+        }
+    },
+    "system": {
+        "topics": {
+            "send": "deltas"
+        }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379
+    },
+    "keyValue": {
+        "documentUrl": "https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-local-00018",
+        "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+        "gatewayUrl": "http://gateway:3000",
+        "load": false
+    },
+    "express": {
+        "session": {
+            "secret": "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi"
+        }
+    }
+}

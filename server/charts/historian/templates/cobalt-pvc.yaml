@@ -1,0 +1,23 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "cobalt.fullname" . }}
+  labels:
+    app: {{ template "historian.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.cobalt.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  {{- if eq .Values.cobalt.mode "legacy"}}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.cobalt.persistence.storageClass | quote }}
+  {{- end}}
+spec:
+  {{- if eq .Values.cobalt.mode "latest"}}
+  storageClassName: managed-premium
+  {{- end}}
+  accessModes:
+    - {{ .Values.cobalt.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.cobalt.persistence.size | quote }}

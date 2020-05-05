@@ -1,0 +1,49 @@
+version: '3.4'
+services:
+    jarvis:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            target: runner
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        ports:
+            - "3030:3000"
+        command: node deli/dist/jarvis/www.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ../..:/usr/src/server
+    deli2:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            target: runner
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        command: node deli/dist/kafka-service/index.js deli /usr/src/server/functions/deli/dist/deli/index.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ../..:/usr/src/server
+    scriptorium2:
+        build:
+            context: .
+            dockerfile: ./functions/Dockerfile
+            target: runner
+            args:
+                - NPM_TOKEN=${NPM_TOKEN}
+        command: node deli/dist/kafka-service/index.js scriptorium ../scriptorium/index.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
+        volumes:
+            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
+            - ../..:/usr/src/server

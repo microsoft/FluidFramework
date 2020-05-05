@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gitrest.fullname" . }}
+  labels:
+    app: {{ template "historian.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.gitrest.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": false,
+            "morganFormat": "short",
+            "json": false,
+            "level": "verbose",
+            "timestamp": false
+        },
+        "requestSizeLimit": "1gb",
+        "storageDir": "/home/node/documents"
+    }

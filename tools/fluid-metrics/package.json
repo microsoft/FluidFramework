@@ -1,0 +1,25 @@
+{
+  "name": "fluid-metrics",
+  "version": "0.1.0",
+  "description": "Fluid Metrics",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "start": "node dist/index.js",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@microsoft/fluid-server-routerlicious": "^0.1.2544",
+    "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz",
+    "winston": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.11.1",
+    "@types/node": "^10.1.2",
+    "tslint": "^5.9.1",
+    "typescript": "~3.4.5"
+  }
+}

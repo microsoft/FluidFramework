@@ -1,0 +1,146 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<html>
+<header>
+</header>
+
+
+<body>
+    <div style='padding: 3px; display: inline-block;'><a>Link:</a><input style='min-width: 800px;' id='link'> </input>
+    </div>
+    <div style='padding: 3px; display: inline-block;'><a>Storage Token (SPO only):</a><input style='min-width: 800px;'
+        id='storageToken'> </input></div>
+
+    <div style='padding: 3px; display: inline-block;'><a>Socket Token (SPO only):</a><input style='min-width: 800px;'
+        id='socketToken'> </input></div>
+
+    <div style='padding: 3px; display: inline-block;'><a>Client Id (SPO only):</a><input style='min-width: 800px;'
+            id='clientId'> </input></div>
+
+    <div style='padding: 3px; display: inline-block;'><a>Client Secret (SPO only):</a><input style='min-width: 800px;'
+            id='clientSecret'> </input></div>
+    <p>The "SPO only" fields are used with the tenant spo or spo-df.</p>
+    <button id='go' onclick='go()'>go</button>
+    <button id='go' onclick='go(true)'>goIFrame</button>
+
+    <div id='container'></div>
+    <script>
+        function go(useIframe) {
+            storeThings();
+            const iframe = document.createElement('iframe');
+            const container = document.getElementById('container');
+            iframe.id = `theframe${container.childElementCount}`;
+            iframe.style.height = '45vw';
+            iframe.style.width = '45vw';
+            iframe.style.maxHeight = '1000px';
+            iframe.style.maxWidth = iframe.style.maxHeight;
+            iframe.style.display = 'block';
+
+            const iFrameContainerDiv = document.createElement('div');
+            iFrameContainerDiv.id = `thediv${container.childElementCount}`;
+            iFrameContainerDiv.style.display = 'inline-block';
+
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'CLOSE';
+            closeButton.style.width = '45vw';
+            closeButton.style.maxWidth = iframe.style.maxWidth;
+            closeButton.style.display = 'block';
+            closeButton.onclick = () => {
+                document.getElementById(iframe.id).remove();
+                const removeDiv = document.getElementById(iFrameContainerDiv.id);
+                removeDiv.style.visibility = 'hidden';
+                removeDiv.style.width = '0px';
+                removeDiv.style.height = '0px';
+            }
+
+            iFrameContainerDiv.appendChild(iframe);
+            iFrameContainerDiv.appendChild(closeButton);
+            container.appendChild(iFrameContainerDiv);
+
+            container.app
+
+            const rawframe = document.getElementById(iframe.id);
+            const framedoc = rawframe.contentDocument;
+            if (!framedoc && rawframe.contentWindow) {
+                framedoc = rawframe.contentWindow.document;
+            }
+
+            var reactScript = document.createElement('script');
+            var reactDOMScript = document.createElement('script');
+            reactScript.type = "text/javascript";
+            reactDOMScript.type = "text/javascript";
+            reactScript.src = "https://unpkg.com/react@16/umd/react.development.js";
+            reactDOMScript.src = "https://unpkg.com/react-dom@16/umd/react-dom.development.js";
+
+            var loadFluidScript = document.createElement('script');
+            loadFluidScript.type = "text/javascript";
+            loadFluidScript.src = "dist/main.bundle.js";
+            loadFluidScript.onload = () => {
+                const runScript = document.createElement('script');
+                const storageToken =  `${document.getElementById('storageToken').value}`;
+                const socketToken =  `${document.getElementById('socketToken').value}`;
+                const tokenApiConfig = `{
+                    getStorageToken: () => "${storageToken}",
+                    getWebsocketToken: () => "${socketToken}",
+                }`;
+                runScript.text = `
+                ReactDOM.render(
+                    React.createElement(
+                        reactLoader.FluidLoader,
+                        {
+                            url: "${document.getElementById('link').value}",
+                            tokenApi: ${tokenApiConfig},
+                            appId: "reactLoader",
+                            libraryName: "reactLoader",
+                            iframe: ${useIframe}
+                        },
+                        null
+                    ),
+                    document.getElementById('fluid-component')
+                )
+                `
+                framedoc.body.appendChild(runScript);
+            }
+
+            reactScript.onload = () => {
+                framedoc.body.appendChild(reactDOMScript);
+            }
+            reactDOMScript.onload = () => {
+                framedoc.body.appendChild(loadFluidScript);
+            }
+            framedoc.body.appendChild(reactScript);
+
+            const newdiv = document.createElement('div');
+            newdiv.id = 'fluid-component';
+            framedoc.body.appendChild(newdiv);
+        }
+
+        function fillThings() {
+            const storageToken = localStorage.getItem('storageToken');
+            const socketToken = localStorage.getItem('socketToken');
+            const clientId = localStorage.getItem('clientId');
+
+            if (storageToken) document.getElementById('storageToken').value = storageToken;
+            if (socketToken) document.getElementById('socketToken').value = socketToken;
+            if (clientId) document.getElementById('clientId').value = clientId;
+            if (link) document.getElementById('link').value = link;
+        }
+        function storeThings() {
+            localStorage.setItem('storageToken', document.getElementById('storageToken').value);
+            localStorage.setItem('socketToken', document.getElementById('socketToken').value);
+            localStorage.setItem('clientId', document.getElementById('clientId').value);
+            localStorage.setItem('link', document.getElementById('link').value);
+        }
+
+        fillThings();
+
+    </script>
+    <style>
+        iframe {
+            border: 1px dotted darkgray;
+        }
+    </style>
+</body>
+
+</html>

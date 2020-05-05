@@ -1,0 +1,43 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "foreman": {
+        "permissions": {
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+            "augloopQueue": ["augmentation"],
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+        }
+    },
+    "alfred": {
+        "maxMessageSize": "16KB",
+        "maxNumberOfClientsPerDocument": 1000000
+    },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "content": "content",
+            "deltas": "deltas",
+            "documents": "documents",
+            "partitions": "partitions",
+            "tenants": "tenants",
+            "nodes": "nodes",
+            "reservations": "reservations",
+            "scribeDeltas": "scribeDeltas"
+        }
+    },
+    "storage": "/var/lib/tinylicious",
+    "db": {
+        "inMemory": true,
+        "path": "/var/lib/db"
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
+    }
+}

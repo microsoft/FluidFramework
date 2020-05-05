@@ -1,0 +1,53 @@
+@require '~vuepress-plugin-tabs/dist/themes/default.styl';
+
+a.header-anchor:hover {
+    text-decoration: initial !important;
+}
+
+.home .hero .description {
+    color: $textColor !important;
+}
+
+.hero .symbol {
+    font-size: 4rem;
+    padding-top: .67em;
+}
+
+.custom-block {
+    .custom-block-title {
+        font-weight: 600;
+        margin-bottom: -0.4rem;
+    }
+
+    &.important, &.tip, &.note {
+        padding: 0.1rem 1.5rem;
+        border-left-width: 0.5rem;
+        border-left-style: solid;
+        margin: 1rem 0;
+        background-color: #f3f5f7;
+    }
+
+    &.important, &.tip {
+        border-color: #00BCF2; // #0078d4
+    }
+
+    &.note {
+        border-color: #2c3e50;
+    }
+}
+
+.badge {
+    &.tip {
+        // background-color: #3eaf7c !important;
+    }
+
+    height: 20px !important;
+}
+
+.theme-default-content:not(.custom) > h1:first-child, .theme-default-content:not(.custom) > h2:first-child, .theme-default-content:not(.custom) > h3:first-child, .theme-default-content:not(.custom) > h4:first-child, .theme-default-content:not(.custom) > h5:first-child, .theme-default-content:not(.custom) > h6:first-child, .theme-default-content:not(.custom) > h1, .theme-default-content:not(.custom) > h2, .theme-default-content:not(.custom) > h3, .theme-default-content:not(.custom) > h4, .theme-default-content:not(.custom) > h5, .theme-default-content:not(.custom) > h6 {
+    margin-left: -0.3em !important;
+}
+
+iframe {
+    border: none;
+}

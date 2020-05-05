@@ -1,0 +1,29 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { AsJsonable, Jsonable } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+
+/**
+ * Shared summary block interface. A shared summary block is part of the summary but it does not generate any ops.
+ * The set on this interface must only be called in response to a remote op. Basically, if we replay same ops,
+ * the set of calls on this interface to set data should be the same. This is critical because the object does not
+ * generate ops of its own, but relies on the above principle to maintain eventual consistency and to summarize.
+ */
+export interface ISharedSummaryBlock extends ISharedObject {
+    /**
+     * Retrieves the given key from the map.
+     * @param key - Key to retrieve from.
+     * @returns The stored value, or undefined if the key is not set.
+     */
+    get<T = Jsonable>(key: string): T;
+
+    /**
+     * Sets the value stored at key to the provided value.
+     * @param key - Key to set at.
+     * @param value - Jsonable type value to set.
+     */
+    set<T>(key: string, value: AsJsonable<T>): void ;
+}

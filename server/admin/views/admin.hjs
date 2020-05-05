@@ -1,0 +1,24 @@
+{{<layout}}
+    {{$styles}}
+        <link href="//necolas.github.io/normalize.css/8.0.0/normalize.css" rel="stylesheet" />
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            {{#user}}
+                <div id="adminportal"></div>
+            {{/user}}
+        </div>
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/index.js{{/hfurl}}"></script>
+        <script>
+            var userData = {{{ user }}};
+            var contentData = {{{ data }}};
+            controller.admin.load(userData, contentData);
+        </script>
+    {{/scripts}}
+
+{{/layout}}

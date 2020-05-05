@@ -1,0 +1,50 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "routemaster.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.routemaster.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.routemaster.replicas }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/fluid-configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ template "routerlicious.name" . }}
+        component: "{{ .Values.routemaster.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "routemaster.fullname" . }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        command:
+          - 'node'
+          - 'dist/kafka-service/index.js'
+          - 'routemaster'
+          - '/usr/src/server/server/routerlicious/packages/lambdas-driver/dist/document-router/index.js'
+        env:
+        - name: DEBUG
+          value: "fluid:*"
+        - name: NODE_ENV
+          value: production
+        - name: documentLambda
+          value: "/usr/src/server/server/routerlicious/packages/routerlicious/dist/routemaster/index.js"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/src/server/server/routerlicious/packages/routerlicious/config/config.json
+          subPath: config.json
+      dnsConfig:
+        options:
+        - name: single-request-reopen
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "routerlicious.fullname" . }}

@@ -1,0 +1,13 @@
+# Don't allow people to merge changes to these generated files, because the result
+# may be invalid.  You need to run "rush update" again.
+shrinkwrap.yaml              merge=binary
+npm-shrinkwrap.json          merge=binary
+yarn.lock                    merge=binary
+*     text !filter !merge !diff
+*     text=auto eol=lf
+*.txt text=auto !eol
+
+*.png -text
+*.jpg -text
+*.gif -text
+*.pdf -text

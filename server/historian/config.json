@@ -1,0 +1,15 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "riddler": "http://riddler:5000",
+    "requestSizeLimit": "1gb",
+    "redis": {
+        "host": "redis",
+        "port": 6379
+    }
+}

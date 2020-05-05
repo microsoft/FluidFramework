@@ -1,0 +1,50 @@
+{
+  "name": "gitrest",
+  "version": "0.1.0",
+  "description": "Git REST API",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/www.js",
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "start": "node dist/www.js",
+    "test": "nyc --all -x dist/test/**/* mocha dist/test",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "body-parser": "^1.17.2",
+    "compression": "^1.7.3",
+    "cors": "^2.8.5",
+    "debug": "^4.1.1",
+    "express": "^4.16.4",
+    "morgan": "^1.9.1",
+    "nconf": "^0.10.0",
+    "nodegit": "^0.23.0",
+    "split": "^1.0.0",
+    "winston": "^2.4.4"
+  },
+  "devDependencies": {
+    "@types/async": "^2.0.50",
+    "@types/cors": "^2.8.4",
+    "@types/debug": "0.0.31",
+    "@types/lorem-ipsum": "^1.0.2",
+    "@types/mocha": "^2.2.48",
+    "@types/morgan": "^1.7.32",
+    "@types/nconf": "0.0.37",
+    "@types/nodegit": "^0.22.7",
+    "@types/rimraf": "^2.0.2",
+    "@types/supertest": "^2.0.7",
+    "@types/winston": "^2.4.4",
+    "async": "^2.5.0",
+    "lorem-ipsum": "^1.0.6",
+    "mocha": "^7.1.2",
+    "moniker": "^0.1.2",
+    "nyc": "^15.0.0",
+    "rimraf": "^2.6.3",
+    "supertest": "^3.4.2",
+    "tslint": "^5.12.0",
+    "typescript": "~3.4.5"
+  }
+}

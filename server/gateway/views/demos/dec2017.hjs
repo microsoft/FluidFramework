@@ -1,0 +1,40 @@
+{{<layout}}
+    {{$content}}
+        <div class="container">
+
+            <h1>Prague Demos</h1>
+
+            <h3>Competitive Analysis</h3>
+            <ul class="list-unstyled">
+                <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit">Google Docs Pride and Prejudice</a></li>
+                <li><a href="https://microsoft-my.sharepoint-df.com/:w:/r/personal/kurtb_microsoft_com/_layouts/15/Doc.aspx?sourcedoc=%7B3fc69ddc-eb43-4653-be42-cc3d34425a67%7D&action=edit">Word Online Pride and Prejudice</a></li>
+                <li>Ink (no compose) (DEPRECATED)</li>
+                <li>Ink (compose) (DEPRECATED)</li>
+            </ul>
+
+            <h3>Routerlicious</h3>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&spellchecking=disabled&template=pp.txt">Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{sharedTextPageInkMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&pageInk=true&template=pp.txt">Pride and Prejudice (page ink)</a></li>
+                <li><a href="http://prague-grafana.westus2.cloudapp.azure.com/dashboard/db/latency-summary">Performance Metrics</a></li>
+                <li><a href="/loader/fluid/{{canvasMoniker}}?chaincode=@fluid-example/canvas@{{version}}">Ink</a></li>
+            </ul>
+
+            <h3>Intelligent Services</h3>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@fluid-example/scribe@{{version}}">Scribe</a></li>
+            </ul>
+
+            <h3>Versioning and Branching</h3>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{emptyMoniker}}?chaincode=@fluid-example/shared-text@{{version}}">Starter Document</a></li>
+            </ul>
+
+            <h3>Distributed Data Type Apps (DEPRECATED)</h3>
+            <ul class="list-unstyled">
+                <li>Video player</li>
+            </ul>
+        </div>
+
+    {{/content}}
+{{/layout}}

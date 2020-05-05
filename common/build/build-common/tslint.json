@@ -1,0 +1,117 @@
+{
+    "extends": [
+        "tslint-microsoft-contrib",
+        "tslint:recommended"
+    ],
+    "rules": {
+        "binary-expression-operand-order": false,
+        "newline-before-return": false,
+        "no-empty": false,
+        "no-increment-decrement": false,
+        "no-backbone-get-set-outside-model": false,
+        "no-namespace": false,
+        "no-this-assignment": [
+            true,
+            {
+                "allow-destructuring": true
+            }
+        ],
+        "newline-per-chained-call": false,
+        "max-classes-per-file": false,
+        "prefer-array-literal": false,
+        "array-type": [true, "array"],
+        "linebreak-style": false,
+        "export-name": false,
+        "static-this": true,
+        "no-console": [
+            true,
+            "log",
+            "warn",
+            "error"
+        ],
+        "strict-boolean-expressions": [
+            true,
+            "allow-null-union",
+            "allow-undefined-union",
+            "allow-string",
+            "allow-number"
+        ],
+        "no-implicit-dependencies": [
+            true,
+            "dev"
+        ],
+        "no-relative-imports": false,
+        "function-name": [
+            true,
+            {
+                "method-regex": "^[a-z][\\w\\d]+$",
+                "private-method-regex": "^[a-z][\\w\\d]+$",
+                "protected-method-regex": "^[a-z][\\w\\d]+$",
+                "static-method-regex": "^[a-z][\\w\\d]+$",
+                "function-regex": "^[a-z][\\w\\d]+$"
+            }
+        ],
+        "variable-name": {
+            "options": ["ban-keywords", "check-format", "allow-leading-underscore", "allow-pascal-case"]
+        },
+        "object-literal-sort-keys" : false,
+        // Copyright file header
+        "file-header": [
+            true,
+            {
+                "match": "Copyright \\(c\\) Microsoft Corporation\\. All rights reserved\\.[\\*\\s\\/]*Licensed under the MIT License\\.",
+                "allow-single-line-comments": true,
+                "default": "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.",
+                "enforce-trailing-newline": false // disabled for false-positives bug in tslint
+            }
+        ],
+        /**
+         * Security Rules. The following rules should be turned on because they find security issues
+         * or are recommended in the Microsoft Secure Development Lifecycle (SDL)
+         */
+        "insecure-random": true,
+        "no-banned-terms": true,
+        "no-cookies": true,
+        "no-delete-expression": true,
+        "no-disable-auto-sanitization": true,
+        "no-document-domain": true,
+        "no-document-write": true,
+        "no-eval": true,
+        "no-exec-script": true,
+        "function-constructor": true,
+        "no-http-string": [
+            true,
+            "http://.*"
+        ],
+        "no-inner-html": true,
+        "no-octal-literal": true,
+        "no-string-based-set-immediate": true,
+        "no-string-based-set-interval": true,
+        "no-string-based-set-timeout": true,
+        "no-unnecessary-local-variable": false,
+        "no-void-expression": false,
+        "non-literal-require": true,
+        "possible-timing-attack": true,
+        "prefer-type-cast": false,
+        "react-anchor-blank-noopener": true,
+        "react-iframe-missing-sandbox": true,
+        "react-no-dangerous-html": true,
+        "type-literal-delimiter": false,
+        "no-constant-condition": [
+            true,
+            { "checkLoops": false } // allows while(true), etc.
+        ],
+        // Deprecated Rules. These rules are deprecated. Disabling them so that they don't get applied.
+        "no-function-constructor-with-string-args": false,
+        "no-unnecessary-bind": false,
+        "no-reserved-keywords": false,
+        "max-line-length": [
+            true,
+            {
+              "limit": 120,
+              "check-strings": true,
+              "check-regex": true
+            }
+          ]
+    }
+}

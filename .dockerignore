@@ -1,0 +1,17 @@
+*
+!*.json
+!*.md
+!.npmrc
+!_api-extractor-temp/**
+!LICENSE.txt
+!packages/**
+!components/**
+!examples/hosts/iframe-host/**
+!server/routerlicious
+!docs/**
+!tools/build-server-resources/**
+**/node_modules
+**/dist
+**/lib
+**/nyc
+**/*.tsbuildinfo

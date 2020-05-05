@@ -1,0 +1,56 @@
+{
+  "name": "fluid-health-monitor",
+  "version": "0.0.1",
+  "description": "Checks Fluid service health using a script",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git"
+  },
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "docker:build": "docker build -t monitoring .",
+    "docker:start": "docker run --rm -t monitoring",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "start": "node dist/index.js",
+    "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@microsoft/fluid-container-definitions": "0.13.19189",
+    "@microsoft/fluid-container-loader": "0.13.19189",
+    "@microsoft/fluid-driver-definitions": "0.13.19189",
+    "@microsoft/fluid-routerlicious-driver": "0.13.19189",
+    "@microsoft/fluid-routerlicious-host": "0.13.19189",
+    "@microsoft/fluid-server-services": "0.1002.20282",
+    "@sentry/node": "^5.6.2",
+    "@types/mocha": "^5.2.5",
+    "debug": "^4.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "nconf": "^0.10.0",
+    "uuid": "^3.3.2",
+    "winston": "3.2.1"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.7.7",
+    "@microsoft/eslint-config-fluid": "^0.13.19136",
+    "@microsoft/fluid-build-common": "^0.13.19136",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "eslint": "~6.8.0",
+    "rimraf": "^2.6.2",
+    "ts-node": "^8.6.2",
+    "typescript": "~3.7.4"
+  }
+}

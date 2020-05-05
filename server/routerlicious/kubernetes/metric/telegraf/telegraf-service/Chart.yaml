@@ -1,0 +1,3 @@
+name: telegraf-service
+version: latest
+description: Telegraf is an agent written in Go for collecting, processing, aggregating, and writing metrics.

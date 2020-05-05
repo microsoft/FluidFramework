@@ -1,0 +1,8 @@
+{
+    "extends": [
+        "@microsoft/eslint-config-fluid/no-tslint"
+    ],
+    "rules": {
+        "no-null/no-null": "off"
+    }
+}

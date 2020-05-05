@@ -1,0 +1,57 @@
+html, body {
+	height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+}
+
+.host {
+    overflow: hidden;
+    height: 100%;
+}
+
+.viewport {
+    overflow: auto;
+    height: 100%;
+}
+
+.padding {
+    outline: 1px dotted #ddd;
+    margin: 0.75in;
+    padding: 0.1in;
+}
+
+.padding:focus-within {
+    background: white;
+    outline: 1px dotted #aaa;
+}
+
+.slot {
+    white-space: pre-wrap;
+}
+
+.slot:focus-within {
+    outline: none;
+}
+
+.search { }
+
+.bold {
+    font-weight: bold;
+}
+
+/*
+Styles for entities recognized by intelligent services.
+*/
+:global(.entity-person) {
+    background-color: yellow;
+}
+
+:global(.entity-location) {
+    background-color: blue;
+}
+
+:global(.entity-generic) {
+    background-color: red;
+}

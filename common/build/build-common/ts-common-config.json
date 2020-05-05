@@ -1,0 +1,20 @@
+{
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es2017",
+        "declaration": true,
+        "declarationMap": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noUnusedLocals": true,
+        "sourceMap": true,
+        "inlineSources": true,
+        "noImplicitAny": false,
+        "incremental": true,
+        "types": [],
+        "strict": true
+    }
+}

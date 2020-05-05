@@ -1,0 +1,16 @@
+{
+  "name": "repo-policy-check",
+  "version": "1.0.0",
+  "description": "policy check for entire repository",
+  "license": "MIT",
+  "author": "Microsoft",
+  "scripts": {
+    "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
+    "policy-check": "cd ../.. && git ls-files -co --exclude-standard | node tools/repo-policy-check/policy-check.js",
+    "policy-check:fix": "npm run policy-check -- -r"
+  },
+  "dependencies": {
+    "commander": "^2.20.0",
+    "sort-package-json": "1.40.0"
+  }
+}

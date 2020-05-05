@@ -1,0 +1,21 @@
+{    
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "declaration": true,
+        "noImplicitAny": false,
+        "noUnusedLocals": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "sourceMap": true,
+        "inlineSources": true,
+        "types": [],
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}

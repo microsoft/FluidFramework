@@ -1,0 +1,37 @@
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+
+historian:
+  name: historian
+  image: prague.azurecr.io/historian:4049
+  redis:
+    url: lumpy-condor-redis
+    port: 6379
+    tls: false
+  host: historian.wu2.prague.office-int.com
+  cert: wu2-tls-certificate
+  ingressClass: nginx-prod
+  riddler: http://wiggly-wombat-riddler
+
+gitrest:
+  name: gitrest
+  image: prague.azurecr.io/gitrest:4048
+  mode: latest
+  persistence:
+    storageClass: managed-premium
+    size: 1024Gi
+    accessMode: ReadWriteOnce
+
+gitssh:
+  name: gitssh
+  image: prague.azurecr.io/gitssh:654
+
+cobalt:
+  name: cobalt
+  image: prague.azurecr.io/cobalt:1544
+  mode: latest
+  persistence:
+    storageClass: managed-premium
+    size: 128Gi
+    accessMode: ReadWriteOnce

@@ -1,0 +1,18 @@
+{
+  "name": "docker-lambda",
+  "version": "1.0.0",
+  "description": "docker build . -t praguelambdas.azurecr.io/reverser:latest docker push praguelambdas.azurecr.io/reverser:latest  nuctl deploy reverser -n nuclio --run-image praguelambdas.azurecr.io/reverser:latest \\     --runtime nodejs \\     --handler handler:handler \\     --platform kube",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "handler.js",
+  "scripts": {
+    "build": "docker build . -t praguelambdas.azurecr.io/reverser:latest",
+    "deploy": "nuctl deploy reverser -n nuclio --run-image praguelambdas.azurecr.io/reverser:latest --runtime nodejs --handler handler:handler --platform kube",
+    "endpoint": "kubectl get endpoints -n nuclio reverser",
+    "push": "docker push praguelambdas.azurecr.io/reverser:latest",
+    "upload": "npm run build && npm run push && npm run deploy"
+  },
+  "dependencies": {
+    "moment": "^2.22.2"
+  }
+}

@@ -1,0 +1,20 @@
+{
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "target": "es6",
+        "module": "esnext",
+        "outDir": "dist",
+        "jsx": "react",
+        "strictNullChecks": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "types": []
+    },
+    "include": [
+        "src/**/*"
+    ]    
+}

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "cobalt.fullname" . }}
+  labels:
+    app: {{ template "historian.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.cobalt.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
+  selector:
+    app: {{ template "historian.fullname" . }}
+    component: "{{ .Values.cobalt.name }}"
+    release: {{ .Release.Name }}

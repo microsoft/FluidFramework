@@ -1,0 +1,17 @@
+{
+  "name": "getkeys",
+  "version": "1.0.0",
+  "description": "",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "azure-keyvault": "^3.0.4",
+    "ms-rest-azure": "^2.6.0"
+  }
+}

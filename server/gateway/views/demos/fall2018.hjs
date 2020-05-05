@@ -1,0 +1,170 @@
+{{<layout}}
+    {{$content}}
+        <div class="container">
+            <h1>Fall 2018 Demos</h1>
+            <p>
+                To create a new set of links refresh this page.
+            </p>
+
+            <h2>Components</h2>
+            <p>
+                Dynamic, interactive components can be embedded inside of Prague documents. This demo introduces a few
+                of these by inserting a sheetlet inside of a Prague flow view and then showing how calc.ts can be used
+                to perform computations on the sheetlet data. The demo also shows how other controls, like charts and
+                sliders, can bind against the sheetlet data. As well as how spreadsheet cells and computations can be embedded inline
+                within the flow of the document.
+            </p>
+            <h3>Demo</h3>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{componentsMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+            </ul>
+
+            <p>
+                Open up a copy of Pride and Prejudice. Type <i>ctrl+m</i> to get an input window and type <i>insert sheet</i>.
+                Calc.ts is used to compute all of the data. Go into the flowview and use ctl+m again. This time insert
+                a formula by typing <i>=</i> followed by a standard Excel formula - i.e. <i>=SUM(B2:B6)</i>
+            </p>
+            <p>
+                Click on any cell in the sheetlet and upate its value. Any inline cells bound to this value will update as well.
+            </p>
+            <p>
+                Insert a chart by typing <i>ctrl+m</i> and then typing <i>insert chart</i>. The chart will be bound to the sheetlet
+                data inserted above. Change the sheetlet data to observe the chart changing.
+            </p>
+            <p>
+                Insert a slider bound to a cell value by typing <i>ctrl+m</i> followed by a * and any cell name - i.e. <i>*B2</i>.
+                Move the slider to modify the cell value.
+            </p>
+
+            <h2>Code + Data</h2>
+            <p>
+                Prague documents are code plus data packages. This means that in addition to the underlying data that
+                represents the document each Prague document also stores the code that is used to process document
+                operations and do things like run the UI. Combining the two together brings about a frictionless
+                deployment of a Prague document which makes it simple to load them or embed them
+                in other documents. If you view a Prague document as a block chain the code becomes the chaincode that
+                runs on top of the chain.
+            </p>
+            <p>
+                All that is required to load one of these code plus data packages is the Prague minimum runtime. This is
+                a minimum set of code that serves as the trusted computing base for Prague. This set of code is able
+                to connect to the ordering service to send and receive ops, download snapshots, create blobs, load code,
+                and establish quorums amongst members. A host simply needs to load the Prague minimum runtime
+                to then be able to load any Prague document.
+            </p>
+            <h3>Demo</h3>
+            <h4>Pinpoint Maps</h4>
+            <ul class="list-unstyled">
+                <li><a href="https://www.wsj.com/articles/when-napoleon-met-his-waterloo-he-was-out-of-town-1433894903" target="_blank">WSJ Article</a></li>
+                <li><a href="/loader/fluid/{{napoleonMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
+                <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.15" target="_blank">Pinpoint Editor</a></li>
+            </ul>
+            <p>
+                A first example of a Prague component is the pinpoint map editor. This component was created by the Wall
+                Street Journal <a href="http://wsj.github.io/pinpoint/" target="_blank">http://wsj.github.io/pinpoint/</a> and is used
+                by their journalists for creating pinpoint maps. The original version is an Angular app that makes use of
+                a RESTful web service that is backed by a Postgres database. With a small set of changes we were able to
+                update it to make use of Prague distributed data types. By using Prague the app becomes shared and
+                no longer needs a backend database.
+            </p>
+            <p>
+                To view the pinpoint map in action open two copies of the link above and then edit the map properties.
+                Notice that edits to the pinpoint map are shared.
+            </p>
+            <p>
+                Next insert the map into a flow view by using the copy of pride and prejudice created at the beginning of
+                the demo. To insert the map type <i>ctrl+m</i> followed by <i>&amp;{{pinpointMoniker}}</i> inside the
+                flowview.
+            </p>
+            <p>
+                The map UI is able to change in both cases by querying its host interface. During the load process a
+                component is provided an interface to access its underlying host. In the case of the pinpoint editor it can detect
+                when it has full page access vs. being embedded within a document. The pinpoint map uses this information to update
+                its UI accordingly.
+            </p>
+
+            <h4>npm packages</h4>
+            <p>
+                Clients of a Prague document establish a quorum that defines the code to be included with the document.
+                npm is used to store these code packages. We make use of a private npm repository to store our document
+                code - which we refer to as chaincode - which can be found via the link below.
+            </p>
+            <p>
+                <a href="https://packages.wu2.prague.office-int.com" target="_blank">https://packages.wu2.prague.office-int.com</a>
+            </p>
+            <p>
+                Any package that begins with @chaincode can be installed in a Prague document. To do so simply navigate
+                to the loader route, choose a unique document ID, and then
+                append <i>?chaincode=&lt;package-name&gt;@&lt;version&gt;</i>. As an easy example simply append a number to
+                the random name this page created for the pinpoint map
+                
+                /loader/{{pinpointMoniker}}2?chaincode=@chaincode/praguesteroids@0.10.0 (DEPRECATED)
+            </p>
+
+            <h4>Embedded charts and polls</h4>
+            <p>
+                Another example of Prague components is creating a poll and then a chart that binds to the poll data.
+            </p>
+            <ul class="list-unstyled">
+                <li>Charts (DEPRECATED)</li>
+                <li>Poll (DEPRECATED)</li>
+            </ul>
+            <p>
+                Start by opening the poll listed above. Fill out the question title as well as some of the choices.
+                When done click the <i>Publish</i> button. Once done the poll can be embedded in any Prague host. Start
+                by using a flow view and follow the same steps as earlier by typing <i>ctrl+m</i> followed by
+                <i>&amp;{{pollMoniker}}</i>. Then take the poll.
+            </p>
+            <p>
+                To insert into Teams open the Teams app, go to the FlowViewTeam, and then type <i>@Prague Bot deeplink loader;{{pollMoniker}}</i>.
+                When the bot responds click on the <i>Open Document in Team</i> link.
+            </p>
+            <p>
+                Next bind the chart to the poll. Click on the chart link above. Choose a column series layout. And then copy and
+                paste the link to the poll and put it into the <i>Map Binding</i> field. Be sure to change focus away from this
+                text box so that knockout.js updates the binding data which will cause the Prague map to serialize it.
+            </p>
+            <p>
+                Follow the same steps as earlier to then insert the poll into a document. Refresh any document that
+                has the poll in it to take it again. Taking the poll will also cause the chart to update.
+            </p>
+
+            <h4>Monaco code editor</h4>
+            <p>
+                The Monaco code editor is also available as a Prague document.
+            </p>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{monacoMoniker}}?chaincode=@fluid-example/monaco@{{version}}" target="_blank">Monaco</a></li>
+            </ul>
+
+            <h2>SharePoint (DEPRECATED)</h2>
+            <p>
+                SharePoint is setup to host Prague documents - both the original shared text demo as well as dynamically
+                loaded Prague documents. SharePoint consumes the Prague server code via an npm package and then implements
+                Prague server side storage interfaces to write data back to SharePoint. This allows them to use the same
+                server side lambda functions (alfred, deli, scriptorium, etc...) as the reference implementation. Just
+                backed by their own storage infrastructure.
+            </p>
+            <h3>Demo</h3>
+            <p>
+                Go to <a href="https://msft-my.spoppe.com/" target="_blank">https://msft-my.spoppe.com/</a>
+            </p>
+            <p>
+                Then go to <a href="https://msft.spoppe.com/teams/SPGroups/playground/cookieredirect/redirect.aspx?mobile=0&setcookie=https%3A%2F%2Fresourceseng.blob.core.windows.net%2Ffiles%2Fdev-garywilb-garywilb-pce--git-odsp-next-app-min-user%2Fgarywilb%2Fopeninprague%2F&redirect=https:%2f%2fmsft-my.spoppe.com%2fpersonal%2f%25user%25_microsoft_com%2f_layouts%2f15%2fonedrive.aspx%3fmobile%3d0" target="_blank">https://msft.spoppe.com/teams/SPGroups/playground/cookieredirect/redirect.aspx?mobile=0&setcookie=https%3A%2F%2Fresourceseng.blob.core.windows.net%2Ffiles%2Fdev-garywilb-garywilb-pce--git-odsp-next-app-min-user%2Fgarywilb%2Fopeninprague%2F&redirect=https:%2f%2fmsft-my.spoppe.com%2fpersonal%2f%25user%25_microsoft_com%2f_layouts%2f15%2fonedrive.aspx%3fmobile%3d0</a>
+            </p>
+            <p>
+                You can then click New -> Prague Document. Clicking this file will create and open a new flow view.
+            </p>
+            <p>
+                You can also load any of the Prague components. To do so bring up the dev tools (F12) and type
+                <i>USE_LOADER = true; CHAINCODE = "@chaincode/shared-text@0.1.6"</i>. Or choose any other of the
+                chaincode packages. Then choose New -> Prague Document and when you open it it will load a document
+                with the specified chaincode.
+            </p>
+            <p>
+                For opening in a new tab to work you may need to edit your browser preferences to allow popups for
+                msft.spoppe.com.
+            </p>
+        </div>
+    {{/content}}
+{{/layout}}
