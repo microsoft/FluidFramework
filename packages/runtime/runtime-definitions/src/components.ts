@@ -426,6 +426,10 @@ export interface IContainerRuntime extends
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(
+        event: "componentInstantiated",
+        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+    ): this;
 
     /**
      * Returns the runtime of the component.
