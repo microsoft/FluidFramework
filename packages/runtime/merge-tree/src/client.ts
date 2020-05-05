@@ -30,11 +30,11 @@ import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { Snapshot } from "./snapshot";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
+import { SnapshotV1 } from "./snapshotV1";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -902,7 +902,7 @@ export class Client {
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
         const snap = this.mergeTree.options && this.mergeTree.options.newMergeTreeSnapshotFormat
-            ? new Snapshot(this.mergeTree, this.logger)
+            ? new SnapshotV1(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
 
         snap.extractSync();
@@ -914,7 +914,7 @@ export class Client {
     }
 
     public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
-        const loader = new SnapshotLoader(runtime, this, this.mergeTree);
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
         // TODO: Remove return value once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)

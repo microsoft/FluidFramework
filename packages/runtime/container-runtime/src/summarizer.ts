@@ -591,6 +591,15 @@ export class Summarizer implements ISummarizer {
             return;
         }
 
+        if (this.runtime.deltaManager.active === false) {
+            this.logger.sendTelemetryEvent({
+                eventName: "NotStarted",
+                reason: "CannotWrite",
+                onBehalfOf,
+            });
+            return;
+        }
+
         if (this.runtime.summarizerClientId !== this.onBehalfOfClientId
             && this.runtime.summarizerClientId !== this.runtime.clientId) {
             // Verify that this client's computed summarizer matches the client this was spawned
