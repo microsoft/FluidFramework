@@ -16,8 +16,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
     IComponentCallbacks,
-    ISpacesCollectible,
-    IProvideComponentCollector,
+    IProvideComponentCollectorSpaces,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
 
@@ -37,7 +36,7 @@ const localComponents = [
  * The view component must support certain interfaces to work with the waterpark.
  */
 export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & IProvideComponentCollector<ISpacesCollectible>;
+    IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
 
 /**
  * Component that loads extneral components via their url
@@ -171,7 +170,8 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             const viewComponent = await this.viewComponentP;
-            if (viewComponent.IComponentCollector === undefined || this.runtime.IComponentRegistry === undefined) {
+            if (viewComponent.IComponentCollectorSpaces === undefined
+                || this.runtime.IComponentRegistry === undefined) {
                 throw new Error("View component is empty or is not an IComponentCollector!!");
             }
 
@@ -213,7 +213,7 @@ export class ExternalComponentLoader extends PrimedComponent
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollector.addItem({
+            viewComponent.IComponentCollectorSpaces.addItem({
                 component: component as IComponent & IComponentLoadable,
                 type: value,
             });

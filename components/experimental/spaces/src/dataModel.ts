@@ -9,7 +9,7 @@ import {
     IComponent, IComponentLoadable, IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
-import { IComponentCollector, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
+import { IComponentCollectorSpaces, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
 
 const ComponentToolbarKey = "component-toolbar";
 
@@ -23,7 +23,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined>;
     updateGridItem(id: string, newLayout: Layout): void;
     getModels(): ISpacesModel[];
-    IComponentCollector: IComponentCollector<ISpacesCollectible>;
+    IComponentCollectorSpaces: IComponentCollectorSpaces;
     addItem(item: ISpacesCollectible): string;
     removeItem(key: string): void;
 }
@@ -32,7 +32,7 @@ export interface ISpacesDataModel extends EventEmitter {
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
 export class SpacesDataModel extends EventEmitter
-    implements ISpacesDataModel, IComponentCollector<ISpacesCollectible> {
+    implements ISpacesDataModel, IComponentCollectorSpaces {
     private readonly componentSubDirectory: IDirectory;
 
     constructor(
@@ -50,7 +50,7 @@ export class SpacesDataModel extends EventEmitter
         });
     }
 
-    public get IComponentCollector() { return this; }
+    public get IComponentCollectorSpaces() { return this; }
 
     public addItem(item: ISpacesCollectible): string {
         return this.addComponent(item.component, item.type, item.layout ?? { x: 0, y: 0, w: 6, h: 2 });

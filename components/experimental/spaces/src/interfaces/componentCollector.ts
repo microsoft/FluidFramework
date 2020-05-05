@@ -8,26 +8,26 @@ import { Layout } from "react-grid-layout";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentCollector>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentCollectorSpaces>> { }
 }
 
-export const IComponentCollector: keyof IProvideComponentCollector = "IComponentCollector";
+export const IComponentCollectorSpaces: keyof IProvideComponentCollectorSpaces = "IComponentCollectorSpaces";
 
-export interface IProvideComponentCollector<T = any> {
-    readonly IComponentCollector: IComponentCollector<T>;
+export interface IProvideComponentCollectorSpaces {
+    readonly IComponentCollectorSpaces: IComponentCollectorSpaces;
 }
 
 /**
- * An IComponentCollector is a component that manages a collection of things.
+ * An IComponentCollectorSpaces is a component that manages a collection of things in the format that Spaces uses.
  * @alpha
  */
-export interface IComponentCollector<T> extends IProvideComponentCollector<T> {
+export interface IComponentCollectorSpaces extends IProvideComponentCollectorSpaces {
     /**
      * Adds the given item to the collector.
      * @param item - The item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(item: T): string;
+    addItem(item: ISpacesCollectible): string;
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.

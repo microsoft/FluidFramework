@@ -21,8 +21,7 @@ import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import {
     IComponentToolbarConsumer,
-    IProvideComponentCollector,
-    ISpacesCollectible,
+    IProvideComponentCollectorSpaces,
     SpacesCompatibleToolbar,
 } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
@@ -33,7 +32,7 @@ import { SpacesComponentName, Templates } from ".";
 export class Spaces extends PrimedComponent implements
     IComponentHTMLView,
     IComponentToolbarConsumer,
-    IProvideComponentCollector<ISpacesCollectible>
+    IProvideComponentCollectorSpaces
 {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: SpacesCompatibleToolbar | undefined;
@@ -63,7 +62,7 @@ export class Spaces extends PrimedComponent implements
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollector() { return this.dataModel; }
+    public get IComponentCollectorSpaces() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
     public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
