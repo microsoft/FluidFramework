@@ -6,11 +6,11 @@
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
-  "main": "dist/indexNode.js",
+  "main": "dist/index.js",
   "module": "lib/index.js",
   "browser": {
-    "indexNode": "dist/indexBrowser.js",
-    "performanceNowNode": "dist/performanceNowBrowser.js"
+    "./dist/indexNode.js": "./dist/indexBrowser.js",
+    "./lib/indexNode.js": "./lib/indexBrowser.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
