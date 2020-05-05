@@ -73,6 +73,14 @@ export class BadgeView
         this._getCurrentTimestamp = this._getCurrentTimestamp.bind(this);
         this._onRenderCard = this._onRenderCard.bind(this);
 
+        this.props.currentCell.on("valueChanged", () => {
+            this.setState({ current: this.props.currentCell.get() });
+        });
+
+        this.props.optionsMap.on("valueChanged", () => {
+            this.setState({ items: this._getItemsFromOptionsMap(this.props.optionsMap) });
+        });
+
         initializeIcons();
     }
 
@@ -190,17 +198,6 @@ export class BadgeView
             </div>
         );
     }
-
-    public async componentDidMount(): Promise<void> {
-        this.props.currentCell.on("valueChanged", () => {
-            this.setState({ current: this.props.currentCell.get() });
-        });
-
-        this.props.optionsMap.on("valueChanged", () => {
-            this.setState({ items: this._getItemsFromOptionsMap(this.props.optionsMap) });
-        });
-    }
-
     public render(): JSX.Element {
         // Calculate colors
         const color = getColorFromString(this.state.current.iconProps.style.color);
