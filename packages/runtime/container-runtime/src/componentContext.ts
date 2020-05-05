@@ -496,7 +496,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
 
         // notify the runtime if they want to propagate up. Used for logging.
-        this.hostRuntime.notifyComponentInstantiated(this);
+        this.containerRuntime.notifyComponentInstantiated(this);
     }
 
     /**
