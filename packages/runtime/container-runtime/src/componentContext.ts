@@ -142,6 +142,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._containerRuntime;
     }
 
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    public get hostRuntime(): IContainerRuntime {
+        return this._containerRuntime;
+    }
+
     public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
     }
