@@ -659,7 +659,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.updateDocumentDirtyState(false);
+            // If we are not fully connected, then we have no clue if there are any pending ops
+            // to be resubmitted. Wait for "connected" event to get that info.
+            // Not ideal, but it's better to have false negatives then false positives.
+            // We will mark document clean on becoming "connected".
+            if (this.connected) {
+                this.updateDocumentDirtyState(false);
+            }
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
@@ -817,6 +823,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         assert(this.connectionState === value);
 
         if (value === ConnectionState.Connected) {
+            // Once we are connected, all acks are accounted.
+            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // we will switch back to dirty state in such case.
+            this.updateDocumentDirtyState(false);
+
             // Resend all pending attach messages prior to notifying clients
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
