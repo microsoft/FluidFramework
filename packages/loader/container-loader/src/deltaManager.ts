@@ -133,6 +133,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private closed = false;
     private connectionStartingTime: number = 0;
 
+    // track clientId used last time when we sent any ops
+    private lastSubmittedClientId: string | undefined;
+
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
 
@@ -369,7 +372,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         const fetchOpsFromStorage = args.fetchOpsFromStorage ?? true;
-        const requestedMode = args.mode ?? this.defaultReconnectionMode;
+        let requestedMode = args.mode ?? this.defaultReconnectionMode;
+
+        // if we have any non-acked ops from last connection, reconnect as "write".
+        // without that we would connect in view-only mode, which will result in immediate
+        // firing of "connected" event from Container and switch of current clientId (as tracked
+        // bu all DDSs). This will make it impossible to figure out if ops actually made it through,
+        // so DDss will immediately resubmit them, and some of them will be duplicates, corrupting document
+        if (this.clientSequenceNumberObserved !== this.clientSequenceNumber) {
+            requestedMode = "write";
+        }
 
         // Note: There is race condition here.
         // We want to issue request to storage as soon as possible, to
@@ -500,6 +512,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.readonly) {
             this.logger.sendErrorEvent({ eventName: "SubmitOpReadOnly", type });
             return -1;
+        }
+
+        // reset clientSequenceNumber if we are using new clientId.
+        // we keep info about old connection as long as possible to be able to account all non-acked ops
+        // that we pick up on next connection.
+        assert(this.connection);
+        if (this.lastSubmittedClientId !== this.connection?.details.clientId) {
+            this.lastSubmittedClientId = this.connection?.details.clientId;
+            this.clientSequenceNumber = 0;
+            this.clientSequenceNumberObserved = 0;
         }
 
         // Start adding trace for the op.
@@ -816,10 +838,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this._outbound.systemResume();
+        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on new connection");
 
-        this.clientSequenceNumber = 0;
-        this.clientSequenceNumberObserved = 0;
+        this._outbound.systemResume();
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
@@ -926,6 +947,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (!connection) {
             return;
         }
+
+        assert(this.messageBuffer.length === 0, "messageBuffer is not empty on disconnect");
 
         // Avoid any re-entrancy - clear object reference
         this.connection = undefined;
@@ -1066,7 +1089,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
 
-        if (this.connection && this.connection.details.clientId === message.clientId) {
+        if (this.lastSubmittedClientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
             assert(this.clientSequenceNumberObserved < clientSequenceNumber, "client seq# not growing");
