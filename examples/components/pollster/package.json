@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/pollster",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Example poll component",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -29,17 +29,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.2",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
-    "@microsoft/fluid-map": "^0.16.2",
-    "@microsoft/fluid-view-interfaces": "^0.16.2",
+    "@microsoft/fluid-aqueduct": "^0.16.3",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
+    "@microsoft/fluid-map": "^0.16.3",
+    "@microsoft/fluid-view-interfaces": "^0.16.3",
     "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.16.2",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.3",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

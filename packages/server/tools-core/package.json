@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-tools-core",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,14 +22,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.16.2",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
-    "@microsoft/fluid-container-definitions": "^0.16.2",
-    "@microsoft/fluid-map": "^0.16.2",
-    "@microsoft/fluid-merge-tree": "^0.16.2",
+    "@fluid-internal/client-api": "^0.16.3",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
+    "@microsoft/fluid-container-definitions": "^0.16.3",
+    "@microsoft/fluid-map": "^0.16.3",
+    "@microsoft/fluid-merge-tree": "^0.16.3",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-runtime-definitions": "^0.16.2",
-    "@microsoft/fluid-sequence": "^0.16.2",
+    "@microsoft/fluid-runtime-definitions": "^0.16.3",
+    "@microsoft/fluid-sequence": "^0.16.3",
     "async": "^2.6.1",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"

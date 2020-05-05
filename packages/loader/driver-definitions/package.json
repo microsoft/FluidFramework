@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-definitions",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Fluid driver definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/chat",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Fluid Framework Chat with minimal runtime",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,10 +27,10 @@
     "webpack": "webpack --env=\"production\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.2",
-    "@microsoft/fluid-container-definitions": "^0.16.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
+    "@microsoft/fluid-container-definitions": "^0.16.3",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-view-interfaces": "^0.16.2",
+    "@microsoft/fluid-view-interfaces": "^0.16.3",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.16.2",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.3",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.4",
     "@types/request": "^2.47.1",
