@@ -131,7 +131,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     private closed = false;
-    private connectionStartingTime: number = 0;
 
     // track clientId used last time when we sent any ops
     private lastSubmittedClientId: string | undefined;
@@ -403,8 +402,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (!docService) {
             throw new Error("Container is not attached");
         }
-
-        this.connectionStartingTime = performanceNow();
 
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
