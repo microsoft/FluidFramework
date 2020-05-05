@@ -38,21 +38,22 @@ const localComponents = [
 export type WaterParkCompatibleView =
     IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
 
+const defaultComponents = [
+    "@fluid-example/todo",
+    "@fluid-example/math",
+    "@fluid-example/monaco",
+    "@fluid-example/image-collection",
+    "@fluid-example/pond",
+    "@fluid-example/clicker",
+    "@fluid-example/primitives",
+    "@fluid-example/table-view",
+];
+
 /**
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLView, SpacesCompatibleToolbar {
-    private static readonly defaultComponents = [
-        "@fluid-example/todo",
-        "@fluid-example/math",
-        "@fluid-example/monaco",
-        "@fluid-example/image-collection",
-        "@fluid-example/pond",
-        "@fluid-example/clicker",
-        "@fluid-example/primitives",
-        "@fluid-example/table-view",
-    ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
     private viewComponentP: Promise<WaterParkCompatibleView> | undefined;
 
@@ -73,10 +74,6 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     public render(element: HTMLElement) {
-        if (element === undefined) {
-            return;
-        }
-
         if (this.savedElement !== undefined) {
             // eslint-disable-next-line no-null/no-null
             while (this.savedElement.firstChild !== null) {
@@ -98,7 +95,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
             // When locally developing, want to load the latest available patch version by default
             const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
-            ExternalComponentLoader.defaultComponents.forEach((url) => {
+            defaultComponents.forEach((url) => {
                 const option = document.createElement("option");
                 option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);

@@ -130,7 +130,9 @@ export class SpacesDataModel extends EventEmitter
         this.componentSubDirectory.set(id, model);
     }
 
+    // Needs to return something that can be handled by a ReactViewAdapter.  View doesn't really care how it got there.
     public async getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined> {
+        // handle gets the data model for the component.  But the ISpacesModel could include a view...?
         return this.componentSubDirectory.get<ISpacesModel>(id)?.handle.get() as Promise<T>;
     }
 

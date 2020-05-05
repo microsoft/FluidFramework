@@ -75,6 +75,8 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 }
 
 const generateFactory = () => {
+    // create a matching registry of type -> view type?  Import all view types above?
+    // have to set the view registry on the dataModel though, so it can respond to getComponent() calls?
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
             type: "clicker",
