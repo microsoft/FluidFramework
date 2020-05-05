@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 // eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -213,7 +213,7 @@ export class CreationServerMessagesHandler {
      */
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: "",
+            clientId: null as any,
             clientSequenceNumber: -1,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
