@@ -13,7 +13,7 @@ describe("Routerlicious Host", () => {
     describe("UrlResolver", () => {
         let axiosMock: Partial<AxiosInstance> & { failPost?: boolean };
 
-        it.only("resolve should be retryable", async () => {
+        it("resolve should be retryable", async () => {
             axiosMock = {
                 post: async () => {
                     if (axiosMock.failPost) {
