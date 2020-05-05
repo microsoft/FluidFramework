@@ -97,7 +97,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
-        await this.resetCheckpointOnEpochTick(
+        const newCheckpoint = await this.resetCheckpointOnEpochTick(
             tenantId,
             documentId,
             gitManager,
@@ -111,7 +111,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             context,
             tenantId,
             documentId,
-            lastCheckpoint,
+            newCheckpoint,
             dbObject,
             // It probably shouldn't take the collection - I can manage that
             this.collection,
@@ -169,33 +169,42 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         gitManager: IGitManager,
         logger: ILogger,
         checkpoint: IDeliCheckpoint,
-        leaderEpoch: number) {
-        if (checkpoint.epoch !== undefined && checkpoint.term !== undefined) {
-            if (leaderEpoch !== checkpoint.epoch) {
+        leaderEpoch: number): Promise<IDeliCheckpoint> {
+        let newCheckpoint = checkpoint;
+        if (newCheckpoint.epoch !== undefined && newCheckpoint.term !== undefined) {
+            if (leaderEpoch !== newCheckpoint.epoch) {
                 const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
                 if (lastSummaryState === undefined) {
-                    checkpoint.epoch = leaderEpoch;
+                    newCheckpoint.epoch = leaderEpoch;
                 } else {
-                    checkpoint.epoch = leaderEpoch;
-                    checkpoint.term = lastSummaryState.term + 1;
-                    checkpoint.sequenceNumber = lastSummaryState.sequenceNumber;
-                    checkpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
+                    newCheckpoint = lastSummaryState;
+                    newCheckpoint.epoch = leaderEpoch;
+                    ++newCheckpoint.term;
+                    newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
                     // Now create the summary.
-                    await this.createSummaryWithLatestTerm(gitManager, checkpoint, documentId);
+                    await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
+                    logger.info(`Created a summary on epoch tick`);
                 }
             }
         } else {
             // Back-compat for old documents.
-            checkpoint.epoch = leaderEpoch;
-            checkpoint.term = 1;
-            checkpoint.durableSequenceNumber = checkpoint.sequenceNumber;
+            newCheckpoint.epoch = leaderEpoch;
+            newCheckpoint.term = 1;
+            newCheckpoint.durableSequenceNumber = newCheckpoint.sequenceNumber;
         }
+        return newCheckpoint;
     }
 
     private async createSummaryWithLatestTerm(
         gitManager: IGitManager,
         checkpoint: IDeliCheckpoint,
         documentId: string) {
+        const [lastCommit, scribeContent] = await Promise.all([
+            gitManager.getCommit(this.existingRef.object.sha),
+            gitManager.getContent(this.existingRef.object.sha, ".serviceProtocol/scribe")]);
+
+        const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
+
         const serviceProtocolEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
@@ -207,28 +216,43 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 },
             },
         ];
-        const lastCommit = await gitManager.getCommit(this.existingRef.object.sha);
-        const [deliTree, lastSummaryTree] = await Promise.all([
+        serviceProtocolEntries.push(
+            {
+                mode: FileMode.File,
+                path: "scribe",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: scribe,
+                    encoding: "utf-8",
+                },
+            },
+        );
+
+        const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             // eslint-disable-next-line no-null/no-null
             gitManager.createTree({ entries: serviceProtocolEntries, id: null }),
             gitManager.getTree(lastCommit.tree.sha, false),
         ]);
-        // Add/update new deli tree
-        const newTreeEntries = lastSummaryTree.tree.map((value) => {
-            const createTreeEntry: ICreateTreeEntry = {
-                mode: value.mode,
-                path: value.path,
-                sha: value.sha,
-                type: value.type,
-            };
-            return createTreeEntry;
-        });
+
+        const newTreeEntries = lastSummaryTree.tree
+            .filter((value) => value.path !== ".serviceProtocol")
+            .map((value) => {
+                const createTreeEntry: ICreateTreeEntry = {
+                    mode: value.mode,
+                    path: value.path,
+                    sha: value.sha,
+                    type: value.type,
+                };
+                return createTreeEntry;
+            });
+
         newTreeEntries.push({
             mode: FileMode.Directory,
-            path: ".serviceProtocol/deli",
-            sha: deliTree.sha,
+            path: ".serviceProtocol",
+            sha: serviceProtocolTree.sha,
             type: "tree",
         });
+
         const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
             author: {
