@@ -16,7 +16,8 @@ import {
     ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import { ITreeEntry, TreeEntry, FileMode } from "@microsoft/fluid-protocol-definitions";
+import { generateServiceProtocolEntries } from "@microsoft/fluid-protocol-base";
+import { FileMode } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
@@ -204,29 +205,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             gitManager.getContent(this.existingRef.object.sha, ".serviceProtocol/scribe")]);
 
         const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
-
-        const serviceProtocolEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "deli",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(checkpoint),
-                    encoding: "utf-8",
-                },
-            },
-        ];
-        serviceProtocolEntries.push(
-            {
-                mode: FileMode.File,
-                path: "scribe",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: scribe,
-                    encoding: "utf-8",
-                },
-            },
-        );
+        const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             // eslint-disable-next-line no-null/no-null

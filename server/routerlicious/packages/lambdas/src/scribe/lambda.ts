@@ -8,6 +8,7 @@
 import * as assert from "assert";
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
+    generateServiceProtocolEntries,
     IQuorumSnapshot,
     ProtocolOpHandler,
     getQuorumTreeEntries,
@@ -400,7 +401,7 @@ export class ScribeLambda extends SequencedLambda {
         const logTailEntries = await this.generateLogtailEntries(sequenceNumber, summarySequenceNumber + 1);
 
         // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+        const serviceProtocolEntries = generateServiceProtocolEntries(
             op.additionalContent,
             JSON.stringify(checkpoint));
 
@@ -469,7 +470,7 @@ export class ScribeLambda extends SequencedLambda {
         const logTailEntries = await this.generateLogtailEntries(this.protocolHead, sequenceNumber + 1);
 
         // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+        const serviceProtocolEntries = generateServiceProtocolEntries(
             serviceContent,
             JSON.stringify(checkpoint));
 
@@ -565,33 +566,6 @@ export class ScribeLambda extends SequencedLambda {
             },
         ];
         return logTailEntries;
-    }
-
-    private generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[] {
-        const serviceProtocolEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "deli",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: deli,
-                    encoding: "utf-8",
-                },
-            },
-        ];
-
-        serviceProtocolEntries.push(
-            {
-                mode: FileMode.File,
-                path: "scribe",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: scribe,
-                    encoding: "utf-8",
-                },
-            },
-        );
-        return serviceProtocolEntries;
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {
