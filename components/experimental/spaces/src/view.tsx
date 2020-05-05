@@ -107,18 +107,26 @@ export const SpacesGridView: React.FunctionComponent<ISpacesGridViewProps> =
         });
 
         React.useEffect(() => {
-            props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
+            const onComponentListChanged = (newMap: Map<string, Layout>) => {
                 setComponentMap(newMap);
                 if (props.dataModel.getComponentToolbar() === undefined) {
                     setEditable(props.dataModel.componentList.size === 0);
                 }
-            });
+            };
+            props.dataModel.on("componentListChanged", onComponentListChanged);
+            return () => {
+                props.dataModel.off("componentListChanged", onComponentListChanged);
+            };
         });
 
         React.useEffect(() => {
-            props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
+            const onEditableUpdated = (isEditable?: boolean) => {
                 setEditable(isEditable || !editable);
-            });
+            };
+            props.dataModel.on("editableUpdated", onEditableUpdated);
+            return () => {
+                props.dataModel.off("editableUpdated", onEditableUpdated);
+            };
         });
 
         const onGridChangeEvent = (
