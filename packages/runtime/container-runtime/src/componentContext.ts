@@ -502,6 +502,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+
+        // notify the runtime if they want to propagate up. Used for logging.
+        this.containerRuntime.notifyComponentInstantiated(this);
     }
 
     /**

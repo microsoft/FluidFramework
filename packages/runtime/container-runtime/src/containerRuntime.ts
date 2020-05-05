@@ -910,6 +910,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return componentContext.realize();
     }
 
+    public notifyComponentInstantiated(componentContext: IComponentContext) {
+        const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
+        const registryPath =
+            `/${componentContext.packagePath.slice(0,componentContext.packagePath.length - 1).join("/")}`;
+        this.emit("componentInstantiated", componentPkgName, registryPath, !componentContext.existing);
+    }
+
     public setFlushMode(mode: FlushMode): void {
         if (mode === this._flushMode) {
             return;

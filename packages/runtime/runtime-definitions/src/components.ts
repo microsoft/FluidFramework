@@ -431,6 +431,10 @@ export interface IContainerRuntime extends
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(
+        event: "componentInstantiated",
+        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+    ): this;
 
     /**
      * Returns the runtime of the component.
@@ -505,6 +509,11 @@ export interface IContainerRuntime extends
      * pending local changes. All pending changes are automatically flushed by shared objects on connection.
      */
     notifyPendingMessages(): void;
+
+    /**
+     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     */
+    notifyComponentInstantiated(componentContext: IComponentContext): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
