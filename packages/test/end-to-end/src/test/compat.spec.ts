@@ -12,6 +12,7 @@ import {
 import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 import * as old from "./oldVersion";
@@ -62,7 +63,7 @@ describe("loader/runtime compatibility", () => {
     };
 
     async function createContainer(
-        factory: IRuntimeFactory,
+        factory: IRuntimeFactory | IComponentFactory,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<Container> {
         const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
@@ -70,7 +71,7 @@ describe("loader/runtime compatibility", () => {
     }
 
     async function createOldContainer(
-        factory: IRuntimeFactory,
+        factory: IRuntimeFactory | IComponentFactory,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<old.Container> {
         const loader = old.createLocalLoader([[ codeDetails, factory ]] as any, deltaConnectionServer);
@@ -119,6 +120,24 @@ describe("loader/runtime compatibility", () => {
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainer(
                 OldTestComponent.runtimeFactory as unknown as IRuntimeFactory,
+                this.deltaConnectionServer);
+            this.component = await getComponent<OldTestComponent>("default", this.container);
+            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
+        });
+
+        tests();
+
+        afterEach(async function() {
+            await this.deltaConnectionServer.webSocketServer.close();
+        });
+    });
+
+    describe("new ContainerRuntime, old ComponentRuntime", function() {
+        beforeEach(async function() {
+            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
+            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
+            this.container = await createContainer(
+                OldTestComponent.componentFactory as unknown as IComponentFactory,
                 this.deltaConnectionServer);
             this.component = await getComponent<OldTestComponent>("default", this.container);
             this.containerDeltaEventManager.registerDocuments(this.component._runtime);
