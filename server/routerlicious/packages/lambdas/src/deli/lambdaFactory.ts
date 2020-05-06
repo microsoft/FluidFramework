@@ -34,6 +34,10 @@ export const ActivityCheckingTimeout = 30 * 1000;
 // Timeout for sending consolidated no-ops.
 export const NoopConsolidationTimeout = 250;
 
+// Epoch should never tick in our current setting. This flag is just for being extra cautious.
+// TODO: Remove when everything is up to date.
+const FlipTerm = false;
+
 const getDefaultCheckpooint = (epoch: number): IDeliCheckpoint => {
     return {
         branchMap: undefined,
@@ -98,14 +102,16 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
-        const newCheckpoint = await this.resetCheckpointOnEpochTick(
-            tenantId,
-            documentId,
-            gitManager,
-            context.log,
-            lastCheckpoint,
-            leaderEpoch,
-        );
+        const newCheckpoint = FlipTerm ?
+            await this.resetCheckpointOnEpochTick(
+                tenantId,
+                documentId,
+                gitManager,
+                context.log,
+                lastCheckpoint,
+                leaderEpoch,
+            ) :
+            lastCheckpoint;
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         return new DeliLambda(
