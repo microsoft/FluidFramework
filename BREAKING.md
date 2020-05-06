@@ -6,7 +6,7 @@
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
 - [ConsensusRegisterCollection able to store handles not SharedObjects](#ConsensusRegisterCollection-able-to-store-handles-not-SharedObjects)
-- [App Id removed as a parameter to OdspDocumentServiceFactory](App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
+- [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
 
 ### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
 
