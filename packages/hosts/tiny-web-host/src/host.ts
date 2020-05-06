@@ -231,7 +231,6 @@ export async function loadIFramedFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis = { getToken: async () => Promise.resolve("") },
-    clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<void> {
     let scriptUrl: string;
