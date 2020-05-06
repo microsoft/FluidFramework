@@ -148,6 +148,11 @@ export async function start(
     textArea: HTMLTextAreaElement,
     attached: boolean,
 ): Promise<void> {
+    div.style.width = "100%";
+    div.style.minHeight = "100vh";
+    div.style.display = "flex";
+    div.style.position = "relative";
+
     let finalDocId = documentId;
     if (attached) {
         attachButton.style.display = "none";

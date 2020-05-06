@@ -29,7 +29,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
 // available when running on localhost.
 const localComponents = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
+    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
 /**
