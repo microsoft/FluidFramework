@@ -74,8 +74,9 @@ export function create(
     /**
      * Creates a new tenant
      */
-    router.post("/tenants", (request, response) => {
-        const tenantP = manager.createTenant();
+    router.post("/tenants/:id?", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const tenantP = manager.createTenant(tenantId);
         returnResponse(tenantP, response);
     });
 

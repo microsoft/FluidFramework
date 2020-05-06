@@ -33,7 +33,6 @@
     "@microsoft/fluid-framework-interfaces": "^0.17.0",
     "@microsoft/fluid-map": "^0.17.0",
     "@microsoft/fluid-runtime-definitions": "^0.17.0",
-    "@microsoft/fluid-shared-object-base": "^0.17.0",
     "@microsoft/fluid-view-interfaces": "^0.17.0",
     "@types/node": "^10.14.6"
   },
