@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { getGitType } from "@microsoft/fluid-protocol-base";
-import { getDocAttributesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
+import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@microsoft/fluid-driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IOdspResolvedUrl,
@@ -63,7 +63,7 @@ export async function createNewFluidFile(
     }
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", 710, false);
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameErrorCode, false);
     }
     let containerSnapshot: ISnapshotTree | undefined;
     if (createNewSummary) {

@@ -34,6 +34,9 @@ export enum OnlineStatus {
     Unknown,
 }
 
+// Status code for invalid file name error in odsp driver.
+export const invalidFileNameErrorCode: number = 710;
+
 // It tells if we have local connection only - we might not have connection to web.
 // No solution for node.js (other than resolve dns names / ping specific sites)
 // Can also use window.addEventListener("online" / "offline")
@@ -62,8 +65,9 @@ class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError
 }
 
 /**
- * AuthorizationError error class -
- * used to communicate Unauthorized/Forbidden error responses(maybe due to expired token) from the server
+ * AuthorizationError error class - used to communicate Unauthorized/Forbidden error responses
+ * (maybe due to expired token) from the server. Almost all of these cases is because user does
+ * not have permissions.
  */
 class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
     readonly errorType: ErrorType.authorizationError = ErrorType.authorizationError;
@@ -184,7 +188,7 @@ export function createNetworkError(
     if (statusCode === 507) {
         return new OutOfStorageError(errorMessage, statusCode, canRetry, online);
     }
-    if (statusCode === 414 || statusCode === 710) {
+    if (statusCode === 414 || statusCode === invalidFileNameErrorCode) {
         return new InvalidFileNameError(errorMessage, statusCode, canRetry, online);
     }
     if (retryAfterSeconds !== undefined) {
