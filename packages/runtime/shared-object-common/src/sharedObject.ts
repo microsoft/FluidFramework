@@ -303,6 +303,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
     ): Promise<T> {
         return new Promise((resolve, reject) => {
+            if (this.runtime.disposed) {
+                reject("Preparing to wait for an op to be acked with a disposed ComponentRuntime");
+            }
+
             (this.runtime).on(
                 "dispose",
                 () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending")));
