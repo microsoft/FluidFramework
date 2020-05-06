@@ -631,6 +631,12 @@ export class Container
         return this.context!.hasNullRuntime();
     }
 
+    public async requestUrl(request: IRequest): Promise<IResponse> {
+        const exp = this.urlResolver as IExperimentalUrlResolver;
+        assert(exp.isExperimentalUrlResolver);
+        return exp.requestUrl(this.resolvedUrl!, request);
+    }
+
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
             this.deltaManager.inbound.systemPause(),

@@ -224,6 +224,8 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      * back-compat: 0.14 uploadSummary
      */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
+
+    requestUrl(request: IRequest): Promise<IResponse>;
 }
 
 export interface IExperimentalContainerContext extends IContainerContext {

@@ -1300,6 +1300,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return summaryTree;
     }
 
+    public async requestUrl(request: IRequest): Promise<IResponse> {
+        return this.context.requestUrl(request);
+    }
+
     private async generateSummary(
         fullTree: boolean = false,
         safe: boolean = false,

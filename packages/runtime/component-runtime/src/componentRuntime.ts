@@ -567,6 +567,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.error(error);
     }
 
+    public async requestUrl(request: IRequest): Promise<IResponse> {
+        return this.componentContext.requestUrl(request);
+    }
+
     /**
      * Attach channel should only be called after the componentRuntime has been attached
      */

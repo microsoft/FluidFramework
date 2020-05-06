@@ -193,6 +193,8 @@ export interface IComponentRuntime extends
      * Errors raised by distributed data structures
      */
     error(err: any): void;
+
+    requestUrl(request: IRequest): Promise<IResponse>;
 }
 
 export interface IExperimentalComponentRuntime extends IComponentRuntime {
@@ -352,6 +354,8 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
+
+    requestUrl(request: IRequest): Promise<IResponse>
 }
 
 export interface IExperimentalComponentContext extends IComponentContext {
@@ -548,6 +552,8 @@ export interface IContainerRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+
+    requestUrl(request: IRequest): Promise<IResponse>;
 }
 
 export interface IExperimentalContainerRuntime extends IContainerRuntime {

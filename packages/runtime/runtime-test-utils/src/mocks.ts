@@ -44,6 +44,7 @@ import {
     IDeltaHandler,
     IObjectStorageService,
     ISharedObjectServices,
+    IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
@@ -320,6 +321,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
  */
 export class MockRuntime extends EventEmitter
     implements IComponentRuntime, IComponentHandleContext {
+    IComponentRegistry?: IComponentRegistry;
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -460,6 +462,14 @@ export class MockRuntime extends EventEmitter
     }
 
     public error(err: any): void { }
+
+    public async requestUrl(request: IRequest): Promise<IResponse> {
+        return {
+            status: 200,
+            value: `http://localhost/${request.url}`,
+            mimeType: "text/plain",
+        };
+    }
 }
 
 /**

@@ -274,6 +274,9 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     public hasNullRuntime() {
         return this.runtime! instanceof NullRuntime;
     }
+    public async requestUrl(request: IRequest): Promise<IResponse> {
+        return this.container.requestUrl(request);
+    }
 
     private async load() {
         this.runtime = await this.chaincode.instantiateRuntime(this);
