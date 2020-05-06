@@ -18,7 +18,6 @@ export const getOrigin = (url: string) => new URL(url).origin;
  * @param itemId -The SPO item id that this request should be made against
  * @param siteUrl - The SPO site that this request should be made against
  * @param path - The API path that is relevant to this request
- * @param additionalParams - Additional URL parameters to append to this request
  * @param method - The type of request, such as GET or POST
  * @param retryPolicy - A strategy for re-attempting failed requests
  * @param nameForLogging - A name to use in the logs for this request
@@ -45,10 +44,11 @@ export async function fetchJoinSession(
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
-            const queryParams = `access_token=${token}`;
+            let queryParams = `access_token=${token}`;
             let headers = {};
             if (queryParams.length > 2048) {
                 headers = { Authorization: `Bearer ${token}` };
+                queryParams = ''
             }
 
             const response = await fetchHelper(
