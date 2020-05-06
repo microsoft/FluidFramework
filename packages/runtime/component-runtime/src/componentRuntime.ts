@@ -79,7 +79,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         componentRegistry?: IComponentRegistry,
     ): ComponentRuntime {
-        const logger = ChildLogger.create(context.containerRuntime.logger, undefined, { componentId: context.id });
+        const containerRuntime = context.containerRuntime === undefined
+            ? context.hostRuntime : context.containerRuntime;
+        context.containerRuntime = containerRuntime;
+        const logger = ChildLogger.create(containerRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
