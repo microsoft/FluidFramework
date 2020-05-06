@@ -19,9 +19,9 @@
     "webpack:dev": "npm run dev"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-sequence": "^0.16.0",
+    "@microsoft/fluid-aqueduct": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
+    "@microsoft/fluid-sequence": "^0.17.0",
     "@types/react": "^16.9.23",
     "@uifabric/date-time": "^7.8.35",
     "office-ui-fabric-react": "^7.89.0",
@@ -31,7 +31,7 @@
     "redux": "^4.0.5"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.16.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.17.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.5",
     "ts-loader": "^4.5.0",
