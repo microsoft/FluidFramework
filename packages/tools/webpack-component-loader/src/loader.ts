@@ -177,14 +177,14 @@ export async function start(
         attachButton.innerText = "Attach Container";
         attachDiv.append(attachButton);
         document.body.prepend(attachDiv);
-        attachButton.onclick = async () => {
-            await container1.attach(urlResolver.createRequestForCreateNew(documentId))
-                .then(async () => {
+        attachButton.onclick = () => {
+            container1.attach(urlResolver.createRequestForCreateNew(documentId))
+                .then(() => {
                     container1Attached.resolve();
                     attachDiv.remove();
                     window.location.hash = "";
                 }, (error) => {
-                    throw new Error(error);
+                    console.error(error);
                 });
         };
     } else {

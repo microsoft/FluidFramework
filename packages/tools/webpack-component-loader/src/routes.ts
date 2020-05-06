@@ -174,9 +174,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return;
             }
         }
-        if (req.params.id === "create") {
-            req.params.openMode = "detached";
-        }
+
         fluid(req, res, baseDir, options);
     });
 };
