@@ -64,8 +64,8 @@ export class Spaces extends PrimedComponent implements
     public get IComponentCollectorSpaces() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
-        this.dataModel.setComponentToolbar(id, type, toolbarComponent);
+    public setToolbarComponent(toolbarComponent: SpacesCompatibleToolbar) {
+        this.dataModel.setComponentToolbar(toolbarComponent);
     }
 
     /**
@@ -93,10 +93,7 @@ export class Spaces extends PrimedComponent implements
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
         const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        this.setComponentToolbar(
-            componentToolbar.url,
-            ComponentToolbarName,
-            componentToolbar);
+        this.setToolbarComponent(componentToolbar);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {

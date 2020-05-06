@@ -99,6 +99,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
         const [componentMap, setComponentMap] = React.useState<Map<string, Layout>>(props.dataModel.componentList);
 
+        // Editable is a view-only concept; SpacesView is the authority.
         const combinedToolbarCallbacks = props.toolbarCallbacks;
         combinedToolbarCallbacks.getEditable = () => editable;
         combinedToolbarCallbacks.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);

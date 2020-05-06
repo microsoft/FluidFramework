@@ -21,5 +21,5 @@ export interface IProvideComponentToolbarConsumer {
  * other interfaces such as IComponentToolbar.
  */
 export interface IComponentToolbarConsumer extends IProvideComponentToolbarConsumer {
-    setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;
+    setToolbarComponent(toolbarComponent: SpacesCompatibleToolbar): void;
 }

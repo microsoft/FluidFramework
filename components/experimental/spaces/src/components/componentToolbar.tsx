@@ -15,7 +15,6 @@ import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
-import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     IContainerComponentDetails,
@@ -86,7 +85,6 @@ export class ComponentToolbar extends PrimedComponent
         ReactDOM.render(
             <ComponentToolbarView
                 callbacks={this.callbacks}
-                root={this.root}
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 supportedComponentList={this.supportedComponentList!}
             />,
@@ -98,7 +96,6 @@ export class ComponentToolbar extends PrimedComponent
 interface IComponentToolbarViewProps {
     callbacks: IComponentCallbacks;
     supportedComponentList: IContainerComponentDetails[];
-    root: ISharedDirectory;
 }
 
 interface IComponentToolbarViewState {

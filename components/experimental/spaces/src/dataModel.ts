@@ -19,7 +19,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
-    setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;
+    setComponentToolbar(toolbarComponent: SpacesCompatibleToolbar): void;
     getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined>;
     updateGridItem(id: string, newLayout: Layout): void;
     getModels(): ISpacesModel[];
@@ -88,13 +88,9 @@ export class SpacesDataModel extends EventEmitter
         });
     }
 
-    public setComponentToolbar(
-        url: string,
-        type: string,
-        toolbarComponent: SpacesCompatibleToolbar,
-    ): void {
+    public setComponentToolbar(toolbarComponent: SpacesCompatibleToolbar): void {
         if (toolbarComponent.handle === undefined) {
-            throw new Error(`Toolbar component must have a handle: ${type}`);
+            throw new Error(`Toolbar component must have a handle.`);
         }
         this.root.set(ComponentToolbarKey, toolbarComponent.handle);
     }
