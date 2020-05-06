@@ -16,18 +16,18 @@ This is an npm package containing a lightweight express server. It will be run f
 1) Make sure your root .npmrc contains the following line:
 @microsoft:registry=https://packages.wu2.prague.office-int.com
 @microsoft:always-auth=true
-Alternatively, you can also install the package from the bohemia-intercept/reroute-server package if you do not have access to the feed.
+Alternatively, you can also install the package from the fluidpreview-intercept/reroute-server package if you do not have access to the feed.
 
 2) Open Google Chrome, navigate to Settings -> Extensions
     a) Enable the "Developer mode" toggle on the top right corner of the page
-    b) Click on "Load unpacked", navigate to the bohemia-intercept/chrome-extension folder in this package, click on Select Folder to load in the extension.
+    b) Click on "Load unpacked", navigate to the fluidpreview-intercept/chrome-extension folder in this package, click on Select Folder to load in the extension.
     c) Observe the discolored Fluid waterdrop icon on the top right Extension bar to indicate that your extension was installed.
 
 NOTE: This step only needs to be run once for all of your components as it is just loading the Fluid intercept extension to your browser. The next two to be run from your component directory, and will need to be run again when loading a different component from its respective directory.
 
 3) Run the following commands in your new Fluid component's package directory:
-npm i -g @microsoft/bohemia-intercept-reroute-server
-bohemia-intercept-reroute-server
+npm i -g @microsoft/fluidpreview-intercept-reroute-server
+fluidpreview-intercept-reroute-server
 
 4) On another terminal window, start your Fluid component locally as per normal:
 npm run start
