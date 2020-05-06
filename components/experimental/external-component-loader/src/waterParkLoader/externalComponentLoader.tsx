@@ -93,7 +93,7 @@ export class ExternalComponentLoader extends PrimedComponent
         ReactDOM.render(
             <ExternalComponentLoaderToolbar
                 componentUrls={ componentUrls }
-                onSelectOption={ this.tryAddComponent }
+                onSelectOption={ this.createAndAddComponent }
                 toggleEditable={ this.toggleEditable }
             />,
             element,
@@ -109,24 +109,8 @@ export class ExternalComponentLoader extends PrimedComponent
         }
     }
 
-    private readonly toggleEditable = () => {
-        if (this.callbacks?.setEditable !== undefined) {
-            this.callbacks.setEditable();
-        }
-    };
-
-    private readonly tryAddComponent = async (componentUrl: string) => {
-        if (this.viewComponentP === undefined) {
-            throw new Error("View component promise not set!!");
-        }
-
-        const viewComponent = await this.viewComponentP;
-        if (viewComponent.IComponentCollectorSpaces === undefined
-            || this.runtime.IComponentRegistry === undefined) {
-            throw new Error("View component is empty or is not an IComponentCollector!!");
-        }
-
-        const urlReg = await this.runtime.IComponentRegistry.get("url");
+    private async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
+        const urlReg = await this.runtime.IComponentRegistry?.get("url");
         if (urlReg?.IComponentRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
         }
@@ -163,9 +147,30 @@ export class ExternalComponentLoader extends PrimedComponent
         componentRuntime.attach();
         if (component.IComponentCollection !== undefined) {
             component = component.IComponentCollection.createCollectionItem();
+            if (component.IComponentLoadable === undefined) {
+                throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
+            }
         }
+
+        return component.IComponentLoadable;
+    }
+
+    private readonly toggleEditable = () => {
+        if (this.callbacks?.setEditable !== undefined) {
+            this.callbacks.setEditable();
+        }
+    };
+
+    private readonly createAndAddComponent = async (componentUrl: string) => {
+        if (this.viewComponentP === undefined) {
+            throw new Error("View component promise not set!!");
+        }
+        const viewComponent = await this.viewComponentP;
+
+        const newComponent = await this.createComponentFromUrl(componentUrl);
+
         viewComponent.IComponentCollectorSpaces.addItem({
-            component: component as IComponent & IComponentLoadable,
+            component: newComponent,
             type: componentUrl,
         });
     };
