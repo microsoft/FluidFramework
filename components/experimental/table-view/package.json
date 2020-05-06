@@ -39,7 +39,6 @@
     "@fluid-example/table-document": "^0.17.0",
     "@microsoft/fluid-aqueduct": "^0.17.0",
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-runtime-definitions": "^0.17.0",
     "@microsoft/fluid-view-interfaces": "^0.17.0"
   },
   "devDependencies": {
