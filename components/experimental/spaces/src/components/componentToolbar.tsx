@@ -21,7 +21,6 @@ import {
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
-    IComponentToolbar,
     InternalRegistry,
     Templates,
 } from "..";
@@ -47,10 +46,9 @@ initializeIcons();
  * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks>, IComponentToolbar {
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
-    public get IComponentToolbar() { return this; }
 
     private callbacks: IComponentCallbacks = {};
 
@@ -75,19 +73,6 @@ export class ComponentToolbar extends PrimedComponent
                     .getFromCapability("IComponentHTMLView");
             }
         }
-    }
-
-    public setEditable(isEditable: boolean) {
-        this.root.set("isEditable", isEditable);
-    }
-
-    public setTemplatesVisible(isVisible: boolean) {
-        this.root.set("isTemplateVisible", isVisible);
-    }
-
-    protected async componentInitializingFirstTime() {
-        this.root.set("isEditable", true);
-        this.root.set("isTemplateVisible", false);
     }
 
     public setComponentCallbacks(callbacks: IComponentCallbacks) {
@@ -129,12 +114,15 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     constructor(props: IComponentToolbarViewProps) {
         super(props);
         this.supportedComponentList = props.supportedComponentList;
-        const editable = props.callbacks.getEditable !== undefined ? props.callbacks.getEditable() : false;
+        const isEditable = props.callbacks.getEditable !== undefined ? props.callbacks.getEditable() : false;
+        const isTemplateVisible = props.callbacks.shouldShowTemplates !== undefined
+            ? props.callbacks.shouldShowTemplates()
+            : false;
         this.state = {
-            isEditable: editable,
+            isEditable,
             isComponentListOpen: false,
             isTemplateListOpen: false,
-            isTemplateVisible: props.root.get("isTemplateVisible"),
+            isTemplateVisible,
         };
     }
 

@@ -11,8 +11,12 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentCallable>> { }
 }
 
+/**
+ * IComponentCallbacks are all callbacks that a toolbar using Spaces might want to have.
+ */
 export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
+    shouldShowTemplates?(): boolean;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
     getEditable?(): boolean;

@@ -35,7 +35,6 @@ export class Spaces extends PrimedComponent implements
     IProvideComponentCollectorSpaces
 {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private componentToolbar: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
@@ -67,7 +66,6 @@ export class Spaces extends PrimedComponent implements
 
     public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
         this.dataModel.setComponentToolbar(id, type, toolbarComponent);
-        this.componentToolbar = toolbarComponent;
     }
 
     /**
@@ -84,6 +82,7 @@ export class Spaces extends PrimedComponent implements
                         console.error(`Error while creating component: ${type}`, error);
                     });
             },
+            shouldShowTemplates: () => this.registryDetails?.IComponentRegistryTemplates !== undefined,
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),
         };
@@ -94,7 +93,6 @@ export class Spaces extends PrimedComponent implements
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
         const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        componentToolbar.setEditable(true);
         this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
@@ -108,16 +106,10 @@ export class Spaces extends PrimedComponent implements
 
     protected async componentInitializingFromExisting() {
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
 
     protected async componentHasInitialized() {
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
-        if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.setTemplatesVisible(
-                this.registryDetails?.IComponentRegistryTemplates !== undefined,
-            );
-        }
     }
 
     private initializeDataModel() {
@@ -125,7 +117,7 @@ export class Spaces extends PrimedComponent implements
     }
 
     private async addTemplateFromRegistry(template: Templates) {
-        if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
+        if (this.registryDetails?.IComponentRegistryTemplates !== undefined) {
             const componentRegistryEntries = this.registryDetails.IComponentRegistryTemplates
                 .getFromTemplate(template);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
