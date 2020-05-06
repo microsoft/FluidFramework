@@ -1245,6 +1245,7 @@ export class Container
     private setConnectionState(
         value: ConnectionState,
         reason: string) {
+        assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1280,7 +1281,6 @@ export class Container
             this.messageCountAfterDisconnection = 0;
         }
 
-        assert(this._connectionState !== ConnectionState.Connecting);
         const state = this._connectionState === ConnectionState.Connected;
         this.context!.changeConnectionState(state, this.clientId);
         this.protocolHandler!.quorum.changeConnectionState(
