@@ -51,7 +51,7 @@ export class ClientSequenceNumberManager {
         const clients: IClientSequenceNumber[] = [];
         for (const [, value] of this.clientNodeMap) {
             const source = value.value;
-            clients.push({...source});
+            clients.push({ ...source });
         }
         return clients;
     }
