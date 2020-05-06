@@ -51,8 +51,7 @@ export class ClientSequenceNumberManager {
         const clients: IClientSequenceNumber[] = [];
         for (const [, value] of this.clientNodeMap) {
             const source = value.value;
-            const copy = Object.assign({}, source);
-            clients.push(copy);
+            clients.push({...source});
         }
         return clients;
     }
