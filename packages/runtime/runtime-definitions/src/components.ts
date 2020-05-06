@@ -82,7 +82,7 @@ export interface IComponentRuntime extends
     isAttached: boolean;
 
     on(event: "disconnected" | "dispose", listener: () => void): this;
-    on(event: "connected" | "leader" | "noleader", listener: (clientId: string) => void): this;
+    on(event: "connected" | "leader" | "notleader", listener: (clientId: string) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
 
@@ -432,7 +432,7 @@ export interface IContainerRuntime extends
         event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
         listener: () => void): this;
     on(
-        event: "connected" | "leader" | "noleader",
+        event: "connected" | "leader" | "notleader",
         listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;

@@ -73,6 +73,18 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
+    // Back-compat: supporting <= 0.16 clients
+    public on(event: "leader" | "notleader", listener: () => void) {
+        this.hostRuntime.on(event, listener);
+        return this;
+    }
+
+    // Back-compat: supporting <= 0.16 clients
+    public off(event: "leader" | "notleader", listener: () => void) {
+        this.hostRuntime.off(event, listener);
+        return this;
+    }
+
     public isLocal(): boolean {
         const expContainerRuntime = this._containerRuntime as IExperimentalContainerRuntime;
         assert(expContainerRuntime?.isExperimentalContainerRuntime);

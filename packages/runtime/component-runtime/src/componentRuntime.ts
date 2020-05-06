@@ -625,14 +625,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return channelContext;
     }
 
-    // Ideally the component runtime should drive this. But the interface change just for this
-    // is probably an overkill.
     private attachListener() {
         this.componentContext.containerRuntime.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
-        this.componentContext.containerRuntime.on("noleader", (clientId: string) => {
-            this.emit("noleader", clientId);
+        this.componentContext.containerRuntime.on("notleader", (clientId: string) => {
+            this.emit("notleader", clientId);
         });
     }
 
