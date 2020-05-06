@@ -86,7 +86,11 @@ export class Spaces extends PrimedComponent implements
             addComponent: (type: string, w?: number, h?: number) => {
                 this.createAndAttachComponent(type)
                     .then((component) => {
-                        this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
+                        this.dataModel.addItem({
+                            component,
+                            type,
+                            layout: { w, h, x: 0, y: 0 },
+                        });
                     })
                     .catch((error) => {
                         console.error(`Error while creating component: ${type}`, error);
@@ -138,9 +142,13 @@ export class Spaces extends PrimedComponent implements
             componentRegistryEntries.forEach(async (componentRegistryEntry) => {
                 const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                templateLayouts.forEach(async (templateLayout: Layout) => {
+                templateLayouts.forEach(async (layout: Layout) => {
                     const component = await this.createAndAttachComponent(componentRegistryEntry.type);
-                    this.dataModel.addComponent(component, componentRegistryEntry.type, templateLayout);
+                    this.dataModel.addItem({
+                        component,
+                        type: componentRegistryEntry.type,
+                        layout,
+                    });
                 });
             });
         }
@@ -161,7 +169,11 @@ export class Spaces extends PrimedComponent implements
             const templateItems = JSON.parse(templateString) as ISpacesModel[];
             const promises = templateItems.map(async (templateItem) => {
                 const component = await this.createAndAttachComponent(templateItem.type);
-                this.dataModel.addComponent(component, templateItem.type, templateItem.layout);
+                this.dataModel.addItem({
+                    component,
+                    type: templateItem.type,
+                    layout: templateItem.layout,
+                });
                 return component;
             });
 

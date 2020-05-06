@@ -156,7 +156,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
                         url={url}
                         editable={editable}
                         getComponent={async () => props.dataModel.getComponent(url)}
-                        removeComponent={() => props.dataModel.removeComponent(url)}
+                        removeComponent={() => props.dataModel.removeItem(url)}
                     />
                 </div>,
             );

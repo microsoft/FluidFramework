@@ -13,9 +13,7 @@ import { IComponentCollectorSpaces, ISpacesCollectible } from "./interfaces";
 
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
-    removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
     updateGridItem(id: string, newLayout: Layout): void;
     getModels(): ISpacesModel[];
@@ -49,11 +47,20 @@ export class SpacesDataModel extends EventEmitter
     public get IComponentCollectorSpaces() { return this; }
 
     public addItem(item: ISpacesCollectible): string {
-        return this.addComponent(item.component, item.type, item.layout ?? { x: 0, y: 0, w: 6, h: 2 });
+        if (item.component.handle === undefined) {
+            throw new Error(`Component must have a handle: ${item.type}`);
+        }
+        const model: ISpacesModel = {
+            type: item.type,
+            layout: item.layout ?? { x: 0, y: 0, w: 6, h: 2 },
+            handle: item.component.handle,
+        };
+        this.componentSubDirectory.set(item.component.url, model);
+        return item.component.url;
     }
 
     public removeItem(key: string): void {
-        this.removeComponent(key);
+        this.componentSubDirectory.delete(key);
     }
 
     /**
@@ -80,25 +87,12 @@ export class SpacesDataModel extends EventEmitter
     public async addFormattedComponents(componentModels: ISpacesModel[]): Promise<void> {
         const components = await Promise.all(componentModels.map(async (model) => model.handle.get()));
         components.forEach((component, index) => {
-            this.addComponent(component, componentModels[index].type, componentModels[index].layout);
+            this.addItem({
+                component,
+                type: componentModels[index].type,
+                layout: componentModels[index].layout,
+            });
         });
-    }
-
-    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string {
-        if (component.handle === undefined) {
-            throw new Error(`Component must have a handle: ${type}`);
-        }
-        const model: ISpacesModel = {
-            type,
-            layout,
-            handle: component.handle,
-        };
-        this.componentSubDirectory.set(component.url, model);
-        return component.url;
-    }
-
-    public removeComponent(id: string) {
-        this.componentSubDirectory.delete(id);
     }
 
     public updateGridItem(id: string, newLayout: Layout): void {
