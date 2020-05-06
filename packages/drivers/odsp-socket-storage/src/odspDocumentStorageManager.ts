@@ -62,6 +62,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private readonly queryString: string;
     private lastSummaryHandle: string | undefined;
+    // Last proposed handle of the uploaded app summary.
+    private blobsShaProposalHandle: string | undefined;
     private readonly appId: string;
 
     private _ops: ISequencedDeltaOpMessage[] | undefined;
@@ -89,7 +91,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
-        private createNewFlag: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -434,12 +435,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        if (this.createNewFlag) {
-            this.lastSummaryHandle = `${context.ackHandle}/.app`;
-            this.createNewFlag = false;
-        } else {
-            this.lastSummaryHandle = context.proposalHandle;
+        // If the last proposed handle is not the proposed handle of the acked summary, clear the cache as the last summary
+        // could have got nacked.
+        if (context.proposalHandle !== this.blobsShaProposalHandle) {
+            this.blobsShaToPathCache.clear();
         }
+
+        this.lastSummaryHandle = `${context.ackHandle}/.app`;
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
@@ -450,6 +452,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
         if (blobsShaToPathCacheLatest) {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
+            this.blobsShaProposalHandle = result.sha;
         }
 
         return result.sha;

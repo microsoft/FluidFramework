@@ -1,6 +1,6 @@
 {
   "packages": [
-    "examples/components/**",
+    "components/**",
     "examples/hosts/iframe-host",
     "packages/**"
   ],

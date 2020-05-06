@@ -44,7 +44,7 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
 
     public get IComponentLastEditedTracker() { return this.lastEditedTracker; }
 
-    protected async componentInitializingFirstTime(props: any) {
+    protected async componentInitializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }

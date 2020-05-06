@@ -264,7 +264,12 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IHostRuntime;
+    readonly containerRuntime: IContainerRuntime;
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    readonly hostRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -376,24 +381,24 @@ export enum FlushMode {
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideHostRuntime>> { }
+    export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
 
-export const IHostRuntime: keyof IProvideHostRuntime = "IHostRuntime";
+export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
-export interface IProvideHostRuntime {
-    IHostRuntime: IHostRuntime;
+export interface IProvideContainerRuntime {
+    IContainerRuntime: IContainerRuntime;
 }
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends
+export interface IContainerRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
     IProvideComponentRegistry,
-    IProvideHostRuntime {
+    IProvideContainerRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -426,6 +431,10 @@ export interface IHostRuntime extends
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(
+        event: "componentInstantiated",
+        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+    ): this;
 
     /**
      * Returns the runtime of the component.
@@ -502,6 +511,11 @@ export interface IHostRuntime extends
     notifyPendingMessages(): void;
 
     /**
+     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     */
+    notifyComponentInstantiated(componentContext: IComponentContext): void;
+
+    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -536,9 +550,9 @@ export interface IHostRuntime extends
     submitSignal(type: string, content: any): void;
 }
 
-export interface IExperimentalHostRuntime extends IHostRuntime {
+export interface IExperimentalContainerRuntime extends IContainerRuntime {
 
-    isExperimentalHostRuntime: true;
+    isExperimentalContainerRuntime: true;
 
     /**
      * It is false if the container is not attached to storage and the component is attached to container.

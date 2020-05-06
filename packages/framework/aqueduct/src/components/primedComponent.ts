@@ -26,10 +26,11 @@ import { SharedComponent } from "./sharedComponent";
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
+ * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent<P extends IComponent = object, E extends IEvent = IEvent>
-    extends SharedComponent<P, E>
+export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
+    extends SharedComponent<P, S, E>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
@@ -100,7 +101,7 @@ export abstract class PrimedComponent<P extends IComponent = object, E extends I
             url: `/_scheduler`,
         };
 
-        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.hostRuntime.request(request));
+        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.containerRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime

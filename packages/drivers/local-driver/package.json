@@ -21,6 +21,9 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -30,17 +33,18 @@
     "@microsoft/fluid-container-definitions": "^0.17.0",
     "@microsoft/fluid-driver-definitions": "^0.17.0",
     "@microsoft/fluid-driver-utils": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "@microsoft/fluid-routerlicious-driver": "^0.17.0",
-    "@microsoft/fluid-server-local-server": "^0.1004.1",
-    "@microsoft/fluid-server-services-client": "^0.1004.1",
-    "@microsoft/fluid-server-services-core": "^0.1004.1",
-    "@microsoft/fluid-server-test-utils": "^0.1004.1",
+    "@microsoft/fluid-server-local-server": "^0.1004.2",
+    "@microsoft/fluid-server-services-client": "^0.1004.2",
+    "@microsoft/fluid-server-services-core": "^0.1004.2",
+    "@microsoft/fluid-server-test-utils": "^0.1004.2",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
@@ -53,6 +57,8 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4"
   }

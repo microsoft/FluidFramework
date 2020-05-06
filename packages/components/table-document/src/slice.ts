@@ -21,7 +21,7 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends PrimedComponent implements ITable {
+export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -109,17 +109,22 @@ export class TableSlice extends PrimedComponent implements ITable {
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async componentInitializingFirstTime(props?: any) {
-        if (!props) {
-            return Promise.reject();
+    protected async componentInitializingFirstTime(initialState?: ITableSliceConfig) {
+        if (!initialState) {
+            throw new Error("TableSlice must be created with initial state");
         }
-        const maybeConfig = props;
-        this.root.set(ConfigKey.docId, maybeConfig.docId);
-        this.root.set(ConfigKey.name, maybeConfig.name);
-        this.maybeDoc = await this.getComponent_UNSAFE(maybeConfig.docId);
-        this.root.set(maybeConfig.docId, this.maybeDoc.handle);
+
+        this.root.set(ConfigKey.docId, initialState.docId);
+        this.root.set(ConfigKey.name, initialState.name);
+        this.maybeDoc = await this.getComponent_UNSAFE(initialState.docId);
+        this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
-        this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
+        this.createValuesRange(
+            initialState.minCol,
+            initialState.minRow,
+            initialState.maxCol,
+            initialState.maxRow,
+        );
     }
 
     protected async componentInitializingFromExisting() {

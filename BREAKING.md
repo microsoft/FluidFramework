@@ -1,5 +1,59 @@
 # Breaking changes
 
+## 0.17 Breaking Changes
+
+- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
+- [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
+- [ConsensusRegisterCollection able to store handles not SharedObjects](#ConsensusRegisterCollection-able-to-store-handles-not-SharedObjects)
+
+### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+
+The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+IComponentContext still has the hostRuntime param but it is now marked with a deprecated flag and will be removed in 0.18
+
+### Updates to ContainerRuntime and LocalComponentContext createProps removal
+
+Guidance for migrating from ContainerRuntime and LocalComponentContext createProps as described [previously in 0.16 notes](#ContainerRuntime-and-LocalComponentContext-createProps-removal) is updated.  To specify creation props, consumers should do the following:
+
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Specify the generic type for the initial state object in the component.  The same generic exists in the factory as well, but does not need to be specified there because it is inferred from the provided component constructor at creation.
+```typescript
+export class ClickerWithInitialValue
+    extends PrimedComponent<{}, IClickerInitialState>
+    implements IComponentHTMLView
+{
+    ...
+}
+```
+3. Implement `componentInitializingFirstTime(...)` in the component to optionally consume the initial state.
+```typescript
+protected async componentInitializingFirstTime(
+    initialState?: IClickerInitialState)
+{
+    ...
+}
+```
+As with previous guidance, components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
+### `SimpleContainerRuntimeFactory` removed
+
+`SimpleContainerRuntimeFactory` was deprecated in 0.16, and has now been removed in 0.17.
+
+### ConsensusRegisterCollection prepped to store handles not SharedObjects
+
+`ConsensusRegisterCollection` can store handles, and will properly serialize/deserialize to/from summary files.
+Please take care to ensure 0.17 is fully deployed before incorporating any change that writes handles to this data structure to avoid n/n-1 issues.
+Also, note that storing a SharedObject directly is no longer supported,
+and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
+We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
@@ -8,9 +62,13 @@
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
-- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
+- [Event Emitter Changes](#Event-Emitter-Changes)
+- [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
+- [Changes to TestResolver's `resolve` method](#Changes-to-TestResolver's-resolve-method)
+- [Changes to TestHost's `createAndAttachComponent` and `getComponent` methods](#Changes-to-TestHost's-createAndAttachComponent-and-getComponent-methods)
 
 ### View interfaces moved to separate package
 
@@ -88,12 +146,17 @@ Users can also pass in an optional function to get the value from their director
 Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
 they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
 
-### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+### Changes to createComponent in IComponentContext, IContainerRuntime, and ContainerRuntime
 
-The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
-The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+The createComponent call in IContainerRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IContainerRuntime to add component from the runtime.
 
 ### ContainerRuntime and LocalComponentContext createProps removal
+
+⚠️ There are additional changes in this area in 0.17 that obsolete this guidance and should be used instead when available.
+
+<details>
+<summary>Expand old guidance</summary>
 
 Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
 1. Create an interface for the initial state that defines what may be provided to the component.
@@ -128,6 +191,7 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
 }
 ```
 Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+</details>
 
 ### Providers in Aqueduct
 
@@ -147,6 +211,42 @@ export const MyClickerFactory = new PrimedComponentFactory(
 
 See Aqueduct README for further details.
 
+### Event Emitter Changes
+
+We are moving to event emitters which include strong typing. So far this has been done for the following interfaces
+ - IQuorum
+ - ISharedObject
+
+ For the updated interface we will now be only supporting a minimal interface for listening to events, which includes: once, on, and off
+ We recommend switching instances of addListener, and removeListener to on and off respectivly.
+
+### WebCodeLoader Resolver & Seeding
+The web code loader's constructor now take a resolver, and is no longer directly coupled to veradccio. To load from verdaccio you should pass in the a new SemVerCdnCodeResolver which encapsulates the logic for loading from cdn's that support semantic versioning, like verdaccio.
+
+In addition we have fixed bugs and simplfied how module seeding works in the web code loader. Previously, seeded modules did not have their entrypoint protected from
+overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
+
+See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
+
+### Changes to TestResolver's `resolve` method
+TestResolver's `resolve` method now parses the URL in the passed request to get the ID of the container. It is the first part of the path in the URL.
+
+For example, in `http://localhost/fluidFrameworkDocument/componentId`, the container ID will be `fluidFrameworkDocument`.
+
+If a URL of this format is not passed to `resolve`, it will fail.
+
+This enables TestResolver to be used to resolve multiple Containers and not be bound to a single Container.
+
+### Changes to TestHost's `createAndAttachComponent` and `getComponent` methods
+TestHost's `createAndAttachComponent` and `getComponent` have been modified because of the changes in PrimedComponent / SharedComponent as detailed [here](#PrimedComponent-and-Shared-Component-interface-changes).
+
+`createAndAttachComponent` still accepts an `id` as before. However, it does not create a component with the given `id`. Instead, it creates a component and then sets the component's `handle` againt the `id` in a SharedDirectory.
+
+`getComponent` gets the `handle` for the given `id` from the SharedDirectory and then gets the component from the `handle`.
+
+This means that `getComponent` can only be used to get the component that was created via `createAndAttachComponent`.
+
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
@@ -161,7 +261,7 @@ We've removed `getComponentRuntime` on `IComponentContext` and subsequently `Com
 can get it via a `request(...)` to the ContainerRuntime.
 
 If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
-`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+`...context.containerRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
 scenario.
 
 ### Container.reconnect, Container.reconnect changes
@@ -274,7 +374,7 @@ However, ID is being deprecated so prefer passing undefined in its place (the ru
 This API will now attempt to create the specified package off the current sub-registry and if that fails, it will
 attempt to create it off the global registry.
 
-For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IContainerRuntime`.
 
 ### `IComponentHandle` - Type parameter moved
 

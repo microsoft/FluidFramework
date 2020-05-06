@@ -96,11 +96,7 @@ async function main() {
 
         // Symlink check
         const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-        const updated = await repo.symlink(options);
-        if (updated) {
-            logStatus(`${updated} symlink updated. Running clean script.`);
-            repo.clean();
-        }
+        await repo.symlink(options);
         timer.time(`${symlinkTaskName} completed`, options.symlink);
 
         // Check scripts

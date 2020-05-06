@@ -5,15 +5,15 @@
 
 import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { strongAssert } from "@microsoft/fluid-runtime-utils";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
 
-describe("Routerlicious", () => {
+describe("ConsensusOrderedCollection", () => {
     const factory = new ConsensusQueueFactory();
 
-    // tslint:disable:mocha-no-side-effect-code
     function generate(
         input: any[],
         output: any[],
@@ -55,6 +55,20 @@ describe("Routerlicious", () => {
                 assert.strictEqual(await removeItem(), undefined);
                 await addItem("testValue");
                 assert.strictEqual(await removeItem(), "testValue");
+                assert.strictEqual(await removeItem(), undefined);
+            });
+
+            it("Can add and remove a handle", async () => {
+                assert.strictEqual(await removeItem(), undefined);
+                const handle = testCollection.handle;
+                strongAssert(handle, "Need an actual handle to test this case");
+                await addItem(handle);
+
+                const acquiredValue = await removeItem();
+                assert.strictEqual(acquiredValue.path, handle.path);
+                const component = await handle.get();
+                assert.strictEqual(component.url, testCollection.url);
+
                 assert.strictEqual(await removeItem(), undefined);
             });
 
