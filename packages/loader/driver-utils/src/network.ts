@@ -6,9 +6,11 @@
 import {
     IError,
     IGenericNetworkError,
-    IAccessDeniedError,
-    IFileNotFoundError,
+    IAuthorizationError,
+    IFileNotFoundOrAccessDeniedError,
     IFatalError,
+    IOutOfStorageError,
+    IInvalidFileNameError,
     IThrottlingError,
     IWriteError,
     ErrorType,
@@ -60,11 +62,11 @@ class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError
 }
 
 /**
- * AccessDenied error class -
- * used to communicate Unauthorized/Forbidden error responses from the server
+ * AuthorizationError error class -
+ * used to communicate Unauthorized/Forbidden error responses(maybe due to expired token) from the server
  */
-class AccessDeniedError extends ErrorWithProps implements IAccessDeniedError {
-    readonly errorType: ErrorType.accessDeniedError = ErrorType.accessDeniedError;
+class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
+    readonly errorType: ErrorType.authorizationError = ErrorType.authorizationError;
 
     constructor(
         errorMessage: string,
@@ -77,11 +79,46 @@ class AccessDeniedError extends ErrorWithProps implements IAccessDeniedError {
 }
 
 /**
- * FileNotFound error class -
- * used to communicate File Not Found errors from the server
+ * FileNotFoundOrAccessDeniedError error class -
+ * used to communicate File Not Found errors or access denied errors(due to current user not
+ * having access to the file) from the server
  */
-class FileNotFoundError extends ErrorWithProps implements IFileNotFoundError {
-    readonly errorType: ErrorType.fileNotFoundError = ErrorType.fileNotFoundError;
+class FileNotFoundOrAccessDeniedError extends ErrorWithProps implements IFileNotFoundOrAccessDeniedError {
+    readonly errorType: ErrorType.fileNotFoundOrAccessDeniedError = ErrorType.fileNotFoundOrAccessDeniedError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * OutOfStorageError error class -
+ * Used to communicate error that occur when we create a file and there is no storage on server/account.
+ */
+class OutOfStorageError extends ErrorWithProps implements IOutOfStorageError {
+    readonly errorType: ErrorType.outOfStorageError = ErrorType.outOfStorageError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * InvalidFileNameError error class -
+ * Used to communicate error that occur when we create a file with invalid file name.
+ */
+class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameError {
+    readonly errorType: ErrorType.invalidFileNameError = ErrorType.invalidFileNameError;
 
     constructor(
         errorMessage: string,
@@ -136,13 +173,19 @@ export function createNetworkError(
     online: string = OnlineStatus[isOnline()],
 ): IError {
     if (statusCode === 401 || statusCode === 403) {
-        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
+        return new AuthorizationError(errorMessage, statusCode, canRetry, online);
     }
     if (statusCode === 404) {
-        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
+        return new FileNotFoundOrAccessDeniedError(errorMessage, statusCode, canRetry, online);
     }
     if (statusCode === 500) {
         return new FatalError(errorMessage);
+    }
+    if (statusCode === 507) {
+        return new OutOfStorageError(errorMessage, statusCode, canRetry, online);
+    }
+    if (statusCode === 414 || statusCode === 710) {
+        return new InvalidFileNameError(errorMessage, statusCode, canRetry, online);
     }
     if (retryAfterSeconds !== undefined) {
         return new ThrottlingError(errorMessage, retryAfterSeconds);

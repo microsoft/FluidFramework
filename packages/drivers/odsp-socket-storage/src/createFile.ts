@@ -63,7 +63,7 @@ export async function createNewFluidFile(
     }
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throw new Error("Invalid filename. Please try again.");
+        throwOdspNetworkError("Invalid filename. Please try again.", 710, false);
     }
     let containerSnapshot: ISnapshotTree | undefined;
     if (createNewSummary) {
