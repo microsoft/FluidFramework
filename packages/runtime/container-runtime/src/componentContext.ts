@@ -68,6 +68,11 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
 {
     public readonly isExperimentalComponentContext = true;
 
+    // Back-compat: supporting <= 0.16 components
+    public get connectionState(): ConnectionState {
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
+    }
+
     public isLocal(): boolean {
         const expContainerRuntime = this._containerRuntime as IExperimentalContainerRuntime;
         assert(expContainerRuntime?.isExperimentalContainerRuntime);
@@ -305,6 +310,8 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
             return;
         }
 
+        assert(this.connected === connected);
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const runtime: IComponentRuntime = this.componentRuntime!;
 
@@ -312,9 +319,7 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         if (runtime.setConnectionState) {
             runtime.setConnectionState(connected, clientId);
         } else if (runtime.changeConnectionState) {
-            runtime.changeConnectionState(
-                connected ? ConnectionState.Connected : ConnectionState.Disconnected,
-                clientId);
+            runtime.changeConnectionState(this.connectionState, clientId);
         } else {
             assert(false);
         }

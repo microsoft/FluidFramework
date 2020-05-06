@@ -159,6 +159,11 @@ export class ContainerContext implements IContainerContext, IExperimentalContain
         return this._disposed;
     }
 
+    // Back-compat: supporting <= 0.16 components
+    public get connectionState(): ConnectionState {
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
+    }
+
     constructor(
         private readonly container: Container,
         public readonly scope: IComponent,
@@ -224,13 +229,13 @@ export class ContainerContext implements IContainerContext, IExperimentalContain
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime!;
 
+        assert(this.connected === connected);
+
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
             runtime.setConnectionState(connected, clientId);
         } else if (runtime.changeConnectionState) {
-            runtime.changeConnectionState(
-                connected ? ConnectionState.Connected : ConnectionState.Disconnected,
-                clientId);
+            runtime.changeConnectionState(this.connectionState, clientId);
         } else {
             assert(false);
         }
