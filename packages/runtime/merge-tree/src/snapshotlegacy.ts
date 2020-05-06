@@ -9,14 +9,16 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ChildLogger } from "@microsoft/fluid-common-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { SnapshotHeader } from "./snapshot";
+import {
+    MergeTreeChunkLegacy,
+    serializeAsMinSupportedVersion,
+} from "./snapshotChunks";
 
 // first three are index entry
 export interface SnapChunk {
@@ -27,6 +29,17 @@ export interface SnapChunk {
     lengthBytes: number;
     sequenceLength: number;
     buffer?: Buffer;
+}
+
+export interface SnapshotHeader {
+    chunkCount?: number;
+    segmentsTotalLength: number;
+    indexOffset?: number;
+    segmentsOffset?: number;
+    seq: number;
+    // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    minSeq?: number;
 }
 
 export class SnapshotLegacy {
@@ -60,7 +73,7 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex = 0): ops.MergeTreeChunk {
+        startIndex = 0): MergeTreeChunkLegacy {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
@@ -71,6 +84,7 @@ export class SnapshotLegacy {
             segCount++;
         }
         return {
+            version: undefined,
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
@@ -101,7 +115,13 @@ export class SnapshotLegacy {
                     path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializer ? serializer.stringify(chunk1, context, bind) : JSON.stringify(chunk1),
+                        contents: serializeAsMinSupportedVersion(
+                            SnapshotLegacy.header,
+                            chunk1,
+                            this.logger,
+                            serializer,
+                            context,
+                            bind),
                         encoding: "utf-8",
                     },
                 },
@@ -119,7 +139,13 @@ export class SnapshotLegacy {
                 path: SnapshotLegacy.body,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: serializer ? serializer.stringify(chunk2, context, bind) : JSON.stringify(chunk2),
+                    contents: serializeAsMinSupportedVersion(
+                        SnapshotLegacy.body,
+                        chunk2,
+                        this.logger,
+                        serializer,
+                        context,
+                        bind),
                     encoding: "utf-8",
                 },
             });
@@ -209,24 +235,5 @@ export class SnapshotLegacy {
         }
 
         return this.segments;
-    }
-
-    public static async loadChunk(
-        storage: IObjectStorageService,
-        path: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): Promise<ops.MergeTreeChunk> {
-        const chunkAsString: string = await storage.read(path);
-        return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
-    }
-
-    public static processChunk(
-        chunk: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): ops.MergeTreeChunk {
-        const utf8 = fromBase64ToUtf8(chunk);
-        return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }
 }
