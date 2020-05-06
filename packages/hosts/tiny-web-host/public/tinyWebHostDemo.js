@@ -25,7 +25,6 @@ function load() {
         url,
         div,
         tokenApiConfig,
-        clientId,
         clientSecret,
     );
 }

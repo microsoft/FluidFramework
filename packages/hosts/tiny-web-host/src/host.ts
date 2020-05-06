@@ -52,7 +52,6 @@ export async function loadFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis,
-    clientId?: string,
     clientSecret?: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
@@ -87,7 +86,6 @@ export async function loadFluidContainer(
         resolved as IFluidResolvedUrl,
         tokenApiConfig,
         div,
-        clientId,
         clientSecret,
         codeDetails);
     return containerP;
@@ -142,7 +140,6 @@ async function loadContainer(
     resolved: IFluidResolvedUrl,
     tokenApiConfig: ITokenApis,
     div: HTMLDivElement,
-    clientId: string,
     secret: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
@@ -151,7 +148,6 @@ async function loadContainer(
     if (protocol === "fluid-odsp:") {
         const config = tokenApiConfig as IOdspTokenApi;
         documentServiceFactory = new OdspDocumentServiceFactory(
-            clientId,
             // eslint-disable-next-line @typescript-eslint/unbound-method
             config.getStorageToken,
             // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -276,7 +272,6 @@ export async function loadIFramedFluidContainer(
                         url,
                         document.getElementById("componentDiv"),
                         tokenApiConfig,
-                        "clientId",
                         "clientSecret");
                 }
 
