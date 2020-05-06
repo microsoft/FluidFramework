@@ -40,6 +40,7 @@ import {
     buildSnapshotTree,
     isSystemType,
     raiseConnectedEvent,
+    SnapshotTreeHolder,
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
@@ -634,7 +635,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
                 key,
-                value,
+                typeof value === "string" ? value : new SnapshotTreeHolder(value),
                 this,
                 this.storage,
                 this.containerScope,
@@ -1148,19 +1149,21 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 }
 
                 const attachMessage = message.contents as IAttachMessage;
-                const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null = null;
+                let flatBlobs: Promise<Map<string, string>> | undefined;
+                let treeHolder: SnapshotTreeHolder | null = null;
                 if (attachMessage.snapshot) {
-                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    const treeHolderAndMap = buildSnapshotTree(attachMessage.snapshot.entries);
+                    treeHolder = treeHolderAndMap.treeHolder;
+                    flatBlobs = treeHolderAndMap.blobMap;
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
-                    snapshotTree,
+                    treeHolder,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobs ?? new Map()),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);

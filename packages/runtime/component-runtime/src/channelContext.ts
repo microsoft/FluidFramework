@@ -4,11 +4,10 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
+import { BlobTreeEntry, SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -34,8 +33,8 @@ export function createServiceEndpoints(
     submitFn: (type: MessageType, content: any) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    tree?: SnapshotTreeHolder,
+    extraBlobs?: Promise<Map<string, string>>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

@@ -6,10 +6,10 @@
 import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -43,9 +43,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (type: MessageType, content: any) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        baseSnapshot: SnapshotTreeHolder,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Map<string, string>,
+        extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
@@ -111,7 +111,7 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded);
 
         let attributes: IChannelAttributes | undefined;
-        if (this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(".attributes")) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
                 ".attributes");

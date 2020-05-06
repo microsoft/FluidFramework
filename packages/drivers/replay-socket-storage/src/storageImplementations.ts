@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTree, buildSnapshotTreeAsync, SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
 import {
     IClient,
     ISnapshotTree,
@@ -35,15 +35,18 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected docTree: ISnapshotTree;
-    protected readonly blobs = new Map<string, string>();
+    protected docTreeHolder: SnapshotTreeHolder;
+    protected blobs: Promise<Map<string, string>>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
     public constructor(json: IFileSnapshot) {
         super();
         this.commits = json.commits;
-        this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
+
+        const treeHolderAndMap = buildSnapshotTree(json.tree.entries);
+        this.docTreeHolder = treeHolderAndMap.treeHolder;
+        this.blobs = treeHolderAndMap.blobMap;
     }
 
     public async getVersions(
@@ -62,7 +65,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
         if (!versionRequested || versionRequested.id === "latest") {
-            return this.docTree;
+            return this.docTreeHolder.snapshotTree;
         }
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
@@ -75,13 +78,15 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            this.trees[versionRequested.id] = snapshotTree = buildSnapshotTree(tree.entries, this.blobs);
+            const blobMap = await this.blobs;
+            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTreeAsync(tree.entries, blobMap);
+            this.blobs = Promise.resolve(blobMap);
         }
         return snapshotTree;
     }
 
     public async read(blobId: string): Promise<string> {
-        const blob = this.blobs.get(blobId);
+        const blob = (await this.blobs).get(blobId);
         if (blob !== undefined) {
             return blob;
         }
