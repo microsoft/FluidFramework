@@ -147,9 +147,9 @@ export class TestHistorian implements IHistorian {
         return this.getRef(params.ref);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        throw new Error("Not Supported");
+    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+        await this.refs.update({ _id: ref }, { sha:params.sha, ref }, {});
+        return this.getRef(ref);
     }
 
     public async deleteRef(ref: string): Promise<void> {
