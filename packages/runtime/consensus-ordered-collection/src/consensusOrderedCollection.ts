@@ -373,6 +373,10 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(!this.isLocal());
 
+        if (this.runtime.disposed) {
+            throw new Error("Attempting to submit an op on a disposed ComponentRuntime");
+        }
+
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.

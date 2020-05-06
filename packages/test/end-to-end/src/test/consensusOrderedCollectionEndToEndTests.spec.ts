@@ -272,8 +272,7 @@ function generate(
             await collection1.add("testValue");
 
             assert(rejected, "Closing the runtime while waiting should cause promise reject");
-            //* todo: This deadlocks, since it's waiting for the op to come back...
-            // assert.equal(await acquireAndComplete(collection2), undefined);
+            await assert.rejects(acquireAndComplete(collection2), "Acquiring when the runtime is disposed should fail");
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 
