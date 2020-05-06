@@ -148,7 +148,11 @@ export class TestHistorian implements IHistorian {
     }
 
     public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        await this.refs.update({ _id: ref }, { sha:params.sha, ref }, {});
+        if (params.force) {
+            await this.refs.upsert({ _id: ref }, { sha: params.sha, ref }, {});
+        } else {
+            await this.refs.update({ _id: ref }, { sha: params.sha, ref }, {});
+        }
         return this.getRef(ref);
     }
 
