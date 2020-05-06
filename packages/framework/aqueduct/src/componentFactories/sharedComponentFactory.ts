@@ -111,14 +111,6 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
         initialState?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
-        /*
-        REVIEW [curtism]: why do we want to inject the IContaineRuntime?
-        // If the Container did not register the IContainerRuntime we can do it here to make sure services that need
-        // it will have it.
-        if (!dependencyContainer.has(IContainerRuntime)) {
-            dependencyContainer.register(IContainerRuntime, context.containerRuntime);
-        }
-        */
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
