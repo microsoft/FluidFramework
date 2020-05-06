@@ -5,13 +5,6 @@
 
 import * as assert from "assert";
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
-    ContainerRuntimeFactoryWithDefaultComponent,
-} from "@microsoft/fluid-aqueduct";
-import { initializeContainerCode } from "@microsoft/fluid-base-host";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
     ICodeLoader,
     IFluidCodeDetails,
     IProxyLoaderFactory,
@@ -21,60 +14,29 @@ import {
     CreationDocumentServiceFactory,
     CreationDriverUrlResolver,
 } from "@microsoft/fluid-experimental-creation-driver";
+import {
+    ITestFluidComponent,
+    initializeLocalContainer,
+    LocalCodeLoader,
+    TestFluidComponentFactory,
+} from "@microsoft/fluid-test-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 
-/**
- * Implementation of counter component for testing.
- */
-export class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
-
-    public static getFactory() { return TestComponent.factory; }
-
-    private static readonly factory = new PrimedComponentFactory(
-        TestComponent.type,
-        TestComponent,
-        [SharedString.getFactory()],
-        {},
-    );
-
-    private _sharedString: SharedString | undefined;
-
-    public get sharedString(): SharedString {
-        if (this._sharedString === undefined) {
-            throw new Error("SharedString has not been created yet");
-        }
-        return this._sharedString;
-    }
-
-    protected async componentInitializingFirstTime() {
-        const sharedString = SharedString.create(this.runtime);
-        this.root.set("sharedString", sharedString.handle);
-    }
-
-    protected async componentHasInitialized() {
-        this._sharedString = await this.root.get<IComponentHandle<SharedString>>("sharedString").get();
-    }
-}
-
-const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    "default",
-    new Map([
-        ["default", Promise.resolve(TestComponent.getFactory())],
-    ]),
-);
-
 describe("In Memory Driver", () => {
     const id = "fluid-test://localhost?uniqueId=inMemoryDriverTest";
-    let component: TestComponent;
+    const stringId = "stringKey";
+    const codeDetails: IFluidCodeDetails = {
+        package: "inMemoryDriverTestPackage",
+        config: {},
+    };
+    let component: ITestFluidComponent;
 
     function createInMemoryDriverLoader(): Loader {
         const urlResolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const documentServiceFactory = new CreationDocumentServiceFactory();
-        const codeLoader: ICodeLoader = {
-            load: async <T>() => ({ fluidExport } as unknown as T),
-        };
+        const factory = new TestFluidComponentFactory([[ stringId, SharedString.getFactory() ]]);
+        const codeLoader: ICodeLoader = new LocalCodeLoader([[ codeDetails, factory ]]);
 
         // The default client to be used.
         const client = {
@@ -96,17 +58,15 @@ describe("In Memory Driver", () => {
 
     async function createContainer(): Promise<Container> {
         const loader: Loader = createInMemoryDriverLoader();
-        const container = await loader.resolve({ url: id });
-        await initializeContainerCode(container, {} as any as IFluidCodeDetails);
-        return container;
+        return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function getComponent(componentId: string, container: Container): Promise<TestComponent> {
+    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
         const response = await container.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
         }
-        return response.value as TestComponent;
+        return response.value as ITestFluidComponent;
     }
 
     beforeEach(async () => {
@@ -115,7 +75,7 @@ describe("In Memory Driver", () => {
     });
 
     it("can create and set value in a SharedString in an in-memory Container", async () => {
-        const sharedString = component.sharedString;
+        const sharedString = await component.getSharedObject<SharedString>(stringId);
         const text = "syncSharedString";
         sharedString.insertText(0, text);
         assert.equal(sharedString.getText(), text, "The retrieved text should match the inserted text.");
