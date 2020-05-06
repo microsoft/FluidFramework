@@ -13,7 +13,6 @@ import { IOdspResponse } from "./odspUtils";
  * Fetches a snapshot from the server with a given version id.
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
  * @param token - token used for authorization in the request
- * @param appId - id of the app requesting the snapshot
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
@@ -22,7 +21,6 @@ import { IOdspResponse } from "./odspUtils";
 export async function fetchSnapshot(
     snapshotUrl: string,
     token: string | null,
-    appId: string,
     storageFetchWrapper: IFetchWrapper,
     versionId: string,
     fetchFullSnapshot: boolean,
@@ -32,12 +30,12 @@ export async function fetchSnapshot(
 
     if (fetchFullSnapshot) {
         if (versionId !== "latest") {
-            queryParams = { app_id: appId, channels: "1", blobs: "2" };
+            queryParams = { channels: "1", blobs: "2" };
         } else {
-            queryParams = { app_id: appId, deltas: "1", channels: "1", blobs: "2" };
+            queryParams = { deltas: "1", channels: "1", blobs: "2" };
         }
     } else {
-        queryParams = { app_id: appId };
+        queryParams = { };
     }
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
