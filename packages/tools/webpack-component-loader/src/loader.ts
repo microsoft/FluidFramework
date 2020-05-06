@@ -165,7 +165,7 @@ export async function start(
     let container1: Container;
     const container1Attached = new Deferred();
 
-    if (window.location.search.toLocaleLowerCase().includes("manualattach")) {
+    if (window.location.hash.toLocaleLowerCase().includes("manualattach")) {
         if (!codeDetails) {
             throw new Error("Code details must be defined for detached mode!!");
         }
@@ -182,6 +182,7 @@ export async function start(
                 .then(async () => {
                     container1Attached.resolve();
                     attachDiv.remove();
+                    window.location.hash = "";
                 }, (error) => {
                     throw new Error(error);
                 });
