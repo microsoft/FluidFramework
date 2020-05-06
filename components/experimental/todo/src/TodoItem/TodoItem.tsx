@@ -25,12 +25,10 @@ export const TodoItemName = `${pkg.name as string}-item`;
 
 export interface ITodoItemInitialState {
     startingText: string;
-    baseUrl?: string;
 }
 
 const checkedKey = "checked";
 const textKey = "text";
-const baseUrlKey = "baseUrl";
 const innerComponentKey = "innerId";
 
 /**
@@ -47,10 +45,11 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     IComponentReactViewable {
     private text: SharedString;
     private innerIdCell: ISharedCell;
-    private baseUrl: string = "";
+    private _absoluteUrl: string;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
+    public get absoluteUrl() { return this._absoluteUrl;}
 
     /**
      * Do creation work
@@ -58,7 +57,6 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     protected async componentInitializingFirstTime(initialState?: ITodoItemInitialState) {
         // Set initial state if it was provided
         const newItemText = initialState?.startingText ?? "New Item";
-        this.baseUrl = initialState?.baseUrl ?? "";
 
         // The text of the todo item
         const text = SharedString.create(this.runtime);
@@ -67,7 +65,6 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
         // The state of the checkbox
         this.root.set(checkedKey, false);
-        this.root.set(baseUrlKey, this.baseUrl);
 
         // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
         // user choose the component they want to embed. We store it in a cell for easier event handling.
@@ -79,7 +76,6 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     protected async componentHasInitialized() {
         const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
         const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
-        this.baseUrl = this.root.get(baseUrlKey);
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -104,6 +100,11 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                 }
             }
         });
+
+        const urlResponse = await this.runtime.requestUrl({ url: this.url });
+        if (urlResponse.status === 200) {
+            this._absoluteUrl = urlResponse.value as string;
+        }
     }
 
     public static getFactory() { return TodoItem.factory; }
@@ -157,10 +158,6 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
         return this.text;
     }
 
-    public getBaseUrl() {
-        return this.baseUrl;
-    }
-
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
         this.emit("checkedStateChanged");
@@ -188,13 +185,13 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
      * @param type - component to be created
      * @param props - props to be passed into component creation
      */
-    public async createInnerComponent(type: TodoItemSupportedComponents, baseUrl?: string): Promise<void> {
+    public async createInnerComponent(type: TodoItemSupportedComponents): Promise<void> {
         let component: IComponentLoadable;
         switch (type) {
             case "todo":
                 component = await TodoItem.getFactory().createComponent(
                     this.context,
-                    { startingText: type, baseUrl },
+                    { startingText: type },
                 );
                 break;
             case "clicker":

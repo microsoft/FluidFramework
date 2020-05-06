@@ -20,7 +20,6 @@ interface TodoItemViewState {
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
     private readonly itemText: SharedString;
-    private readonly itemUrl: string;
     private readonly buttonStyle = {
         height: "25px",
         marginLeft: "2px",
@@ -32,10 +31,6 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         super(props);
 
         this.itemText = this.props.todoItemModel.getTodoItemText();
-
-        const baseUrl = this.props.todoItemModel.getBaseUrl();
-        const url = new URL(baseUrl);
-        this.itemUrl = `${url.origin}${url.pathname}/${this.props.todoItemModel.url}${url.search}`;
 
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
@@ -83,9 +78,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                     </button>
                     <button
                         name="OpenSubComponent"
-                        id={this.itemUrl}
                         style={this.buttonStyle}
-                        onClick={() => window.open(this.itemUrl, "_blank")}>↗
+                        onClick={() => window.open(this.props.todoItemModel.absoluteUrl, "_blank")}>↗
                     </button>
                     <button
                         style={this.buttonStyle}
