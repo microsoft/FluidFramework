@@ -812,7 +812,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
-    public changeConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         assert(this.connected === connected);
@@ -831,7 +831,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         for (const [component, componentContext] of this.contexts) {
             try {
-                componentContext.changeConnectionState(connected, clientId);
+                componentContext.setConnectionState(connected, clientId);
             } catch (error) {
                 this.logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",

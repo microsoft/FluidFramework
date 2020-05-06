@@ -73,7 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
-    public changeConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {
             return;

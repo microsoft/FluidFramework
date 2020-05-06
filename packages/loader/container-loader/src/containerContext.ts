@@ -25,6 +25,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
@@ -220,8 +221,19 @@ export class ContainerContext implements IContainerContext, IExperimentalContain
         return expRuntime.createSummary();
     }
 
-    public changeConnectionState(connected: boolean, clientId?: string) {
-        this.runtime!.changeConnectionState(connected, clientId);
+    public setConnectionState(connected: boolean, clientId?: string) {
+        const runtime = this.runtime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(
+                connected ? ConnectionState.Connected : ConnectionState.Disconnected,
+                clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

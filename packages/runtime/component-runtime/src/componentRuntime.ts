@@ -364,7 +364,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients
@@ -375,7 +375,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         for (const [, object] of this.contexts) {
-            object.changeConnectionState(connected, clientId);
+            object.setConnectionState(connected, clientId);
         }
 
         raiseConnectedEvent(this.logger, this, connected, clientId);

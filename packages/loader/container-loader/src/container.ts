@@ -1282,7 +1282,7 @@ export class Container
         }
 
         const state = this._connectionState === ConnectionState.Connected;
-        this.context!.changeConnectionState(state, this.clientId);
+        this.context!.setConnectionState(state, this.clientId);
         this.protocolHandler!.quorum.changeConnectionState(
             // TODO: Deprecated, to be removed on next server bump
             state ? ConnectionStateToBeDeleted.Connected : ConnectionStateToBeDeleted.Disconnected,

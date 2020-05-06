@@ -419,7 +419,7 @@ export class MockRuntime extends EventEmitter
         return;
     }
 
-    public changeConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         return;
     }
 

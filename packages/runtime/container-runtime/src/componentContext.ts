@@ -24,6 +24,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ConnectionState,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentRegistryEntry,
@@ -296,7 +297,7 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -305,7 +306,18 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.changeConnectionState(connected, clientId);
+        const runtime: IComponentRuntime = this.componentRuntime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(
+                connected ? ConnectionState.Connected : ConnectionState.Disconnected,
+                clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {

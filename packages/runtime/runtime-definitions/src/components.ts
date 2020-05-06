@@ -26,6 +26,7 @@ import {
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     IClientDetails,
+    ConnectionState,
     IDocumentMessage,
     IHelpMessage,
     IQuorum,
@@ -101,7 +102,10 @@ export interface IComponentRuntime extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(connected: boolean, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * Generates a snapshot of the given component

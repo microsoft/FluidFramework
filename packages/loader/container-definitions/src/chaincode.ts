@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
@@ -142,7 +143,10 @@ export interface IRuntime extends IDisposable {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(connected: boolean, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * @deprecated in 0.14 async stop()
