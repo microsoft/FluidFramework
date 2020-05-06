@@ -18,7 +18,7 @@ export interface IProvideComponentToolbarConsumer {
 
 /**
  * An IComponentToolbarConsumer is a component that takes another to use as a toolbar.  That toolbar may implement
- * other interfaces such as IComponentToolbar or IComponentCallable.
+ * other interfaces such as IComponentToolbar.
  */
 export interface IComponentToolbarConsumer extends IProvideComponentToolbarConsumer {
     setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;

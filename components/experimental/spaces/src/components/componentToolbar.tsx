@@ -77,11 +77,11 @@ export class ComponentToolbar extends PrimedComponent
         }
     }
 
-    public changeEditState(isEditable: boolean) {
+    public setEditable(isEditable: boolean) {
         this.root.set("isEditable", isEditable);
     }
 
-    public toggleTemplates(isVisible: boolean) {
+    public setTemplatesVisible(isVisible: boolean) {
         this.root.set("isTemplateVisible", isVisible);
     }
 
