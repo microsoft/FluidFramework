@@ -200,6 +200,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             }
         });
     }
+
     public async requestUrl(request: IRequest): Promise<IResponse> {
         return this.containerRuntime.requestUrl(request);
     }

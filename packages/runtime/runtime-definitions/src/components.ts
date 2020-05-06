@@ -194,6 +194,10 @@ export interface IComponentRuntime extends
      */
     error(err: any): void;
 
+    /**
+     * Request an absolute url based on the provided request.
+     * @param request - A relative request within the container
+     */
     requestUrl(request: IRequest): Promise<IResponse>;
 }
 
@@ -355,6 +359,10 @@ export interface IComponentContext extends EventEmitter {
      */
     setChannelDirty(address: string): void;
 
+    /**
+     * Request an absolute url based on the provided request.
+     * @param request - A relative request within the container
+     */
     requestUrl(request: IRequest): Promise<IResponse>
 }
 
@@ -553,6 +561,10 @@ export interface IContainerRuntime extends
      */
     submitSignal(type: string, content: any): void;
 
+    /**
+     * Request an absolute url based on the provided request.
+     * @param request - A relative request within the container
+     */
     requestUrl(request: IRequest): Promise<IResponse>;
 }
 
