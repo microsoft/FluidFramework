@@ -89,6 +89,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
     };
 
 interface ISpacesGridViewProps {
+    toolbarComponentP: Promise<SpacesCompatibleToolbar | undefined>;
     dataModel: ISpacesDataModel;
     toolbarCallbacks: IComponentCallbacks;
 }
@@ -106,7 +107,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
 
         React.useEffect(() => {
             // Need an event for when the component toolbar changes
-            props.dataModel.getComponentToolbar()
+            props.toolbarComponentP
                 .then((retrievedToolbar) => {
                     retrievedToolbar?.setComponentCallbacks(combinedToolbarCallbacks);
                     setToolbarComponent(retrievedToolbar);

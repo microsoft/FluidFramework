@@ -57,7 +57,7 @@ export class ComponentToolbar extends PrimedComponent
         [],
         {});
 
-    private supportedComponentList: IContainerComponentDetails[] | undefined;
+    private supportedComponentList: IContainerComponentDetails[] = [];
 
     public static getFactory() {
         return ComponentToolbar.factory;
@@ -85,8 +85,7 @@ export class ComponentToolbar extends PrimedComponent
         ReactDOM.render(
             <ComponentToolbarView
                 callbacks={this.callbacks}
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                supportedComponentList={this.supportedComponentList!}
+                supportedComponentList={this.supportedComponentList}
             />,
             div,
         );

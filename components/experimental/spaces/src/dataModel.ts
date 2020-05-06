@@ -9,9 +9,7 @@ import {
     IComponent, IComponentLoadable, IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
-import { IComponentCollectorSpaces, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
-
-const ComponentToolbarKey = "component-toolbar";
+import { IComponentCollectorSpaces, ISpacesCollectible } from "./interfaces";
 
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
@@ -19,8 +17,6 @@ export interface ISpacesDataModel extends EventEmitter {
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
-    setComponentToolbar(toolbarComponent: SpacesCompatibleToolbar): void;
-    getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined>;
     updateGridItem(id: string, newLayout: Layout): void;
     getModels(): ISpacesModel[];
     IComponentCollectorSpaces: IComponentCollectorSpaces;
@@ -86,17 +82,6 @@ export class SpacesDataModel extends EventEmitter
         components.forEach((component, index) => {
             this.addComponent(component, componentModels[index].type, componentModels[index].layout);
         });
-    }
-
-    public setComponentToolbar(toolbarComponent: SpacesCompatibleToolbar): void {
-        if (toolbarComponent.handle === undefined) {
-            throw new Error(`Toolbar component must have a handle.`);
-        }
-        this.root.set(ComponentToolbarKey, toolbarComponent.handle);
-    }
-
-    public async getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined> {
-        return this.root.get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(ComponentToolbarKey)?.get();
     }
 
     public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string {

@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -25,6 +26,8 @@ import {
     SpacesCompatibleToolbar,
 } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
+
+const ComponentToolbarKey = "component-toolbar";
 
 /**
  * Spaces is a component which maintains a collection of other components and a grid-based layout for rendering.
@@ -64,8 +67,15 @@ export class Spaces extends PrimedComponent implements
     public get IComponentCollectorSpaces() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    public setToolbarComponent(toolbarComponent: SpacesCompatibleToolbar) {
-        this.dataModel.setComponentToolbar(toolbarComponent);
+    public setToolbarComponent(toolbarComponent: SpacesCompatibleToolbar): void {
+        if (toolbarComponent.handle === undefined) {
+            throw new Error(`Toolbar component must have a handle.`);
+        }
+        this.root.set(ComponentToolbarKey, toolbarComponent.handle);
+    }
+
+    public async getToolbarComponent(): Promise<SpacesCompatibleToolbar | undefined> {
+        return this.root.get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(ComponentToolbarKey)?.get();
     }
 
     /**
@@ -86,14 +96,21 @@ export class Spaces extends PrimedComponent implements
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),
         };
-        ReactDOM.render(<SpacesView dataModel={this.dataModel} toolbarCallbacks={ toolbarCallbacks } />, div);
+        ReactDOM.render(
+            <SpacesView
+                toolbarComponentP={ this.getToolbarComponent() }
+                dataModel={ this.dataModel }
+                toolbarCallbacks={ toolbarCallbacks }
+            />,
+            div,
+        );
     }
 
     protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
-        const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        this.setToolbarComponent(componentToolbar);
+        const toolbarComponent = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
+        this.setToolbarComponent(toolbarComponent);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
