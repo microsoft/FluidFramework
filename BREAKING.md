@@ -6,6 +6,7 @@
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
 - [ConsensusRegisterCollection able to store handles not SharedObjects](#ConsensusRegisterCollection-able-to-store-handles-not-SharedObjects)
+- [App Id removed as a parameter to OdspDocumentServiceFactory](App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
 
 ### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
 
@@ -53,6 +54,9 @@ Please take care to ensure 0.17 is fully deployed before incorporating any chang
 Also, note that storing a SharedObject directly is no longer supported,
 and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
 We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
+
+### `App Id` removed as a parameter to OdspDocumentServiceFactory
+`@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
 
 ## 0.16 Breaking Changes
 
