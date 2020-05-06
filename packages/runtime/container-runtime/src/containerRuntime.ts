@@ -999,10 +999,14 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
     Promise<IComponentRuntimeChannel> {
-        return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
-    public createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    public createComponentContext(pkg: string[], props?: any): IComponentContext {
+        return this._createComponentContext(pkg, props);
+    }
+
+    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
