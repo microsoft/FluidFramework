@@ -90,17 +90,11 @@ export class ExternalComponentLoader extends PrimedComponent
             ReactDOM.unmountComponentAtNode(this.savedElement);
         }
 
-        const toggleEditable = () => {
-            if (this.callbacks?.setEditable !== undefined) {
-                this.callbacks.setEditable();
-            }
-        };
-
         ReactDOM.render(
             <ExternalComponentLoaderToolbar
                 datalistMembers={ datalistMembers }
-                onSelectOption={ this.tryAddComponent.bind(this) }
-                toggleEditable={ toggleEditable }
+                onSelectOption={ this.tryAddComponent }
+                toggleEditable={ this.toggleEditable }
             />,
             element,
         );
@@ -115,7 +109,13 @@ export class ExternalComponentLoader extends PrimedComponent
         }
     }
 
-    private async tryAddComponent(componentUrl: string) {
+    private readonly toggleEditable = () => {
+        if (this.callbacks?.setEditable !== undefined) {
+            this.callbacks.setEditable();
+        }
+    };
+
+    private readonly tryAddComponent = async (componentUrl: string) => {
         if (this.viewComponentP === undefined) {
             throw new Error("View component promise not set!!");
         }
@@ -168,5 +168,5 @@ export class ExternalComponentLoader extends PrimedComponent
             component: component as IComponent & IComponentLoadable,
             type: componentUrl,
         });
-    }
+    };
 }
