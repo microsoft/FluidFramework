@@ -44,7 +44,6 @@ const appTenants = [
  * @param div - The div to load the component into
  * @param pkg - A resolved package with cdn links. Overrides a query paramter.
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
- * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
@@ -223,7 +222,6 @@ const spoUrls = [
  * @param url - Url of the Fluid component to be loaded
  * @param div - The div to load the component into
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
- * @param clientId - The SPO clientId.
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
