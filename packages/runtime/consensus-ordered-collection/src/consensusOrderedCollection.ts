@@ -190,12 +190,8 @@ export class ConsensusOrderedCollection<T = any>
         do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await new Promise((resolve, reject) => {
+                await this.newAckBasedPromise((resolve, reject) => {
                     this.once("add", resolve);
-                    //* todo: figure out the right event that's available or fix the proxy
-                    (this.runtime.deltaManager as any).deltaManager.on(
-                        "closed",
-                        () => reject(new Error("Delta Manager closed while waiting")));
                 });
             }
         } while (!(await this.acquire(callback)));

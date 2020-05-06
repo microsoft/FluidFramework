@@ -295,6 +295,23 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
+     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * the Promise will reject.
+     */
+    protected async newAckBasedPromise<T>(
+        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+    ): Promise<T> {
+        return new Promise((resolve, reject) => {
+            (this.runtime).on(
+                "dispose",
+                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending")));
+
+            executor(resolve, reject);
+        });
+    }
+
+    /**
      * Report ignorable errors in code logic or data integrity to the logger.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.

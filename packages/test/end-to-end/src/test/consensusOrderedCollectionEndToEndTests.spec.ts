@@ -263,7 +263,7 @@ function generate(
             const collection2 = await collection2Handle.get();
 
             let rejected = false;
-            myWaitAcquireAndComplete(collection2)
+            waitAcquireAndComplete(collection2)
                 .catch(() => { rejected = true; });
             component2.runtime.deltaManager.close();
             //* todo: this fails badly too:
@@ -275,10 +275,6 @@ function generate(
             //* todo: This deadlocks, since it's waiting for the op to come back...
             // assert.equal(await acquireAndComplete(collection2), undefined);
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
-
-            await assert.rejects(p2, "Closing the runtime while waiting should cause promise reject");
-            assert.equal(await acquireAndComplete(collection1), undefined);
-            assert.equal(await acquireAndComplete(collection2), undefined);
         });
 
         it("Events", async () => {
