@@ -34,9 +34,8 @@ export async function fetchSnapshot(
         } else {
             queryParams = { deltas: "1", channels: "1", blobs: "2" };
         }
-    } else {
-        queryParams = { };
-    }
+    } 
+    
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
     const fetchResponse = await storageFetchWrapper.get<IOdspSnapshot>(url, versionId, headers);

@@ -30,7 +30,6 @@ export async function fetchJoinSession(
     itemId: string,
     siteUrl: string,
     path: string,
-    additionalParams: string,
     method: string,
     logger: ITelemetryLogger,
     getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
@@ -46,10 +45,9 @@ export async function fetchJoinSession(
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
-            let queryParams = `access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
+            let queryParams = `access_token=${token}`;
             let headers = {};
             if (queryParams.length > 2048) {
-                queryParams = `${additionalParams ? `${additionalParams}` : ""}`;
                 headers = { Authorization: `Bearer ${token}` };
             }
 
@@ -108,7 +106,6 @@ export function getSocketStorageDiscovery(
             itemId,
             siteUrl,
             "opStream/joinSession",
-            "",
             "POST",
             logger,
             getVroomToken,

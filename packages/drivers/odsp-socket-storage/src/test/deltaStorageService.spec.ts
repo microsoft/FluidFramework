@@ -18,7 +18,7 @@ describe("DeltaStorageService", () => {
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url with auth", async () => {
-        const deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl,
+        const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
             new FetchWrapper(), undefined, async (refresh) => "?access_token=123");
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
@@ -77,7 +77,7 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl,
+            deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
                 fetchWrapperMock, undefined, async (refresh) => "");
         });
 
@@ -138,7 +138,7 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl,
+            deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
                 fetchWrapperMock, undefined, async (refresh) => "");
         });
 

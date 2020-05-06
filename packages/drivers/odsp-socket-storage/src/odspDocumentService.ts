@@ -252,7 +252,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
-            { },
             this.odspResolvedUrl.hashedDocumentId,
             this.odspResolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
@@ -279,7 +278,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         };
 
         return new OdspDeltaStorageService(
-            { },
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
