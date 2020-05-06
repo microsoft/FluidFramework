@@ -17,7 +17,7 @@ interface ISpacesEditButtonProps {
     clickCallback(): void;
 }
 
-const SpacesEditButton: React.FunctionComponent<ISpacesEditButtonProps> =
+const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
     (props: React.PropsWithChildren<ISpacesEditButtonProps>) =>
         <button
             className="spaces-edit-button"
@@ -34,7 +34,7 @@ interface ISpacesEditPaneProps {
     removeComponent(): void;
 }
 
-const SpacesEditPane: React.FunctionComponent<ISpacesEditPaneProps> =
+const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         const componentUrl = `${window.location.href}/${props.url}`;
         return (
@@ -61,7 +61,7 @@ interface ISpacesComponentViewProps {
     removeComponent(): void;
 }
 
-const SpacesComponentView: React.FunctionComponent<ISpacesComponentViewProps> =
+const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
     (props: React.PropsWithChildren<ISpacesComponentViewProps>) => {
         const [component, setComponent] = React.useState<IComponent | undefined>(undefined);
 
@@ -91,7 +91,7 @@ interface ISpacesGridViewProps {
     dataModel: ISpacesDataModel;
 }
 
-export const SpacesGridView: React.FunctionComponent<ISpacesGridViewProps> =
+export const SpacesGridView: React.FC<ISpacesGridViewProps> =
     (props: React.PropsWithChildren<ISpacesGridViewProps>) => {
         const [toolbarComponent, setToolbarComponent] = React.useState<IComponent | undefined>(undefined);
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
