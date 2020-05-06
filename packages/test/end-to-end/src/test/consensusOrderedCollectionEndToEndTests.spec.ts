@@ -254,7 +254,7 @@ function generate(
             assert.equal(await acquireAndComplete(collection2), undefined);
         });
 
-        it.only("cancel on close", async () => {
+        it("cancel on close", async () => {
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
@@ -266,13 +266,12 @@ function generate(
             waitAcquireAndComplete(collection2)
                 .catch(() => { waitRejected = true; });
             component2.runtime.deltaManager.close();
-            //* todo: this fails badly too:
-            // component1.runtime.deltaManager.close();
 
             await collection1.add("testValue");
 
             assert(waitRejected, "Closing the runtime while waiting should cause promise reject");
             await assert.rejects(acquireAndComplete(collection2), "Acquiring when the runtime is disposed should fail");
+            await assert.rejects(collection2.add("anotherValue"), "Adding when the runtime is disposed should fail");
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 

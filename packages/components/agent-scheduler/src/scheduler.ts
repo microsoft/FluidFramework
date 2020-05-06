@@ -479,6 +479,7 @@ export class AgentSchedulerFactory implements IComponentFactory {
             dataTypes,
         );
 
+        // Warning: This promise is unhandled in this scope, and can result in unhandled promise rejection error
         const taskManagerP = TaskManager.load(runtime, context);
         runtime.registerRequestHandler(async (request: IRequest) => {
             const taskManager = await taskManagerP;
