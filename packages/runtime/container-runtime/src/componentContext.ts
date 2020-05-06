@@ -138,9 +138,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._containerRuntime.loader;
     }
 
-    public get containerRuntime(): IContainerRuntime {
-        return this._containerRuntime;
-    }
+    public containerRuntime: IContainerRuntime = this._containerRuntime;
 
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
