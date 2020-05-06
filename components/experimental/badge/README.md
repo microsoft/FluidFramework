@@ -1,9 +1,17 @@
-# Badge component
+# Badge
 
-**Badge** is a Fluid component that allows users to create an in-line badge within a document to represent the status
+**Badge** is a Fluid Component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.
 
 ![Badge UI](./images/badge.png)
+
+## Getting Started
+
+If you want to run this component follow the following steps:
+
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
 
 ## Custom Status
 
