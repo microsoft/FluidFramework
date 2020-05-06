@@ -82,7 +82,7 @@ module.exports = env => {
                 globalObject: 'self',
             },
             devServer: {
-                before: (app, server) => fluidRoute.before(app, server),
+                before: (app, server) => fluidRoute.before(app, server, env),
                 after: (app, server) => fluidRoute.after(app, server, __dirname, env),
             },
         },
