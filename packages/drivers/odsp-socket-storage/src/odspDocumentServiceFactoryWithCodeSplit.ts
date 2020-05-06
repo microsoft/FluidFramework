@@ -49,7 +49,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     }
 
     /**
-   * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -60,7 +59,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param odspCache - This caches response for joinSession.
    */
     constructor(
-        private readonly appId: string,
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryBaseLogger,
@@ -80,7 +78,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         this.documentsOpened.add(docId);
 
         return OdspDocumentService.create(
-            this.appId,
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,

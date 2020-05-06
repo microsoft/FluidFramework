@@ -14,7 +14,6 @@ export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
  * Makes join session call on SPO
- * @param appId - The identifier for the application
  * @param driveId - The SPO drive id that this request should be made against
  * @param itemId -The SPO item id that this request should be made against
  * @param siteUrl - The SPO site that this request should be made against
@@ -27,7 +26,6 @@ export const getOrigin = (url: string) => new URL(url).origin;
  * @param getVroomToken - A function that is able to provide the vroom token for this request
  */
 export async function fetchJoinSession(
-    appId: string,
     driveId: string,
     itemId: string,
     siteUrl: string,
@@ -48,10 +46,10 @@ export async function fetchJoinSession(
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
-            let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
+            let queryParams = `access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
             let headers = {};
             if (queryParams.length > 2048) {
-                queryParams = `app_id=${appId}${additionalParams ? `&${additionalParams}` : ""}`;
+                queryParams = `${additionalParams ? `${additionalParams}` : ""}`;
                 headers = { Authorization: `Bearer ${token}` };
             }
 
@@ -80,7 +78,6 @@ export async function fetchJoinSession(
 
 /**
  * Runs join session to get information about the web socket for a document
- * @param appId - An identifier for the application
  * @param driveId - The drive id where the container is stored
  * @param itemId - The item id of the container
  * @param siteUrl - The site where the container is stored
@@ -92,7 +89,6 @@ export async function fetchJoinSession(
 // Function has to be synchronous (i.e. no awaits) in order to be correct!
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 export function getSocketStorageDiscovery(
-    appId: string,
     driveId: string,
     itemId: string,
     siteUrl: string,
@@ -108,7 +104,6 @@ export function getSocketStorageDiscovery(
 
     if (cachedResultP === undefined) {
         cachedResultP = fetchJoinSession(
-            appId,
             driveId,
             itemId,
             siteUrl,
