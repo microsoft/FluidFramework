@@ -13,7 +13,7 @@ import * as ReactDOM from "react-dom";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
 /**
- * Basic Clicker example using new interfaces and stock component classes.
+ * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
 export class CollaborativeText extends PrimedComponent implements IComponentHTMLView {
     private readonly textKey = "textKey";
@@ -35,38 +35,34 @@ export class CollaborativeText extends PrimedComponent implements IComponentHTML
 
     public static getFactory() { return this.factory; }
 
-    /**
-     * Do setup work here
-     */
     protected async componentInitializingFirstTime() {
+        // Create the SharedString and store the handle in our root SharedDirectory
         const text = SharedString.create(this.runtime);
-        text.insertText(0, "");
         this.root.set(this.textKey, text.handle);
     }
 
     protected async componentHasInitialized() {
+        // Store the text if we are loading the first time or loading from existing
         this.text = await this.root.get<IComponentHandle<SharedString>>(this.textKey).get();
     }
 
     /**
-     * Will return a new Clicker view
+     * Renders a new view into the provided div
      */
     public render(div: HTMLElement) {
         if (this.text === undefined) {
             throw new Error("The SharedString was not initialized correctly");
         }
 
-        // set the class name of the parent div to text-area. This is for testing only.
-        div.className = "text-area";
-
-        // Get our counter object that we set in initialize and pass it in to the view.
         ReactDOM.render(
-            <CollaborativeTextArea sharedString={this.text}/>,
+            <div className="text-area">
+                <CollaborativeTextArea sharedString={this.text}/>
+            </div>,
             div,
         );
         return div;
     }
 }
 
-// Export the CollaborativeText factory as fluidExport for the dynamic case
+// Export the CollaborativeText factory as fluidExport for the dynamic component loading scenario
 export const fluidExport = CollaborativeText.getFactory();
