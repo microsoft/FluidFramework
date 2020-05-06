@@ -224,31 +224,32 @@ export interface ISummaryTracker {
  * get information and call functionality to the container.
  */
 export interface IComponentContext extends EventEmitter {
+    readonly documentId: string;
+    readonly id: string;
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
     /**
      * TODO: should remove after detachedNew is in place
      */
     readonly existing: boolean;
-
+    readonly options: any;
+    readonly clientId: string | undefined;
+    readonly parentBranch: string | null;
+    readonly connected: boolean;
+    readonly leader: boolean;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly blobManager: IBlobManager;
+    readonly storage: IDocumentStorageService;
+    readonly connectionState: ConnectionState;
+    readonly branch: string;
+    readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly loader: ILoader;
     /**
      * TODO: Remove and merge IContainerRuntimeBase into IComponentContext
      */
     readonly containerRuntime: IContainerRuntimeBase;
-
-    readonly options: any;
-    readonly documentId: string;
-    readonly loader: ILoader;
-    readonly connected: boolean;
-    readonly clientId: string | undefined;
-    readonly leader: boolean;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager
-    readonly connectionState: ConnectionState;
-    readonly branch: string;
-    readonly parentBranch: string | null;
-
-    readonly id: string;
-    readonly storage: IDocumentStorageService;
-    readonly baseSnapshot: ISnapshotTree | undefined;
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
      * Use containerRuntime instead of hostRuntime
@@ -257,9 +258,9 @@ export interface IComponentContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
-     * The package path of the component as per the package factory.
+     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
      */
-    readonly packagePath: readonly string[];
+    readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
@@ -271,11 +272,6 @@ export interface IComponentContext extends EventEmitter {
      * abstract by the context. Should be shim those so we don't have to expose ISummaryTracker as a compat interface?
      */
     readonly summaryTracker: ISummaryTracker;
-
-    /**
-     * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
-     */
-    readonly createProps?: any;
 
     /**
      * Returns the current quorum.
@@ -294,23 +290,6 @@ export interface IComponentContext extends EventEmitter {
     error(err: any): void;
 
     /**
-     * Binds a runtime to the context.
-     */
-    bindRuntime(componentRuntime: IComponentRuntimeBase): void;
-
-    /**
-     * Attaches the runtime to the container
-     * @param componentRuntime - runtime to attach
-     */
-    attach(componentRuntime: IComponentRuntimeBase): void;
-
-    /**
-     * Call by IComponentRuntimeBase, indicates that a channel is dirty and needs to be part of the summary.
-     * @param address - The address of the channe that is dirty.
-     */
-    setChannelDirty(address: string): void;
-
-    /**
      * Submits the message to be sent to other clients.
      * @param type - Type of the message.
      * @param content - Content of the message.
@@ -323,18 +302,6 @@ export interface IComponentContext extends EventEmitter {
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
-
-    /**
-     * Create a new component using subregistries with fallback.
-     * @param pkg - Package name of the component
-     * @param realizationFn - Optional function to call to realize the component over the context default
-     * @returns A promise for a component that will have been initialized. Caller is responsible
-     * for attaching the component to the provided runtime's container such as by storing its handle
-     */
-    createComponentWithRealizationFn(
-        pkg: string,
-        realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponent & IComponentLoadable>;
 
     /**
      * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
@@ -350,6 +317,35 @@ export interface IComponentContext extends EventEmitter {
         pkg?: string | string[],
         props?: any,
     ): Promise<IComponentRuntimeBase>;
+
+    /**
+     * Create a new component using subregistries with fallback.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
+    createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable>;
+
+    /**
+     * Binds a runtime to the context.
+     */
+    bindRuntime(componentRuntime: IComponentRuntimeBase): void;
+
+    /**
+     * Attaches the runtime to the container
+     * @param componentRuntime - runtime to attach
+     */
+    attach(componentRuntime: IComponentRuntimeBase): void;
+
+    /**
+     * Call by IComponentRuntimeBase, indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
+     */
+    setChannelDirty(address: string): void;
 }
 
 export interface IExperimentalComponentContext extends IComponentContext {
