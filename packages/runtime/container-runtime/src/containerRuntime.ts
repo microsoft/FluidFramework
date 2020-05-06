@@ -841,7 +841,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        raiseConnectedEvent(this.logger, this, connected, clientId, this.logger);
+        raiseConnectedEvent(this.logger, this, connected, clientId);
 
         if (connected) {
             assert(clientId);

@@ -50,7 +50,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const kevValue = new KeyValue(runtime, context);
+        const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
 
         return kevValue;
@@ -67,7 +67,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         return this._root!;
     }
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime) {
     }
 
     public set(key: string, value: any): void {
