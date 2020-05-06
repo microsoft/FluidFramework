@@ -13,21 +13,27 @@ import {
 import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer, SpacesCompatibleToolbar } from "./interfaces";
+import {
+    IComponentToolbarConsumer,
+    IProvideComponentCollectorSpaces,
+    SpacesCompatibleToolbar,
+} from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent
-    implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
+export class Spaces extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentToolbarConsumer,
+    IProvideComponentCollectorSpaces
+{
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
@@ -56,7 +62,7 @@ export class Spaces extends PrimedComponent
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollection() { return this.dataModel; }
+    public get IComponentCollectorSpaces() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
     public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
@@ -76,7 +82,7 @@ export class Spaces extends PrimedComponent
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
         const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        componentToolbar.changeEditState(true);
+        componentToolbar.setEditable(true);
         this.setComponentToolbar(
             componentToolbar.url,
             ComponentToolbarName,
@@ -95,17 +101,14 @@ export class Spaces extends PrimedComponent
 
     protected async componentHasInitialized() {
         this.addToolbarListeners();
-        const isEditable = this.dataModel.componentList.size - 1 === 0;
+        const isEditable = this.dataModel.componentList.size === 0;
         this.dataModel.emit("editableUpdated", isEditable);
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
-        if (registry) {
-            this.registryDetails = registry as IComponent;
-        }
+        this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
         if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.changeEditState(isEditable);
-            if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
-                this.componentToolbar.IComponentToolbar.toggleTemplates(true);
-            }
+            this.componentToolbar.IComponentToolbar.setEditable(isEditable);
+            this.componentToolbar.IComponentToolbar.setTemplatesVisible(
+                this.registryDetails?.IComponentRegistryTemplates !== undefined,
+            );
         }
     }
 

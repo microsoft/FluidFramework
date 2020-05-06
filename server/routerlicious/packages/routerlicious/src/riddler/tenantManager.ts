@@ -75,13 +75,13 @@ export class TenantManager {
     /**
      * Creates a new tenant
      */
-    public async createTenant(): Promise<ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const key = crypto.randomBytes(16).toString("hex");
         const id = await collection.insertOne({
-            _id: getRandomName("-"),
+            _id: tenantId || getRandomName("-"),
             key,
             orderer: null,
             storage: null,
