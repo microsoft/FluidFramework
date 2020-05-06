@@ -102,6 +102,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             }
         }
 
+        // back-compat for older documents.
+        if (!lastCheckpoint.epoch) {
+            lastCheckpoint.epoch = leaderEpoch;
+            lastCheckpoint.term = 1;
+            lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
+        }
+
         const newCheckpoint = FlipTerm ?
             await this.resetCheckpointOnEpochTick(
                 tenantId,
@@ -178,26 +185,19 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         checkpoint: IDeliCheckpoint,
         leaderEpoch: number): Promise<IDeliCheckpoint> {
         let newCheckpoint = checkpoint;
-        if (newCheckpoint.epoch !== undefined && newCheckpoint.term !== undefined) {
-            if (leaderEpoch !== newCheckpoint.epoch) {
-                const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
-                if (lastSummaryState === undefined) {
-                    newCheckpoint.epoch = leaderEpoch;
-                } else {
-                    newCheckpoint = lastSummaryState;
-                    newCheckpoint.epoch = leaderEpoch;
-                    ++newCheckpoint.term;
-                    newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
-                    // Now create the summary.
-                    await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-                    logger.info(`Created a summary on epoch tick`);
-                }
+        if (leaderEpoch !== newCheckpoint.epoch) {
+            const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
+            if (lastSummaryState === undefined) {
+                newCheckpoint.epoch = leaderEpoch;
+            } else {
+                newCheckpoint = lastSummaryState;
+                newCheckpoint.epoch = leaderEpoch;
+                ++newCheckpoint.term;
+                newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
+                // Now create the summary.
+                await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
+                logger.info(`Created a summary on epoch tick`);
             }
-        } else {
-            // Back-compat for old documents.
-            newCheckpoint.epoch = leaderEpoch;
-            newCheckpoint.term = 1;
-            newCheckpoint.durableSequenceNumber = newCheckpoint.sequenceNumber;
         }
         return newCheckpoint;
     }
