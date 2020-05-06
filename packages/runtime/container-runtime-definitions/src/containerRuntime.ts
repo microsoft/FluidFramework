@@ -78,7 +78,10 @@ export interface IContainerRuntime extends
         event: "connected" | "leader" | "noleader",
         listener: (clientId?: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
-
+    on(
+        event: "componentInstantiated",
+        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+    ): this;
     /**
      * Returns the runtime of the component.
      * @param id - Id supplied during creating the component.
@@ -123,6 +126,11 @@ export interface IContainerRuntime extends
      * Flushes any ops currently being batched to the loader
      */
     flush(): void;
+
+    /**
+     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     */
+    notifyComponentInstantiated(componentContext: IComponentContext): void;
 }
 
 export interface IExperimentalContainerRuntime extends IContainerRuntime {

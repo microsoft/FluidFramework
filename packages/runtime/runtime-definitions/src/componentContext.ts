@@ -249,7 +249,7 @@ export interface IComponentContext extends EventEmitter {
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
      * Use containerRuntime instead of hostRuntime
      */
-    readonly hostRuntime: IContainerRuntime;
+    readonly hostRuntime: IContainerRuntimeBase;
     readonly snapshotFn: (message: string) => Promise<void>;
 
     /**
