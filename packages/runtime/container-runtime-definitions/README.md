@@ -1,2 +1,4 @@
-# Runtime Definitions
-Package that contains the interfaces required by the component runtime.
+# Container Runtime Definitions
+
+Interface IContainerRuntime, which is an abstraction of an implementation of ContainerRuntime.  
+Provides functionality for container developer. 

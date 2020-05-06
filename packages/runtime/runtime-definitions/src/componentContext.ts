@@ -57,8 +57,7 @@ export interface IContainerRuntimeBase extends
     EventEmitter,
     IProvideComponentHandleContext,
     IProvideComponentSerializer,
-    /* REVIEW [curtism]: Used by spaces.  Do we want to make the global registry available globally by default
-       or should we switch to IoC */
+    /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideComponentRegistry {
 
     readonly logger: ITelemetryLogger;
@@ -244,9 +243,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    /**
-     * TODO: Remove and merge IContainerRuntimeBase into IComponentContext
-     */
+
     readonly containerRuntime: IContainerRuntimeBase;
     /**
      * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
@@ -264,11 +261,6 @@ export interface IComponentContext extends EventEmitter {
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
-
-    /**
-     * REVIEW [curtism]: ComponentRuntime only use getId and createOrGetChild, there rest of the functionality is
-     * abstract by the context. Should be shim those so we don't have to expose ISummaryTracker as a compat interface?
-     */
     readonly summaryTracker: ISummaryTracker;
 
     /**
