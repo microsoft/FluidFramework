@@ -15,6 +15,7 @@ export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
+    getEditable?(): boolean;
     setEditable?(isEditable?: boolean): void;
 }
 

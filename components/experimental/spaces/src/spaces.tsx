@@ -17,7 +17,7 @@ import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
-import { SpacesGridView } from "./view";
+import { SpacesView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import {
     IComponentToolbarConsumer,
@@ -68,14 +68,26 @@ export class Spaces extends PrimedComponent implements
     public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
         this.dataModel.setComponentToolbar(id, type, toolbarComponent);
         this.componentToolbar = toolbarComponent;
-        this.addToolbarListeners();
     }
 
     /**
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(<SpacesGridView dataModel={this.dataModel}/>, div);
+        const toolbarCallbacks = {
+            addComponent: (type: string, w?: number, h?: number) => {
+                this.createAndAttachComponent(type)
+                    .then((component) => {
+                        this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
+                    })
+                    .catch((error) => {
+                        console.error(`Error while creating component: ${type}`, error);
+                    });
+            },
+            addTemplate: this.addTemplateFromRegistry.bind(this),
+            saveLayout: () => this.saveLayout(),
+        };
+        ReactDOM.render(<SpacesView dataModel={this.dataModel} toolbarCallbacks={ toolbarCallbacks } />, div);
     }
 
     protected async componentInitializingFirstTime() {
@@ -100,32 +112,12 @@ export class Spaces extends PrimedComponent implements
     }
 
     protected async componentHasInitialized() {
-        this.addToolbarListeners();
-        const isEditable = this.dataModel.componentList.size === 0;
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
         if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.setEditable(isEditable);
             this.componentToolbar.IComponentToolbar.setTemplatesVisible(
                 this.registryDetails?.IComponentRegistryTemplates !== undefined,
             );
         }
-    }
-
-    private addToolbarListeners() {
-        this.componentToolbar?.IComponentCallable.setComponentCallbacks({
-            addComponent: (type: string, w?: number, h?: number) => {
-                this.createAndAttachComponent(type)
-                    .then((component) => {
-                        this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
-                    })
-                    .catch((error) => {
-                        console.error(`Error while creating component: ${type}`, error);
-                    });
-            },
-            addTemplate: this.addTemplateFromRegistry.bind(this),
-            saveLayout: () => this.saveLayout(),
-            setEditable: (isEditable?: boolean) => this.dataModel.emit("editableUpdated", isEditable),
-        });
     }
 
     private initializeDataModel() {

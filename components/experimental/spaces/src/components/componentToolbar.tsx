@@ -129,20 +129,13 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     constructor(props: IComponentToolbarViewProps) {
         super(props);
         this.supportedComponentList = props.supportedComponentList;
+        const editable = props.callbacks.getEditable !== undefined ? props.callbacks.getEditable() : false;
         this.state = {
-            isEditable: props.root.get("isEditable"),
+            isEditable: editable,
             isComponentListOpen: false,
             isTemplateListOpen: false,
             isTemplateVisible: props.root.get("isTemplateVisible"),
         };
-        props.root.on("valueChanged", (change, local) => {
-            if (change.key === "isEditable") {
-                this.setState({
-                    isEditable: props.root.get("isEditable"),
-                    isTemplateVisible: props.root.get("isTemplateVisible"),
-                });
-            }
-        });
     }
 
     public emitAddComponentEvent(type: string, w?: number, h?: number) {

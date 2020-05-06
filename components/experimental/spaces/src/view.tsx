@@ -11,6 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
+import { SpacesCompatibleToolbar, IComponentCallbacks } from "./interfaces";
 import "./style.css";
 
 interface ISpacesEditButtonProps {
@@ -89,18 +90,26 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
 
 interface ISpacesGridViewProps {
     dataModel: ISpacesDataModel;
+    toolbarCallbacks: IComponentCallbacks;
 }
 
-export const SpacesGridView: React.FC<ISpacesGridViewProps> =
+export const SpacesView: React.FC<ISpacesGridViewProps> =
     (props: React.PropsWithChildren<ISpacesGridViewProps>) => {
-        const [toolbarComponent, setToolbarComponent] = React.useState<IComponent | undefined>(undefined);
+        const [toolbarComponent, setToolbarComponent] = React.useState<SpacesCompatibleToolbar | undefined>(undefined);
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
         const [componentMap, setComponentMap] = React.useState<Map<string, Layout>>(props.dataModel.componentList);
+
+        const combinedToolbarCallbacks = props.toolbarCallbacks;
+        combinedToolbarCallbacks.getEditable = () => editable;
+        combinedToolbarCallbacks.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
 
         React.useEffect(() => {
             // Need an event for when the component toolbar changes
             props.dataModel.getComponentToolbar()
-                .then(setToolbarComponent)
+                .then((retrievedToolbar) => {
+                    retrievedToolbar?.setComponentCallbacks(combinedToolbarCallbacks);
+                    setToolbarComponent(retrievedToolbar);
+                })
                 .catch((error) => {
                     console.error(`Error getting toolbar component`, error);
                 });
@@ -109,23 +118,10 @@ export const SpacesGridView: React.FC<ISpacesGridViewProps> =
         React.useEffect(() => {
             const onComponentListChanged = (newMap: Map<string, Layout>) => {
                 setComponentMap(newMap);
-                if (props.dataModel.getComponentToolbar() === undefined) {
-                    setEditable(props.dataModel.componentList.size === 0);
-                }
             };
             props.dataModel.on("componentListChanged", onComponentListChanged);
             return () => {
                 props.dataModel.off("componentListChanged", onComponentListChanged);
-            };
-        });
-
-        React.useEffect(() => {
-            const onEditableUpdated = (isEditable?: boolean) => {
-                setEditable(isEditable || !editable);
-            };
-            props.dataModel.on("editableUpdated", onEditableUpdated);
-            return () => {
-                props.dataModel.off("editableUpdated", onEditableUpdated);
             };
         });
 
@@ -141,7 +137,7 @@ export const SpacesGridView: React.FC<ISpacesGridViewProps> =
             props.dataModel.updateGridItem(id, newItem);
         };
 
-        const toolbar = toolbarComponent !== undefined
+        const toolbarElement = toolbarComponent !== undefined
             ? <ReactViewAdapter component={ toolbarComponent } />
             : undefined;
 
@@ -166,7 +162,7 @@ export const SpacesGridView: React.FC<ISpacesGridViewProps> =
 
         return (
             <div className={`spaces-grid-view${ editable ? " editable" : "" }`}>
-                { toolbar }
+                { toolbarElement }
                 {
                     componentMap.size > 0 &&
                         <ReactGridLayout
