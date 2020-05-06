@@ -195,14 +195,14 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${documentId}</title>
 </head>
-<body style="margin: 0; padding: 0">
+<body style="margin: 0;">
     <div>
         <button id="attach-button" disabled>Attach!</button>
     </div>
     <div>
         <textarea id="text" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
     </div>
-    <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative">
+    <div id="content">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
