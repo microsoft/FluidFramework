@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import * as assert from "assert";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { IComponentRuntimeBase } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
 import { RequestParser } from "../requestParser";
 
@@ -22,15 +22,15 @@ describe("RequestParser", () => {
         it("Component request without wait", async () => {
             const requestParser = new RequestParser({ url: "/componentId" });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeBase> => {
+                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, undefined);
-                    return Promise.resolve<IComponentRuntimeBase>({
+                    return Promise.resolve<IComponentRuntimeChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeBase);
+                    } as IComponentRuntimeChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
@@ -40,15 +40,15 @@ describe("RequestParser", () => {
         it("Component request with wait", async () => {
             const requestParser = new RequestParser({ url: "/componentId", headers: { wait: true } });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeBase> => {
+                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, true);
-                    return Promise.resolve<IComponentRuntimeBase>({
+                    return Promise.resolve<IComponentRuntimeChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeBase);
+                    } as IComponentRuntimeChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
@@ -58,15 +58,15 @@ describe("RequestParser", () => {
         it("Component request with sub route", async () => {
             const requestParser = new RequestParser({ url: "/componentId/route", headers: { wait: true } });
             const runtime: IContainerRuntime = {
-                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeBase> => {
+                getComponentRuntime: async (id, wait): Promise<IComponentRuntimeChannel> => {
                     assert.equal(id, "componentId");
                     assert.equal(wait, true);
-                    return Promise.resolve<IComponentRuntimeBase>({
+                    return Promise.resolve<IComponentRuntimeChannel>({
                         request: async (r) => {
                             assert.equal(r.url, "route");
                             return Promise.resolve(createComponentResponse({}));
                         },
-                    } as IComponentRuntimeBase);
+                    } as IComponentRuntimeChannel);
                 },
             } as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);

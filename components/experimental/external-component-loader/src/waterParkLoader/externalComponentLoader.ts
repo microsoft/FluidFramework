@@ -11,7 +11,7 @@ import {
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentRuntimeBase } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
@@ -181,7 +181,7 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             const pkgReg = await urlReg.IComponentRegistry.get(value) as IComponent;
-            let componentRuntime: IComponentRuntimeBase;
+            let componentRuntime: IComponentRuntimeChannel;
             const id = uuid();
             if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
                 componentRuntime = await this.context.containerRuntime.createComponent(

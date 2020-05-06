@@ -21,15 +21,15 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import {
-    IComponentRuntimeBase,
-} from "@microsoft/fluid-runtime-definitions";
+import { IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRuntimeBase {
+export interface IComponentRuntime extends EventEmitter, Partial<IProvideComponentRegistry> {
+
+    readonly id: string;
 
     readonly IComponentSerializer: IComponentSerializer;
 

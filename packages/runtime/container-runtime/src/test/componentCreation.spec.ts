@@ -4,7 +4,7 @@
  */
 import * as assert from "assert";
 import {
-    IComponentRuntimeBase,
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntimeBase) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";

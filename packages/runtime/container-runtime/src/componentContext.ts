@@ -33,7 +33,7 @@ import {
 } from "@microsoft/fluid-container-runtime-definitions";
 import {
     ComponentRegistryEntry,
-    IComponentRuntimeBase,
+    IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
     IComponentFactory,
@@ -162,11 +162,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._isAttached;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntimeBase) => void;
-    protected componentRuntime: IComponentRuntimeBase | undefined;
+    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntimeBase> | undefined;
+    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
@@ -177,12 +177,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntimeBase) => void,
+        attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntimeBase) => {
+        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             attach(componentRuntime);
             this._isAttached = true;
         };
@@ -228,7 +228,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         pkgOrId: string | undefined,
         pkg?: string,
         props?: any,
-    ): Promise<IComponentRuntimeBase> {
+    ): Promise<IComponentRuntimeChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -271,9 +271,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntimeBase> {
+    public async realize(): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeBase>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -310,9 +310,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async realizeWithFn(
         realizationFn: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeBase> {
+    ): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeBase>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             realizationFn(this);
         }
 
@@ -479,7 +479,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntimeBase) {
+    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
@@ -660,7 +660,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntimeBase) => void,
+        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */

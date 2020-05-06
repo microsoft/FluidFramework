@@ -25,7 +25,7 @@ import {
 import {
     FlushMode,
     IContainerRuntimeBase,
-    IComponentRuntimeBase,
+    IComponentRuntimeChannel,
     IComponentContext,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
@@ -84,7 +84,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
      */
-    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeBase>;
+    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntimeChannel>;
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying
@@ -96,7 +96,7 @@ export interface IContainerRuntime extends
     createComponentWithRealizationFn(
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntimeBase>;
+    ): Promise<IComponentRuntimeChannel>;
 
     /**
      * Returns the current quorum.

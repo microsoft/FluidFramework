@@ -8,7 +8,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
-    IComponentRuntimeBase,
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
@@ -29,7 +29,7 @@ describe("Component Context Tests", () => {
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntimeBase) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IComponentFactory = {

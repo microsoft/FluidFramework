@@ -76,7 +76,6 @@ export interface IContainerRuntimeBase extends
      */
     orderSequentially(callback: () => void): void;
 
-    /* REVIEW [curtism]: Do we want each component able to change the flush mode globally? */
     /**
      * Sets the flush mode for operations on the document.
      */
@@ -122,7 +121,7 @@ export interface IContainerRuntimeBase extends
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeBase>;
+    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntimeChannel>;
 
     /**
      * @deprecated
@@ -131,7 +130,7 @@ export interface IContainerRuntimeBase extends
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * Remove once issue #1756 is closed
      */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeBase>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
 }
 
 /**
@@ -140,12 +139,11 @@ export interface IContainerRuntimeBase extends
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications
  */
-export interface IComponentRuntimeBase extends
+export interface IComponentRuntimeChannel extends
     IComponentRouter,
     Partial<IProvideComponentRegistry>,
     IDisposable {
 
-    /* REVIEW [curtism]: does the IComponentContext really need this? */
     readonly id: string;
 
     /**
@@ -220,7 +218,7 @@ export interface ISummaryTracker {
 }
 
 /**
- * Represents the context for the component. It is used by the component runtime to 
+ * Represents the context for the component. It is used by the component runtime to
  * get information and call functionality to the container.
  */
 export interface IComponentContext extends EventEmitter {
@@ -316,7 +314,7 @@ export interface IComponentContext extends EventEmitter {
         pkgOrId: string | undefined,
         pkg?: string | string[],
         props?: any,
-    ): Promise<IComponentRuntimeBase>;
+    ): Promise<IComponentRuntimeChannel>;
 
     /**
      * Create a new component using subregistries with fallback.
@@ -333,16 +331,16 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IComponentRuntimeBase): void;
+    bindRuntime(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
      * Attaches the runtime to the container
      * @param componentRuntime - runtime to attach
      */
-    attach(componentRuntime: IComponentRuntimeBase): void;
+    attach(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
-     * Call by IComponentRuntimeBase, indicates that a channel is dirty and needs to be part of the summary.
+     * Call by IComponentRuntimeChannel, indicates that a channel is dirty and needs to be part of the summary.
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
@@ -359,10 +357,14 @@ export interface IExperimentalComponentContext extends IComponentContext {
 
 /**
  * Legacy API to be removed from IComponentContext
+ *
+ * Moving out of the main interface to force compilation error.
+ * But the implementation is still in place as a transition so user can case to
+ * the legacy interface and use it temporary if changing their code take some time.
  */
 export interface IComponentContextLegacy extends IComponentContext {
     /**
-     * @deprecated 0.18. Should call IComponentRuntimeBase.request directly
+     * @deprecated 0.18. Should call IComponentRuntimeChannel.request directly
      * Make request to the component.
      * @param request - Request.
      */

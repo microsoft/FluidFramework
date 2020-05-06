@@ -41,6 +41,7 @@ import {
     IAttachMessage,
     IComponentContext,
     IComponentRegistry,
+    IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
     IExperimentalComponentContext,
@@ -65,8 +66,8 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
-    IExperimentalComponentRuntime, IComponentHandleContext
+export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
+    IComponentRuntime, IExperimentalComponentRuntime, IComponentHandleContext
 {
     public readonly isExperimentalComponentRuntime = true;
     /**
