@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-routerlicious-host";
-export const pkgVersion = "0.16.4";
+export const pkgVersion = "0.16.5";

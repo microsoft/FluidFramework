@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/pond",
-  "version": "0.16.4",
+  "version": "0.16.5",
   "description": "Grab bag of fluid scenarios.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -33,21 +33,21 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.4",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.4",
-    "@microsoft/fluid-map": "^0.16.4",
+    "@microsoft/fluid-aqueduct": "^0.16.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.5",
+    "@microsoft/fluid-map": "^0.16.5",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-runtime-definitions": "^0.16.4",
-    "@microsoft/fluid-synthesize": "^0.16.4",
-    "@microsoft/fluid-view-adapters": "^0.16.4",
-    "@microsoft/fluid-view-interfaces": "^0.16.4",
+    "@microsoft/fluid-runtime-definitions": "^0.16.5",
+    "@microsoft/fluid-synthesize": "^0.16.5",
+    "@microsoft/fluid-view-adapters": "^0.16.5",
+    "@microsoft/fluid-view-interfaces": "^0.16.5",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.16.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.5",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
