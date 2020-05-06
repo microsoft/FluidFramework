@@ -12,8 +12,8 @@ function setListeners() {
     webPartsHandler,
     {
       urls: [
-        "https://*.sharepoint-df.com/*/getclientsidewebparts",
-        "https://*.sharepoint.com/*/getclientsidewebparts"
+        "https://*.microsoft.sharepoint-df.com/*/getclientsidewebparts",
+        "https://microsofteur-my.sharepoint.com/*/getclientsidewebparts"
       ]
     },
     ['requestBody', 'blocking']

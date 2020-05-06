@@ -6,8 +6,8 @@
     "webRequest",
     "webRequestBlocking",
     "https://*.fluidpreview.office.net/*",
-    "https://*.sharepoint-df.com/*",
-    "https://*.sharepoint.com/*",
+    "https://*.microsoft.sharepoint-df.com/*",
+    "https://*.microsofteur-my.sharepoint.com/*",
     "http://localhost:8080/*",
     "http://localhost:3000/*"
   ],
