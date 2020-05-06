@@ -39,21 +39,21 @@ const defaultComponents = [
     "@fluid-example/table-view",
 ];
 
-// localComponents facilitates local component development.  Make sure the path points to a directory containing
+// localComponentUrls facilitates local component development.  Make sure the path points to a directory containing
 // the package.json for the package, and also make sure you've run webpack there first.  These will only be
 // available when running on localhost.
-const localComponents = [
+const localComponentUrls = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
     "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
 // When locally developing, want to load the latest available patch version by default
 const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
-const datalistMembers = defaultComponents.map((url) => `${url}@${defaultVersionToLoad}`);
+const componentUrls = defaultComponents.map((url) => `${url}@${defaultVersionToLoad}`);
 
 // When running on localhost, add entries for local component development.
 if (window.location.hostname === "localhost") {
-    datalistMembers.push(...localComponents);
+    componentUrls.push(...localComponentUrls);
 }
 
 /**
@@ -92,7 +92,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
         ReactDOM.render(
             <ExternalComponentLoaderToolbar
-                datalistMembers={ datalistMembers }
+                componentUrls={ componentUrls }
                 onSelectOption={ this.tryAddComponent }
                 toggleEditable={ this.toggleEditable }
             />,

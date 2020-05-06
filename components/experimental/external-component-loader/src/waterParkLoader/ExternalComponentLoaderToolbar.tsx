@@ -7,8 +7,8 @@ import * as uuid from "uuid";
 import * as React from "react";
 
 interface ExternalComponentLoaderToolbarProps {
-    datalistMembers: string[];
-    onSelectOption: (option: string) => Promise<void>;
+    componentUrls: string[];
+    onSelectOption: (componentUrl: string) => Promise<void>;
     toggleEditable?: () => void;
 }
 
@@ -17,7 +17,7 @@ export const ExternalComponentLoaderToolbar: React.FC<ExternalComponentLoaderToo
         const [errorText, setErrorText] = React.useState<string | undefined>(undefined);
         const datalistId = uuid();
 
-        const datalistOptions = props.datalistMembers.map((member) => {
+        const datalistOptions = props.componentUrls.map((member) => {
             return <option value={ member } key={ member }></option>;
         });
 
@@ -29,11 +29,11 @@ export const ExternalComponentLoaderToolbar: React.FC<ExternalComponentLoaderToo
             if (inputRef.current === null) {
                 return;
             }
-            const picked = inputRef.current.value;
-            if (picked === undefined || picked.length === 0) {
+            const componentUrl = inputRef.current.value;
+            if (componentUrl === undefined || componentUrl.length === 0) {
                 inputRef.current.style.backgroundColor = "#fee";
             } else {
-                props.onSelectOption(picked).catch((error) => {
+                props.onSelectOption(componentUrl).catch((error) => {
                     setErrorText(error.toString());
                 });
             }
