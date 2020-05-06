@@ -16,7 +16,6 @@ import {
 import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
@@ -32,7 +31,6 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
-    openMode?: "detached" | "attached";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -144,26 +142,12 @@ export async function start(
     fluidModule: IFluidModule,
     options: RouteOptions,
     div: HTMLDivElement,
-    attachButton: HTMLButtonElement,
-    textArea: HTMLTextAreaElement,
-    attached: boolean,
 ): Promise<void> {
-    let finalDocId = documentId;
-    if (attached) {
-        attachButton.style.display = "none";
-        textArea.style.display = "none";
-    } else {
-        finalDocId = getRandomName("-");
-    }
-    if (options.mode === "local") {
-        textArea.style.display = "none";
-    }
-
-    const documentServiceFactory = getDocumentServiceFactory(finalDocId, options);
+    const documentServiceFactory = getDocumentServiceFactory(documentId, options);
 
     // Construct a request
     const url = window.location.href;
-    const urlResolver = new MultiUrlResolver(window.location.origin, finalDocId, options);
+    const urlResolver = new MultiUrlResolver(window.location.origin, documentId, options);
 
     const codeDetails: IFluidCodeDetails = {
         package: packageJson,
@@ -179,23 +163,40 @@ export async function start(
         [packageSeed],
     );
     let container1: Container;
-    if (!attached) {
+    const container1Attached = new Deferred();
+
+    if (window.location.hash.toLocaleLowerCase().includes("manualattach")) {
         if (!codeDetails) {
             throw new Error("Code details must be defined for detached mode!!");
         }
         const loader = await baseHost1.getLoader();
         container1 = await loader.createDetachedContainer(codeDetails);
+
+        const attachDiv = document.createElement("div");
+        const attachButton = document.createElement("button");
+        attachButton.innerText = "Attach Container";
+        attachDiv.append(attachButton);
+        document.body.prepend(attachDiv);
+        attachButton.onclick = () => {
+            container1.attach(urlResolver.createRequestForCreateNew(documentId))
+                .then(() => {
+                    container1Attached.resolve();
+                    attachDiv.remove();
+                    window.location.hash = "";
+                }, (error) => {
+                    console.error(error);
+                });
+        };
     } else {
         container1 = await baseHost1.initializeContainer(
             url,
             codeDetails,
         );
+        container1Attached.resolve();
     }
 
     const reqParser = new RequestParser({ url });
     const componentUrl = `/${reqParser.createSubRequest(3).url}`;
-    attachButton.disabled = false;
-    const urlDeferred = new Deferred<string>();
     // Side-by-side mode
     if (options.mode === "local" && !options.single) {
         div.style.display = "flex";
@@ -207,29 +208,30 @@ export async function start(
         container1.on("contextChanged", () => {
             getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
         });
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        urlDeferred.promise.then(async (containerUrl) => {
-            // New documentServiceFactory for right div, same everything else
-            const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(finalDocId, options);
-            const hostConf2 =
-                { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
+        if (!container1Attached.isCompleted) {
+            rightDiv.innerText = "Waiting for container attach";
+        }
+        await container1Attached.promise;
+        // New documentServiceFactory for right div, same everything else
+        const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(documentId, options);
+        const hostConf2 =
+            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
-            // This will create a new Loader/Container/Component from the BaseHost above. This is
-            // intentional because we want to emulate two clients collaborating with each other.
-            const baseHost2 = new BaseHost(
-                hostConf2,
-                [packageSeed],
-            );
-            const container2 = await baseHost2.initializeContainer(
-                containerUrl,
-                codeDetails,
-            );
+        // This will create a new Loader/Container/Component from the BaseHost above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
+        const baseHost2 = new BaseHost(
+            hostConf2,
+            [packageSeed],
+        );
+        const container2 = await baseHost2.initializeContainer(
+            url,
+            codeDetails,
+        );
 
-            await getComponentAndRender(container2, componentUrl, rightDiv);
-            // Handle the code upgrade scenario (which fires contextChanged)
-            container2.on("contextChanged", () => {
-                getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
-            });
+        await getComponentAndRender(container2, componentUrl, rightDiv);
+        // Handle the code upgrade scenario (which fires contextChanged)
+        container2.on("contextChanged", () => {
+            getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
         });
     } else {
         await getComponentAndRender(container1, componentUrl, div);
@@ -237,21 +239,6 @@ export async function start(
         container1.on("contextChanged", () => {
             getComponentAndRender(container1, componentUrl, div).catch(() => { });
         });
-    }
-    if (!attached) {
-        attachButton.onclick = async () => {
-            await container1.attach(urlResolver.createRequestForCreateNew(finalDocId))
-                .then(() => {
-                    const text = window.location.href.replace("create", finalDocId);
-                    textArea.innerText = text;
-                    urlDeferred.resolve(text);
-                    attachButton.style.display = "none";
-                }, (error) => {
-                    throw new Error(error);
-                });
-        };
-    } else {
-        urlDeferred.resolve(window.location.href);
     }
 }
 
