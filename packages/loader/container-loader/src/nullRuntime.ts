@@ -17,7 +17,6 @@ import {
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
@@ -59,7 +58,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public changeConnectionState(connected: boolean, clientId?: string) {
         return;
     }
 

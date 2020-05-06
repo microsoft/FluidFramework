@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
-import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -50,7 +50,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Connection state
      */
-    private _state = ConnectionState.Disconnected;
+    private _connected = false;
 
     /**
      * Locally applied operations not yet ACK'd by the server
@@ -71,8 +71,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets the connection state
      * @returns The state of the connection
      */
-    public get state(): ConnectionState {
-        return this._state;
+    public get connected(): boolean {
+        return this._connected;
     }
 
     /**
@@ -254,7 +254,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         let clientSequenceNumber = -1;
-        if (this.state === ConnectionState.Connected) {
+        if (this.connected) {
             // This assert !isLocal above means services can't be undefined.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
@@ -315,66 +315,46 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             process: (message, local) => {
                 this.process(message, local);
             },
-            setConnectionState: (state: ConnectionState) => {
-                this.setConnectionState(state);
+            setConnectionState: (connected: boolean) => {
+                this.setConnectionState(connected);
             },
         });
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.setConnectionState(this.services!.deltaConnection.state);
+        this.setConnectionState(this.services!.deltaConnection.connected);
     }
 
     /**
      * Set the state of connection to services.
      * @param state - The new state of the connection
      */
-    private setConnectionState(state: ConnectionState) {
-        if (this._state === state) {
+    private setConnectionState(connected: boolean) {
+        if (this._connected === connected) {
             // Not changing state, nothing the same.
             return;
         }
 
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
-        this._state = state;
+        this._connected = connected;
 
-        switch (state) {
-            case ConnectionState.Disconnected:
-                // Things that are true now...
-                // - if we had a connection we can no longer send messages over it
-                // - if we had outbound messages some may or may not be ACK'd. Won't know until next message
-                //
-                // - nack could get a new msn - but might as well do it in the join?
-                this.onDisconnect();
-                this.emit("disconnected");
-                break;
+        if (!connected) {
+            // Things that are true now...
+            // - if we had a connection we can no longer send messages over it
+            // - if we had outbound messages some may or may not be ACK'd. Won't know until next message
+            //
+            // - nack could get a new msn - but might as well do it in the join?
+            this.onDisconnect();
+        } else {
+            // Extract all un-ack'd payload operation
+            const pendingOps = this.pendingOps.toArray().map((value) => value.content);
+            this.pendingOps.clear();
 
-            case ConnectionState.Connecting:
-                // Things that are now true...
-                // - we will begin to receive inbound messages
-                // - we know what our new client id is.
-                // - still not safe to send messages
-
-                // While connecting we are still ticking off the previous messages
-                debug(`${this.id} is now connecting`);
-                break;
-
-            case ConnectionState.Connected: {
-                // Extract all un-ack'd payload operation
-                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
-                this.pendingOps.clear();
-
-                // And now we are fully connected
-                // - we have a client ID
-                // - we are caught up enough to attempt to send messages
-                this.onConnect(pendingOps);
-                this.emit("connected");
-                break;
-            }
-
-            default:
-                assert.ok(false, `Unknown ConnectionState ${state}`);
+            // And now we are fully connected
+            // - we have a client ID
+            // - we are caught up enough to attempt to send messages
+            this.onConnect(pendingOps);
         }
     }
 
@@ -417,8 +397,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         this.pendingOps.shift();
-        if (this.pendingOps.length === 0) {
-            this.emit("processed");
-        }
     }
 }

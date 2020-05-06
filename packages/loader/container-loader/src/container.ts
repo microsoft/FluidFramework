@@ -28,6 +28,7 @@ import {
     DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
+    raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
@@ -56,10 +57,9 @@ import {
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-    raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
+    ConnectionState as ConnectionStateToBeDeleted,
     FileMode,
     IClient,
     IClientDetails,
@@ -112,6 +112,23 @@ export interface IContainerConfig {
     id?: string;
 }
 
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
+
 export class Container
     extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
@@ -149,6 +166,8 @@ export class Container
             },
             logger);
 
+        // REVIEW: What's the point of setting scopes here if it will be overwritten on first connection,
+        // and it will not match it (due to view-only connection, of read-only permissions)?
         container._scopes = container.getScopes(resolvedUrl);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
@@ -234,7 +253,6 @@ export class Container
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
-    private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
@@ -298,7 +316,7 @@ export class Container
      * configuration details returned as part of the initial connection.
      */
     public get serviceConfiguration(): IServiceConfiguration | undefined {
-        return this._serviceConfiguration;
+        return this._deltaManager.serviceConfiguration;
     }
 
     /**
@@ -314,6 +332,7 @@ export class Container
      * Set once this.connected is true, otherwise undefined
      */
     public get scopes(): string[] | undefined {
+        // Likely should just get it from deltaManager and not track it manually.
         return this._scopes;
     }
 
@@ -988,10 +1007,7 @@ export class Container
             if (clientId === this.pendingClientId) {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`,
-                    this.pendingClientId,
-                    details.client.scopes,
-                    this._deltaManager.serviceConfiguration);
+                    `joined @ ${details.sequenceNumber}`);
             }
         });
 
@@ -1101,20 +1117,27 @@ export class Container
         );
 
         deltaManager.on("connect", (details: IConnectionDetails) => {
-            this.setConnectionState(
-                ConnectionState.Connecting,
-                "websocket established",
-                details.clientId,
-                details.claims.scopes,
-                details.serviceConfiguration);
+            const oldState = this._connectionState;
+            this._connectionState = ConnectionState.Connecting;
+            this._scopes = details.claims.scopes;
+
+            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
+            // (have received the join message for the client ID)
+            // This is especially important in the reconnect case. It's possible there could be outstanding
+            // ops sent by this client, so we should keep the old client id until we see our own client's
+            // join message. after we see the join message for out new connection with our new client id,
+            // we know there can no longer be outstanding ops that we sent with the previous client id.
+            this.pendingClientId = details.clientId;
+
+            this.emit("joining");
+
+            // Report telemetry after we set client id!
+            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState, "websocket established");
 
             if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined as readonly`,
-                    details.clientId,
-                    details.claims.scopes,
-                    deltaManager.serviceConfiguration);
+                    `joined as readonly`);
             }
 
             // Back-compat for new client and old server.
@@ -1127,6 +1150,7 @@ export class Container
 
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
+            this._scopes = undefined;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
@@ -1218,19 +1242,9 @@ export class Container
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
     private setConnectionState(
         value: ConnectionState,
-        reason: string,
-        clientId: string,
-        scopes: string[],
-        configuration: IServiceConfiguration);
-    private setConnectionState(
-        value: ConnectionState,
-        reason: string,
-        clientId?: string,
-        scopes?: string[],
-        configuration?: IServiceConfiguration) {
+        reason: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1239,18 +1253,8 @@ export class Container
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        this._scopes = scopes;
-        this._serviceConfiguration = configuration;
 
-        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-        // (have received the join message for the client ID)
-        // This is especially important in the reconnect case. It's possible there could be outstanding
-        // ops sent by this client, so we should keep the old client id until we see our own client's
-        // join message. after we see the join message for out new connection with our new client id,
-        // we know there can no longer be outstanding ops that we sent with the previous client id.
-        if (value === ConnectionState.Connecting) {
-            this.pendingClientId = clientId;
-        } else if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1275,9 +1279,16 @@ export class Container
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
-        raiseConnectedEvent(this, this._connectionState, this.clientId);
+
+        assert(this._connectionState !== ConnectionState.Connecting);
+        const state = this._connectionState === ConnectionState.Connected;
+        this.context!.changeConnectionState(state, this.clientId);
+        this.protocolHandler!.quorum.changeConnectionState(
+            // TODO: cleanup and pass state
+            state ? ConnectionStateToBeDeleted.Connected : ConnectionStateToBeDeleted.Disconnected,
+            this.clientId);
+        raiseConnectedEvent(this.logger, this, state, this.clientId);
+
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });

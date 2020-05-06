@@ -18,7 +18,7 @@ import {
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 
 class ProxyRuntime implements IRuntime {
     private _disposed = false;
@@ -34,7 +34,7 @@ class ProxyRuntime implements IRuntime {
     async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
         throw new Error("Method not implemented.");
     }
-    async changeConnectionState(value: ConnectionState, clientId?: string) {
+    async changeConnectionState(connected: boolean, clientId?: string) {
     }
     async stop(): Promise<IRuntimeState> {
         throw new Error("Method not implemented.");

@@ -6,10 +6,9 @@
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Loader } from "@microsoft/fluid-container-loader";
+import { ConnectionState, Loader } from "@microsoft/fluid-container-loader";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
     IExperimentalComponentContext,

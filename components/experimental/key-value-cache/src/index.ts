@@ -101,10 +101,10 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         } else {
             this._root = await this.runtime.getChannel("root") as ISharedMap;
         }
-        if (this.context.leader) {
+        if (this.runtime.leader) {
             console.log(`INITIAL LEADER`);
         } else {
-            this.context.on("leader", () => {
+            this.runtime.on("leader", () => {
                 console.log(`LEADER NOW`);
             });
         }

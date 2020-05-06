@@ -103,7 +103,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     maxMessageSize: number;
 
     // Service configuration provided by the service.
-    serviceConfiguration: IServiceConfiguration;
+    serviceConfiguration: IServiceConfiguration | undefined;
 
     // Flag to indicate whether the client can write or not.
     active: boolean;

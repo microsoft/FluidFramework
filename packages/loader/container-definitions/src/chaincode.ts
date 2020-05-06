@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -13,7 +12,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
@@ -144,7 +142,7 @@ export interface IRuntime extends IDisposable {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    changeConnectionState(connected: boolean, clientId?: string);
 
     /**
      * @deprecated in 0.14 async stop()
@@ -183,7 +181,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
+export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -193,7 +191,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly parentBranch: string | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
-    readonly connectionState: ConnectionState;
     readonly connected: boolean;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | null;
@@ -218,12 +215,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
-
-    /**
-     * DEPRECATED
-     * back-compat: 0.14 uploadSummary
-     */
-    refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 
 export interface IExperimentalContainerContext extends IContainerContext {

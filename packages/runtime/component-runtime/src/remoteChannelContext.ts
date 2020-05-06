@@ -7,7 +7,6 @@ import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -52,7 +51,7 @@ export class RemoteChannelContext implements IChannelContext {
     ) {
         this.services = createServiceEndpoints(
             this.id,
-            this.componentContext.connectionState,
+            this.componentContext.connected,
             submitFn,
             () => dirtyFn(this.id),
             storageService,
@@ -74,13 +73,13 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public changeConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {
             return;
         }
 
-        this.services.deltaConnection.setConnectionState(value);
+        this.services.deltaConnection.setConnectionState(connected);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
@@ -168,7 +167,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-        this.services.deltaConnection.setConnectionState(this.componentContext.connectionState);
+        this.services.deltaConnection.setConnectionState(this.componentContext.connected);
         return this.channel;
     }
 }

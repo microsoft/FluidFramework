@@ -25,7 +25,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -68,18 +67,23 @@ export interface IComponentRuntime extends
 
     readonly parentBranch: string | null;
 
-    readonly connectionState: ConnectionState;
-
     readonly connected: boolean;
 
     readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;
 
+    readonly leader: boolean;
+
     /**
      * Returns if the runtime is attached.
      */
     isAttached: boolean;
+
+    on(event: "disconnected" | "dispose", listener: () => void): this;
+    on(event: "connected" | "leader" | "noleader", listener: (clientId: string) => void): this;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
 
     /**
      * Processes the op.
@@ -97,7 +101,7 @@ export interface IComponentRuntime extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    changeConnectionState(connected: boolean, clientId?: string);
 
     /**
      * Generates a snapshot of the given component
@@ -244,7 +248,7 @@ export interface ISummaryTracker {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export interface IComponentContext extends EventEmitter {
+export interface IComponentContext {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -260,7 +264,6 @@ export interface IComponentContext extends EventEmitter {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
@@ -410,7 +413,6 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
@@ -423,11 +425,11 @@ export interface IContainerRuntime extends
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
+        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
         listener: () => void): this;
     on(
         event: "connected" | "leader" | "noleader",
-        listener: (clientId?: string) => void): this;
+        listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
