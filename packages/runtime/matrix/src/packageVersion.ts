@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-matrix";
-export const pkgVersion = "0.16.3";
+export const pkgVersion = "0.16.4";

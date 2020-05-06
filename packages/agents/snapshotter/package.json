@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/snapshotter-agent",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "description": "Snapshotter for Fluid container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-container-runtime": "^0.16.3",
+    "@microsoft/fluid-container-runtime": "^0.16.4",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2"
   },
   "devDependencies": {

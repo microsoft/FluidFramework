@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-blob-manager",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "description": "Blob management component",
   "license": "MIT",
   "author": "Microsoft",
@@ -26,12 +26,12 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.3",
-    "@microsoft/fluid-component-runtime": "^0.16.3",
-    "@microsoft/fluid-container-definitions": "^0.16.3",
-    "@microsoft/fluid-driver-definitions": "^0.16.3",
-    "@microsoft/fluid-map": "^0.16.3",
-    "@microsoft/fluid-runtime-definitions": "^0.16.3",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.4",
+    "@microsoft/fluid-component-runtime": "^0.16.4",
+    "@microsoft/fluid-container-definitions": "^0.16.4",
+    "@microsoft/fluid-driver-definitions": "^0.16.4",
+    "@microsoft/fluid-map": "^0.16.4",
+    "@microsoft/fluid-runtime-definitions": "^0.16.4",
     "@types/node": "^10.14.6"
   },
   "devDependencies": {
