@@ -5,7 +5,7 @@
 !_api-extractor-temp/**
 !LICENSE.txt
 !packages/**
-!examples/components/**
+!components/**
 !examples/hosts/iframe-host/**
 !server/routerlicious
 !docs/**

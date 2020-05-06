@@ -86,7 +86,10 @@ describe("Component Creation Tests", () => {
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: globalRegistry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: globalRegistry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
             summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
         });
 
