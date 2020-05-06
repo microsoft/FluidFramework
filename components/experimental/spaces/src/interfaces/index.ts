@@ -4,6 +4,7 @@
  */
 
 export * from "./componentCallable";
+export * from "./componentCollectorSpaces";
 export * from "./componentToolbar";
 export * from "./componentToolbarConsumer";
 export * from "./componentRegistryDetails";

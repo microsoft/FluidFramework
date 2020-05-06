@@ -20,6 +20,6 @@ export interface IProvideComponentToolbar {
  * An IComponentToolbar is a component that has a roster of functions defined by T that other components can use
  */
 export interface IComponentToolbar extends IProvideComponentToolbar {
-    changeEditState(isEditable: boolean): void;
-    toggleTemplates(isVisible: boolean): void;
+    setEditable(isEditable: boolean): void;
+    setTemplatesVisible(isVisible: boolean): void;
 }
