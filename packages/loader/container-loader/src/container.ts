@@ -426,7 +426,7 @@ export class Container
             this.protocolHandler.close();
         }
 
-        this.context?.dispose();
+        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 

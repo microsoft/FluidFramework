@@ -188,13 +188,13 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         this.logger = container.subLogger;
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
 
-        this.runtime!.dispose();
+        this.runtime!.dispose(error);
         this.quorum.dispose();
         this.deltaManager.dispose();
     }

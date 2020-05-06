@@ -569,6 +569,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
+    private disposedWithError = false;
 
     // Components tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -715,11 +716,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        if (error) {
+            this.disposedWithError = true;
+        }
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -728,8 +733,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [componentId, contextD] of this.contextsDeferred) {
             contextD.promise.then((context) => {
                 context.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
+            }).catch((contextError) => {
+                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
             });
         }
 
@@ -1503,7 +1508,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private verifyNotClosed() {
-        if (this._disposed) {
+        if (this._disposed && !this.disposedWithError) {
             throw new Error("Runtime is closed");
         }
     }
