@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-last-edited-experimental",
-  "version": "0.16.4",
+  "version": "0.16.5",
   "description": "Tracks the last edited information in the Container.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -46,11 +46,11 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.16.4",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.4",
+    "@microsoft/fluid-aqueduct": "^0.16.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.5",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-runtime-definitions": "^0.16.4",
-    "@microsoft/fluid-shared-summary-block": "^0.16.4"
+    "@microsoft/fluid-runtime-definitions": "^0.16.5",
+    "@microsoft/fluid-shared-summary-block": "^0.16.5"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

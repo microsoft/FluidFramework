@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/monaco-container",
-  "version": "0.16.4",
+  "version": "0.16.5",
   "description": "Monaco chaincode container",
   "license": "MIT",
   "author": "Microsoft",
@@ -32,15 +32,15 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/monaco": "^0.16.4",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.4",
-    "@microsoft/fluid-container-definitions": "^0.16.4",
-    "@microsoft/fluid-container-runtime": "^0.16.4",
-    "@microsoft/fluid-runtime-definitions": "^0.16.4"
+    "@fluid-example/monaco": "^0.16.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.5",
+    "@microsoft/fluid-container-definitions": "^0.16.5",
+    "@microsoft/fluid-container-runtime": "^0.16.5",
+    "@microsoft/fluid-runtime-definitions": "^0.16.5"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.16.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.16.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
