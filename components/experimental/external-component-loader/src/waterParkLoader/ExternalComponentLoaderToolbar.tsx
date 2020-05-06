@@ -34,13 +34,12 @@ export const ExternalComponentLoaderToolbar: React.FC<ExternalComponentLoaderToo
                 inputRef.current.style.backgroundColor = "#fee";
             } else {
                 props.onSelectOption(picked).catch((error) => {
-                    setErrorText(`Error in picking component: ${error}`);
+                    setErrorText(error.toString());
                 });
             }
         };
 
         const inputKeyUpHandler = (event) => {
-            console.log(event.key);
             if (event.key === "Enter") {
                 pickComponent();
             }
