@@ -45,7 +45,7 @@ export async function fetchJoinSession(
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
-            let queryParams = `access_token=${token}`;
+            const queryParams = `access_token=${token}`;
             let headers = {};
             if (queryParams.length > 2048) {
                 headers = { Authorization: `Bearer ${token}` };
