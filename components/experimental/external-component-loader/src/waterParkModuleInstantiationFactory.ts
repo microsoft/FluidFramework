@@ -66,6 +66,5 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
 
         // Only add the component toolbar if the view component supports it
         viewComponent.IComponentToolbarConsumer?.setToolbarComponent(loaderComponent);
-        loaderComponent.setViewComponent(viewComponent);
     }
 }

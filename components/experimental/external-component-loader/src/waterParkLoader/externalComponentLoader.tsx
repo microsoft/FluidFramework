@@ -67,19 +67,11 @@ export type WaterParkCompatibleView =
  */
 export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLView, SpacesCompatibleToolbar {
-    private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<WaterParkCompatibleView> | undefined;
-
     private savedElement: HTMLElement | undefined;
     private callbacks: IComponentCallbacks | undefined;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
-
-    public setViewComponent(component: WaterParkCompatibleView) {
-        this.root.set(this.viewComponentMapID, component.IComponentHandle);
-        this.viewComponentP = Promise.resolve(component);
-    }
 
     public setComponentCallbacks(callbacks: IComponentCallbacks) {
         this.callbacks = callbacks;
@@ -100,13 +92,6 @@ export class ExternalComponentLoader extends PrimedComponent
         );
 
         this.savedElement = element;
-    }
-
-    protected async componentHasInitialized() {
-        const viewComponentHandle = this.root.get<IComponentHandle<WaterParkCompatibleView>>(this.viewComponentMapID);
-        if (viewComponentHandle !== undefined) {
-            this.viewComponentP = viewComponentHandle.get();
-        }
     }
 
     private async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
@@ -162,15 +147,12 @@ export class ExternalComponentLoader extends PrimedComponent
     };
 
     private readonly createAndAddComponent = async (componentUrl: string) => {
-        if (this.viewComponentP === undefined) {
-            throw new Error("View component promise not set!!");
+        if (this.callbacks?.addItem === undefined) {
+            throw new Error("Don't have an addItem callback");
         }
-        const viewComponent = await this.viewComponentP;
 
-        const newComponent = await this.createComponentFromUrl(componentUrl);
-
-        viewComponent.IComponentCollectorSpaces.addItem({
-            component: newComponent,
+        this.callbacks.addItem({
+            component: await this.createComponentFromUrl(componentUrl),
             type: componentUrl,
         });
     };

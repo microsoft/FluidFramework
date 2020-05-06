@@ -24,6 +24,7 @@ import {
     IComponentToolbarConsumer,
     IProvideComponentCollectorSpaces,
     SpacesCompatibleToolbar,
+    ISpacesCollectible,
 } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
@@ -96,6 +97,7 @@ export class Spaces extends PrimedComponent implements
                         console.error(`Error while creating component: ${type}`, error);
                     });
             },
+            addItem: (item: ISpacesCollectible) => { return this.dataModel.addItem(item); },
             shouldShowTemplates: () => this.registryDetails?.IComponentRegistryTemplates !== undefined,
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),

@@ -4,6 +4,7 @@
  */
 
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { ISpacesCollectible } from "./componentCollectorSpaces";
 import { Templates } from "..";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -16,6 +17,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
  */
 export interface IComponentCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
+    addItem?(item: ISpacesCollectible): string;
     shouldShowTemplates?(): boolean;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
