@@ -82,6 +82,9 @@ export interface IConnectionArgs {
 interface INackReconnectInfo {
     nackReason: string;
     canReconnect: boolean;
+    /**
+     * Delay before reconnecting in milliseconds.
+     */
     reconnectDelayMs?: number;
 }
 
