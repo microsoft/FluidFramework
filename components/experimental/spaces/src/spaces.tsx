@@ -20,8 +20,8 @@ import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
+import { SpacesToolbar, SpacesToolbarName } from "./spacesToolbar";
 import { SpacesView } from "./view";
-import { SpacesToolbar, SpacesToolbarName } from "./components";
 import {
     IComponentToolbarConsumer,
     SpacesCompatibleToolbar,

@@ -22,7 +22,7 @@ import {
     IComponentSpacesToolbarProps,
     InternalRegistry,
     Templates,
-} from "..";
+} from ".";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };

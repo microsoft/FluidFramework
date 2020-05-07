@@ -14,11 +14,11 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { Spaces } from "./spaces";
 import {
     SpacesToolbar,
     SpacesToolbarName,
-} from "./components";
-import { Spaces } from "./spaces";
+} from "./spacesToolbar";
 import {
     IContainerComponentDetails,
     Templates,
@@ -27,7 +27,6 @@ import {
 } from "./interfaces";
 
 export * from "./spaces";
-export * from "./components";
 export * from "./interfaces";
 
 export const SpacesComponentName = "spaces";
