@@ -186,7 +186,7 @@ export class Spaces extends PrimedComponent implements
         this.root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
             // If we don't have this then moving locally is broken
             if (changed.path === this.componentSubDirectory.absolutePath) {
-                this.emit("componentListChanged", this.componentList);
+                this.emit("componentListChanged", new Map(this.componentList.entries()));
             }
         });
     }
