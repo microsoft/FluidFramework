@@ -638,7 +638,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.updateDocumentDirtyState(false);
+            // If we are not fully connected, then we have no clue if there are any pending ops
+            // to be resubmitted. Wait for "connected" event to get that info.
+            // Not ideal, but it's better to have false negatives then false positives.
+            // We will mark document clean on becoming "connected".
+            if (this.connected) {
+                this.updateDocumentDirtyState(false);
+            }
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
@@ -796,6 +802,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         assert(this.connectionState === value);
 
         if (value === ConnectionState.Connected) {
+            // Once we are connected, all acks are accounted.
+            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // we will switch back to dirty state in such case.
+            this.updateDocumentDirtyState(false);
+
             // Resend all pending attach messages prior to notifying clients
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
@@ -887,6 +898,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         const componentContext = await deferredContext.promise;
         return componentContext.realize();
+    }
+
+    public notifyComponentInstantiated(componentContext: IComponentContext) {
+        const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
+        const registryPath =
+            `/${componentContext.packagePath.slice(0,componentContext.packagePath.length - 1).join("/")}`;
+        this.emit("componentInstantiated", componentPkgName, registryPath, !componentContext.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -1320,7 +1338,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 const parents = versions.map((version) => version.id);
                 await this.refreshLatestSummaryAck(
                     { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.deltaManager.referenceSequenceNumber);
+                    this.summaryTracker.referenceSequenceNumber);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

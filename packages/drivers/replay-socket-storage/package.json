@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-replay-driver",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Document replay version of Socket.IO implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-protocol-base": "^0.1004.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-driver-definitions": "^0.18.0",
+    "@microsoft/fluid-protocol-base": "^0.1004.2",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "debug": "^4.1.1"
   },
   "devDependencies": {

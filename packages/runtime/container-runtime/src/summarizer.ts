@@ -432,6 +432,7 @@ export class RunningSummarizer implements IDisposable {
             summarizeCount: ++this.summarizeCount,
             timeSinceLastAttempt: Date.now() - this.heuristics.lastSent.summaryTime,
             timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
+            safe: safe || undefined,
         });
 
         // Wait for generate/send summary

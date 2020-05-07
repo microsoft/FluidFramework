@@ -44,7 +44,6 @@ const appTenants = [
  * @param div - The div to load the component into
  * @param pkg - A resolved package with cdn links. Overrides a query paramter.
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
- * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
@@ -52,7 +51,6 @@ export async function loadFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis,
-    clientId?: string,
     clientSecret?: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
@@ -87,7 +85,6 @@ export async function loadFluidContainer(
         resolved as IFluidResolvedUrl,
         tokenApiConfig,
         div,
-        clientId,
         clientSecret,
         codeDetails);
     return containerP;
@@ -142,7 +139,6 @@ async function loadContainer(
     resolved: IFluidResolvedUrl,
     tokenApiConfig: ITokenApis,
     div: HTMLDivElement,
-    clientId: string,
     secret: string,
     pkg?: IFluidCodeDetails,
 ): Promise<Container> {
@@ -151,7 +147,6 @@ async function loadContainer(
     if (protocol === "fluid-odsp:") {
         const config = tokenApiConfig as IOdspTokenApi;
         documentServiceFactory = new OdspDocumentServiceFactory(
-            clientId,
             // eslint-disable-next-line @typescript-eslint/unbound-method
             config.getStorageToken,
             // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -227,7 +222,6 @@ const spoUrls = [
  * @param url - Url of the Fluid component to be loaded
  * @param div - The div to load the component into
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
- * @param clientId - The SPO clientId.
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
@@ -235,7 +229,6 @@ export async function loadIFramedFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis = { getToken: async () => Promise.resolve("") },
-    clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<void> {
     let scriptUrl: string;
@@ -276,7 +269,6 @@ export async function loadIFramedFluidContainer(
                         url,
                         document.getElementById("componentDiv"),
                         tokenApiConfig,
-                        "clientId",
                         "clientSecret");
                 }
 

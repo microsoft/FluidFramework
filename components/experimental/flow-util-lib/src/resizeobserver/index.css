@@ -1,0 +1,48 @@
+/*
+ * shared-text expects to fill the space provided to it.  When loading in webpack-component-loader, we need to force
+ * the larger size on the #content div or we'll render at 0 height.  shared-text should probably enforce a minimum
+ * functional size if the provided space is too small.
+ */
+#content {
+    height: 100vh;
+}
+
+/*
+ * Based on 'ResizeSensor' from Marc J. Schmidt's 'CSS Element Queries':
+ * https://github.com/marcj/css-element-queries/blob/09d4cf12a2bf2c143274bbe4e4bc04060e55880f/src/ResizeSensor.js
+ */
+
+.root {
+    position: relative;
+}
+
+/* WebKit: Hide scrollbars */
+.observer::-webkit-scrollbar { 
+    display: none; 
+}
+
+.observer, .expand, .shrink, .expandChild, .shrinkChild {
+    position: absolute;
+    left: 0;
+    top: 0;
+	border: 0 none;
+	outline: 0;
+	padding: 0;
+    margin: 0;
+}
+
+.observer, .expand, .shrink {
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+    visibility: hidden;
+    z-index: -1;
+
+    /* FireFox: Hide scrollbars  */
+    scrollbar-width: none;
+}
+
+.shrinkChild {
+    width: 200%;
+    height: 200%;
+}

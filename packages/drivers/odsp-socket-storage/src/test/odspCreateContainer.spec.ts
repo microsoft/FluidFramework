@@ -44,7 +44,6 @@ describe("Odsp Create Container Test", () => {
         };
 
         const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-            "dummy",
             async (url: string, refresh: boolean) => "token",
             async (refresh: boolean) => "token",
             DebugLogger.create("fluid:createContainer"),
