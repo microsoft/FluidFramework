@@ -83,7 +83,7 @@ export class Spaces extends PrimedComponent implements
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        const toolbarCallbacks = {
+        const toolbarProps = {
             addComponent: (type: string) => {
                 this.createAndAttachComponent(type)
                     .then((component) => {
@@ -106,7 +106,7 @@ export class Spaces extends PrimedComponent implements
             <SpacesView
                 toolbarComponentP={ this.getToolbarComponent() }
                 dataModel={ this.dataModel }
-                toolbarCallbacks={ toolbarCallbacks }
+                toolbarProps={ toolbarProps }
             />,
             div,
         );

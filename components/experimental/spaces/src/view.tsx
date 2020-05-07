@@ -91,7 +91,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
 interface ISpacesGridViewProps {
     toolbarComponentP: Promise<SpacesCompatibleToolbar | undefined>;
     dataModel: ISpacesDataModel;
-    toolbarCallbacks: IComponentSpacesToolbarProps;
+    toolbarProps: IComponentSpacesToolbarProps;
 }
 
 export const SpacesView: React.FC<ISpacesGridViewProps> =
@@ -101,15 +101,15 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
         const [componentMap, setComponentMap] = React.useState<Map<string, Layout>>(props.dataModel.componentList);
 
         // Editable is a view-only concept; SpacesView is the authority.
-        const combinedToolbarCallbacks = props.toolbarCallbacks;
-        combinedToolbarCallbacks.editable = editable;
-        combinedToolbarCallbacks.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
+        const combinedToolbarProps = props.toolbarProps;
+        combinedToolbarProps.editable = editable;
+        combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
 
         React.useEffect(() => {
             // Need an event for when the component toolbar changes
             props.toolbarComponentP
                 .then((retrievedToolbar) => {
-                    retrievedToolbar?.setComponentCallbacks(combinedToolbarCallbacks);
+                    retrievedToolbar?.setComponentCallbacks(combinedToolbarProps);
                     setToolbarComponent(retrievedToolbar);
                 })
                 .catch((error) => {
