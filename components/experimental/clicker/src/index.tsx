@@ -15,6 +15,7 @@ import {
     useStateFluid,
     useReducerFluid,
     IFluidReducer,
+    createFluidContext,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -25,6 +26,8 @@ const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
 
 // ----- REACT STUFF -----
+
+// ---- React Class Component ----
 
 interface CounterState {
     value: number;
@@ -42,6 +45,8 @@ class CounterReactView extends FluidReactComponent<{}, CounterState> {
         );
     }
 }
+
+// ---- React Functional Component w/ useState ----
 
 interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
 
@@ -61,6 +66,8 @@ function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
         </div>
     );
 }
+
+// ---- React Functional Component w/ useReducer ----
 
 interface IActionReducer extends IFluidReducer<CounterFunctionalState>{
     increment:  (oldState: CounterFunctionalState, args?: {step: number}) => CounterFunctionalState
@@ -87,6 +94,30 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
     );
 }
 
+function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
+    const [FluidProvider, FluidConsumer, initialValue] = createFluidContext(props);
+    return (
+        <div>
+            <FluidProvider value={initialValue}>
+                <div>
+                    <FluidConsumer>
+                        {({ state, setState }) =>
+                            <div>
+                                <span
+                                    className="clicker-value-class-context"
+                                    id={`clicker-context-value-${Date.now().toString()}`}
+                                >
+                                    {`Context Component: ${state.value}`}
+                                </span>
+                                <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+                            </div>}
+                    </FluidConsumer>
+                </div>
+            </FluidProvider>
+        </div>
+    );
+}
+
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
@@ -100,6 +131,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         this.root.set("counterClicks", 0);
         this.root.set("counterClicksFunctional", 0);
         this.root.set("counterClicksReducer", 0);
+        this.root.set("counterClicksContext", 0);
     }
 
     // #region IComponentHTMLView
@@ -125,6 +157,11 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         const stateToRootReducer = new Map<keyof CounterState, string>();
         stateToRootReducer.set("value", "counterClicksReducer");
 
+        const rootToInitialStateContext = new Map<string, keyof CounterState>();
+        rootToInitialStateContext.set("counterClicksContext", "value");
+        const stateToRootContext = new Map<keyof CounterState, string>();
+        stateToRootContext.set("value", "counterClicksContext");
+
         ReactDOM.render(
             <div>
                 <CounterReactView
@@ -145,6 +182,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                     rootToInitialState={rootToInitialStateReducer}
                     stateToRoot={stateToRootReducer}
                     reducer={ActionReducer}
+                />
+                <CounterReactFunctionalContext
+                    root={this.root}
+                    reactComponentDefaultState={initialState}
+                    rootToInitialState={rootToInitialStateContext}
+                    stateToRoot={stateToRootContext}
                 />
             </div>,
             div,
