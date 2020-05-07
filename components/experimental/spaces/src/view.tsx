@@ -102,7 +102,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
 
         // Editable is a view-only concept; SpacesView is the authority.
         const combinedToolbarProps = props.toolbarProps;
-        combinedToolbarProps.editable = editable;
+        combinedToolbarProps.editable = () => editable;
         combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
 
         React.useEffect(() => {

@@ -97,75 +97,60 @@ interface IComponentToolbarViewProps {
     supportedComponentList: IContainerComponentDetails[];
 }
 
-interface IComponentToolbarViewState {
-    editable: boolean;
-    isComponentListOpen: boolean;
-    isTemplateListOpen: boolean;
-    templatesAvailable: boolean;
-}
-
-class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
-    private readonly supportedComponentList: IContainerComponentDetails[];
-
-    constructor(props: IComponentToolbarViewProps) {
-        super(props);
-        this.supportedComponentList = props.supportedComponentList;
-        const editable = props.props.editable ?? false;
+const ComponentToolbarView: React.FC<IComponentToolbarViewProps> =
+    (props: React.PropsWithChildren<IComponentToolbarViewProps>) => {
         const templatesAvailable = props.props.templatesAvailable ?? false;
-        this.state = {
-            editable,
-            isComponentListOpen: false,
-            isTemplateListOpen: false,
-            templatesAvailable,
-        };
-    }
+        const editable = props.props.editable !== undefined
+            ? props.props.editable()
+            : false;
 
-    render() {
-        const { isComponentListOpen, isTemplateListOpen, editable: isEditable } = this.state;
+        const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
+        const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);
+        // Would prefer not to copy props into state
+        const [editableState, setEditableState] = React.useState<boolean>(editable);
 
         const componentsButton = (
             <Button
-                iconProps={{ iconName: isComponentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                iconProps={{ iconName: componentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
                 style={menuButtonStyle}
-                onClick={() => this.setState({ isComponentListOpen: !isComponentListOpen })}
+                onClick={() => setComponentListOpen(!componentListOpen)}
             >
                 {"Add Components"}
             </Button>
         );
         const componentButtonList: JSX.Element[] = [];
-        if (isComponentListOpen) {
-            this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+        if (componentListOpen) {
+            props.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
                 componentButtonList.push(
                     <Button
                         style={dropDownButtonStyle}
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
-                            if (this.props.props.addComponent) {
-                                this.props.props.addComponent(supportedComponent.type);
+                            if (props.props.addComponent) {
+                                props.props.addComponent(supportedComponent.type);
                             }
-                            this.setState({ isComponentListOpen: false });
+                            setComponentListOpen(false);
                         }}
                     >
                         {supportedComponent.friendlyName}
-                    </Button>
-                    ,
+                    </Button>,
                 );
             }));
         }
         let templateCollapsible: JSX.Element | undefined;
-        if (this.state.templatesAvailable) {
+        if (templatesAvailable) {
             const templateButtonList: JSX.Element[] = [];
             const templateButton = (
                 <Button
-                    iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                    iconProps={{ iconName: templateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
                     style={menuButtonStyle}
-                    onClick={() => this.setState({ isTemplateListOpen: !isTemplateListOpen })}
+                    onClick={() => setTemplateListOpen(!templateListOpen)}
                 >
                     {"Add Templates"}
                 </Button>
             );
-            if (isTemplateListOpen) {
+            if (templateListOpen) {
                 // eslint-disable-next-line no-restricted-syntax
                 for (const template in Templates) {
                     if (template) {
@@ -174,10 +159,10 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    if (this.props.props.addTemplate) {
-                                        this.props.props.addTemplate(Templates[template]);
+                                    if (props.props.addTemplate) {
+                                        props.props.addTemplate(Templates[template]);
                                     }
-                                    this.setState({ isTemplateListOpen: false });
+                                    setTemplateListOpen(false);
                                 }}
                             >
                                 {Templates[template]}
@@ -190,7 +175,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             templateCollapsible = (
                 <div style={templateButtonStyle}>
                     <Collapsible
-                        open={isTemplateListOpen}
+                        open={templateListOpen}
                         trigger={templateButton}
                     >
                         {templateButtonList}
@@ -205,20 +190,20 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     style={editableButtonStyle}
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => {
-                        const newIsEditable = !this.state.editable;
-                        this.setState({ editable: newIsEditable });
-                        if (this.props.props.setEditable) {
-                            this.props.props.setEditable(newIsEditable);
+                        const newEditableState = !editableState;
+                        setEditableState(newEditableState);
+                        if (props.props.setEditable) {
+                            props.props.setEditable(newEditableState);
                         }
                     }}
                 >
-                    {`Edit: ${isEditable}`}
+                    {`Edit: ${editableState}`}
                 </Button>
-                {this.state.editable ?
+                {editableState ?
                     <div>
                         <div style={componentButtonStyle}>
                             <Collapsible
-                                open={isComponentListOpen}
+                                open={componentListOpen}
                                 trigger={componentsButton}
                             >
                                 {componentButtonList}
@@ -229,5 +214,4 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     : undefined}
             </div>
         );
-    }
-}
+    };
