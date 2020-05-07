@@ -16,7 +16,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
     IComponentSpacesToolbarProps,
-    IProvideComponentCollectorSpaces,
+    ISpacesModel,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
 import * as React from "react";
@@ -60,7 +60,7 @@ if (window.location.hostname === "localhost") {
  * The view component must support certain interfaces to work with the waterpark.
  */
 export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
+    IComponentHandle & IComponentLoadable & ISpacesModel;
 
 /**
  * Component that loads extneral components via their url

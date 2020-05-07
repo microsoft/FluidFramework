@@ -4,7 +4,6 @@
  */
 
 export * from "./componentProps";
-export * from "./componentCollectorSpaces";
 export * from "./componentToolbarConsumer";
 export * from "./componentRegistryDetails";
 export * from "./componentRegistryTemplates";

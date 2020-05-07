@@ -136,8 +136,8 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
             event: MouseEvent,
             element: HTMLElement,
         ) => {
-            const id = newItem.i.split("_")[0];
-            props.dataModel.updateGridItem(id, newItem);
+            const key = newItem.i.split("_")[0];
+            props.dataModel.updateLayout(key, newItem);
         };
 
         const toolbarElement = toolbarComponent !== undefined

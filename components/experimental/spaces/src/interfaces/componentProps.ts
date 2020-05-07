@@ -4,7 +4,7 @@
  */
 
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ISpacesCollectible } from "./componentCollectorSpaces";
+import { ISpacesCollectible } from "../spaces";
 import { Templates } from "..";
 
 declare module "@microsoft/fluid-component-core-interfaces" {

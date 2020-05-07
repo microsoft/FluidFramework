@@ -14,6 +14,7 @@ import {
 import {
     IComponent,
     IComponentHandle,
+    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -22,11 +23,8 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { SpacesView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import {
-    IComponentCollectorSpaces,
     IComponentToolbarConsumer,
-    IProvideComponentCollectorSpaces,
     SpacesCompatibleToolbar,
-    ISpacesCollectible,
 } from "./interfaces";
 import { SpacesComponentName, Templates } from ".";
 
@@ -34,10 +32,18 @@ const ComponentToolbarKey = "component-toolbar";
 
 export interface ISpacesModel extends EventEmitter {
     readonly componentList: Map<string, ISpacesStoredComponent>;
-    updateGridItem(id: string, newLayout: Layout): void;
-    IComponentCollectorSpaces: IComponentCollectorSpaces;
+    /**
+     * Adds the given item to the collector.
+     * @param item - The item to add.
+     * @returns A unique key corresponding to the added item.
+     */
     addItem(item: ISpacesCollectible): string;
+    /**
+     * Removes the item specified by the given key.
+     * @param key - The key referring to the item to remove.
+     */
     removeItem(key: string): void;
+    updateLayout(key: string, newLayout: Layout): void;
 }
 
 export interface ISpacesStoredComponent {
@@ -47,12 +53,21 @@ export interface ISpacesStoredComponent {
 }
 
 /**
+ * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
+ * supporting export to template.
+ */
+export interface ISpacesCollectible {
+    component: IComponent & IComponentLoadable;
+    type: string;
+    layout?: Layout;
+}
+
+/**
  * Spaces is a component which maintains a collection of other components and a grid-based layout for rendering.
  */
 export class Spaces extends PrimedComponent implements
     IComponentHTMLView,
     IComponentToolbarConsumer,
-    IProvideComponentCollectorSpaces,
     ISpacesModel
 {
     private registryDetails: IComponent | undefined;
@@ -78,7 +93,6 @@ export class Spaces extends PrimedComponent implements
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollectorSpaces() { return this; }
     public get IComponentToolbarConsumer() { return this; }
 
     public setToolbarComponent(toolbarComponent: SpacesCompatibleToolbar): void {
@@ -113,14 +127,14 @@ export class Spaces extends PrimedComponent implements
         this.componentSubDirectory.delete(key);
     }
 
-    public updateGridItem(id: string, newLayout: Layout): void {
-        const currentEntry = this.componentSubDirectory.get<ISpacesStoredComponent>(id);
+    public updateLayout(key: string, newLayout: Layout): void {
+        const currentEntry = this.componentSubDirectory.get<ISpacesStoredComponent>(key);
         const model = {
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
             handle: currentEntry.handle,
         };
-        this.componentSubDirectory.set(id, model);
+        this.componentSubDirectory.set(key, model);
     }
 
     /**
