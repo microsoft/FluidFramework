@@ -11,7 +11,8 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IChannel, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
