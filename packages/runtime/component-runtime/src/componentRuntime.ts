@@ -39,15 +39,18 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
-    IChannel,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
+    IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
-    IExperimentalComponentRuntime,
     IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannel,
+    IComponentRuntime,
+    IExperimentalComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
@@ -63,8 +66,8 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
-    IExperimentalComponentRuntime, IComponentHandleContext
+export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
+    IComponentRuntime, IExperimentalComponentRuntime, IComponentHandleContext
 {
     public readonly isExperimentalComponentRuntime = true;
     /**

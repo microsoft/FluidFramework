@@ -28,6 +28,10 @@ import {
     IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
+    IContainerRuntime,
+    IExperimentalContainerRuntime,
+} from "@microsoft/fluid-container-runtime-definitions";
+import {
     Deferred,
     Trace,
     LazyPromise,
@@ -64,13 +68,11 @@ import {
     IAttachMessage,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
+    IComponentRuntimeChannel,
     IEnvelope,
-    IContainerRuntime,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -912,7 +914,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         context.processSignal(transformed, local);
     }
 
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
+    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
         this.verifyNotClosed();
 
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
@@ -1001,11 +1003,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
-    Promise<IComponentRuntime> {
-        return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+    Promise<IComponentRuntimeChannel> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
-    public createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    public createComponentContext(pkg: string[], props?: any): IComponentContext {
+        return this._createComponentContext(pkg, props);
+    }
+
+    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -1017,7 +1023,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
-            (cr: IComponentRuntime) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1030,7 +1036,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public async createComponentWithRealizationFn(
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntime> {
+    ): Promise<IComponentRuntimeChannel> {
         this.verifyNotClosed();
 
         // tslint:disable-next-line: no-unsafe-any
@@ -1042,7 +1048,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
-            (cr: IComponentRuntime) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1235,7 +1241,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private attachComponent(componentRuntime: IComponentRuntime): void {
+    private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);

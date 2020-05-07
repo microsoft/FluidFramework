@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies

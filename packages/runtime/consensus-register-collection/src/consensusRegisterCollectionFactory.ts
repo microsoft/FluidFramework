@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
 import { pkgVersion } from "./packageVersion";

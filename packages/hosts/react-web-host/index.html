@@ -15,9 +15,6 @@
     <div style='padding: 3px; display: inline-block;'><a>Socket Token (SPO only):</a><input style='min-width: 800px;'
         id='socketToken'> </input></div>
 
-    <div style='padding: 3px; display: inline-block;'><a>Client Id (SPO only):</a><input style='min-width: 800px;'
-            id='clientId'> </input></div>
-
     <div style='padding: 3px; display: inline-block;'><a>Client Secret (SPO only):</a><input style='min-width: 800px;'
             id='clientSecret'> </input></div>
     <p>The "SPO only" fields are used with the tenant spo or spo-df.</p>
@@ -119,17 +116,14 @@
         function fillThings() {
             const storageToken = localStorage.getItem('storageToken');
             const socketToken = localStorage.getItem('socketToken');
-            const clientId = localStorage.getItem('clientId');
 
             if (storageToken) document.getElementById('storageToken').value = storageToken;
             if (socketToken) document.getElementById('socketToken').value = socketToken;
-            if (clientId) document.getElementById('clientId').value = clientId;
             if (link) document.getElementById('link').value = link;
         }
         function storeThings() {
             localStorage.setItem('storageToken', document.getElementById('storageToken').value);
             localStorage.setItem('socketToken', document.getElementById('socketToken').value);
-            localStorage.setItem('clientId', document.getElementById('clientId').value);
             localStorage.setItem('link', document.getElementById('link').value);
         }
 

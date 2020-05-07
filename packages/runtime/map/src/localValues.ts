@@ -9,7 +9,7 @@ import {
     IComponentSerializer,
     ISerializedHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import {
     ISharedObject,
     parseHandles,

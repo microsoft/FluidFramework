@@ -14,7 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
     IExperimentalComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
@@ -292,6 +292,26 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         return;
+    }
+
+    /**
+     * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
+     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * the Promise will reject.
+     */
+    protected async newAckBasedPromise<T>(
+        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+    ): Promise<T> {
+        return new Promise((resolve, reject) => {
+            if (this.runtime.disposed) {
+                reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
+            }
+
+            this.runtime.once("dispose",
+                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending")));
+
+            executor(resolve, reject);
+        });
     }
 
     /**

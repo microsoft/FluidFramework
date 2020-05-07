@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@microsoft/fluid-runtime-definitions";
+import { Serializable } from "@microsoft/fluid-component-runtime-definitions";
 
 export enum MatrixOp {
     spliceCols,
