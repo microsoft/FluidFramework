@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-runtime-utils";
-export const pkgVersion = "0.17.0";
+export const pkgVersion = "0.18.0";
