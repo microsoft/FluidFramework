@@ -32,15 +32,15 @@ import { SpacesComponentName, Templates } from ".";
 
 const ComponentToolbarKey = "component-toolbar";
 
-export interface ISpacesDataModel extends EventEmitter {
-    readonly componentList: Map<string, ISpacesModel>;
+export interface ISpacesModel extends EventEmitter {
+    readonly componentList: Map<string, ISpacesStoredComponent>;
     updateGridItem(id: string, newLayout: Layout): void;
     IComponentCollectorSpaces: IComponentCollectorSpaces;
     addItem(item: ISpacesCollectible): string;
     removeItem(key: string): void;
 }
 
-export interface ISpacesModel {
+export interface ISpacesStoredComponent {
     type: string;
     layout: Layout;
     handle: IComponentHandle;
@@ -53,7 +53,7 @@ export class Spaces extends PrimedComponent implements
     IComponentHTMLView,
     IComponentToolbarConsumer,
     IProvideComponentCollectorSpaces,
-    ISpacesDataModel
+    ISpacesModel
 {
     private registryDetails: IComponent | undefined;
 
@@ -92,7 +92,7 @@ export class Spaces extends PrimedComponent implements
         return this.root.get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(ComponentToolbarKey)?.get();
     }
 
-    public get componentList(): Map<string, ISpacesModel> {
+    public get componentList(): Map<string, ISpacesStoredComponent> {
         return this.componentSubDirectory;
     }
 
@@ -100,7 +100,7 @@ export class Spaces extends PrimedComponent implements
         if (item.component.handle === undefined) {
             throw new Error(`Component must have a handle: ${item.type}`);
         }
-        const model: ISpacesModel = {
+        const model: ISpacesStoredComponent = {
             type: item.type,
             layout: item.layout ?? { x: 0, y: 0, w: 6, h: 2 },
             handle: item.component.handle,
@@ -114,7 +114,7 @@ export class Spaces extends PrimedComponent implements
     }
 
     public updateGridItem(id: string, newLayout: Layout): void {
-        const currentEntry = this.componentSubDirectory.get<ISpacesModel>(id);
+        const currentEntry = this.componentSubDirectory.get<ISpacesStoredComponent>(id);
         const model = {
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
@@ -209,7 +209,7 @@ export class Spaces extends PrimedComponent implements
 
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesModel[];
+            const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
             const promises = templateItems.map(async (templateItem) => {
                 const component = await this.createAndAttachComponent(templateItem.type);
                 this.addItem({

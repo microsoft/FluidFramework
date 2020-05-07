@@ -10,8 +10,8 @@ import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { ISpacesDataModel, ISpacesModel } from "./spaces";
 import { SpacesCompatibleToolbar, IComponentSpacesToolbarProps } from "./interfaces";
+import { ISpacesModel, ISpacesStoredComponent } from "./spaces";
 import "./style.css";
 
 interface ISpacesEditButtonProps {
@@ -90,7 +90,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
 
 interface ISpacesGridViewProps {
     toolbarComponentP: Promise<SpacesCompatibleToolbar | undefined>;
-    dataModel: ISpacesDataModel;
+    dataModel: ISpacesModel;
     toolbarProps: IComponentSpacesToolbarProps;
 }
 
@@ -99,7 +99,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
         const [toolbarComponent, setToolbarComponent] = React.useState<SpacesCompatibleToolbar | undefined>(undefined);
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
         const [componentMap, setComponentMap] =
-            React.useState<Map<string, ISpacesModel>>(props.dataModel.componentList);
+            React.useState<Map<string, ISpacesStoredComponent>>(props.dataModel.componentList);
 
         // Editable is a view-only concept; SpacesView is the authority.
         const combinedToolbarProps = props.toolbarProps;
