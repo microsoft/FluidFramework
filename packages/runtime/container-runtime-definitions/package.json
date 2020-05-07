@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-container-runtime-definitions",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Fluid Runtime definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
