@@ -408,7 +408,7 @@ class BumpVersion {
             }
             return this.gitRepo.pushTag(tag, this.remote);
         } else {
-            console.log("    SKIPPED: pushing tag ${tag}");
+            console.log(`    SKIPPED: pushing tag ${tag}`);
         }
     }
 
