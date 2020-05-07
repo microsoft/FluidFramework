@@ -108,8 +108,6 @@ describe("Detached Container", () => {
         assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
         assert.strictEqual(testChannel.isLocal(), true, "Channel should be local!!");
         assert.strictEqual(subComponent.context.isLocal(), true, "Component should be local!!");
-
-        assert.strictEqual(subComponent.context.containerRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -139,7 +137,6 @@ describe("Detached Container", () => {
         assert.strictEqual(testChannel.isLocal(), false, "Channel should not be local!!");
 
         assert.strictEqual(testComponent.context.isLocal(), false, "Component should not be local!!");
-        assert.strictEqual(testComponent.context.containerRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {

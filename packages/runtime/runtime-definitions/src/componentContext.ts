@@ -338,7 +338,7 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is false if the container is not attached to storage and the component is attached to container.
+     * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
 }

@@ -25,10 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
-import {
-    IContainerRuntime,
-    IExperimentalContainerRuntime,
-} from "@microsoft/fluid-container-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     Deferred,
     Trace,
