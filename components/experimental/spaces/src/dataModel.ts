@@ -8,32 +8,31 @@ import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft
 import {
     IComponent, IComponentLoadable, IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
-import { IComponentOptions, SpacesCompatibleToolbar } from "./interfaces";
+import { IComponentCollectorSpaces, ISpacesCollectible, SpacesCompatibleToolbar } from "./interfaces";
 
-const ComponentToolbarUrlKey = "component-toolbar-url";
+const ComponentToolbarKey = "component-toolbar";
 
 export interface ISpacesDataModel extends EventEmitter {
     readonly componentList: Map<string, Layout>;
-    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void;
+    addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
     setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar): void;
     getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined>;
     updateGridItem(id: string, newLayout: Layout): void;
-    getModels(): ISpacesModel[]
-    readonly componentToolbarUrl: string;
-    IComponentCollection: IComponentCollection;
-    createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
-    removeCollectionItem(item: IComponent): void;
+    getModels(): ISpacesModel[];
+    IComponentCollectorSpaces: IComponentCollectorSpaces;
+    addItem(item: ISpacesCollectible): string;
+    removeItem(key: string): void;
 }
 
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
-export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, IComponentCollection {
+export class SpacesDataModel extends EventEmitter
+    implements ISpacesDataModel, IComponentCollectorSpaces {
     private readonly componentSubDirectory: IDirectory;
 
     constructor(
@@ -51,23 +50,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         });
     }
 
-    public get IComponentCollection() { return this; }
+    public get IComponentCollectorSpaces() { return this; }
 
-    public createCollectionItem<T>(rawOptions: T): IComponent {
-        const options = rawOptions as IComponentOptions;
-        if (!options.type || !options.component) {
-            throw new Error("Tried to create a collection item in Spaces with invalid options");
-        }
-        this.addComponent(options.component, options.type, { x: 0, y: 0, w: 6, h: 2 });
-        return options.component;
+    public addItem(item: ISpacesCollectible): string {
+        return this.addComponent(item.component, item.type, item.layout ?? { x: 0, y: 0, w: 6, h: 2 });
     }
 
-    public removeCollectionItem(instance: IComponent): void {
-        let componentUrl: string;
-        if (instance.IComponentLoadable) {
-            componentUrl = instance.IComponentLoadable.url;
-            this.removeComponent(componentUrl);
-        }
+    public removeItem(key: string): void {
+        this.removeComponent(key);
     }
 
     /**
@@ -91,10 +81,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return response;
     }
 
-    public get componentToolbarUrl(): string {
-        return this.root.get<string>(ComponentToolbarUrlKey);
-    }
-
     public async addFormattedComponents(componentModels: ISpacesModel[]): Promise<void> {
         const components = await Promise.all(componentModels.map(async (model) => model.handle.get()));
         components.forEach((component, index) => {
@@ -107,17 +93,17 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         toolbarComponent: SpacesCompatibleToolbar,
     ): void {
-        this.removeComponent(this.componentToolbarUrl);
-        this.addComponent(toolbarComponent, type, { x: 0, y: 0, w: 6, h: 2 });
-        this.root.set(ComponentToolbarUrlKey, url);
+        if (toolbarComponent.handle === undefined) {
+            throw new Error(`Toolbar component must have a handle: ${type}`);
+        }
+        this.root.set(ComponentToolbarKey, toolbarComponent.handle);
     }
 
     public async getComponentToolbar(): Promise<SpacesCompatibleToolbar | undefined> {
-        const component = await this.getComponent<SpacesCompatibleToolbar>(this.componentToolbarUrl);
-        return component;
+        return this.root.get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(ComponentToolbarKey)?.get();
     }
 
-    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): void {
+    public addComponent(component: IComponent & IComponentLoadable, type: string, layout: Layout): string {
         if (component.handle === undefined) {
             throw new Error(`Component must have a handle: ${type}`);
         }
@@ -127,6 +113,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             handle: component.handle,
         };
         this.componentSubDirectory.set(component.url, model);
+        return component.url;
     }
 
     public removeComponent(id: string) {
