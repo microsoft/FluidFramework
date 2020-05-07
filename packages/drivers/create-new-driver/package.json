@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-experimental-creation-driver",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "A driver that imitates actual driver but stores everthing in memory.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,9 +50,9 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.17.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-driver-utils": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.1",
+    "@microsoft/fluid-driver-definitions": "^0.17.1",
+    "@microsoft/fluid-driver-utils": "^0.17.1",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "uuid": "^3.3.2"
   },
