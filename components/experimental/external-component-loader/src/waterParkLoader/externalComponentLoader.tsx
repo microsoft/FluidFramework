@@ -73,7 +73,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
 
-    public setComponentCallbacks(props: IComponentSpacesToolbarProps) {
+    public setComponentProps(props: IComponentSpacesToolbarProps) {
         this.props = props;
     }
 

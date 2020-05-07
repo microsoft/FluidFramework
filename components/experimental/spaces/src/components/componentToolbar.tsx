@@ -74,7 +74,7 @@ export class ComponentToolbar extends PrimedComponent
         }
     }
 
-    public setComponentCallbacks(props: IComponentSpacesToolbarProps) {
+    public setComponentProps(props: IComponentSpacesToolbarProps) {
         this.props = props;
     }
 

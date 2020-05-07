@@ -37,7 +37,7 @@ export interface IProvideComponentTakesProps {
  * An IComponentTakesProps is a component that has a roster of functions defined by T that other components can use
  */
 export interface IComponentTakesProps<T> extends IProvideComponentTakesProps {
-    setComponentCallbacks(props: T): void;
+    setComponentProps(props: T): void;
 }
 
 export type SpacesCompatibleToolbar =

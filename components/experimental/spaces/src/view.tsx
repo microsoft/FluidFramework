@@ -109,7 +109,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
             // Need an event for when the component toolbar changes
             props.toolbarComponentP
                 .then((retrievedToolbar) => {
-                    retrievedToolbar?.setComponentCallbacks(combinedToolbarProps);
+                    retrievedToolbar?.setComponentProps(combinedToolbarProps);
                     setToolbarComponent(retrievedToolbar);
                 })
                 .catch((error) => {
