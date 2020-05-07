@@ -9,13 +9,13 @@ import { Templates } from "..";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentCallable>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentTakesProps>> { }
 }
 
 /**
- * IComponentCallbacks are all callbacks that a toolbar using Spaces might want to have.
+ * IComponentSpacesToolbarProps are all callbacks that a toolbar using Spaces might want to have.
  */
-export interface IComponentCallbacks {
+export interface IComponentSpacesToolbarProps {
     addComponent?(type: string): void;
     addItem?(item: ISpacesCollectible): string;
     shouldShowTemplates?(): boolean;
@@ -25,19 +25,20 @@ export interface IComponentCallbacks {
     setEditable?(isEditable?: boolean): void;
 }
 
-export const IComponentCallable: keyof IProvideComponentCallable = "IComponentCallable";
+export const IComponentTakesProps: keyof IProvideComponentTakesProps = "IComponentTakesProps";
 
 // Experimental code, we are looking into seeing how we can use generics to allow components
 // to set interfaces to communicate between one another
-export interface IProvideComponentCallable {
-    readonly IComponentCallable: IComponentCallable<IComponentCallbacks>;
+export interface IProvideComponentTakesProps {
+    readonly IComponentTakesProps: IComponentTakesProps<IComponentSpacesToolbarProps>;
 }
 
 /**
- * An IComponentCallable is a component that has a roster of functions defined by T that other components can use
+ * An IComponentTakesProps is a component that has a roster of functions defined by T that other components can use
  */
-export interface IComponentCallable<T> extends IProvideComponentCallable {
+export interface IComponentTakesProps<T> extends IProvideComponentTakesProps {
     setComponentCallbacks(callbacks: T): void;
 }
 
-export type SpacesCompatibleToolbar = IComponent & IComponentLoadable & IComponentCallable<IComponentCallbacks>;
+export type SpacesCompatibleToolbar =
+    IComponent & IComponentLoadable & IComponentTakesProps<IComponentSpacesToolbarProps>;

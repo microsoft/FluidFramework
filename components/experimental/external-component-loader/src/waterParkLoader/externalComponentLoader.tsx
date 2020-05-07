@@ -15,7 +15,7 @@ import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
-    IComponentCallbacks,
+    IComponentSpacesToolbarProps,
     IProvideComponentCollectorSpaces,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
@@ -68,12 +68,12 @@ export type WaterParkCompatibleView =
 export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLView, SpacesCompatibleToolbar {
     private savedElement: HTMLElement | undefined;
-    private callbacks: IComponentCallbacks | undefined;
+    private callbacks: IComponentSpacesToolbarProps | undefined;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCallable() { return this; }
+    public get IComponentTakesProps() { return this; }
 
-    public setComponentCallbacks(callbacks: IComponentCallbacks) {
+    public setComponentCallbacks(callbacks: IComponentSpacesToolbarProps) {
         this.callbacks = callbacks;
     }
 

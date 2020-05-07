@@ -18,8 +18,8 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     IContainerComponentDetails,
-    IComponentCallable,
-    IComponentCallbacks,
+    IComponentTakesProps,
+    IComponentSpacesToolbarProps,
     InternalRegistry,
     Templates,
 } from "..";
@@ -45,11 +45,11 @@ initializeIcons();
  * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
+    implements IComponentHTMLView, IComponentTakesProps<IComponentSpacesToolbarProps> {
     public get IComponentHTMLView() { return this; }
-    public get IComponentCallable() { return this; }
+    public get IComponentTakesProps() { return this; }
 
-    private callbacks: IComponentCallbacks = {};
+    private callbacks: IComponentSpacesToolbarProps = {};
 
     private static readonly factory = new PrimedComponentFactory(
         ComponentToolbarName,
@@ -74,7 +74,7 @@ export class ComponentToolbar extends PrimedComponent
         }
     }
 
-    public setComponentCallbacks(callbacks: IComponentCallbacks) {
+    public setComponentCallbacks(callbacks: IComponentSpacesToolbarProps) {
         this.callbacks = callbacks;
     }
 
@@ -93,7 +93,7 @@ export class ComponentToolbar extends PrimedComponent
 }
 
 interface IComponentToolbarViewProps {
-    callbacks: IComponentCallbacks;
+    callbacks: IComponentSpacesToolbarProps;
     supportedComponentList: IContainerComponentDetails[];
 }
 

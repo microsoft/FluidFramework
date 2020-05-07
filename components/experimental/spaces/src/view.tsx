@@ -11,7 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
-import { SpacesCompatibleToolbar, IComponentCallbacks } from "./interfaces";
+import { SpacesCompatibleToolbar, IComponentSpacesToolbarProps } from "./interfaces";
 import "./style.css";
 
 interface ISpacesEditButtonProps {
@@ -91,7 +91,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
 interface ISpacesGridViewProps {
     toolbarComponentP: Promise<SpacesCompatibleToolbar | undefined>;
     dataModel: ISpacesDataModel;
-    toolbarCallbacks: IComponentCallbacks;
+    toolbarCallbacks: IComponentSpacesToolbarProps;
 }
 
 export const SpacesView: React.FC<ISpacesGridViewProps> =
