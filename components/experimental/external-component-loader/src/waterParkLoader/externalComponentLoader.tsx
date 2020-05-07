@@ -141,9 +141,11 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     private readonly toggleEditable = () => {
-        if (this.props?.setEditable !== undefined) {
-            this.props.setEditable();
+        if (this.props?.setEditable === undefined) {
+            throw new Error("Don't have a setEditable callback");
         }
+
+        this.props.setEditable();
     };
 
     private readonly createAndAddComponent = async (componentUrl: string) => {

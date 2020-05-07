@@ -12,7 +12,7 @@ import { Layout } from "react-grid-layout";
 import { IComponentCollectorSpaces, ISpacesCollectible } from "./interfaces";
 
 export interface ISpacesDataModel extends EventEmitter {
-    readonly componentList: Map<string, Layout>;
+    readonly componentList: Map<string, ISpacesModel>;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     addFormattedComponents(componentModels: ISpacesModel[]): Promise<void>;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -76,10 +76,10 @@ export class SpacesDataModel extends EventEmitter
         return super.on(event, listener);
     }
 
-    public get componentList(): Map<string, Layout> {
+    public get componentList(): Map<string, ISpacesModel> {
         const response: Map<string, Layout> = new Map();
         this.componentSubDirectory.forEach((value: ISpacesModel, key) => {
-            response.set(key, value.layout);
+            response.set(key, value);
         });
         return response;
     }

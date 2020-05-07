@@ -10,7 +10,7 @@ import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { ISpacesDataModel } from "./dataModel";
+import { ISpacesDataModel, ISpacesModel } from "./dataModel";
 import { SpacesCompatibleToolbar, IComponentSpacesToolbarProps } from "./interfaces";
 import "./style.css";
 
@@ -98,7 +98,8 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
     (props: React.PropsWithChildren<ISpacesGridViewProps>) => {
         const [toolbarComponent, setToolbarComponent] = React.useState<SpacesCompatibleToolbar | undefined>(undefined);
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
-        const [componentMap, setComponentMap] = React.useState<Map<string, Layout>>(props.dataModel.componentList);
+        const [componentMap, setComponentMap] =
+            React.useState<Map<string, ISpacesModel>>(props.dataModel.componentList);
 
         // Editable is a view-only concept; SpacesView is the authority.
         const combinedToolbarProps = props.toolbarProps;
@@ -145,7 +146,8 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
 
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        componentMap.forEach((layout, url) => {
+        componentMap.forEach((model, url) => {
+            const layout = model.layout;
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
             layout.i = url;
@@ -155,7 +157,7 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
                     <SpacesComponentView
                         url={url}
                         editable={editable}
-                        getComponent={async () => props.dataModel.getComponent(url)}
+                        getComponent={async () => model.handle.get()}
                         removeComponent={() => props.dataModel.removeItem(url)}
                     />
                 </div>,
