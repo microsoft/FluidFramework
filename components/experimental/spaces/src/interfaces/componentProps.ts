@@ -21,7 +21,7 @@ export interface IComponentSpacesToolbarProps {
     shouldShowTemplates?(): boolean;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
-    getEditable?(): boolean;
+    editable?: boolean;
     setEditable?(isEditable?: boolean): void;
 }
 

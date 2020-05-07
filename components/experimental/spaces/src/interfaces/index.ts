@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./componentCallable";
+export * from "./componentProps";
 export * from "./componentCollectorSpaces";
 export * from "./componentToolbarConsumer";
 export * from "./componentRegistryDetails";
