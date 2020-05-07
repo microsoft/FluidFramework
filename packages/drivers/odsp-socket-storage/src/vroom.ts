@@ -47,8 +47,9 @@ export async function fetchJoinSession(
             let queryParams = `access_token=${token}`;
             let headers = {};
             if (queryParams.length > 2048) {
+                queryParams = "";
                 headers = { Authorization: `Bearer ${token}` };
-                queryParams = ''
+
             }
 
             const response = await fetchHelper(
