@@ -11,14 +11,12 @@ import {
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     ComponentToolbar,
     ComponentToolbarName,
-    TextBox,
-    TextBoxName,
-    FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
 import {
@@ -97,9 +95,9 @@ const generateFactory = () => {
             },
         },
         {
-            type: TextBoxName as string,
-            factory: Promise.resolve(TextBox.getFactory()),
-            friendlyName: FriendlyTextBoxName,
+            type: CollaborativeText.ComponentName,
+            factory: Promise.resolve(CollaborativeText.getFactory()),
+            friendlyName: "Text Box",
             fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             templates: {

@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./textBox";
 export * from "./componentToolbar";
