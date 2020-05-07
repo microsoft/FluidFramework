@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/version-test-2",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "private": true,
   "description": "Component to test version conversion.",
   "repository": "microsoft/prague",
@@ -26,13 +26,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.17.1",
-    "@microsoft/fluid-view-interfaces": "^0.17.1",
+    "@microsoft/fluid-aqueduct": "^0.17.2",
+    "@microsoft/fluid-view-interfaces": "^0.17.2",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.17.1",
+    "@microsoft/fluid-webpack-component-loader": "^0.17.2",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

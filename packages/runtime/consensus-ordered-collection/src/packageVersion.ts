@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-ordered-collection";
-export const pkgVersion = "0.17.1";
+export const pkgVersion = "0.17.2";
