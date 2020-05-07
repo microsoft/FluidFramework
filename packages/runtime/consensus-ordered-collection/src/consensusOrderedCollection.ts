@@ -90,23 +90,32 @@ interface IPendingRecord<T> {
     message: IConsensusOrderedCollectionOperation;
 }
 
-type jobTrackingType<T> = Map<string, { value: T, clientId: string | undefined }>;
-const belongsToUnattached = undefined;
+/**
+ * For job tracking, we need to keep track of which client "owns" a given value.
+ * Key is the acquireId from when it was acquired
+ * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
+ */
+type JobTrackingInfo<T> = Map<string, {value: T, clientId: string | undefined}>;
+const idForLocalUnattachedClient = undefined;
 
 /**
  * Implementation of a consensus collection shared object
  *
+ * Implements the shared object's communication, and the semantics around the
+ * release/complete mechanism following acquire.
+ *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * Implements the shared object's communication, handles the sending/processing
- * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     /** Queue of local messages awaiting ack from the server */
     private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
 
-    private jobTracking: jobTrackingType<T> = new Map();
+    /**
+     * The set of values that have been acquired but not yet completed or released
+     */
+    private jobTracking: JobTrackingInfo<T> = new Map();
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -120,17 +129,10 @@ export class ConsensusOrderedCollection<T = any>
     ) {
         super(id, runtime, attributes);
 
-        // It's likely not safe to call this.removeClient(this.runtime.clientId) in here
-        // The fact that client recorded disconnect does not mean much in terms of the order
-        // server will record disconnects from multiple clients. And order matters because
-        // it defines the order items go back to the queue.
+        // We can't simply call this.removeClient(this.runtime.clientId) in on runtime disconnected,
+        // because other clients may disconnect concurrently.
+        // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
-        /*
-        runtime.on("disconnected", () => {
-            this.removeClient(this.runtime.clientId);
-        });
-        */
-
         runtime.getQuorum().on("removeMember", (clientId: string) => {
             assert(clientId);
             this.removeClient(clientId);
@@ -187,26 +189,20 @@ export class ConsensusOrderedCollection<T = any>
      * Wait for a value to be available and acquire it from the consensus collection
      */
     public async waitAndAcquire(callback: ConsensusCallback<T>): Promise<void> {
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
+        do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await new Promise((resolve) => {
+                await this.newAckBasedPromise((resolve) => {
                     this.once("add", resolve);
                 });
             }
-
-            const res = await this.acquire(callback);
-            if (res) {
-                return;
-            }
-        }
+        } while (!(await this.acquire(callback)));
     }
 
     public snapshot(): ITree {
         // If we are transitioning from unattached to attached mode,
         // then we are losing all checked out work!
-        this.removeClient(belongsToUnattached);
+        this.removeClient(idForLocalUnattachedClient);
 
         const tree: ITree = {
             entries: [
@@ -305,7 +301,7 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
             const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
-            this.jobTracking = new Map(content) as jobTrackingType<T>;
+            this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
         assert(this.data.size() === 0);
@@ -379,7 +375,7 @@ export class ConsensusOrderedCollection<T = any>
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve) => {
+        return this.newAckBasedPromise((resolve) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
         });
@@ -409,8 +405,7 @@ export class ConsensusOrderedCollection<T = any>
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         if (this.isLocal()) {
             // can be undefined if queue is empty
-            const value = this.acquireCore(uuid(), belongsToUnattached);
-            return Promise.resolve(value);
+            return this.acquireCore(uuid(), idForLocalUnattachedClient);
         }
 
         return this.submit<IConsensusOrderedCollectionAcquireOperation>({
