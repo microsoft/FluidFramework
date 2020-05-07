@@ -36,6 +36,7 @@ import {
     IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
+    IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
     IEnvelope,
@@ -66,7 +67,10 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
+export abstract class ComponentContext extends EventEmitter implements
+    IComponentContext,
+    IComponentContextLegacy,
+    IDisposable,
     IExperimentalComponentContext {
     public readonly isExperimentalComponentContext = true;
 

@@ -1,4 +1,13 @@
 # Component Runtime Definitions
 
-Contains interface IComponentRuntime, which is an abstraction of an implementation of IComponentRuntime.
-These are functionality that a compiler developer can use.
+Interface `IComponentRuntime` specify the component developer API.
+
+TODO: The full set of functionality is under review
+
+- DDS creation and management APIs
+- Container info and states (connection state, documentId, quorum, audience, etc.)
+- Loader
+- Op/Signal submission
+- Snapshotting
+- DeltaManager
+- Blob Management API.

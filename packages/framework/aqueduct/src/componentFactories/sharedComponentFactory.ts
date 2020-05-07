@@ -6,7 +6,6 @@
 import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-// import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
