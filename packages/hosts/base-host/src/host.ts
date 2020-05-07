@@ -27,8 +27,8 @@ async function createWebLoader(
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
 
     if (seedPackages !== undefined) {
-        for (const pkg of seedPackages) {
-            await codeLoader.seedModule(pkg[0], pkg[1]);
+        for (const [codeDetails, maybeModule] of seedPackages) {
+            await codeLoader.seedModule(codeDetails, maybeModule);
         }
     }
 
