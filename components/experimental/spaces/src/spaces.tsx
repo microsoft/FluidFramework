@@ -50,6 +50,7 @@ export interface ISpacesCollectible {
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
+    private toolbarComponent: SpacesCompatibleToolbar | undefined;
     private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
@@ -70,10 +71,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     public get IComponentHTMLView() { return this; }
-
-    private async getToolbarComponent(): Promise<SpacesCompatibleToolbar | undefined> {
-        return this.root.get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(SpacesToolbarKey)?.get();
-    }
 
     /**
      * Will return a new Spaces View
@@ -108,7 +105,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         };
         ReactDOM.render(
             <SpacesView
-                toolbarComponentP={ this.getToolbarComponent() }
+            // make this non-promise
+                toolbarComponentP={ Promise.resolve(this.toolbarComponent) }
                 dataModel={ this.storageComponent }
                 toolbarProps={ toolbarProps }
             />,
@@ -119,7 +117,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         const storageComponent = await this.createAndAttachComponent<SpacesStorage>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
-        this.root.createSubDirectory("component-list");
         const toolbarComponent = await this.createAndAttachComponent<SpacesToolbar>(SpacesToolbarName);
         this.root.set(SpacesToolbarKey, toolbarComponent.handle);
         // Set the saved template if there is a template query param
@@ -131,6 +128,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
+        // eventually make this a non-persisted component
+        this.toolbarComponent = await this.root
+            .get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(SpacesToolbarKey)?.get();
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
     }
 
