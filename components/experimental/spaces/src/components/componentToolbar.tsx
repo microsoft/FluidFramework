@@ -98,10 +98,10 @@ interface IComponentToolbarViewProps {
 }
 
 interface IComponentToolbarViewState {
-    isEditable: boolean;
+    editable: boolean;
     isComponentListOpen: boolean;
     isTemplateListOpen: boolean;
-    isTemplateVisible: boolean;
+    templatesAvailable: boolean;
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
@@ -110,18 +110,18 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     constructor(props: IComponentToolbarViewProps) {
         super(props);
         this.supportedComponentList = props.supportedComponentList;
-        const isEditable = props.props.editable ?? false;
-        const isTemplateVisible = props.props.templatesAvailable ?? false;
+        const editable = props.props.editable ?? false;
+        const templatesAvailable = props.props.templatesAvailable ?? false;
         this.state = {
-            isEditable,
+            editable,
             isComponentListOpen: false,
             isTemplateListOpen: false,
-            isTemplateVisible,
+            templatesAvailable,
         };
     }
 
     render() {
-        const { isComponentListOpen, isTemplateListOpen, isEditable } = this.state;
+        const { isComponentListOpen, isTemplateListOpen, editable: isEditable } = this.state;
 
         const componentsButton = (
             <Button
@@ -154,7 +154,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             }));
         }
         let templateCollapsible: JSX.Element | undefined;
-        if (this.state.isTemplateVisible) {
+        if (this.state.templatesAvailable) {
             const templateButtonList: JSX.Element[] = [];
             const templateButton = (
                 <Button
@@ -205,8 +205,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     style={editableButtonStyle}
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => {
-                        const newIsEditable = !this.state.isEditable;
-                        this.setState({ isEditable: newIsEditable });
+                        const newIsEditable = !this.state.editable;
+                        this.setState({ editable: newIsEditable });
                         if (this.props.props.setEditable) {
                             this.props.props.setEditable(newIsEditable);
                         }
@@ -214,7 +214,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 >
                     {`Edit: ${isEditable}`}
                 </Button>
-                {this.state.isEditable ?
+                {this.state.editable ?
                     <div>
                         <div style={componentButtonStyle}>
                             <Collapsible
