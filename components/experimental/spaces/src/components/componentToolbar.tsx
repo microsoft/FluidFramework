@@ -122,9 +122,9 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         };
     }
 
-    public emitAddComponentEvent(type: string, w?: number, h?: number) {
+    public emitAddComponentEvent(type: string) {
         if (this.props.callbacks.addComponent) {
-            this.props.callbacks.addComponent(type, w, h);
+            this.props.callbacks.addComponent(type);
         }
     }
 
@@ -163,7 +163,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={async () => {
-                            this.emitAddComponentEvent(supportedComponent.type, 20, 5);
+                            this.emitAddComponentEvent(supportedComponent.type);
                             this.setState({ isComponentListOpen: false });
                         }}
                     >

@@ -84,13 +84,13 @@ export class Spaces extends PrimedComponent implements
      */
     public render(div: HTMLElement) {
         const toolbarCallbacks = {
-            addComponent: (type: string, w?: number, h?: number) => {
+            addComponent: (type: string) => {
                 this.createAndAttachComponent(type)
                     .then((component) => {
                         this.dataModel.addItem({
                             component,
                             type,
-                            layout: { w, h, x: 0, y: 0 },
+                            layout: { w: 20, h: 5, x: 0, y: 0 },
                         });
                     })
                     .catch((error) => {

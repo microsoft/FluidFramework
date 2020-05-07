@@ -16,7 +16,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
  * IComponentCallbacks are all callbacks that a toolbar using Spaces might want to have.
  */
 export interface IComponentCallbacks {
-    addComponent?(type: string, w?: number, h?: number): void;
+    addComponent?(type: string): void;
     addItem?(item: ISpacesCollectible): string;
     shouldShowTemplates?(): boolean;
     addTemplate?(template: Templates): void;
