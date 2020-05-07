@@ -68,8 +68,7 @@ export class ScriptManager {
 
     public async preCacheFiles(files: string[], tryPreload: boolean): Promise<void> {
         await Promise.all(
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            files.map((url)=>{
+            files.map(async (url)=>{
                 const cacheLink = document.createElement("link");
                 cacheLink.href = url;
                 cacheLink.as = "script";
