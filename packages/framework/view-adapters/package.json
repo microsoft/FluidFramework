@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-view-adapters",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "View adapters for rendering components of alternate or unknown UI frameworks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-view-interfaces": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-view-interfaces": "^0.18.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
