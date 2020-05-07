@@ -72,7 +72,8 @@ export class ScriptManager {
                 const cacheLink = document.createElement("link");
                 cacheLink.href = url;
                 cacheLink.as = "script";
-                if (tryPreload && cacheLink.relList?.contains("preload") === true) {
+
+                if (tryPreload && cacheLink.relList?.supports("preload") === true) {
                     cacheLink.rel = "preload";
                 } else {
                     cacheLink.rel = "prefetch";
