@@ -62,6 +62,7 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+    public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
      * @param context - The component context

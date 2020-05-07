@@ -21,6 +21,7 @@ import { OdspDocumentService } from "./odspDocumentService";
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();

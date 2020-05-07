@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-odsp-utils";
 
 export class OdspUrlResolver implements IUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(

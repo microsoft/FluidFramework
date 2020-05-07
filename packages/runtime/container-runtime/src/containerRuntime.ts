@@ -378,6 +378,8 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
+    public readonly isExperimentalRuntime = true;
+    public readonly isExperimentalContainerRuntime = true;
     public get IContainerRuntime() { return this; }
 
     /**

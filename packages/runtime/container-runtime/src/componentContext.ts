@@ -63,6 +63,7 @@ interface ISnapshotDetails {
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
+    public readonly isExperimentalComponentContext = true;
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }

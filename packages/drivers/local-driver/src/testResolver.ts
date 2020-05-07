@@ -20,6 +20,7 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
  * related test classes.
  */
 export class TestResolver implements IUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 

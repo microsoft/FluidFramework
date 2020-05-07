@@ -14,6 +14,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly isExperimentalDocumentServiceFactory = true;
     public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
         if (Array.isArray(documentServiceFactory)) {
             const factories: IDocumentServiceFactory[] = [];

@@ -15,6 +15,7 @@ import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
  * Basic implementation of a document service for testing.
  */
 export class TestDocumentService implements api.IDocumentService {
+    public readonly isExperimentalDocumentService = true;
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token

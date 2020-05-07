@@ -65,6 +65,7 @@ const getUser = (): IDevServerUser => ({
 });
 
 export class MultiUrlResolver implements IUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly urlResolver: IUrlResolver;
     constructor(
         private readonly rawUrl: string,

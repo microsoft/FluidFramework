@@ -34,6 +34,7 @@ import * as jwt from "jsonwebtoken";
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(
