@@ -78,6 +78,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                     </button>
                     <button
                         name="OpenSubComponent"
+                        id={this.props.todoItemModel.absoluteUrl}
                         style={this.buttonStyle}
                         onClick={() => window.open(this.props.todoItemModel.absoluteUrl, "_blank")}>↗
                     </button>
