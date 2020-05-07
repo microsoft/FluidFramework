@@ -8,7 +8,7 @@ import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
     Jsonable,
     JsonablePrimitive,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 
 export type TableDocumentItem = Jsonable<JsonablePrimitive | IComponentHandle>;
 

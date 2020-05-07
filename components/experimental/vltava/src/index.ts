@@ -13,6 +13,7 @@ import {
 } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
@@ -20,7 +21,6 @@ import {
 } from "@microsoft/fluid-last-edited-experimental";
 import {
     IComponentRegistry,
-    IContainerRuntime,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";

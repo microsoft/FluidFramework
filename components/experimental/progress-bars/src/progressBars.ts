@@ -15,7 +15,8 @@ import {
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 

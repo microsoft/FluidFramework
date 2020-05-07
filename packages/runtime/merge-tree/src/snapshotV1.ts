@@ -18,7 +18,7 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";

@@ -8,7 +8,7 @@ import {
     IComponentRuntime,
     ISharedObjectServices,
     IChannel,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";

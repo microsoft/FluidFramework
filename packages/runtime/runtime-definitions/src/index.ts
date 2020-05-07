@@ -4,11 +4,7 @@
  */
 
 export * from "./agent";
-export * from "./channel";
 export * from "./componentFactory";
 export * from "./componentRegistry";
-export * from "./components";
-export * from "./jsonable";
+export * from "./componentContext";
 export * from "./protocol";
-export * from "./serializable";
-export * from "./storage";

@@ -14,7 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
     IExperimentalComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
