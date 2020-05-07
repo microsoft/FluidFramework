@@ -186,15 +186,14 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
 
     const html =
         `<!DOCTYPE html>
-<html lang="en">
+<html style="height: 100%; padding: 0; margin: 0" lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${documentId}</title>
 </head>
-<body style="margin: 0;">
-
-    <div id="content">
+<body style="height: 100%; padding: 0; margin: 0">
+    <div id="content" style="height: 100%; padding: 0; margin: 0; overflow: auto">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
