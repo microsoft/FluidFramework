@@ -21,7 +21,7 @@ import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { SpacesView } from "./view";
-import { ComponentToolbar, ComponentToolbarName } from "./components";
+import { SpacesToolbar, SpacesToolbarName } from "./components";
 import {
     IComponentToolbarConsumer,
     SpacesCompatibleToolbar,
@@ -81,7 +81,7 @@ export class Spaces extends PrimedComponent implements
             SharedObjectSequence.getFactory(),
         ],
         {},
-        [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
+        [[ SpacesToolbarName, Promise.resolve(SpacesToolbar.getFactory()) ]],
     );
 
     public static getFactory() {
@@ -172,7 +172,7 @@ export class Spaces extends PrimedComponent implements
 
     protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
-        const toolbarComponent = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
+        const toolbarComponent = await this.createAndAttachComponent<SpacesToolbar>(SpacesToolbarName);
         this.setToolbarComponent(toolbarComponent);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);

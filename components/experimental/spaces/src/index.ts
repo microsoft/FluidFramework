@@ -15,8 +15,8 @@ import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
-    ComponentToolbar,
-    ComponentToolbarName,
+    SpacesToolbar,
+    SpacesToolbarName,
 } from "./components";
 import { Spaces } from "./spaces";
 import {
@@ -124,7 +124,7 @@ const generateFactory = () => {
 
     // We don't want to include the default wrapper component in our list of available components
     containerComponents.push([ SpacesComponentName, Promise.resolve(Spaces.getFactory())]);
-    containerComponents.push([ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]);
+    containerComponents.push([ SpacesToolbarName, Promise.resolve(SpacesToolbar.getFactory()) ]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

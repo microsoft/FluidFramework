@@ -37,14 +37,14 @@ const componentButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
 };
 
-export const ComponentToolbarName = "componentToolbar";
+export const SpacesToolbarName = "spacesToolbar";
 
 initializeIcons();
 
 /**
  * A component to allow you to add and manipulate components
  */
-export class ComponentToolbar extends PrimedComponent
+export class SpacesToolbar extends PrimedComponent
     implements IComponentHTMLView, IComponentTakesProps<IComponentSpacesToolbarProps> {
     public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
@@ -52,15 +52,15 @@ export class ComponentToolbar extends PrimedComponent
     private props: IComponentSpacesToolbarProps = {};
 
     private static readonly factory = new PrimedComponentFactory(
-        ComponentToolbarName,
-        ComponentToolbar,
+        SpacesToolbarName,
+        SpacesToolbar,
         [],
         {});
 
     private supportedComponentList: IContainerComponentDetails[] = [];
 
     public static getFactory() {
-        return ComponentToolbar.factory;
+        return SpacesToolbar.factory;
     }
 
     protected async componentHasInitialized() {
