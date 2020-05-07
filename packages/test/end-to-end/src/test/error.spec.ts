@@ -118,23 +118,23 @@ describe("Errors Types", () => {
         }
     });
 
-    it("AccessDeniedError Test 401", async () => {
+    it("AuthorizationError Test 401", async () => {
         const networkError = createNetworkError(
             "Test Message",
             false /* canRetry */,
             401 /* statusCode */);
-        assert.equal(networkError.errorType, ErrorType.accessDeniedError,
-            "Error should be an accessDeniedError");
+        assert.equal(networkError.errorType, ErrorType.authorizationError,
+            "Error should be an authorizationError");
         assertCustomPropertySupport(networkError);
     });
 
-    it("AccessDeniedError Test 403", async () => {
+    it("AuthorizationError Test 403", async () => {
         const networkError = createNetworkError(
             "Test Message",
             false /* canRetry */,
             403 /* statusCode */);
-        if (networkError.errorType !== ErrorType.accessDeniedError) {
-            assert.fail("Error should be an accessDeniedError");
+        if (networkError.errorType !== ErrorType.authorizationError) {
+            assert.fail("Error should be an authorizationError");
         }
         else {
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
@@ -142,19 +142,49 @@ describe("Errors Types", () => {
         }
     });
 
-    it("FileNotFoundError Test", async () => {
+    it("OutOfStorageError Test 507", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /* canRetry */,
+            507 /* statusCode */);
+        assert.equal(networkError.errorType, ErrorType.outOfStorageError,
+            "Error should be an OutOfStorageError");
+        assertCustomPropertySupport(networkError);
+    });
+
+    it("FileNotFoundOrAccessDeniedError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
             false /* canRetry */,
             404 /* statusCode */);
         assertCustomPropertySupport(networkError);
-        if (networkError.errorType !== ErrorType.fileNotFoundError) {
-            assert.fail("Error should be a fileNotFoundError");
+        if (networkError.errorType !== ErrorType.fileNotFoundOrAccessDeniedError) {
+            assert.fail("Error should be a fileNotFoundOrAccessDeniedError");
         }
         else {
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
             assert.equal(networkError.statusCode, 404, "status code should be preserved");
         }
+    });
+
+    it("InvalidFileNameError Test 414", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /* canRetry */,
+            414 /* statusCode */);
+        assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
+            "Error should be an InvalidFileNameError");
+        assertCustomPropertySupport(networkError);
+    });
+
+    it("InvalidFileNameError Test 710", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /* canRetry */,
+            710 /* statusCode */);
+        assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
+            "Error should be an InvalidFileNameError");
+        assertCustomPropertySupport(networkError);
     });
 
     it("FatalError Test", async () => {
