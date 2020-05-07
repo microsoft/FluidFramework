@@ -70,7 +70,6 @@ async function initializeODSPCore(
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     const getWebsocketTokenStub = () => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
-        clientConfig.clientId,
         getStorageTokenStub,
         getWebsocketTokenStub,
         new BaseTelemetryNullLogger());

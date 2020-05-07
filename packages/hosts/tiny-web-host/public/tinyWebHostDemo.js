@@ -10,7 +10,6 @@ function load() {
     const url = parent.document.getElementById('link').value;
     const storageToken =  parent.document.getElementById('storageToken').value;
     const socketToken =  parent.document.getElementById('socketToken').value;
-    const clientId = parent.document.getElementById('clientId').value;
     const clientSecret = parent.document.getElementById('clientSecret').value;
 
     const div = document.getElementById(contentDivId);
@@ -25,7 +24,6 @@ function load() {
         url,
         div,
         tokenApiConfig,
-        clientId,
         clientSecret,
     );
 }
