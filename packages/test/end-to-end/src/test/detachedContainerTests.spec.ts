@@ -105,11 +105,11 @@ describe("Detached Container", () => {
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
-        assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
-        assert.equal(subComponent.context.isLocal(), true, "Component should be local!!");
+        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isLocal(), true, "Channel should be local!!");
+        assert.strictEqual(subComponent.context.isLocal(), true, "Component should be local!!");
 
-        assert.equal(subComponent.context.containerRuntime.isLocal(), true, "Container should be local!!");
+        assert.strictEqual(subComponent.context.containerRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -135,11 +135,11 @@ describe("Detached Container", () => {
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
-        assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
+        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isLocal(), false, "Channel should not be local!!");
 
-        assert.equal(testComponent.context.isLocal(), false, "Component should not be local!!");
-        assert.equal(testComponent.context.containerRuntime.isLocal(), false, "Container should be attached!!");
+        assert.strictEqual(testComponent.context.isLocal(), false, "Component should not be local!!");
+        assert.strictEqual(testComponent.context.containerRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
