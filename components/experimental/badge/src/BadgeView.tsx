@@ -29,14 +29,29 @@ import {
 } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
-import * as React from "react";
+import React, { useState } from "react";
 import { IBadgeType } from "./IBadgeType";
 import { IHistory } from "./IHistory";
 
-export interface IBadgeViewProps {
+initializeIcons();
+
+const defaultColor = "#fff";
+const animation: string = "all 0.15s ease-in";
+const cardPadding: string = "16px 24px";
+
+export interface IBadgeViewPropsOrig {
     currentCell: ISharedCell;
     optionsMap: ISharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+}
+
+export interface IBadgeViewProps {
+    current: IBadgeType;
+    setCurrent(badgeOption: IBadgeType): void;
+    options: IBadgeType[];
+    addOption(badgeOption: IBadgeType): void;
+    history: IHistory<IBadgeType>[];
+    addToHistory(badgeType: IBadgeType, timestamp: Date): void;
 }
 
 export interface IBadgeViewState {
@@ -47,7 +62,206 @@ export interface IBadgeViewState {
     items: any;
 }
 
-export class BadgeView
+const _getTextColor = (c: IColor) => {
+    // https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+    return (c.r * 0.299 + c.g * 0.587 + c.b * 0.114 > 186) ?
+        "#000000" : "#ffffff";
+};
+
+export const BadgeView = (props: IBadgeViewProps) => {
+    const [isDialogVisible, setDialogVisible] = useState(false);
+    const [customColor, setCustomColor] = useState(getColorFromString(defaultColor));
+    const [customText, setCustomText] = useState("");
+    const { setCurrent, current, options, addOption, addToHistory, history } = props;
+
+    function closeDialog(): void {
+        setDialogVisible(false);
+    }
+
+    function setCurrentAndAddHistory(newItem: IBadgeType): void {
+        if (newItem.key !== current.key) {
+            // Save current value into history
+            addToHistory(current, new Date());
+
+            // Set new value
+            setCurrent(newItem);
+        }
+    }
+
+    function onMenuItemClick(_, item: IContextualMenuItem): void {
+        if (item.key === "new") {
+            setDialogVisible(true);
+        }
+        else {
+            setCurrentAndAddHistory(item as IBadgeType);
+        }
+    }
+
+    function onSave(): void {
+        if (customText !== "") {
+            const newItem: IBadgeType = {
+                key: customText,
+                text: customText,
+                iconProps: {
+                    iconName: "Contact",
+                    style: {
+                        color: customColor.str,
+                    },
+                },
+            };
+
+            // Add to the badge options
+            addOption(newItem);
+            setCurrent(newItem);
+            setCustomText("");
+        }
+
+        setDialogVisible(false);
+    }
+
+    function updateColor(ev: React.SyntheticEvent<HTMLElement>, colorObj: IColor) {
+        setCustomColor(colorObj);
+    }
+
+    function updateText(ev: React.SyntheticEvent<HTMLElement>, newValue: string) {
+        setCustomText(newValue);
+    }
+
+    function getOptions() {
+        const items = [];
+        options.forEach((v) => items.push(v));
+
+        items.push({
+            key: "divider_1",
+            itemType: ContextualMenuItemType.Divider,
+        });
+        items.push({
+            key: "new",
+            text: "Set custom...",
+            iconProps: {
+                iconName: "Add",
+            },
+        });
+
+        return items;
+    }
+
+    function onRenderCard(): JSX.Element {
+        const items = [];
+
+        // Add items to history in reverse order
+        // eslint-disable-next-line react/prop-types
+        history.forEach((x) => {
+            items.unshift(
+                <ActivityItem
+                    activityDescription={`Set to ${x.value.text}`}
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                    timeStamp={getRelativeDate(x.timestamp)}
+                    activityIcon={<Icon {...x.value.iconProps} />} />,
+            );
+        });
+
+        return (
+            <div style={{
+                padding: cardPadding,
+            }}>
+                {items}
+            </div>
+        );
+    }
+
+    const color = getColorFromString(current.iconProps.style.color);
+    const textColor = _getTextColor(color);
+
+    const colorHover = getColorFromHSV({
+        h: color.h,
+        s: color.s,
+        v: color.v + 5,
+    });
+
+    const colorPressed = getColorFromHSV({
+        h: color.h,
+        s: color.s,
+        v: color.v - 5,
+    });
+
+    return (
+        <div style={{ animation: MotionAnimations.scaleDownIn }}>
+            <HoverCard
+                plainCardProps={{
+                    onRenderPlainCard: onRenderCard,
+                    directionalHint: DirectionalHint.rightTopEdge,
+                }}
+                type={HoverCardType.plain}
+            >
+                <DefaultButton
+                    text={current.text}
+                    iconProps={{ iconName: current.iconProps.iconName }}
+                    menuProps={{
+                        isBeakVisible: false,
+                        shouldFocusOnMount: true,
+                        items: getOptions(),
+                        onItemClick: onMenuItemClick,
+                    }}
+                    styles={{
+                        label: {
+                            color: textColor,
+                        },
+                        icon: {
+                            color: textColor,
+                        },
+                        menuIcon: {
+                            color: textColor,
+                        },
+                        root: {
+                            backgroundColor: color.str,
+                            transition: animation,
+                        },
+                        rootHovered: {
+                            backgroundColor: colorHover.str,
+                        },
+                        rootPressed: {
+                            backgroundColor: colorPressed.str,
+                        },
+                        rootExpanded: {
+                            backgroundColor: colorPressed.str,
+                        },
+                    }}
+                />
+            </HoverCard>
+
+            <Dialog
+                hidden={!isDialogVisible}
+                onDismiss={closeDialog}
+                dialogContentProps={{
+                    type: DialogType.normal,
+                    title: "Add a custom status",
+                }}
+                modalProps={{
+                    isBlocking: false,
+                    styles: { main: { maxWidth: 450 } },
+                }}
+            >
+                <Stack>
+                    <TextField
+                        placeholder="Custom status name"
+                        onChange={updateText} />
+                    <ColorPicker
+                        color={customColor}
+                        onChange={updateColor}
+                        alphaSliderHidden={true}
+                    />
+                </Stack>
+                <DialogFooter>
+                    <PrimaryButton onClick={onSave} text="Save" />
+                    <DefaultButton onClick={closeDialog} text="Cancel" />
+                </DialogFooter>
+            </Dialog>
+        </div>
+    );
+};
+
+export class BadgeViewOrig
     extends React.Component<IBadgeViewProps, IBadgeViewState> {
     private readonly defaultColor: string = "#fff";
     private readonly animation: string = "all 0.15s ease-in";

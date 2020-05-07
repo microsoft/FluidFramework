@@ -7,10 +7,12 @@
     "compilerOptions": {
         "target": "es6",
         "module": "esnext",
+        "strict": true,
         "strictNullChecks": false,
         "outDir": "dist",
         "jsx": "react",
-        "types": []
+        "types": [],
+        "esModuleInterop": true
     },
     "include": [
         "src/**/*"
