@@ -24,8 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-runtime-definitions": "^0.17.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.17.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

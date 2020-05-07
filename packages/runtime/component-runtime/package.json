@@ -35,7 +35,6 @@
     "@microsoft/fluid-protocol-base": "^0.1004.2",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "@microsoft/fluid-runtime-definitions": "^0.17.0",
-    "@microsoft/fluid-runtime-utils": "^0.17.0",
     "@microsoft/fluid-shared-object-base": "^0.17.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"

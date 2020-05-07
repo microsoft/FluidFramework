@@ -2,6 +2,8 @@
 
 ## 0.17 Breaking Changes
 
+### FileNotFoundError is now FileNotFoundOrAccessDeniedError and AccessDeniedError to AuthorizationError
+
 - [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
