@@ -98,7 +98,7 @@ export class Spaces extends PrimedComponent implements
                     });
             },
             addItem: (item: ISpacesCollectible) => { return this.dataModel.addItem(item); },
-            shouldShowTemplates: () => this.registryDetails?.IComponentRegistryTemplates !== undefined,
+            templatesAvailable: this.registryDetails?.IComponentRegistryTemplates !== undefined,
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),
         };

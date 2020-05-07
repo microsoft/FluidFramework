@@ -18,7 +18,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 export interface IComponentSpacesToolbarProps {
     addComponent?(type: string): void;
     addItem?(item: ISpacesCollectible): string;
-    shouldShowTemplates?(): boolean;
+    templatesAvailable?: boolean;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
     editable?: boolean;
