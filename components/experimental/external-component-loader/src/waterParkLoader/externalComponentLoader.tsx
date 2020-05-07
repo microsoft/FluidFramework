@@ -68,13 +68,13 @@ export type WaterParkCompatibleView =
 export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLView, SpacesCompatibleToolbar {
     private savedElement: HTMLElement | undefined;
-    private callbacks: IComponentSpacesToolbarProps | undefined;
+    private props: IComponentSpacesToolbarProps | undefined;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
 
-    public setComponentCallbacks(callbacks: IComponentSpacesToolbarProps) {
-        this.callbacks = callbacks;
+    public setComponentCallbacks(props: IComponentSpacesToolbarProps) {
+        this.props = props;
     }
 
     public render(element: HTMLElement) {
@@ -141,17 +141,17 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     private readonly toggleEditable = () => {
-        if (this.callbacks?.setEditable !== undefined) {
-            this.callbacks.setEditable();
+        if (this.props?.setEditable !== undefined) {
+            this.props.setEditable();
         }
     };
 
     private readonly createAndAddComponent = async (componentUrl: string) => {
-        if (this.callbacks?.addItem === undefined) {
+        if (this.props?.addItem === undefined) {
             throw new Error("Don't have an addItem callback");
         }
 
-        this.callbacks.addItem({
+        this.props.addItem({
             component: await this.createComponentFromUrl(componentUrl),
             type: componentUrl,
         });

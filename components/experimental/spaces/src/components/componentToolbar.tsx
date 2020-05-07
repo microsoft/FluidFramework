@@ -49,7 +49,7 @@ export class ComponentToolbar extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
 
-    private callbacks: IComponentSpacesToolbarProps = {};
+    private props: IComponentSpacesToolbarProps = {};
 
     private static readonly factory = new PrimedComponentFactory(
         ComponentToolbarName,
@@ -74,8 +74,8 @@ export class ComponentToolbar extends PrimedComponent
         }
     }
 
-    public setComponentCallbacks(callbacks: IComponentSpacesToolbarProps) {
-        this.callbacks = callbacks;
+    public setComponentCallbacks(props: IComponentSpacesToolbarProps) {
+        this.props = props;
     }
 
     /**
@@ -84,7 +84,7 @@ export class ComponentToolbar extends PrimedComponent
     public render(div: HTMLElement) {
         ReactDOM.render(
             <ComponentToolbarView
-                callbacks={this.callbacks}
+                props={this.props}
                 supportedComponentList={this.supportedComponentList}
             />,
             div,
@@ -93,7 +93,7 @@ export class ComponentToolbar extends PrimedComponent
 }
 
 interface IComponentToolbarViewProps {
-    callbacks: IComponentSpacesToolbarProps;
+    props: IComponentSpacesToolbarProps;
     supportedComponentList: IContainerComponentDetails[];
 }
 
@@ -110,9 +110,9 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     constructor(props: IComponentToolbarViewProps) {
         super(props);
         this.supportedComponentList = props.supportedComponentList;
-        const isEditable = props.callbacks.editable ?? false;
-        const isTemplateVisible = props.callbacks.shouldShowTemplates !== undefined
-            ? props.callbacks.shouldShowTemplates()
+        const isEditable = props.props.editable ?? false;
+        const isTemplateVisible = props.props.shouldShowTemplates !== undefined
+            ? props.props.shouldShowTemplates()
             : false;
         this.state = {
             isEditable,
@@ -143,8 +143,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
-                            if (this.props.callbacks.addComponent) {
-                                this.props.callbacks.addComponent(supportedComponent.type);
+                            if (this.props.props.addComponent) {
+                                this.props.props.addComponent(supportedComponent.type);
                             }
                             this.setState({ isComponentListOpen: false });
                         }}
@@ -176,8 +176,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    if (this.props.callbacks.addTemplate) {
-                                        this.props.callbacks.addTemplate(Templates[template]);
+                                    if (this.props.props.addTemplate) {
+                                        this.props.props.addTemplate(Templates[template]);
                                     }
                                     this.setState({ isTemplateListOpen: false });
                                 }}
@@ -209,8 +209,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     onClick={() => {
                         const newIsEditable = !this.state.isEditable;
                         this.setState({ isEditable: newIsEditable });
-                        if (this.props.callbacks.setEditable) {
-                            this.props.callbacks.setEditable(newIsEditable);
+                        if (this.props.props.setEditable) {
+                            this.props.props.setEditable(newIsEditable);
                         }
                     }}
                 >
