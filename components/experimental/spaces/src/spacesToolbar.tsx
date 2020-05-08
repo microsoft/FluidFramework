@@ -10,7 +10,7 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
-    IContainerComponentDetails,
+    IInternalRegistryEntry,
     IComponentSpacesToolbarProps,
     Templates,
 } from ".";
@@ -32,7 +32,7 @@ initializeIcons();
 
 interface IComponentToolbarViewProps {
     props: IComponentSpacesToolbarProps;
-    components: IContainerComponentDetails[];
+    components: IInternalRegistryEntry[];
 }
 
 export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
@@ -60,7 +60,7 @@ export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
         );
         const componentButtonList: JSX.Element[] = [];
         if (componentListOpen) {
-            props.components.forEach(((supportedComponent: IContainerComponentDetails) => {
+            props.components.forEach(((supportedComponent: IInternalRegistryEntry) => {
                 componentButtonList.push(
                     <Button
                         style={dropDownButtonStyle}

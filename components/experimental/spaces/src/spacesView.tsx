@@ -5,12 +5,12 @@
 
 import * as React from "react";
 import "react-grid-layout/css/styles.css";
-import { IComponentSpacesToolbarProps, IContainerComponentDetails } from "./interfaces";
+import { IComponentSpacesToolbarProps, IInternalRegistryEntry } from "./interfaces";
 import { ISpacesStorageModel, SpacesStorageView } from "./spacesStorage";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    supportedToolbarComponents: IContainerComponentDetails[];
+    supportedToolbarComponents: IInternalRegistryEntry[];
     dataModel: ISpacesStorageModel;
     toolbarProps: IComponentSpacesToolbarProps;
 }

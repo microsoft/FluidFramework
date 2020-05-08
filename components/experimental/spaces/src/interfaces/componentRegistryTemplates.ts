@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerComponentDetails } from ".";
+import { IInternalRegistryEntry } from ".";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -17,7 +17,7 @@ export interface IProvideComponentRegistryTemplates {
 }
 
 export interface IComponentRegistryTemplates extends IProvideComponentRegistryTemplates {
-    getFromTemplate(template: Templates): IContainerComponentDetails[];
+    getFromTemplate(template: Templates): IInternalRegistryEntry[];
 }
 
 export enum Templates {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./componentInternalRegistry";
 export * from "./componentProps";
-export * from "./componentToolbarConsumer";
-export * from "./componentRegistryDetails";
 export * from "./componentRegistryTemplates";
+export * from "./componentToolbarConsumer";

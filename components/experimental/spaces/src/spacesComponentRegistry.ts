@@ -14,19 +14,19 @@ import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
-    IContainerComponentDetails,
+    IInternalRegistryEntry,
     Templates,
-    IComponentRegistryDetails,
+    IComponentInternalRegistry,
     IComponentRegistryTemplates,
 } from "./interfaces";
 
-export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails, IComponentRegistryTemplates {
+export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }
-    public get IComponentRegistryDetails() { return this; }
+    public get IComponentInternalRegistry() { return this; }
     public get IComponentRegistryTemplates() {return this; }
 
     constructor(
-        private readonly containerComponentArray: IContainerComponentDetails[],
+        private readonly containerComponentArray: IInternalRegistryEntry[],
     ) {
     }
 
@@ -42,7 +42,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         return undefined;
     }
 
-    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+    public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter((componentDetails) =>
             componentDetails.capabilities.includes(capability));
     }
@@ -54,7 +54,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
 
-    public getFromTemplate(template: Templates): IContainerComponentDetails[] {
+    public getFromTemplate(template: Templates): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter((componentDetails) =>
             componentDetails.templates[template] !== undefined);
     }
@@ -63,7 +63,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 export const generateRegistryEntries = () => {
     // create a matching registry of type -> view type?  Import all view types above?
     // have to set the view registry on the dataModel though, so it can respond to getComponent() calls?
-    const containerComponentsDefinition: IContainerComponentDetails[] = [
+    const containerComponentsDefinition: IInternalRegistryEntry[] = [
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),

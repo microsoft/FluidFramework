@@ -19,7 +19,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesCollectible, ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
 import { SpacesView } from "./spacesView";
 import {
-    IContainerComponentDetails,
+    IInternalRegistryEntry,
     IComponentSpacesToolbarProps,
 } from "./interfaces";
 import { InternalRegistry } from "./spacesComponentRegistry";
@@ -32,8 +32,8 @@ const SpacesStorageKey = "spaces-storage";
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
-    private supportedComponents: IContainerComponentDetails[] = [];
-    private registryDetails: IComponent | undefined;
+    private supportedComponents: IInternalRegistryEntry[] = [];
+    private internalRegistry: IComponent | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -82,7 +82,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 }
                 return this.storageComponent.addItem(item);
             },
-            templatesAvailable: () => this.registryDetails?.IComponentRegistryTemplates !== undefined,
+            templatesAvailable: () => this.internalRegistry?.IComponentRegistryTemplates !== undefined,
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),
         };
@@ -108,10 +108,10 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
-        this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
+        this.internalRegistry = await this.context.containerRuntime.IComponentRegistry.get("");
 
-        if (this.registryDetails) {
-            const registryDetails = this.registryDetails.IComponentRegistryDetails;
+        if (this.internalRegistry) {
+            const registryDetails = this.internalRegistry.IComponentInternalRegistry;
             if (registryDetails) {
                 this.supportedComponents = (registryDetails as InternalRegistry)
                     .getFromCapability("IComponentHTMLView");
@@ -120,8 +120,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     private async addTemplateFromRegistry(template: Templates) {
-        if (this.registryDetails?.IComponentRegistryTemplates !== undefined) {
-            const componentRegistryEntries = this.registryDetails.IComponentRegistryTemplates
+        if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {
+            const componentRegistryEntries = this.internalRegistry.IComponentRegistryTemplates
                 .getFromTemplate(template);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             componentRegistryEntries.forEach(async (componentRegistryEntry) => {

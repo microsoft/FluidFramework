@@ -9,21 +9,21 @@ import { Layout } from "react-grid-layout";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistryDetails>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
 }
 
-export const IComponentRegistryDetails: keyof IProvideComponentRegistryDetails = "IComponentRegistryDetails";
+export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
 
-export interface IProvideComponentRegistryDetails {
-    readonly IComponentRegistryDetails: IComponentRegistryDetails;
+export interface IProvideComponentInternalRegistry {
+    readonly IComponentInternalRegistry: IComponentInternalRegistry;
 }
 
-export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapability(type: keyof IComponent): IContainerComponentDetails[];
+export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
+    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
     hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 
-export interface IContainerComponentDetails {
+export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideComponentFactory>;
     capabilities: (keyof IComponent)[];
