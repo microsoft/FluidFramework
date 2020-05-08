@@ -24,13 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
-    IExperimentalRuntime,
-    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
-import {
-    IContainerRuntime,
-    IExperimentalContainerRuntime,
-} from "@microsoft/fluid-container-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     Deferred,
     Trace,
@@ -382,13 +377,11 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
-    IExperimentalRuntime, IExperimentalContainerRuntime
-{
-    public get IContainerRuntime() { return this; }
-
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
+    public get IContainerRuntime() { return this; }
+
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -511,18 +504,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public isLocal(): boolean {
-        const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext) {
-            // back-compat: 0.15 isAttached
-            // isAttached is replaced with isLocal.
-            return expContainerContext.isLocal ? expContainerContext.isLocal() :
-                expContainerContext.isAttached ? !expContainerContext.isAttached() : false;
-        } else {
-            // back-compat: 0.15 isAttached
-            // Need to return false if container is not experimental because then the result would depend on
-            // whether the component is attached or not.
-            return false;
-        }
+        return this.context.isLocal();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -601,16 +583,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
-            true : this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = {
             proposalHandle: undefined,
-            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion
-                ? expContainerContext.getLoadedFromVersion()?.id : undefined,
+            ackHandle: this.context.getLoadedFromVersion()?.id,
         };
         this.summaryTracker = new SummaryTracker(
             useContext,
