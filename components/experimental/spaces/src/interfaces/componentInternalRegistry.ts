@@ -9,21 +9,27 @@ import { Layout } from "react-grid-layout";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistryDetails>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
 }
 
-export const IComponentRegistryDetails: keyof IProvideComponentRegistryDetails = "IComponentRegistryDetails";
+export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
 
-export interface IProvideComponentRegistryDetails {
-    readonly IComponentRegistryDetails: IComponentRegistryDetails;
+export interface IProvideComponentInternalRegistry {
+    readonly IComponentInternalRegistry: IComponentInternalRegistry;
 }
 
-export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapability(type: keyof IComponent): IContainerComponentDetails[];
+/**
+ * Provides functionality to retrieve subsets of an internal registry.
+ */
+export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
+    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
     hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 
-export interface IContainerComponentDetails {
+/**
+ * A registry entry, with extra metadata.
+ */
+export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideComponentFactory>;
     capabilities: (keyof IComponent)[];
