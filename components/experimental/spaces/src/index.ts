@@ -5,7 +5,7 @@
 
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { Spaces } from "./spaces";
-import { spacesComponentRegistryEntries } from "./spacesComponentRegistry";
+import { spacesInternalRegistryEntries } from "./spacesComponentRegistry";
 
 export * from "./spaces";
 export * from "./spacesStorage/index";
@@ -15,6 +15,6 @@ export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Spaces.ComponentName,
     [
         [ Spaces.ComponentName, Promise.resolve(Spaces.getFactory()) ],
-        ...spacesComponentRegistryEntries,
+        ...spacesInternalRegistryEntries,
     ],
 );

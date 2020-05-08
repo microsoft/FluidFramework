@@ -27,7 +27,7 @@ import { Templates } from ".";
 const SpacesStorageKey = "spaces-storage";
 
 /**
- * Spaces is the app, which uses the toolbar and the storage to present a unified experience..
+ * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
@@ -36,16 +36,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
-    // TODO #1188 - Component registry should automatically add ComponentToolbar
-    // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(
         Spaces.ComponentName,
         Spaces,
         [],
         {},
-        [
-            [ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ],
-        ],
+        [[ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ]],
     );
 
     public static getFactory() {
@@ -59,18 +55,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
      */
     public render(div: HTMLElement) {
         if (this.storageComponent === undefined) {
-            throw new Error("Temporarily throwing -- should eventually make SpacesView robust to no storageComponent");
+            throw new Error("Spaces can't render, storage not found");
         }
+
         const toolbarProps: IComponentSpacesToolbarProps = {
             addComponent: (type: string) => {
-                this.createAndAttachComponent(type)
-                    .then((component) => {
-                        this.storageComponent?.addItem({
-                            component,
-                            type,
-                            layout: { w: 20, h: 5, x: 0, y: 0 },
-                        });
-                    })
+                this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
                     .catch((error) => {
                         console.error(`Error while creating component: ${type}`, error);
                     });
@@ -119,21 +109,20 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     private async addTemplateFromRegistry(template: Templates) {
         if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {
+            const componentPromises: Promise<string>[] = [];
+            // getFromTemplate filters down to just components that are present in this template
             const componentRegistryEntries = this.internalRegistry.IComponentRegistryTemplates
                 .getFromTemplate(template);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            componentRegistryEntries.forEach(async (componentRegistryEntry) => {
+            componentRegistryEntries.forEach((componentRegistryEntry) => {
+                // Each component may occur multiple times in the template, get all the layouts.
                 const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                templateLayouts.forEach(async (layout: Layout) => {
-                    const component = await this.createAndAttachComponent(componentRegistryEntry.type);
-                    this.storageComponent?.addItem({
-                        component,
-                        type: componentRegistryEntry.type,
-                        layout,
-                    });
+                templateLayouts.forEach((layout: Layout) => {
+                    componentPromises.push(
+                        this.createAndStoreComponent(componentRegistryEntry.type, layout),
+                    );
                 });
             });
+            await Promise.all(componentPromises);
         }
     }
 
@@ -149,16 +138,24 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         if (templateString) {
             const templateItems = JSON.parse(templateString) as ISpacesStorageFormat[];
             const promises = templateItems.map(async (templateItem) => {
-                const component = await this.createAndAttachComponent(templateItem.type);
-                this.storageComponent?.addItem({
-                    component,
-                    type: templateItem.type,
-                    layout: templateItem.layout,
-                });
-                return component;
+                return this.createAndStoreComponent(templateItem.type, templateItem.layout);
             });
 
             await Promise.all(promises);
         }
+    }
+
+    private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
+        const component = await this.createAndAttachComponent(type);
+
+        if (this.storageComponent === undefined) {
+            throw new Error("Can't add item, storage not found");
+        }
+
+        return this.storageComponent.addItem({
+            component,
+            type,
+            layout,
+        });
     }
 }

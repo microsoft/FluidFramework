@@ -115,4 +115,4 @@ export const generateRegistryEntries = () => {
     return componentRegistryEntries;
 };
 
-export const spacesComponentRegistryEntries = generateRegistryEntries();
+export const spacesInternalRegistryEntries = generateRegistryEntries();
