@@ -18,7 +18,7 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
-import { ExternalComponentLoader } from "./waterParkLoader";
+import { ExternalComponentLoader } from "./externalComponentLoader";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;

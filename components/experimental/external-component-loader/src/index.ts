@@ -4,7 +4,7 @@
 */
 
 import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
-import { ExternalComponentLoader } from "./waterParkLoader";
+import { ExternalComponentLoader } from "./externalComponentLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 
 export const fluidExport = new WaterParkModuleInstantiationFactory(

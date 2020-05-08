@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definition
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { IComponentToolbarConsumer, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
-import { ExternalComponentLoader, WaterParkCompatibleView } from "./waterParkLoader";
+import { ExternalComponentLoader, WaterParkCompatibleView } from "./externalComponentLoader";
 
 /**
  * Calls create, initialize, and attach on a new component.
