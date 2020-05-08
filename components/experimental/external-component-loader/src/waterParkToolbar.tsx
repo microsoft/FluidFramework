@@ -54,7 +54,7 @@ export const WaterParkToolbar: React.FC<WaterParkToolbarViewProps> =
             : undefined;
 
         return (
-            <div className="external-component-loader-toolbar">
+            <div className="waterpark-toolbar">
                 <datalist id={datalistId}>
                     { datalistOptions }
                 </datalist>

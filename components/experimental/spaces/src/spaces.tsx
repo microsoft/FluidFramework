@@ -20,11 +20,19 @@ import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
-    ISpacesProps,
 } from "./interfaces";
 import { Templates } from ".";
 
 const SpacesStorageKey = "spaces-storage";
+
+/**
+ * ISpacesProps are the public interface that SpacesView will use to communicate with Spaces.
+ */
+export interface ISpacesProps {
+    addComponent?(type: string): void;
+    templatesAvailable?: boolean;
+    applyTemplate?(template: Templates): void;
+}
 
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.

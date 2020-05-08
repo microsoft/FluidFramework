@@ -41,7 +41,7 @@ const defaultComponents = [
 // available when running on localhost.
 const localComponentUrls = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
-    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
 // When locally developing, want to load the latest available patch version by default
@@ -54,7 +54,7 @@ if (window.location.hostname === "localhost") {
 }
 
 /**
- * WaterPark assembles the SpacesStorage with WaterParkToolbar that can load other components
+ * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
  */
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }

@@ -14,11 +14,9 @@ import * as uuid from "uuid";
 import { UrlRegistry } from "./urlRegistry";
 
 /**
- * Component that loads extneral components via their url
+ * Component that loads external components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent {
-    public get IComponentTakesProps() { return this; }
-
     public static get ComponentName() { return "@fluid-example/external-component-loader"; }
 
     private static readonly factory = new PrimedComponentFactory(

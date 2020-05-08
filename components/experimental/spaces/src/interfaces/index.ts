@@ -4,5 +4,4 @@
  */
 
 export * from "./componentInternalRegistry";
-export * from "./spacesProps";
 export * from "./componentRegistryTemplates";
