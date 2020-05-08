@@ -3,14 +3,13 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentLoadable,
     IResponse,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 import {
@@ -18,10 +17,7 @@ import {
     ISpacesStorageModel,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkg = require("../../package.json") as IPackage;
-export const WaterParkLoaderName = `${pkg.name}-loader`;
+import { UrlRegistry } from "../urlRegistry";
 
 /**
  * The view component must support certain interfaces to work with the waterpark.
@@ -36,6 +32,20 @@ export class ExternalComponentLoader extends PrimedComponent implements SpacesCo
     private props: IComponentSpacesToolbarProps | undefined;
 
     public get IComponentTakesProps() { return this; }
+
+    public static get ComponentName() { return "@fluid-example/external-component-loader"; }
+
+    private static readonly factory = new PrimedComponentFactory(
+        ExternalComponentLoader.ComponentName,
+        ExternalComponentLoader,
+        [],
+        {},
+        [["url", Promise.resolve(new UrlRegistry())]],
+    );
+
+    public static getFactory() {
+        return ExternalComponentLoader.factory;
+    }
 
     public setComponentProps(props: IComponentSpacesToolbarProps) {
         this.props = props;

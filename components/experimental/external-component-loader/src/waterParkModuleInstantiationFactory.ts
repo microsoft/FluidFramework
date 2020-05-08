@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definition
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { IComponentToolbarConsumer, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
-import { ExternalComponentLoader, WaterParkCompatibleView, WaterParkLoaderName } from "./waterParkLoader";
+import { ExternalComponentLoader, WaterParkCompatibleView } from "./waterParkLoader";
 
 /**
  * Calls create, initialize, and attach on a new component.
@@ -57,7 +57,7 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
                 SpacesComponentName,
             );
         const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
-            runtime, uuid(), WaterParkLoaderName);
+            runtime, uuid(), ExternalComponentLoader.ComponentName);
 
         // Only add the component toolbar if the view component supports it
         viewComponent.IComponentToolbarConsumer?.setToolbarComponent(loaderComponent);

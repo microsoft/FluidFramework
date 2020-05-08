@@ -34,6 +34,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private supportedComponents: IContainerComponentDetails[] = [];
     private registryDetails: IComponent | undefined;
 
+    public static get ComponentName() { return "@fluid-example/spaces"; }
+
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(

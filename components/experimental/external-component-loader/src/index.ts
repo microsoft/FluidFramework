@@ -4,12 +4,12 @@
 */
 
 import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
-import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
+import { ExternalComponentLoader } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 
 export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([
-        [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
+        [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
         [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
     ]),
 );
