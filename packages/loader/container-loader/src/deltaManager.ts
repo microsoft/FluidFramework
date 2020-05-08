@@ -62,11 +62,8 @@ const DefaultContentBufferSize = 10;
 
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function canRetryOnError(error: any) {
-    // Always retry unless told otherwise.
-    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
-}
+const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+const getRetryDelayFromError = (error: any): number | undefined => (error?.retryAfterSeconds ?? 0) * 1000 || undefined;
 
 enum RetryFor {
     DeltaStream,
@@ -449,7 +446,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                             error);
                     }
 
-                    const retryDelayFromError = this.getRetryDelayFromError(error);
+                    const retryDelayFromError = getRetryDelayFromError(error);
                     delay = retryDelayFromError !== undefined ?
                         retryDelayFromError :
                         Math.min(delay * 2, MaxReconnectDelay);
@@ -669,7 +666,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return;
                 }
                 success = false;
-                retryAfter = this.getRetryDelayFromError(error);
+                retryAfter = getRetryDelayFromError(error);
             }
 
             let delay: number;
@@ -1025,7 +1022,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         if (autoReconnect) {
-            const delay = reconnectDelayMs ?? this.getRetryDelayFromError(error);
+            const delay = reconnectDelayMs ?? getRetryDelayFromError(error);
             if (delay !== undefined) {
                 this.emitDelayInfo(RetryFor.DeltaStream, delay);
                 await waitForConnectedState(delay);
@@ -1039,11 +1036,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
             });
         }
-    }
-
-    private getRetryDelayFromError(error): number | undefined {
-        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds * 1000
-            : undefined;
     }
 
     private processInitialMessages(
@@ -1291,7 +1283,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return {
             canReconnect: true,
             nackReason,
-            reconnectDelayMs: nackContent.retryAfter ? nackContent.retryAfter * 1000 : undefined,
+            reconnectDelayMs: (nackContent.retryAfter ?? 0) * 1000 || undefined,
         };
     }
 }
