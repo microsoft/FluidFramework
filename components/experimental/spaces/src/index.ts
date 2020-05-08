@@ -7,9 +7,10 @@ import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aq
 import { Spaces } from "./spaces";
 import { spacesInternalRegistryEntries } from "./spacesComponentRegistry";
 
-export * from "./spaces";
-export * from "./spacesStorage/index";
 export * from "./interfaces";
+export * from "./spaces";
+export * from "./spacesView";
+export * from "./storage";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Spaces.ComponentName,

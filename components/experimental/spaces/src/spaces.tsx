@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesStoredComponent, SpacesStorage } from "./spacesStorage";
+import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
