@@ -273,7 +273,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Will throw an error if reconnectMode set to Never.
      */
     public setAutomaticReconnect(reconnect: boolean): void {
-        assert(this._reconnectMode !== ReconnectMode.Never, "Cannot toggle automatic reconnect if reconnect is set to Never.");
+        assert(
+            this._reconnectMode !== ReconnectMode.Never,
+            "Cannot toggle automatic reconnect if reconnect is set to Never.");
         this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
     }
 
