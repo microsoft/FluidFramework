@@ -4,7 +4,7 @@
  */
 
 import { SharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SequenceDeltaEvent, SharedString } from "@microsoft/fluid-sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import * as React from "react";

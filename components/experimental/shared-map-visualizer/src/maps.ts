@@ -20,9 +20,9 @@ import {
     FlushMode,
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
-    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as $ from "jquery";

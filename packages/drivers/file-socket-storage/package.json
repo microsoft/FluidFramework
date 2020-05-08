@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-file-driver",
-  "version": "0.17.2",
+  "version": "0.18.0",
   "description": "A driver that reads/write from/to local file storage.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,11 +24,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.2",
+    "@microsoft/fluid-common-definitions": "^0.16.0",
+    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-protocol-base": "^0.1004.2",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-replay-driver": "^0.17.2",
+    "@microsoft/fluid-replay-driver": "^0.18.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

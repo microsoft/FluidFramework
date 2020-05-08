@@ -8,7 +8,7 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     ISharedObjectServices,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 
 /**
  * Definitions of a shared object factory. Factories follow a common model but enable custom behavior.

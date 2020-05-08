@@ -13,7 +13,8 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";

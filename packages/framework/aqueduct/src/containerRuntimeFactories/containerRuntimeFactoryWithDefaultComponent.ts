@@ -9,10 +9,8 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
-import {
-    IContainerRuntime,
-    NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 

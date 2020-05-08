@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-sequence";
-export const pkgVersion = "0.17.2";
+export const pkgVersion = "0.18.0";
