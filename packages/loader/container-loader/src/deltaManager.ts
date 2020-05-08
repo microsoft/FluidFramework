@@ -68,9 +68,9 @@ function canRetryOnError(error: any) {
     return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
 
-enum retryFor {
-    DELTASTREAM,
-    DELTASTORAGE,
+enum RetryFor {
+    DeltaStream,
+    DeltaStorage,
 }
 
 export interface IConnectionArgs {
@@ -455,7 +455,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         Math.min(delay * 2, MaxReconnectDelay);
 
                     if (retryDelayFromError) {
-                        this.emitDelayInfo(retryFor.DELTASTREAM, retryDelayFromError);
+                        this.emitDelayInfo(RetryFor.DeltaStream, retryDelayFromError);
                     }
                     await waitForConnectedState(delay);
                 }
@@ -721,7 +721,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             if (retryAfter && retryAfter >= 0) {
                 // Emit throttling info only if we get it from error.
-                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+                this.emitDelayInfo(RetryFor.DeltaStorage, delay);
             }
             await waitForConnectedState(delay);
         }
@@ -800,9 +800,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private emitDelayInfo(retryEndpoint: number, delay: number) {
         // Delay === -1 means the corresponding endpoint has connected properly
         // and we do not need to emit any delay to app.
-        if (retryEndpoint === retryFor.DELTASTORAGE) {
+        if (retryEndpoint === RetryFor.DeltaStorage) {
             this.deltaStorageDelay = delay;
-        } else if (retryEndpoint === retryFor.DELTASTREAM) {
+        } else if (retryEndpoint === RetryFor.DeltaStream) {
             this.deltaStreamDelay = delay;
         }
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
@@ -835,7 +835,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.setReadonlyPermissions(readonly);
 
-        this.emitDelayInfo(retryFor.DELTASTREAM, -1);
+        this.emitDelayInfo(RetryFor.DeltaStream, -1);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -1027,7 +1027,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (autoReconnect) {
             const delay = reconnectDelayMs ?? this.getRetryDelayFromError(error);
             if (delay !== undefined) {
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                this.emitDelayInfo(RetryFor.DeltaStream, delay);
                 await waitForConnectedState(delay);
             }
 
@@ -1184,7 +1184,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
+            this.emitDelayInfo(RetryFor.DeltaStorage, -1);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
