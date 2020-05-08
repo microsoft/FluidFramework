@@ -260,10 +260,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.readonlyPermissions || this._forceReadonly;
     }
 
+    /**
+     * Automatic reconnecting enabled or disabled.
+     * If set to Never, then reconnecting will never be allowed.
+     */
     public get reconnect(): ReconnectMode {
         return this._reconnect;
     }
 
+    /**
+     * Enables or disables automatic reconnecting.
+     * Will throw an error if attempting to enable when set to Never.
+     */
     public setReconnect(reconnect: boolean): void {
         if (reconnect) {
             assert(this._reconnect !== ReconnectMode.Never, "Cannot enable reconnect if reconnect is set to Never.");
