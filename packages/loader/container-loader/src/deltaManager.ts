@@ -112,6 +112,12 @@ export interface IConnectionArgs {
     reason?: string;
 }
 
+export enum ReconnectMode {
+    Never = -1,
+    Disabled = 0,
+    Enabled = 1,
+}
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -125,7 +131,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Controls whether the DeltaManager will automatically reconnect to the delta stream after receiving a disconnect.
      */
-    public autoReconnect: boolean = true;
+    private _reconnect: ReconnectMode;
 
     // file ACL - whether user has only read-only access to a file
     private readonlyPermissions: boolean | undefined;
@@ -254,6 +260,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.readonlyPermissions || this._forceReadonly;
     }
 
+    public get reconnect(): ReconnectMode {
+        return this._reconnect;
+    }
+
+    public setReconnect(reconnect: boolean): void {
+        if (reconnect) {
+            assert(this._reconnect !== ReconnectMode.Never, "Cannot enable reconnect if reconnect is set to Never.");
+            this._reconnect = ReconnectMode.Enabled;
+        } else if (this._reconnect === ReconnectMode.Enabled) {
+            this._reconnect = ReconnectMode.Disabled;
+        }
+    }
+
     /**
      * Sends signal to runtime (and components) to be read-only.
      * Hosts may have read only views, indicating to components that no edits are allowed.
@@ -284,12 +303,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly serviceProvider: () => IDocumentService | undefined,
         private client: IClient,
         private readonly logger: ITelemetryLogger,
-        private readonly reconnect: boolean,
+        reconnectAllowed: boolean,
     ) {
         super();
 
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
+        this._reconnect = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -906,7 +926,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     getError() { return createFatalError(this.reason); },
                 };
 
-            if (!this.autoReconnect) {
+            if (this.reconnect !== ReconnectMode.Enabled) {
                 this.logger.sendErrorEvent({
                     eventName: "NackWithNoReconnect",
                     nackError: `reason: ${reconnectInfo.reason}`,
@@ -1025,7 +1045,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // If reconnection is not an option, close the DeltaManager
         const isCriticalError = !reconnectInfo.canReconnect;
-        if (!this.reconnect || isCriticalError) {
+        if (this.reconnect === ReconnectMode.Never || isCriticalError) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
@@ -1037,7 +1057,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        if (this.autoReconnect) {
+        if (this.reconnect === ReconnectMode.Enabled) {
             if (reconnectInfo.reconnectDelay !== undefined) {
                 this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay);
                 await waitForConnectedState(reconnectInfo.reconnectDelay * 1000);
