@@ -8,9 +8,9 @@ import * as util from "util";
 import {
     IConsumer,
     IPartition,
+    IPartitionWithEpoch,
     IQueuedMessage,
     IZookeeperClient,
-    IPartitionWithEpoch
 } from "@microsoft/fluid-server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";
@@ -180,7 +180,6 @@ export class KafkaNodeConsumer implements IConsumer {
             }
 
             epochs = await Promise.all(epochsP);
-
         } else {
             epochs = new Array(partitions.length).fill(0);
         }
