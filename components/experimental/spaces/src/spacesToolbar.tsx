@@ -4,16 +4,13 @@
  */
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import Collapsible from "react-collapsible";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
     IContainerComponentDetails,
-    IComponentTakesProps,
     IComponentSpacesToolbarProps,
     Templates,
 } from ".";
@@ -33,41 +30,12 @@ const componentButtonStyle: React.CSSProperties = {
 
 initializeIcons();
 
-/**
- * A component to allow you to add and manipulate components
- */
-export class SpacesToolbar implements IComponentHTMLView, IComponentTakesProps<IComponentSpacesToolbarProps> {
-    public get IComponentHTMLView() { return this; }
-    public get IComponentTakesProps() { return this; }
-
-    private props: IComponentSpacesToolbarProps = {};
-
-    constructor(private readonly components: IContainerComponentDetails[] = []) {}
-
-    public setComponentProps(props: IComponentSpacesToolbarProps) {
-        this.props = props;
-    }
-
-    /**
-     * Will return a new ComponentToolbarView
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <ComponentToolbarView
-                props={this.props}
-                components={this.components}
-            />,
-            div,
-        );
-    }
-}
-
 interface IComponentToolbarViewProps {
     props: IComponentSpacesToolbarProps;
     components: IContainerComponentDetails[];
 }
 
-const ComponentToolbarView: React.FC<IComponentToolbarViewProps> =
+export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
     (props: React.PropsWithChildren<IComponentToolbarViewProps>) => {
         console.log(props.props.templatesAvailable);
         const templatesAvailable = props.props.templatesAvailable !== undefined

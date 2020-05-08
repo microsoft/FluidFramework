@@ -18,11 +18,10 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { SpacesStorage } from "./spacesStorage";
-import { SpacesToolbar } from "./spacesToolbar";
 import { SpacesView } from "./view";
 import {
+    IContainerComponentDetails,
     IComponentSpacesToolbarProps,
-    SpacesCompatibleToolbar,
 } from "./interfaces";
 import { InternalRegistry, SpacesComponentName, Templates } from ".";
 
@@ -49,7 +48,7 @@ export interface ISpacesCollectible {
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
-    private toolbarComponent: SpacesCompatibleToolbar | undefined;
+    private supportedComponents: IContainerComponentDetails[] = [];
     private registryDetails: IComponent | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
@@ -103,7 +102,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         };
         ReactDOM.render(
             <SpacesView
-                toolbarComponent={ this.toolbarComponent }
+                supportedToolbarComponents={this.supportedComponents}
                 dataModel={ this.storageComponent }
                 toolbarProps={ toolbarProps }
             />,
@@ -125,15 +124,13 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
 
-        let components;
         if (this.registryDetails) {
             const registryDetails = this.registryDetails.IComponentRegistryDetails;
             if (registryDetails) {
-                components = (registryDetails as InternalRegistry)
+                this.supportedComponents = (registryDetails as InternalRegistry)
                     .getFromCapability("IComponentHTMLView");
             }
         }
-        this.toolbarComponent = new SpacesToolbar(components ?? []);
     }
 
     private async addTemplateFromRegistry(template: Templates) {
