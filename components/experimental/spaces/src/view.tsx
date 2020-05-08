@@ -96,11 +96,6 @@ interface ISpacesStorageViewProps {
 }
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
-        // Render nothing if there are no components
-        if (props.storage.componentList.size === 0) {
-            return <></>;
-        }
-
         const [componentMap, setComponentMap] =
             React.useState<Map<string, ISpacesStoredComponent>>(props.storage.componentList);
 
@@ -113,6 +108,11 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                 props.storage.off("componentListChanged", onComponentListChanged);
             };
         });
+
+        // Render nothing if there are no components
+        if (props.storage.componentList.size === 0) {
+            return <></>;
+        }
 
         const onGridChangeEvent = (
             layout: Layout[],

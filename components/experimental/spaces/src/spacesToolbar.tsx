@@ -37,7 +37,6 @@ interface IComponentToolbarViewProps {
 
 export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
     (props: React.PropsWithChildren<IComponentToolbarViewProps>) => {
-        console.log(props.props.templatesAvailable);
         const templatesAvailable = props.props.templatesAvailable !== undefined
             ? props.props.templatesAvailable()
             : false;
