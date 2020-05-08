@@ -20,13 +20,10 @@ export const SpacesView: React.FC<ISpacesViewProps> =
         // Editable is a view-only concept; SpacesView is the authority.
         const [editable, setEditable] = React.useState<boolean>(props.storage.componentList.size === 0);
 
-        const combinedToolbarProps = props.toolbarProps;
-        combinedToolbarProps.editable = () => editable;
-
         return (
             <div className="spaces-view">
                 <SpacesToolbar
-                    props={combinedToolbarProps}
+                    props={props.toolbarProps}
                     editable={editable}
                     setEditable={setEditable}
                     components={props.supportedComponents}

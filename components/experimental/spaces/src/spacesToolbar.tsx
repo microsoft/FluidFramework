@@ -96,8 +96,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    if (props.props.addTemplate) {
-                                        props.props.addTemplate(Templates[template]);
+                                    if (props.props.applyTemplate) {
+                                        props.props.applyTemplate(Templates[template]);
                                     }
                                     setTemplateListOpen(false);
                                 }}

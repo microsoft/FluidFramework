@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISpacesCollectible } from "../spacesStorage";
 import { Templates } from "..";
 
 /**
@@ -11,10 +10,6 @@ import { Templates } from "..";
  */
 export interface IComponentSpacesToolbarProps {
     addComponent?(type: string): void;
-    addItem?(item: ISpacesCollectible): string;
     templatesAvailable?(): boolean;
-    addTemplate?(template: Templates): void;
-    saveLayout?(): void;
-    editable?(): boolean;
-    setEditable?(isEditable?: boolean): void;
+    applyTemplate?(template: Templates): void;
 }

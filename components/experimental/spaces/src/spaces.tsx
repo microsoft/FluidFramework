@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesCollectible, ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
+import { ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
@@ -65,15 +65,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                         console.error(`Error while creating component: ${type}`, error);
                     });
             },
-            addItem: (item: ISpacesCollectible) => {
-                if (this.storageComponent === undefined) {
-                    throw new Error("Can't addItem, storage not found");
-                }
-                return this.storageComponent.addItem(item);
-            },
             templatesAvailable: () => this.internalRegistry?.IComponentRegistryTemplates !== undefined,
-            addTemplate: this.addTemplateFromRegistry.bind(this),
-            saveLayout: () => this.saveLayout(),
+            applyTemplate: this.applyTemplateFromRegistry.bind(this),
         };
         ReactDOM.render(
             <SpacesView
@@ -107,7 +100,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
     }
 
-    private async addTemplateFromRegistry(template: Templates) {
+    private async applyTemplateFromRegistry(template: Templates) {
         if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {
             const componentPromises: Promise<string>[] = [];
             // getFromTemplate filters down to just components that are present in this template
