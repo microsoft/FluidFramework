@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponentLoadable,
     IComponentHandle,
@@ -22,7 +22,6 @@ import { ExternalComponentLoader } from "./waterParkLoader";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
-export const WaterParkLoaderName = `${pkg.name}-loader`;
 
 const storageKey = "storage";
 const loaderKey = "loader";
@@ -68,6 +67,23 @@ export type WaterParkCompatibleView =
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    public static get ComponentName() { return "@fluid-example/external-component-loader"; }
+
+    private static readonly factory = new PrimedComponentFactory(
+        WaterPark.ComponentName,
+        WaterPark,
+        [],
+        {},
+        [
+            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
+            [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
+        ],
+    );
+
+    public static getFactory() {
+        return WaterPark.factory;
+    }
+
     private storage: SpacesStorage | undefined;
     private loader: ExternalComponentLoader | undefined;
 
@@ -84,7 +100,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage);
-        const loader = await this.createAndAttachComponent(WaterParkLoaderName);
+        const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader);
     }
 
