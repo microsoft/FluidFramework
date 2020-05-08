@@ -313,12 +313,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.runtime.on("dispose", rejectBecauseDispose);
 
             executor(resolve, reject);
-        }).then((v) => {
+        }).finally(() => {
             this.runtime.off("dispose", rejectBecauseDispose);
-            return v;
-        }).catch((e) => {
-            this.runtime.off("dispose", rejectBecauseDispose);
-            throw e;
         });
     }
 
