@@ -15,7 +15,6 @@ import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
-    IMergeTreeSegmentDelta,
 } from "@microsoft/fluid-merge-tree";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
@@ -78,6 +77,10 @@ export class PermutationSegment extends BaseSegment {
 
         return leafSegment;
     }
+
+    public toString() {
+        return `<${this.cachedLength} handles>`;
+    }
 }
 
 export class PermutationVector extends Client {
@@ -132,8 +135,7 @@ export class PermutationVector extends Client {
             return undefined;
         }
 
-        const toPos = this.getPosition(segment);
-        return toPos + offset;
+        return this.getPosition(segment) + offset;
     }
 
     // Constructs an ITreeEntry for the cell data.
@@ -169,25 +171,38 @@ export class PermutationVector extends Client {
         opArgs: IMergeTreeDeltaOpArgs,
         { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
     ) => {
+        // Apply deltas in descending order to prevent positions from shifting.
+        const ranges = deltaSegments
+            .map(({ segment }) => ({
+                position: this.getPosition(segment),
+                length: segment.cachedLength,
+            }))
+            .sort((left, right) => left.position - right.position);
+
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
-                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
-                    this.handles.splice(position, 0, ...new Array(length).fill(Handle.unallocated));
-                });
+                for (const { position, length } of ranges) {
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    this.handles = this.handles.slice(0, position)
+                        .concat(new Array(length).fill(Handle.unallocated))
+                        .concat(this.handles.slice(position));
+                }
 
                 // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
-                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                for (const { position, length } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
-                });
+                }
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                const freed: number[] = [];
+                let freed: number[] = [];
 
-                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
-                    freed.concat(this.handles.splice(position, length)
-                        .filter((handle) => handle !== Handle.unallocated));
-                });
+                for (const { position, length } of ranges) {
+                    const removed = this.handles.splice(position, /* deleteCount: */ length);
+
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    freed = freed.concat(removed.filter((handle) => handle !== Handle.unallocated));
+                }
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
                 // the rows/cols prior to free to ensure recycled row/cols are initially empty.
@@ -199,9 +214,9 @@ export class PermutationVector extends Client {
                 }
 
                 // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
-                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                for (const { position, length } of ranges) {
                     this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
-                });
+                }
                 break;
             }
 
@@ -209,29 +224,6 @@ export class PermutationVector extends Client {
                 assert.fail();
         }
     };
-
-    private enumerateDeltaRanges(deltas: IMergeTreeSegmentDelta[], callback: (position, length) => void) {
-        if (deltas.length > 0) {
-            const segment0 = deltas[0].segment;
-            let rangeStart = this.getPosition(segment0);
-            let rangeLength = segment0.cachedLength;
-
-            for (let i = 1; i < deltas.length; i++) {
-                const segment = deltas[i].segment;
-                const segStart = this.getPosition(segment);
-
-                if (segStart === rangeLength) {
-                    rangeLength += segment.cachedLength;
-                } else {
-                    callback(rangeStart, rangeLength);
-                    rangeStart = segStart;
-                    rangeLength = segment.cachedLength;
-                }
-            }
-
-            callback(rangeStart, rangeLength);
-        }
-    }
 
     public toString() {
         return this.handles.map((handle, index) => `${index}:${handle}`).join(" ");

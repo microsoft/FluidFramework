@@ -66,11 +66,11 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHostRuntime,
+    IContainerRuntime,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-    IExperimentalHostRuntime,
+    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -153,9 +153,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    // Experimental flag that will generate summaries if connected to a service that supports them.
+    // Flag that will generate summaries if connected to a service that supports them.
     // This defaults to true and must be explicitly set to false to disable.
-    generateSummaries: boolean;
+    generateSummaries?: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
     enableWorker?: boolean;
@@ -359,7 +359,7 @@ export class ScheduleManager {
 
 export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
             return componentRuntimeRequestHandler(request, runtime);
         }
@@ -380,13 +380,13 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
-    IExperimentalRuntime, IExperimentalHostRuntime
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
+    IExperimentalRuntime, IExperimentalContainerRuntime
 {
-    public get IHostRuntime() { return this; }
+    public get IContainerRuntime() { return this; }
 
     public readonly isExperimentalRuntime = true;
-    public readonly isExperimentalHostRuntime = true;
+    public readonly isExperimentalContainerRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -659,7 +659,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.updateDocumentDirtyState(false);
+            // If we are not fully connected, then we have no clue if there are any pending ops
+            // to be resubmitted. Wait for "connected" event to get that info.
+            // Not ideal, but it's better to have false negatives then false positives.
+            // We will mark document clean on becoming "connected".
+            if (this.connected) {
+                this.updateDocumentDirtyState(false);
+            }
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
@@ -817,6 +823,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         assert(this.connectionState === value);
 
         if (value === ConnectionState.Connected) {
+            // Once we are connected, all acks are accounted.
+            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // we will switch back to dirty state in such case.
+            this.updateDocumentDirtyState(false);
+
             // Resend all pending attach messages prior to notifying clients
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
@@ -910,6 +921,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return componentContext.realize();
     }
 
+    public notifyComponentInstantiated(componentContext: IComponentContext) {
+        const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
+        const registryPath =
+            `/${componentContext.packagePath.slice(0,componentContext.packagePath.length - 1).join("/")}`;
+        this.emit("componentInstantiated", componentPkgName, registryPath, !componentContext.existing);
+    }
+
     public setFlushMode(mode: FlushMode): void {
         if (mode === this._flushMode) {
             return;
@@ -984,6 +1002,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
+
+        assert(!this.contexts.has(id), "Creating component with existing ID");
 
         const context = new LocalComponentContext(
             id,
@@ -1189,6 +1209,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
+
                     // Resolve pending gets and store off any new ones
                     const deferred = this.ensureContextDeferred(attachMessage.id);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1337,7 +1359,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 const parents = versions.map((version) => version.id);
                 await this.refreshLatestSummaryAck(
                     { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.deltaManager.referenceSequenceNumber);
+                    this.summaryTracker.referenceSequenceNumber);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

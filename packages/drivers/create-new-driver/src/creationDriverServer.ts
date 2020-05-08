@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -73,10 +74,6 @@ export class CreationServerMessagesHandler {
             }, Number.MAX_VALUE);
     }
 
-    private createClientId() {
-        return `newFileCreationClient${this.totalClients}`;
-    }
-
     /**
      * Messages to be processed by the server.
      * @param messages - List of messages to be stamped.
@@ -128,7 +125,7 @@ export class CreationServerMessagesHandler {
                 maxAckWaitTime: 600000,
             },
         };
-        const clientId: string = this.createClientId();
+        const clientId: string = uuid();
         const clientDetail: IClientJoin = {
             clientId,
             detail: connectMessage.client,
@@ -216,8 +213,8 @@ export class CreationServerMessagesHandler {
      */
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: clientDetail.clientId,
-            clientSequenceNumber: 0,
+            clientId: null as any,
+            clientSequenceNumber: -1,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,

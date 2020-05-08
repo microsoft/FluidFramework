@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-register-collection";
-export const pkgVersion = "0.16.1";
+export const pkgVersion = "0.17.2";

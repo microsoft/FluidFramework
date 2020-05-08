@@ -45,7 +45,7 @@ export function createTableWithInterception<T extends ITable>(
         assert(executingCallback === false,
             "Interception wrapper method called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
@@ -64,7 +64,7 @@ export function createTableWithInterception<T extends ITable>(
         assert(executingCallback === false,
             "Interception wrapper method called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 table.annotateCell(row, col, propertyInterceptionCallback(properties));

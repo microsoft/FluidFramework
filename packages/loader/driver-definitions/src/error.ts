@@ -12,10 +12,16 @@ export enum ErrorType {
     genericNetworkError,
 
     // Access denied - user does not have enough privileges to open a file, or continue to operate on a file
-    accessDeniedError,
+    authorizationError,
 
     // File not found, or file deleted during session
-    fileNotFoundError,
+    fileNotFoundOrAccessDeniedError,
+
+    // Storage is out of space
+    outOfStorageError,
+
+    // Invalid file name (at creation of the file)
+    invalidFileNameError,
 
     // Throttling error from server. Server is busy and is asking not to reconnect for some time
     throttlingError,
@@ -35,8 +41,8 @@ export enum ErrorType {
     fatalError,
 }
 
-export type IError = IGeneralError | IThrottlingError |
-IGenericNetworkError | IAccessDeniedError | IFileNotFoundError |
+export type IError = IGeneralError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
+IGenericNetworkError | IAuthorizationError | IFileNotFoundOrAccessDeniedError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
 export interface IErrorBase {
@@ -61,12 +67,20 @@ export interface IGenericNetworkError extends IErrorBase {
     readonly statusCode?: number;
 }
 
-export interface IAccessDeniedError extends IErrorBase {
-    readonly errorType: ErrorType.accessDeniedError;
+export interface IAuthorizationError extends IErrorBase {
+    readonly errorType: ErrorType.authorizationError;
 }
 
-export interface IFileNotFoundError extends IErrorBase {
-    readonly errorType: ErrorType.fileNotFoundError;
+export interface IFileNotFoundOrAccessDeniedError extends IErrorBase {
+    readonly errorType: ErrorType.fileNotFoundOrAccessDeniedError;
+}
+
+export interface IOutOfStorageError extends IErrorBase {
+    readonly errorType: ErrorType.outOfStorageError;
+}
+
+export interface IInvalidFileNameError extends IErrorBase {
+    readonly errorType: ErrorType.invalidFileNameError;
 }
 
 export interface IServiceError extends IErrorBase {

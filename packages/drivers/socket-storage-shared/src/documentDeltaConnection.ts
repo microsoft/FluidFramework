@@ -109,6 +109,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     private trackedListeners: IEventListener[] = [];
 
+    protected get hasDetails(): boolean {
+        return !!this._details;
+    }
+
     private get details(): IConnected {
         if (!this._details) {
             throw new Error("Internal error: calling method before _details is initialized!");
@@ -356,6 +360,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    error.nonce !== undefined &&
+                    error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -375,6 +386,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    response.nonce !== undefined &&
+                    response.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 /* Issue #1566: Backward compat */
                 if (response.initialMessages === undefined) {
                     response.initialMessages = [];
@@ -465,9 +483,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
-    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {

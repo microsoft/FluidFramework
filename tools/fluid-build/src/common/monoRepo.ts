@@ -5,10 +5,9 @@
 
 import { Package, Packages } from "./npmPackage";
 import * as path from "path";
-import { rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
+import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
 export enum MonoRepoKind {
-    None,
     Client,
     Server,
 };
@@ -23,7 +22,7 @@ export class MonoRepo {
         const lerna = readJsonSync(lernaPath);
         for (const dir of lerna.packages as string[]) {
             // TODO: other glob pattern?
-            const loadDir = dir.endsWith("/**")? dir.substr(0, dir.length - 3) : dir;
+            const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
             this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), this));
         }
     }
@@ -36,6 +35,11 @@ export class MonoRepo {
         return path.join(this.repoPath, "node_modules");
     }
 
+    public async install() {
+        console.log(`${MonoRepoKind[this.kind]}: Installing - npm i`);
+        const installScript = "npm i";
+        return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
+    }
     public async uninstall() {
         return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);
     }

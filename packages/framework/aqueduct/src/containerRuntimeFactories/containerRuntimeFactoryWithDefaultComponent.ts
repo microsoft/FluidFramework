@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
 import {
-    IHostRuntime,
+    IContainerRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
@@ -19,7 +19,7 @@ import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 const defaultComponentId = "default";
 
 const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             return componentRuntimeRequestHandler(
                 new RequestParser({
@@ -56,7 +56,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) {
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const componentRuntime = await runtime.createComponent(
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
             this.defaultComponentName,

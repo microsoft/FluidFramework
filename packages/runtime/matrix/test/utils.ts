@@ -28,6 +28,26 @@ export function fill<T extends IArray2D<U>, U>(
 }
 
 /**
+ * Sets the corners of the given matrix.
+ */
+export function setCorners<T extends IArray2D<U>, U>(matrix: T) {
+    matrix.setCell(0, 0, "TopLeft" as any);
+    matrix.setCell(0, matrix.numCols - 1, "TopRight" as any);
+    matrix.setCell(matrix.numRows - 1, matrix.numCols - 1, "BottomRight" as any);
+    matrix.setCell(matrix.numRows - 1, 0, "BottomLeft" as any);
+}
+
+/**
+ * Checks the corners of the given matrix.
+ */
+export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
+    assert.equal(matrix.read(0, 0), "TopLeft");
+    assert.equal(matrix.read(0, matrix.numCols - 1), "TopRight");
+    assert.equal(matrix.read(matrix.numRows - 1, matrix.numCols - 1), "BottomRight");
+    assert.equal(matrix.read(matrix.numRows - 1, 0), "BottomLeft");
+}
+
+/**
  * Vets that cells are equal to the values computed by the 'value' callback for the designated
  * region of the matrix.
  */

@@ -11,7 +11,10 @@ import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-defini
 import {
     IClient,
     IConnect,
+    INack,
 } from "@microsoft/fluid-protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
@@ -50,6 +53,8 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+    private readonly nonForwardEvents = ["nack"];
+
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -89,6 +94,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            nonce: uuid(),
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
@@ -247,6 +253,25 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId);
+
+        // when possible emit nacks only when it targets this specific client/document
+        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
+            if (clientIdOrDocumentId.length === 0 ||
+                clientIdOrDocumentId === documentId ||
+                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                this.emit("nack", clientIdOrDocumentId, message);
+            }
+        });
+    }
+
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+        if (!this.nonForwardEvents.includes(event)) {
+            super.addTrackedListener(event, listener);
+        } else {
+            // this is a "nonforward" event
+            // don't directly link up this socket event to the listener
+            // we will handle the event from a listener in the constructor
+        }
     }
 
     /**

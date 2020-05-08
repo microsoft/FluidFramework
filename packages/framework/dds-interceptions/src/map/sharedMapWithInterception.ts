@@ -34,7 +34,7 @@ export function createSharedMapWithInterception(
         // infinite recursion.
         assert(executingCallback === false, "set called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             map = sharedMap.set(key, value);
             executingCallback = true;
             try {

@@ -12,7 +12,7 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import {
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -66,20 +66,30 @@ export class BaseContainerRuntimeFactory implements
             dc);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IHostRuntime, runtime);
+        dc.register(IContainerRuntime, runtime);
 
-        // On first boot create the base component
         if (!runtime.existing) {
+            // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
         }
+
+        // This always gets called at the end of initialize on first time or from existing.
+        await this.containerHasInitialized(runtime);
 
         return runtime;
     }
 
     /**
      * Subclasses may override containerInitializingFirstTime to perform any setup steps at the time the container
-     * is created.  This likely includes creating any initial components that are expected to be there at the outset.
+     * is created. This likely includes creating any initial components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
+
+    /**
+     * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
+     * This likely includes loading any components that are expected to be there at the outset.
+     * @param runtime - The container runtime for the container being initialized
+     */
+    protected async containerHasInitialized(runtime: IContainerRuntime) { }
 }
