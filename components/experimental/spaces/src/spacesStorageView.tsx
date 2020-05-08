@@ -10,10 +10,8 @@ import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { IComponentSpacesToolbarProps, IContainerComponentDetails } from "./interfaces";
 import { ISpacesStorageFormat, ISpacesStorageModel } from "./spacesStorage";
-import { SpacesToolbar } from "./spacesToolbar";
-import "./style.css";
+import "./spacesStorageView.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;
@@ -166,28 +164,5 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             >
                 {components}
             </ReactGridLayout>
-        );
-    };
-
-interface ISpacesViewProps {
-    supportedToolbarComponents: IContainerComponentDetails[];
-    dataModel: ISpacesStorageModel;
-    toolbarProps: IComponentSpacesToolbarProps;
-}
-
-export const SpacesView: React.FC<ISpacesViewProps> =
-    (props: React.PropsWithChildren<ISpacesViewProps>) => {
-        const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
-
-        // Editable is a view-only concept; SpacesView is the authority.
-        const combinedToolbarProps = props.toolbarProps;
-        combinedToolbarProps.editable = () => editable;
-        combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
-
-        return (
-            <div className="spaces-view">
-                <SpacesToolbar props={combinedToolbarProps} components={props.supportedToolbarComponents} />
-                <SpacesStorageView storage={props.dataModel} editable={editable} />
-            </div>
         );
     };

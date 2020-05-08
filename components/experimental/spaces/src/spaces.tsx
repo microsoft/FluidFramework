@@ -17,7 +17,7 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { ISpacesCollectible, ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
-import { SpacesView } from "./view";
+import { SpacesView } from "./spacesView";
 import {
     IContainerComponentDetails,
     IComponentSpacesToolbarProps,

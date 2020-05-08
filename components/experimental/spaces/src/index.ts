@@ -24,7 +24,7 @@ import {
 
 export * from "./spaces";
 export * from "./spacesStorage";
-export * from "./view";
+export * from "./spacesStorageView";
 export * from "./interfaces";
 
 export const SpacesComponentName = "spaces";
