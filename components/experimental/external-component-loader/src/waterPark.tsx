@@ -36,9 +36,11 @@ const defaultComponents = [
     "@fluid-example/table-view",
 ];
 
-// localComponentUrls facilitates local component development.  Make sure the path points to a directory containing
-// the package.json for the package, and also make sure you've run webpack there first.  These will only be
-// available when running on localhost.
+/**
+ * localComponentUrls facilitates local component development.  Make sure the path points to a directory containing
+ * the package.json for the package, and also make sure you've run webpack there first.  These will only be
+ * available when running on localhost.
+ */
 const localComponentUrls = [
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",

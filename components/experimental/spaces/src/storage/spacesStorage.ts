@@ -99,7 +99,6 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
 
     protected async componentHasInitialized() {
         this.root.on("valueChanged", () => {
-            // prob just need to re-render
             this.emit("componentListChanged", new Map(this.componentList.entries()));
         });
     }
