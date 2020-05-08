@@ -60,10 +60,46 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
+interface IErrorReconnectInfo {
+    /**
+     * A string describing why we are reconnecting from the error.
+     */
+    reason: string;
+    /**
+     * True if the error can be reconnected after.
+     */
+    canReconnect: boolean;
+    /**
+     * Delay before reconnecting in seconds.
+     */
+    reconnectDelay?: number;
+    /**
+     * If reconnecting is not an option, close with this error.
+     */
+    getError(): IError,
+}
+
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+function getErrorReconnectInfo(reason: string, error: any): IErrorReconnectInfo {
+    return {
+        reason,
+        canReconnect: canRetryOnError(error),
+        reconnectDelay: getRetryDelayFromError(error),
+        getError: () => createIError(error),
+    };
+}
+function getNackReconnectInfo(nackContent: INackContent): IErrorReconnectInfo {
+    return {
+        reason: `Nacked: ${nackContent.message}`,
+        canReconnect: ![403, 429].includes(nackContent.code),
+        reconnectDelay: nackContent.retryAfter,
+        getError() { return createFatalError(this.reason); },
+    };
+}
 
 enum RetryFor {
     DeltaStream,
@@ -74,15 +110,6 @@ export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
     reason?: string;
-}
-
-interface INackReconnectInfo {
-    nackReason: string;
-    canReconnect: boolean;
-    /**
-     * Delay before reconnecting in seconds.
-     */
-    reconnectDelay?: number;
 }
 
 /**
@@ -871,28 +898,27 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             // check message.content for back-compat with old service.
-            const reconnectInfo: INackReconnectInfo = message.content
-                ? this.parseNackReconnectInfo(message.content)
-                : { canReconnect: true, nackReason: "" };
+            const reconnectInfo: IErrorReconnectInfo = message.content
+                ? getNackReconnectInfo(message.content)
+                : {
+                    reason: "",
+                    canReconnect: true,
+                    getError() { return createFatalError(this.reason); },
+                };
 
-            if (!reconnectInfo.canReconnect || !this.reconnect) {
-                this.close(createFatalError(reconnectInfo.nackReason));
-            }
             if (!this.autoReconnect) {
                 this.logger.sendErrorEvent({
                     eventName: "NackWithNoReconnect",
-                    nackError: `reason: ${reconnectInfo.nackReason}`,
+                    nackError: `reason: ${reconnectInfo.reason}`,
                     mode: this.connectionMode,
                 });
             }
+
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                reconnectInfo.nackReason,
                 connection,
                 "write",
-                undefined,
-                this.autoReconnect,
-                reconnectInfo.reconnectDelay,
+                reconnectInfo,
             );
         });
 
@@ -902,11 +928,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                `Disconnect: ${disconnectReason}`,
                 connection,
                 this.defaultReconnectionMode,
-                disconnectReason,
-                this.autoReconnect,
+                getErrorReconnectInfo(`Disconnect: ${disconnectReason}`, disconnectReason),
             );
         });
 
@@ -917,10 +941,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                `Error: ${error}`,
                 connection,
                 this.defaultReconnectionMode,
-                error);
+                getErrorReconnectInfo(`Error: ${error}`, error),
+            );
         });
 
         connection.on("pong", (latency: number) => {
@@ -981,20 +1005,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     /**
      * Disconnect the current connection and reconnect.
-     * @param reason - A string describing why we are reconnecting
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
-     * @param error - The error that prompted the reconnect
-     * @param autoReconnect - Whether to attempt reconnection automatically after error handling
+     * @param reconnectInfo - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
-        reason: string,
         connection: DeltaConnection,
         requestedMode: ConnectionMode,
-        error?: any,
-        autoReconnect: boolean = true,
-        reconnectDelayMs?: number,
+        reconnectInfo: IErrorReconnectInfo,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -1002,15 +1021,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this.disconnectFromDeltaStream(reason);
+        this.disconnectFromDeltaStream(reconnectInfo.reason);
 
         // If reconnection is not an option, close the DeltaManager
-        const criticalError = !canRetryOnError(error);
-        if (!this.reconnect || criticalError) {
+        const isCriticalError = !reconnectInfo.canReconnect;
+        if (!this.reconnect || isCriticalError) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(createIError(error), criticalError /* raiseContainerError */);
+            this.close(reconnectInfo.getError(), isCriticalError /* raiseContainerError */);
         }
 
         // If closed then we can't reconnect
@@ -1018,11 +1037,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        if (autoReconnect) {
-            const delay = reconnectDelayMs ?? getRetryDelayFromError(error);
-            if (delay !== undefined) {
-                this.emitDelayInfo(RetryFor.DeltaStream, delay);
-                await waitForConnectedState(delay * 1000);
+        if (this.autoReconnect) {
+            if (reconnectInfo.reconnectDelay !== undefined) {
+                this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay);
+                await waitForConnectedState(reconnectInfo.reconnectDelay * 1000);
             }
 
             this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
@@ -1262,25 +1280,5 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;
-    }
-
-    /**
-     * Determines whether the received nack is retryable or not, and
-     * how long of a delay to wait before retrying.
-     */
-    private parseNackReconnectInfo(nackContent: INackContent): INackReconnectInfo {
-        const nackReason = `Nacked: ${nackContent.message}`;
-
-        if (nackContent.code === 403) {
-            return { canReconnect: false, nackReason };
-        }
-        if (nackContent.code === 429 && nackContent.type === "LimitExceededError") {
-            return { canReconnect: false, nackReason };
-        }
-        return {
-            canReconnect: true,
-            nackReason,
-            reconnectDelay: nackContent.retryAfter || undefined,
-        };
     }
 }
