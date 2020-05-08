@@ -91,7 +91,7 @@ class FileNotFoundOrAccessDeniedError extends ErrorWithProps implements IFileNot
 
     constructor(
         errorMessage: string,
-        readonly statusCode?: number,
+        readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
@@ -107,7 +107,7 @@ class OutOfStorageError extends ErrorWithProps implements IOutOfStorageError {
 
     constructor(
         errorMessage: string,
-        readonly statusCode?: number,
+        readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
@@ -173,7 +173,7 @@ export function createNetworkError(
     online: string = OnlineStatus[isOnline()],
 ): IError {
     if (statusCode === 401 || statusCode === 403) {
-        return new FileNotFoundOrAccessDeniedError(errorMessage, canRetry, online);
+        return new AuthorizationError(errorMessage, canRetry, online);
     }
     if (statusCode === 404) {
         return new FileNotFoundOrAccessDeniedError(errorMessage, canRetry, online);
@@ -182,10 +182,10 @@ export function createNetworkError(
         return new FatalError(errorMessage);
     }
     if (statusCode === 507) {
-        return new OutOfStorageError(errorMessage, statusCode, canRetry, online);
+        return new OutOfStorageError(errorMessage, canRetry, online);
     }
     if (statusCode === 414 || statusCode === invalidFileNameErrorCode) {
-        return new InvalidFileNameError(errorMessage, statusCode, canRetry, online);
+        return new InvalidFileNameError(errorMessage, canRetry, online);
     }
     if (retryAfterSeconds !== undefined) {
         return new ThrottlingError(errorMessage, retryAfterSeconds);

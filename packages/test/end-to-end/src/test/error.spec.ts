@@ -137,7 +137,7 @@ describe("Errors Types", () => {
             assert.fail("Error should be an authorizationError");
         }
         else {
-            assert.equal(networkError.errorType, ErrorType.accessDeniedError, "canRetry should be preserved");
+            assert.equal(networkError.errorType, ErrorType.authorizationError, "canRetry should be preserved");
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
         }
     });
@@ -162,7 +162,8 @@ describe("Errors Types", () => {
             assert.fail("Error should be a fileNotFoundOrAccessDeniedError");
         }
         else {
-            assert.equal(networkError.errorType, ErrorType.fileNotFoundError, "canRetry should be preserved");
+            assert.equal(networkError.errorType, ErrorType.fileNotFoundOrAccessDeniedError,
+                "canRetry should be preserved");
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
         }
     });
