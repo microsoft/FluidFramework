@@ -17,6 +17,7 @@ export class InnerUrlResolver implements IUrlResolver {
         return Promise.resolve(this.resolved);
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async requestUrl(
         resolvedUrl: IResolvedUrl,
         request: IRequest,

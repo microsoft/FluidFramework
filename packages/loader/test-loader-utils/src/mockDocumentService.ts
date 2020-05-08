@@ -35,6 +35,7 @@ export class MockDocumentService implements IDocumentService {
         private readonly deltaConnectionFactory?: () => IDocumentDeltaConnection,
     ) {}
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");
     }

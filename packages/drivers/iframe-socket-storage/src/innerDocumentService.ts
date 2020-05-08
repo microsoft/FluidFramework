@@ -40,6 +40,7 @@ export class InnerDocumentService implements IDocumentService {
         }>,
         public clientId: string) { }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");
     }

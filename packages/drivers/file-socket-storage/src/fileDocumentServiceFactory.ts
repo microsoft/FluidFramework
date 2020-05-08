@@ -37,6 +37,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
         return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,

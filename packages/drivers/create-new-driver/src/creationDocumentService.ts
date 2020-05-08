@@ -21,6 +21,7 @@ export class CreationDocumentService implements api.IDocumentService {
         this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): api.IResolvedUrl {
         throw new Error("Not implemented");
     }

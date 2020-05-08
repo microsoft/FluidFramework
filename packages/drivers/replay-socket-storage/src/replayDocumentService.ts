@@ -36,6 +36,7 @@ export class ReplayDocumentService implements api.IDocumentService {
         private readonly deltaStorage: api.IDocumentDeltaConnection) {
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): api.IResolvedUrl {
         throw new Error("Not implemented");
     }

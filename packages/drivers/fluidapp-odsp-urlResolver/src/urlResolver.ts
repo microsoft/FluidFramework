@@ -30,6 +30,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         return undefined;
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async requestUrl(
         resolvedUrl: IResolvedUrl,
         request: IRequest,

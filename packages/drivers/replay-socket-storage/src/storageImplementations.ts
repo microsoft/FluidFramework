@@ -139,6 +139,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {
         throw new Error("Not implemented");
     }
@@ -173,6 +174,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
         return new StaticStorageDocumentService(this.storage);
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,

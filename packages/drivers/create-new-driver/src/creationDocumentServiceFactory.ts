@@ -34,6 +34,7 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
             "createNewFileDocTenant");
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
