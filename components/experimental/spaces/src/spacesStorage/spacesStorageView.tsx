@@ -11,7 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesStorageFormat, ISpacesStorageModel } from "./spacesStorage";
-import "./spacesStorageView.css";
+import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
     clickCallback(): void;

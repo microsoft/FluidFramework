@@ -6,9 +6,8 @@
 import * as React from "react";
 import "react-grid-layout/css/styles.css";
 import { IComponentSpacesToolbarProps, IContainerComponentDetails } from "./interfaces";
-import { ISpacesStorageModel } from "./spacesStorage";
+import { ISpacesStorageModel, SpacesStorageView } from "./spacesStorage";
 import { SpacesToolbar } from "./spacesToolbar";
-import { SpacesStorageView } from "./spacesStorageView";
 
 interface ISpacesViewProps {
     supportedToolbarComponents: IContainerComponentDetails[];

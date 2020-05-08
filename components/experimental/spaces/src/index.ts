@@ -23,8 +23,7 @@ import {
 } from "./interfaces";
 
 export * from "./spaces";
-export * from "./spacesStorage";
-export * from "./spacesStorageView";
+export * from "./spacesStorage/index";
 export * from "./interfaces";
 
 export const SpacesComponentName = "spaces";
