@@ -78,7 +78,7 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
             type,
             layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },
         };
-        // REVIEW: Is it safe to use handle.path here as a key?
+
         this.root.set(handle.path, model);
         return handle.path;
     }
