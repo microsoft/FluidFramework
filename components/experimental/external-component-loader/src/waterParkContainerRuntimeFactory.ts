@@ -40,7 +40,7 @@ async function createAndAttachComponent<T>(
  * This class creates two components: A loader and a view component for water park and then
  * add loader component to the view component to be rendered.
  */
-export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactoryWithDefaultComponent {
+export class WaterParkContainerRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
     /**
      * @param entries - Registered component types
      */

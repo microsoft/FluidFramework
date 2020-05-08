@@ -5,9 +5,9 @@
 
 import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
 import { ExternalComponentLoader } from "./externalComponentLoader";
-import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
+import { WaterParkContainerRuntimeFactory } from "./waterParkContainerRuntimeFactory";
 
-export const fluidExport = new WaterParkModuleInstantiationFactory(
+export const fluidExport = new WaterParkContainerRuntimeFactory(
     new Map([
         [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
         [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
