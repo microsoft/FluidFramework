@@ -48,10 +48,10 @@ import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
 
-const MaxReconnectDelay = 8000;
-const InitialReconnectDelay = 1000;
-const MissingFetchDelay = 100;
-const MaxFetchDelay = 10000;
+const MaxReconnectDelaySeconds = 8;
+const InitialReconnectDelaySeconds = 1;
+const MissingFetchDelaySeconds = 0.1;
+const MaxFetchDelaySeconds = 10;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
 
@@ -63,7 +63,7 @@ const DefaultContentBufferSize = 10;
 // Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
-const getRetryDelayFromError = (error: any): number | undefined => (error?.retryAfterSeconds ?? 0) * 1000 || undefined;
+const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
 
 enum RetryFor {
     DeltaStream,
@@ -80,9 +80,9 @@ interface INackReconnectInfo {
     nackReason: string;
     canReconnect: boolean;
     /**
-     * Delay before reconnecting in milliseconds.
+     * Delay before reconnecting in seconds.
      */
-    reconnectDelayMs?: number;
+    reconnectDelay?: number;
 }
 
 /**
@@ -412,7 +412,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
             let connection: DeltaConnection | undefined;
-            let delay = InitialReconnectDelay;
+            let delay = InitialReconnectDelaySeconds;
             let connectRepeatCount = 0;
             const connectStartTime = performanceNow();
 
@@ -440,21 +440,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         logNetworkFailure(
                             this.logger,
                             {
-                                delay,
+                                delay, // seconds
                                 eventName: "DeltaConnectionFailureToConnect",
                             },
                             error);
                     }
 
                     const retryDelayFromError = getRetryDelayFromError(error);
-                    delay = retryDelayFromError !== undefined ?
-                        retryDelayFromError :
-                        Math.min(delay * 2, MaxReconnectDelay);
+                    delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelaySeconds);
 
                     if (retryDelayFromError) {
                         this.emitDelayInfo(RetryFor.DeltaStream, retryDelayFromError);
                     }
-                    await waitForConnectedState(delay);
+                    await waitForConnectedState(delay * 1000);
                 }
             }
 
@@ -599,7 +597,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number | undefined = -1;
+            let retryAfter: number | undefined;
 
             try {
                 // Connect to the delta storage endpoint
@@ -675,8 +673,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 retry = 0; // start calculating timeout over if we got some ops
             } else {
                 retry++;
-                delay = retryAfter !== undefined && retryAfter >= 0 ?
-                    retryAfter : Math.min(MaxFetchDelay, MissingFetchDelay * Math.pow(2, retry));
+                delay = retryAfter ?? Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
 
                 // Chances that we will get something from storage after that many retries is zero.
                 // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
@@ -707,7 +704,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             telemetryEvent.reportProgress({
-                delay,
+                delay, // seconds
                 deltasRetrievedLast,
                 deltasRetrievedTotal,
                 replayFrom: from,
@@ -716,11 +713,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
-            if (retryAfter && retryAfter >= 0) {
+            if (retryAfter) {
                 // Emit throttling info only if we get it from error.
                 this.emitDelayInfo(RetryFor.DeltaStorage, delay);
             }
-            await waitForConnectedState(delay);
+            await waitForConnectedState(delay * 1000);
         }
 
         // Might need to change to non-error event
@@ -808,7 +805,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 const throttlingError: IThrottlingError = {
                     errorType: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
-                    retryAfterSeconds: delayTime / 1000,
+                    retryAfterSeconds: delayTime,
                 };
                 this.emit("error", throttlingError);
             }
@@ -895,7 +892,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 "write",
                 undefined,
                 this.autoReconnect,
-                reconnectInfo.reconnectDelayMs,
+                reconnectInfo.reconnectDelay,
             );
         });
 
@@ -1025,7 +1022,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const delay = reconnectDelayMs ?? getRetryDelayFromError(error);
             if (delay !== undefined) {
                 this.emitDelayInfo(RetryFor.DeltaStream, delay);
-                await waitForConnectedState(delay);
+                await waitForConnectedState(delay * 1000);
             }
 
             this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
@@ -1283,7 +1280,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return {
             canReconnect: true,
             nackReason,
-            reconnectDelayMs: (nackContent.retryAfter ?? 0) * 1000 || undefined,
+            reconnectDelay: nackContent.retryAfter || undefined,
         };
     }
 }
