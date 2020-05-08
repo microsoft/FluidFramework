@@ -6,12 +6,12 @@
 import * as React from "react";
 import "react-grid-layout/css/styles.css";
 import { ISpacesProps, IInternalRegistryEntry } from "./interfaces";
-import { ISpacesStorageModel, SpacesStorageView } from "./spacesStorage";
+import { ISpacesStorage, SpacesStorageView } from "./spacesStorage";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
     supportedComponents: IInternalRegistryEntry[];
-    storage: ISpacesStorageModel;
+    storage: ISpacesStorage;
     spacesProps: ISpacesProps;
 }
 

@@ -16,6 +16,9 @@ export interface IProvideComponentRegistryTemplates {
     readonly IComponentRegistryTemplates: IComponentRegistryTemplates;
 }
 
+/**
+ * Provides functionality to retrieve subsets of an internal registry based on membership in a template.
+ */
 export interface IComponentRegistryTemplates extends IProvideComponentRegistryTemplates {
     getFromTemplate(template: Templates): IInternalRegistryEntry[];
 }

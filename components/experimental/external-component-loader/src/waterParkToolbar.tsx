@@ -12,6 +12,10 @@ interface WaterParkToolbarViewProps {
     toggleEditable?: () => void;
 }
 
+/**
+ * WaterParkToolbar is an alternative toolbar to the one used by Spaces normally.  When an option is selected,
+ * it uses the provided callback to notify the WaterPark.
+ */
 export const WaterParkToolbar: React.FC<WaterParkToolbarViewProps> =
     (props: WaterParkToolbarViewProps) => {
         const [errorText, setErrorText] = React.useState<string | undefined>(undefined);

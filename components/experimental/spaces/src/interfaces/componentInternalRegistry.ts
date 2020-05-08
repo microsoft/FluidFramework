@@ -18,11 +18,17 @@ export interface IProvideComponentInternalRegistry {
     readonly IComponentInternalRegistry: IComponentInternalRegistry;
 }
 
+/**
+ * Provides functionality to retrieve subsets of an internal registry.
+ */
 export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
     getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
     hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 
+/**
+ * A registry entry, with extra metadata.
+ */
 export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideComponentFactory>;

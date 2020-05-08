@@ -10,7 +10,7 @@ import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { ISpacesStoredComponent, ISpacesStorageModel } from "./spacesStorage";
+import { ISpacesStoredComponent, ISpacesStorage } from "./spacesStorage";
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
@@ -88,7 +88,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
     };
 
 interface ISpacesStorageViewProps {
-    storage: ISpacesStorageModel;
+    storage: ISpacesStorage;
     editable: boolean;
 }
 

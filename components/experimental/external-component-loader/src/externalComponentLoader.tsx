@@ -33,12 +33,17 @@ export class ExternalComponentLoader extends PrimedComponent {
         return ExternalComponentLoader.factory;
     }
 
+    /**
+     * Creates the component retrieved from the given location.  Adds it to the registry dynamically if needed.
+     * @param componentUrl - the URL of the component to create, adding it to the registry if needed.
+     */
     public async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
         const urlReg = await this.runtime.IComponentRegistry?.get("url");
         if (urlReg?.IComponentRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
         }
 
+        // Calling .get() on the urlReg registry will also add it to the registry if it's not already there.
         const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent;
         let componentRuntime: IComponentRuntimeChannel;
         const id = uuid();

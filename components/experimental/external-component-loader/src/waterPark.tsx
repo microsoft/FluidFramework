@@ -54,7 +54,7 @@ if (window.location.hostname === "localhost") {
 }
 
 /**
- * WaterPark assembles the SpacesStorage with a custom toolbar that can load other components
+ * WaterPark assembles the SpacesStorage with WaterParkToolbar that can load other components
  */
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -101,6 +101,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
     }
 
+    /**
+     * addComponent is handed down to the WaterParkToolbar as the callback when an option is selected from the list.
+     */
     private readonly addComponent = async (componentUrl: string) => {
         if (this.loader === undefined) {
             throw new Error("Can't add component, loader not found");

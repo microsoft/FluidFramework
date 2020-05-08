@@ -39,9 +39,7 @@ interface ISpacesToolbarProps {
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
-        const templatesAvailable = props.spacesProps.templatesAvailable !== undefined
-            ? props.spacesProps.templatesAvailable()
-            : false;
+        const templatesAvailable = props.spacesProps.templatesAvailable ?? false;
 
         const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
         const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);

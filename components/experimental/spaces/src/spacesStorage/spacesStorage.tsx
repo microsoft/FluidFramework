@@ -4,8 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
     PrimedComponent,
@@ -14,9 +12,11 @@ import {
 import {
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-export interface ISpacesStorageModel extends EventEmitter {
+/**
+ * ISpacesStorage describes the public API surface of SpacesStorage.
+ */
+export interface ISpacesStorage extends EventEmitter {
     /**
      * The list of components being stored.
      */
@@ -53,10 +53,7 @@ export interface ISpacesStoredComponent {
 /**
  * SpacesStorage is a component which maintains a collection of other components and a grid-based layout for rendering.
  */
-export class SpacesStorage extends PrimedComponent implements
-    IComponentHTMLView,
-    ISpacesStorageModel
-{
+export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -70,8 +67,6 @@ export class SpacesStorage extends PrimedComponent implements
     public static getFactory() {
         return SpacesStorage.factory;
     }
-
-    public get IComponentHTMLView() { return this; }
 
     public get componentList(): Map<string, ISpacesStoredComponent> {
         return this.root;
@@ -100,16 +95,6 @@ export class SpacesStorage extends PrimedComponent implements
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
         };
         this.root.set(key, model);
-    }
-
-    /**
-     * Will return a new Spaces View
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>Figure it out</div>,
-            div,
-        );
     }
 
     protected async componentHasInitialized() {

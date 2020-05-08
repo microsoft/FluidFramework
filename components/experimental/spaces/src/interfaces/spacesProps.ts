@@ -10,6 +10,6 @@ import { Templates } from "..";
  */
 export interface ISpacesProps {
     addComponent?(type: string): void;
-    templatesAvailable?(): boolean;
+    templatesAvailable?: boolean;
     applyTemplate?(template: Templates): void;
 }

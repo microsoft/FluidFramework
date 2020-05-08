@@ -65,7 +65,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                         console.error(`Error while creating component: ${type}`, error);
                     });
             },
-            templatesAvailable: () => this.internalRegistry?.IComponentRegistryTemplates !== undefined,
+            templatesAvailable: this.internalRegistry?.IComponentRegistryTemplates !== undefined,
             applyTemplate: this.applyTemplateFromRegistry.bind(this),
         };
         ReactDOM.render(
