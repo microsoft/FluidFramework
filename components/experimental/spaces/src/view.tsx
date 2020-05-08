@@ -11,8 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { IComponentSpacesToolbarProps, IContainerComponentDetails } from "./interfaces";
-import { ISpacesStoredComponent } from "./spaces";
-import { ISpacesStorageModel } from "./spacesStorage";
+import { ISpacesStorageFormat, ISpacesStorageModel } from "./spacesStorage";
 import { SpacesToolbar } from "./spacesToolbar";
 import "./style.css";
 
@@ -97,7 +96,7 @@ interface ISpacesStorageViewProps {
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
         const [componentMap, setComponentMap] =
-            React.useState<Map<string, ISpacesStoredComponent>>(props.storage.componentList);
+            React.useState<Map<string, ISpacesStorageFormat>>(props.storage.componentList);
 
         React.useEffect(() => {
             const onComponentListChanged = (newMap: Map<string, Layout>) => {

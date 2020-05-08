@@ -6,14 +6,14 @@
 import * as uuid from "uuid";
 import * as React from "react";
 
-interface ExternalComponentLoaderToolbarProps {
+interface ExternalComponentLoaderToolbarViewProps {
     componentUrls: string[];
     onSelectOption: (componentUrl: string) => Promise<void>;
     toggleEditable?: () => void;
 }
 
-export const ExternalComponentLoaderToolbar: React.FC<ExternalComponentLoaderToolbarProps> =
-    (props: ExternalComponentLoaderToolbarProps) => {
+export const ExternalComponentLoaderToolbarView: React.FC<ExternalComponentLoaderToolbarViewProps> =
+    (props: ExternalComponentLoaderToolbarViewProps) => {
         const [errorText, setErrorText] = React.useState<string | undefined>(undefined);
         const datalistId = uuid();
 

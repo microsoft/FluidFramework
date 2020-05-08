@@ -13,11 +13,10 @@ import {
 import {
     IComponent,
     IComponentHandle,
-    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { SpacesStorage } from "./spacesStorage";
+import { ISpacesCollectible, ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
 import { SpacesView } from "./view";
 import {
     IContainerComponentDetails,
@@ -26,22 +25,6 @@ import {
 import { InternalRegistry, SpacesComponentName, Templates } from ".";
 
 const SpacesStorageKey = "spaces-storage";
-
-export interface ISpacesStoredComponent {
-    type: string;
-    layout: Layout;
-    handle: IComponentHandle;
-}
-
-/**
- * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
- * supporting export to template.
- */
-export interface ISpacesCollectible {
-    component: IComponent & IComponentLoadable;
-    type: string;
-    layout?: Layout;
-}
 
 /**
  * Spaces is the app, which uses the toolbar and the storage to present a unified experience..
@@ -163,7 +146,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     public async setTemplate(): Promise<void> {
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
+            const templateItems = JSON.parse(templateString) as ISpacesStorageFormat[];
             const promises = templateItems.map(async (templateItem) => {
                 const component = await this.createAndAttachComponent(templateItem.type);
                 this.storageComponent?.addItem({

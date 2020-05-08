@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definition
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { IComponentToolbarConsumer, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
-import { ExternalComponentLoader, WaterParkCompatibleView, WaterParkLoaderName } from "./waterParkLoader";
+import { ExternalComponentLoaderToolbar, WaterParkCompatibleView, WaterParkLoaderName } from "./waterParkLoader";
 
 /**
  * Calls create, initialize, and attach on a new component.
@@ -47,11 +47,9 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
      * @param viewComponentName - The registry name for the view component, which must be a WaterParkCompatibleView
      * and may also be an IComponentToolbarConsumer
      */
-    constructor(
-        entries: NamedComponentRegistryEntries,
-        private readonly loaderComponentName: string = WaterParkLoaderName,
-        private readonly viewComponentName: string = SpacesComponentName) {
-        super(viewComponentName, entries);
+    constructor(entries: NamedComponentRegistryEntries) {
+        // this needs to switch to WaterParkLoaderName
+        super(SpacesComponentName, entries);
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
@@ -59,10 +57,10 @@ export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactory
             await createAndAttachComponent<WaterParkCompatibleView & Partial<IComponentToolbarConsumer>>(
                 runtime,
                 ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
-                this.viewComponentName,
+                SpacesComponentName,
             );
-        const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
-            runtime, uuid(), this.loaderComponentName);
+        const loaderComponent = await createAndAttachComponent<ExternalComponentLoaderToolbar>(
+            runtime, uuid(), WaterParkLoaderName);
 
         // Only add the component toolbar if the view component supports it
         viewComponent.IComponentToolbarConsumer?.setToolbarComponent(loaderComponent);

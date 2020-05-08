@@ -16,12 +16,12 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
     IComponentSpacesToolbarProps,
-    ISpacesModel,
+    ISpacesStorageModel,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ExternalComponentLoaderToolbar } from "./ExternalComponentLoaderToolbar";
+import { ExternalComponentLoaderToolbarView } from "./ExternalComponentLoaderToolbar";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -60,12 +60,12 @@ if (window.location.hostname === "localhost") {
  * The view component must support certain interfaces to work with the waterpark.
  */
 export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & ISpacesModel;
+    IComponentHandle & IComponentLoadable & ISpacesStorageModel;
 
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent
+export class ExternalComponentLoaderToolbar extends PrimedComponent
     implements IComponentHTMLView, SpacesCompatibleToolbar {
     private savedElement: HTMLElement | undefined;
     private props: IComponentSpacesToolbarProps | undefined;
@@ -83,7 +83,7 @@ export class ExternalComponentLoader extends PrimedComponent
         }
 
         ReactDOM.render(
-            <ExternalComponentLoaderToolbar
+            <ExternalComponentLoaderToolbarView
                 componentUrls={ componentUrls }
                 onSelectOption={ this.createAndAddComponent }
                 toggleEditable={ this.toggleEditable }
