@@ -12,49 +12,16 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import {
     IComponentSpacesToolbarProps,
     ISpacesStorageModel,
     SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { WaterParkToolbar } from "../waterParkToolbar";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
-
-// defaultComponents are the component options that are always available in the waterpark.
-const defaultComponents = [
-    "@fluid-example/todo",
-    "@fluid-example/math",
-    "@fluid-example/monaco",
-    "@fluid-example/image-collection",
-    "@fluid-example/pond",
-    "@fluid-example/clicker",
-    "@fluid-example/primitives",
-    "@fluid-example/table-view",
-];
-
-// localComponentUrls facilitates local component development.  Make sure the path points to a directory containing
-// the package.json for the package, and also make sure you've run webpack there first.  These will only be
-// available when running on localhost.
-const localComponentUrls = [
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
-    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
-];
-
-// When locally developing, want to load the latest available patch version by default
-const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
-const componentUrls = defaultComponents.map((url) => `${url}@${defaultVersionToLoad}`);
-
-// When running on localhost, add entries for local component development.
-if (window.location.hostname === "localhost") {
-    componentUrls.push(...localComponentUrls);
-}
 
 /**
  * The view component must support certain interfaces to work with the waterpark.
@@ -65,36 +32,16 @@ export type WaterParkCompatibleView =
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoaderToolbar extends PrimedComponent
-    implements IComponentHTMLView, SpacesCompatibleToolbar {
-    private savedElement: HTMLElement | undefined;
+export class ExternalComponentLoader extends PrimedComponent implements SpacesCompatibleToolbar {
     private props: IComponentSpacesToolbarProps | undefined;
 
-    public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
 
     public setComponentProps(props: IComponentSpacesToolbarProps) {
         this.props = props;
     }
 
-    public render(element: HTMLElement) {
-        if (this.savedElement !== undefined) {
-            ReactDOM.unmountComponentAtNode(this.savedElement);
-        }
-
-        ReactDOM.render(
-            <WaterParkToolbar
-                componentUrls={ componentUrls }
-                onSelectOption={ this.createAndAddComponent }
-                toggleEditable={ this.toggleEditable }
-            />,
-            element,
-        );
-
-        this.savedElement = element;
-    }
-
-    private async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
+    public async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
         const urlReg = await this.runtime.IComponentRegistry?.get("url");
         if (urlReg?.IComponentRegistry === undefined) {
             throw new Error("Couldn't get url component registry");
@@ -140,15 +87,7 @@ export class ExternalComponentLoaderToolbar extends PrimedComponent
         return component.IComponentLoadable;
     }
 
-    private readonly toggleEditable = () => {
-        if (this.props?.setEditable === undefined) {
-            throw new Error("Don't have a setEditable callback");
-        }
-
-        this.props.setEditable();
-    };
-
-    private readonly createAndAddComponent = async (componentUrl: string) => {
+    public readonly createAndAddComponent = async (componentUrl: string) => {
         if (this.props?.addItem === undefined) {
             throw new Error("Don't have an addItem callback");
         }

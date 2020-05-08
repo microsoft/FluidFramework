@@ -6,11 +6,11 @@
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { UrlRegistry } from "../urlRegistry";
-import { ExternalComponentLoaderToolbar, WaterParkLoaderName } from "./externalComponentLoader";
+import { ExternalComponentLoader, WaterParkLoaderName } from "./externalComponentLoader";
 
 export const WaterParkLoaderInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
     WaterParkLoaderName,
-    ExternalComponentLoaderToolbar,
+    ExternalComponentLoader,
     [],
     {},
     [["url", Promise.resolve(new UrlRegistry())]],

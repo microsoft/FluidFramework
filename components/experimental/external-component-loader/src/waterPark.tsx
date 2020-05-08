@@ -5,15 +5,11 @@
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
-    IComponent,
     IComponentLoadable,
-    IResponse,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as uuid from "uuid";
 import {
     ISpacesStorageModel,
     SpacesStorage,
@@ -22,12 +18,14 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
+import { ExternalComponentLoader } from "./waterParkLoader";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
 const storageKey = "storage";
+const loaderKey = "loader";
 
 // defaultComponents are the component options that are always available in the waterpark.
 const defaultComponents = [
@@ -71,13 +69,14 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private storage: SpacesStorage | undefined;
+    private loader: ExternalComponentLoader | undefined;
 
     public render(element: HTMLElement) {
         if (this.storage === undefined) {
             throw new Error("Can't render, storage not found");
         }
         ReactDOM.render(
-            <WaterParkView storage={this.storage} onSelectOption={this.createAndAddComponent} />,
+            <WaterParkView storage={this.storage} onSelectOption={this.addComponent} />,
             element,
         );
     }
@@ -85,65 +84,25 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage);
+        const loader = await this.createAndAttachComponent(WaterParkLoaderName);
+        this.root.set(loaderKey, loader);
     }
 
     protected async componentHasInitialized() {
         this.storage = await this.root.get<IComponentHandle<SpacesStorage>>(storageKey)?.get();
+        this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
     }
 
-    private async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
-        const urlReg = await this.runtime.IComponentRegistry?.get("url");
-        if (urlReg?.IComponentRegistry === undefined) {
-            throw new Error("Couldn't get url component registry");
+    private readonly addComponent = async (componentUrl: string) => {
+        if (this.loader === undefined) {
+            throw new Error("Can't add component, loader not found");
         }
-
-        const pkgReg = await urlReg.IComponentRegistry.get(componentUrl) as IComponent;
-        let componentRuntime: IComponentRuntimeChannel;
-        const id = uuid();
-        if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
-                [
-                    ...this.context.packagePath,
-                    "url",
-                    componentUrl,
-                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
-                ]);
-        } else if (pkgReg?.IComponentFactory !== undefined) {
-            componentRuntime = await this.context.containerRuntime.createComponent(
-                id,
-                [
-                    ...this.context.packagePath,
-                    "url",
-                    componentUrl,
-                ]);
-        } else {
-            throw new Error(`${componentUrl} is not a factory, and does not provide default component name`);
-        }
-
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        let component: IComponent = response.value as IComponent;
-        if (component.IComponentLoadable === undefined) {
-            throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
-        }
-        componentRuntime.attach();
-        if (component.IComponentCollection !== undefined) {
-            component = component.IComponentCollection.createCollectionItem();
-            if (component.IComponentLoadable === undefined) {
-                throw new Error(`${componentUrl} must implement the IComponentLoadable interface to be loaded here`);
-            }
-        }
-
-        return component.IComponentLoadable;
-    }
-
-    private readonly createAndAddComponent = async (componentUrl: string) => {
-        if (this.storage?.addItem === undefined) {
-            throw new Error("Don't have an addItem callback");
+        if (this.storage === undefined) {
+            throw new Error("Can't add component, storage not found");
         }
 
         this.storage.addItem({
-            component: await this.createComponentFromUrl(componentUrl),
+            component: await this.loader.createComponentFromUrl(componentUrl),
             type: componentUrl,
         });
     };
