@@ -22,7 +22,8 @@ import {
     IContainerComponentDetails,
     IComponentSpacesToolbarProps,
 } from "./interfaces";
-import { InternalRegistry, SpacesComponentName, Templates } from ".";
+import { InternalRegistry } from "./spacesComponentRegistry";
+import { Templates } from ".";
 
 const SpacesStorageKey = "spaces-storage";
 
@@ -39,7 +40,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(
-        SpacesComponentName,
+        Spaces.ComponentName,
         Spaces,
         [],
         {},
