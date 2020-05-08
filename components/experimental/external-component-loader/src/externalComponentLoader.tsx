@@ -11,17 +11,12 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
-import {
-    IComponentSpacesToolbarProps,
-} from "@fluid-example/spaces";
-import { UrlRegistry } from "../urlRegistry";
+import { UrlRegistry } from "./urlRegistry";
 
 /**
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent {
-    private props: IComponentSpacesToolbarProps | undefined;
-
     public get IComponentTakesProps() { return this; }
 
     public static get ComponentName() { return "@fluid-example/external-component-loader"; }
@@ -36,10 +31,6 @@ export class ExternalComponentLoader extends PrimedComponent {
 
     public static getFactory() {
         return ExternalComponentLoader.factory;
-    }
-
-    public setComponentProps(props: IComponentSpacesToolbarProps) {
-        this.props = props;
     }
 
     public async createComponentFromUrl(componentUrl: string): Promise<IComponentLoadable> {
@@ -87,15 +78,4 @@ export class ExternalComponentLoader extends PrimedComponent {
 
         return component.IComponentLoadable;
     }
-
-    public readonly createAndAddComponent = async (componentUrl: string) => {
-        if (this.props?.addItem === undefined) {
-            throw new Error("Don't have an addItem callback");
-        }
-
-        this.props.addItem({
-            component: await this.createComponentFromUrl(componentUrl),
-            type: componentUrl,
-        });
-    };
 }
