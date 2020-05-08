@@ -4,7 +4,7 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { IChannel, ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {

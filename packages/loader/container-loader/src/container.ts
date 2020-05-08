@@ -21,7 +21,6 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -37,9 +36,6 @@ import {
     IFluidResolvedUrl,
     IUrlResolver,
     IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory,
-    IExperimentalDocumentService,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
@@ -112,11 +108,9 @@ export interface IContainerConfig {
     id?: string;
 }
 
-export class Container
-    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
-    public static version = "^0.1.0";
-
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public readonly isExperimentalContainer = true;
+    public static version = "^0.1.0";
 
     /**
      * Load container.
@@ -439,10 +433,6 @@ export class Container
         return !this.attached;
     }
 
-    public isAttached(): boolean {
-        return this.attached;
-    }
-
     public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
@@ -468,21 +458,15 @@ export class Container
 
         try {
             // Actually go and create the resolved document
-            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
-            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
-            this.service = await expDocFactory.createContainer(
+            this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
                 ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
             );
-            const expDocService = this.service as IExperimentalDocumentService;
-            assert(expDocService?.isExperimentalDocumentService);
-            const resolvedUrl = expDocService.resolvedUrl;
+            const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-            assert(expUrlResolver?.isExperimentalUrlResolver);
-            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
             if (response.status !== 200) {
                 throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
             }

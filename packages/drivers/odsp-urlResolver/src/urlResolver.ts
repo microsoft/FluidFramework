@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     createOdspUrl,
@@ -26,6 +26,13 @@ export class OdspUrlResolver implements IUrlResolver {
             return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
         }
         return undefined;
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }
 

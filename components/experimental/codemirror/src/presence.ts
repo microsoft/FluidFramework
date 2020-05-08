@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as CodeMirror from "codemirror";
 
 interface IPresenceInfo {
