@@ -21,7 +21,7 @@ import {
 } from "@fluid-example/spaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ExternalComponentLoaderToolbarView } from "./ExternalComponentLoaderToolbar";
+import { WaterParkToolbar } from "../waterParkToolbar";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -83,7 +83,7 @@ export class ExternalComponentLoaderToolbar extends PrimedComponent
         }
 
         ReactDOM.render(
-            <ExternalComponentLoaderToolbarView
+            <WaterParkToolbar
                 componentUrls={ componentUrls }
                 onSelectOption={ this.createAndAddComponent }
                 toggleEditable={ this.toggleEditable }

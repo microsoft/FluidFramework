@@ -21,7 +21,7 @@ import {
 } from "@fluid-example/spaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ExternalComponentLoaderToolbarView } from "./waterParkLoader/ExternalComponentLoaderToolbar";
+import { WaterParkToolbar } from "./waterParkToolbar";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -77,7 +77,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Can't render, storage not found");
         }
         ReactDOM.render(
-            <WaterParkView storage={this.storage} />,
+            <WaterParkView storage={this.storage} onSelectOption={this.createAndAddComponent} />,
             element,
         );
     }
@@ -138,11 +138,11 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     private readonly createAndAddComponent = async (componentUrl: string) => {
-        if (this.props?.addItem === undefined) {
+        if (this.storage?.addItem === undefined) {
             throw new Error("Don't have an addItem callback");
         }
 
-        this.props.addItem({
+        this.storage.addItem({
             component: await this.createComponentFromUrl(componentUrl),
             type: componentUrl,
         });
@@ -151,17 +151,19 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 
 interface IWaterParkViewProps {
     storage: SpacesStorage;
+    onSelectOption: (componentUrl: string) => Promise<void>;
 }
+
 export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsWithChildren<IWaterParkViewProps>) => {
     const [editable, setEditable] = React.useState(props.storage.componentList.size === 0);
     return (
         <>
-            <ExternalComponentLoaderToolbarView
+            <WaterParkToolbar
                 componentUrls={ componentUrls }
-                onSelectOption={ this.createAndAddComponent }
+                onSelectOption={ props.onSelectOption }
                 toggleEditable={ () => setEditable(!editable) }
             />
             <SpacesStorageView storage={props.storage} editable={editable} />
         </>
     );
-}
+};
