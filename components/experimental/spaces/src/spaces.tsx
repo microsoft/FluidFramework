@@ -22,7 +22,6 @@ import {
     IInternalRegistryEntry,
     IComponentSpacesToolbarProps,
 } from "./interfaces";
-import { InternalRegistry } from "./spacesComponentRegistry";
 import { Templates } from ".";
 
 const SpacesStorageKey = "spaces-storage";
@@ -111,10 +110,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         this.internalRegistry = await this.context.containerRuntime.IComponentRegistry.get("");
 
         if (this.internalRegistry) {
-            const registryDetails = this.internalRegistry.IComponentInternalRegistry;
-            if (registryDetails) {
-                this.supportedComponents = (registryDetails as InternalRegistry)
-                    .getFromCapability("IComponentHTMLView");
+            const internalRegistry = this.internalRegistry.IComponentInternalRegistry;
+            if (internalRegistry) {
+                this.supportedComponents = internalRegistry.getFromCapability("IComponentHTMLView");
             }
         }
     }
