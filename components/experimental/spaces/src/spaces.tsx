@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
+import { ISpacesStoredComponent, SpacesStorage } from "./spacesStorage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
@@ -129,7 +129,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     public async setTemplate(): Promise<void> {
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesStorageFormat[];
+            const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
             const promises = templateItems.map(async (templateItem) => {
                 return this.createAndStoreComponent(templateItem.type, templateItem.layout);
             });
@@ -149,10 +149,10 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Can't add item, storage not found");
         }
 
-        return this.storageComponent.addItem({
-            handle: component.handle,
+        return this.storageComponent.addItem(
+            component.handle,
             type,
             layout,
-        });
+        );
     }
 }

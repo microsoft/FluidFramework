@@ -20,13 +20,13 @@ export interface ISpacesStorageModel extends EventEmitter {
     /**
      * The list of components being stored.
      */
-    readonly componentList: Map<string, ISpacesStorageFormat>;
+    readonly componentList: Map<string, ISpacesStoredComponent>;
     /**
      * Adds the given item to the collector.
      * @param item - The item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(item: ISpacesCollectible): string;
+    addItem(handle: IComponentHandle, type: string, layout?: Layout): string
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.
@@ -40,20 +40,14 @@ export interface ISpacesStorageModel extends EventEmitter {
     updateLayout(key: string, newLayout: Layout): void;
 }
 
-export interface ISpacesStorageFormat {
-    type: string;
-    layout: Layout;
-    handle: IComponentHandle;
-}
-
 /**
  * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
  * supporting export to template.
  */
-export interface ISpacesCollectible {
+export interface ISpacesStoredComponent {
     handle: IComponentHandle;
     type: string;
-    layout?: Layout;
+    layout: Layout;
 }
 
 /**
@@ -79,19 +73,19 @@ export class SpacesStorage extends PrimedComponent implements
 
     public get IComponentHTMLView() { return this; }
 
-    public get componentList(): Map<string, ISpacesStorageFormat> {
+    public get componentList(): Map<string, ISpacesStoredComponent> {
         return this.root;
     }
 
-    public addItem(item: ISpacesCollectible): string {
-        const model: ISpacesStorageFormat = {
-            type: item.type,
-            layout: item.layout ?? { x: 0, y: 0, w: 6, h: 2 },
-            handle: item.handle,
+    public addItem(handle: IComponentHandle, type: string, layout?: Layout): string {
+        const model: ISpacesStoredComponent = {
+            handle,
+            type,
+            layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },
         };
         // REVIEW: Is it safe to use handle.path here as a key?
-        this.root.set(item.handle.path, model);
-        return item.handle.path;
+        this.root.set(handle.path, model);
+        return handle.path;
     }
 
     public removeItem(key: string): void {
@@ -99,11 +93,11 @@ export class SpacesStorage extends PrimedComponent implements
     }
 
     public updateLayout(key: string, newLayout: Layout): void {
-        const currentEntry = this.root.get<ISpacesStorageFormat>(key);
+        const currentEntry = this.root.get<ISpacesStoredComponent>(key);
         const model = {
+            handle: currentEntry.handle,
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
-            handle: currentEntry.handle,
         };
         this.root.set(key, model);
     }

@@ -113,10 +113,10 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         if (component.handle === undefined) {
             throw new Error("Can't add, component must have a handle");
         }
-        this.storage.addItem({
-            handle: component.handle,
-            type: componentUrl,
-        });
+        this.storage.addItem(
+            component.handle,
+            componentUrl,
+        );
     };
 }
 
