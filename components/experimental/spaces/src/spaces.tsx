@@ -77,8 +77,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         };
         ReactDOM.render(
             <SpacesView
-                supportedToolbarComponents={this.supportedComponents}
-                dataModel={ this.storageComponent }
+                supportedComponents={this.supportedComponents}
+                storage={ this.storageComponent }
                 toolbarProps={ toolbarProps }
             />,
             div,

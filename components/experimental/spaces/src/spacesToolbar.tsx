@@ -30,24 +30,21 @@ const componentButtonStyle: React.CSSProperties = {
 
 initializeIcons();
 
-interface IComponentToolbarViewProps {
+interface ISpacesToolbarProps {
     props: IComponentSpacesToolbarProps;
     components: IInternalRegistryEntry[];
+    editable: boolean;
+    setEditable: (editable: boolean) => void;
 }
 
-export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
-    (props: React.PropsWithChildren<IComponentToolbarViewProps>) => {
+export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
+    (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
         const templatesAvailable = props.props.templatesAvailable !== undefined
             ? props.props.templatesAvailable()
-            : false;
-        const editable = props.props.editable !== undefined
-            ? props.props.editable()
             : false;
 
         const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
         const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);
-        // Would prefer not to copy props into state
-        const [editableState, setEditableState] = React.useState<boolean>(editable);
 
         const componentsButton = (
             <Button
@@ -130,16 +127,13 @@ export const SpacesToolbar: React.FC<IComponentToolbarViewProps> =
                     style={editableButtonStyle}
                     iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => {
-                        const newEditableState = !editableState;
-                        setEditableState(newEditableState);
-                        if (props.props.setEditable) {
-                            props.props.setEditable(newEditableState);
-                        }
+                        const newEditableState = !props.editable;
+                        props.setEditable(newEditableState);
                     }}
                 >
-                    {`Edit: ${editableState}`}
+                    {`Edit: ${props.editable}`}
                 </Button>
-                {editableState ?
+                {props.editable ?
                     <div>
                         <div style={componentButtonStyle}>
                             <Collapsible
