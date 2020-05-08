@@ -89,30 +89,27 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
         );
     };
 
-interface ISpacesViewProps {
-    toolbarComponent: SpacesCompatibleToolbar | undefined;
-    dataModel: ISpacesStorageModel;
-    toolbarProps: IComponentSpacesToolbarProps;
+interface ISpacesStorageViewProps {
+    storage: ISpacesStorageModel;
+    editable: boolean;
 }
+export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
+    (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
+        // Render nothing if there are no components
+        if (props.storage.componentList.size === 0) {
+            return <></>;
+        }
 
-export const SpacesView: React.FC<ISpacesViewProps> =
-    (props: React.PropsWithChildren<ISpacesViewProps>) => {
-        const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
         const [componentMap, setComponentMap] =
-            React.useState<Map<string, ISpacesStoredComponent>>(props.dataModel.componentList);
-
-        // Editable is a view-only concept; SpacesView is the authority.
-        const combinedToolbarProps = props.toolbarProps;
-        combinedToolbarProps.editable = () => editable;
-        combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
+            React.useState<Map<string, ISpacesStoredComponent>>(props.storage.componentList);
 
         React.useEffect(() => {
             const onComponentListChanged = (newMap: Map<string, Layout>) => {
                 setComponentMap(newMap);
             };
-            props.dataModel.on("componentListChanged", onComponentListChanged);
+            props.storage.on("componentListChanged", onComponentListChanged);
             return () => {
-                props.dataModel.off("componentListChanged", onComponentListChanged);
+                props.storage.off("componentListChanged", onComponentListChanged);
             };
         });
 
@@ -125,12 +122,8 @@ export const SpacesView: React.FC<ISpacesViewProps> =
             element: HTMLElement,
         ) => {
             const key = newItem.i.split("_")[0];
-            props.dataModel.updateLayout(key, newItem);
+            props.storage.updateLayout(key, newItem);
         };
-
-        const toolbarElement = props.toolbarComponent !== undefined
-            ? <ReactViewAdapter component={ props.toolbarComponent } />
-            : undefined;
 
         const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
@@ -144,39 +137,60 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                 <div key={url} className="spaces-component-view-wrapper">
                     <SpacesComponentView
                         url={url}
-                        editable={editable}
+                        editable={props.editable}
                         getComponent={async () => model.handle.get()}
-                        removeComponent={() => props.dataModel.removeItem(url)}
+                        removeComponent={() => props.storage.removeItem(url)}
                     />
                 </div>,
             );
         });
 
         return (
-            <div className={`spaces-grid-view${ editable ? " editable" : "" }`}>
+            <ReactGridLayout
+                className="spaces-component-grid"
+                cols={36}
+                rowHeight={50}
+                width={1800}
+                height={10000}
+                // eslint-disable-next-line no-null/no-null
+                compactType={null} // null is required for the GridLayout
+                isDroppable={props.editable}
+                isDraggable={props.editable}
+                isResizable={props.editable}
+                preventCollision={true}
+                isRearrangeable={false}
+                onResizeStop={onGridChangeEvent}
+                onDragStop={onGridChangeEvent}
+                layout={layouts}
+            >
+                {components}
+            </ReactGridLayout>
+        );
+    };
+
+interface ISpacesViewProps {
+    toolbarComponent: SpacesCompatibleToolbar | undefined;
+    dataModel: ISpacesStorageModel;
+    toolbarProps: IComponentSpacesToolbarProps;
+}
+
+export const SpacesView: React.FC<ISpacesViewProps> =
+    (props: React.PropsWithChildren<ISpacesViewProps>) => {
+        const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
+
+        // Editable is a view-only concept; SpacesView is the authority.
+        const combinedToolbarProps = props.toolbarProps;
+        combinedToolbarProps.editable = () => editable;
+        combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
+
+        const toolbarElement = props.toolbarComponent !== undefined
+            ? <ReactViewAdapter component={ props.toolbarComponent } />
+            : undefined;
+
+        return (
+            <div className={`spaces-view${ editable ? " editable" : "" }`}>
                 { toolbarElement }
-                {
-                    componentMap.size > 0 &&
-                        <ReactGridLayout
-                            className="spaces-component-grid"
-                            cols={36}
-                            rowHeight={50}
-                            width={1800}
-                            height={10000}
-                            // eslint-disable-next-line no-null/no-null
-                            compactType={null} // null is required for the GridLayout
-                            isDroppable={editable}
-                            isDraggable={editable}
-                            isResizable={editable}
-                            preventCollision={true}
-                            isRearrangeable={false}
-                            onResizeStop={onGridChangeEvent}
-                            onDragStop={onGridChangeEvent}
-                            layout={layouts}
-                        >
-                            {components}
-                        </ReactGridLayout>
-                }
+                <SpacesStorageView storage={props.dataModel} editable={editable} />
             </div>
         );
     };
