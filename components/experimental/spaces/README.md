@@ -1,6 +1,6 @@
 # Spaces
 
-**Spaces** is a Fluid component that provides a grid layout for users to compose their own experiences by adding and re-arranging components. This is a beginner thought exercise at how modular document types could work.
+**Spaces** is a Fluid component that provides a grid layout for users to compose their own experiences by adding and re-arranging components. This example explores how modular document types could work in Fluid.
 
 ## Getting Started
 

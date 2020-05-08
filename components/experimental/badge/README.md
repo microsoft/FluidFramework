@@ -1,6 +1,6 @@
 # Badge
 
-**Badge** is a Fluid Component that allows users to create an in-line badge within a document to represent the status
+**Badge** is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.
 
 ![Badge UI](./images/badge.png)

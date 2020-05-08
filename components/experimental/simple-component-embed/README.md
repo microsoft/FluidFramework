@@ -1,6 +1,6 @@
 # Simple Component Embed
 
-An example of how to embeds another component. **Simple Component Embed** is a component that creates and loads
+An example of how to embed another component. **Simple Component Embed** is a component that creates and loads
 the [`@fluid-example/clicker`](../clicker/README.md) component.
 
 ## Getting Started

@@ -16,4 +16,4 @@ If you want to run this component follow the following steps:
 Monaco uses the following distributed data structures:
 
 - SharedDirectory - root
-- SharedString - storing Draft.js text
+- SharedString - storing Monaco text

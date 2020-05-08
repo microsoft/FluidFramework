@@ -20,10 +20,9 @@ If you want to run this component follow the following steps:
 
 ### [Anchor](./src/components/anchor/anchor.ts)
 
-**Anchor** is a simple attempt at a Root Component. Current thoughts are that the Root Component will be be a way to decouple
-the default view from the Container and also offer a surface area API to the Hosting Application.
-
-Currently the Anchor component is simply a view proxy to the Vltava component. 
+**Anchor** is a simple attempt at a Root Component. Currently the Anchor component is a view proxy to the Vltava component.
+Future thoughts are that the Root Component will be be a way to further decouple the default view from the Container
+and also offer a surface area API to the Hosting Application.
 
 ### [Tabs](./src/components/tabs/tabs.tsx)
 

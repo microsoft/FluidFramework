@@ -4,7 +4,7 @@ An experimental implementation of writing a Rich Text Editor.
 
 ## History
 
-**Shared Text** was the first editor written on the Fluid Framework and has evolved with the evolution of the framework.
+**Shared Text** was the first editor written on the Fluid Framework and has evolved along with the framework.
 
 ## Getting Started
 

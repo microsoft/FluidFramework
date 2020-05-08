@@ -16,4 +16,4 @@ If you want to run this component follow the following steps:
 SimpleMDE uses the following distributed data structures:
 
 - SharedMap - root
-- SharedString - storing ProseMirror text
+- SharedString - storing SimpleMDE text

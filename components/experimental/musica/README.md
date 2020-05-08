@@ -13,6 +13,6 @@ If you want to run this component follow the following steps:
 
 ## Data model
 
-Dice Roller uses the following distributed data structures:
+Musica uses the following distributed data structures:
 
 - SharedDirectory - root
