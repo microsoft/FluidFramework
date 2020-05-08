@@ -8,6 +8,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
@@ -33,6 +34,11 @@ export class MockDocumentService implements IDocumentService {
         private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
         private readonly deltaConnectionFactory?: () => IDocumentDeltaConnection,
     ) {}
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): IResolvedUrl {
+        throw new Error("Not implemented");
+    }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
         throw new Error("Method not implemented.");

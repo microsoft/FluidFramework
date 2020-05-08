@@ -18,6 +18,11 @@ export class FileDocumentService implements api.IDocumentService {
         private readonly deltaConnection: api.IDocumentDeltaConnection) {
     }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): api.IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return this.storage;
     }

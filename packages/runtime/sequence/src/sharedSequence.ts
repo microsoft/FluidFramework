@@ -5,7 +5,7 @@
 
 import {
     BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection } from "@microsoft/fluid-merge-tree";
-import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;

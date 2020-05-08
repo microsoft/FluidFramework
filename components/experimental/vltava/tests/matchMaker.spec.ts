@@ -12,7 +12,7 @@ import {
     IComponentDiscoverableInterfaces,
     IComponentDiscoverInterfaces,
 } from "@microsoft/fluid-framework-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-component-runtime-definitions";
 
 import { MatchMaker } from "../src/containerServices";
 

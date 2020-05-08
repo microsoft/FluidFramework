@@ -8,7 +8,6 @@ import * as path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
 export enum MonoRepoKind {
-    None,
     Client,
     Server,
 };

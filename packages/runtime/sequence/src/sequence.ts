@@ -14,7 +14,11 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import {
     makeHandlesSerializable,
