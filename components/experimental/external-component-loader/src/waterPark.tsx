@@ -5,13 +5,11 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentLoadable,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
-    ISpacesStorageModel,
     SpacesStorage,
     SpacesStorageView,
 } from "@fluid-example/spaces";
@@ -54,12 +52,6 @@ const componentUrls = defaultComponents.map((url) => `${url}@${defaultVersionToL
 if (window.location.hostname === "localhost") {
     componentUrls.push(...localComponentUrls);
 }
-
-/**
- * The view component must support certain interfaces to work with the waterpark.
- */
-export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & ISpacesStorageModel;
 
 /**
  * WaterPark assembles the SpacesStorage with a custom toolbar that can load other components

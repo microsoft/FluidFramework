@@ -8,21 +8,13 @@ import {
     IComponent,
     IComponentLoadable,
     IResponse,
-    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 import {
     IComponentSpacesToolbarProps,
-    ISpacesStorageModel,
 } from "@fluid-example/spaces";
 import { UrlRegistry } from "../urlRegistry";
-
-/**
- * The view component must support certain interfaces to work with the waterpark.
- */
-export type WaterParkCompatibleView =
-    IComponentHandle & IComponentLoadable & ISpacesStorageModel;
 
 /**
  * Component that loads extneral components via their url
