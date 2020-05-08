@@ -11,9 +11,9 @@ import {
     IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { IOdspResolvedUrl, IOdspSnapshot } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -56,7 +56,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param odspCache - This caches response for joinSession.
+   * @param cachedSnapshots - cached Odsp Snapshots to hydrate into the OdspCache.
    */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
@@ -64,9 +64,9 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        permanentCache?: ICache,
+        cachedSnapshots?: Map<string, IOdspSnapshot>,
     ) {
-        this.cache = new OdspCache(permanentCache);
+        this.cache = new OdspCache(cachedSnapshots);
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {

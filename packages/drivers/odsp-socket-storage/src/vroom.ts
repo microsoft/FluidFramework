@@ -98,7 +98,7 @@ export function getSocketStorageDiscovery(
     // If the result is valid and used within an hour we put the same result again with updated time
     // to keep using it for consecutive join session calls.
     // On error, the delta connection will invalidate it.
-    let cachedResultP: Promise<ISocketStorageDiscovery> = cache.sessionStorage.get(joinSessionKey);
+    let cachedResultP: Promise<ISocketStorageDiscovery> = cache.sessionCache.get(joinSessionKey);
 
     if (cachedResultP === undefined) {
         cachedResultP = fetchJoinSession(
@@ -111,11 +111,11 @@ export function getSocketStorageDiscovery(
             getVroomToken,
         );
         cachedResultP.catch((error) => {
-            cache.sessionStorage.remove(joinSessionKey);
+            cache.sessionCache.remove(joinSessionKey);
         });
     }
 
-    cache.sessionStorage.put(joinSessionKey, cachedResultP, 3600000);
+    cache.sessionCache.put(joinSessionKey, cachedResultP, 3600000);
 
     return cachedResultP;
 }

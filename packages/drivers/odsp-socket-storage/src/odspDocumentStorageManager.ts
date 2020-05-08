@@ -276,9 +276,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                const odspCacheKey: string = `${this.documentId}/getlatest`;
-                let odspSnapshot: IOdspSnapshot = await this.cache.localStorage.get(odspCacheKey);
-                if (!odspSnapshot) {
+                const fetchOdspSnapshot = async () => {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -290,7 +288,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        odspSnapshot = response.content;
+                        const odspSnapshot: IOdspSnapshot = response.content;
 
                         const props = {
                             trees: odspSnapshot.trees ? odspSnapshot.trees.length : 0,
@@ -302,17 +300,21 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
+                        return odspSnapshot;
                     } catch (error) {
                         event.cancel({}, error);
                         throw error;
                     }
+                };
 
-                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                    // want to use the same getLatest result.
-                    this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
-                }
-                const { trees, tree, blobs, ops, sha } = odspSnapshot;
+                // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+                // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+                // want to use the same getLatest result.
+                const odspCacheKey: string = `${this.documentId}/getlatest`;
+                //* rename
+                const theThing = await this.cache.snapshotCache.addOrGet(odspCacheKey, fetchOdspSnapshot);
+
+                const { trees, tree, blobs, ops, sha } = theThing;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
                     this.initTreesCache(trees);
@@ -332,7 +334,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
                 // instead of "Tree"
                 if (tree) {
-                    this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
+                    this.treesCache.set(theThing.sha, (theThing as any) as resources.ITree);
                 }
 
                 if (blobs) {

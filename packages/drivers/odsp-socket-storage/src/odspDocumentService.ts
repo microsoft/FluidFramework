@@ -323,7 +323,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.cache.sessionStorage.remove(this.joinSessionKey);
+                this.cache.sessionCache.remove(this.joinSessionKey);
                 throw error;
             });
         });
