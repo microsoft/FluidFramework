@@ -93,6 +93,7 @@ interface ISpacesStorageViewProps {
     storage: ISpacesStorageModel;
     editable: boolean;
 }
+
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
         const [componentMap, setComponentMap] =

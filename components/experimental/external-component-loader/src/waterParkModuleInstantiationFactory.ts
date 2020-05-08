@@ -43,9 +43,6 @@ async function createAndAttachComponent<T>(
 export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactoryWithDefaultComponent {
     /**
      * @param entries - Registered component types
-     * @param loaderComponentName - The registry name for the loader component
-     * @param viewComponentName - The registry name for the view component, which must be a WaterParkCompatibleView
-     * and may also be an IComponentToolbarConsumer
      */
     constructor(entries: NamedComponentRegistryEntries) {
         // this needs to switch to WaterParkLoaderName
