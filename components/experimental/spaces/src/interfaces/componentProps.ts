@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISpacesCollectible } from "../spacesStorage";
 import { Templates } from "..";
 
@@ -39,6 +38,3 @@ export interface IProvideComponentTakesProps {
 export interface IComponentTakesProps<T> extends IProvideComponentTakesProps {
     setComponentProps(props: T): void;
 }
-
-export type SpacesCompatibleToolbar =
-    IComponent & IComponentTakesProps<IComponentSpacesToolbarProps>;

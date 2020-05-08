@@ -6,4 +6,3 @@
 export * from "./componentInternalRegistry";
 export * from "./componentProps";
 export * from "./componentRegistryTemplates";
-export * from "./componentToolbarConsumer";

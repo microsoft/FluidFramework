@@ -15,7 +15,6 @@ import * as uuid from "uuid";
 import {
     IComponentSpacesToolbarProps,
     ISpacesStorageModel,
-    SpacesCompatibleToolbar,
 } from "@fluid-example/spaces";
 import { UrlRegistry } from "../urlRegistry";
 
@@ -28,7 +27,7 @@ export type WaterParkCompatibleView =
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent implements SpacesCompatibleToolbar {
+export class ExternalComponentLoader extends PrimedComponent {
     private props: IComponentSpacesToolbarProps | undefined;
 
     public get IComponentTakesProps() { return this; }
