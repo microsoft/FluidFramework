@@ -148,7 +148,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
 
         return (
             <ReactGridLayout
-                className="spaces-component-grid"
+                className={`spaces-storage-view${ props.editable ? " editable" : "" }`}
                 cols={36}
                 rowHeight={50}
                 width={1800}
@@ -185,7 +185,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
         combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
 
         return (
-            <div className={`spaces-view${ editable ? " editable" : "" }`}>
+            <div className="spaces-view">
                 <SpacesToolbar props={combinedToolbarProps} components={props.supportedToolbarComponents} />
                 <SpacesStorageView storage={props.dataModel} editable={editable} />
             </div>
