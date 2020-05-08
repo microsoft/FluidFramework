@@ -141,12 +141,16 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
         const component = await this.createAndAttachComponent(type);
 
+        if (component.handle === undefined) {
+            throw new Error("Can't add, component must have a handle");
+        }
+
         if (this.storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
         }
 
         return this.storageComponent.addItem({
-            component,
+            handle: component.handle,
             type,
             layout,
         });

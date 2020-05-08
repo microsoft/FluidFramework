@@ -12,9 +12,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponent,
     IComponentHandle,
-    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
@@ -53,7 +51,7 @@ export interface ISpacesStorageFormat {
  * supporting export to template.
  */
 export interface ISpacesCollectible {
-    component: IComponent & IComponentLoadable;
+    handle: IComponentHandle;
     type: string;
     layout?: Layout;
 }
@@ -86,16 +84,14 @@ export class SpacesStorage extends PrimedComponent implements
     }
 
     public addItem(item: ISpacesCollectible): string {
-        if (item.component.handle === undefined) {
-            throw new Error(`Component must have a handle: ${item.type}`);
-        }
         const model: ISpacesStorageFormat = {
             type: item.type,
             layout: item.layout ?? { x: 0, y: 0, w: 6, h: 2 },
-            handle: item.component.handle,
+            handle: item.handle,
         };
-        this.root.set(item.component.url, model);
-        return item.component.url;
+        // REVIEW: Is it safe to use handle.path here as a key?
+        this.root.set(item.handle.path, model);
+        return item.handle.path;
     }
 
     public removeItem(key: string): void {
