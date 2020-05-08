@@ -21,7 +21,7 @@ import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkg = require("../../package.json") as IPackage;
+const pkg = require("../package.json") as IPackage;
 
 const storageKey = "storage";
 const loaderKey = "loader";
@@ -67,7 +67,7 @@ export type WaterParkCompatibleView =
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    public static get ComponentName() { return "@fluid-example/external-component-loader"; }
+    public static get ComponentName() { return "@fluid-example/waterpark"; }
 
     private static readonly factory = new PrimedComponentFactory(
         WaterPark.ComponentName,
@@ -99,9 +99,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
-        this.root.set(storageKey, storage);
+        this.root.set(storageKey, storage.handle);
         const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
-        this.root.set(loaderKey, loader);
+        this.root.set(loaderKey, loader.handle);
     }
 
     protected async componentHasInitialized() {

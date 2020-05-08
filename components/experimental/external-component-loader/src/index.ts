@@ -3,13 +3,12 @@
 * Licensed under the MIT License.
 */
 
-import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
-import { ExternalComponentLoader } from "./externalComponentLoader";
-import { WaterParkContainerRuntimeFactory } from "./waterParkContainerRuntimeFactory";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { WaterPark } from "./waterPark";
 
-export const fluidExport = new WaterParkContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    WaterPark.ComponentName,
     new Map([
-        [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
-        [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
+        [WaterPark.ComponentName, Promise.resolve(WaterPark.getFactory())],
     ]),
 );
