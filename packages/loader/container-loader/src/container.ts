@@ -31,7 +31,6 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
-    ErrorType,
     IDocumentService,
     IDocumentStorageService,
     IError,
@@ -145,26 +144,16 @@ export class Container
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
-            const onError = (err?: IError) => {
-                container.removeListener("closed", onError);
+            const onClosed = (err?: IError) => {
+                container.removeListener("closed", onClosed);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                let error: IError;
-                if (err === undefined) {
-                    const message = "Container closed without an error";
-                    error = {
-                        errorType: ErrorType.generalError,
-                        message,
-                        error: new Error(message),
-                    };
-                } else {
-                    error = createIError(err);
-                }
+                const error = err ?? createIError("Container closed without an error");
                 container.close(error);
                 rej(error);
             };
-            container.on("closed", onError);
+            container.on("closed", onClosed);
 
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
@@ -173,14 +162,14 @@ export class Container
 
             container.load(version, !!pause)
                 .then((props) => {
-                    container.removeListener("closed", onError);
-                    res(container);
+                    container.removeListener("closed", onClosed);
                     perfEvent.end(props);
+                    res(container);
                 })
                 .catch((error) => {
                     perfEvent.cancel(undefined, error);
                     const err = createIError(error);
-                    onError(err);
+                    onClosed(err);
                 });
         });
     }
@@ -419,7 +408,7 @@ export class Container
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
-        // Backward compatibility - raise "critical" error
+        // Supporting existing behavior (temporarily, will be removed in the future) - raise "critical" error
         // Hosts should instead  listen for "closed" event.
         // That said, when we remove it, we need to replace it with call to this.logContainerError()
         // for telemetry to continue to flow.
@@ -614,6 +603,12 @@ export class Container
     public get storage(): IDocumentStorageService | null | undefined {
         return this.blobsCacheStorageService || this.storageService;
     }
+
+    /**
+     * Raise non-critical error to host. Calling this API will not close container.
+     * For critical errors, please call Container.close(error).
+     * @param error - an error to raise
+     */
 
     public raiseContainerError(error: IError) {
         this.emit("error", error);

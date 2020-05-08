@@ -17,7 +17,6 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IError,
-    IGenericNetworkError,
     IThrottlingError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
@@ -411,12 +410,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 try {
                     this.client.mode = requestedMode;
                     connection = await DeltaConnection.connect(docService, this.client);
-                } catch (error) {
+                } catch (origError) {
+                    const error = createIError(origError);
+
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
-                    if (!canRetryOnError(error)) {
-                        const error2 = createIError(error);
-                        this.close(error2);
-                        throw error2;
+                    if (!canRetryOnError(origError)) {
+                        this.close(error);
+                        throw error;
                     }
 
                     // Log error once - we get too many errors in logs when we are offline,
@@ -428,10 +428,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                                 delay,
                                 eventName: "DeltaConnectionFailureToConnect",
                             },
-                            error);
+                            origError);
                     }
 
-                    const retryDelayFromError = this.getRetryDelayFromError(error);
+                    const retryDelayFromError = this.getRetryDelayFromError(origError);
                     delay = retryDelayFromError !== undefined ?
                         retryDelayFromError :
                         Math.min(delay * 2, MaxReconnectDelay);
@@ -622,7 +622,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
                 // count since something prevented us from seeing those deltas
                 from = lastFetch;
-            } catch (error) {
+            } catch (origError) {
+                const error = createIError(origError);
+
                 logNetworkFailure(
                     this.logger,
                     {
@@ -632,19 +634,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         requests,
                         retry: retry + 1,
                     },
-                    error);
+                    origError);
 
-                if (!canRetry || !canRetryOnError(error)) {
+                if (!canRetry || !canRetryOnError(origError)) {
                     // It's game over scenario.
-                    telemetryEvent.cancel({ category: "error" }, error);
-                    this.close(createIError(error));
+                    telemetryEvent.cancel({ category: "error" }, origError);
+                    this.close(error);
                     return;
                 }
                 success = false;
-                retryAfter = this.getRetryDelayFromError(error);
+                retryAfter = this.getRetryDelayFromError(origError);
 
                 if (retryAfter !== undefined && retryAfter >= 0) {
-                    // Emit throttling info only if we get it from error.
                     this.emitDelayInfo(retryFor.DELTASTORAGE, retryAfter, error);
                 }
             }
@@ -679,7 +680,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         undefined /* statusCode */,
                         undefined /* retryAfterSeconds */,
                         "Online",
-                    ) as IGenericNetworkError;
+                    );
                     this.close(closeError);
                     return;
                 }
@@ -762,7 +763,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private emitDelayInfoCancel(retryEndpoint: number) {
+    private cancelDelayInfo(retryEndpoint: number) {
         if (retryEndpoint === retryFor.DELTASTORAGE) {
             this.deltaStorageDelay = 0;
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
@@ -770,7 +771,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private emitDelayInfo(retryEndpoint: number, delay: number, error: any) {
+    private emitDelayInfo(retryEndpoint: number, delay: number, error: IError) {
         if (retryEndpoint === retryFor.DELTASTORAGE) {
             this.deltaStorageDelay = delay;
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
@@ -779,14 +780,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
         if (delayTime > 0) {
-            // Is it an Error object?
-            let message = error?.message;
-            if (message === undefined) {
-                message = `${error}`;
-            }
             const throttlingError: IThrottlingError = {
                 errorType: ErrorType.throttlingError,
-                message: `Service busy/throttled: ${message}`,
+                message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delayTime / 1000,
             };
             this.emit("error", throttlingError);
@@ -810,7 +806,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.setReadonlyPermissions(readonly);
 
-        this.emitDelayInfoCancel(retryFor.DELTASTREAM);
+        this.cancelDelayInfo(retryFor.DELTASTREAM);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -966,12 +962,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.disconnectFromDeltaStream(reason);
 
         // If reconnection is not an option, close the DeltaManager
-        const criticalError = !canRetryOnError(error);
-        if (!this.reconnect || criticalError) {
+        const canRetry = canRetryOnError(error);
+        if (!(this.reconnect && canRetry)) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(criticalError ? createIError(error) : undefined);
+            this.close(canRetry ? undefined : createIError(error));
         }
 
         // If closed then we can't reconnect
@@ -1129,7 +1125,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.emitDelayInfoCancel(retryFor.DELTASTORAGE);
+            this.cancelDelayInfo(retryFor.DELTASTORAGE);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 

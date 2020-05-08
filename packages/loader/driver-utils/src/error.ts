@@ -24,6 +24,12 @@ export function createIError(error: any): IError {
             };
         }
         return error;
+    } else if (typeof error === "string") {
+        return {
+            errorType: ErrorType.generalError,
+            message : error,
+            error: new Error(error),
+        };
     } else {
         const specificError: IError = {
             errorType: ErrorType.generalError,

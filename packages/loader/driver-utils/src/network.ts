@@ -68,7 +68,6 @@ class AccessDeniedError extends ErrorWithProps implements IAccessDeniedError {
 
     constructor(
         errorMessage: string,
-        readonly statusCode?: number,
         readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
@@ -85,7 +84,6 @@ class FileNotFoundError extends ErrorWithProps implements IFileNotFoundError {
 
     constructor(
         errorMessage: string,
-        readonly statusCode?: number,
         readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
@@ -136,10 +134,10 @@ export function createNetworkError(
     online: string = OnlineStatus[isOnline()],
 ): IError {
     if (statusCode === 401 || statusCode === 403) {
-        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
+        return new AccessDeniedError(errorMessage, canRetry, online);
     }
     if (statusCode === 404) {
-        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
+        return new FileNotFoundError(errorMessage, canRetry, online);
     }
     if (statusCode === 500) {
         return new FatalError(errorMessage);
