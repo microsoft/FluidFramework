@@ -113,9 +113,9 @@ export interface IConnectionArgs {
 }
 
 export enum ReconnectMode {
-    Never = -1,
-    Disabled = 0,
-    Enabled = 1,
+    Never = "Never",
+    Disabled = "Disabled",
+    Enabled = "Enabled",
 }
 
 /**
@@ -131,7 +131,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Controls whether the DeltaManager will automatically reconnect to the delta stream after receiving a disconnect.
      */
-    private _reconnect: ReconnectMode;
+    private _reconnectMode: ReconnectMode;
 
     // file ACL - whether user has only read-only access to a file
     private readonlyPermissions: boolean | undefined;
@@ -264,21 +264,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Automatic reconnecting enabled or disabled.
      * If set to Never, then reconnecting will never be allowed.
      */
-    public get reconnect(): ReconnectMode {
-        return this._reconnect;
+    public get reconnectMode(): ReconnectMode {
+        return this._reconnectMode;
     }
 
     /**
      * Enables or disables automatic reconnecting.
-     * Will throw an error if attempting to enable when set to Never.
+     * Will throw an error if reconnectMode set to Never.
      */
-    public setReconnect(reconnect: boolean): void {
-        if (reconnect) {
-            assert(this._reconnect !== ReconnectMode.Never, "Cannot enable reconnect if reconnect is set to Never.");
-            this._reconnect = ReconnectMode.Enabled;
-        } else if (this._reconnect === ReconnectMode.Enabled) {
-            this._reconnect = ReconnectMode.Disabled;
-        }
+    public setAutomaticReconnect(reconnect: boolean): void {
+        assert(this._reconnectMode !== ReconnectMode.Never, "Cannot toggle automatic reconnect if reconnect is set to Never.");
+        this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
     }
 
     /**
@@ -317,7 +313,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
-        this._reconnect = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
+        this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -929,12 +925,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const reconnectInfo: IErrorReconnectInfo = message.content
                 ? getNackReconnectInfo(message.content)
                 : {
-                    reason: "",
+                    reason: "Nacked: Unknown reason",
                     canReconnect: true,
                     getError() { return createFatalError(this.reason); },
                 };
 
-            if (this.reconnect !== ReconnectMode.Enabled) {
+            if (this.reconnectMode !== ReconnectMode.Enabled) {
                 this.logger.sendErrorEvent({
                     eventName: "NackWithNoReconnect",
                     nackError: `reason: ${reconnectInfo.reason}`,
@@ -1053,7 +1049,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // If reconnection is not an option, close the DeltaManager
         const isCriticalError = !reconnectInfo.canReconnect;
-        if (this.reconnect === ReconnectMode.Never || isCriticalError) {
+        if (this.reconnectMode === ReconnectMode.Never || isCriticalError) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
@@ -1065,7 +1061,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        if (this.reconnect === ReconnectMode.Enabled) {
+        if (this.reconnectMode === ReconnectMode.Enabled) {
             if (reconnectInfo.reconnectDelay !== undefined) {
                 this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay);
                 await waitForConnectedState(reconnectInfo.reconnectDelay * 1000);

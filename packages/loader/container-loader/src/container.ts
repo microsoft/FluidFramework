@@ -564,7 +564,7 @@ export class Container
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
 
-        this._deltaManager.setReconnect(reconnect);
+        this._deltaManager.setAutomaticReconnect(reconnect);
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
@@ -1180,7 +1180,7 @@ export class Container
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager.reconnect;
+            autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
             if (value === ConnectionState.Connected) {
