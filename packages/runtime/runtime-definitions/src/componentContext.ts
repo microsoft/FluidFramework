@@ -336,13 +336,9 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
-}
-
-export interface IExperimentalComponentContext extends IComponentContext {
-    readonly isExperimentalComponentContext: true;
 
     /**
-     * It is false if the container is not attached to storage and the component is attached to container.
+     * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
 }

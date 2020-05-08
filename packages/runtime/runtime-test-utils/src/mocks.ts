@@ -367,6 +367,10 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
+    public isLocal(): boolean {
+        return true;
+    }
+
     public registerChannel(channel: IChannel): void {
         channel.connect(this.services);
     }

@@ -139,13 +139,9 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
      * Errors raised by distributed data structures
      */
     error(err: any): void;
-}
-
-export interface IExperimentalComponentRuntime extends IComponentRuntime {
-    readonly isExperimentalComponentRuntime: true;
 
     /**
-     * Indicates whether the container is attached to storage.
+     * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
 }
