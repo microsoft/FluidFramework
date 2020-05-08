@@ -18,16 +18,15 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { SpacesStorage } from "./spacesStorage";
-import { SpacesToolbar, SpacesToolbarName } from "./spacesToolbar";
+import { SpacesToolbar } from "./spacesToolbar";
 import { SpacesView } from "./view";
 import {
     IComponentSpacesToolbarProps,
     SpacesCompatibleToolbar,
 } from "./interfaces";
-import { SpacesComponentName, Templates } from ".";
+import { InternalRegistry, SpacesComponentName, Templates } from ".";
 
 const SpacesStorageKey = "spaces-storage";
-const SpacesToolbarKey = "spaces-toolbar";
 
 export interface ISpacesStoredComponent {
     type: string;
@@ -62,7 +61,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         {},
         [
             [ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ],
-            [ SpacesToolbarName, Promise.resolve(SpacesToolbar.getFactory()) ],
         ],
     );
 
@@ -99,7 +97,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 }
                 return this.storageComponent.addItem(item);
             },
-            templatesAvailable: this.registryDetails?.IComponentRegistryTemplates !== undefined,
+            templatesAvailable: () => this.registryDetails?.IComponentRegistryTemplates !== undefined,
             addTemplate: this.addTemplateFromRegistry.bind(this),
             saveLayout: () => this.saveLayout(),
         };
@@ -116,8 +114,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     protected async componentInitializingFirstTime() {
         const storageComponent = await this.createAndAttachComponent<SpacesStorage>(SpacesStorage.ComponentName);
         this.root.set(SpacesStorageKey, storageComponent.handle);
-        const toolbarComponent = await this.createAndAttachComponent<SpacesToolbar>(SpacesToolbarName);
-        this.root.set(SpacesToolbarKey, toolbarComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -127,10 +123,17 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
-        // eventually make this a non-persisted component
-        this.toolbarComponent = await this.root
-            .get<IComponentHandle<SpacesCompatibleToolbar> | undefined>(SpacesToolbarKey)?.get();
         this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
+
+        let components;
+        if (this.registryDetails) {
+            const registryDetails = this.registryDetails.IComponentRegistryDetails;
+            if (registryDetails) {
+                components = (registryDetails as InternalRegistry)
+                    .getFromCapability("IComponentHTMLView");
+            }
+        }
+        this.toolbarComponent = new SpacesToolbar(components ?? []);
     }
 
     private async addTemplateFromRegistry(template: Templates) {

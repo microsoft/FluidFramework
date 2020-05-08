@@ -16,10 +16,6 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "./spaces";
 import {
-    SpacesToolbar,
-    SpacesToolbarName,
-} from "./spacesToolbar";
-import {
     IContainerComponentDetails,
     Templates,
     IComponentRegistryDetails,
@@ -123,7 +119,6 @@ const generateFactory = () => {
 
     // We don't want to include the default wrapper component in our list of available components
     containerComponents.push([ SpacesComponentName, Promise.resolve(Spaces.getFactory())]);
-    containerComponents.push([ SpacesToolbarName, Promise.resolve(SpacesToolbar.getFactory()) ]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

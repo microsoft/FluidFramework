@@ -183,6 +183,8 @@ export const SpacesView: React.FC<ISpacesViewProps> =
         combinedToolbarProps.editable = () => editable;
         combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
 
+        props.toolbarComponent?.setComponentProps(combinedToolbarProps);
+
         const toolbarElement = props.toolbarComponent !== undefined
             ? <ReactViewAdapter component={ props.toolbarComponent } />
             : undefined;

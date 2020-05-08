@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISpacesCollectible } from "../spaces";
 import { Templates } from "..";
 
@@ -18,7 +18,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 export interface IComponentSpacesToolbarProps {
     addComponent?(type: string): void;
     addItem?(item: ISpacesCollectible): string;
-    templatesAvailable?: boolean;
+    templatesAvailable?(): boolean;
     addTemplate?(template: Templates): void;
     saveLayout?(): void;
     editable?(): boolean;
@@ -41,4 +41,4 @@ export interface IComponentTakesProps<T> extends IProvideComponentTakesProps {
 }
 
 export type SpacesCompatibleToolbar =
-    IComponent & IComponentLoadable & IComponentTakesProps<IComponentSpacesToolbarProps>;
+    IComponent & IComponentTakesProps<IComponentSpacesToolbarProps>;

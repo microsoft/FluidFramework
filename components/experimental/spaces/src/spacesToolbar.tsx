@@ -6,21 +6,15 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import Collapsible from "react-collapsible";
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     IContainerComponentDetails,
     IComponentTakesProps,
     IComponentSpacesToolbarProps,
-    InternalRegistry,
     Templates,
 } from ".";
 
@@ -37,42 +31,18 @@ const componentButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
 };
 
-export const SpacesToolbarName = "spacesToolbar";
-
 initializeIcons();
 
 /**
  * A component to allow you to add and manipulate components
  */
-export class SpacesToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentTakesProps<IComponentSpacesToolbarProps> {
+export class SpacesToolbar implements IComponentHTMLView, IComponentTakesProps<IComponentSpacesToolbarProps> {
     public get IComponentHTMLView() { return this; }
     public get IComponentTakesProps() { return this; }
 
     private props: IComponentSpacesToolbarProps = {};
 
-    private static readonly factory = new PrimedComponentFactory(
-        SpacesToolbarName,
-        SpacesToolbar,
-        [],
-        {});
-
-    private supportedComponentList: IContainerComponentDetails[] = [];
-
-    public static getFactory() {
-        return SpacesToolbar.factory;
-    }
-
-    protected async componentHasInitialized() {
-        const registry = await this.context.containerRuntime.IComponentRegistry.get("");
-        if (registry) {
-            const registryDetails = (registry as IComponent).IComponentRegistryDetails;
-            if (registryDetails) {
-                this.supportedComponentList = (registryDetails as InternalRegistry)
-                    .getFromCapability("IComponentHTMLView");
-            }
-        }
-    }
+    constructor(private readonly components: IContainerComponentDetails[] = []) {}
 
     public setComponentProps(props: IComponentSpacesToolbarProps) {
         this.props = props;
@@ -85,7 +55,7 @@ export class SpacesToolbar extends PrimedComponent
         ReactDOM.render(
             <ComponentToolbarView
                 props={this.props}
-                supportedComponentList={this.supportedComponentList}
+                components={this.components}
             />,
             div,
         );
@@ -94,12 +64,15 @@ export class SpacesToolbar extends PrimedComponent
 
 interface IComponentToolbarViewProps {
     props: IComponentSpacesToolbarProps;
-    supportedComponentList: IContainerComponentDetails[];
+    components: IContainerComponentDetails[];
 }
 
 const ComponentToolbarView: React.FC<IComponentToolbarViewProps> =
     (props: React.PropsWithChildren<IComponentToolbarViewProps>) => {
-        const templatesAvailable = props.props.templatesAvailable ?? false;
+        console.log(props.props.templatesAvailable);
+        const templatesAvailable = props.props.templatesAvailable !== undefined
+            ? props.props.templatesAvailable()
+            : false;
         const editable = props.props.editable !== undefined
             ? props.props.editable()
             : false;
@@ -120,7 +93,7 @@ const ComponentToolbarView: React.FC<IComponentToolbarViewProps> =
         );
         const componentButtonList: JSX.Element[] = [];
         if (componentListOpen) {
-            props.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+            props.components.forEach(((supportedComponent: IContainerComponentDetails) => {
                 componentButtonList.push(
                     <Button
                         style={dropDownButtonStyle}
