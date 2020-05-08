@@ -89,15 +89,14 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
         );
     };
 
-interface ISpacesGridViewProps {
-    toolbarComponentP: Promise<SpacesCompatibleToolbar | undefined>;
+interface ISpacesViewProps {
+    toolbarComponent: SpacesCompatibleToolbar | undefined;
     dataModel: ISpacesStorageModel;
     toolbarProps: IComponentSpacesToolbarProps;
 }
 
-export const SpacesView: React.FC<ISpacesGridViewProps> =
-    (props: React.PropsWithChildren<ISpacesGridViewProps>) => {
-        const [toolbarComponent, setToolbarComponent] = React.useState<SpacesCompatibleToolbar | undefined>(undefined);
+export const SpacesView: React.FC<ISpacesViewProps> =
+    (props: React.PropsWithChildren<ISpacesViewProps>) => {
         const [editable, setEditable] = React.useState<boolean>(props.dataModel.componentList.size === 0);
         const [componentMap, setComponentMap] =
             React.useState<Map<string, ISpacesStoredComponent>>(props.dataModel.componentList);
@@ -106,18 +105,6 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
         const combinedToolbarProps = props.toolbarProps;
         combinedToolbarProps.editable = () => editable;
         combinedToolbarProps.setEditable = (isEditable?: boolean) => setEditable(isEditable ?? !editable);
-
-        React.useEffect(() => {
-            // Need an event for when the component toolbar changes
-            props.toolbarComponentP
-                .then((retrievedToolbar) => {
-                    retrievedToolbar?.setComponentProps(combinedToolbarProps);
-                    setToolbarComponent(retrievedToolbar);
-                })
-                .catch((error) => {
-                    console.error(`Error getting toolbar component`, error);
-                });
-        });
 
         React.useEffect(() => {
             const onComponentListChanged = (newMap: Map<string, Layout>) => {
@@ -141,8 +128,8 @@ export const SpacesView: React.FC<ISpacesGridViewProps> =
             props.dataModel.updateLayout(key, newItem);
         };
 
-        const toolbarElement = toolbarComponent !== undefined
-            ? <ReactViewAdapter component={ toolbarComponent } />
+        const toolbarElement = props.toolbarComponent !== undefined
+            ? <ReactViewAdapter component={ props.toolbarComponent } />
             : undefined;
 
         const components: JSX.Element[] = [];
