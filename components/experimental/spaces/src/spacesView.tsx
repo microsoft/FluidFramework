@@ -5,14 +5,14 @@
 
 import * as React from "react";
 import "react-grid-layout/css/styles.css";
-import { IComponentSpacesToolbarProps, IInternalRegistryEntry } from "./interfaces";
+import { ISpacesProps, IInternalRegistryEntry } from "./interfaces";
 import { ISpacesStorageModel, SpacesStorageView } from "./spacesStorage";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
     supportedComponents: IInternalRegistryEntry[];
     storage: ISpacesStorageModel;
-    toolbarProps: IComponentSpacesToolbarProps;
+    spacesProps: ISpacesProps;
 }
 
 export const SpacesView: React.FC<ISpacesViewProps> =
@@ -23,7 +23,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
         return (
             <div className="spaces-view">
                 <SpacesToolbar
-                    props={props.toolbarProps}
+                    spacesProps={props.spacesProps}
                     editable={editable}
                     setEditable={setEditable}
                     components={props.supportedComponents}

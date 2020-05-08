@@ -11,7 +11,7 @@ import {
 } from "office-ui-fabric-react";
 import {
     IInternalRegistryEntry,
-    IComponentSpacesToolbarProps,
+    ISpacesProps,
     Templates,
 } from ".";
 
@@ -31,7 +31,7 @@ const componentButtonStyle: React.CSSProperties = {
 initializeIcons();
 
 interface ISpacesToolbarProps {
-    props: IComponentSpacesToolbarProps;
+    spacesProps: ISpacesProps;
     components: IInternalRegistryEntry[];
     editable: boolean;
     setEditable: (editable: boolean) => void;
@@ -39,8 +39,8 @@ interface ISpacesToolbarProps {
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
-        const templatesAvailable = props.props.templatesAvailable !== undefined
-            ? props.props.templatesAvailable()
+        const templatesAvailable = props.spacesProps.templatesAvailable !== undefined
+            ? props.spacesProps.templatesAvailable()
             : false;
 
         const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
@@ -64,8 +64,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
-                            if (props.props.addComponent) {
-                                props.props.addComponent(supportedComponent.type);
+                            if (props.spacesProps.addComponent) {
+                                props.spacesProps.addComponent(supportedComponent.type);
                             }
                             setComponentListOpen(false);
                         }}
@@ -96,8 +96,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    if (props.props.applyTemplate) {
-                                        props.props.applyTemplate(Templates[template]);
+                                    if (props.spacesProps.applyTemplate) {
+                                        props.spacesProps.applyTemplate(Templates[template]);
                                     }
                                     setTemplateListOpen(false);
                                 }}

@@ -6,9 +6,9 @@
 import { Templates } from "..";
 
 /**
- * IComponentSpacesToolbarProps are all callbacks that a toolbar using Spaces might want to have.
+ * ISpacesProps are the public interface that SpacesView will use to communicate with Spaces.
  */
-export interface IComponentSpacesToolbarProps {
+export interface ISpacesProps {
     addComponent?(type: string): void;
     templatesAvailable?(): boolean;
     applyTemplate?(template: Templates): void;
