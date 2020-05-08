@@ -1,6 +1,18 @@
-# Musica, a Fluid component for musical collaboration
+# Musica
 
-Authored by @leeviana and @dpgil
+An example of taking the open source [react-piano](https://github.com/kevinsqi/react-piano)
+and making it collaborative using the Fluid Framework.
 
 ## Getting Started
-npm install then npm start to host the component at http://localhost:8080
+
+If you want to run this component follow the following steps:
+
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
+
+## Data model
+
+Dice Roller uses the following distributed data structures:
+
+- SharedDirectory - root

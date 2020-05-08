@@ -1,9 +1,18 @@
 # Simple Component Embed
 
-This app simply embeds another chaincode. It's meant for reference and not practical purposes.
+An example of how to embeds another component. **Simple Component Embed** is a component that creates and loads
+the [`@fluid-example/clicker`](../clicker/README.md) component.
 
-**NOTE that this demo is on 0.2.0 of Prague. This is required if you want to load 0.2.0 components in your component.**
+## Getting Started
 
-## Steps
+If you want to run this component follow the following steps:
 
-`npm install` the component you want to embed. This is because you'll need type references to this component even if you are dynamically loading it.
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
+
+## Data model
+
+Simple Component Embed uses the following distributed data structures:
+
+- SharedDirectory - root

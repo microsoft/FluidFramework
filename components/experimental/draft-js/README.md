@@ -1,25 +1,26 @@
-# Draft.js Example
+# Draft.js
 
-A demo of how to take Facebooks [rich editor sample](https://github.com/facebook/draft-js/tree/master/examples/draft-0-10-0/rich) and quickly enable live coauthoring with the Fluid Framework.
+An experimental implementation of how to take Facebook's open source [Draft.js](https://draftjs.org/) rich text editor and
+enable real-time coauthoring using the Fluid Framework.
 
 ## Getting Started
-To start coding, open this directory in your IDE and check out ./src/index.tsx
 
-You can try the following commands
+If you want to run this component follow the following steps:
 
-````
-    npm start
-       Hosts the component at http://localhost:8080
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
 
+## Data model
 
-    npm run build
-       Builds the component into bundled js files
+Draft.js uses the following distributed data structures:
 
+- SharedDirectory - root
+- SharedString - storing Draft.js text
+- SharedMap - storing user presence
 
-    npm run deploy
-       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
-````
+## Known Issues
 
-We suggest you start by typing:
-	
-    npm start
+Currently presence is persisted via entries into the SharedMap. While this ensures that presence is persisted into the history
+it also leads to large amounts of operations which can bloat the size of the op stream and slow down future loads. An alternative
+solution is to enable ephemeral presence by using Signals ops and character input tracking as location queues.
