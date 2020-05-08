@@ -109,8 +109,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Can't add component, storage not found");
         }
 
+        const component = await this.loader.createComponentFromUrl(componentUrl);
         this.storage.addItem({
-            component: await this.loader.createComponentFromUrl(componentUrl),
+            component,
             type: componentUrl,
         });
     };

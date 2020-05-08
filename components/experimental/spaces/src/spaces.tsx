@@ -20,7 +20,7 @@ import { ISpacesStorageFormat, SpacesStorage } from "./spacesStorage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
-    IComponentSpacesToolbarProps,
+    ISpacesProps,
 } from "./interfaces";
 import { Templates } from ".";
 
@@ -58,7 +58,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Spaces can't render, storage not found");
         }
 
-        const toolbarProps: IComponentSpacesToolbarProps = {
+        const spacesProps: ISpacesProps = {
             addComponent: (type: string) => {
                 this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
                     .catch((error) => {
@@ -72,7 +72,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             <SpacesView
                 supportedComponents={this.supportedComponents}
                 storage={ this.storageComponent }
-                toolbarProps={ toolbarProps }
+                spacesProps={ spacesProps }
             />,
             div,
         );

@@ -19,6 +19,9 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export interface ISpacesStorageModel extends EventEmitter {
+    /**
+     * The list of components being stored.
+     */
     readonly componentList: Map<string, ISpacesStorageFormat>;
     /**
      * Adds the given item to the collector.
@@ -31,6 +34,11 @@ export interface ISpacesStorageModel extends EventEmitter {
      * @param key - The key referring to the item to remove.
      */
     removeItem(key: string): void;
+    /**
+     * Update the layout of the given item.
+     * @param key - The item to update
+     * @param newLayout - The item's new layout
+     */
     updateLayout(key: string, newLayout: Layout): void;
 }
 

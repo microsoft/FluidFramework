@@ -15,6 +15,9 @@ interface ISpacesViewProps {
     spacesProps: ISpacesProps;
 }
 
+/**
+ * SpacesView is the full view of the Spaces component, including its toolbar and contained components.
+ */
 export const SpacesView: React.FC<ISpacesViewProps> =
     (props: React.PropsWithChildren<ISpacesViewProps>) => {
         // Editable is a view-only concept; SpacesView is the authority.
