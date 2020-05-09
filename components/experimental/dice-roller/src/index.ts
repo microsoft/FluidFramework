@@ -7,7 +7,9 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
 
-import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
+import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
+
+export { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 
 /**
  * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
@@ -21,8 +23,8 @@ import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
  * components.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-    DiceRollerName,
+    DiceRoller.ComponentName,
     new Map([
-        [DiceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [DiceRoller.ComponentName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );
