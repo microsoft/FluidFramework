@@ -12,81 +12,83 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { ISpacesDataModel, ISpacesModel, SpacesDataModel } from "./dataModel";
-import { SpacesGridView } from "./view";
-import { ComponentToolbar, ComponentToolbarName } from "./components";
+import { ISpacesStoredComponent, SpacesStorage } from "./storage";
+import { SpacesView } from "./spacesView";
 import {
-    IComponentToolbarConsumer,
-    IProvideComponentCollectorSpaces,
-    SpacesCompatibleToolbar,
+    IInternalRegistryEntry,
 } from "./interfaces";
-import { SpacesComponentName, Templates } from ".";
+import { Templates } from ".";
+
+const SpacesStorageKey = "spaces-storage";
 
 /**
- * Spaces is the Fluid
+ * ISpacesProps are the public interface that SpacesView will use to communicate with Spaces.
  */
-export class Spaces extends PrimedComponent implements
-    IComponentHTMLView,
-    IComponentToolbarConsumer,
-    IProvideComponentCollectorSpaces
-{
-    private dataModelInternal: ISpacesDataModel | undefined;
-    private componentToolbar: SpacesCompatibleToolbar | undefined;
-    private registryDetails: IComponent | undefined;
+export interface ISpacesProps {
+    addComponent?(type: string): void;
+    templatesAvailable?: boolean;
+    applyTemplate?(template: Templates): void;
+}
 
-    // TODO #1188 - Component registry should automatically add ComponentToolbar
-    // to the registry since it's required for the spaces component
+/**
+ * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
+ */
+export class Spaces extends PrimedComponent implements IComponentHTMLView {
+    private storageComponent: SpacesStorage | undefined;
+    private supportedComponents: IInternalRegistryEntry[] = [];
+    private internalRegistry: IComponent | undefined;
+
+    public static get ComponentName() { return "@fluid-example/spaces"; }
+
     private static readonly factory = new PrimedComponentFactory(
-        SpacesComponentName,
+        Spaces.ComponentName,
         Spaces,
-        [
-            SharedObjectSequence.getFactory(),
-        ],
+        [],
         {},
-        [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
+        [[ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ]],
     );
 
     public static getFactory() {
         return Spaces.factory;
     }
 
-    private get dataModel(): ISpacesDataModel {
-        if (!this.dataModelInternal) {
-            throw new Error("The Spaces DataModel was not properly initialized.");
-        }
-        return this.dataModelInternal;
-    }
-
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollectorSpaces() { return this.dataModel; }
-    public get IComponentToolbarConsumer() { return this; }
-
-    public setComponentToolbar(id: string, type: string, toolbarComponent: SpacesCompatibleToolbar) {
-        this.dataModel.setComponentToolbar(id, type, toolbarComponent);
-        this.componentToolbar = toolbarComponent;
-        this.addToolbarListeners();
-    }
 
     /**
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(<SpacesGridView dataModel={this.dataModel}/>, div);
+        if (this.storageComponent === undefined) {
+            throw new Error("Spaces can't render, storage not found");
+        }
+
+        const spacesProps: ISpacesProps = {
+            addComponent: (type: string) => {
+                this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
+                    .catch((error) => {
+                        console.error(`Error while creating component: ${type}`, error);
+                    });
+            },
+            templatesAvailable: this.internalRegistry?.IComponentRegistryTemplates !== undefined,
+            applyTemplate: this.applyTemplateFromRegistry.bind(this),
+        };
+        ReactDOM.render(
+            <SpacesView
+                supportedComponents={this.supportedComponents}
+                storage={ this.storageComponent }
+                spacesProps={ spacesProps }
+            />,
+            div,
+        );
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.createSubDirectory("component-list");
-        this.initializeDataModel();
-        const componentToolbar = await this.createAndAttachComponent<ComponentToolbar>(ComponentToolbarName);
-        componentToolbar.setEditable(true);
-        this.setComponentToolbar(
-            componentToolbar.url,
-            ComponentToolbarName,
-            componentToolbar);
+        const storageComponent = await this.createAndAttachComponent<SpacesStorage>(SpacesStorage.ComponentName);
+        this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -94,83 +96,71 @@ export class Spaces extends PrimedComponent implements
         }
     }
 
-    protected async componentInitializingFromExisting() {
-        this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponentToolbar();
-    }
-
     protected async componentHasInitialized() {
-        this.addToolbarListeners();
-        const isEditable = this.dataModel.componentList.size === 0;
-        this.dataModel.emit("editableUpdated", isEditable);
-        this.registryDetails = await this.context.containerRuntime.IComponentRegistry.get("");
-        if (this.componentToolbar && this.componentToolbar.IComponentToolbar) {
-            this.componentToolbar.IComponentToolbar.setEditable(isEditable);
-            this.componentToolbar.IComponentToolbar.setTemplatesVisible(
-                this.registryDetails?.IComponentRegistryTemplates !== undefined,
-            );
+        this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
+        this.internalRegistry = await this.context.containerRuntime.IComponentRegistry.get("");
+
+        if (this.internalRegistry) {
+            const internalRegistry = this.internalRegistry.IComponentInternalRegistry;
+            if (internalRegistry) {
+                this.supportedComponents = internalRegistry.getFromCapability("IComponentHTMLView");
+            }
         }
     }
 
-    private addToolbarListeners() {
-        if (this.componentToolbar) {
-            this.componentToolbar.IComponentCallable.setComponentCallbacks({
-                addComponent: (type: string, w?: number, h?: number) => {
-                    this.createAndAttachComponent(type)
-                        .then((component) => {
-                            this.dataModel.addComponent(component, type, { w, h, x: 0, y: 0 });
-                        })
-                        .catch((error) => {
-                            console.error(`Error while creating component: ${type}`, error);
-                        });
-                },
-                addTemplate: this.addTemplateFromRegistry.bind(this),
-                saveLayout: () => this.saveLayout(),
-                toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
-            });
-        }
-    }
-
-    private initializeDataModel() {
-        this.dataModelInternal = new SpacesDataModel(this.root);
-    }
-
-    private async addTemplateFromRegistry(template: Templates) {
-        if (this.registryDetails && this.registryDetails.IComponentRegistryTemplates) {
-            const componentRegistryEntries = this.registryDetails.IComponentRegistryTemplates
+    private async applyTemplateFromRegistry(template: Templates) {
+        if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {
+            const componentPromises: Promise<string>[] = [];
+            // getFromTemplate filters down to just components that are present in this template
+            const componentRegistryEntries = this.internalRegistry.IComponentRegistryTemplates
                 .getFromTemplate(template);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            componentRegistryEntries.forEach(async (componentRegistryEntry) => {
+            componentRegistryEntries.forEach((componentRegistryEntry) => {
+                // Each component may occur multiple times in the template, get all the layouts.
                 const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                templateLayouts.forEach(async (templateLayout: Layout) => {
-                    const component = await this.createAndAttachComponent(componentRegistryEntry.type);
-                    this.dataModel.addComponent(component, componentRegistryEntry.type, templateLayout);
+                templateLayouts.forEach((layout: Layout) => {
+                    componentPromises.push(
+                        this.createAndStoreComponent(componentRegistryEntry.type, layout),
+                    );
                 });
             });
+            await Promise.all(componentPromises);
         }
     }
 
     public saveLayout(): void {
-        localStorage.setItem("spacesTemplate", JSON.stringify(this.dataModel.getModels()));
+        if (this.storageComponent === undefined) {
+            throw new Error("Can't save layout, storage not found");
+        }
+        localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.componentList.values()]));
     }
 
     public async setTemplate(): Promise<void> {
-        if (this.dataModel.componentList.size > 0) {
-            console.log("Can't set template because there is already components");
-            return;
-        }
-
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
-            const templateItems = JSON.parse(templateString) as ISpacesModel[];
+            const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
             const promises = templateItems.map(async (templateItem) => {
-                const component = await this.createAndAttachComponent(templateItem.type);
-                this.dataModel.addComponent(component, templateItem.type, templateItem.layout);
-                return component;
+                return this.createAndStoreComponent(templateItem.type, templateItem.layout);
             });
 
             await Promise.all(promises);
         }
+    }
+
+    private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
+        const component = await this.createAndAttachComponent(type);
+
+        if (component.handle === undefined) {
+            throw new Error("Can't add, component must have a handle");
+        }
+
+        if (this.storageComponent === undefined) {
+            throw new Error("Can't add item, storage not found");
+        }
+
+        return this.storageComponent.addItem(
+            component.handle,
+            type,
+            layout,
+        );
     }
 }

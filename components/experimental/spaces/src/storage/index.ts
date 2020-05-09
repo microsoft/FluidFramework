@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./manager";
+export * from "./spacesStorage";
+export * from "./spacesStorageView";

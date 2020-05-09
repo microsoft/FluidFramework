@@ -131,14 +131,9 @@ export interface IContainerRuntime extends
      * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
      */
     notifyComponentInstantiated(componentContext: IComponentContext): void;
-}
-
-export interface IExperimentalContainerRuntime extends IContainerRuntime {
-
-    isExperimentalContainerRuntime: true;
 
     /**
-     * It is false if the container is not attached to storage and the component is attached to container.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
 }

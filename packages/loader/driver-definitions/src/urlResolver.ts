@@ -29,10 +29,7 @@ export interface IUrlResolver {
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-}
 
-export interface IExperimentalUrlResolver extends IUrlResolver {
-    readonly isExperimentalUrlResolver: true;
     // Creates a url for the created container with any component path given in request.
     requestUrl(
         resolvedUrl: IResolvedUrl,

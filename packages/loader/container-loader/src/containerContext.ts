@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -21,8 +20,6 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    IExperimentalRuntime,
-    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -45,7 +42,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
+export class ContainerContext extends EventEmitter implements IContainerContext {
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
@@ -188,13 +185,13 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         this.logger = container.subLogger;
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
 
-        this.runtime!.dispose();
+        this.runtime!.dispose(error);
         this.quorum.dispose();
         this.deltaManager.dispose();
     }
@@ -228,14 +225,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.container.isLocal();
     }
 
-    public isAttached(): boolean {
-        return this.container.isAttached();
-    }
-
     public createSummary(): ISummaryTree {
-        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
-        assert(expRuntime?.isExperimentalRuntime);
-        return expRuntime.createSummary();
+        if (!this.runtime) {
+            throw new Error("Runtime should be there to take summary");
+        }
+        return this.runtime.createSummary();
     }
 
     public changeConnectionState(value: ConnectionState, clientId?: string) {
