@@ -9,7 +9,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IFluidCodeDetails, IFluidModule, ILoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
@@ -19,14 +19,6 @@ import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@chaincode/test-component";
-
-    public static readonly componentFactory = new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
-
-    public static readonly runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
-        TestComponent.type,
-        [[TestComponent.type, Promise.resolve(TestComponent.componentFactory)]],
-    );
-
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -38,19 +30,6 @@ class TestComponent extends PrimedComponent {
 // class should not be necessary.
 class OldTestComponent extends old.PrimedComponent {
     public static readonly type = "@chaincode/old-test-component";
-
-    public static readonly componentFactory = new old.PrimedComponentFactory(
-        OldTestComponent.type,
-        OldTestComponent,
-        [],
-        {},
-    );
-
-    public static readonly runtimeFactory = new old.ContainerRuntimeFactoryWithDefaultComponent(
-        OldTestComponent.type,
-        [[OldTestComponent.type, Promise.resolve(OldTestComponent.componentFactory)]],
-    );
-
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -62,19 +41,47 @@ describe("loader/runtime compatibility", () => {
         config: {},
     };
 
+    const createComponentFactory = (): IComponentFactory => {
+        return new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
+    };
+
+    const createOldComponentFactory = (): old.IComponentFactory => {
+        return new old.PrimedComponentFactory(OldTestComponent.type, OldTestComponent, [], {});
+    };
+
+    const createRuntimeFactory = (
+        type: string,
+        componentFactory: IComponentFactory | old.IComponentFactory,
+    ): IRuntimeFactory => {
+        return new ContainerRuntimeFactoryWithDefaultComponent(
+            type,
+            [[type, Promise.resolve(componentFactory as IComponentFactory)]],
+        );
+    };
+
+    const createOldRuntimeFactory = (
+        type: string,
+        componentFactory: IComponentFactory | old.IComponentFactory,
+    ): old.IRuntimeFactory => {
+        return new old.ContainerRuntimeFactoryWithDefaultComponent(
+            type,
+            [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
+        );
+    };
+
     async function createContainer(
-        factory: IRuntimeFactory | IComponentFactory,
+        fluidModule: IFluidModule | old.IFluidModule,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<Container> {
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, fluidModule as IFluidModule]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
     async function createOldContainer(
-        factory: IRuntimeFactory | IComponentFactory,
+        fluidModule: IFluidModule | old.IFluidModule,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<old.Container> {
-        const loader = old.createLocalLoader([[ codeDetails, factory ]] as any, deltaConnectionServer);
+        const loader = old.createLocalLoader([[codeDetails, fluidModule as old.IFluidModule]], deltaConnectionServer);
         return old.initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -111,7 +118,7 @@ describe("loader/runtime compatibility", () => {
 
     describe("old loader, new runtime", function() {
         const makeContainer = async (server: ILocalDeltaConnectionServer) => createOldContainer(
-            TestComponent.runtimeFactory,
+            { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
             server,
         );
 
@@ -132,7 +139,7 @@ describe("loader/runtime compatibility", () => {
 
     describe("new loader, old runtime", function() {
         const makeContainer = async (server: ILocalDeltaConnectionServer) => createContainer(
-            OldTestComponent.runtimeFactory as unknown as IRuntimeFactory,
+            { fluidExport: createOldRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
             server,
         );
 
@@ -153,7 +160,7 @@ describe("loader/runtime compatibility", () => {
 
     describe("old ContainerRuntime, new ComponentRuntime", function() {
         const makeContainer = async (server: ILocalDeltaConnectionServer) => createOldContainer(
-            TestComponent.componentFactory,
+            { fluidExport: createOldRuntimeFactory(TestComponent.type, createComponentFactory()) },
             server,
         );
 
@@ -174,7 +181,7 @@ describe("loader/runtime compatibility", () => {
 
     describe("new ContainerRuntime, old ComponentRuntime", function() {
         const makeContainer = async (server: ILocalDeltaConnectionServer) => createContainer(
-            OldTestComponent.componentFactory as unknown as IComponentFactory,
+            { fluidExport: createRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
             server,
         );
 
