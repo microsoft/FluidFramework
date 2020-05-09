@@ -164,11 +164,6 @@ export interface IRuntime extends IDisposable {
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
-}
-
-export interface IExperimentalRuntime extends IRuntime {
-
-    isExperimentalRuntime: true;
 
     createSummary(): ISummaryTree;
 }
@@ -230,21 +225,11 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      * @param request - A relative request within the container
      */
     requestUrl(request: IRequest): Promise<IResponse>;
-}
-
-export interface IExperimentalContainerContext extends IContainerContext {
-    isExperimentalContainerContext: true;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
      */
     isLocal(): boolean;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * @deprecated - It will be replaced with isLocal.
-     */
-    isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 

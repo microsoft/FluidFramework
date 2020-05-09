@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IExperimentalUrlResolver, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { TestResolver } from "@microsoft/fluid-local-driver";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
@@ -64,9 +64,8 @@ const getUser = (): IDevServerUser => ({
     name: getRandomName(),
 });
 
-export class MultiUrlResolver implements IExperimentalUrlResolver {
+export class MultiUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
-
     private readonly urlResolver: IUrlResolver;
     constructor(
         private readonly rawUrl: string,

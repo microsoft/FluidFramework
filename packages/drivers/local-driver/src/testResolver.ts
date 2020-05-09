@@ -10,7 +10,6 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
@@ -20,7 +19,7 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
  * Resolves URLs by providing fake URLs which succeed with the other
  * related test classes.
  */
-export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class TestResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";

@@ -4,6 +4,8 @@
  */
 
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
@@ -37,5 +39,14 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         return Promise.resolve(ReplayDocumentService.create(
             await this.documentServiceFactory.createDocumentService(resolvedUrl),
             this.controller));
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }
