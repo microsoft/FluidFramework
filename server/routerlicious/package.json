@@ -19,7 +19,7 @@
     "clean:nyc": "rimraf nyc/**",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local -v",
-    "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:policy-check || true) && (npm run postinstall:r11s || true)",
+    "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:policy-check || true)",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "cd ../../tools/repo-policy-check && npm run policy-check",
