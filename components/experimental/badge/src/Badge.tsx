@@ -109,18 +109,29 @@ export class Badge extends PrimedComponent implements
     protected async componentHasInitialized() {
         this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
         this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
-        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+        this.historySequence =
+            await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+
+        this.currentCell.on("valueChanged", (value) => {
+            this.render();
+        });
+
+        this.optionsMap.on("valueChanged", (value) => {
+            this.render();
+        });
     }
 
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            this.createJSXElement(),
-            div,
-        );
-    }
-
-    public remove() {
-        throw new Error("Not Implemented");
+    public render(div?: HTMLElement) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (div) {
+            console.log("render!");
+            ReactDOM.render(
+                this.createJSXElement(),
+                div,
+            );
+        } else {
+            console.log(`No div!`);
+        }
     }
 
     public createJSXElement(): JSX.Element {
@@ -128,12 +139,28 @@ export class Badge extends PrimedComponent implements
             display: "inline-block",
         };
 
+        const items = new Array<IBadgeType>();
+        this.optionsMap.forEach((v) => items.push(v as IBadgeType));
+
         return (
             <div style={divStyle}>
                 <BadgeView
-                    currentCell={this.currentCell}
-                    optionsMap={this.optionsMap}
-                    historySequence={this.historySequence} />
+                    current={this.currentCell.get()}
+                    setCurrent={(badgeOption) => { this.currentCell.set(badgeOption); }}
+                    options={items}
+                    addOption={(badgeOption) => { this.optionsMap.set(badgeOption.key, badgeOption); }}
+                    history={this.historySequence.getItems(0)}
+                    addToHistory={(badgeOption, timestamp) => {
+                        this.historySequence.insert(
+                            this.historySequence.getItemCount(), [
+                                {
+                                    value: badgeOption,
+                                    timestamp,
+                                },
+                            ],
+                        );
+                    }}
+                />
             </div>
         );
     }
