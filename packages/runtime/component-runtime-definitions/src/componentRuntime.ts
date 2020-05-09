@@ -8,7 +8,6 @@ import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitio
 import {
     IComponentHandleContext,
     IComponentSerializer,
-
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -145,5 +144,4 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
-
 }

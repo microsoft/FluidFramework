@@ -174,8 +174,6 @@ export interface IComponentRuntimeChannel extends
     /**
      * Generates a snapshot of the given component
      */
-    error(err: any): void;
-
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
 
     /**

@@ -49,7 +49,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
-    public get absoluteUrl() { return this._absoluteUrl;}
+    public get absoluteUrl() { return this._absoluteUrl; }
 
     /**
      * Do creation work
