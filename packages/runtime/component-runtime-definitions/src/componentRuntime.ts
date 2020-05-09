@@ -8,8 +8,7 @@ import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitio
 import {
     IComponentHandleContext,
     IComponentSerializer,
-    IRequest,
-    IResponse,
+
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -147,9 +146,4 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
      */
     isLocal(): boolean;
 
-    /**
-     * Request an absolute url based on the provided request.
-     * @param request - A relative request within the container
-     */
-    requestUrl(request: IRequest): Promise<IResponse>;
 }

@@ -101,7 +101,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             }
         });
 
-        const urlResponse = await this.runtime.requestUrl({ url: this.url });
+        const urlResponse = await this.context.containerRuntime.requestContainerUrl({ url: this.url });
         if (urlResponse.status === 200) {
             this._absoluteUrl = urlResponse.value as string;
         }

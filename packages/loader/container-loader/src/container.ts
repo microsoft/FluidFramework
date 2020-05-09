@@ -615,7 +615,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async requestUrl(request: IRequest): Promise<IResponse> {
+    public async requestContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
         if (this.resolvedUrl === undefined) {
             return {
                 status: 400,
@@ -623,7 +623,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 value: "Container not attached to storage",
             };
         }
-        return this.urlResolver.requestUrl(this.resolvedUrl, request);
+        return this.urlResolver.requestUrl(this.resolvedUrl, relativeRequest);
     }
 
     private async reloadContextCore(): Promise<void> {

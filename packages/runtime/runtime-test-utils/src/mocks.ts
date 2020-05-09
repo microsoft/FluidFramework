@@ -464,14 +464,6 @@ export class MockRuntime extends EventEmitter
     }
 
     public error(err: any): void { }
-
-    public async requestUrl(request: IRequest): Promise<IResponse> {
-        return {
-            status: 200,
-            value: `http://localhost/${request.url}`,
-            mimeType: "text/plain",
-        };
-    }
 }
 
 /**

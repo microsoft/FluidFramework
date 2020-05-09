@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent, IRequest, IResponse,
+    IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -136,10 +136,4 @@ export interface IContainerRuntime extends
      * False if the container is attached to storage.
      */
     isLocal(): boolean;
-
-    /**
-     * Request an absolute url based on the provided request.
-     * @param request - A relative request within the container
-     */
-    requestUrl(request: IRequest): Promise<IResponse>;
 }

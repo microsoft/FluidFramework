@@ -130,6 +130,12 @@ export interface IContainerRuntimeBase extends
      * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
+
+    /**
+     * Request an absolute url to the conatiner based on the provided relativeRequest.
+     * @param relativeRequest - A relative request within the container
+     */
+    requestContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -338,12 +344,6 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
-
-    /**
-     * Request an absolute url based on the provided request.
-     * @param request - A relative request within the container
-     */
-    requestUrl(request: IRequest): Promise<IResponse>
 
     /**
      * It is false if the container is attached to storage and the component is attached to container.
