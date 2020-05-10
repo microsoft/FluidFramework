@@ -71,7 +71,25 @@ export const BadgeView = (props: IBadgeViewProps) => {
         setDialogVisible(false);
     }
 
+    // function _setCurrent(newItem: IBadgeType): void {
+    //     if (newItem.key !== this.state.current.key) {
+    //         // Save current value into history
+    //         this.props.historySequence.insert(
+    //             this.props.historySequence.getItemCount(), [
+    //                 {
+    //                     value: newItem,
+    //                     timestamp: new Date(),
+    //                 },
+    //             ],
+    //         );
+
+    //         // Set new value
+    //         this.props.currentCell.set(newItem);
+    //     }
+    // }
+
     function setCurrentAndAddHistory(newItem: IBadgeType): void {
+        console.log(`${clientId}: setCurrentAndAddHistory; newItem: ${newItem.key}`);
         if (newItem.key !== current.key) {
             // Save current value into history
             addToHistory(current, new Date());
@@ -105,7 +123,7 @@ export const BadgeView = (props: IBadgeViewProps) => {
 
             // Add to the badge options
             addOption(newItem);
-            setCurrent(newItem);
+            setCurrentAndAddHistory(newItem);
             setCustomText("");
         }
 

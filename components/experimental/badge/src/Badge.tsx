@@ -96,7 +96,7 @@ export class Badge extends PrimedComponent implements
         // Create a sequence to store the badge's history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
         history.insert(0, [{
-            value: current.get(),
+            value: current.get() as IBadgeType,
             timestamp: new Date(),
         }]);
         this.root.set(this.historyId, history.handle);
@@ -123,7 +123,7 @@ export class Badge extends PrimedComponent implements
         });
 
         this.historySequence.on("sequenceDelta", (event, target) => {
-            console.log(`${this.runtime.clientId}: sequenceDelta: ${target}`);
+            console.log(`${this.runtime.clientId}: sequenceDelta from: ${event.clientId}`);
         });
     }
 
@@ -167,7 +167,7 @@ export class Badge extends PrimedComponent implements
                     }}
                     history={this.historySequence.getItems(0)}
                     addToHistory={(badgeOption, timestamp) => {
-                        console.log(`addToHistory`);
+                        console.log(`addToHistory: ${badgeOption.key}, ${badgeOption.text}`);
                         this.historySequence.insert(
                             this.historySequence.getItemCount(), [
                                 {
