@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -15,8 +17,22 @@ import * as ReactDOM from "react-dom";
 
 const diceValueKey = "diceValue";
 
+/**
+ * IDiceRoller describes the public API surface for our dice roller component.
+ */
+interface IDiceRoller extends EventEmitter {
+    /**
+     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     */
+    rollDice: () => void;
+    /**
+     * Get the dice value as a number.
+     */
+    getDiceValue: () => number;
+}
+
 interface IDiceRollerViewProps {
-    model: DiceRoller;
+    model: IDiceRoller;
 }
 
 const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
@@ -30,7 +46,7 @@ const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewPr
         return () => {
             props.model.off("diceRolled", onDiceRolled);
         };
-    });
+    }, [props.model]);
 
     const getDiceChar = (value: number) => {
         // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
@@ -48,7 +64,7 @@ const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewPr
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
     public get IComponentHTMLView() { return this; }
