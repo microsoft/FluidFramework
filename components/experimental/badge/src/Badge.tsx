@@ -31,6 +31,8 @@ export class Badge extends PrimedComponent implements
     private readonly historyId: string = "history";
     private readonly optionsId: string = "options";
 
+    private div: HTMLElement;
+
     private readonly defaultOptions: IBadgeType[] = [
         {
             key: "drafting",
@@ -119,18 +121,26 @@ export class Badge extends PrimedComponent implements
         this.optionsMap.on("valueChanged", (value) => {
             this.render();
         });
+
+        this.historySequence.on("sequenceDelta", (event, target) => {
+            console.log(`${this.runtime.clientId}: sequenceDelta: ${target}`);
+        });
     }
 
     public render(div?: HTMLElement) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (div) {
-            console.log("render!");
+            this.div = div;
+        }
+
+        if (!this.div) {
+            console.log(`${this.runtime.clientId}: No div!`);
+        } else {
+            console.log(`${this.runtime.clientId}: render!`);
+
             ReactDOM.render(
                 this.createJSXElement(),
-                div,
+                this.div,
             );
-        } else {
-            console.log(`No div!`);
         }
     }
 
@@ -146,11 +156,18 @@ export class Badge extends PrimedComponent implements
             <div style={divStyle}>
                 <BadgeView
                     current={this.currentCell.get()}
-                    setCurrent={(badgeOption) => { this.currentCell.set(badgeOption); }}
+                    setCurrent={(badgeOption) => {
+                        console.log(`setCurrent`);
+                        this.currentCell.set(badgeOption);
+                    }}
                     options={items}
-                    addOption={(badgeOption) => { this.optionsMap.set(badgeOption.key, badgeOption); }}
+                    addOption={(badgeOption) => {
+                        console.log(`addOption`);
+                        this.optionsMap.set(badgeOption.key, badgeOption);
+                    }}
                     history={this.historySequence.getItems(0)}
                     addToHistory={(badgeOption, timestamp) => {
+                        console.log(`addToHistory`);
                         this.historySequence.insert(
                             this.historySequence.getItemCount(), [
                                 {

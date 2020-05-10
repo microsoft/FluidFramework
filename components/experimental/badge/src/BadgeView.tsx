@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { ISharedCell } from "@microsoft/fluid-cell";
-// import { ISharedMap } from "@microsoft/fluid-map";
-// import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import {
     ActivityItem,
     DefaultButton,
@@ -39,12 +36,6 @@ const defaultColor = "#fff";
 const animation: string = "all 0.15s ease-in";
 const cardPadding: string = "16px 24px";
 
-// interface IBadgeViewPropsOrig {
-//     currentCell: ISharedCell;
-//     optionsMap: ISharedMap;
-//     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
-// }
-
 export interface IBadgeViewProps {
     current: IBadgeType;
     setCurrent(badgeOption: IBadgeType): void;
@@ -52,6 +43,7 @@ export interface IBadgeViewProps {
     addOption(badgeOption: IBadgeType): void;
     history: IHistory<IBadgeType>[];
     addToHistory(badgeType: IBadgeType, timestamp: Date): void;
+    clientId?: string;
 }
 
 export interface IBadgeViewState {
@@ -73,7 +65,7 @@ export const BadgeView = (props: IBadgeViewProps) => {
     const [isDialogVisible, setDialogVisible] = useState(false);
     const [customColor, setCustomColor] = useState(getColorFromString(defaultColor));
     const [customText, setCustomText] = useState("");
-    const { setCurrent, current, options, addOption, addToHistory, history } = props;
+    const { setCurrent, current, options, addOption, addToHistory, history, clientId } = props;
 
     function closeDialog(): void {
         setDialogVisible(false);
@@ -153,12 +145,16 @@ export const BadgeView = (props: IBadgeViewProps) => {
         // Add items to history in reverse order
         // eslint-disable-next-line react/prop-types
         history.forEach((x) => {
+            console.log(`${clientId}: x: ${typeof x}`);
+            // const key = `${clientId}_${x.timestamp.getUTCDate()}`;
             items.unshift(
                 <ActivityItem
                     activityDescription={`Set to ${x.value.text}`}
                     // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     timeStamp={getRelativeDate(x.timestamp)}
-                    activityIcon={<Icon {...x.value.iconProps} />} />,
+                    activityIcon={<Icon {...x.value.iconProps}/>}
+                    // key={key}
+                />,
             );
         });
 
@@ -261,250 +257,6 @@ export const BadgeView = (props: IBadgeViewProps) => {
         </div>
     );
 };
-
-// export class BadgeViewOrig
-//     extends React.Component<IBadgeViewProps, IBadgeViewState> {
-//     private readonly defaultColor: string = "#fff";
-//     private readonly animation: string = "all 0.15s ease-in";
-//     private readonly cardPadding: string = "16px 24px";
-
-//     constructor(props: IBadgeViewProps) {
-//         super(props);
-
-//         this.state = {
-//             isDialogVisible: false,
-//             current: props.currentCell.get(),
-//             customColor: getColorFromString(this.defaultColor),
-//             customText: "",
-//             items: this._getItemsFromOptionsMap(props.optionsMap),
-//         };
-
-//         this._onClick = this._onClick.bind(this);
-//         this._onSave = this._onSave.bind(this);
-//         this._closeDialog = this._closeDialog.bind(this);
-//         this._updateColor = this._updateColor.bind(this);
-//         this._updateText = this._updateText.bind(this);
-//         this._setCurrent = this._setCurrent.bind(this);
-//         this._getCurrentTimestamp = this._getCurrentTimestamp.bind(this);
-//         this._onRenderCard = this._onRenderCard.bind(this);
-
-//         this.props.currentCell.on("valueChanged", () => {
-//             this.setState({ current: this.props.currentCell.get() });
-//         });
-
-//         this.props.optionsMap.on("valueChanged", () => {
-//             this.setState({ items: this._getItemsFromOptionsMap(this.props.optionsMap) });
-//         });
-
-//         initializeIcons();
-//     }
-
-//     private _onClick(_, item: IContextualMenuItem): void {
-//         if (item.key === "new") {
-//             this.setState({ isDialogVisible: true });
-//         }
-//         else {
-//             this._setCurrent(item as IBadgeType);
-//         }
-//     }
-
-//     private _onSave(): void {
-//         if (this.state.customText !== "") {
-//             const newItem: IBadgeType = {
-//                 key: this.state.customText,
-//                 text: this.state.customText,
-//                 iconProps: {
-//                     iconName: "Contact",
-//                     style: {
-//                         color: this.state.customColor.str,
-//                     },
-//                 },
-//             };
-
-//             // Add to the badge options
-//             this.props.optionsMap.set(this.state.customText, newItem);
-
-//             this._setCurrent(newItem);
-
-//             this.setState({ customText: "" });
-//         }
-
-//         this._closeDialog();
-//     }
-
-//     private _closeDialog(): void {
-//         this.setState({ isDialogVisible: false });
-//     }
-
-//     private _setCurrent(newItem: IBadgeType): void {
-//         if (newItem.key !== this.state.current.key) {
-//             // Save current value into history
-//             this.props.historySequence.insert(
-//                 this.props.historySequence.getItemCount(), [
-//                     {
-//                         value: newItem,
-//                         timestamp: new Date(),
-//                     },
-//                 ],
-//             );
-
-//             // Set new value
-//             this.props.currentCell.set(newItem);
-//         }
-//     }
-
-//     private _getCurrentTimestamp(): Date {
-//         const len = this.props.historySequence.getItemCount();
-//         return this.props.historySequence.getItems(len - 1)[0].timestamp;
-//     }
-
-//     private _updateColor(ev: React.SyntheticEvent<HTMLElement>, colorObj: IColor) {
-//         this.setState({ customColor: colorObj });
-//     }
-
-//     private _updateText(ev: React.SyntheticEvent<HTMLElement>, newValue: string) {
-//         this.setState({ customText: newValue });
-//     }
-
-//     private _getItemsFromOptionsMap(optionsMap: ISharedMap) {
-//         const items = [];
-//         optionsMap.forEach((v) => items.push(v));
-
-//         items.push({
-//             key: "divider_1",
-//             itemType: ContextualMenuItemType.Divider,
-//         });
-//         items.push({
-//             key: "new",
-//             text: "Set custom...",
-//             iconProps: {
-//                 iconName: "Add",
-//             },
-//         });
-
-//         return items;
-//     }
-
-//     private _getTextColor(c: IColor) {
-// eslint-disable-next-line max-len
-//         // https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
-//         return (c.r * 0.299 + c.g * 0.587 + c.b * 0.114 > 186) ?
-//             "#000000" : "#ffffff";
-//     }
-
-//     private _onRenderCard(): JSX.Element {
-//         const history = [];
-
-//         // Add items to history in reverse order
-//         this.props.historySequence.getItems(0).forEach((x) => {
-//             history.unshift(
-//                 <ActivityItem
-//                     activityDescription={`Set to ${x.value.text}`}
-//                     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-//                     timeStamp={getRelativeDate(x.timestamp)}
-//                     activityIcon={<Icon {...x.value.iconProps} />} />,
-//             );
-//         });
-
-//         return (
-//             <div style={{
-//                 padding: this.cardPadding,
-//             }}>
-//                 {history}
-//             </div>
-//         );
-//     }
-//     public render(): JSX.Element {
-//         // Calculate colors
-//         const color = getColorFromString(this.state.current.iconProps.style.color);
-//         const colorHover = getColorFromHSV({
-//             h: color.h,
-//             s: color.s,
-//             v: color.v + 5,
-//         });
-//         const colorPressed = getColorFromHSV({
-//             h: color.h,
-//             s: color.s,
-//             v: color.v - 5,
-//         });
-//         const textColor = this._getTextColor(color);
-
-//         return (
-//             <div style={{ animation: MotionAnimations.scaleDownIn }}>
-//                 <HoverCard
-//                     plainCardProps={{
-//                         onRenderPlainCard: this._onRenderCard,
-//                         directionalHint: DirectionalHint.rightTopEdge,
-//                     }}
-//                     type={HoverCardType.plain}
-//                 >
-//                     <DefaultButton
-//                         text={this.state.current.text}
-//                         iconProps={{ iconName: this.state.current.iconProps.iconName }}
-//                         menuProps={{
-//                             isBeakVisible: false,
-//                             shouldFocusOnMount: true,
-//                             items: this.state.items,
-//                             onItemClick: this._onClick,
-//                         }}
-//                         styles={{
-//                             label: {
-//                                 color: textColor,
-//                             },
-//                             icon: {
-//                                 color: textColor,
-//                             },
-//                             menuIcon: {
-//                                 color: textColor,
-//                             },
-//                             root: {
-//                                 backgroundColor: color.str,
-//                                 transition: this.animation,
-//                             },
-//                             rootHovered: {
-//                                 backgroundColor: colorHover.str,
-//                             },
-//                             rootPressed: {
-//                                 backgroundColor: colorPressed.str,
-//                             },
-//                             rootExpanded: {
-//                                 backgroundColor: colorPressed.str,
-//                             },
-//                         }}
-//                     />
-//                 </HoverCard>
-
-//                 <Dialog
-//                     hidden={!this.state.isDialogVisible}
-//                     onDismiss={this._closeDialog}
-//                     dialogContentProps={{
-//                         type: DialogType.normal,
-//                         title: "Add a custom status",
-//                     }}
-//                     modalProps={{
-//                         isBlocking: false,
-//                         styles: { main: { maxWidth: 450 } },
-//                     }}
-//                 >
-//                     <Stack>
-//                         <TextField
-//                             placeholder="Custom status name"
-//                             onChange={this._updateText} />
-//                         <ColorPicker
-//                             color={this.state.customColor}
-//                             onChange={this._updateColor}
-//                             alphaSliderHidden={true}
-//                         />
-//                     </Stack>
-//                     <DialogFooter>
-//                         <PrimaryButton onClick={this._onSave} text="Save" />
-//                         <DefaultButton onClick={this._closeDialog} text="Cancel" />
-//                     </DialogFooter>
-//                 </Dialog>
-//             </div>
-//         );
-//     }
-// }
 
 function getRelativeDate(timestamp: Date): string {
     // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting

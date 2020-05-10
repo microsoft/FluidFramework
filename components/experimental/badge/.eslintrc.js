@@ -8,7 +8,8 @@ module.exports = {
         "@microsoft/eslint-config-fluid"
     ],
     "rules": {
+        "@typescript-eslint/max-len": "off",
+        "@typescript-eslint/strict-boolean-expressions":"off",
         "@typescript-eslint/unbound-method": "off",
-        "max-len": "off"
     }
 }
