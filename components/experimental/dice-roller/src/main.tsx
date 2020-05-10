@@ -7,6 +7,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
@@ -63,8 +64,10 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        this.root.on("valueChanged", () => {
-            this.emit("diceRolled");
+        this.root.on("valueChanged", (changed: IValueChanged) => {
+            if (changed.key === diceValueKey) {
+                this.emit("diceRolled");
+            }
         });
     }
 
