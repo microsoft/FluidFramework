@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.18.0-0",
+    "@microsoft/fluid-map": "^0.18.0-0",
     "@microsoft/fluid-view-interfaces": "^0.18.0-0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
