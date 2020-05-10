@@ -1,7 +1,7 @@
 # Collaborative TextArea
 
-This is a basic example that creates a SharedString and uses the react CollaborativeTextArea component to launch
-a basic collaborative `<textarea>`
+**Collaborative TextArea** is a basic example that creates a SharedString and uses the react CollaborativeTextArea
+component to launch a basic collaborative HTML `<textarea>`
 
 ## Getting Started
 
@@ -26,3 +26,10 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
+
+## Data model
+
+Collaborative TextArea uses the following distributed data structures:
+
+- SharedDirectory - root
+- SharedString - stores the text

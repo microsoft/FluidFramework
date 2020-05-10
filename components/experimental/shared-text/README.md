@@ -1,6 +1,10 @@
-# External Component Loader
+# Shared Text
 
-An experimental implementation of how to use a Container to enable dynamic code loading from a CDN.
+An experimental implementation of writing a Rich Text Editor.
+
+## History
+
+**Shared Text** was the first editor written on the Fluid Framework and has evolved along with the framework.
 
 ## Getting Started
 
