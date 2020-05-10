@@ -71,28 +71,11 @@ export const BadgeView = (props: IBadgeViewProps) => {
         setDialogVisible(false);
     }
 
-    // function _setCurrent(newItem: IBadgeType): void {
-    //     if (newItem.key !== this.state.current.key) {
-    //         // Save current value into history
-    //         this.props.historySequence.insert(
-    //             this.props.historySequence.getItemCount(), [
-    //                 {
-    //                     value: newItem,
-    //                     timestamp: new Date(),
-    //                 },
-    //             ],
-    //         );
-
-    //         // Set new value
-    //         this.props.currentCell.set(newItem);
-    //     }
-    // }
-
     function setCurrentAndAddHistory(newItem: IBadgeType): void {
         console.log(`${clientId}: setCurrentAndAddHistory; newItem: ${newItem.key}`);
         if (newItem.key !== current.key) {
-            // Save current value into history
-            addToHistory(current, new Date());
+            // Save new date value into history
+            addToHistory(newItem, new Date());
 
             // Set new value
             setCurrent(newItem);
@@ -160,17 +143,17 @@ export const BadgeView = (props: IBadgeViewProps) => {
     function onRenderCard(): JSX.Element {
         const items = [];
 
-        // Add items to history in reverse order
+        // Add ActivityItems for each history entry; they'll be sorted oldest --> newest
         // eslint-disable-next-line react/prop-types
-        history.forEach((x) => {
-            console.log(`${clientId}: x: ${typeof x}`);
+        history.forEach((historyEntry) => {
+            console.log(`${clientId}: historyEntry: ${typeof historyEntry}`);
             // const key = `${clientId}_${x.timestamp.getUTCDate()}`;
-            items.unshift(
+            items.push(
                 <ActivityItem
-                    activityDescription={`Set to ${x.value.text}`}
+                    activityDescription={`Set to ${historyEntry.value.text}`}
                     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                    timeStamp={getRelativeDate(x.timestamp)}
-                    activityIcon={<Icon {...x.value.iconProps}/>}
+                    timeStamp={getRelativeDate(historyEntry.timestamp)}
+                    activityIcon={<Icon {...historyEntry.value.iconProps}/>}
                     // key={key}
                 />,
             );

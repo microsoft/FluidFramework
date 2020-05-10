@@ -169,7 +169,7 @@ export class Badge extends PrimedComponent implements
                     addToHistory={(badgeOption, timestamp) => {
                         console.log(`addToHistory: ${badgeOption.key}, ${badgeOption.text}`);
                         this.historySequence.insert(
-                            this.historySequence.getItemCount(), [
+                            0, [
                                 {
                                     value: badgeOption,
                                     timestamp,
