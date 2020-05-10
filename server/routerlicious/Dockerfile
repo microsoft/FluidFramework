@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim AS base
+FROM node:12.16.3-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,31 +19,34 @@ RUN chmod +x /tini
 # Copy over and build the server
 WORKDIR /usr/src/server
 
+# To auth against private VSTS
+ARG NPM_TOKEN
+
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY LICENSE.txt .
-COPY server/routerlicious/package*.json server/routerlicious/
-COPY server/routerlicious/lerna.json server/routerlicious/lerna.json
-COPY server/routerlicious/lerna-package-lock.json server/routerlicious/lerna-package-lock.json
-COPY server/routerlicious/.npmrc server/routerlicious/
-COPY tools/build-server-resources/build-version.js server/routerlicious/tools/build-server-resources/
+COPY package*.json ./
+COPY lerna.json .
+COPY lerna-package-lock.json .
+COPY .npmrc .
+COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
-COPY server/routerlicious/packages/gitresources/package*.json server/routerlicious/packages/gitresources/
-COPY server/routerlicious/packages/protocol-definitions/package*.json server/routerlicious/packages/protocol-definitions/
-COPY server/routerlicious/packages/kafka-orderer/package*.json server/routerlicious/packages/kafka-orderer/
-COPY server/routerlicious/packages/lambdas-driver/package*.json server/routerlicious/packages/lambdas-driver/
-COPY server/routerlicious/packages/lambdas/package*.json server/routerlicious/packages/lambdas/
-COPY server/routerlicious/packages/local-server/package*.json server/routerlicious/packages/local-server/
-COPY server/routerlicious/packages/memory-orderer/package*.json server/routerlicious/packages/memory-orderer/
-COPY server/routerlicious/packages/routerlicious/package*.json server/routerlicious/packages/routerlicious/
-COPY server/routerlicious/packages/services/package*.json server/routerlicious/packages/services/
-COPY server/routerlicious/packages/services-client/package*.json server/routerlicious/packages/services-client/
-COPY server/routerlicious/packages/services-core/package*.json server/routerlicious/packages/services-core/
-COPY server/routerlicious/packages/services-utils/package*.json server/routerlicious/packages/services-utils/
-COPY server/routerlicious/packages/test-utils/package*.json server/routerlicious/packages/test-utils/
-COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
+COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/protocol-definitions/package*.json packages/protocol-definitions/
+COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
+COPY packages/lambdas-driver/package*.json packages/lambdas-driver/
+COPY packages/lambdas/package*.json packages/lambdas/
+COPY packages/local-server/package*.json packages/local-server/
+COPY packages/memory-orderer/package*.json packages/memory-orderer/
+COPY packages/routerlicious/package*.json packages/routerlicious/
+COPY packages/services/package*.json packages/services/
+COPY packages/services-client/package*.json packages/services-client/
+COPY packages/services-core/package*.json packages/services-core/
+COPY packages/services-utils/package*.json packages/services-utils/
+COPY packages/test-utils/package*.json packages/test-utils/
+COPY packages/protocol-base/package*.json packages/protocol-base/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
-COPY server/routerlicious/chaincode/* /tmp/chaincode/
+COPY chaincode/* /tmp/chaincode/
 
 # Give write permission to node user.
 RUN chown -R node:node /tmp/chaincode/
@@ -57,20 +60,17 @@ RUN mkdir nyc && chown node: nyc
 # Expose the port the app runs under
 EXPOSE 3000
 
-# Switch to the server folder for npm install
-WORKDIR /usr/src/server/server/routerlicious
-
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
-WORKDIR /usr/src/server
-COPY server/routerlicious/packages/ server/routerlicious/packages/
+COPY packages/ packages/
 
 # Switch to the server folder and build
-WORKDIR /usr/src/server/server/routerlicious
+WORKDIR /usr/src/server
+
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
 ARG VERSION_BUILDBRANCH=refs/heads/unknown
@@ -85,9 +85,6 @@ FROM base AS runner
 # Don't run as root user
 USER node
 
-# Switch to the routerlicious folder
-WORKDIR /usr/src/server/server/routerlicious/packages/routerlicious
-
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
 ENTRYPOINT ["/tini", "--"]
@@ -97,6 +94,9 @@ CMD ["npm", "run", "alfred"]
 
 # Partial Build Target for publishing
 FROM base AS publish
+
+# To auth against private VSTS
+ARG NPM_TOKEN
 
 # Webpack components for publishing
 RUN npm run webpack
