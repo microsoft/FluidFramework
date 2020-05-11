@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-framework-interfaces",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "description": "Definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.2"
+    "@microsoft/fluid-component-core-interfaces": "^0.17.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

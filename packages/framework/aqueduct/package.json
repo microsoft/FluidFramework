@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-aqueduct",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "description": "A set of implementations for fluid framework interfaces.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -55,15 +55,15 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.16.0",
     "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.2",
-    "@microsoft/fluid-component-runtime": "^0.17.2",
-    "@microsoft/fluid-container-definitions": "^0.17.2",
-    "@microsoft/fluid-container-runtime": "^0.17.2",
-    "@microsoft/fluid-framework-interfaces": "^0.17.2",
-    "@microsoft/fluid-map": "^0.17.2",
-    "@microsoft/fluid-runtime-definitions": "^0.17.2",
-    "@microsoft/fluid-shared-object-base": "^0.17.2",
-    "@microsoft/fluid-synthesize": "^0.17.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.3",
+    "@microsoft/fluid-component-runtime": "^0.17.3",
+    "@microsoft/fluid-container-definitions": "^0.17.3",
+    "@microsoft/fluid-container-runtime": "^0.17.3",
+    "@microsoft/fluid-framework-interfaces": "^0.17.3",
+    "@microsoft/fluid-map": "^0.17.3",
+    "@microsoft/fluid-runtime-definitions": "^0.17.3",
+    "@microsoft/fluid-shared-object-base": "^0.17.3",
+    "@microsoft/fluid-synthesize": "^0.17.3",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

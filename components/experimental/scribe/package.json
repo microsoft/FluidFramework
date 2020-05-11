@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/scribe",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "description": "Scribe document writer",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -31,16 +31,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.2",
-    "@microsoft/fluid-component-runtime": "^0.17.2",
-    "@microsoft/fluid-container-definitions": "^0.17.2",
-    "@microsoft/fluid-container-runtime": "^0.17.2",
-    "@microsoft/fluid-host-service-interfaces": "^0.17.2",
-    "@microsoft/fluid-map": "^0.17.2",
-    "@microsoft/fluid-runtime-definitions": "^0.17.2",
-    "@microsoft/fluid-server-tools-core": "^0.17.2",
-    "@microsoft/fluid-shared-object-base": "^0.17.2",
-    "@microsoft/fluid-view-interfaces": "^0.17.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.3",
+    "@microsoft/fluid-component-runtime": "^0.17.3",
+    "@microsoft/fluid-container-definitions": "^0.17.3",
+    "@microsoft/fluid-container-runtime": "^0.17.3",
+    "@microsoft/fluid-host-service-interfaces": "^0.17.3",
+    "@microsoft/fluid-map": "^0.17.3",
+    "@microsoft/fluid-runtime-definitions": "^0.17.3",
+    "@microsoft/fluid-server-tools-core": "^0.17.3",
+    "@microsoft/fluid-shared-object-base": "^0.17.3",
+    "@microsoft/fluid-view-interfaces": "^0.17.3",
     "@types/node": "^10.14.6",
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7"
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.17.2",
+    "@microsoft/fluid-webpack-component-loader": "^0.17.3",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "eslint": "~6.8.0",

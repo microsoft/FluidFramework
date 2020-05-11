@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-dds-interceptions";
-export const pkgVersion = "0.17.2";
+export const pkgVersion = "0.17.3";

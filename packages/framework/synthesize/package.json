@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-synthesize",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "description": "A library for synthesizing scope objects.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,7 +51,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.2"
+    "@microsoft/fluid-component-core-interfaces": "^0.17.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
