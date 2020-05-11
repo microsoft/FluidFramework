@@ -13,8 +13,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-    IExperimentalComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
@@ -171,9 +170,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
-        return expComponentRuntime?.isExperimentalComponentRuntime ?
-            expComponentRuntime.isLocal() || this.services === undefined : this.services === undefined;
+        return this.runtime.isLocal !== undefined
+            ? this.runtime.isLocal() || this.services === undefined : this.services === undefined;
     }
 
     /**
@@ -302,15 +300,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected async newAckBasedPromise<T>(
         executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
     ): Promise<T> {
-        return new Promise((resolve, reject) => {
+        let rejectBecauseDispose: () => void;
+        return new Promise<T>((resolve, reject) => {
+            rejectBecauseDispose =
+                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
+            this.runtime.on("dispose", rejectBecauseDispose);
+
+            // Even in this case don't return, so the caller's executor can run
             if (this.runtime.disposed) {
                 reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
             }
 
-            this.runtime.once("dispose",
-                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending")));
-
             executor(resolve, reject);
+        }).finally(() => {
+            // Note: rejectBecauseDispose will never be undefined here
+            this.runtime.off("dispose", rejectBecauseDispose);
         });
     }
 

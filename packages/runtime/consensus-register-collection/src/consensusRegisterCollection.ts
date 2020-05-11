@@ -16,7 +16,7 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
@@ -42,14 +42,13 @@ interface ILocalRegister<T> {
     sequenceNumber: number;
 }
 
-const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> =>
-    ({
-        sequenceNumber,
-        value: {
-            type: "Plain",
-            value,
-        },
-    });
+const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> => ({
+    sequenceNumber,
+    value: {
+        type: "Plain",
+        value,
+    },
+});
 
 /**
  * An operation for consensus register collection
@@ -359,7 +358,7 @@ export class ConsensusRegisterCollection<T>
     private onLocalMessageAck(message: ISequencedDocumentMessage, winner: boolean) {
         const pending = this.pendingLocalMessages.shift();
         strongAssert(pending);
-        assert(message.clientSequenceNumber === pending.clientSequenceNumber,
+        assert.strictEqual(message.clientSequenceNumber, pending.clientSequenceNumber,
             "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }

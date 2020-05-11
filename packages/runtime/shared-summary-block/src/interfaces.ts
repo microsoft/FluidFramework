@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsJsonable, Jsonable } from "@microsoft/fluid-runtime-definitions";
+import { AsJsonable, Jsonable } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
 /**

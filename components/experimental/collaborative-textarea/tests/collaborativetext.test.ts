@@ -6,8 +6,6 @@
 import { globals } from "../jest.config";
 
 describe("collaborativetext", () => {
-    jest.setTimeout(10000);
-
     const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
             const divs = document.getElementsByClassName("text-area");
@@ -39,6 +37,12 @@ describe("collaborativetext", () => {
             }
         }, index, text);
     };
+
+    beforeAll(async () => {
+        // Wait for the page to load first before running any tests
+        // so this time isn't attributed to the first test
+        await page.goto(globals.PATH, { waitUntil: "load" });
+    }, 45000);
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });

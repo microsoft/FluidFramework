@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 
 const rootMapId = "root";

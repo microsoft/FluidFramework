@@ -12,7 +12,11 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -357,8 +361,7 @@ export class ConsensusOrderedCollection<T = any>
      */
     private onLocalMessageAck(
         message: ISequencedDocumentMessage,
-        value: IConsensusOrderedCollectionValue<T> | undefined)
-    {
+        value: IConsensusOrderedCollectionValue<T> | undefined) {
         const pending = this.pendingLocalMessages.shift();
         strongAssert(pending);
         assert(message.contents.opName === pending.message.opName);

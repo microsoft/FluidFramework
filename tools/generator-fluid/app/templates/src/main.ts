@@ -1,82 +1,56 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { EventEmitter } from "events";
+
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-const pkg = require("../package.json");
+
+const diceValueKey = "diceValue";
 
 /**
- * DiceRoller example using view interfaces and stock component classes.
+ * IDiceRoller describes the public API surface for our dice roller component.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+interface IDiceRoller extends EventEmitter {
+    /**
+     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     */
+    rollDice: () => void;
+    /**
+     * Get the dice value as a number.
+     */
+    getDiceValue: () => number;
+}
+
+class DiceRollerView implements IComponentHTMLView {
+    constructor(private readonly model: IDiceRoller) { }
+
     public get IComponentHTMLView() { return this; }
 
-    /**
-     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
-     * component and all work will resolve before the view is presented to any user.
-     *
-     * This method is used to perform component setup, which can include setting an initial schema or initial values.
-     */
-    protected async componentInitializingFirstTime() {
-        this.root.set("diceValue", 1);
-
-        // Uncomment the line below to add a title to your data schema!
-        // this.root.set("title", "Initial Title Value");
-    }
-
-    /**
-     * Render the DiceRoller
-     */
     public render(div: HTMLElement) {
-        // Do initial setup off the provided div.
-        this.createComponentDom(div);
-
-        // When the value of the dice changes we will re-render the
-        // value in the dice span
-        this.root.on("valueChanged", () => {
-            // Uncomment the block below to live update your title
-            // const title = this.root.get("title");
-            // const titleParagraph = document.getElementById("titleParagraph");
-            // titleParagraph.textContent = title;
-
-            const diceValue = this.root.get<number>("diceValue");
-            const diceSpan = div.querySelector(".diceSpan");
-            diceSpan.textContent = this.getDiceChar(diceValue);
-        });
-    }
-
-    private createComponentDom(host: HTMLElement) {
-
-        const diceValue = this.root.get<number>("diceValue");
-
-        // Uncomment the block below to create a title in your components DOM
-        // const titleParagraph = document.createElement("p");
-        // titleParagraph.id = "titleParagraph";
-        // host.appendChild(titleParagraph);
-
-        // const titleInput = document.createElement("input");
-        // titleInput.id = "titleInput";
-        // titleInput.type = "text";
-        // titleInput.oninput = ( e) => { this.root.set("title", (e.target as any).value) };
-        // host.appendChild(titleInput);
-
         const diceSpan = document.createElement("span");
         diceSpan.classList.add("diceSpan");
         diceSpan.style.fontSize = "50px";
-        diceSpan.textContent = this.getDiceChar(diceValue);
-        host.appendChild(diceSpan);
+        diceSpan.textContent = this.getDiceChar(this.model.getDiceValue());
+        div.appendChild(diceSpan);
 
         const rollButton = document.createElement("button");
         rollButton.classList.add("rollButton");
         rollButton.textContent = "Roll";
-        rollButton.onclick = this.rollDice.bind(this);
-        host.appendChild(rollButton);
-    }
+        rollButton.onclick = this.model.rollDice;
+        div.appendChild(rollButton);
 
-    private rollDice() {
-        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set("diceValue", rollValue);
+        // When the value of the dice changes we will re-render the
+        // value in the dice span
+        this.model.on("diceRolled", () => {
+            diceSpan.textContent = this.getDiceChar(this.model.getDiceValue());
+        });
     }
 
     private getDiceChar(value: number) {
@@ -86,11 +60,56 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
 }
 
 /**
- * This is where you define all your Distributed Data Structures
+ * Dice roller example using view interfaces and stock component classes.
+ */
+export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
+    public static get ComponentName() { return "@fluid-example/dice-roller"; }
+
+    public get IComponentHTMLView() { return this; }
+
+    /**
+     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
+     * component and all work will resolve before the view is presented to any user.
+     *
+     * This method is used to perform component setup, which can include setting an initial schema or initial values.
+     */
+    protected async componentInitializingFirstTime() {
+        this.root.set(diceValueKey, 1);
+    }
+
+    protected async componentHasInitialized() {
+        this.root.on("valueChanged", (changed: IValueChanged) => {
+            if (changed.key === diceValueKey) {
+                this.emit("diceRolled");
+            }
+        });
+    }
+
+    /**
+     * Render the dice.
+     */
+    public render(div: HTMLElement) {
+        const view = new DiceRollerView(this);
+        view.render(div);
+    }
+
+    public readonly rollDice = () => {
+        const rollValue = Math.floor(Math.random() * 6) + 1;
+        this.root.set(diceValueKey, rollValue);
+    };
+
+    public readonly getDiceValue = () => {
+        return this.root.get(diceValueKey);
+    };
+}
+
+/**
+ * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
+ * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
-    pkg.name as string,
+    DiceRoller.ComponentName,
     DiceRoller,
     [],
-    {}
+    {},
 );
