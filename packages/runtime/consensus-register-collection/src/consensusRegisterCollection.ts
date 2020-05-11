@@ -54,10 +54,16 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 /**
  * An operation for consensus register collection
  */
-interface IRegisterOperation {
+interface IRegisterOperation<T> {
     key: string;
     type: "write";
-    value: string;
+    serializedValue?: string,
+
+    // Old op format from < 0.17, here temporarily for back compat
+    value: {
+        type: "Plain",
+        value: T,
+    };
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
@@ -66,10 +72,22 @@ interface IRegisterOperation {
     refSeq: number;
 }
 
+const newRegisterOp = <T>(key: string, value: T, serializedValue: string, refSeq: number): IRegisterOperation<T> =>
+    ({
+        key,
+        type: "write",
+        serializedValue,
+        value: {
+            type: "Plain",
+            value,
+        },
+        refSeq,
+    });
+
 /**
  * A record of the pending operation awaiting ack
  */
-interface IPendingRecord {
+interface IPendingRecord<T> {
     /** The resolve function to call after the local operation is ack'ed */
     resolve: (winner: boolean) => void;
 
@@ -77,7 +95,7 @@ interface IPendingRecord {
     clientSequenceNumber: number;
 
     /** Pending Message */
-    message: IRegisterOperation;
+    message: IRegisterOperation<T>;
 }
 
 const snapshotFileName = "header";
@@ -110,7 +128,7 @@ export class ConsensusRegisterCollection<T>
     private readonly data = new Map<string, ILocalData<T>>();
 
     /** Queue of local messages awaiting ack from the server */
-    private readonly pendingLocalMessages: IPendingRecord[] = [];
+    private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -134,17 +152,17 @@ export class ConsensusRegisterCollection<T>
         const serializedValue = this.stringify(value);
 
         if (this.isLocal()) {
-            // JSON-roundtrip value even for local writes
+            // JSON-roundtrip value for local writes to match the behavior of going through the wire
             this.processInboundWrite(key, this.parse(serializedValue), 0, 0, true);
             return true;
         }
 
-        const message: IRegisterOperation = {
+        const message: IRegisterOperation<T> = newRegisterOp(
             key,
-            type: "write",
-            value: serializedValue,
-            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
-        };
+            value,
+            serializedValue,
+            this.runtime.deltaManager.referenceSequenceNumber,
+        );
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
@@ -236,7 +254,7 @@ export class ConsensusRegisterCollection<T>
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
-            const op: IRegisterOperation = message.contents;
+            const op: IRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
@@ -244,9 +262,13 @@ export class ConsensusRegisterCollection<T>
                     const refSeqWhenCreated = op.refSeq;
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
+                    // Read the new (>= 0.17) op format that supports handles, if possible
+                    const value = op.serializedValue !== undefined
+                        ? this.parse(op.serializedValue)
+                        : op.value.value;
                     const winner = this.processInboundWrite(
                         op.key,
-                        this.parse(op.value),
+                        value,
                         refSeqWhenCreated,
                         message.sequenceNumber,
                         local);
