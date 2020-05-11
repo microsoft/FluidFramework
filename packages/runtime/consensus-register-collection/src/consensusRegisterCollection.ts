@@ -65,13 +65,6 @@ interface IRegisterOperation {
     refSeq: number;
 }
 
-const newRegisterOp = (key: string, serializedValue: string, refSeq: number): IRegisterOperation => ({
-    key,
-    type: "write",
-    serializedValue,
-    refSeq,
-});
-
 /**
  * A record of the pending operation awaiting ack
  */
@@ -145,11 +138,12 @@ export class ConsensusRegisterCollection<T>
             return true;
         }
 
-        const message: IRegisterOperation = newRegisterOp(
+        const message: IRegisterOperation = {
             key,
+            type: "write",
             serializedValue,
-            this.runtime.deltaManager.referenceSequenceNumber,
-        );
+            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
+        };
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
