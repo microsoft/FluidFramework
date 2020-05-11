@@ -42,14 +42,13 @@ interface ILocalRegister<T> {
     sequenceNumber: number;
 }
 
-const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> =>
-    ({
-        sequenceNumber,
-        value: {
-            type: "Plain",
-            value,
-        },
-    });
+const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> => ({
+    sequenceNumber,
+    value: {
+        type: "Plain",
+        value,
+    },
+});
 
 /**
  * An operation for consensus register collection
@@ -57,7 +56,7 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 interface IRegisterOperation {
     key: string;
     type: "write";
-    value: string;
+    serializedValue: string;
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
@@ -134,7 +133,7 @@ export class ConsensusRegisterCollection<T>
         const serializedValue = this.stringify(value);
 
         if (this.isLocal()) {
-            // JSON-roundtrip value even for local writes
+            // JSON-roundtrip value for local writes to match the behavior of going through the wire
             this.processInboundWrite(key, this.parse(serializedValue), 0, 0, true);
             return true;
         }
@@ -142,7 +141,7 @@ export class ConsensusRegisterCollection<T>
         const message: IRegisterOperation = {
             key,
             type: "write",
-            value: serializedValue,
+            serializedValue,
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
 
@@ -246,7 +245,7 @@ export class ConsensusRegisterCollection<T>
 
                     const winner = this.processInboundWrite(
                         op.key,
-                        this.parse(op.value),
+                        this.parse(op.serializedValue),
                         refSeqWhenCreated,
                         message.sequenceNumber,
                         local);
@@ -337,7 +336,7 @@ export class ConsensusRegisterCollection<T>
     private onLocalMessageAck(message: ISequencedDocumentMessage, winner: boolean) {
         const pending = this.pendingLocalMessages.shift();
         strongAssert(pending);
-        assert(message.clientSequenceNumber === pending.clientSequenceNumber,
+        assert.strictEqual(message.clientSequenceNumber, pending.clientSequenceNumber,
             "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }
