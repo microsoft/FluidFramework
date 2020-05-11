@@ -1493,12 +1493,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private verifyNotClosed() {
-        // Don't throw another error here if the runtime was disposed due to an error,
+        // Don't log another error here if the runtime was disposed due to an error,
         // because the disposer should be responsible for reporting it.  Check this
         // instead of stopping calls to the runtime because not all runtime consumers
         // may be aware of the error.
         if (this._disposed && !this.disposedWithError) {
-            throw new Error("Runtime is closed");
+            this.logger.sendErrorEvent({
+                eventName: "ContainerRuntime_verifyNotClosed",
+                error: new Error("Runtime is closed"),
+            });
         }
     }
 
