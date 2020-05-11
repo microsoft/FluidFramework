@@ -1,2 +1,2 @@
-export * from "./BadArray";
+export * from "./ArraySequence";
 export * from "./defaultData";

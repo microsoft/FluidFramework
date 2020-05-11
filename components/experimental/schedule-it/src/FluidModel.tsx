@@ -5,7 +5,7 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { BadArray, defaultDatesNumbers, defaultPeople } from "./utils";
+import { ArraySequence, defaultDatesNumbers, defaultPeople } from "./utils";
 import {
   AvailabilityType,
   IPersonType,
@@ -54,9 +54,9 @@ export class DataModel extends PrimedComponent
     this.root.set(this._commentsKey, comments.handle);
 
     // if (this.context.leader) {
-    BadArray.push<number>(dates, defaultDatesNumbers);
-    BadArray.push<IPersonType>(people, defaultPeople);
-    BadArray.push<ICommentType>(comments, undefined);
+    ArraySequence.push<number>(dates, defaultDatesNumbers);
+    ArraySequence.push<IPersonType>(people, defaultPeople);
+    ArraySequence.push<ICommentType>(comments, undefined);
     // }
   }
 
@@ -75,7 +75,7 @@ export class DataModel extends PrimedComponent
 
   private setPerson = (index: number, person: IPersonType): void => {
     if (this._people) {
-      BadArray.set(this._people, this.context.hostRuntime, index, person);
+      ArraySequence.set(this._people, this.context.hostRuntime, index, person);
     }
   };
 
@@ -84,7 +84,7 @@ export class DataModel extends PrimedComponent
     value: Date
   ): void => {
     if (this._dates) {
-      BadArray.set(
+      ArraySequence.set(
         this._dates,
         this.context.hostRuntime,
         index,
@@ -100,7 +100,7 @@ export class DataModel extends PrimedComponent
     value: number
   ) => {
     if (this._people) {
-      let person = BadArray.get(this._people, personIndex);
+      let person = ArraySequence.get(this._people, personIndex);
       person.availability[dayIndex] = value;
       this.setPerson(personIndex, person);
     }
@@ -111,7 +111,7 @@ export class DataModel extends PrimedComponent
     name: string
   ) => {
     if (this._people) {
-      let person = BadArray.get(this._people, personIndex);
+      let person = ArraySequence.get(this._people, personIndex);
       person.name = name;
       this.setPerson(personIndex, person);
     }
@@ -119,7 +119,7 @@ export class DataModel extends PrimedComponent
 
   public addRow: IViewActions["addRow"] = () => {
     if (this._people) {
-      BadArray.push(this._people, [
+      ArraySequence.push(this._people, [
         {
           name: undefined,
           availability: [
@@ -134,7 +134,7 @@ export class DataModel extends PrimedComponent
 
   public removeRow: IViewActions["removeRow"] = () => {
     if (this._people) {
-      BadArray.pop(this._people);
+      ArraySequence.pop(this._people);
     }
   };
 
@@ -144,7 +144,7 @@ export class DataModel extends PrimedComponent
   ): void => {
     if (this._comments) {
       const length = this._comments.getLength();
-      BadArray.push(this._comments, [{ name, message }]);
+      ArraySequence.push(this._comments, [{ name, message }]);
     }
   };
 

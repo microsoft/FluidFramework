@@ -1,0 +1,74 @@
+{
+  "name": "schedule-it",
+  "version": "0.0.1",
+  "description": "Fluid starter project",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:compile",
+    "build:compile": "npm run tsc",
+    "build:full": "concurrently npm:build npm:webpack",
+    "dev": "webpack --env.development",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tsc": "tsc",
+    "webpack": "webpack --env.production && npm run tsc",
+    "webpack:dev": "webpack --env.development"
+  },
+  "dependencies": {
+<<<<<<< HEAD:components/experimental/schedule-it/package.json
+    "@microsoft/fluid-aqueduct": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
+    "@microsoft/fluid-map": "^0.17.0",
+    "@microsoft/fluid-runtime-definitions": "^0.17.0",
+    "@microsoft/fluid-sequence": "^0.17.0",
+    "@microsoft/fluid-view-interfaces": "^0.17.0",
+=======
+    "@microsoft/fluid-aqueduct": "^0.16.1",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.1",
+    "@microsoft/fluid-map": "^0.16.1",
+    "@microsoft/fluid-runtime-definitions": "^0.16.1",
+    "@microsoft/fluid-sequence": "^0.16.1",
+    "@microsoft/fluid-view-interfaces": "^0.16.1",
+>>>>>>> 3b96c8ff7adf1256d24ef1ae37ca853ae31de08a:examples/components/schedule-it/package.json
+    "@uifabric/date-time": "^7.8.35",
+    "office-ui-fabric-react": "^7.28.1",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.5"
+  },
+  "devDependencies": {
+<<<<<<< HEAD:components/experimental/schedule-it/package.json
+    "@microsoft/fluid-webpack-component-loader": "^0.17.0",
+    "@types/node": "^10.14.6",
+    "@types/react": "^16.9.15",
+    "@types/react-dom": "^16.9.4",
+=======
+    "@microsoft/fluid-webpack-component-loader": "^0.16.1",
+    "@types/node": "^10.14.6",
+    "@types/react": "^16.9.15",
+    "@types/react-dom": "^16.9.4",
+    "concurrently": "^4.1.0",
+>>>>>>> 3b96c8ff7adf1256d24ef1ae37ca853ae31de08a:examples/components/schedule-it/package.json
+    "ts-loader": "^6.1.2",
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
+}
