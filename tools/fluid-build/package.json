@@ -1,7 +1,6 @@
 {
-  "name": "fluid-build",
-  "version": "0.0.5",
-  "private": true,
+  "name": "@fluid-internal/fluid-build-tools",
+  "version": "0.1.0",
   "description": "Fluid Build tool",
   "license": "MIT",
   "author": "Microsoft",
