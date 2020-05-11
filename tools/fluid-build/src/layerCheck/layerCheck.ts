@@ -64,20 +64,10 @@ function parseOptions(argv: string[]) {
     }
 }
 
-function versionCheck() {
-    const pkg = require(path.join(__dirname, "..", "..", "package.json"));
-    const builtVersion = "0.0.5";
-    if (pkg.version > builtVersion) {
-        console.warn(`WARNING: fluid-layer-check is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
-    }
-}
-
 parseOptions(process.argv);
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
-
-    versionCheck();
 
     const resolvedRoot = await getResolvedFluidRoot();
 
