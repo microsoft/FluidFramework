@@ -48,6 +48,12 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isRegistered(): boolean;
 
     /**
+     * Returns whether the given shared object is attached.
+     * @returns True if the given shared object is attached
+     */
+    isAttached(): boolean;
+
+    /**
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object
      */

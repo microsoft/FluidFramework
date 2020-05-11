@@ -188,6 +188,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * {@inheritDoc ISharedObject.isAttached}
+     */
+    public isAttached(): boolean {
+        return this.services !== undefined;
+    }
+
+    /**
      * {@inheritDoc ISharedObject.snapshot}
      */
     public abstract snapshot(): ITree;
