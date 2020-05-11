@@ -18,6 +18,15 @@ export interface IEmbeddedComponentProps {
  * If the component is none of these, we render nothing.
  */
 export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
+    public static canAdapt(component: IComponent) {
+        return (
+            React.isValidElement(component)
+            || component.IComponentReactViewable !== undefined
+            || component.IComponentHTMLView !== undefined
+            || component.IComponentHTMLVisual !== undefined
+        );
+    }
+
     private readonly element: JSX.Element;
 
     constructor(props: IEmbeddedComponentProps) {

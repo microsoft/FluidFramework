@@ -17,7 +17,7 @@ You can now bootstrap a new dice roller component at any time.
 
 Go back to your root directory and try it now.
 ````bash
-yo fluid
+yo @microsoft/fluid
 ````
 ---
 
