@@ -1,5 +1,0 @@
-# registry=https://registry.npmjs.org/
-# always-auth=false
-
-@microsoft:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-@microsoft:always-auth=true
