@@ -370,6 +370,7 @@ class BumpVersion {
             if (!pkg) {
                 break;
             }
+            const collectVersionPromises = [];
             for (const { name: dep, version } of pkg.combinedDependencies) {
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
@@ -401,12 +402,13 @@ class BumpVersion {
                         }
                         depVersions.add(depBuildPackage, depVersion, reference);
                     } else {
-                        await depVersions.collectPublishedPackageDependencies(depBuildPackage, version,
-                            this.repo.resolvedRoot, this.fullPackageMap, reference);
+                        collectVersionPromises.push(depVersions.collectPublishedPackageDependencies(depBuildPackage, version,
+                            this.repo.resolvedRoot, this.fullPackageMap, reference));
                     }
 
                 }
             }
+            await Promise.all(collectVersionPromises);
         }
 
         // Fake these for printing.
