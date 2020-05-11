@@ -56,7 +56,7 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 interface IRegisterOperation {
     key: string;
     type: "write";
-    serializedValue: string,
+    serializedValue: string;
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
