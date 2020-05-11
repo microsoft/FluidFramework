@@ -48,10 +48,10 @@ import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
 
-const MaxReconnectDelay = 8000;
-const InitialReconnectDelay = 1000;
-const MissingFetchDelay = 100;
-const MaxFetchDelay = 10000;
+const MaxReconnectDelaySeconds = 8;
+const InitialReconnectDelaySeconds = 1;
+const MissingFetchDelaySeconds = 0.1;
+const MaxFetchDelaySeconds = 10;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
 
@@ -60,17 +60,50 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
-// Test if we deal with NetworkError object and if it has enough information to make a call.
-// If in doubt, allow retries.
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function canRetryOnError(error: any) {
-    // Always retry unless told otherwise.
-    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
+interface IErrorReconnectInfo {
+    /**
+     * A string describing why we are reconnecting from the error.
+     */
+    reason: string;
+    /**
+     * True if the error can be reconnected after.
+     */
+    canReconnect: boolean;
+    /**
+     * Delay before reconnecting in seconds.
+     */
+    reconnectDelay?: number;
+    /**
+     * If reconnecting is not an option, close with this error.
+     */
+    getError(): IError,
 }
 
-enum retryFor {
-    DELTASTREAM,
-    DELTASTORAGE,
+// Test if we deal with NetworkError object and if it has enough information to make a call.
+// If in doubt, allow retries.
+const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
+const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+function getErrorReconnectInfo(reason: string, error: any): IErrorReconnectInfo {
+    return {
+        reason,
+        canReconnect: canRetryOnError(error),
+        reconnectDelay: getRetryDelayFromError(error),
+        getError: () => createIError(error),
+    };
+}
+function getNackReconnectInfo(nackContent: INackContent): IErrorReconnectInfo {
+    return {
+        reason: `Nacked: ${nackContent.message}`,
+        canReconnect: ![403, 429].includes(nackContent.code),
+        reconnectDelay: nackContent.retryAfter,
+        getError() { return createFatalError(this.reason); },
+    };
+}
+
+enum RetryFor {
+    DeltaStream,
+    DeltaStorage,
 }
 
 export interface IConnectionArgs {
@@ -79,13 +112,10 @@ export interface IConnectionArgs {
     reason?: string;
 }
 
-interface INackReconnectInfo {
-    nackReason: string;
-    canReconnect: boolean;
-    /**
-     * Delay before reconnecting in milliseconds.
-     */
-    reconnectDelayMs?: number;
+export enum ReconnectMode {
+    Never = "Never",
+    Disabled = "Disabled",
+    Enabled = "Enabled",
 }
 
 /**
@@ -101,7 +131,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Controls whether the DeltaManager will automatically reconnect to the delta stream after receiving a disconnect.
      */
-    public autoReconnect: boolean = true;
+    private _reconnectMode: ReconnectMode;
 
     // file ACL - whether user has only read-only access to a file
     private readonlyPermissions: boolean | undefined;
@@ -231,6 +261,25 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     /**
+     * Automatic reconnecting enabled or disabled.
+     * If set to Never, then reconnecting will never be allowed.
+     */
+    public get reconnectMode(): ReconnectMode {
+        return this._reconnectMode;
+    }
+
+    /**
+     * Enables or disables automatic reconnecting.
+     * Will throw an error if reconnectMode set to Never.
+     */
+    public setAutomaticReconnect(reconnect: boolean): void {
+        assert(
+            this._reconnectMode !== ReconnectMode.Never,
+            "Cannot toggle automatic reconnect if reconnect is set to Never.");
+        this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+    }
+
+    /**
      * Sends signal to runtime (and components) to be read-only.
      * Hosts may have read only views, indicating to components that no edits are allowed.
      * This is independent from this.readonlyPermissions (permissions) and this.connectionMode
@@ -260,12 +309,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly serviceProvider: () => IDocumentService | undefined,
         private client: IClient,
         private readonly logger: ITelemetryLogger,
-        private readonly reconnect: boolean,
+        reconnectAllowed: boolean,
     ) {
         super();
 
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
+        this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -415,7 +465,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
             let connection: DeltaConnection | undefined;
-            let delay = InitialReconnectDelay;
+            let delay = InitialReconnectDelaySeconds;
             let connectRepeatCount = 0;
             const connectStartTime = performanceNow();
 
@@ -443,21 +493,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         logNetworkFailure(
                             this.logger,
                             {
-                                delay,
+                                delay, // seconds
                                 eventName: "DeltaConnectionFailureToConnect",
                             },
                             error);
                     }
 
-                    const retryDelayFromError = this.getRetryDelayFromError(error);
-                    delay = retryDelayFromError !== undefined ?
-                        retryDelayFromError :
-                        Math.min(delay * 2, MaxReconnectDelay);
+                    const retryDelayFromError = getRetryDelayFromError(error);
+                    delay = retryDelayFromError ?? Math.min(delay * 2, MaxReconnectDelaySeconds);
 
                     if (retryDelayFromError) {
-                        this.emitDelayInfo(retryFor.DELTASTREAM, retryDelayFromError);
+                        this.emitDelayInfo(RetryFor.DeltaStream, retryDelayFromError);
                     }
-                    await waitForConnectedState(delay);
+                    await waitForConnectedState(delay * 1000);
                 }
             }
 
@@ -602,7 +650,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number | undefined = -1;
+            let retryAfter: number | undefined;
 
             try {
                 // Connect to the delta storage endpoint
@@ -669,7 +717,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return;
                 }
                 success = false;
-                retryAfter = this.getRetryDelayFromError(error);
+                retryAfter = getRetryDelayFromError(error);
             }
 
             let delay: number;
@@ -678,8 +726,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 retry = 0; // start calculating timeout over if we got some ops
             } else {
                 retry++;
-                delay = retryAfter !== undefined && retryAfter >= 0 ?
-                    retryAfter : Math.min(MaxFetchDelay, MissingFetchDelay * Math.pow(2, retry));
+                delay = retryAfter ?? Math.min(MaxFetchDelaySeconds, MissingFetchDelaySeconds * Math.pow(2, retry));
 
                 // Chances that we will get something from storage after that many retries is zero.
                 // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
@@ -710,7 +757,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             telemetryEvent.reportProgress({
-                delay,
+                delay, // seconds
                 deltasRetrievedLast,
                 deltasRetrievedTotal,
                 replayFrom: from,
@@ -719,11 +766,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
-            if (retryAfter && retryAfter >= 0) {
+            if (retryAfter) {
                 // Emit throttling info only if we get it from error.
-                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+                this.emitDelayInfo(RetryFor.DeltaStorage, delay);
             }
-            await waitForConnectedState(delay);
+            await waitForConnectedState(delay * 1000);
         }
 
         // Might need to change to non-error event
@@ -800,9 +847,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private emitDelayInfo(retryEndpoint: number, delay: number) {
         // Delay === -1 means the corresponding endpoint has connected properly
         // and we do not need to emit any delay to app.
-        if (retryEndpoint === retryFor.DELTASTORAGE) {
+        if (retryEndpoint === RetryFor.DeltaStorage) {
             this.deltaStorageDelay = delay;
-        } else if (retryEndpoint === retryFor.DELTASTREAM) {
+        } else if (retryEndpoint === RetryFor.DeltaStream) {
             this.deltaStreamDelay = delay;
         }
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
@@ -811,7 +858,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 const throttlingError: IThrottlingError = {
                     errorType: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
-                    retryAfterSeconds: delayTime / 1000,
+                    retryAfterSeconds: delayTime,
                 };
                 this.emit("error", throttlingError);
             }
@@ -835,7 +882,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
         this.setReadonlyPermissions(readonly);
 
-        this.emitDelayInfo(retryFor.DELTASTREAM, -1);
+        this.emitDelayInfo(RetryFor.DeltaStream, -1);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
@@ -877,28 +924,27 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             // check message.content for back-compat with old service.
-            const reconnectInfo: INackReconnectInfo = message.content
-                ? this.parseNackReconnectInfo(message.content)
-                : { canReconnect: true, nackReason: "" };
+            const reconnectInfo: IErrorReconnectInfo = message.content
+                ? getNackReconnectInfo(message.content)
+                : {
+                    reason: "Nacked: Unknown reason",
+                    canReconnect: true,
+                    getError() { return createFatalError(this.reason); },
+                };
 
-            if (!reconnectInfo.canReconnect || !this.reconnect) {
-                this.close(createFatalError(reconnectInfo.nackReason));
-            }
-            if (!this.autoReconnect) {
+            if (this.reconnectMode !== ReconnectMode.Enabled) {
                 this.logger.sendErrorEvent({
                     eventName: "NackWithNoReconnect",
-                    nackError: `reason: ${reconnectInfo.nackReason}`,
+                    nackError: `reason: ${reconnectInfo.reason}`,
                     mode: this.connectionMode,
                 });
             }
+
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                reconnectInfo.nackReason,
                 connection,
                 "write",
-                undefined,
-                this.autoReconnect,
-                reconnectInfo.reconnectDelayMs,
+                reconnectInfo,
             );
         });
 
@@ -908,11 +954,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                `Disconnect: ${disconnectReason}`,
                 connection,
                 this.defaultReconnectionMode,
-                disconnectReason,
-                this.autoReconnect,
+                getErrorReconnectInfo(`Disconnect: ${disconnectReason}`, disconnectReason),
             );
         });
 
@@ -923,10 +967,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(
-                `Error: ${error}`,
                 connection,
                 this.defaultReconnectionMode,
-                error);
+                getErrorReconnectInfo(`Error: ${error}`, error),
+            );
         });
 
         connection.on("pong", (latency: number) => {
@@ -987,20 +1031,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     /**
      * Disconnect the current connection and reconnect.
-     * @param reason - A string describing why we are reconnecting
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
-     * @param error - The error that prompted the reconnect
-     * @param autoReconnect - Whether to attempt reconnection automatically after error handling
+     * @param reconnectInfo - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
-        reason: string,
         connection: DeltaConnection,
         requestedMode: ConnectionMode,
-        error?: any,
-        autoReconnect: boolean = true,
-        reconnectDelayMs?: number,
+        reconnectInfo: IErrorReconnectInfo,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -1008,15 +1047,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this.disconnectFromDeltaStream(reason);
+        this.disconnectFromDeltaStream(reconnectInfo.reason);
 
         // If reconnection is not an option, close the DeltaManager
-        const criticalError = !canRetryOnError(error);
-        if (!this.reconnect || criticalError) {
+        const isCriticalError = !reconnectInfo.canReconnect;
+        if (this.reconnectMode === ReconnectMode.Never || isCriticalError) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(createIError(error), criticalError /* raiseContainerError */);
+            this.close(reconnectInfo.getError(), isCriticalError /* raiseContainerError */);
         }
 
         // If closed then we can't reconnect
@@ -1024,11 +1063,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        if (autoReconnect) {
-            const delay = reconnectDelayMs ?? this.getRetryDelayFromError(error);
-            if (delay !== undefined) {
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
-                await waitForConnectedState(delay);
+        if (this.reconnectMode === ReconnectMode.Enabled) {
+            if (reconnectInfo.reconnectDelay !== undefined) {
+                this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay);
+                await waitForConnectedState(reconnectInfo.reconnectDelay * 1000);
             }
 
             this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
@@ -1039,11 +1077,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
             });
         }
-    }
-
-    private getRetryDelayFromError(error): number | undefined {
-        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds * 1000
-            : undefined;
     }
 
     private processInitialMessages(
@@ -1184,7 +1217,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.fetching = true;
 
         await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
-            this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
+            this.emitDelayInfo(RetryFor.DeltaStorage, -1);
             this.catchUpCore(messages, telemetryEventSuffix);
         });
 
@@ -1273,25 +1306,5 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;
-    }
-
-    /**
-     * Determines whether the received nack is retryable or not, and
-     * how long of a delay to wait before retrying.
-     */
-    private parseNackReconnectInfo(nackContent: INackContent): INackReconnectInfo {
-        const nackReason = `Nacked: ${nackContent.message}`;
-
-        if (nackContent.code === 403) {
-            return { canReconnect: false, nackReason };
-        }
-        if (nackContent.code === 429 && nackContent.type === "LimitExceededError") {
-            return { canReconnect: false, nackReason };
-        }
-        return {
-            canReconnect: true,
-            nackReason,
-            reconnectDelayMs: nackContent.retryAfter ? nackContent.retryAfter * 1000 : undefined,
-        };
     }
 }

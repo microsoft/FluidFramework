@@ -1,63 +1,40 @@
 # Pond
 
-The pond is a grab bag of fluid scenarios.
+The pond is a collection of simple fluid scenarios used primarily for testing.
 
 ## Getting Started
 
-To start coding, open this directory in your IDE and check out ./src/index.tsx
+If you want to run this component follow the following steps:
 
-You can try the following commands
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
 
-```node
-    npm start
-       Hosts the component at http://localhost:8080
+## Internal Component Examples
 
+### [Clicker](./src/internal-components/clicker.tsx)
 
-    npm run build
-       Builds the component into bundled js files
+Similar to the `@fluid-example/clicker` but renders two clickers. One using the `this.root`
+SharedDirectory and the other using a newly created SharedMap that is stored on the root.
 
+### [ClickerWithInitialValue](./src/internal-components/clickerWithInitialValue.tsx)
 
-    npm run deploy
-       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
-```
+Another clicker example but one that allows for optional initial state to be passed into
+the component.
 
-We suggest you start by typing:
+### [ExampleUsingProviders](./src/internal-components/exampleUsingProviders.tsx)
 
-```node
-npm start
-```
+An example that uses Container Providers to get an render current user information. This information
+will only be rendered if the Container provides a Provider for `IComponentUserInformation`.
 
-## Deploy
+### [Pond](./src/index.tsx)
 
-To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private npm repository.
+The Pond renders all three of the above components.
 
-Go to https://packages.wu2.prague.office-int.com
+The Container logic also initializes the UserInfo Provider below.
 
-Login with:
+## Internal Provider Examples
 
-> UN: prague
-> PW: 8Fxttu_A
+### [UserInfo Provider](./src/providers/userInfo.ts)
 
-And follow the npm adduser steps
-
-To deploy, use
-
-```node
-npm run deploy
-```
-
-To view your chaincode, you can go to the URL
-
-> https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode={pkg.name}@{pkg.version};
-
-This link is then shareable and, in an expanding list of components, embeddable!
-
-## npm or Azure DevOps auth Issue
-
-[Stack Overflow Issue](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
-
-If you run into an auth issue. Please set up your .npmrc. This is a common issue during npm install.
-
-For windows: https://www.npmjs.com/package/vsts-npm-auth
-
-For mac you’ll need to add credentials to your npmrc manually. Go to this link, https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague, click on “Connect to Feed” then select **npm** on the left, and follow the instructions.
+An example Container Provider that implements the `IComponentUserInformation` interface.

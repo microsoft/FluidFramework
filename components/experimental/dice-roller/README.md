@@ -1,6 +1,7 @@
-# Dice roller Component
+# Dice Roller
 
-This is a basic example component using the interface model and stock classes.
+**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and 
+persists the value in the root SharedDirectory.
 
 ## Getting Started
 
@@ -25,3 +26,9 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
+
+## Data model
+
+Dice Roller uses the following distributed data structures:
+
+- SharedDirectory - root

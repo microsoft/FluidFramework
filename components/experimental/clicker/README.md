@@ -1,6 +1,10 @@
-# Clicker Component
+# Clicker
 
-This is a basic example component using the interface model and stock classes.
+**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
+increments the counter. This is a basic example component using the interface model and stock
+classes.
+
+**Clicker** also demonstrates how use the built in taskManager to setup a simple agent.
 
 ## Getting Started
 
@@ -25,3 +29,9 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
+
+## Data model
+
+Badge uses the following distributed data structures:
+
+- SharedDirectory - root

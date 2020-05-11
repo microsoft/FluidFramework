@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.18.0",
-    "@microsoft/fluid-common-definitions": "^0.16.0",
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
     "@microsoft/fluid-component-base": "^0.18.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",

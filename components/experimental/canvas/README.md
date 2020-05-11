@@ -1,6 +1,6 @@
-# Primitives Component
+# Canvas
 
-This is a basic example component giving a UI to different distributed data structures.
+**Canvas** is a Fluid Component that displays a collaborative canvas you can draw on.
 
 ## Getting Started
 
@@ -12,7 +12,7 @@ If you want to run this component follow the following steps:
 
 ## Data model
 
-Dice Roller uses the following distributed data structures:
+Canvas uses the following distributed data structures:
 
 - SharedDirectory - root
-- SharedMap - creating new maps
+- Ink - Append only stream designed for ink scenarios
