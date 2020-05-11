@@ -174,8 +174,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             assert.strictEqual(versions6[0], "value10", "Happened after value did not overwrite");
         });
 
-        // Disabled temporarily due to n/n-1 issues (see https://github.com/microsoft/FluidFramework/issues/2130)
-        it.skip("Can store handles", async () => {
+        it("Can store handles", async () => {
             // Set up the collection with two handles and add it to the map so other containers can find it
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("test", "sampleValue");

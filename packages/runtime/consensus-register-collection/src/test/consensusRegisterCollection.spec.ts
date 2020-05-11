@@ -61,8 +61,7 @@ describe("ConsensusRegisterCollection", () => {
                 assert.strictEqual(writeResult, true, "No concurrency expected");
             });
 
-            // Disabled temporarily due to n/n-1 issues (see https://github.com/microsoft/FluidFramework/issues/2130)
-            it.skip("Can add and remove a handle", async () => {
+            it("Can add and remove a handle", async () => {
                 assert.strictEqual(crc.read("key1"), undefined);
                 const handle = crc.handle;
                 if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
