@@ -99,8 +99,6 @@ function makeSideBySideDiv(divId: string) {
     const div = document.createElement("div");
     div.style.flexGrow = "1";
     div.style.width = "50%"; // ensure the divs don't encroach on each other
-    div.style.height = "100%;";
-    div.style.overflow = "auto";
     div.style.border = "1px solid lightgray";
     div.style.boxSizing = "border-box";
     div.style.position = "relative"; // Make the new <div> a CSS containing block.
