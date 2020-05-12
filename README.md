@@ -19,7 +19,7 @@ distributed data structures.
 
 _Coming soon._
 
-## Contribute
+## Contributing
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md) to Fluid.
 
@@ -41,13 +41,15 @@ with any additional questions or comments.
 
 Get up and running quickly using our documentation at <https://aka.ms/fluid>.
 
+## Directory Structure
+
+_Coming soon._
+
 ## Building
 
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and **v10** of [Node.js](https://nodejs.org/).
+In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/).
 
-> Fluid Framework's toolchain has a known issue with Node versions later than v10.  The latest v10 release can be found [here](https://nodejs.org/dist/latest-v10.x/).
->
-> _You may want to use nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install v10 side-by-side with later versions of Node.js._
+> We recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different versions of Node.js side-by-side.
 
 Clone a copy of the repo and change to the repo root directory:
 
@@ -65,35 +67,32 @@ npm run build:fast
 
 ## Testing
 
-### Pre-requisite: Downloading test collateral
-
-Some of the test collateral is in a submodule here: <https://github.com/microsoft/FluidFrameworkTestData>.  You'll need to fetch that collateral into your enlistment to successfully run all the tests.
-
-First install git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
-
-```bash
-git lfs install
-git submodule init
-git submodule update
-```
-
 ### Running the tests
 
 You can run the tests from root to run all tests (via lerna), or you can run a scoped set of tests by running the command from the directory you're interested in.
 
-#### Unit Tests
+> Note: Some of the tests depend on test collateral that lives in a submodule here: <https://github.com/microsoft/FluidFrameworkTestData>.  You may choose to fetch that collateral into your local repository, which is required to run all the tests - otherwise some will be skipped. First install git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
+>
+>  ```bash
+>  git lfs install
+>  git submodule init
+>  git submodule update
+>  ```
+>
+
+#### Run the tests
 
 ```bash
 npm run test
 ```
 
-#### UTs with code coverage
+#### Include code coverage
 
 ```bash
 npm run test:coverage
 ```
 
-#### Mimicking the official CI build
+#### Mimic the official CI build
 
 _Note: The official build uses npm run test:full, which doesn’t work on windows._
 
@@ -102,15 +101,15 @@ npm run test:coverage
 npm run test:copyresults
 ```
 
-#### From within VS Code
+#### Run tests from within VS Code
 
-We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests.
+We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
 
 ## Try it out locally
 
 ### Single browser window, two panes
 
-_This will use an in-memory implementation of the Fluid Server to sync between the two panes in the browser window._
+_This will use an in-memory implementation of the Fluid server to sync between the two panes in the browser window._
 
 * Choose a component under `/components`
 * Navigate to the component's directory, e.g. `/components/experimental/clicker`
@@ -119,7 +118,7 @@ _This will use an in-memory implementation of the Fluid Server to sync between t
 
 ### Multiple browser instances on the same device
 
-_This will run the local Fluid Server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
+_This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
 
 First, start Tinylicous by running these commands from `/server/tinylicous`:
 
