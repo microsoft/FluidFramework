@@ -75,11 +75,7 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.logger,
             gitManager);
 
-        // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not
-        // wait on dependant promises in lambda startup. So we give it time to prepare these before actually resolving
-        // the promise.
-        // tslint:disable-next-line:no-string-based-set-timeout
-        await new Promise((resolve) => { setTimeout(resolve, 1000); });
+        await orderer.lamdasStarted;
 
         return orderer;
     }
