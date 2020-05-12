@@ -29,7 +29,7 @@ class TestComponent extends PrimedComponent {
 // between loader and runtime should be backwards-compatible and changing this
 // class should not be necessary.
 class OldTestComponent extends old.PrimedComponent {
-    public static readonly type = "@chaincode/old-test-component";
+    public static readonly type = "@chaincode/test-component";
     public get _runtime() { return this.runtime; }
     public get _root() { return this.root; }
 }
@@ -77,7 +77,7 @@ describe("loader/runtime compatibility", () => {
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
-    async function createOldContainer(
+    async function createContainerWithOldLoader(
         fluidModule: IFluidModule | old.IFluidModule,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<old.Container> {
@@ -110,14 +110,28 @@ describe("loader/runtime compatibility", () => {
             const test = ["prague is", "also neat"];
             this.component._root.set(test[0], test[1]);
             assert.strictEqual(await this.component._root.wait(test[0]), test[1]);
+
+            // load with a second container with same versions
             const container2 = await createSecondContainer(this.deltaConnectionServer);
             const component2 = await getComponent<TestComponent | OldTestComponent>("default", container2);
             assert.strictEqual(await component2._root.wait(test[0]), test[1]);
+
+            // load with a new container/runtime
+            const container3 = await createContainer(
+                { fluidExport: createRuntimeFactory(OldTestComponent.type, createComponentFactory()) },
+                this.deltaConnectionServer,
+            );
+            const component3 = await getComponent<TestComponent | OldTestComponent>("default", container3);
+            assert.strictEqual(await component3._root.wait(test[0]), test[1]);
+            (component3._root as any).set(test[1], test[0]);
+            assert.strictEqual(await component3._root.wait(test[1]), test[0]);
+            assert.strictEqual(await component2._root.wait(test[1]), test[0]);
+            assert.strictEqual(await this.component._root.wait(test[1]), test[0]);
         });
     };
 
     describe("old loader, new runtime", function() {
-        const makeContainer = async (server: ILocalDeltaConnectionServer) => createOldContainer(
+        const makeContainer = async (server: ILocalDeltaConnectionServer) => createContainerWithOldLoader(
             { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
             server,
         );
@@ -159,7 +173,7 @@ describe("loader/runtime compatibility", () => {
     });
 
     describe("old ContainerRuntime, new ComponentRuntime", function() {
-        const makeContainer = async (server: ILocalDeltaConnectionServer) => createOldContainer(
+        const makeContainer = async (server: ILocalDeltaConnectionServer) => createContainerWithOldLoader(
             { fluidExport: createOldRuntimeFactory(TestComponent.type, createComponentFactory()) },
             server,
         );
