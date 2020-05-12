@@ -7,8 +7,10 @@
 export enum ErrorType {
     generalError,
     genericNetworkError,
-    accessDeniedError,
-    fileNotFoundError,
+    authorizationError,
+    fileNotFoundOrAccessDeniedError,
+    outOfStorageError,
+    invalidFileNameError,
     throttlingError,
     serviceError,
     summarizingError,
@@ -16,8 +18,8 @@ export enum ErrorType {
     fatalError,
 }
 
-export type IError = IGeneralError | IThrottlingError |
-IGenericNetworkError | IAccessDeniedError | IFileNotFoundError |
+export type IError = IGeneralError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
+IGenericNetworkError | IAuthorizationError | IFileNotFoundOrAccessDeniedError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
 export interface IGeneralError {
@@ -45,12 +47,20 @@ export interface IGenericNetworkError extends IBaseConnectionError {
     readonly errorType: ErrorType.genericNetworkError;
 }
 
-export interface IAccessDeniedError extends IBaseConnectionError {
-    readonly errorType: ErrorType.accessDeniedError;
+export interface IAuthorizationError extends IBaseConnectionError {
+    readonly errorType: ErrorType.authorizationError;
 }
 
-export interface IFileNotFoundError extends IBaseConnectionError {
-    readonly errorType: ErrorType.fileNotFoundError;
+export interface IFileNotFoundOrAccessDeniedError extends IBaseConnectionError {
+    readonly errorType: ErrorType.fileNotFoundOrAccessDeniedError;
+}
+
+export interface IOutOfStorageError extends IBaseConnectionError {
+    readonly errorType: ErrorType.outOfStorageError;
+}
+
+export interface IInvalidFileNameError extends IBaseConnectionError {
+    readonly errorType: ErrorType.invalidFileNameError;
 }
 
 export interface IServiceError {

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-driver",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Socket storage implementation for SPO and ODC",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,20 +48,21 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-driver-base": "^0.17.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-driver-utils": "^0.17.0",
-    "@microsoft/fluid-gitresources": "^0.1004.1",
-    "@microsoft/fluid-protocol-base": "^0.1004.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-driver-base": "^0.18.0",
+    "@microsoft/fluid-driver-definitions": "^0.18.0",
+    "@microsoft/fluid-driver-utils": "^0.18.0",
+    "@microsoft/fluid-gitresources": "^0.1004.2",
+    "@microsoft/fluid-protocol-base": "^0.1004.2",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
     "performance-now": "^2.1.0",
     "sha.js": "^2.4.11",
-    "socket.io-client": "^2.1.1"
+    "socket.io-client": "^2.1.1",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

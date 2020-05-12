@@ -24,9 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
-    IExperimentalRuntime,
-    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     Deferred,
     Trace,
@@ -64,13 +63,11 @@ import {
     IAttachMessage,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
+    IComponentRuntimeChannel,
     IEnvelope,
-    IContainerRuntime,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-    IExperimentalContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -380,13 +377,11 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
-    IExperimentalRuntime, IExperimentalContainerRuntime
-{
-    public get IContainerRuntime() { return this; }
-
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
+    public get IContainerRuntime() { return this; }
+
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -509,18 +504,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public isLocal(): boolean {
-        const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext) {
-            // back-compat: 0.15 isAttached
-            // isAttached is replaced with isLocal.
-            return expContainerContext.isLocal ? expContainerContext.isLocal() :
-                expContainerContext.isAttached ? !expContainerContext.isAttached() : false;
-        } else {
-            // back-compat: 0.15 isAttached
-            // Need to return false if container is not experimental because then the result would depend on
-            // whether the component is attached or not.
-            return false;
-        }
+        return this.context.isLocal();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -569,6 +553,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
+    private disposedWithError = false;
 
     // Components tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -598,16 +583,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
-            true : this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = {
             proposalHandle: undefined,
-            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion
-                ? expContainerContext.getLoadedFromVersion()?.id : undefined,
+            ackHandle: this.context.getLoadedFromVersion()?.id,
         };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -659,7 +641,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.updateDocumentDirtyState(false);
+            // If we are not fully connected, then we have no clue if there are any pending ops
+            // to be resubmitted. Wait for "connected" event to get that info.
+            // Not ideal, but it's better to have false negatives then false positives.
+            // We will mark document clean on becoming "connected".
+            if (this.connected) {
+                this.updateDocumentDirtyState(false);
+            }
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
@@ -709,11 +697,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
+
+        if (error) {
+            this.disposedWithError = true;
+        }
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -722,8 +714,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [componentId, contextD] of this.contextsDeferred) {
             contextD.promise.then((context) => {
                 context.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
+            }).catch((contextError) => {
+                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
             });
         }
 
@@ -817,6 +809,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         assert(this.connectionState === value);
 
         if (value === ConnectionState.Connected) {
+            // Once we are connected, all acks are accounted.
+            // If there are any pending ops, DDSs will resubmit them right away (below) and
+            // we will switch back to dirty state in such case.
+            this.updateDocumentDirtyState(false);
+
             // Resend all pending attach messages prior to notifying clients
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
@@ -896,7 +893,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         context.processSignal(transformed, local);
     }
 
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
+    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
         this.verifyNotClosed();
 
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
@@ -908,6 +905,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         const componentContext = await deferredContext.promise;
         return componentContext.realize();
+    }
+
+    public notifyComponentInstantiated(componentContext: IComponentContext) {
+        const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
+        const registryPath =
+            `/${componentContext.packagePath.slice(0,componentContext.packagePath.length - 1).join("/")}`;
+        this.emit("componentInstantiated", componentPkgName, registryPath, !componentContext.existing);
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -978,11 +982,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
-    Promise<IComponentRuntime> {
-        return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+    Promise<IComponentRuntimeChannel> {
+        return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
-    public createComponentContext(pkg: string[], props?: any, id = uuid()) {
+    public createComponentContext(pkg: string[], props?: any): IComponentContext {
+        return this._createComponentContext(pkg, props);
+    }
+
+    private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
@@ -994,7 +1002,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
-            (cr: IComponentRuntime) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1007,7 +1015,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public async createComponentWithRealizationFn(
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
-    ): Promise<IComponentRuntime> {
+    ): Promise<IComponentRuntimeChannel> {
         this.verifyNotClosed();
 
         // tslint:disable-next-line: no-unsafe-any
@@ -1019,7 +1027,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
-            (cr: IComponentRuntime) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1212,7 +1220,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private attachComponent(componentRuntime: IComponentRuntime): void {
+    private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
@@ -1341,7 +1349,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 const parents = versions.map((version) => version.id);
                 await this.refreshLatestSummaryAck(
                     { proposalHandle: undefined, ackHandle: parents[0] },
-                    this.deltaManager.referenceSequenceNumber);
+                    this.summaryTracker.referenceSequenceNumber);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1485,7 +1493,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private verifyNotClosed() {
-        if (this._disposed) {
+        // Don't throw another error here if the runtime was disposed due to an error,
+        // because the disposer should be responsible for reporting it.  Check this
+        // instead of stopping calls to the runtime because not all runtime consumers
+        // may be aware of the error.
+        if (this._disposed && !this.disposedWithError) {
             throw new Error("Runtime is closed");
         }
     }

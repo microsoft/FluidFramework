@@ -11,8 +11,10 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import {
-    IComponentRegistry,
     IContainerRuntime,
+} from "@microsoft/fluid-container-runtime-definitions";
+import {
+    IComponentRegistry,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";

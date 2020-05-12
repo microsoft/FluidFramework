@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 export class CreationDriverUrlResolver implements IUrlResolver {
@@ -26,5 +26,12 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         };
 
         return response;
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }

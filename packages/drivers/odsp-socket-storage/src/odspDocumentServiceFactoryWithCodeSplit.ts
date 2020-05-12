@@ -8,7 +8,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -23,9 +22,7 @@ import { OdspDocumentService } from "./odspDocumentService";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory
-{
+export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
@@ -44,11 +41,11 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 
     /**
-   * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -59,7 +56,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param odspCache - This caches response for joinSession.
    */
     constructor(
-        private readonly appId: string,
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryBaseLogger,
@@ -79,7 +75,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         this.documentsOpened.add(docId);
 
         return OdspDocumentService.create(
-            this.appId,
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,

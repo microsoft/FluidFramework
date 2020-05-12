@@ -39,15 +39,13 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
-    IChannel,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
+    IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
-    IExperimentalComponentRuntime,
-    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
+import { IChannel, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
@@ -63,8 +61,8 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
-    IExperimentalComponentRuntime, IComponentHandleContext
+export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
+    IComponentRuntime, IComponentHandleContext
 {
     public readonly isExperimentalComponentRuntime = true;
     /**
@@ -323,9 +321,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public isLocal(): boolean {
-        const expComponentContext = this.componentContext as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        return expComponentContext.isLocal();
+        return this.componentContext.isLocal();
     }
 
     /**
@@ -576,17 +572,23 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = snapshotChannel(channel);
+        assert(this.isAttached, "Component should be attached to attach the channel.");
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients. If the container is attached and component is not attached we will never reach here.
+        if (!this.isLocal()) {
+            // Get the object snapshot and include it in the initial attach
+            const snapshot = snapshotChannel(channel);
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.attributes.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            const message: IAttachMessage = {
+                id: channel.id,
+                snapshot,
+                type: channel.attributes.type,
+            };
+            this.pendingAttach.set(channel.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;

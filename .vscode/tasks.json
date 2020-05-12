@@ -8,7 +8,7 @@
             "type": "process",
             "command": "node",
             "args": [
-                "${workspaceRoot}/tools/fluid-build/dist/fluidBuild.js",
+                "${workspaceRoot}/node_modules/@fluid-internal/fluid-build-tools/dist/fluidBuild.js",
                 "--root",
                 "${workspaceRoot}",
                 "--vscode"

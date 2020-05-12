@@ -8,7 +8,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -21,7 +20,7 @@ import { OdspDocumentService } from "./odspDocumentService";
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
@@ -40,11 +39,11 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 
     /**
-   * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -55,7 +54,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
    * @param odspCache - This caches response for joinSession.
    */
     constructor(
-        private readonly appId: string,
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryBaseLogger,
@@ -75,7 +73,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
         this.documentsOpened.add(docId);
 
         return OdspDocumentService.create(
-            this.appId,
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
