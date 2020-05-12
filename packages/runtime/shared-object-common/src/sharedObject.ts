@@ -170,8 +170,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        return this.runtime.isLocal !== undefined
-            ? this.runtime.isLocal() || this.services === undefined : this.services === undefined;
+        return this.services === undefined || this.runtime.isLocal();
     }
 
     /**
@@ -187,6 +186,15 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         const isRegistered = (!!this.services || this.registered);
         assert(isRegistered ? true : this.isLocal());
         return isRegistered;
+    }
+
+    /**
+     * {@inheritDoc ISharedObject.isAttached}
+     */
+    public isAttached(): boolean {
+        const isAttached = this.services !== undefined;
+        assert(isAttached ? this.isRegistered() : this.isLocal());
+        return isAttached;
     }
 
     /**
