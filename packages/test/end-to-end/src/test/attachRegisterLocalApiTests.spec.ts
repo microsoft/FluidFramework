@@ -20,7 +20,7 @@ import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { IContainerRuntimeBase } from "@microsoft/fluid-runtime-definitions";
 import { SharedMap } from "@microsoft/fluid-map";
 
-describe("DDS Detached Container", () => {
+describe("Attach/Register/Local Api Tests For Local And Live Container", () => {
     const documentId = "detachedContainerTest";
     const pkg: IFluidCodeDetails = {
         package: "detachedContainerTestPackage",
@@ -286,9 +286,9 @@ describe("DDS Detached Container", () => {
             // Currently it will go in infinite loop.
             channel1.handle.attach();
             assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
-                "Test Channel 1 should be attached now after attaching parent component");
+                "Test Channel 1 should be attached now after attaching it");
             assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
-                "Test Channel 2 should be attached now after attaching parent component");
+                "Test Channel 2 should be attached now after attaching other DDS");
         });
 
     // Live Contianer Tests
@@ -512,8 +512,8 @@ describe("DDS Detached Container", () => {
             // Currently it will go in infinite loop.
             channel1.handle.attach();
             assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
-                "Test Channel 1 should be attached now after attaching parent component");
+                "Test Channel 1 should be attached now after attaching it");
             assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
-                "Test Channel 2 should be attached now after attaching parent component");
+                "Test Channel 2 should be attached now after attaching other DDS");
         });
 });
