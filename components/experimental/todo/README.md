@@ -1,16 +1,22 @@
 # Todo
 
-This is a simple Todo application that covers many of the core scenarios for building a Fluid Component. The Todo app uses React as it's view rendering platform.
-
-[Live Example on wu2-ppe](https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode=@fluid-example/todo@0.6.0)
+**Todo** is a more advanced Component that covers more complicated scenarios. The Todo app uses React as it's view rendering platform.
 
 ![Todo Example](./resources/todo-screen-capture.gif)
 
-## Components
+## Getting Started
+
+If you want to run this component follow the following steps:
+
+1. Run `npm install` from the `FluidFramework` root directory
+2. Navigate to this directory
+3. Run `npm run start`
+
+## Todo Components
 
 There are two components that make up the Todo application:
 
-## [Todo](./src/Todo/index.tsx)
+### [Todo](./src/Todo/index.tsx)
 
 A Todo is the top level component and contains three core concepts:
 
@@ -18,43 +24,20 @@ A Todo is the top level component and contains three core concepts:
 2. Ability to create new Todo Items
 3. Collection of Todo Items
 
-## [TodoItem](./src/TodoItem/index.tsx)
+### [TodoItem](./src/TodoItem/index.tsx)
 
 A Todo Item is a singular todo entry. Because each Todo Item is its own component each Todo Item can be independently opened.
 
 Todo Items can contain one inner component. These can currently be another Todo Item or a Clicker.
 
-## Getting Started with Development
+## Other Components
 
-To start coding, open this directory in your IDE and check out ./src/index.tsx
+There are two other components that live in the todo repo but are there to extend functionality of `TodoItem`
 
-You can try the following commands
+### [TextBox](./src/TextBox/index.tsx)
 
-```node
-    npm start
-       Hosts the component at http://localhost:8080
+A Collaborative TextArea based off the React CollaborativeTextArea. This should be replaced by just pulling in the `@fluid-example/collaborative-textarea` component.
 
+### [TextList](./src/TextList/index.tsx)
 
-    npm run build
-       Builds the component into bundled js files
-
-
-    npm run deploy
-       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
-```
-
-We suggest you start by typing:
-
-```node
-npm start
-```
-
-## npm or Azure DevOps auth Issue
-
-[Stack Overflow Issue](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
-
-If you run into an auth issue. Please set up your .npmrc. This is a common issue during npm install.
-
-For windows: https://www.npmjs.com/package/vsts-npm-auth
-
-For mac you’ll need to add credentials to your npmrc manually. Go to this link, https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague, click on “Connect to Feed” then select **npm** on the left, and follow the instructions.
+Used the `SharedString` to manage a list of text items.

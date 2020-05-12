@@ -17,7 +17,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { debug } from "./debug";
 import {

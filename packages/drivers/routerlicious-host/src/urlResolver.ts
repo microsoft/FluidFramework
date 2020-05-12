@@ -5,7 +5,7 @@
 
 import { PromiseCache } from "@microsoft/fluid-common-utils";
 import {
-    IRequest,
+    IRequest, IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IResolvedUrl,
@@ -47,5 +47,12 @@ export class ContainerUrlResolver implements IUrlResolver {
         };
 
         return this.cache.addOrGet(request.url, fetchResolvedUrl);
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }

@@ -8,8 +8,6 @@ import * as React from "react";
 
 export interface ILoaderProps {
 
-    clientId?: string;
-
     clientSecret?: string;
 
     iframe?: boolean;
@@ -47,7 +45,6 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
                 this.props.url,
                 this.divRef.current,
                 this.props.tokenApi,
-                this.props.clientId ? this.props.clientId : "",
                 this.props.clientSecret ? this.props.clientSecret : "",
                 this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
             );
@@ -57,7 +54,6 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
                 this.props.url,
                 this.divRef.current,
                 this.props.tokenApi,
-                this.props.clientId ? this.props.clientId : "",
                 this.props.clientSecret ? this.props.clientSecret : "",
             );
         }

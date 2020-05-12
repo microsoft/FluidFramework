@@ -10,11 +10,11 @@ import "./publicpath";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IContainerRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";

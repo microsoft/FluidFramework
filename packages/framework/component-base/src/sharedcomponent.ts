@@ -11,7 +11,12 @@ import {
     IResponse,
     IProvideComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+} from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { EventForwarder } from "@microsoft/fluid-common-utils";
@@ -19,8 +24,9 @@ import { IEvent } from "@microsoft/fluid-common-definitions";
 
 export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,
-    TEvents extends IEvent = IEvent,
-> extends EventForwarder<TEvents> implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
+    TEvents extends IEvent = IEvent>
+    extends EventForwarder<TEvents>
+    implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
     private _handle?: IComponentHandle<this>;
 
     public get IComponentRouter() { return this; }

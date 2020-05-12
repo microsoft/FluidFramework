@@ -24,13 +24,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-common-utils": "^0.17.0",
     "@microsoft/fluid-protocol-base": "^0.1005.0",
     "@microsoft/fluid-protocol-definitions": "^0.1005.0",
     "@microsoft/fluid-server-lambdas": "^0.1005.0",
     "@microsoft/fluid-server-services-client": "^0.1005.0",
     "@microsoft/fluid-server-services-core": "^0.1005.0",
-    "@microsoft/fluid-server-test-utils": "^0.1005.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",

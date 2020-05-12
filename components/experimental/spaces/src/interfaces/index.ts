@@ -3,8 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./componentCallable";
-export * from "./componentToolbar";
-export * from "./componentToolbarConsumer";
-export * from "./componentRegistryDetails";
+export * from "./componentInternalRegistry";
 export * from "./componentRegistryTemplates";

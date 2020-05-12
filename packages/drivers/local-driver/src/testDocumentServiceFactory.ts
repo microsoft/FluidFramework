@@ -8,7 +8,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
@@ -25,9 +24,8 @@ import { createTestDocumentService } from "./testDocumentService";
 /**
  * Implementation of document service factory for testing.
  */
-export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
-
     public readonly protocolName = "fluid-test:";
     /**
      * @param localDeltaConnectionServer - delta connection server for ops

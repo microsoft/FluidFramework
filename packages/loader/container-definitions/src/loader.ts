@@ -83,11 +83,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
-}
-
-export interface IExperimentalContainer extends IContainer {
-
-    isExperimentalContainer: true;
 
     /**
      * Represents the resolved url to the container.
@@ -98,12 +93,6 @@ export interface IExperimentalContainer extends IContainer {
      * Flag indicating if the given container has been attached to a host service.
      */
     isLocal(): boolean;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * @deprecated - It will be replaced with isLocal.
-     */
-    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.
@@ -129,11 +118,6 @@ export interface ILoader {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
-}
-
-export interface IExperimentalLoader extends ILoader {
-
-    isExperimentalLoader: true;
 
     /**
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all

@@ -13,8 +13,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-    IExperimentalComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
@@ -171,9 +170,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
-        return expComponentRuntime?.isExperimentalComponentRuntime ?
-            expComponentRuntime.isLocal() || this.services === undefined : this.services === undefined;
+        return this.services === undefined || this.runtime.isLocal();
     }
 
     /**
@@ -186,7 +183,18 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // if somebody called register on dds explicitly without attaching it which will set
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return (!!this.services || this.registered);
+        const isRegistered = (!!this.services || this.registered);
+        assert(isRegistered ? true : this.isLocal());
+        return isRegistered;
+    }
+
+    /**
+     * {@inheritDoc ISharedObject.isAttached}
+     */
+    public isAttached(): boolean {
+        const isAttached = this.services !== undefined;
+        assert(isAttached ? this.isRegistered() : this.isLocal());
+        return isAttached;
     }
 
     /**
@@ -292,6 +300,32 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         return;
+    }
+
+    /**
+     * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
+     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * the Promise will reject.
+     */
+    protected async newAckBasedPromise<T>(
+        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+    ): Promise<T> {
+        let rejectBecauseDispose: () => void;
+        return new Promise<T>((resolve, reject) => {
+            rejectBecauseDispose =
+                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
+            this.runtime.on("dispose", rejectBecauseDispose);
+
+            // Even in this case don't return, so the caller's executor can run
+            if (this.runtime.disposed) {
+                reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
+            }
+
+            executor(resolve, reject);
+        }).finally(() => {
+            // Note: rejectBecauseDispose will never be undefined here
+            this.runtime.off("dispose", rejectBecauseDispose);
+        });
     }
 
     /**

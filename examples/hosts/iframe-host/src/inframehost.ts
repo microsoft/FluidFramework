@@ -18,7 +18,7 @@ import {
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, ITree, ConnectionState, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 
 class ProxyRuntime implements IRuntime {
     private _disposed = false;
@@ -42,6 +42,10 @@ class ProxyRuntime implements IRuntime {
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
     }
     async processSignal(message: any, local: boolean) {
+    }
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    createSummary(): ISummaryTree {
+        throw new Error("Method not implemented.");
     }
 }
 
