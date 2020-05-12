@@ -146,7 +146,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private _isAttached: boolean;
@@ -215,12 +214,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
         this._disposed = true;
 
-        /**
-         * @deprecated in 0.14 async stop()
-         * Converge closed with _disposed when removing async stop()
-         */
-        this.closed = true;
-
         this.emit("dispose");
     }
 
@@ -255,8 +248,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public async getChannel(id: string): Promise<IChannel> {
-        this.verifyNotClosed();
-
         // TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
         // we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
         // it doesn't exist
@@ -272,8 +263,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
-        this.verifyNotClosed();
-
         assert(!this.contexts.has(id), "createChannel() with existing ID");
 
         const context = new LocalChannelContext(
@@ -366,8 +355,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public changeConnectionState(value: ConnectionState, clientId?: string) {
-        this.verifyNotClosed();
-
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
@@ -383,31 +370,23 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
-
         return this.quorum;
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
-
         return this.audience;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public snapshot(message: string): Promise<void> {
-        this.verifyNotClosed();
         return this.snapshotFn(message);
     }
 
     public save(tag: string) {
-        this.verifyNotClosed();
         this.submit(MessageType.Save, tag);
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
-        this.verifyNotClosed();
-
         const blob = await this.blobManager.createBlob(file);
         file.id = blob.id;
         file.url = blob.url;
@@ -419,8 +398,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
-        this.verifyNotClosed();
-
         return this.blobManager.getBlob(blobId);
     }
 
@@ -428,17 +405,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    /**
-     * Stop the runtime.  snapshotInternal() is called separately if needed
-     */
-    public stop(): void {
-        this.verifyNotClosed();
-
-        this.closed = true;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean) {
-        this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
@@ -543,7 +510,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public submitSignal(type: string, content: any) {
-        this.verifyNotClosed();
         return this.componentContext.submitSignal(type, content);
     }
 
@@ -567,8 +533,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * Attach channel should only be called after the componentRuntime has been attached
      */
     private attachChannel(channel: IChannel): void {
-        this.verifyNotClosed();
-
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
@@ -590,18 +554,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private submit(type: MessageType, content: any): number {
-        this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content);
     }
 
     private setChannelDirty(address: string): void {
-        this.verifyNotClosed();
         this.componentContext.setChannelDirty(address);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean) {
-        this.verifyNotClosed();
-
         const envelope = message.contents as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);
         assert(channelContext);
@@ -635,11 +595,5 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
-    }
-
-    private verifyNotClosed() {
-        if (this.closed) {
-            throw new Error("Runtime is closed");
-        }
     }
 }

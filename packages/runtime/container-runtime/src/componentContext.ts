@@ -323,8 +323,6 @@ export abstract class ComponentContext extends EventEmitter implements
      * it's new client ID when we are connecting or connected.
      */
     public changeConnectionState(value: ConnectionState, clientId?: string) {
-        this.verifyNotClosed();
-
         // Connection events are ignored if the component is not yet loaded
         if (!this.loaded) {
             return;
@@ -337,8 +335,6 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {
-        this.verifyNotClosed();
-
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
@@ -352,8 +348,6 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
-        this.verifyNotClosed();
-
         // Signals are ignored if the component is not yet loaded
         if (!this.loaded) {
             return;
@@ -364,12 +358,10 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
         return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
         return this._containerRuntime.getAudience();
     }
 
@@ -414,7 +406,6 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public submitMessage(type: MessageType, content: any): number {
-        this.verifyNotClosed();
         assert(this.componentRuntime);
         return this.submitOp(type, content);
     }
@@ -428,8 +419,6 @@ export abstract class ComponentContext extends EventEmitter implements
      *
      */
     public setChannelDirty(address: string): void {
-        this.verifyNotClosed();
-
         // Get the latest sequence number.
         const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
 
@@ -444,7 +433,6 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public submitSignal(type: string, content: any) {
-        this.verifyNotClosed();
         assert(this.componentRuntime);
         const envelope: IEnvelope = {
             address: this.id,
@@ -552,7 +540,6 @@ export abstract class ComponentContext extends EventEmitter implements
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     private submitOp(type: MessageType, content: any): number {
-        this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
             contents: {
@@ -561,12 +548,6 @@ export abstract class ComponentContext extends EventEmitter implements
             },
         };
         return this._containerRuntime.submitFn(MessageType.Operation, envelope);
-    }
-
-    private verifyNotClosed() {
-        if (this._disposed) {
-            throw new Error("Runtime is closed");
-        }
     }
 }
 
