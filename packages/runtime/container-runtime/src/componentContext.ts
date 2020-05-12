@@ -46,7 +46,7 @@ import { v4 as uuid } from "uuid";
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */

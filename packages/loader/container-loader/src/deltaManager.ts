@@ -226,7 +226,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get active(): boolean {
         const res = this.inQuorum && this.connectionMode === "write";
-        // user can't have r/w connection when user has only read permisisons.
+        // user can't have r/w connection when user has only read permissions.
         // That said, connection can be r/w when host called forceReadonly(), as
         // this is view-only change
         assert(!(this.readonlyPermissions && res));

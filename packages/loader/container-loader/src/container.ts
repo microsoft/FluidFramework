@@ -861,7 +861,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
-        const commitedCodeProposal: ICommittedProposal = {
+        const committedCodeProposal: ICommittedProposal = {
             key: "code",
             value: source,
             approvalSequenceNumber: 0,
@@ -871,7 +871,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const members: [string, ISequencedClient][] = [];
         const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", commitedCodeProposal]];
+        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
 
         this.attachDeltaManagerOpHandler(attributes);
 
