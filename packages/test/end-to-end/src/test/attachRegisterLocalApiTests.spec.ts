@@ -139,8 +139,7 @@ import { SharedMap } from "@microsoft/fluid-map";
             assert.strictEqual(component2.runtime.isAttached, true, "Component2 should be attached");
 
             // Channel should get attached as it was registered to its component
-            // This will fail because isAttached on handle is wrongly implemented.
-            // assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
         });
 
         it.skip("Attaching DDS should attach component", async () => {
@@ -196,16 +195,14 @@ import { SharedMap } from "@microsoft/fluid-map";
             const rootOfComponent2 = await component2.runtime.getChannel("root") as SharedMap;
             const testChannelOfComponent2 = await component2.runtime.getChannel("test1");
 
-            // This will fail because isAttached on handle is wrongly implemented.
-            // assert.strictEqual(rootOfComponent2.handle.isAttached, true,
-            //     "Root Channel should get attached as it was registered");
+            assert.strictEqual(rootOfComponent2.handle.isAttached, true,
+                "Root Channel should get attached as it was registered");
             assert.strictEqual(testChannelOfComponent2.handle.isAttached, false,
                 "Test Channel should not be attached ");
             rootOfComponent2.set("test1handle", channel.handle);
 
-            // This will fail because isAttached on handle is wrongly implemented.
-            // assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
-            //     "Test Channel should be attached now after sticking it in attached dds");
+            assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
+                "Test Channel should be attached now after sticking it in attached dds");
         });
 
         it("Registering DDS in attached component should attach it", async () => {
@@ -232,8 +229,7 @@ import { SharedMap } from "@microsoft/fluid-map";
 
             (await channel.handle.get() as SharedObject).register();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered");
-            // This will fail because isAttached on handle is wrongly implemented.
-            // assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
         });
 
         it("Registering DDS in detached component should not attach it", async () => {

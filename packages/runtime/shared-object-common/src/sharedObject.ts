@@ -193,7 +193,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined;
+        const isAttached = this.services !== undefined;
+        assert(isAttached ? this.isRegistered() : this.isLocal());
+        return isAttached;
     }
 
     /**
