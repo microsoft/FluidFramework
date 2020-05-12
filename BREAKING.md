@@ -11,6 +11,7 @@
 
 The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+IComponentContext still has the hostRuntime param but it is now marked with a deprecated flag and will be removed in 0.18
 
 ### Updates to ContainerRuntime and LocalComponentContext createProps removal
 
@@ -66,7 +67,8 @@ We don't believe it's ever been used this way so there should be no such files, 
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
 - [Event Emitter Changes](#Event-Emitter-Changes)
 - [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
-
+- [Changes to TestResolver's `resolve` method](#Changes-to-TestResolver's-resolve-method)
+- [Changes to TestHost's `createAndAttachComponent` and `getComponent` methods](#Changes-to-TestHost's-createAndAttachComponent-and-getComponent-methods)
 
 ### View interfaces moved to separate package
 
@@ -225,6 +227,25 @@ In addition we have fixed bugs and simplfied how module seeding works in the web
 overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
 
 See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
+
+### Changes to TestResolver's `resolve` method
+TestResolver's `resolve` method now parses the URL in the passed request to get the ID of the container. It is the first part of the path in the URL.
+
+For example, in `http://localhost/fluidFrameworkDocument/componentId`, the container ID will be `fluidFrameworkDocument`.
+
+If a URL of this format is not passed to `resolve`, it will fail.
+
+This enables TestResolver to be used to resolve multiple Containers and not be bound to a single Container.
+
+### Changes to TestHost's `createAndAttachComponent` and `getComponent` methods
+TestHost's `createAndAttachComponent` and `getComponent` have been modified because of the changes in PrimedComponent / SharedComponent as detailed [here](#PrimedComponent-and-Shared-Component-interface-changes).
+
+`createAndAttachComponent` still accepts an `id` as before. However, it does not create a component with the given `id`. Instead, it creates a component and then sets the component's `handle` againt the `id` in a SharedDirectory.
+
+`getComponent` gets the `handle` for the given `id` from the SharedDirectory and then gets the component from the `handle`.
+
+This means that `getComponent` can only be used to get the component that was created via `createAndAttachComponent`.
+
 
 ## 0.15 Breaking Changes
 

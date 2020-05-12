@@ -265,6 +265,11 @@ export interface IComponentContext extends EventEmitter {
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     readonly containerRuntime: IContainerRuntime;
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    readonly hostRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -426,6 +431,10 @@ export interface IContainerRuntime extends
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(
+        event: "componentInstantiated",
+        listener: (componentPkgName: string, registryPath: string, createNew: boolean) => void,
+    ): this;
 
     /**
      * Returns the runtime of the component.
@@ -500,6 +509,11 @@ export interface IContainerRuntime extends
      * pending local changes. All pending changes are automatically flushed by shared objects on connection.
      */
     notifyPendingMessages(): void;
+
+    /**
+     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     */
+    notifyComponentInstantiated(componentContext: IComponentContext): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

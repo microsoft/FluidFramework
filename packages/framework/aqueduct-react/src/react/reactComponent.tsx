@@ -203,3 +203,14 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A exten
 
     return [state, combinedReducer];
 }
+
+export function createFluidContext<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
+[
+    React.ProviderExoticComponent<React.ProviderProps<{ state: S; setState: (newState: S) => void; }>>,
+    React.Consumer<{ state: S; setState: (newState: S) => void; }>,
+    {state: S, setState: (newState: S) => void},
+] {
+    const [state, setState] = useStateFluid(props);
+    const FluidContext = React.createContext({ state, setState });
+    return [FluidContext.Provider, FluidContext.Consumer, { state, setState }];
+}

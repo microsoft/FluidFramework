@@ -23,7 +23,7 @@
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.17.0",
     "@microsoft/fluid-map": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "@microsoft/fluid-sequence": "^0.17.0",
     "request": "^2.88.0"
   },
