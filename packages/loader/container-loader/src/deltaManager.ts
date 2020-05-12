@@ -134,7 +134,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private _reconnectMode: ReconnectMode;
 
     // file ACL - whether user has only read-only access to a file
-    private readonlyPermissions: boolean | undefined;
+    private _readonlyPermissions: boolean | undefined;
 
     // tracks host requiring read-only mode.
     private _forceReadonly = false;
@@ -229,7 +229,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // user can't have r/w connection when user has only read permisisons.
         // That said, connection can be r/w when host called forceReadonly(), as
         // this is view-only change
-        assert(!(this.readonlyPermissions && res));
+        assert(!(this._readonlyPermissions && res));
         return res;
     }
 
@@ -254,10 +254,25 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Tells if container is in read-only mode.
      * Components should listen for "readonly" notifications and disallow user
      * making changes to components.
-     * This is independent from file permissions and type of type of connection
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     * It is undefined if we did not yet established websocket connection
+     * and do not know if user has write access to a file.
      */
-    public get readonly(): boolean | undefined {
-        return this.readonlyPermissions || this._forceReadonly;
+    public get readonly() {
+        if (this._forceReadonly) {
+            return true;
+        }
+        return this._readonlyPermissions;
+    }
+
+    /**
+     * Tells if user has no write permissions for file in storage
+     * It is undefined if we did not yet established websocket connection
+     * and do not know if user has write access to a file.
+     */
+    public get readonlyPermissions() {
+        return this._readonlyPermissions;
     }
 
     /**
@@ -282,7 +297,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Sends signal to runtime (and components) to be read-only.
      * Hosts may have read only views, indicating to components that no edits are allowed.
-     * This is independent from this.readonlyPermissions (permissions) and this.connectionMode
+     * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
      * (server can return "write" mode even when asked for "read")
      * Leveraging same "readonly" event as runtime & components should behave the same in such case
      * as in read-only permissions.
@@ -297,9 +312,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private setReadonlyPermissions(readonly: boolean) {
+    private set_readonlyPermissions(readonly: boolean) {
         const oldValue = this.readonly;
-        this.readonlyPermissions = readonly;
+        this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
             this.emit("readonly", this.readonly);
         }
@@ -816,7 +831,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Notify everyone we are in read-only state.
         // Useful for components in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
-        this.setReadonlyPermissions(true);
+        this.set_readonlyPermissions(true);
 
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of components / runtime to "hear"
@@ -880,7 +895,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
             "claims/connectionMode mismatch");
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
-        this.setReadonlyPermissions(readonly);
+        this.set_readonlyPermissions(readonly);
 
         this.emitDelayInfo(RetryFor.DeltaStream, -1);
 
@@ -919,7 +934,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (message: INack) => {
             // TODO: we should remove this check when service updates?
-            if (this.readonlyPermissions) {
+            if (this._readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
 

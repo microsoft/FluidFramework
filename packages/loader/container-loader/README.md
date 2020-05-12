@@ -1,5 +1,7 @@
 # Loader and Container
 
+- [Expectations from host implementers](#Expectations-from-host-implementers)
+- [Expectations from container runtime and components implementers](#Expectations-from-container-runtime-and-components-implementers)
 - [Fluid loader](#Fluid-loader)
 - [Container Lifetime](#Container-lifetime)
 - [Audience](#Audience)
@@ -8,6 +10,18 @@
 - [Connectivity events](#Connectivity-events)
 - [Readonly states](#Readonly-states)
 - [Proposal Lifetime](#Proposal-lifetime)
+
+## Expectations from host implementers
+It's expected that host will listen to various events described in other sections of the document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
+1. "disconnected" event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
+2. "closed": If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
+3. "readonly" event: Host should have some indication to user that document is not editable.
+
+## Expectations from container runtime and components implementers
+1. Respect "readonly" state. In this spate container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
+2. Maintain OPs in flight until observed they are acknowledged by server. Resubmit any lost ops on reconnection.
+3. Not submit ops when in disconnected state
+4. "dispose" event 
 
 ## Fluid Loader
 
@@ -111,6 +125,8 @@ Container and DeltaManager expose `"readonly"` event and property. There are thr
 3. Host can force readonly-mode for a container via calling `Container.forceReadonly(true)`. Later can be used in couple scenarios like
    - Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of document (container)
    - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
+
+`Container.readonlyPermissions` indicates to host if file is writable or not. This value does not depend on `Container.forceReadonly` calls and can be used by hosts to indicate to users if it's possible to edit a file in `Container.forceReadonly(false)` state.
 
 Readonly events are accessible by components and DDSs (through ContainerRuntime.deltaManager). It's expected that components adhere to requirements and expose read-only (or rather 'no edit') experiences.
 

@@ -108,7 +108,13 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Flag to indicate whether the client can write or not.
     active: boolean;
 
-    // Tells if user has no permissions to change document
+    /**
+     * {@inheritDoc DeltaManager.readonly}
+     *
+     * Note - we do not differentiate here between no write access to storage
+     * vs. host disallowing changes to container - in all cases container runtime
+     * and components should respect readonly state and not allow local changes.
+     */
     readonly?: boolean;
 
     close(): void;
