@@ -25,14 +25,6 @@ ${commonOptionString}
 `);
 }
 
-function versionCheck() {
-    const pkg = require(path.join(__dirname, "..", "..", "package.json"));
-    const builtVersion = "0.0.5";
-    if (pkg.version > builtVersion) {
-        console.warn(`WARNING: fluid-bump-version is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
-    }
-}
-
 type VersionBumpType = "minor" | "patch";
 
 let paramBumpVersionKind: VersionBumpType | undefined;
@@ -798,8 +790,6 @@ class BumpVersion {
  * Load the repo and either do version bump or dependencies bump
  */
 async function main() {
-    versionCheck();
-
     const resolvedRoot = await getResolvedFluidRoot();
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();

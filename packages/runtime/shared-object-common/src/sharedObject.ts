@@ -184,7 +184,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // if somebody called register on dds explicitly without attaching it which will set
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        return (!!this.services || this.registered);
+        const isRegistered = (!!this.services || this.registered);
+        assert(isRegistered ? true : this.isLocal());
+        return isRegistered;
     }
 
     /**
