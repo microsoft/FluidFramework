@@ -75,7 +75,18 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.logger,
             gitManager);
 
-        await orderer.lamdasStarted;
+        const lambdas = [
+            orderer.broadcasterLambda,
+            orderer.deliLambda,
+            orderer.foremanLambda,
+            orderer.scribeLambda,
+            orderer.scriptoriumLambda,
+        ];
+        await Promise.all(lambdas.map(async (l)=>{
+            if (l.state === "created") {
+                return new Promise((resolve) => l.once("started", () => resolve()));
+            }
+        }));
 
         return orderer;
     }

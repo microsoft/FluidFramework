@@ -215,8 +215,6 @@ export class LocalOrderer implements IOrderer {
     public deliLambda: LocalLambdaController | undefined;
     public broadcasterLambda: LocalLambdaController | undefined;
 
-    public readonly lamdasStarted: Promise<void[]>;
-
     private readonly socketPublisher: LocalSocketPublisher;
     private readonly dbObject: IDocument;
     private existing: boolean;
@@ -249,7 +247,7 @@ export class LocalOrderer implements IOrderer {
 
         this.setupLambdas();
 
-        this.lamdasStarted = this.startLambdas();
+        this.startLambdas();
     }
 
     public async connect(
@@ -408,28 +406,31 @@ export class LocalOrderer implements IOrderer {
             this.scribeNackOnSummarizeException);
     }
 
-    private async startLambdas() {
-        const startP: Promise<void>[] = [];
+    private startLambdas() {
         if (this.deliLambda) {
-            startP.push(this.deliLambda.start());
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.deliLambda.start();
         }
 
         if (this.scriptoriumLambda) {
-            startP.push(this.scriptoriumLambda.start());
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.scriptoriumLambda.start();
         }
 
         if (this.foremanLambda) {
-            startP.push(this.foremanLambda.start());
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.foremanLambda.start();
         }
 
         if (this.scribeLambda) {
-            startP.push(this.scribeLambda.start());
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.scribeLambda.start();
         }
 
         if (this.broadcasterLambda) {
-            startP.push(this.broadcasterLambda.start());
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.broadcasterLambda.start();
         }
-        return Promise.all(startP);
     }
 
     private async closeKafkas() {
