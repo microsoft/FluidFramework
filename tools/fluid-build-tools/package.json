@@ -8,16 +8,21 @@
   "bin": {
     "fluid-build": "bin/fluid-build",
     "fluid-bump-version": "bin/fluid-bump-version",
-    "fluid-layer-check": "bin/fluid-layer-check"
+    "fluid-layer-check": "bin/fluid-layer-check",
+    "fluid-repo-policy-check": "bin/fluid-repo-policy-check"
   },
   "scripts": {
     "build": "tsc -b",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
+    "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
+    "policy-check": "cd ../.. && git ls-files -co --exclude-standard | node tools/fluid-build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
+    "policy-check:fix": "npm run policy-check -- -r",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "async": "^2.6.2",
     "chalk": "^2.4.2",
+    "commander": "^2.20.0",
     "glob": "^7.1.3",
     "lodash.isequal": "^4.5.0",
     "rimraf": "^2.6.2",

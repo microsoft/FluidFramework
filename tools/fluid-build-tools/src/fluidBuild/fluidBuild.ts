@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { commonOptions } from "./common/commonOptions";
-import { FluidRepo } from "./fluidBuild/fluidRepo";
-import { getResolvedFluidRoot } from "./common/fluidUtils";
-import { logStatus } from "./common/logging";
-import { Timer } from "./common/timer";
-import { existsSync } from "./common/utils";
-import { BuildResult } from "./fluidBuild/buildGraph";
-import { parseOptions, options } from "./fluidBuild/options";
+import { commonOptions } from "../common/commonOptions";
+import { FluidRepo } from "./fluidRepo";
+import { getResolvedFluidRoot } from "../common/fluidUtils";
+import { logStatus } from "../common/logging";
+import { Timer } from "../common/timer";
+import { existsSync } from "../common/utils";
+import { BuildResult } from "./buildGraph";
+import { parseOptions, options } from "./options";
 import * as path from "path";
 import chalk from "chalk";
 
