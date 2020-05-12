@@ -15,7 +15,7 @@
     "build": "tsc -b",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
-    "policy-check": "cd ../.. && git ls-files -co --exclude-standard | node tools/fluid-build-tools/src/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check": "cd ../.. && git ls-files -co --exclude-standard | node tools/fluid-build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
     "policy-check:fix": "npm run policy-check -- -r",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

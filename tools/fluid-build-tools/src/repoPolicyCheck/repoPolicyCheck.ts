@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-const fs = require('fs');
-const readline = require('readline');
-const newline = require('os').EOL;
-const program = require('commander');
-const exclusions = require('./exclusions.json').map(e => new RegExp(e, "i"));
-const sortPackageJson = require('sort-package-json');
+import * as fs from "fs";
+import * as readline from "readline";
+import * as child_process from "child_process";
+import { EOL as newline } from "os";
+import program from "commander";
+import sortPackageJson from "sort-package-json";
+const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
 /**
  * argument parsing
@@ -18,12 +19,13 @@ program
     .option('-r|--resolve', 'Resolve errors if possible')
     .option('-h|--handler <regex>', 'Filter handler names by <regex>')
     .option('-p|--path <regex>', 'Filter file paths by <regex>')
+    .option('-s|--stdin', 'Get file from stdin')
     .parse(process.argv);
 
 const handlerRegex = (program.handler ? new RegExp(program.handler, 'i') : /.?/);
 const pathRegex = (program.path ? new RegExp(program.path, 'i') : /.?/);
 
-function writeOutLine(output) {
+function writeOutLine(output: string) {
     if (!program.quiet) {
         console.log(output);
     }
@@ -50,34 +52,40 @@ const author = 'Microsoft';
 const serverPath = "server/routerlicious/";
 const serverDockerfilePath = `${serverPath}Dockerfile`
 
-function getDockerfileCopyText(packageFilePath) {
+function getDockerfileCopyText(packageFilePath: string) {
     const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
     return `COPY ${packageDir}/package*.json ${packageDir}/`;
 }
 
-function readFile(file) {
+function readFile(file: string) {
     return fs.readFileSync(file, { encoding: "utf8" });
 }
 
-function writeFile(file, data) {
+function writeFile(file: string, data: string) {
     fs.writeFileSync(file, data, { encoding: "utf8" });
 }
 
 const localMap = new Map();
-function getOrAddLocalMap(key, getter) {
+function getOrAddLocalMap(key: string, getter: () => Buffer) {
     if (!localMap.has(key)) {
         localMap.set(key, getter());
     }
     return localMap.get(key);
 }
 
+interface Handler {
+    name: string,
+    match: RegExp,
+    handler: (file: string) => string | undefined,
+    resolver: (file: string) => { resolved: boolean, message?: string };
+};
 /**
  * declared file handlers
  * each handler has a name for filtering and a match regex for matching which files it should resolve
  * the handler function returns an error message or undefined/null for success
  * the resolver function (optional) can attempt to resolve the failed validation
  */
-const handlers = [
+const handlers: Handler[] = [
     {
         name: "html-copyright-file-header",
         match: /(^|\/)[^\/]+\.html$/i,
@@ -221,8 +229,8 @@ const handlers = [
             if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
                 // regex basically find the last of 3 or more consecutive COPY package lines
                 const endOfCopyLinesRegex = /(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
-                const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents);
-                const localNewline = regexMatch.groups.newline;
+                const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
+                const localNewline = regexMatch.groups!.newline;
                 let insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 
                 dockerfileContents = dockerfileContents.substring(0, insertIndex)
@@ -239,7 +247,7 @@ const handlers = [
 
 // route files to their handlers by regex testing their full paths
 // synchronize output, exit code, and resolve decision for all handlers
-function routeToHandlers(file) {
+function routeToHandlers(file: string) {
     handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
         const result = handler.handler(file);
         if (result) {
@@ -264,15 +272,36 @@ function routeToHandlers(file) {
     });
 }
 
-// prepare to read standard input line by line
-process.stdin.setEncoding('utf8');
-let lineReader = readline.createInterface({
-    input: process.stdin,
-    terminal: false
+let lineReader: readline.Interface;
+if (program.stdin) {
+    // prepare to read standard input line by line
+    process.stdin.setEncoding('utf8');
+    lineReader = readline.createInterface({
+        input: process.stdin,
+        terminal: false
+    });
+} else {
+    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard"]);
+    lineReader = readline.createInterface({
+        input: p.stdout,
+        terminal: false
+    });
+}
+
+let count = 0;
+let processed = 0;
+lineReader.on('line', line => {
+    if (pathRegex.test(line) && fs.existsSync(line)) {
+        count++;
+        if (exclusions.every(value => !value.test(line))) {
+            routeToHandlers(line.trim());
+            processed++;
+        } else {
+            console.log(`Excluded: ${line}`);
+        }
+    }
 });
 
-lineReader.on('line', line => {
-    if (pathRegex.test(line) && exclusions.every(value => !value.test(line)) && fs.existsSync(line)) {
-        routeToHandlers(line.trim());
-    }
+process.on("beforeExit", () => {
+    console.log(`${processed} processed, ${count - processed} excluded, ${count} total`);
 });
