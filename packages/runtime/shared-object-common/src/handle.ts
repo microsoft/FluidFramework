@@ -35,12 +35,11 @@ export class SharedObjectComponentHandle implements IComponentHandle {
     public get isAttached(): boolean {
         // This change is due to the change in meaning of isLocal. Because a shared object is still local
         // if it is attached and container is detached. So isLocal cann't tell that it is attached or not.
-        // It tells if the shared object is attached to parent component. Parent component could itself be
+        // Attached tells if the shared object is attached to parent component. Parent component could itself be
         // unattached. It does not matter if the container is live or local.
         // If the dds was registered to attached component, it should have get attached and isAttached should
         // be true in that case. If the dds was attached, it should have its services and isAttached is true.
-        // isLocal is just maintained just to ensure we does not break something. It will be removed in next iterations.
-        return this.value.isAttached !== undefined ? this.value.isAttached() : !this.value.isLocal();
+        return this.value.isAttached();
     }
 
     /**
