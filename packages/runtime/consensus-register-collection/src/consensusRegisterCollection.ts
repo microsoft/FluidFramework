@@ -263,7 +263,7 @@ export class ConsensusRegisterCollection<T>
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
                     const value = incomingOpMatchesCurrentFormat(op)
-                        ? this.parse(op.serializedValue)
+                        ? this.parse(op.serializedValue) as T
                         : op.value.value;
                     const winner = this.processInboundWrite(
                         op.key,
