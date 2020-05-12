@@ -53,16 +53,10 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 /**
  * An operation for consensus register collection
  */
-interface IRegisterOperation<T> {
+interface IRegisterOperation {
     key: string;
     type: "write";
-    serializedValue?: string,
-
-    // Old op format from < 0.17, here temporarily for back compat
-    value: {
-        type: "Plain",
-        value: T,
-    };
+    serializedValue: string,
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
@@ -71,22 +65,29 @@ interface IRegisterOperation<T> {
     refSeq: number;
 }
 
-const newRegisterOp = <T>(key: string, value: T, serializedValue: string, refSeq: number): IRegisterOperation<T> =>
-    ({
-        key,
-        type: "write",
-        serializedValue,
-        value: {
-            type: "Plain",
-            value,
-        },
-        refSeq,
-    });
+/**
+ * IRegisterOperation format in versions < 0.17
+ */
+interface IRegisterOperationOld<T> {
+    key: string;
+    type: "write";
+    value: {
+        type: "Plain",
+        value: T,
+    };
+    refSeq: number;
+}
+
+/** Incoming ops could match any of these types */
+type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
+
+/** Distinguish between incoming op formats so we know which type it is */
+const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
 
 /**
  * A record of the pending operation awaiting ack
  */
-interface IPendingRecord<T> {
+interface IPendingRecord {
     /** The resolve function to call after the local operation is ack'ed */
     resolve: (winner: boolean) => void;
 
@@ -94,7 +95,7 @@ interface IPendingRecord<T> {
     clientSequenceNumber: number;
 
     /** Pending Message */
-    message: IRegisterOperation<T>;
+    message: IRegisterOperation;
 }
 
 const snapshotFileName = "header";
@@ -127,7 +128,7 @@ export class ConsensusRegisterCollection<T>
     private readonly data = new Map<string, ILocalData<T>>();
 
     /** Queue of local messages awaiting ack from the server */
-    private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
+    private readonly pendingLocalMessages: IPendingRecord[] = [];
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -156,12 +157,12 @@ export class ConsensusRegisterCollection<T>
             return true;
         }
 
-        const message: IRegisterOperation<T> = newRegisterOp(
+        const message: IRegisterOperation = {
             key,
-            value,
+            type: "write",
             serializedValue,
-            this.runtime.deltaManager.referenceSequenceNumber,
-        );
+            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
+        };
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
@@ -253,7 +254,7 @@ export class ConsensusRegisterCollection<T>
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
-            const op: IRegisterOperation<T> = message.contents;
+            const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
@@ -261,8 +262,7 @@ export class ConsensusRegisterCollection<T>
                     const refSeqWhenCreated = op.refSeq;
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
-                    // Read the new (>= 0.17) op format that supports handles, if possible
-                    const value = op.serializedValue !== undefined
+                    const value = incomingOpMatchesCurrentFormat(op)
                         ? this.parse(op.serializedValue)
                         : op.value.value;
                     const winner = this.processInboundWrite(

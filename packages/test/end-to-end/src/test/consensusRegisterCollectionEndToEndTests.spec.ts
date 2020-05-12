@@ -9,7 +9,7 @@ import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
-    ConsensusRegisterCollection,
+    IIncomingRegisterOperation,
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
@@ -52,7 +52,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
                 [ mapId, SharedMap.getFactory() ],
-                [ undefined, ConsensusRegisterCollection.getFactory() ],
+                [ undefinedIIIIncomingRegisterOperation.getFactory() ],
             ]);
             const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
@@ -204,4 +204,4 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     });
 }
 
-generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
+generate("ConsensusRegisterCollectioIIIIIIncomingRegisterOperation);
