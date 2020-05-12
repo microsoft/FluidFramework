@@ -23,7 +23,7 @@ describe("external-component-loader", () => {
     });
 
     it("can load, enable, and use clicker", async () => {
-        await expect(page).toFill("input", `${globals.PATH}/file/${path.join(__dirname, "../..")}/clicker/`);
+        await expect(page).toFill("input", `${globals.PATH}/file/${path.join(__dirname, "..\\..\\..\\examples\\")}\\clicker\\`);
         await expect(page).toClick("button", { text: "Add Component" });
 
         // wait for clicker to be loaded
@@ -60,5 +60,5 @@ describe("external-component-loader", () => {
         expect(postValue).toEqual("1");
         const postValue2 = await getValue(1);
         expect(postValue2).toEqual("1");
-    });
+    }, 20000);
 });
