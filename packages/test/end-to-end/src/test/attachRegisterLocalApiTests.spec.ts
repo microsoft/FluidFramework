@@ -38,22 +38,23 @@ import { SharedMap } from "@microsoft/fluid-map";
             const container = await loader.createDetachedContainer(pkg);
             // Get the root component from the detached container.
             const response = await container.request({ url: "/" });
-            const component1 = response.value as ITestFluidComponent;
+            const defaultComponent = response.value as ITestFluidComponent;
             return {
                 container,
-                component1,
+                defaultComponent,
             };
         };
 
-        const createComponent = async (
+        const createPeerComponent = async (
             containerRuntime: IContainerRuntimeBase,
         ) => {
-            const component2RuntimeChannel = await (containerRuntime as IContainerRuntime)
+            const peerComponentRuntimeChannel = await (containerRuntime as IContainerRuntime)
                 .createComponentWithRealizationFn(["default"]);
-            const component2 = (await component2RuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
+            const peerComponent =
+                (await peerComponentRuntimeChannel.request({ url: "/" })).value as ITestFluidComponent;
             return {
-                component2,
-                component2RuntimeChannel,
+                peerComponent,
+                peerComponentRuntimeChannel,
             };
         };
 
@@ -78,13 +79,16 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it("Attaching component should not attach unregistered DDS", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2, component2RuntimeChannel } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
+            const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+
             assert.strictEqual(component2.runtime.isLocal(), true, createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
 
@@ -92,6 +96,7 @@ import { SharedMap } from "@microsoft/fluid-map";
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.isLocal(), true, "Channel should be local");
 
             component2RuntimeChannel.attach();
 
@@ -106,13 +111,15 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it("Attaching component should attach registered DDS", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2, component2RuntimeChannel } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
+            const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
             assert.strictEqual(component2.runtime.isLocal(), true,
                 createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -137,13 +144,14 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it.skip("Attaching DDS should attach component", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2 } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
             assert.strictEqual(component2.runtime.isLocal(), true,
                 createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -153,11 +161,9 @@ import { SharedMap } from "@microsoft/fluid-map";
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-            // Now register the channel
-            (await channel.handle.get() as SharedObject).register();
-            assert.strictEqual(channel.isRegistered(), true, "Channel should be registered");
-
             channel.handle.attach();
+            assert.strictEqual(channel.isRegistered(), true, "Channel should be registered after attaching");
+
             // Channel should get attached as it was registered to its component
             assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
 
@@ -167,13 +173,15 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it("Sticking handle in attached dds should attach the DDS", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2, component2RuntimeChannel } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
+            const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
             assert.strictEqual(component2.runtime.isLocal(), true,
                 createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -201,13 +209,16 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it("Registering DDS in attached component should attach it", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2, component2RuntimeChannel } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
+            const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+
             assert.strictEqual(component2.runtime.isLocal(), true,
                 createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -226,13 +237,15 @@ import { SharedMap } from "@microsoft/fluid-map";
         });
 
         it("Registering DDS in detached component should not attach it", async () => {
-            const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
-            const { component2 } = await createComponent(component1.context.containerRuntime);
+            const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent.peerComponent;
+
             assert.strictEqual(component2.runtime.isLocal(), true,
                 createTestStatementForLocalLive("Component2", true));
             assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -250,14 +263,16 @@ import { SharedMap } from "@microsoft/fluid-map";
 
         it.skip("Stick handle of 2 dds in each other and then attaching component should attach both DDS",
             async () => {
-                const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+                const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
 
                 // Create another component which returns the runtime channel.
-                const { component2, component2RuntimeChannel } =
-                    await createComponent(component1.context.containerRuntime);
+                const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component2 = peerComponent.peerComponent;
+                const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
+
                 assert.strictEqual(component2.runtime.isLocal(), true,
                     createTestStatementForLocalLive("Component2", true));
                 assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -277,7 +292,7 @@ import { SharedMap } from "@microsoft/fluid-map";
                 (await channel2.handle.get() as SharedObject).register();
 
                 const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-                const testChannel2OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
+                const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
 
                 testChannel1OfComponent2.set("test2handle", channel2.handle);
                 testChannel2OfComponent2.set("test1handle", channel1.handle);
@@ -292,13 +307,15 @@ import { SharedMap } from "@microsoft/fluid-map";
 
         it.skip("Stick handle of 2 dds in each other and then attaching 1 DDS should attach other DDS",
             async () => {
-                const { container, component1 } = await createDetachedContainerAndGetRootComponent();
+                const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
 
                 // Create another component which returns the runtime channel.
-                const { component2 } = await createComponent(component1.context.containerRuntime);
+                const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component2 = peerComponent.peerComponent;
+
                 assert.strictEqual(component2.runtime.isLocal(), true,
                     createTestStatementForLocalLive("Component2", true));
                 assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
@@ -318,7 +335,7 @@ import { SharedMap } from "@microsoft/fluid-map";
                 (await channel2.handle.get() as SharedObject).register();
 
                 const testChannel1OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-                const testChannel2OfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
+                const testChannel2OfComponent2 = await component2.runtime.getChannel("test2") as SharedMap;
 
                 testChannel1OfComponent2.set("test2handle", channel2.handle);
                 testChannel2OfComponent2.set("test1handle", channel1.handle);
@@ -330,5 +347,53 @@ import { SharedMap } from "@microsoft/fluid-map";
                 assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
                     "Test Channel 2 should be attached now after attaching other DDS");
             });
+
+        it.skip("Stick handle of 2 dds(of 2 different components) in each other and then attaching 1 DDS should " +
+            "attach other DDS and component with correct recursion",
+        async () => {
+            const { container, defaultComponent } = await createDetachedContainerAndGetRootComponent();
+            if (!isLocal) {
+                await container.attach(request);
+            }
+
+            // Create another component which returns the runtime channel.
+            const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component2 = peerComponent1.peerComponent;
+            assert.strictEqual(component2.runtime.isLocal(), true,
+                createTestStatementForLocalLive("Component2", true));
+            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+
+            // Create another component which returns the runtime channel.
+            const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+            const component3 = peerComponent2.peerComponent;
+            assert.strictEqual(component3.runtime.isLocal(), true,
+                createTestStatementForLocalLive("Component2", true));
+            assert.strictEqual(component3.runtime.isAttached, false, "Component2 should be unattached");
+
+            // Create first channel from component2
+            const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
+            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+
+            // Create second channel from component 3
+            const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
+            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+
+            const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
+            const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
+
+            testChannelOfComponent2.set("channel3handle", channel3.handle);
+            testChannelOfComponent3.set("channel2handle", channel2.handle);
+
+            // Currently it will go in infinite loop.
+            channel2.handle.attach();
+            assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
+                "Test Channel 1 should be attached now after attaching it");
+            assert.strictEqual(testChannelOfComponent3.handle.isAttached, true,
+                "Test Channel 2 should be attached now after attaching other DDS");
+            assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should have get attached");
+            assert.strictEqual(component2.runtime.isAttached, true, "Component 3 should have get attached");
+        });
     });
 });
