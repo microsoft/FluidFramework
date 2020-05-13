@@ -984,6 +984,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
+        this.verifyNotClosed();
+
         assert(!this.contexts.has(id), "Creating component with existing ID");
 
         const context = new LocalComponentContext(
@@ -1007,6 +1009,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
     ): Promise<IComponentRuntimeChannel> {
+        this.verifyNotClosed();
+
         // tslint:disable-next-line: no-unsafe-any
         const id: string = uuid();
         const context = new LocalComponentContext(
@@ -1210,6 +1214,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
+        this.verifyNotClosed();
+
         const context = this.getContext(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         if (!this.isLocal()) {
