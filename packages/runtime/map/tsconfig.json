@@ -7,6 +7,7 @@
     "compilerOptions": {
         "strictNullChecks": false,
         "stripInternal": true,
+        "esModuleInterop": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [

@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "strictNullChecks": false,
+        "esModuleInterop": true,
         "rootDir": "./src",
         "jsx": "react",
         "outDir": "./dist",

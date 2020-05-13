@@ -7,6 +7,7 @@
     "compilerOptions": {
         "noUnusedLocals": false,
         "strictNullChecks": false,
+        "esModuleInterop": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [

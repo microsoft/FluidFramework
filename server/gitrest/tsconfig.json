@@ -1,4 +1,4 @@
-{    
+{
     "exclude": [
         "dist",
         "node_modules"
@@ -11,6 +11,7 @@
         "noImplicitAny": false,
         "noUnusedLocals": true,
         "outDir": "dist",
+        "esModuleInterop": true,
         "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true,
