@@ -168,6 +168,7 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A ex
     reducer: A,
     rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
+    selector?: keyof S
 }
 
 export interface ActionInfo {type: string, args?: any}

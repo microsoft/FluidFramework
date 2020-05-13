@@ -1,5 +1,5 @@
 import {
-    IFluidReducer,
+    IFluidReducer, FluidFunctionalComponentState,
 } from "@microsoft/fluid-aqueduct-react";
 
 export interface IDate {
@@ -28,24 +28,24 @@ export interface IPerson {
     key: string;
 }
 
-export interface PeopleMap {
+export interface IPersonMap {
     [key: string]: IPerson
 }
 
-export interface IPeopleState {
-    peopleMap: PeopleMap
+export interface IPersonState extends FluidFunctionalComponentState {
+    peopleMap: IPersonMap
 }
 
 export interface IDateMap {
     [key: string]: IDate
 }
 
-export interface IDateState {
+export interface IDateState extends FluidFunctionalComponentState {
     dateMap: IDateMap
 }
 
-export interface ICommentState {
-    messages: string[];
+export interface ICommentState extends FluidFunctionalComponentState {
+    comments: string[];
 }
 
 export interface ICommentReducer extends IFluidReducer<ICommentState>{
@@ -56,9 +56,9 @@ export interface IDateReducer extends IFluidReducer<IDateState>{
     set: (oldState: IDateState, args: {key: string, time: IDate}) => IDateState
 }
 
-export interface IPeopleReducer extends IFluidReducer<IPeopleState> {
-    updateName: (state: IPeopleState, args: {key: string, name: string}) => IPeopleState,
-    updateAvailability: (state: IPeopleState, args: {key: string, availability: IAvailability}) => IPeopleState,
-    addPerson: (state: IPeopleState) => IPeopleState,
-    removePerson: (state: IPeopleState, args: {key: string}) => IPeopleState
+export interface IPersonReducer extends IFluidReducer<IPersonState> {
+    updateName: (state: IPersonState, args: {key: string, name: string}) => IPersonState,
+    updateAvailability: (state: IPersonState, args: {key: string, availability: IAvailability}) => IPersonState,
+    addPerson: (state: IPersonState) => IPersonState,
+    removePerson: (state: IPersonState, args: {key: string}) => IPersonState
 }

@@ -5,34 +5,38 @@ import {
     AvailableType,
     IAvailability,
     IDateState,
-    IPeopleState,
+    IPersonState,
     ICommentReducer,
     ICommentState,
     IDateReducer,
-    IPeopleReducer,
+    IPersonReducer,
+    IPersonMap,
+    IDateMap,
 } from "./interface";
 
 const today = new Date();
 const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 const dayAfter = new Date(today.getTime() + 24 * 60 * 60 * 1000 * 2);
 
-export const defaultDates: IDate[] = [
-    {
+export const defaultComments: string[] = [];
+
+export const defaultDates: IDateMap = {
+    today: {
         key: "today",
         date: today,
     },
-    {
+    tomorrow: {
         key: "tomorrow",
         date: tomorrow,
     },
-    {
+    dayAfter: {
         key: "dayAfter",
         date: dayAfter,
     },
-];
+};
 
-export const defaultPeople: IPerson[] = [
-    {
+export const defaultPeople: IPersonMap = {
+    1: {
         key: "1",
         name: "Bruno",
         availabilityMap: {
@@ -41,7 +45,7 @@ export const defaultPeople: IPerson[] = [
             dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.Maybe },
         },
     },
-    {
+    2: {
         key: "2",
         name: "Tamine",
         availabilityMap: {
@@ -50,7 +54,7 @@ export const defaultPeople: IPerson[] = [
             dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.No },
         },
     },
-    {
+    3: {
         key: "3",
         name: "Jodom",
         availabilityMap: {
@@ -59,7 +63,7 @@ export const defaultPeople: IPerson[] = [
             dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.Yes },
         },
     },
-    {
+    4: {
         key: "4",
         name: "Michelle",
         availabilityMap: {
@@ -68,11 +72,11 @@ export const defaultPeople: IPerson[] = [
             dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.Maybe },
         },
     },
-];
+};
 
 export const CommentReducer: ICommentReducer = {
     add:  (state: ICommentState, args: {newComment: string}) => {
-        state.messages.push(args.newComment);
+        state.comments.push(args.newComment);
         return state;
     },
 };
@@ -84,17 +88,17 @@ export const DateReducer: IDateReducer = {
     },
 };
 
-export const PeopleReducer: IPeopleReducer = {
-    updateName: (state: IPeopleState, args: {key: string, name: string}) => {
+export const PersonReducer: IPersonReducer = {
+    updateName: (state: IPersonState, args: {key: string, name: string}) => {
         state.peopleMap[args.key].name = name;
         return state;
     },
-    updateAvailability: (state: IPeopleState, args: {key: string, availability: IAvailability}) => {
+    updateAvailability: (state: IPersonState, args: {key: string, availability: IAvailability}) => {
         const { dateKey, availabilityType } = args.availability;
         state.peopleMap[args.key].availabilityMap[dateKey].availabilityType = availabilityType;
         return state;
     },
-    addPerson: (state: IPeopleState) => {
+    addPerson: (state: IPersonState) => {
         const newPerson: IPerson = {
             key: uuid(),
             name: "",
@@ -107,7 +111,7 @@ export const PeopleReducer: IPeopleReducer = {
         state.peopleMap[newPerson.key] = newPerson;
         return state;
     },
-    removePerson: (state: IPeopleState, args: {key: string}) => {
+    removePerson: (state: IPersonState, args: {key: string}) => {
         if (state.peopleMap[args.key] !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete state.peopleMap[args.key];
