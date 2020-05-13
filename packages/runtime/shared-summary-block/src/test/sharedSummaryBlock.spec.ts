@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
 import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";

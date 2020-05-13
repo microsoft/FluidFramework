@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as fs from "fs";
 import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
 import {

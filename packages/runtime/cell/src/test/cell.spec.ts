@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { CellFactory } from "../cellFactory";
 import { ISharedCell } from "..";

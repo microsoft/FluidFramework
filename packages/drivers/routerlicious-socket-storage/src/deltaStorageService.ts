@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as querystring from "querystring";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";

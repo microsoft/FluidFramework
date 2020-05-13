@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";

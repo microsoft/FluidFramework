@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { getGitType } from "@microsoft/fluid-protocol-base";
 import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@microsoft/fluid-driver-utils";

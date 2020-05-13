@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 

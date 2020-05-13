@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as API from "@fluid-internal/client-api";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     FileMode,

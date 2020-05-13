@@ -30,7 +30,7 @@ import {
     TestWebSocketServer,
     DebugLogger,
 } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
 import { DefaultMetricClient, IScribe } from "@microsoft/fluid-server-services-core";
 import { generateToken } from "@microsoft/fluid-server-services-client";

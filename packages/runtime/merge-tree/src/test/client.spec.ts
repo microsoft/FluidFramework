@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as MergeTree from "../";
 import { UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";

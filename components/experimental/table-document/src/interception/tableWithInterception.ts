@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { PropertySet } from "@microsoft/fluid-merge-tree";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { ITable, TableDocumentItem } from "../table";

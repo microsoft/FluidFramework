@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";

@@ -11,7 +11,7 @@ import {
     ICreateRefParams,
     ICreateTreeParams,
 } from "@microsoft/fluid-gitresources";
-import * as assert from "assert";
+import assert from "assert";
 import * as async from "async";
 import * as lorem from "lorem-ipsum";
 import * as moniker from "moniker";

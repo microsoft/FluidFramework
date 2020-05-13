@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";

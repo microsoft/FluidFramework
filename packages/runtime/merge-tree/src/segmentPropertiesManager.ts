@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { UnassignedSequenceNumber } from "./constants";
 import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";

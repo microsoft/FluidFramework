@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";

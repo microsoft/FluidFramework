@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import {

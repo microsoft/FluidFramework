@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import * as core from "@microsoft/fluid-server-services-core";
 import { TestContext } from "./testContext";

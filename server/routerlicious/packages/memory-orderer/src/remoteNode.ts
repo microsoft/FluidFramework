@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";

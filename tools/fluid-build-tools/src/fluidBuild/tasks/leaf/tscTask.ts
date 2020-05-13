@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { logVerbose } from "../../../common/logging";
 import { readFileAsync, existsSync } from "../../../common/utils";

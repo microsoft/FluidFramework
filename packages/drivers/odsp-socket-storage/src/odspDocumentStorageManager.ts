@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     fromBase64ToUtf8,

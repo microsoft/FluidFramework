@@ -4,7 +4,7 @@
  */
 
 import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 import { Context } from "../../kafka-service/context";
 

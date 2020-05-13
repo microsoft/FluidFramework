@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
 import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";

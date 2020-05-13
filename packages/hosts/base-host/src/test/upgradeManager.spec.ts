@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { UpgradeManager } from "../utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";

@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import * as assert from "assert";
+import assert from "assert";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { gitHashFile } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IError, ErrorType } from "@microsoft/fluid-driver-definitions";
 import { OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { IOdspSocketError } from "../contracts";

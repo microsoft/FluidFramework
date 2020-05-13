@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
