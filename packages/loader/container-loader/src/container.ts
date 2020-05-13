@@ -374,13 +374,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+                containerId: uuid(),
             },
             {
                 docId: () => this.id,
             });
 
         // Prefix all events in this file with container-loader
-        this.logger = ChildLogger.create(this.subLogger, "Container", { containerId: uuid() });
+        this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
             this.logContainerError(error);
