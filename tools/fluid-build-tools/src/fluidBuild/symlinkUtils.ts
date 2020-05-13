@@ -17,7 +17,7 @@ import {
     realpathAsync,
 } from "../common/utils";
 import { FluidRepo } from "./fluidRepo";
-import * as semver from "semver";
+import semver from "semver";
 import fs from "fs";
 import { MonoRepo } from "../common/monoRepo";
 

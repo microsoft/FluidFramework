@@ -9,7 +9,7 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
+import sequence from "@microsoft/fluid-sequence";
 import { MonacoRunner } from "./chaincode";
 
 const monacoName = "@fluid-example/monaco";

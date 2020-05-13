@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as nconf from "nconf";
+import nconf from "nconf";
 import path from "path";
-import * as supertest from "supertest";
+import supertest from "supertest";
 import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import { Alfred } from "../alfred";
-import * as app from "../app";
+import app from "../app";
 
 describe("Gateway", () => {
     describe("Server", () => {

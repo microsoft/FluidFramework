@@ -12,9 +12,9 @@ import {
 import { ChildLogger } from "@microsoft/fluid-common-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
+import MergeTree from "./mergeTree";
+import ops from "./ops";
+import Properties from "./properties";
 import {
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,

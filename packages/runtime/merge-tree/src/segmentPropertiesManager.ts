@@ -7,7 +7,7 @@ import assert from "assert";
 import { UnassignedSequenceNumber } from "./constants";
 import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
-import * as Properties from "./properties";
+import Properties from "./properties";
 
 export class SegmentPropertiesManager {
     private pendingKeyUpdateCount: Properties.MapLike<number>;

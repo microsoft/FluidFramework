@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { IData, IUser } from "../definitions";
 import { Content } from "./components/Content";
 

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
-import * as winston from "winston";
+import debug from "debug";
+import winston from "winston";
 
 export interface IWinstonConfig {
     colorize: boolean;

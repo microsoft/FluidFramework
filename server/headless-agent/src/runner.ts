@@ -5,9 +5,9 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import * as winston from "winston";
+import core from "@microsoft/fluid-server-services-core";
+import utils from "@microsoft/fluid-server-services-utils";
+import winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";
 import { ICache } from "./redisCache";
 

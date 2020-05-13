@@ -4,7 +4,7 @@
  */
 
 import { IPartitionLambdaFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/lambdas";
-import * as aria from "aria-nodejs-sdk";
+import aria from "aria-nodejs-sdk";
 import { Provider } from "nconf";
 import { MetricsLambdaFactory } from "./lambdaFactory";
 

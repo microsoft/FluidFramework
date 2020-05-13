@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as bodyParser from "body-parser";
-import * as compression from "compression";
-import * as cors from "cors";
-import * as express from "express";
+import bodyParser from "body-parser";
+import compression from "compression";
+import cors from "cors";
+import express from "express";
 import { Express } from "express";
-import * as morgan from "morgan";
-import * as nconf from "nconf";
+import morgan from "morgan";
+import nconf from "nconf";
 import split = require("split");
-import * as winston from "winston";
-import * as routes from "./routes";
+import winston from "winston";
+import routes from "./routes";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to

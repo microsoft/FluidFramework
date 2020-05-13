@@ -11,9 +11,9 @@ import {
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
-import * as _ from "lodash";
+import _ from "lodash";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 

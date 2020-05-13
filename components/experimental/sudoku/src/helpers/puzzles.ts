@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@microsoft/fluid-map";
-import * as sudoku from "sudokus";
+import sudoku from "sudokus";
 import { Coordinate } from "./coordinate";
 import { SudokuCell } from "./sudokuCell";
 

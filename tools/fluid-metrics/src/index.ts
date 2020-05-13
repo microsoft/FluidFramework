@@ -5,7 +5,7 @@
 
 import { KafkaResourcesFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/resourcesFactory";
 import { KafkaRunnerFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/runnerFactory";
-import * as utils from "@microsoft/fluid-server-routerlicious/dist/utils";
+import utils from "@microsoft/fluid-server-routerlicious/dist/utils";
 import path from "path";
 
 const name = "fluid-metrics";

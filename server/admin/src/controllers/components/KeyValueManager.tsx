@@ -11,9 +11,9 @@ import {
   } from "antd";
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
-import * as React from "react";
+import React from "react";
 import { IKeyValue } from "../../definitions";
-import * as utils from "../utils";
+import utils from "../utils";
 import { DuplicateKeyModal } from "./DuplicateKeyModal";
 import { CreateKeyValueModal } from "./KeyValueCreateModal";
 

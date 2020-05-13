@@ -26,7 +26,7 @@ import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definition
 import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
-import * as CodeMirror from "codemirror";
+import CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */

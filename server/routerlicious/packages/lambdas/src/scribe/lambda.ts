@@ -43,8 +43,8 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as Deque from "double-ended-queue";
-import * as _ from "lodash";
+import Deque from "double-ended-queue";
+import _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
 import { fetchLatestSummaryState, initializeProtocol } from "./summaryHelper";
 

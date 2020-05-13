@@ -8,8 +8,8 @@ import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { logVerbose } from "../../../common/logging";
 import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
-import * as ts from "typescript";
-import * as TscUtils from "../../tscUtils";
+import ts from "typescript";
+import TscUtils from "../../tscUtils";
 const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {

@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import * as child_process from "child_process";
+import child_process from "child_process";
 import fs from "fs";
-import * as API from "@fluid-internal/client-api";
+import API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";

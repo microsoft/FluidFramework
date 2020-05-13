@@ -4,7 +4,7 @@
  */
 
 import { IDocumentDeltaConnection, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./tokens";

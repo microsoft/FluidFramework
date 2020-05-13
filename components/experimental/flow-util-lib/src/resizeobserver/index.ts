@@ -6,7 +6,7 @@
 import { isBrowser } from "../isbrowser";
 import { Template } from "../template";
 import { View } from "../view";
-import * as style from "./index.css";
+import style from "./index.css";
 
 const template = isBrowser && new Template(
     { tag: "div", ref: "root", props: { className: style.root }, children: [

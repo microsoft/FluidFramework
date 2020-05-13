@@ -9,7 +9,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { GridView } from "./grid";
-import * as styles from "./index.css";
+import styles from "./index.css";
 
 export const tableViewType = "@fluid-example/table-view";
 

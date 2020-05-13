@@ -5,8 +5,8 @@
 
 import { AssertionError } from "assert";
 import { inspect } from "util";
-import * as nconf from "nconf";
-import * as winston from "winston";
+import nconf from "nconf";
+import winston from "winston";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as chalk from "chalk";
+import chalk from "chalk";
 import { commonOptions } from "./commonOptions";
 
 export function logVerbose(msg: string) {

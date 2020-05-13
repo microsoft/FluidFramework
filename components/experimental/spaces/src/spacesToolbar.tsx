@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import Collapsible from "react-collapsible";
 import {
     DefaultButton as Button,

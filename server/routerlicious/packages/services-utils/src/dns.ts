@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as dns from "dns";
-import * as os from "os";
+import dns from "dns";
+import os from "os";
 import util from "util";
 
 export async function getHostIp(): Promise<string> {

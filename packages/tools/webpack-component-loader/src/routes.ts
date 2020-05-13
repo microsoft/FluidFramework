@@ -5,9 +5,9 @@
 
 import fs from "fs";
 import path from "path";
-import * as express from "express";
-import * as moniker from "moniker";
-import * as nconf from "nconf";
+import express from "express";
+import moniker from "moniker";
+import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";

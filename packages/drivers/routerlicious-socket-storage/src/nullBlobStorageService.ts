@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document access to underlying storage. It is default implementation of a storage service.

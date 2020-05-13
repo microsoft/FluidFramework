@@ -4,11 +4,11 @@
  */
 
 import { MongoManager } from "@microsoft/fluid-server-services-core";
-import * as bodyParser from "body-parser";
-import * as express from "express";
-import * as morgan from "morgan";
-import * as winston from "winston";
-import * as api from "./api";
+import bodyParser from "body-parser";
+import express from "express";
+import morgan from "morgan";
+import winston from "winston";
+import api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
-import * as querystring from "querystring";
-import * as request from "request";
-import * as winston from "winston";
+import git from "@microsoft/fluid-gitresources";
+import querystring from "querystring";
+import request from "request";
+import winston from "winston";
 import { ICache, IStorage } from "./definitions";
 
 // We include the historian version in the user-agent string

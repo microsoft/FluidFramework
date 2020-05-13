@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as http from "http";
+import http from "http";
 import { HttpServer } from "@microsoft/fluid-server-services";
 import {
     IWebServer,

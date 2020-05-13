@@ -6,7 +6,7 @@
 /* eslint-disable unicorn/filename-case */
 
 import fs from "fs";
-import * as os from "os";
+import os from "os";
 import path from "path";
 import util from "util";
 import { IOdspTokens } from "@microsoft/fluid-odsp-utils";

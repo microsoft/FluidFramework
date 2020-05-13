@@ -12,7 +12,7 @@ import { Timer } from '../common/timer';
 import { FileHashCache } from "../common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
-import * as semver from "semver";
+import semver from "semver";
 
 export enum BuildResult {
     Success,

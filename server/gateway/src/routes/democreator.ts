@@ -4,7 +4,7 @@
  */
 
 import { Router } from "express";
-import * as moniker from "moniker";
+import moniker from "moniker";
 import { getUserDetails, getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 

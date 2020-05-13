@@ -4,7 +4,7 @@
  */
 
 import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/lambdas";
-import * as aria from "aria-nodejs-sdk";
+import aria from "aria-nodejs-sdk";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { MetricsLambda } from "./lambda";

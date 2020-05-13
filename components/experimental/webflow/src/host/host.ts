@@ -11,7 +11,7 @@ import { htmlFormatter } from "../html/formatters";
 
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
-import * as styles from "./index.css";
+import styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
 
 const template = new Template(

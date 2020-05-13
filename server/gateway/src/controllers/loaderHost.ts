@@ -19,8 +19,8 @@ import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 
-import * as commits from "./commits";
-import * as navbar from "./navbar";
+import commits from "./commits";
+import navbar from "./navbar";
 
 export { commits };
 export { navbar };

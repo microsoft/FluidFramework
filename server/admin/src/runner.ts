@@ -4,11 +4,11 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import core from "@microsoft/fluid-server-services-core";
+import utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
-import * as app from "./app";
+import winston from "winston";
+import app from "./app";
 import { IWebServer, IWebServerFactory } from "./webServer";
 
 export class AdminRunner implements utils.IRunner {

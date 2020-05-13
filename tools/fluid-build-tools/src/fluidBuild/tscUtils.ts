@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as ts from "typescript";
+import ts from "typescript";
 import path from "path";
 
 export function parseCommandLine(command: string) {

@@ -4,7 +4,7 @@
  */
 
 import { ICollection } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
+import _ from "lodash";
 
 // TODO consider https://github.com/kofrasa/mingo for handling queries
 

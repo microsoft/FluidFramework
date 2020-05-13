@@ -8,7 +8,7 @@ import fs from "fs";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 
 // This ID is used by replay tool as Document Id.

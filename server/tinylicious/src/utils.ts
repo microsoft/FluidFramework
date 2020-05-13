@@ -8,7 +8,7 @@ import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
-import * as _ from "lodash";
+import _ from "lodash";
 import { IAlfredTenant, generateToken } from "@microsoft/fluid-server-services-client";
 
 /**

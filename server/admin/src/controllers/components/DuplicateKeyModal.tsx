@@ -4,7 +4,7 @@
  */
 
 import { Button, Modal } from "antd";
-import * as React from "react";
+import React from "react";
 
 export interface IDuplicateKeyProps {
     visible: boolean;

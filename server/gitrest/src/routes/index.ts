@@ -4,16 +4,16 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as utils from "../utils";
-import * as blobs from "./git/blobs";
-import * as commits from "./git/commits";
-import * as refs from "./git/refs";
-import * as repos from "./git/repos";
-import * as tags from "./git/tags";
-import * as trees from "./git/trees";
-import * as repositoryCommits from "./repository/commits";
-import * as contents from "./repository/contents";
+import nconf from "nconf";
+import utils from "../utils";
+import blobs from "./git/blobs";
+import commits from "./git/commits";
+import refs from "./git/refs";
+import repos from "./git/repos";
+import tags from "./git/tags";
+import trees from "./git/trees";
+import repositoryCommits from "./repository/commits";
+import contents from "./repository/contents";
 
 export interface IRoutes {
     git: {

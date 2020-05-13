@@ -5,10 +5,10 @@
 
 import { IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
-import * as jwt from "jsonwebtoken";
-import * as puppeteer from "puppeteer";
-import * as request from "request";
-import * as winston from "winston";
+import jwt from "jsonwebtoken";
+import puppeteer from "puppeteer";
+import request from "request";
+import winston from "winston";
 import { ICache } from "../redisCache";
 
 export interface ICloseEvent {

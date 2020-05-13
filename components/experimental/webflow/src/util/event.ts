@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as styles from "../editor/index.css";
+import styles from "../editor/index.css";
 
 export function ownsNode(root: HTMLElement, node: Node | HTMLElement) {
     while (node !== null && node !== root) {

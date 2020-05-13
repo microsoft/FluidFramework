@@ -4,7 +4,7 @@
  */
 
 import { queue } from "async";
-import * as chalk from "chalk";
+import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import sortPackageJson from "sort-package-json";

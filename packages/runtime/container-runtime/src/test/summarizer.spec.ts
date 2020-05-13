@@ -12,7 +12,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 

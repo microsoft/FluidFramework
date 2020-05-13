@@ -12,10 +12,10 @@ import {
     MongoManager,
     IHttpServer,
 } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
-import * as app from "./app";
+import winston from "winston";
+import app from "./app";
 import { IAlfred } from "./interfaces";
 
 export class GatewayRunner implements utils.IRunner {

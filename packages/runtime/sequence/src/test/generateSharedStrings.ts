@@ -5,7 +5,7 @@
 
 import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as mocks from "@microsoft/fluid-test-runtime-utils";
+import mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 

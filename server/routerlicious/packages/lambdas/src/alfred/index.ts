@@ -21,10 +21,10 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 
-import * as jwt from "jsonwebtoken";
-import * as safeStringify from "json-stringify-safe";
-import * as semver from "semver";
-import * as core from "@microsoft/fluid-server-services-core";
+import jwt from "jsonwebtoken";
+import safeStringify from "json-stringify-safe";
+import semver from "semver";
+import core from "@microsoft/fluid-server-services-core";
 import {
     createRoomJoinMessage,
     createNackMessage,

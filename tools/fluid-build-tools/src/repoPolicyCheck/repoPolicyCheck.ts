@@ -4,8 +4,8 @@
  */
 
 import fs from "fs";
-import * as readline from "readline";
-import * as child_process from "child_process";
+import readline from "readline";
+import child_process from "child_process";
 import path from "path";
 import { EOL as newline } from "os";
 import program from "commander";

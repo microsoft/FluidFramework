@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as cell from "@microsoft/fluid-cell";
+import cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
@@ -16,7 +16,7 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import * as ink from "@microsoft/fluid-ink";
+import ink from "@microsoft/fluid-ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,
@@ -24,7 +24,7 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
+import sequence from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";

@@ -6,9 +6,9 @@
 import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { TestContext } from "@microsoft/fluid-server-test-utils";
 import assert from "assert";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import path from "path";
-import * as plugin from "../../document-router";
+import plugin from "../../document-router";
 
 describe("document-router", () => {
     describe("Plugin", () => {

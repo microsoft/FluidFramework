@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@microsoft/fluid-common-utils";
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 
 export class DocumentManager {
     public static async create(

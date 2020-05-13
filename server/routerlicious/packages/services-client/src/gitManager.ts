@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 import { IGitManager, IHistorian } from "./storage";
 

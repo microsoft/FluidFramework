@@ -16,7 +16,7 @@ import {
     View,
 } from "@fluid-example/flow-util-lib";
 import { debug } from "./debug";
-import * as style from "./index.css";
+import style from "./index.css";
 
 const template = new Template({
     tag: "div", props: { className: style.math }, children: [

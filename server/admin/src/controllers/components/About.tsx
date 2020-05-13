@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 
 export class About extends React.Component<{}, {}> {
     public render() {

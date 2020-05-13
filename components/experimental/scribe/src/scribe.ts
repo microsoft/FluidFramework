@@ -31,7 +31,7 @@ import {
 import {
     IContainerRuntime,
 } from "@microsoft/fluid-container-runtime-definitions";
-import * as scribe from "@microsoft/fluid-server-tools-core";
+import scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import Axios from "axios";

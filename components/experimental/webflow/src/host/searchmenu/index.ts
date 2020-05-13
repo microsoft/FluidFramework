@@ -5,7 +5,7 @@
 
 import { Dom, ICommand, KeyCode, randomId, Template, View } from "@fluid-example/flow-util-lib";
 import { debug } from "../debug";
-import * as style from "./index.css";
+import style from "./index.css";
 
 interface ISearchMenuProps {
     commands: ICommand[];

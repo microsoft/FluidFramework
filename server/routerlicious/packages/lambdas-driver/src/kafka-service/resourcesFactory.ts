@@ -6,7 +6,7 @@
 import { createConsumer } from "@microsoft/fluid-server-services";
 import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { IResources, IResourcesFactory } from "@microsoft/fluid-server-services-utils";
-import * as moniker from "moniker";
+import moniker from "moniker";
 import { Provider } from "nconf";
 
 export interface IKafkaResources extends IResources {

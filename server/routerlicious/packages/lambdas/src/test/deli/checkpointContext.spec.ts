@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as testUtils from "@microsoft/fluid-server-test-utils";
+import testUtils from "@microsoft/fluid-server-test-utils";
 import { CheckpointContext, ICheckpointParams } from "../../deli/checkpointContext";
 
 describe("Routerlicious", () => {

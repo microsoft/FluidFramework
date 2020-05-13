@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import * as sha1 from "sha.js/sha1";
+import sha1 from "sha.js/sha1";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import * as Collections from "../collections";
+import Collections from "../collections";
 
 describe("Collections.List", () => {
     const listCount = 5;

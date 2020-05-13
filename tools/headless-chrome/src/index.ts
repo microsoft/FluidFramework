@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as commander from "commander";
-import * as puppeteer from "puppeteer";
+import commander from "commander";
+import puppeteer from "puppeteer";
 import { URL } from "url";
 
 async function testPage(documentUrl: string, page: puppeteer.Page, matchText: string[]): Promise<number[]> {

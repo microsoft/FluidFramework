@@ -5,7 +5,7 @@
 
 import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { getRandomName } from "./dockerNames";
 

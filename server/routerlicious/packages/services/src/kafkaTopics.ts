@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as kafka from "kafka-node";
+import kafka from "kafka-node";
 
 export const defaultPartitionCount = 32;
 

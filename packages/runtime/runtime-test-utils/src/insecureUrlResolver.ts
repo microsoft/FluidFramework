@@ -17,7 +17,7 @@ import {
     IUser,
 } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier

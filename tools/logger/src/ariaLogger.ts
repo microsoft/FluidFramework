@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as aria from "aria-nodejs-sdk";
-import * as commander from "commander";
+import aria from "aria-nodejs-sdk";
+import commander from "commander";
 import fs from "fs";
 import { runInContext } from "vm";
 

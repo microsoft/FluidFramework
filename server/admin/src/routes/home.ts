@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as passport from "passport";
-import * as winston from "winston";
+import passport from "passport";
+import winston from "winston";
 import { IData } from "../definitions";
 import { KeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";

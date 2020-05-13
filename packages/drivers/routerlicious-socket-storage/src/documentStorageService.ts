@@ -6,7 +6,7 @@
 import assert from "assert";
 import { gitHashFile } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import {
     FileMode,
@@ -19,7 +19,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+import gitStorage from "@microsoft/fluid-server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.

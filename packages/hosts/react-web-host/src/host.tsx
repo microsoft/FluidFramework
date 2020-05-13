@@ -4,7 +4,7 @@
  */
 
 import { ITokenApis,  loadFluidContainer, loadIFramedFluidContainer } from "@fluid-example/tiny-web-host";
-import * as React from "react";
+import React from "react";
 
 export interface ILoaderProps {
 

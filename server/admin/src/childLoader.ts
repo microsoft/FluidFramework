@@ -13,9 +13,9 @@ import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { NodeCodeLoader } from "@microsoft/fluid-server-services";
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { parse } from "url";
-import * as winston from "winston";
+import winston from "winston";
 import { IKeyValue as IKV } from "./definitions";
 
 const packageUrl = "https://packages.wu2.prague.office-int.com";

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as commits from "./commits";
-import * as loader from "./loader";
-import * as loaderFramed from "./loaderFramed";
-import * as navbar from "./navbar";
+import commits from "./commits";
+import loader from "./loader";
+import loaderFramed from "./loaderFramed";
+import navbar from "./navbar";
 
 export { commits };
 

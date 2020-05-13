@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ICollection, IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
+import _ from "lodash";
 
 export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {

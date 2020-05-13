@@ -11,7 +11,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 

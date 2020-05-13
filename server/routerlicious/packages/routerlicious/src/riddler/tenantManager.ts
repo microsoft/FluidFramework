@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as crypto from "crypto";
+import crypto from "crypto";
 import {
     ITenantConfig,
     ITenantOrderer,
     ITenantStorage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
+import jwt from "jsonwebtoken";
+import _ from "lodash";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
 
 /**

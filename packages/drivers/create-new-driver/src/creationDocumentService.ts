@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
+import api from "@microsoft/fluid-driver-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { CreationDeltaStorageService } from "./creationDeltaStorageService";
 import { CreationDocumentDeltaConnection } from "./creationDocumentDeltaConnection";

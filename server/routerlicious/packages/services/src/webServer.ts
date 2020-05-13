@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import http from "http";
 import { AddressInfo } from "net";
 import util from "util";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as socketIo from "./socketIoServer";
+import core from "@microsoft/fluid-server-services-core";
+import socketIo from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 

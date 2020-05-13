@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
+import api from "@microsoft/fluid-driver-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
-import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
+import socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";

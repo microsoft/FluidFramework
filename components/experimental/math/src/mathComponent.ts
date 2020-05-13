@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import * as ClientUI from "@fluid-example/client-ui-lib";
+import ClientUI from "@fluid-example/client-ui-lib";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
-import * as SearchMenu from "@fluid-example/search-menu";
+import SearchMenu from "@fluid-example/search-menu";
 import {
     IComponent,
     IComponentHandleContext,
@@ -26,13 +26,13 @@ import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
+import Sequence from "@microsoft/fluid-sequence";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
-import * as Katex from "katex";
-import * as MathExpr from "./mathExpr";
+import Katex from "katex";
+import MathExpr from "./mathExpr";
 
 const directionToCursorDirection = {
     [Direction.left]: ComponentCursorDirection.Left,

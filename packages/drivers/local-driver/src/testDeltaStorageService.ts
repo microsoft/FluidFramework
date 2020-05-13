@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
+import api from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 

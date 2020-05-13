@@ -4,11 +4,11 @@
  */
 
 import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
-import * as api from "@microsoft/fluid-driver-definitions";
+import api from "@microsoft/fluid-driver-definitions";
 import { IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
-import * as io from "socket.io-client";
+import io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";

@@ -4,10 +4,10 @@
  */
 
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import * as cors from "cors";
+import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as api from "./api";
+import api from "./api";
 
 export function create(
     config: Provider,

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
-import * as http from "http";
-import * as nconf from "nconf";
+import debug from "debug";
+import http from "http";
+import nconf from "nconf";
 import path from "path";
-import * as redis from "redis";
-import * as winston from "winston";
-import * as app from "./app";
-import * as services from "./services";
+import redis from "redis";
+import winston from "winston";
+import app from "./app";
+import services from "./services";
 
 const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 

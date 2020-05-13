@@ -15,13 +15,13 @@ import {
     IWebServerFactory,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { createMetricClient } from "@microsoft/fluid-server-services";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
-import * as app from "./app";
+import app from "./app";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;

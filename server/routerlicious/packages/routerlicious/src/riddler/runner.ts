@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import http from "http";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import * as winston from "winston";
-import * as app from "./app";
+import utils from "@microsoft/fluid-server-services-utils";
+import winston from "winston";
+import app from "./app";
 
 export class RiddlerRunner implements utils.IRunner {
     private server: http.Server;

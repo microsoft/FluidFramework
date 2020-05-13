@@ -11,7 +11,7 @@ import {
     IPartitionWithEpoch,
     IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { Partition } from "./partition";
 
 /**

@@ -5,8 +5,8 @@
 
 import { ICreateRepoParams } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as utils from "../../utils";
+import nconf from "nconf";
+import utils from "../../utils";
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();

@@ -4,8 +4,8 @@
  */
 
 import { ICollection } from "@microsoft/fluid-server-services-core";
-import * as charwise from "charwise";
-import * as _ from "lodash";
+import charwise from "charwise";
+import _ from "lodash";
 
 export interface ICollectionProperty {
     indexes: string[]; // Index structure for the collecion.

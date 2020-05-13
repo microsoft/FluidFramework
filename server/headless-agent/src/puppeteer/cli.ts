@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as commander from "commander";
+import commander from "commander";
 import { configureLogging } from "./cliLogger";
 import { PuppetMaster } from "./puppetMaster";
 

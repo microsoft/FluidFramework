@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
+import api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
 
 export async function blobUploadHandler(

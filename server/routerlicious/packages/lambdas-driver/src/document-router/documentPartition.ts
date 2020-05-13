@@ -6,9 +6,9 @@
 import { EventEmitter } from "events";
 import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
-import * as _ from "lodash";
+import _ from "lodash";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition extends EventEmitter {

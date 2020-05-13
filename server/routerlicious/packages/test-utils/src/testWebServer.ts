@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as moniker from "moniker";
+import core from "@microsoft/fluid-server-services-core";
+import moniker from "moniker";
 
 export class TestWebSocket implements core.IWebSocket {
     private readonly events = new EventEmitter();

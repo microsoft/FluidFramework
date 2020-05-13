@@ -4,7 +4,7 @@
  */
 
 import { ITrace } from "@microsoft/fluid-protocol-definitions";
-import * as telegraf from "telegrafjs";
+import telegraf from "telegrafjs";
 import { DefaultMetricClient, IMetricClient } from  "@microsoft/fluid-server-services-core";
 
 class TelegrafClient implements IMetricClient {

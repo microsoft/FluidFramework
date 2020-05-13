@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as url from "url";
+import url from "url";
 import { BatchManager } from "@microsoft/fluid-common-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
@@ -20,7 +20,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import * as ws from "isomorphic-ws";
+import ws from "isomorphic-ws";
 
 const protocolVersion = "^0.1.0";
 

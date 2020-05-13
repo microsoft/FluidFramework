@@ -4,9 +4,9 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { ICache, ITenantService } from "../../services";
-import * as utils from "../utils";
+import utils from "../utils";
 
 export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): Router {
     const router: Router = Router();

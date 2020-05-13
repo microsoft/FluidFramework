@@ -9,7 +9,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
-import * as styles from "../editor/index.css";
+import styles from "../editor/index.css";
 import { emptyObject } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
 

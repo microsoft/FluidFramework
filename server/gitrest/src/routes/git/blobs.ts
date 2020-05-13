@@ -5,8 +5,8 @@
 
 import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as utils from "../../utils";
+import nconf from "nconf";
+import utils from "../../utils";
 
 /**
  * Validates that the input encoding is valid

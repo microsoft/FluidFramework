@@ -7,9 +7,9 @@ import { EventEmitter } from "events";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as GraphiQL from "graphiql";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import GraphiQL from "graphiql";
+import React from "react";
+import ReactDOM from "react-dom";
 import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given

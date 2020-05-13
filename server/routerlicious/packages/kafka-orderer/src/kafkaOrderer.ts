@@ -13,7 +13,7 @@ import {
     IServiceConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(

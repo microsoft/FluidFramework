@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as nconf from "nconf";
-import * as rimrafCallback from "rimraf";
+import nconf from "nconf";
+import rimrafCallback from "rimraf";
 import util from "util";
 
 export const defaultProvider = new nconf.Provider({}).defaults({

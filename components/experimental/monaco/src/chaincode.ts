@@ -17,7 +17,7 @@ import {
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-unresolved
-import * as monaco from "monaco-editor";
+import monaco from "monaco-editor";
 
 /**
  * Compilation options for Monaco to use on Typescript

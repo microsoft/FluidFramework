@@ -5,10 +5,10 @@
 
 import axios from "axios";
 import { Router } from "express";
-import * as mime from "mime";
-import * as nconf from "nconf";
-import * as npa from "npm-package-arg";
-import * as semver from "semver";
+import mime from "mime";
+import nconf from "nconf";
+import npa from "npm-package-arg";
+import semver from "semver";
 import { fetchFile } from "./loader";
 
 interface IPackageDetails {

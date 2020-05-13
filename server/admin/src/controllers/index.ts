@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-import * as admin from "./admin";
+import admin from "./admin";
 export { admin };

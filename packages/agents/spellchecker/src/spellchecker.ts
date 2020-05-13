@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
+import Sequence from "@microsoft/fluid-sequence";
 
 export interface IPgMarker {
     tile: MergeTree.Marker | undefined;

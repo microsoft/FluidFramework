@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 import { Collection, MongoClient, MongoClientOptions } from "mongodb";
 
 const MaxFetchSize = 2000;

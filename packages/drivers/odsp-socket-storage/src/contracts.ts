@@ -4,8 +4,8 @@
  */
 
 import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import resources from "@microsoft/fluid-gitresources";
+import api from "@microsoft/fluid-protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
 export interface IOdspResolvedUrl extends IResolvedUrlBase {

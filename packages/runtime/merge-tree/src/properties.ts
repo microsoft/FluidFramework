@@ -5,7 +5,7 @@
 
 /* eslint-disable no-param-reassign */
 
-import * as ops from "./ops";
+import ops from "./ops";
 
 // tslint:disable:interface-name
 

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@fluid-example/search-menu";
-import * as api from "@fluid-internal/client-api";
+import SearchMenu from "@fluid-example/search-menu";
+import api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
@@ -20,19 +20,19 @@ import {
 import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
-import * as types from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import types from "@microsoft/fluid-map";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
+import Sequence from "@microsoft/fluid-sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
-import * as ui from "../ui";
+import ui from "../ui";
 import { Cursor, IRange } from "./cursor";
-import * as domutils from "./domutils";
+import domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";

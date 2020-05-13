@@ -4,8 +4,8 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as contents from "./contents";
+import nconf from "nconf";
+import contents from "./contents";
 
 /**
  * Provides access to router for npm package files.

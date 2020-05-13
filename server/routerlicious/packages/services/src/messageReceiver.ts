@@ -5,8 +5,8 @@
 
 import { EventEmitter } from "events";
 import { ITaskMessage, ITaskMessageReceiver } from "@microsoft/fluid-server-services-core";
-import * as amqp from "amqplib";
-import * as winston from "winston";
+import amqp from "amqplib";
+import winston from "winston";
 
 class RabbitmqReceiver implements ITaskMessageReceiver {
     private readonly events = new EventEmitter();

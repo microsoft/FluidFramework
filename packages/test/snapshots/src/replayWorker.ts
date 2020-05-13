@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as threads from "worker_threads";
+import threads from "worker_threads";
 import { IWorkerArgs, processOneFile } from "./replayMultipleFiles";
 
 const data = threads.workerData as IWorkerArgs;

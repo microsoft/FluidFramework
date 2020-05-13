@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import fs from "fs";
-import * as git from "nodegit";
+import git from "nodegit";
 import path from "path";
 import util from "util";
 

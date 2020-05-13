@@ -15,7 +15,7 @@ import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
-import * as old from "./oldVersion";
+import old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@chaincode/test-component";

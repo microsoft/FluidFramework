@@ -6,10 +6,10 @@
 import { BroadcasterLambda, DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
 import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
 import { LocalKafka, LocalContext, LocalLambdaController } from "@microsoft/fluid-server-memory-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
+import services from "@microsoft/fluid-server-services";
+import core from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;

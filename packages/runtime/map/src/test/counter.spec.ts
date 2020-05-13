@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import * as map from "../";
+import map from "../";
 
 describe("Routerlicious", () => {
     describe("Map", () => {

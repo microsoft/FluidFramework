@@ -12,9 +12,9 @@ import {
     PerformanceEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 import {
     ISummaryContext,
 } from "@microsoft/fluid-driver-definitions";

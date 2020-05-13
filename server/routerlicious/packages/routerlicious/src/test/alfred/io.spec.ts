@@ -17,8 +17,8 @@ import {
     ICommittedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
+import services from "@microsoft/fluid-server-services";
+import core from "@microsoft/fluid-server-services-core";
 import {
     MessageFactory,
     TestClientManager,

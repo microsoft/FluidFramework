@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@microsoft/fluid-gitresources";
+import git from "@microsoft/fluid-gitresources";
 import {
     IClientJoin,
     IDocumentMessage,

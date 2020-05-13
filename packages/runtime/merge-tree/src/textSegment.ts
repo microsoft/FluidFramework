@@ -5,8 +5,8 @@
 
 import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
-import * as ops from "./ops";
-import * as Properties from "./properties";
+import ops from "./ops";
+import Properties from "./properties";
 import { LocalReferenceCollection } from "./localReference";
 
 export interface IJSONTextSegment extends ops.IJSONSegment {

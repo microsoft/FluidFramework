@@ -4,13 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import * as http from "http";
+import http from "http";
 import util from "util";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
-import * as redis from "redis";
-import * as socketIo from "socket.io";
-import * as socketIoRedis from "socket.io-redis";
+import core from "@microsoft/fluid-server-services-core";
+import _ from "lodash";
+import redis from "redis";
+import socketIo from "socket.io";
+import socketIoRedis from "socket.io-redis";
 
 const socketJoin = util.promisify(
     (socket: SocketIO.Socket, roomId: string, callback: (err: NodeJS.ErrnoException) => void) => {

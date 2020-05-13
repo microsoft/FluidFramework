@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as request from "request-promise-native";
+import request from "request-promise-native";
 import { ITenantInput } from "../../definitions";
 
 export async function addTenant(url: string, tenant: ITenantInput): Promise<any> {

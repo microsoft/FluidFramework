@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
+import winston from "winston";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
-import * as ensureAuth from "connect-ensure-login";
+import core from "@microsoft/fluid-server-services-core";
+import ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { KeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";
-import * as api from "./api";
-import * as home from "./home";
+import api from "./api";
+import home from "./home";
 
 export interface IRoutes {
     home: Router;

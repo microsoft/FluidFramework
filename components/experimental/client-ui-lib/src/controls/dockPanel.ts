@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as ui from "../ui";
+import ui from "../ui";
 
 /**
  * Basic dock panel control

@@ -5,10 +5,10 @@
 
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-import * as url from "url";
+import url from "url";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
-import * as API from "@fluid-internal/client-api";
+import API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponent,
@@ -23,7 +23,7 @@ import {
     ISharedMap,
     SharedMap,
 } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import {
     IProvideSharedString,

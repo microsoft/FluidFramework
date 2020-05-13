@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/indent */
 
-import * as SearchMenu from "@fluid-example/search-menu";
+import SearchMenu from "@fluid-example/search-menu";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import * as Katex from "katex";
+import MergeTree from "@microsoft/fluid-merge-tree";
+import Katex from "katex";
 import { CharacterCodes } from "./characterCodes";
 
 export const cursorTex = " \\textcolor{#800080}{\\vert}";

@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import core from "@microsoft/fluid-server-services-core";
 import { AssertionError } from "assert";
-import * as bodyParser from "body-parser";
-import * as compression from "compression";
-import * as connectRedis from "connect-redis";
-import * as cookieParser from "cookie-parser";
-import * as express from "express";
+import bodyParser from "body-parser";
+import compression from "compression";
+import connectRedis from "connect-redis";
+import cookieParser from "cookie-parser";
+import express from "express";
 import { Express } from "express";
-import * as expressSession from "express-session";
+import expressSession from "express-session";
 import fs from "fs";
-import * as morgan from "morgan";
+import morgan from "morgan";
 import { Provider } from "nconf";
-import * as passport from "passport";
-import * as passportOpenIdConnect from "passport-openidconnect";
+import passport from "passport";
+import passportOpenIdConnect from "passport-openidconnect";
 import path from "path";
-import * as redis from "redis";
-import * as favicon from "serve-favicon";
+import redis from "redis";
+import favicon from "serve-favicon";
 import split = require("split");
-import * as expiry from "static-expiry";
-import * as winston from "winston";
-import * as appRoutes from "./routes";
+import expiry from "static-expiry";
+import winston from "winston";
+import appRoutes from "./routes";
 import { TenantManager } from "./tenantManager";
 
 // Base endpoint to expose static files at

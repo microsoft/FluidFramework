@@ -8,7 +8,7 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { promisify } from "util";
-import * as winston from "winston";
+import winston from "winston";
 
 const asyncExec = promisify(exec);
 

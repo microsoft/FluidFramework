@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import http from "http";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 

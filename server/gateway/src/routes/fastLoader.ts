@@ -10,10 +10,10 @@ import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlres
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { ICache } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import safeStringify from "json-stringify-safe";
+import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 

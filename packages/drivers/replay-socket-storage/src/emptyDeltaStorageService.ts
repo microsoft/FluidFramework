@@ -4,7 +4,7 @@
  */
 
 import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**

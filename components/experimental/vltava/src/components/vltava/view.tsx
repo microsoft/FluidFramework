@@ -4,7 +4,7 @@
  */
 
 import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
-import * as React from "react";
+import React from "react";
 
 import { IVltavaDataModel, IVltavaLastEditedState, IVltavaUserDetails } from "./dataModel";
 import { VltavaFacepile } from "./facePile";

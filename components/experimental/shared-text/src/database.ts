@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ISharedMap } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import { SharedString } from "@microsoft/fluid-sequence";
 import {
     ExecutionResult,

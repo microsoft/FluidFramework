@@ -6,10 +6,10 @@
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import safeStringify from "json-stringify-safe";
+import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";

@@ -5,8 +5,8 @@
 
 import axios from "axios";
 import { Stream } from "stream";
-import * as tar from "tar-stream";
-import * as zlib from "zlib";
+import tar from "tar-stream";
+import zlib from "zlib";
 
 export interface IPackageDetails {
     dist: {

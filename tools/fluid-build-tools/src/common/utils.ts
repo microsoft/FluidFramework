@@ -4,10 +4,10 @@
  */
 
 import path from "path";
-import * as glob from "glob";
+import glob from "glob";
 import util from "util";
 import fs from "fs";
-import * as child_process from "child_process";
+import child_process from "child_process";
 
 export function getExecutableFromCommand(command: string) {
     return command.split(" ")[0];

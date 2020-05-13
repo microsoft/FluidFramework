@@ -9,8 +9,8 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as deltas from "./deltas";
-import * as documents from "./documents";
+import deltas from "./deltas";
+import documents from "./documents";
 
 export function create(
     config: Provider,

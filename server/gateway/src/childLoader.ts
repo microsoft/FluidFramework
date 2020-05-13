@@ -19,8 +19,8 @@ import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
-import * as winston from "winston";
+import jwt from "jsonwebtoken";
+import winston from "winston";
 
 const packageUrl = "https://packages.wu2.prague.office-int.com";
 const installLocation = "/tmp/chaincode";

@@ -13,7 +13,7 @@ import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
-import * as styles from "./index.css";
+import styles from "./index.css";
 
 /**
  * The Host provides the Editor with a registry of view factories which will be used to render components that have

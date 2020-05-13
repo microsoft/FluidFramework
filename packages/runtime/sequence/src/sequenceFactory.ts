@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 import {
     IChannelAttributes,
     IComponentRuntime,

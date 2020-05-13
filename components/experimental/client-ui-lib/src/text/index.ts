@@ -4,8 +4,8 @@
  */
 
 import { CharacterCodes } from "./characterCodes";
-import * as Paragraph from "./paragraph";
-import * as Table from "./table";
+import Paragraph from "./paragraph";
+import Table from "./table";
 
 export { Table };
 export { Paragraph };

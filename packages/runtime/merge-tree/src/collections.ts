@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
 /* eslint-disable no-bitwise, no-param-reassign, no-shadow */
 
-import * as Base from "./base";
-import * as MergeTree from "./mergeTree";
+import Base from "./base";
+import MergeTree from "./mergeTree";
 
 export class Stack<T> {
     items: T[] = [];

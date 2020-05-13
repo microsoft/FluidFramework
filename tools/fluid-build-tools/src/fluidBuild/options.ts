@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
+import os from "os";
 import { commonOptionString, parseOption } from "../common/commonOptions"
 import { IPackageMatchedOptions } from "./fluidRepo";
 import { ISymlinkOptions } from "./symlinkUtils";

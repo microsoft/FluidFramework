@@ -16,7 +16,7 @@
 import fs from "fs";
 import path from "path";
 // eslint-disable-next-line import/no-duplicates
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import MergeTree from "@microsoft/fluid-merge-tree";
 // eslint-disable-next-line no-duplicate-imports
 import {
     TextSegment,
@@ -38,10 +38,10 @@ import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@microsoft
 // eslint-disable-next-line import/no-internal-modules
 import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import * as JsDiff from "diff";
-import * as random from "random-js";
-import * as Xmldoc from "xmldoc";
-import * as SharedString from "../intervalCollection";
+import JsDiff from "diff";
+import random from "random-js";
+import Xmldoc from "xmldoc";
+import SharedString from "../intervalCollection";
 
 const clock = () => process.hrtime();
 

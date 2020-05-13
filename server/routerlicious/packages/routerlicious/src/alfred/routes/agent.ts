@@ -7,12 +7,12 @@ import fs from "fs";
 import path from "path";
 import { Stream } from "stream";
 import { Router } from "express";
-import * as minio from "minio";
+import minio from "minio";
 import { Provider } from "nconf";
-import * as rimraf from "rimraf";
-import * as unzip from "unzip-stream";
-import * as webpack from "webpack";
-import * as winston from "winston";
+import rimraf from "rimraf";
+import unzip from "unzip-stream";
+import webpack from "webpack";
+import winston from "winston";
 import { getParam } from "../utils";
 
 export function create(config: Provider): Router {

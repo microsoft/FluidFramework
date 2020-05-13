@@ -4,10 +4,10 @@
  */
 
 import { gitHashFile } from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import git from "@microsoft/fluid-gitresources";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
-import * as uuid from "uuid";
+import uuid from "uuid";
 import { TestDb } from "./testCollection";
 
 export class TestHistorian implements IHistorian {

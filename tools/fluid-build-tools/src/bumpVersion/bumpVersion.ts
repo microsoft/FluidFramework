@@ -9,11 +9,11 @@ import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { FluidRepoBase } from "../common/fluidRepoBase";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
-import * as semver from "semver";
+import semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
-import * as os from "os";
+import os from "os";
 
 function printUsage() {
     console.log(

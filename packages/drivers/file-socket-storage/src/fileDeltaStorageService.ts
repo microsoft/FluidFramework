@@ -6,7 +6,7 @@
 import assert from "assert";
 import fs from "fs";
 import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.

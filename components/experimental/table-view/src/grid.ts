@@ -6,7 +6,7 @@
 import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName, TableDocument } from "@fluid-example/table-document";
 import { BorderRect } from "./borderstyle";
-import * as styles from "./index.css";
+import styles from "./index.css";
 import { TableView } from "./tableview";
 
 const tableTemplate = new Template({

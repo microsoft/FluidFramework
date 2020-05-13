@@ -12,7 +12,7 @@ import {
     ISequencedOperationMessage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as bytes from "bytes";
+import bytes from "bytes";
 import { Provider } from "nconf";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {

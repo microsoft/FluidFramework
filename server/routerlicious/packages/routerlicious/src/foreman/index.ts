@@ -4,7 +4,7 @@
  */
 
 import { ForemanLambdaFactory } from "@microsoft/fluid-server-lambdas";
-import * as services from "@microsoft/fluid-server-services";
+import services from "@microsoft/fluid-server-services";
 import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 

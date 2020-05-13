@@ -6,8 +6,8 @@
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
 import assert from "assert";
-import * as MergeTree from "../";
-import * as Properties from "../properties";
+import MergeTree from "../";
+import Properties from "../properties";
 import { TestClient } from "./testClient";
 
 function checkGetPropertiesAtPos(

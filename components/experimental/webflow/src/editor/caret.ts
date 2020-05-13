@@ -12,7 +12,7 @@ import { updateRef } from "../util/localref";
 
 import { eotSegment, Layout } from "../view/layout";
 import { debug } from "./debug";
-import * as styles from "./index.css";
+import styles from "./index.css";
 
 export class Caret {
     private get doc() { return this.layout.doc; }

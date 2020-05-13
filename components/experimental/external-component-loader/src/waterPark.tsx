@@ -13,8 +13,8 @@ import {
     SpacesStorage,
     SpacesStorageView,
 } from "@fluid-example/spaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 

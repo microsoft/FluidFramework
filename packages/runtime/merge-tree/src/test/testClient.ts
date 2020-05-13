@@ -10,9 +10,9 @@ import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definition
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as random from "random-js";
+import random from "random-js";
 import { Client } from "../client";
-import * as Collections from "../collections";
+import Collections from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker, MergeTree } from "../mergeTree";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";

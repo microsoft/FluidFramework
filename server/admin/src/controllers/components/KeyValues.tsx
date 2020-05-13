@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import { IKeyValue } from "../../definitions";
 import { KeyValueManager } from "./KeyValueManager";
 

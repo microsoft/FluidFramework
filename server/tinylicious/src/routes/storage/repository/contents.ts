@@ -4,8 +4,8 @@
  */
 
 import { Router } from "express";
-import * as nconf from "nconf";
-import * as utils from "../utils";
+import nconf from "nconf";
+import utils from "../utils";
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();

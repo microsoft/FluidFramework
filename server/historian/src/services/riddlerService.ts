@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as request from "request-promise-native";
+import request from "request-promise-native";
 import { ITenant, ITenantService } from "./definitions";
 
 export class RiddlerService implements ITenantService {

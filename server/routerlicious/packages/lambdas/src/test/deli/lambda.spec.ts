@@ -21,8 +21,8 @@ import {
     TestTenantManager,
 } from "@microsoft/fluid-server-test-utils";
 import assert from "assert";
-import * as _ from "lodash";
-import * as nconf from "nconf";
+import _ from "lodash";
+import nconf from "nconf";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;

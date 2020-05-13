@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import path from "path";
-import * as commander from "commander";
+import commander from "commander";
 
 const getExtension = (fileName: string): string => fileName.split(".").pop();
 const list = (val: string): string[] => val.split(",");

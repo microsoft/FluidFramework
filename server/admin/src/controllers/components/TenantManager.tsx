@@ -6,9 +6,9 @@
 import { Form, Popconfirm, Table } from "antd";
 import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
-import * as React from "react";
+import React from "react";
 import { ITenant } from "../../definitions";
-import * as utils from "../utils";
+import utils from "../utils";
 import { CreateTenantModal } from "./TenantCreateModal";
 import { TenantInfoModal } from "./TenantInfoModal";
 

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as uuid from "uuid";
-import * as React from "react";
+import uuid from "uuid";
+import React from "react";
 
 interface WaterParkToolbarViewProps {
     componentUrls: string[];

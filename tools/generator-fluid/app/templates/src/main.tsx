@@ -12,8 +12,8 @@ import {
 import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 const diceValueKey = "diceValue";
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@microsoft/fluid-server-services";
+import services from "@microsoft/fluid-server-services";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import core from "@microsoft/fluid-server-services-core";
+import utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as redis from "redis";
+import redis from "redis";
 import { Alfred } from "./alfred";
 import { GatewayRunner } from "./runner";
 

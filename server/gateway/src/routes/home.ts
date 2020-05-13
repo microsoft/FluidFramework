@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as passport from "passport";
+import passport from "passport";
 import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 

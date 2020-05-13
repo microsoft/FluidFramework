@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IIntegerRange } from "../";
-import * as Collections from "../collections";
+import Collections from "../collections";
 import {
     ClientSeq,
     clientSeqComparer,
@@ -15,7 +15,7 @@ import {
     ISegment,
     MergeTree,
 } from "../mergeTree";
-import * as Properties from "../properties";
+import Properties from "../properties";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 

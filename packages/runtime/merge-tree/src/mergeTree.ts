@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
 import assert from "assert";
-import * as Base from "./base";
-import * as Collections from "./collections";
+import Base from "./base";
+import Collections from "./collections";
 import {
     LocalClientId,
     NonCollabClient,
@@ -24,9 +24,9 @@ import {
     MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import * as ops from "./ops";
+import ops from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-import * as Properties from "./properties";
+import Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeLib from "./index";
+import MergeLib from "./index";
 
 export enum OverlayNodePosition {
     Above,

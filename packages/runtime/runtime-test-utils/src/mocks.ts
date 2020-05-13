@@ -23,7 +23,7 @@ import {
     Deferred,
     fromUtf8ToBase64,
 } from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import git from "@microsoft/fluid-gitresources";
 import {
     IBlob,
     ICommittedProposal,

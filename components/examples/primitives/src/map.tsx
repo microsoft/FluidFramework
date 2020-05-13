@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import { ISharedMap } from "@microsoft/fluid-map";
 
 export interface IMapProps {

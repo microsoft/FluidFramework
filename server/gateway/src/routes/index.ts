@@ -4,22 +4,22 @@
  */
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { ICache } from "@microsoft/fluid-server-services-core";
-import * as ensureAuth from "connect-ensure-login";
+import ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";
 import { KeyValueWrapper, LocalKeyValueWrapper } from "../keyValueWrapper";
-import * as api from "./api";
-import * as demoCreator from "./democreator";
-import * as fastloader from "./fastLoader";
-import * as fork from "./fork";
-import * as frontpage from "./frontpage";
-import * as home from "./home";
-import * as loader from "./loader";
-import * as loaderFramed from "./loaderFramed";
-import * as templates from "./templates";
-import * as token from "./token";
-import * as versions from "./versions";
-import * as waterpark from "./waterpark";
+import api from "./api";
+import demoCreator from "./democreator";
+import fastloader from "./fastLoader";
+import fork from "./fork";
+import frontpage from "./frontpage";
+import home from "./home";
+import loader from "./loader";
+import loaderFramed from "./loaderFramed";
+import templates from "./templates";
+import token from "./token";
+import versions from "./versions";
+import waterpark from "./waterpark";
 
 export function create(
     config: Provider,

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-routerlicious/dist/core";
+import core from "@microsoft/fluid-server-routerlicious/dist/core";
 import { IContext, IPartitionLambda } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/lambdas";
-import * as utils from "@microsoft/fluid-server-routerlicious/dist/utils";
-import * as aria from "aria-nodejs-sdk";
+import utils from "@microsoft/fluid-server-routerlicious/dist/utils";
+import aria from "aria-nodejs-sdk";
 
 export class MetricsLambda implements IPartitionLambda {
     constructor(

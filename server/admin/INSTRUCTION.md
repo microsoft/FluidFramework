@@ -12,7 +12,7 @@ Create a json object, sign it with the generate secret key, and pass the signed 
 Fluid uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library for verifying the token. Below is an example of a token creation:
 
 ```javascript
-    import * as jwt from "jsonwebtoken";
+    import jwt from "jsonwebtoken";
 
     const tenantId = "gallant-hugle";
     const secret = "03302d4ebfb6f44b662d00313aff5a46";

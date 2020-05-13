@@ -6,8 +6,8 @@
 import { mergeStyles } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { IPersonaSharedProps, Persona, PersonaInitialsColor, PersonaSize } from "office-ui-fabric-react/lib/Persona";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 interface IGatewayUser {
     name: string;

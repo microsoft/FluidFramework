@@ -5,7 +5,7 @@
 import { EventEmitter } from "events";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
 import { ITestDbFactory } from "@microsoft/fluid-server-test-utils";
-import * as uuid from "uuid";
+import uuid from "uuid";
 
 /**
  * A database factory for testing that store data in the browsers session storage

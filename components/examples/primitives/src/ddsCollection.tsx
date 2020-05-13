@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IMapProps, MapComponent } from "./map";

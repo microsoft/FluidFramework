@@ -9,13 +9,13 @@ import {
     ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as cors from "cors";
+import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import * as api from "./api";
-import * as deltas from "./deltas";
-import * as documents from "./documents";
+import api from "./api";
+import deltas from "./deltas";
+import documents from "./documents";
 
 export function create(
     config: Provider,

@@ -12,17 +12,17 @@ import {
     ICreateTreeParams,
 } from "@microsoft/fluid-gitresources";
 import assert from "assert";
-import * as async from "async";
-import * as lorem from "lorem-ipsum";
-import * as moniker from "moniker";
-import * as request from "supertest";
-import * as app from "../app";
+import async from "async";
+import lorem from "lorem-ipsum";
+import moniker from "moniker";
+import request from "supertest";
+import app from "../app";
 import { createBlob as createBlobInternal } from "../routes/git/blobs";
 import { createCommit as createCommitInternal } from "../routes/git/commits";
 import { createTree as createTreeInternal } from "../routes/git/trees";
 import { getCommits } from "../routes/repository/commits";
-import * as utils from "../utils";
-import * as testUtils from "./utils";
+import utils from "../utils";
+import testUtils from "./utils";
 
 // TODO: (issue logged): replace email & name
 const commitEmail = "kurtb@microsoft.com";

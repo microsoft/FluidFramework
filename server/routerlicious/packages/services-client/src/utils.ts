@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import Axios from "axios";
 
 export async function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void> {

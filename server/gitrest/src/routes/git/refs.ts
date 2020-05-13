@@ -5,9 +5,9 @@
 
 import { ICreateRefParams, IPatchRefParams, IRef } from "@microsoft/fluid-gitresources";
 import { Response, Router } from "express";
-import * as nconf from "nconf";
-import * as git from "nodegit";
-import * as utils from "../../utils";
+import nconf from "nconf";
+import git from "nodegit";
+import utils from "../../utils";
 
 function refToIRef(ref: git.Reference): IRef {
     return {

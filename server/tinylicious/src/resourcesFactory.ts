@@ -6,11 +6,11 @@
 import fs from "fs";
 import { DocumentStorage } from "@microsoft/fluid-server-services";
 import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import * as bytes from "bytes";
-import * as git from "isomorphic-git";
+import utils from "@microsoft/fluid-server-services-utils";
+import bytes from "bytes";
+import git from "isomorphic-git";
 import { Provider } from "nconf";
-import * as socketIo from "socket.io";
+import socketIo from "socket.io";
 import { Historian } from "@microsoft/fluid-server-services-client";
 import { TinyliciousResources } from "./resources";
 import {

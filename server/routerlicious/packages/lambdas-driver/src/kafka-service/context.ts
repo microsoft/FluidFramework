@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
+import winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {

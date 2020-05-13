@@ -4,7 +4,7 @@
  */
 
 import { IZookeeperClient } from "@microsoft/fluid-server-services-core";
-import * as zookeeper from "node-zookeeper-client";
+import zookeeper from "node-zookeeper-client";
 
 const RetryAttemps = 3;
 

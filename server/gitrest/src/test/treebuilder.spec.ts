@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as async from "async";
-import * as moniker from "moniker";
-import * as git from "nodegit";
-import * as testUtils from "./utils";
+import async from "async";
+import moniker from "moniker";
+import git from "nodegit";
+import testUtils from "./utils";
 
 async function mockTree(repository: git.Repository, entries: number) {
     const builder = await git.Treebuilder.create(repository, null);

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+// import services from "@microsoft/fluid-server-services";
+import core from "@microsoft/fluid-server-services-core";
+import utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 
 export class TinyliciousResources implements utils.IResources {

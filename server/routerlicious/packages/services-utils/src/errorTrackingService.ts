@@ -4,7 +4,7 @@
  */
 
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
-import * as Sentry from "@sentry/node";
+import Sentry from "@sentry/node";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {
     constructor(endpoint: string, service: string) {

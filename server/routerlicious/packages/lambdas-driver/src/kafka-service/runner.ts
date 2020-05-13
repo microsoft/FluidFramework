@@ -7,7 +7,7 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { IRunner } from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {

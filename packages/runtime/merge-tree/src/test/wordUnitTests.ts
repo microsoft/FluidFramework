@@ -7,10 +7,10 @@
 
 import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as random from "random-js";
+import random from "random-js";
 import { LocalReference } from "../localReference";
-import * as ops from "../ops";
-import * as Properties from "../properties";
+import ops from "../ops";
+import Properties from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 

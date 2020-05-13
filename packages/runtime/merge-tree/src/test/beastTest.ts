@@ -11,11 +11,11 @@ import path from "path";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as JsDiff from "diff";
+import JsDiff from "diff";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as random from "random-js";
-import * as MergeTree from "../";
-import * as Base from "../base";
+import random from "random-js";
+import MergeTree from "../";
+import Base from "../base";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { createRemoveRangeOp } from "../opBuilder";
 import { TextSegment } from "../textSegment";

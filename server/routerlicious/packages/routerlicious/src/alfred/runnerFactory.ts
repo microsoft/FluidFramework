@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
+import os from "os";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import {
     LocalNodeFactory,
@@ -11,14 +11,14 @@ import {
     NodeManager,
     ReservationManager,
 } from "@microsoft/fluid-server-memory-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import * as bytes from "bytes";
+import services from "@microsoft/fluid-server-services";
+import core from "@microsoft/fluid-server-services-core";
+import utils from "@microsoft/fluid-server-services-utils";
+import bytes from "bytes";
 import { Provider } from "nconf";
-import * as redis from "redis";
-import * as winston from "winston";
-import * as ws from "ws";
+import redis from "redis";
+import winston from "winston";
+import ws from "ws";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 import { AlfredRunner } from "./runner";

@@ -17,8 +17,8 @@ import {
     IWebSocketServer,
     ILogger,
 } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
-import * as moniker from "moniker";
+import _ from "lodash";
+import moniker from "moniker";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";

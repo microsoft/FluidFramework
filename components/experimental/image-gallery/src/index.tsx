@@ -9,8 +9,8 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "react-image-gallery/styles/css/image-gallery.css";

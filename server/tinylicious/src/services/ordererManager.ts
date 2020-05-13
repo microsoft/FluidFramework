@@ -16,7 +16,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
+import winston from "winston";
 
 export class OrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
