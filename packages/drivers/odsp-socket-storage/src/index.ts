@@ -19,3 +19,4 @@ export * from "./odspDocumentDeltaConnection";
 export * from "./odspCache";
 export * from "./createFile";
 export * from "./odspUrlHelper";
+export * from "./decodeOdspUrl";
