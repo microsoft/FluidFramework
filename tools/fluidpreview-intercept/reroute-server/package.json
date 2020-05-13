@@ -8,9 +8,9 @@
     "fluidpreview-intercept-reroute-server": "./bin/www"
   },
   "scripts": {
+    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/",
     "start": "node ./bin/www",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "btoa": "^1.2.1",

@@ -1,25 +1,24 @@
 {
-    "name": "@microsoft/fluidpreview-intercept",
-    "version": "1.0.9",
-    "description": "Package containing chrome extension and intercept server to inject packages into Fluid Preview",
-    "license": "MIT",
-    "author": "Microsoft",
-    "bin": {
-      "fluidpreview-intercept-reroute-server": "./reroute-server/bin/www"
-    },
-    "scripts": {
-      "start": "node ./reroute-server/bin/www",
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/"
-    },
-    "dependencies": {
-      "btoa": "^1.2.1",
-      "cookie-parser": "~1.4.4",
-      "cors": "^2.8.5",
-      "debug": "~2.6.9",
-      "express": "~4.16.1",
-      "http-errors": "~1.6.3",
-      "morgan": "~1.9.1"
-    }
+  "name": "@microsoft/fluidpreview-intercept",
+  "version": "1.0.9",
+  "description": "Package containing chrome extension and intercept server to inject packages into Fluid Preview",
+  "license": "MIT",
+  "author": "Microsoft",
+  "bin": {
+    "fluidpreview-intercept-reroute-server": "./reroute-server/bin/www"
+  },
+  "scripts": {
+    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/",
+    "start": "node ./reroute-server/bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "btoa": "^1.2.1",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1"
   }
-  
+}
