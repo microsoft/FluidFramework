@@ -545,6 +545,7 @@ export class DeliLambda implements IPartitionLambda {
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
             metadata: message.operation.metadata,
+            serverMetadata: message.operation.serverMetadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
