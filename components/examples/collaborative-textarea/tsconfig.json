@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "esModuleInterop": true,
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
