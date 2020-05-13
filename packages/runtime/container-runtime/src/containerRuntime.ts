@@ -1612,7 +1612,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isnt needed
+            // We have to call get version to get the treeId for r11s; this isn't needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("FailedToGetVersion",
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -194,7 +194,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
-        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
         const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
 
