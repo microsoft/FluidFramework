@@ -103,7 +103,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         }
 
         // back-compat for older documents.
-        if (!lastCheckpoint.epoch) {
+        if (lastCheckpoint.epoch === undefined) {
             lastCheckpoint.epoch = leaderEpoch;
             lastCheckpoint.term = 1;
             lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
@@ -190,10 +190,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             if (lastSummaryState === undefined) {
                 newCheckpoint.epoch = leaderEpoch;
             } else {
+                // Log offset should never move backwards.
+                const logOffset = newCheckpoint.logOffset;
                 newCheckpoint = lastSummaryState;
                 newCheckpoint.epoch = leaderEpoch;
                 ++newCheckpoint.term;
                 newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
+                newCheckpoint.logOffset = logOffset;
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
                 logger.info(`Created a summary on epoch tick`);
@@ -245,7 +248,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 email: "praguertdev@microsoft.com",
                 name: "Routerlicious Service",
             },
-            message: "Term_Flip_Summary",
+            message: `Term Change Summary @T${checkpoint.term}S${checkpoint.sequenceNumber}`,
             parents: [lastCommit.sha],
             tree: gitTree.sha,
         };

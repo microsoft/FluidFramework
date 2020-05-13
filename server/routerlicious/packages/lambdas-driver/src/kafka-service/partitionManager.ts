@@ -98,7 +98,6 @@ export class PartitionManager extends EventEmitter {
             // eslint-disable-next-line max-len
             winston.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
-            // Add +1 to leaderEpoch to force epoching.
             const newPartition = new Partition(
                 partition.partition,
                 partition.leaderEpoch,

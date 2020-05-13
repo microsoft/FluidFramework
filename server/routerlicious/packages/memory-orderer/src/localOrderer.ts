@@ -384,6 +384,7 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             scribe.minimumSequenceNumber,
             scribe.sequenceNumber,
+            1, // TODO (Change when local orderer also ticks epoch)
             lastState.members,
             lastState.proposals,
             lastState.values,
@@ -400,6 +401,7 @@ export class LocalOrderer implements IOrderer {
             this.gitManager,
             this.rawDeltasKafka,
             protocolHandler,
+            1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
             scribeMessages.map((message) => message.operation),
             false,

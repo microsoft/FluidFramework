@@ -11,12 +11,14 @@ export function getQuorumTreeEntries(
     documentId: string,
     minimumSequenceNumber: number,
     sequenceNumber: number,
+    term: number,
     quorumSnapshot: IQuorumSnapshot,
 ): ITreeEntry[] {
     const documentAttributes: IDocumentAttributes = {
         branch: documentId,
         minimumSequenceNumber,
         sequenceNumber,
+        term,
     };
 
     const entries: ITreeEntry[] = [
