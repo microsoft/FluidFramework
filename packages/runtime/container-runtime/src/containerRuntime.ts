@@ -553,7 +553,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
-    private disposedWithError = false;
 
     // Components tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -697,15 +696,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(error?: Error): void {
+    public dispose(): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
-
-        if (error) {
-            this.disposedWithError = true;
-        }
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -894,8 +889,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
-        this.verifyNotClosed();
-
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1492,12 +1485,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return clientSequenceNumber;
     }
 
+    /**
+     * Throw an error if the runtime is closed.  Methods that are expected to potentially
+     * be called after dispose due to asynchrony should not call this.
+     */
     private verifyNotClosed() {
-        // Don't throw another error here if the runtime was disposed due to an error,
-        // because the disposer should be responsible for reporting it.  Check this
-        // instead of stopping calls to the runtime because not all runtime consumers
-        // may be aware of the error.
-        if (this._disposed && !this.disposedWithError) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -1619,7 +1612,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isnt needed
+            // We have to call get version to get the treeId for r11s; this isn't needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("FailedToGetVersion",
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

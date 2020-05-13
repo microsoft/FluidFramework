@@ -119,6 +119,9 @@ export interface IDocumentMessage {
     // App provided metadata about the operation
     metadata?: any;
 
+    // Server provided metadata about the operation
+    serverMetadata?: any;
+
     // Traces related to the packet.
     traces?: ITrace[];
 }
@@ -172,6 +175,9 @@ export interface ISequencedDocumentMessage {
 
     // App provided metadata about the operation
     metadata?: any;
+
+    // Server provided metadata about the operation
+    serverMetadata?: any;
 
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
