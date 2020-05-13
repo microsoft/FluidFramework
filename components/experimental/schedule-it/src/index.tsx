@@ -39,7 +39,7 @@ interface ScheduleItProps {
     root: ISharedDirectory,
 }
 
-function useCommentReducer(props: ScheduleItProps) {
+function useCommentReducer(props: ScheduleItProps):  {
     const { root } = props;
     const rootToInitialStateComments = new Map<string, keyof ICommentState>();
     rootToInitialStateComments.set("comments", "comments");
@@ -94,11 +94,7 @@ function ScheduleItView(props: ScheduleItProps) {
 
     return (
         <div>
-            <span className="clicker-value-class-reducer" id={`clicker-reducer-value-${Date.now().toString()}`}>
-                {`Functional Reducer Component: ${state.value}`}
-            </span>
-            <button onClick={() => { dispatch({ type: "increment" }); }}>+</button>
-            <button onClick={() => { dispatch({ type: "increment", args: { step: 2 } }); }}>++</button>
+            <button onClick={() => { commentDispatch("increment"); }}>+</button>
         </div>
     );
 }

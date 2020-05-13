@@ -14,8 +14,8 @@ import {
     FluidReactComponent,
     useStateFluid,
     useReducerFluid,
-    IFluidReducer,
     createFluidContext,
+    FluidStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -69,13 +69,15 @@ function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
 
 // ---- React Functional Component w/ useReducer ----
 
-interface IActionReducer extends IFluidReducer<CounterFunctionalState>{
-    increment:  (oldState: CounterFunctionalState, args?: {step: number}) => CounterFunctionalState
+interface IActionReducer {
+    increment:  FluidStateUpdateFunction<CounterFunctionalState>,
 }
 
 const ActionReducer: IActionReducer = {
-    increment:  (oldState: CounterFunctionalState, args?: {step: number}) => {
-        return { value: args === undefined ? oldState.value + 1  : oldState.value + args.step };
+    increment: {
+        function: (oldState: CounterFunctionalState, args?: {step: number}) => {
+            return { value: args === undefined ? oldState.value + 1  : oldState.value + args.step };
+        },
     },
 };
 
@@ -88,8 +90,8 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
             <span className="clicker-value-class-reducer" id={`clicker-reducer-value-${Date.now().toString()}`}>
                 {`Functional Reducer Component: ${state.value}`}
             </span>
-            <button onClick={() => { dispatch({ type: "increment" }); }}>+</button>
-            <button onClick={() => { dispatch({ type: "increment", args: { step: 2 } }); }}>++</button>
+            <button onClick={() => { dispatch("increment"); }}>+</button>
+            <button onClick={() => { dispatch("increment", 2); }}>++</button>
         </div>
     );
 }

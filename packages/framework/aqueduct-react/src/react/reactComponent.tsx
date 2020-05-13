@@ -158,11 +158,7 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
     return [nextState, fluidSetState];
 }
 
-export interface IFluidReducer<S> {
-    [key: string]:  (oldState: S, args?: any) => S,
-}
-
-export interface FluidReducerProps<S extends FluidFunctionalComponentState, A extends IFluidReducer<S>> {
+export interface FluidReducerProps<S extends FluidFunctionalComponentState, A> {
     root: ISharedDirectory,
     initialState: S,
     reducer: A,
@@ -171,11 +167,16 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A ex
     selector?: keyof S
 }
 
-export interface ActionInfo {type: string, args?: any}
+export interface FluidStateUpdateFunction<S> {
+    function: (oldState: S, args?: any) => S;
+}
 
-export function useReducerFluid<S extends FluidFunctionalComponentState, A extends IFluidReducer<S>>(
+export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>
+    "function" in object;
+
+export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
     props: FluidReducerProps<S, A>,
-): [S, (action: ActionInfo) => void] {
+): [S, (type: keyof A, ...args: any) => void] {
     const {
         reducer,
         root,
@@ -191,10 +192,10 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A exten
         stateToRoot,
     });
 
-    const combinedReducer = React.useCallback((actionInfo: ActionInfo) => {
-        const action =  reducer[(actionInfo.type)];
-        if (action) {
-            setState(action(state, actionInfo.args));
+    const combinedReducer = React.useCallback((type: keyof A, ...args: any) => {
+        const action =  reducer[(type)];
+        if (action && instanceOfStateUpdateFunction(action)) {
+            setState((action as any)(state, args));
         } else {
             throw new Error(
                 `Action with key ${action} does not
