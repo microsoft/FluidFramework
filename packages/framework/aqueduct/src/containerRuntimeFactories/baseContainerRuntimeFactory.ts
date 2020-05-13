@@ -50,12 +50,26 @@ const repackAsMountableView = (response: IResponse | undefined) => {
     };
 };
 
-const defaultRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    const componentRuntimeRequestHandlerResponse = await componentRuntimeRequestHandler(request, runtime);
-    if (request.headers?.mountableView as boolean | undefined === true) {
-        return repackAsMountableView(componentRuntimeRequestHandlerResponse);
-    }
-    return componentRuntimeRequestHandlerResponse;
+const makeMountableViewRequestHandler = (requestHandlers: RuntimeRequestHandler[]) => {
+    const issueRequestNormally = async (request: RequestParser, runtime: IContainerRuntime) => {
+        for (const handler of requestHandlers) {
+            const response = await handler(request, runtime);
+            if (response !== undefined) {
+                return response;
+            }
+        }
+    };
+
+    return async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.headers?.mountableView === true) {
+            // Unset the header in case the request is reissued to avoid double repacking.
+            request.headers.mountableView = undefined;
+            const response = await issueRequestNormally(request, runtime);
+            return repackAsMountableView(response);
+        }
+
+        return issueRequestNormally(request, runtime);
+    };
 };
 
 /**
@@ -99,8 +113,11 @@ export class BaseContainerRuntimeFactory implements
             context,
             this.registryEntries,
             [
-                ...this.requestHandlers,
-                defaultRequestHandler,
+                // Conditionally adapt any given request handler with a MountableView based on headers.
+                makeMountableViewRequestHandler([
+                    ...this.requestHandlers,
+                    componentRuntimeRequestHandler,
+                ]),
             ],
             undefined,
             dc);
