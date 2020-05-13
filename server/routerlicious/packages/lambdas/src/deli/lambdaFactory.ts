@@ -144,7 +144,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
     }
 
-    // Fetches last durable deli state from summary. Returns undefined if not present or on an error.
+    // Fetches last durable deli state from summary. Returns undefined if not present.
     private async loadStateFromSummary(
         tenantId: string,
         documentId: string,
@@ -169,14 +169,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     // Check the current epoch with last epoch. If not matched, we need to flip the term.
     // However, we need to store the current term and epoch reliably before we kick off the lambda.
-    // Hence we need to create another summary. Logically its an overwrite but in a git sense,
-    // its a new commit. I am wondering whether we should have an updateSummary() in the driver
-    // to hide these amongst storage providers?
+    // Hence we need to create another summary. Logically its an update but in a git sense,
+    // its a new commit in the chain.
 
     // Another aspect is the starting summary. What happens when epoch ticks and we never had a prior summary?
-    // Creating a summary for every new document seems wasteful? For now, I am checking whether we had a
-    // summary before flipping the term. When we move to createNew() for creation, this should not be a
-    // problem anymore.
+    // For now we are just skipping the step if no prior summary was present.
+    // TODO: May be alfred/deli should create a summary at inception? 
     private async resetCheckpointOnEpochTick(
         tenantId: string,
         documentId: string,
