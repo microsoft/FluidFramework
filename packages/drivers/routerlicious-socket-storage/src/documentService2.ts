@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";
@@ -16,6 +16,7 @@ import { WSDeltaConnection } from "./wsDeltaConnection";
  */
 export class DocumentService2 extends DocumentService {
     constructor(
+        resolvedUrl: IResolvedUrl,
         ordererUrl: string,
         deltaStorageUrl: string,
         gitUrl: string,
@@ -26,6 +27,7 @@ export class DocumentService2 extends DocumentService {
         tenantId: string,
         documentId: string) {
         super(
+            resolvedUrl,
             ordererUrl,
             deltaStorageUrl,
             gitUrl,
@@ -46,14 +48,12 @@ export class DocumentService2 extends DocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<IDocumentDeltaConnection> {
+        client: api.IClient): Promise<IDocumentDeltaConnection> {
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.ordererUrl,
-            mode);
+            this.ordererUrl);
     }
 }

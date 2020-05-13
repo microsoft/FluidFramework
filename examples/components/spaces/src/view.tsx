@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
+import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import GridLayout, { Layout } from "react-grid-layout";
-
-import "../../../../node_modules/react-grid-layout/css/styles.css";
-import "../../../../node_modules/react-resizable/css/styles.css";
+import RGL, { WidthProvider, Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -30,13 +29,18 @@ const buttonContainerStyle: React.CSSProperties = {
     left: 0,
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "25px" };
+const buttonStyle: React.CSSProperties = {
+    width: "2rem",
+    height: "2rem",
+};
+
+const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
- * This ideally shouldn't be here but is here for now to unblock me not knowing how to use EmbeddedComponent.
+ * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
-class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
+class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState> {
     constructor(props) {
         super(props);
         this.state = {
@@ -46,8 +50,10 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <EmbeddedComponent component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {
@@ -72,7 +78,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: true,
+            isEditable: this.props.dataModel.componentList.size - 1 === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -82,10 +88,17 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            this.setState({ componentMap: newMap });
+            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarId)) {
+                this.setState({
+                    componentMap: newMap,
+                    isEditable: this.props.dataModel.componentList.size - 1 === 0,
+                });
+            } else {
+                this.setState({ componentMap: newMap });
+            }
         });
-        this.props.dataModel.on("editableUpdated", (isEditable: boolean) => {
-            this.setState({isEditable});
+        this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
+            this.setState({ isEditable: isEditable || !this.state.isEditable });
         });
     }
 
@@ -114,7 +127,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     generateViewState(): [JSX.Element, any[], Layout[]] {
-        const components = [];
+        const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
         let componentToolbar: JSX.Element | undefined;
 
@@ -133,6 +146,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }
+            if (id !== this.props.dataModel.componentToolbarId) {
+                embeddedComponentStyle.overflow = "scroll";
+            }
 
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
@@ -147,36 +163,47 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         editable &&
                         <div style={buttonContainerStyle}>
                             <button
+                                style={buttonStyle}
                                 onClick={() => this.props.dataModel.removeComponent(id)}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                ❌
+                                }}
+                            >
+                                {"❌"}
                             </button>
                             <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(componentUrl).then(() => {
-                                        console.log("Async: Copying to clipboard was successful!");
-                                    }, (err) => {
-                                        console.error("Async: Could not copy text: ", err);
-                                    });
-                                }}
+                                style={buttonStyle}
+                                onClick={
+                                    () => {
+                                        navigator.clipboard.writeText(componentUrl).then(() => {
+                                            console.log("Async: Copying to clipboard was successful!");
+                                        }, (err) => {
+                                            console.error("Async: Could not copy text: ", err);
+                                        });
+                                    }}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                📎
+                                }}
+                            >
+                                {"📎"}
                             </button>
                             <button
+                                style={buttonStyle}
                                 onClick={() => window.open(componentUrl, "_blank")}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                ↗
+                                }}
+                            >
+                                {"↗️"}
                             </button>
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
+                        <EmbeddedComponentWrapper
+                            id={id}
+                            getComponent={async (componentId: string) =>
+                                this.props.dataModel.getComponent(componentId)}
+                        />
                     </div>
                 </div>;
             if (id !== this.props.dataModel.componentToolbarId) {
@@ -186,7 +213,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             }
         });
 
-        return [componentToolbar, components, layouts];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return [componentToolbar!, components, layouts];
     }
 
     render() {
@@ -196,7 +224,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 {componentToolbar}
                 {
                     this.state.componentMap.size > 0 &&
-                        <GridLayout
+                        <ReactGridLayout
                             className="layout"
                             cols={36}
                             rowHeight={50}
@@ -214,7 +242,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             style={gridContainerStyle}
                         >
                             {components}
-                        </GridLayout>
+                        </ReactGridLayout>
                 }
             </div>
         );

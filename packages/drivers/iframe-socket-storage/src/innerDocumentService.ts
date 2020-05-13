@@ -9,7 +9,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { Remote } from "comlink";
 import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -20,23 +21,22 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(proxyObject: {
+    public static async create(proxyObject: Remote<{
         clientId: string,
         stream: IOuterDocumentDeltaConnectionProxy,
         deltaStorage: IDocumentDeltaStorageService,
         storage: IDocumentStorageService,
-    }): Promise<InnerDocumentService> {
-        // eslint-disable-next-line @typescript-eslint/await-thenable
+    }>): Promise<InnerDocumentService> {
         return new InnerDocumentService(proxyObject, await proxyObject.clientId);
     }
 
-    constructor(private readonly outerProxy: {
-        clientId: string,
-        stream: IOuterDocumentDeltaConnectionProxy,
-        deltaStorage: IDocumentDeltaStorageService,
-        storage: IDocumentStorageService
-    },
-        // eslint-disable-next-line @typescript-eslint/indent
+    private constructor(
+        private readonly outerProxy: Remote<{
+            clientId: string,
+            stream: IOuterDocumentDeltaConnectionProxy,
+            deltaStorage: IDocumentDeltaStorageService,
+            storage: IDocumentStorageService
+        }>,
         public clientId: string) { }
 
     /**
@@ -45,7 +45,7 @@ export class InnerDocumentService implements IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        return new DocumentStorageServiceProxy(this.outerProxy.storage);
+        return new DocumentStorageServiceProxy(this.outerProxy.storage as unknown as IDocumentStorageService);
     }
 
     /**
@@ -55,8 +55,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            get: (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
+            get: async (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
         };
     }
 
@@ -65,7 +64,7 @@ export class InnerDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         const connection = await this.outerProxy.stream.getDetails();
         return InnerDocumentDeltaConnection.create(connection, this.outerProxy.stream);
     }

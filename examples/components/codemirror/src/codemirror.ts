@@ -9,13 +9,10 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
-    IComponentHTMLVisual,
     IComponentHandle,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     MergeTreeDeltaType,
@@ -27,6 +24,7 @@ import {
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import * as CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
@@ -40,14 +38,14 @@ import/no-internal-modules, import/no-unassigned-import */
 import { CodeMirrorPresenceManager } from "./presence";
 
 class CodemirrorView implements IComponentHTMLView {
-    private textArea: HTMLTextAreaElement;
-    private codeMirror: CodeMirror.EditorFromTextArea;
-    private presenceManager: CodeMirrorPresenceManager;
+    private textArea: HTMLTextAreaElement | undefined;
+    private codeMirror: CodeMirror.EditorFromTextArea | undefined;
+    private presenceManager: CodeMirrorPresenceManager | undefined;
 
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
-    private updatingSequence: boolean;
-    private updatingCodeMirror: boolean;
+    private updatingSequence: boolean = false;
+    private updatingCodeMirror: boolean = false;
 
     private sequenceDeltaCb: any;
 
@@ -90,7 +88,8 @@ class CodemirrorView implements IComponentHTMLView {
 
     private setupEditor() {
         this.codeMirror = CodeMirror.fromTextArea(
-            this.textArea,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.textArea!,
             {
                 lineNumbers: true,
                 mode: "text/typescript",
@@ -156,7 +155,8 @@ class CodemirrorView implements IComponentHTMLView {
             // to submit new ops
             this.updatingSequence = true;
 
-            const doc = this.codeMirror.getDoc();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const doc = this.codeMirror!.getDoc();
             for (const range of ev.ranges) {
                 const segment = range.segment;
 
@@ -194,10 +194,14 @@ class CodemirrorView implements IComponentHTMLView {
     }
 }
 
+/**
+ * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
+ * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ */
 export class CodeMirrorComponent
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
@@ -209,9 +213,12 @@ export class CodeMirrorComponent
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
     public url: string;
-    private text: SharedString;
-    private root: ISharedMap;
+    private text: SharedString | undefined;
+    private root: ISharedMap | undefined;
+    private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -219,6 +226,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -249,11 +257,15 @@ export class CodeMirrorComponent
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
-        return new CodemirrorView(this.text, this.runtime);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return new CodemirrorView(this.text!, this.runtime);
     }
 }
 
 class SmdeFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/codemirror";
+    public readonly type = SmdeFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

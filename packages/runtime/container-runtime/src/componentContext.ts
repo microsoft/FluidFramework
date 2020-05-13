@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -31,14 +32,16 @@ import {
     IAttachMessage,
     IComponentContext,
     IComponentFactory,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    IExperimentalHostRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -55,13 +58,23 @@ export interface IComponentAttributes {
 
 interface ISnapshotDetails {
     pkg: readonly string[];
-    snapshot: ISnapshotTree;
+    snapshot?: ISnapshotTree;
 }
 
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
+    IExperimentalComponentContext
+{
+    public readonly isExperimentalComponentContext = true;
+
+    public isLocal(): boolean {
+        const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        return expHostRuntime.isLocal() || !this.isAttached;
+    }
+
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -69,10 +82,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public get packagePath(): readonly string[] {
         // The component must be loaded before the path is accessed.
         assert(this.loaded);
-        return this.pkg;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.pkg!;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this._hostRuntime.parentBranch;
     }
 
@@ -80,7 +94,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this._hostRuntime.clientId;
     }
 
@@ -116,10 +130,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.snapshotFn;
     }
 
-    public get closeFn(): () => void {
-        return this._hostRuntime.closeFn;
-    }
-
     public get branch(): string {
         return this._hostRuntime.branch;
     }
@@ -132,16 +142,23 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime;
     }
 
-    public get baseSnapshot(): ISnapshotTree {
+    public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
     }
 
-    protected componentRuntime: IComponentRuntime;
-    private closed = false;
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public get isAttached(): boolean {
+        return this._isAttached;
+    }
+
+    public readonly attach: (componentRuntime: IComponentRuntime) => void;
+    protected componentRuntime: IComponentRuntime | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime>;
-    private _baseSnapshot: ISnapshotTree;
+    private pending: ISequencedDocumentMessage[] | undefined = [];
+    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
         private readonly _hostRuntime: IHostRuntime,
@@ -150,11 +167,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        private _isAttached: boolean,
+        attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
+        this.attach = (componentRuntime: IComponentRuntime) => {
+            attach(componentRuntime);
+            this._isAttached = true;
+        };
         // back-compat: 0.14 uploadSummary
         this.summaryTracker.addRefreshHandler(async () => {
             // We do not want to get the snapshot unless we have to.
@@ -171,46 +193,69 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         });
     }
 
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        // Dispose any pending runtime after it gets fulfilled
+        if (this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred.promise.then((runtime) => {
+                runtime.dispose();
+            }).catch((error) => {
+                this.hostRuntime.logger.sendErrorEvent(
+                    { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
+                    error);
+            });
+        }
+    }
+
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
-        const pkgName = pkg ?? pkgOrId;
+        // pkgOrId can't be undefined if pkg is undefined
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pkgName = pkg ?? pkgOrId!;
+        assert(pkgName);
         const id = pkg ? (pkgOrId ?? uuid()) : uuid();
 
-        const details = await this.getInitialSnapshotDetails();
-        let packagePath: string[] = [...details.pkg];
-
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, create component with our package path.
-        if (packagePath.length > 0 && pkgName === packagePath[packagePath.length - 1]) {
-            return this.hostRuntime._createComponentWithProps(packagePath, props, id);
-        }
-
-        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
-        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
-        // passed package.
-        let entry: ComponentRegistryEntry = await this.componentRuntime.IComponentRegistry?.get(pkgName);
-        if (entry) {
-            packagePath.push(pkgName);
-        } else {
-            entry = await this._hostRuntime.IComponentRegistry.get(pkgName);
-            packagePath = [pkgName];
-        }
-
-        if (!entry) {
-            throw new Error(`Registry does not contain entry for package '${pkgName}'`);
-        }
+        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
-    public async rejectDeferredRealize(reason: string)
-    {
+    public async createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable> {
+        const packagePath = await this.composeSubpackagePath(pkg);
+
+        const componentRuntime = await this.hostRuntime.createComponentWithRealizationFn(
+            packagePath,
+            realizationFn,
+        );
+        const response = await componentRuntime.request({ url: "/" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        return response.value;
+    }
+
+    private async rejectDeferredRealize(reason: string) {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
 
-        this.componentRuntimeDeferred.reject(error);
-        return this.componentRuntimeDeferred.promise;
+        // This is always called with a componentRuntimeDeferred in realize();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const deferred = this.componentRuntimeDeferred!;
+        deferred.reject(error);
+        return deferred.promise;
     }
 
     public async realize(): Promise<IComponentRuntime> {
@@ -222,9 +267,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
-            let entry: ComponentRegistryEntry;
-            let registry = this._hostRuntime.IComponentRegistry;
-            let factory: IComponentFactory;
+            let entry: ComponentRegistryEntry | undefined;
+            let registry: IComponentRegistry | undefined = this._hostRuntime.IComponentRegistry;
+            let factory: IComponentFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
@@ -250,9 +295,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this._hostRuntime.getComponentRuntime(id, wait);
+    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            realizationFn(this);
+        }
+
+        return this.componentRuntimeDeferred.promise;
     }
 
     /**
@@ -261,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -269,7 +318,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        this.componentRuntime.changeConnectionState(value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.changeConnectionState(value, clientId);
 
         raiseConnectedEvent(this, value, clientId);
     }
@@ -280,10 +330,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
-            return this.componentRuntime.process(message, local);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.componentRuntime!.process(message, local);
         } else {
-            assert(!local);
-            this.pending.push(message);
+            assert(!local, "local component is not loaded");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending!.push(message);
         }
     }
 
@@ -295,7 +347,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        this.componentRuntime.processSignal(message, local);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -310,19 +363,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITree> {
-        this.verifyNotClosed();
-
-        this.closed = true;
-
-        return this.snapshot(true);
-    }
-
-    public close(): void {
-        this._hostRuntime.closeFn();
     }
 
     /**
@@ -345,7 +385,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         await this.realize();
 
-        const entries = await this.componentRuntime.snapshotInternal(fullTree);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const entries = await this.componentRuntime!.snapshotInternal(fullTree);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
@@ -361,6 +402,30 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.verifyNotClosed();
         assert(this.componentRuntime);
         return this.submitOp(type, content);
+    }
+
+    /**
+     * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
+     * It indicates that there is data in the object that needs to be summarized.
+     * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
+     *
+     * @param address - The address of the channel that is dirty.
+     *
+     */
+    public setChannelDirty(address: string): void {
+        this.verifyNotClosed();
+
+        // Get the latest sequence number.
+        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+
+        // Update our summary tracker's latestSequenceNumber.
+        this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+
+        const channelSummaryTracker = this.summaryTracker.getChild(address);
+        // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
+        if (channelSummaryTracker) {
+            channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
     }
 
     public submitSignal(type: string, content: any) {
@@ -394,17 +459,25 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         } else {
             this.emit("notleader", this.clientId);
         }
-
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime): void {
+    public bindRuntime(componentRuntime: IComponentRuntime) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
 
-        if (this.pending.length > 0) {
+        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred();
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pending = this.pending!;
+
+        if (pending.length > 0) {
             // Apply all pending ops
-            for (const op of this.pending) {
+            for (const op of pending) {
                 componentRuntime.process(op, false);
             }
         }
@@ -421,6 +494,39 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+    }
+
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    protected async composeSubpackagePath(subpackage: string): Promise<string[]> {
+        const details = await this.getInitialSnapshotDetails();
+        let packagePath: string[] = [...details.pkg];
+
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        if (packagePath.length > 0 && subpackage === packagePath[packagePath.length - 1]) {
+            return packagePath;
+        }
+
+        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
+        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
+        // passed package.
+        if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
+            packagePath.push(subpackage);
+        } else {
+            if (!(await this._hostRuntime.IComponentRegistry.get(subpackage))) {
+                throw new Error(`Registry does not contain entry for package '${subpackage}'`);
+            }
+
+            packagePath = [subpackage];
+        }
+
+        return packagePath;
     }
 
     public abstract generateAttachMessage(): IAttachMessage;
@@ -440,18 +546,18 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
 }
 
 export class RemotedComponentContext extends ComponentContext {
-    private details: ISnapshotDetails;
+    private details: ISnapshotDetails | undefined;
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string,
+        private readonly initSnapshotValue: ISnapshotTree | string | null,
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -465,6 +571,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
+            true,
             () => {
                 throw new Error("Already attached");
             },
@@ -480,7 +587,7 @@ export class RemotedComponentContext extends ComponentContext {
     // pkg can never change for a component.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
-            let tree: ISnapshotTree;
+            let tree: ISnapshotTree | null;
 
             if (typeof this.initSnapshotValue === "string") {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
@@ -507,13 +614,16 @@ export class RemotedComponentContext extends ComponentContext {
                     }
                 } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
                 this.pkg = pkgFromSnapshot;
             }
 
             this.details = {
-                pkg: this.pkg,
-                snapshot: tree,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                pkg: this.pkg!,
+                snapshot: tree ?? undefined,
             };
         }
 
@@ -530,9 +640,12 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        /**
+         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+         */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {
@@ -541,15 +654,17 @@ export class LocalComponentContext extends ComponentContext {
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
-        const entries = this.componentRuntime.getAttachSnapshot();
-        const snapshot = { entries, id: undefined };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const entries = this.componentRuntime!.getAttachSnapshot();
+        const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: this.pkg[this.pkg.length - 1],
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            type: this.pkg![this.pkg!.length - 1],
         };
 
         return message;
@@ -557,7 +672,8 @@ export class LocalComponentContext extends ComponentContext {
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            pkg: this.pkg,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            pkg: this.pkg!,
             snapshot: undefined,
         };
     }

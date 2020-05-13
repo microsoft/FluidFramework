@@ -2,9 +2,8 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+const pkg = require("../package.json");
 
 /**
  * DiceRoller example using view interfaces and stock component classes.
@@ -90,6 +89,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
  * This is where you define all your Distributed Data Structures
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+    pkg.name as string,
     DiceRoller,
     [],
+    {}
 );

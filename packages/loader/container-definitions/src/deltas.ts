@@ -54,6 +54,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
 }
 
+export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
+
 export interface IProvideDeltaSender {
     readonly IDeltaSender: IDeltaSender;
 }
@@ -106,17 +108,10 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Flag to indicate whether the client can write or not.
     active: boolean;
 
+    // Tells if user has no permissions to change document
+    readonly?: boolean;
+
     close(): void;
-
-    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
-
-    getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
-
-    attachOpHandler(
-        minSequenceNumber: number,
-        sequenceNumber: number,
-        handler: IDeltaHandlerStrategy,
-        resume: boolean);
 
     submitSignal(content: any): void;
 
@@ -129,6 +124,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     on(event: "pong" | "processTime", listener: (latency: number) => void);
     on(event: "connect", listener: (details: IConnectionDetails) => void);
     on(event: "disconnect", listener: (reason: string) => void);
+    on(event: "readonly", listener: (readonly: boolean) => void);
 }
 
 export interface IDeltaQueue<T> extends EventEmitter, IDisposable {

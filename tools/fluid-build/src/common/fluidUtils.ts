@@ -4,38 +4,37 @@
  */
 
 import { commonOptions } from "./commonOptions";
-import { existsSync, readFileAsync, realpathAsync } from "./utils";
+import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
 
 async function isFluidRootLerna(dir: string) {
     const filename = path.join(dir, "lerna.json");
     if (!existsSync(filename)) {
+        logVerbose(`InferRoot: lerna.json not found`);
         return false;
     }
 
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
-    if (Array.isArray(parsed.packages)
-        && parsed.packages.length == 2
-        && parsed.packages[0] === "packages/**"
-        && parsed.packages[1] === "examples/components/**") {
-        return true;
+    if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
+        logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
+        return false;
     }
-    return false;
+
+    return true;
 }
 
 async function isFluidRootPackage(dir: string) {
     const filename = path.join(dir, "package.json");
     if (!existsSync(filename)) {
+        logVerbose(`InferRoot: package.json not found`);
         return false;
     }
 
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
+    const parsed = await readJsonAsync(filename);
     if (parsed.name === "root" && parsed.private === true) {
         return true;
     }
+    logVerbose(`InferRoot: package.json not matched`);
     return false;
 }
 
@@ -44,22 +43,16 @@ async function isFluidRoot(dir: string) {
 }
 
 async function inferRoot() {
-    let curr = process.cwd();
-    while (true) {
+    return lookUpDir(process.cwd(), async (curr) => {
+        logVerbose(`InferRoot: probing ${curr}`);
         try {
             if (await isFluidRoot(curr)) {
-                return curr;
+                return true;
             }
         } catch {
         }
-
-        const up = path.resolve(curr, "..");
-        if (up === curr) {
-            break;
-        }
-        curr = up;
-    }
-    return undefined;
+        return false;
+    });
 }
 
 export async function getResolvedFluidRoot() {

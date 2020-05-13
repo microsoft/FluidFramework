@@ -19,8 +19,9 @@ import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { v4 } from "uuid";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -53,13 +54,11 @@ export async function loadFluidContainer(
     tokenApiConfig: ITokenApis,
     clientId?: string,
     clientSecret?: string,
-    pkg?: IResolvedPackage,
-    scriptIds?: string[],
+    pkg?: IFluidCodeDetails,
 ): Promise<Container> {
-
     let resolved: IResolvedUrl;
 
-    const resolvedPackage = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
+    const codeDetails = pkg ?? parseUrlToResolvedPackage(url);
 
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
@@ -90,14 +89,11 @@ export async function loadFluidContainer(
         div,
         clientId,
         clientSecret,
-        resolvedPackage,
-        scriptIds);
+        codeDetails);
     return containerP;
 }
 
-export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
-    const pkg: IResolvedPackage = {} as any;
-
+export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails | undefined {
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
@@ -107,7 +103,11 @@ export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    if (chaincode.startsWith("http")) {
+    // This allows us to open up documents without specifying the chaincode,
+    // This is useful if the document has already been created with a chaincode and in the SPO scenario
+    if (!chaincode) {
+        return undefined;
+    } else if (chaincode.startsWith("http")) {
         codeDetails = {
             config: {
                 [`@gateway:cdn`]: chaincode,
@@ -126,17 +126,15 @@ export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
             },
         };
     } else {
-        const details = extractDetails(chaincode);
         codeDetails = {
             config: {
-                [`@${details.scope}:cdn`]: cdn,
+                cdn,
             },
             package: chaincode,
         };
     }
-    pkg.details = codeDetails;
 
-    return pkg;
+    return codeDetails;
 }
 
 async function loadContainer(
@@ -146,10 +144,8 @@ async function loadContainer(
     div: HTMLDivElement,
     clientId: string,
     secret: string,
-    pkg?: IResolvedPackage,
-    scriptIds?: string[],
+    pkg?: IFluidCodeDetails,
 ): Promise<Container> {
-
     let documentServiceFactory: IDocumentServiceFactory;
     const protocol = new URL(resolved.url).protocol;
     if (protocol === "fluid-odsp:") {
@@ -176,19 +172,13 @@ async function loadContainer(
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
     const hostConf: IBaseHostConfig = {
+        codeResolver: new SemVerCdnCodeResolver(),
         documentServiceFactory,
         urlResolver: resolver,
     };
 
-    const baseHost = new BaseHost(
-        hostConf,
-        pkg,
-        scriptIds,
-    );
-    const container = await baseHost.initializeContainer(
-        href,
-        pkg ? pkg.details : undefined,
-    );
+    const baseHost = new BaseHost(hostConf);
+    const container = await baseHost.initializeContainer(href, pkg);
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, href, div).catch(() => { });
     });
@@ -203,18 +193,9 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
         return;
     }
 
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }
 
 const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
@@ -257,7 +238,6 @@ export async function loadIFramedFluidContainer(
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<void> {
-
     let scriptUrl: string;
     // main.bundle.js refers to the output of webpacking this file.
     if (packageJson.version.split(".")[2] === "0") {

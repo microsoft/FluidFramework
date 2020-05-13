@@ -8,11 +8,17 @@ import {
     ISignalClient,
     ISignalMessage,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 
-export const createNackMessage = (): INack => ({
+export const createNackMessage = (code: number, type: NackErrorType, message: string): INack => ({
     operation: undefined,
     sequenceNumber: -1,
+    content: {
+        code,
+        type,
+        message,
+    },
 });
 
 export function createRoomJoinMessage(clientId: string, client: IClient): ISignalMessage {

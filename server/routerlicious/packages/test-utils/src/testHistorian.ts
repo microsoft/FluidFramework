@@ -16,11 +16,13 @@ export class TestHistorian implements IHistorian {
     private readonly blobs: ICollection<{ _id: string; value: git.ICreateBlobParams }>;
     private readonly commits: ICollection<{ _id: string; value: git.ICreateCommitParams }>;
     private readonly trees: ICollection<{ _id: string; value: git.ICreateTreeParams }>;
+    private readonly refs: ICollection<{ _id: string; value: git.ICreateRefParams }>;
 
     constructor(db: IDb = new TestDb({})) {
         this.blobs = db.collection("blobs");
         this.commits = db.collection("commits");
         this.trees = db.collection("trees");
+        this.refs = db.collection("refs");
     }
 
     public async getHeader(sha: string): Promise<any> {
@@ -49,9 +51,9 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getBlob(sha: string): Promise<git.IBlob> {
-        const blob = await this.blobs.findOne(sha);
+        const blob = await this.blobs.findOne({ _id: sha });
         return {
-            content: blob.value.content,
+            content: Buffer.from(blob.value.content, blob.value.encoding).toString("base64"),
             encoding: blob.value.encoding,
             sha: blob._id,
             size: blob.value.content.length,
@@ -93,7 +95,13 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getCommit(sha: string): Promise<git.ICommit> {
-        const commit = await this.commits.findOne({ _id: sha });
+        let commit = await this.commits.findOne({ _id: sha });
+        if (!commit) {
+            const ref = await this.getRef(`refs/heads/${sha}`);
+            if (ref !== undefined) {
+                commit = await this.commits.findOne({ _id: ref.object.sha });
+            }
+        }
         if (commit) {
             return {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
@@ -102,7 +110,7 @@ export class TestHistorian implements IHistorian {
                 parents: commit.value.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),
                 sha: commit._id,
                 tree: {
-                    sha: gitHashFile(Buffer.from(commit.value.tree)),
+                    sha: commit.value.tree,
                     url: "",
                 },
                 url: "",
@@ -111,7 +119,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        const _id = gitHashFile(Buffer.from(commit.tree));
+        const _id = commit.tree;
         await this.commits.insertOne({ _id, value: commit });
         return this.getCommit(_id);
     }
@@ -121,14 +129,22 @@ export class TestHistorian implements IHistorian {
         throw new Error("Not Supported");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getRef(ref: string): Promise<git.IRef> {
-        throw new Error("Not Supported");
+    public async getRef(ref: string): Promise<git.IRef> {
+        const val = await this.refs.findOne({ _id: ref });
+        if (val) {
+            return {
+                ref: val.value.ref,
+                url: "",
+                object: { sha: val.value.sha,
+                    url: "",
+                    type: "" },
+            };
+        }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        throw new Error("Not Supported");
+    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+        await this.refs.insertOne({ _id: params.ref, value: params });
+        return this.getRef(params.ref);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -160,20 +176,36 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
+        return this.getTreeHelper(sha, recursive);
+    }
+
+    public async getTreeHelper(sha: string, recursive: boolean, path: string = ""): Promise<git.ITree> {
         const tree = await this.trees.findOne({ _id: sha });
         if (tree) {
-            return {
+            const finalTree: git.ITree = {
                 sha: tree._id,
                 url: "",
-                tree: tree.value.tree.map<git.ITreeEntry>((t) => ({
-                    mode: t.mode,
-                    path: t.path,
-                    sha: t.sha,
-                    size: 0,
-                    type: t.type,
-                    url: "",
-                })),
+                tree: [],
             };
+            for (const entry of tree.value.tree) {
+                const entryPath: string = path  === "" ? entry.path : `${path}/${entry.path}`;
+                const treeEntry: git.ITreeEntry = {
+                    mode: entry.mode,
+                    path: entryPath,
+                    sha: entry.sha,
+                    size: 0,
+                    type: entry.type,
+                    url: "",
+                };
+                finalTree.tree.push(treeEntry);
+                if (entry.type === "tree" && recursive) {
+                    const childTree = await this.getTreeHelper(entry.sha, recursive, entryPath);
+                    if (childTree) {
+                        finalTree.tree = finalTree.tree.concat(childTree.tree);
+                    }
+                }
+            }
+            return finalTree;
         }
     }
 }

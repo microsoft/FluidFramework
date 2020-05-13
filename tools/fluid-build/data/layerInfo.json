@@ -66,6 +66,15 @@
                     "Driver-Definitions"
                 ]
             },
+            "Framework-Utils": {
+                "packages": [
+                    "@microsoft/fluid-view-adapters",
+                    "@microsoft/fluid-view-interfaces"
+                ],
+                "deps": [
+                    "Base-Definitions"
+                ]
+            },
             "Other-Utils": {
                 "dot": false,
                 "packages": [
@@ -131,7 +140,8 @@
                     "@microsoft/fluid-host-service-interfaces"
                 ],
                 "deps": [
-                    "Loader"
+                    "Loader",
+                    "Framework-Utils"
                 ]
             },
             "Runtime": {
@@ -199,7 +209,8 @@
                     "@microsoft/fluid-webpack-component-loader"
                 ],
                 "dirs": [
-                    "packages/test/"
+                    "packages/test/",
+                    "examples/hosts/"
                 ]
             }
         }

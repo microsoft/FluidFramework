@@ -4,7 +4,7 @@
  */
 
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 

@@ -22,7 +22,7 @@ const pollStyles = mergeStyles({
 
 interface PollProps {
     pollStore: PollStore;
-    clientId: string;
+    clientId: string | undefined;
 }
 
 export type OptionsMap = Map<string, PollOptionInfo>;
@@ -54,7 +54,7 @@ export const Poll = React.memo((props: PollProps) => {
     });
 
     const onSubmitQuestion = (newQuestionText: string) => {
-    // Update root map with the question
+        // Update root map with the question
         pollStore.rootMap.set<string>(pollQuestionKey, newQuestionText);
     };
 
@@ -65,16 +65,18 @@ export const Poll = React.memo((props: PollProps) => {
     };
 
     const onVote = (currentOptionId: string) => {
-        const previousVote: VoteInfo | undefined = pollStore.votersMap.get(clientId);
+        if (clientId) {
+            const previousVote: VoteInfo | undefined = pollStore.votersMap.get(clientId);
 
-        const voteInfo: VoteInfo = {
-            clientId,
-            previousOptionId: previousVote === undefined ? undefined : previousVote.currentOptionId,
-            currentOptionId,
-        };
+            const voteInfo: VoteInfo = {
+                clientId,
+                previousOptionId: previousVote === undefined ? undefined : previousVote.currentOptionId,
+                currentOptionId,
+            };
 
-        // Update root map with the latest vote
-        pollStore.votersMap.set<VoteInfo>(voteInfo.clientId, voteInfo);
+            // Update root map with the latest vote
+            pollStore.votersMap.set<VoteInfo>(voteInfo.clientId, voteInfo);
+        }
     };
 
     const onRootMapValueChangedListener = () => {
@@ -90,15 +92,15 @@ export const Poll = React.memo((props: PollProps) => {
     };
 
     React.useEffect(() => {
-    // Set listener for changes in maps
+        // Set listener for changes in maps
         pollStore.rootMap.on("valueChanged", onRootMapValueChangedListener);
         pollStore.votersMap.on("valueChanged", onVotersMapValueChangedListener);
         pollStore.optionsMap.on("valueChanged", onOptionsMapValueChangedListener);
 
         return () => {
-            pollStore.rootMap.removeListener("valueChanged", onRootMapValueChangedListener);
-            pollStore.votersMap.removeListener("valueChanged", onVotersMapValueChangedListener);
-            pollStore.optionsMap.removeListener("valueChanged", onOptionsMapValueChangedListener);
+            pollStore.rootMap.off("valueChanged", onRootMapValueChangedListener);
+            pollStore.votersMap.off("valueChanged", onVotersMapValueChangedListener);
+            pollStore.optionsMap.off("valueChanged", onOptionsMapValueChangedListener);
         };
     }, []);
 

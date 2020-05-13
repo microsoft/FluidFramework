@@ -40,7 +40,6 @@ const mt = random.engines.mt19937();
 mt.seedWithArray([0xDEADBEEF, 0xFEEDBED]);
 
 export class TestClient extends Client {
-
     public static searchChunkSize = 256;
 
     /**

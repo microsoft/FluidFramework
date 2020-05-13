@@ -14,6 +14,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     /* eslint-enable @typescript-eslint/indent */
 }
 
+export const IComponentLayout: keyof IProvideComponentLayout = "IComponentLayout";
+
 export interface IProvideComponentLayout {
     readonly IComponentLayout: IComponentLayout;
 }
@@ -44,6 +46,8 @@ export enum ComponentCursorDirection {
     Focus,
 }
 
+export const IComponentCursor: keyof IProvideComponentCursor = "IComponentCursor";
+
 export interface IProvideComponentCursor {
     readonly IComponentCursor: IComponentCursor;
 }
@@ -55,6 +59,8 @@ export interface IComponentCursor extends IProvideComponentCursor {
     fwd(): boolean;
     rev(): boolean;
 }
+
+export const IComponentKeyHandlers: keyof IProvideComponentKeyHandlers = "IComponentKeyHandlers";
 
 export interface IProvideComponentKeyHandlers {
     readonly IComponentKeyHandlers: IComponentKeyHandlers;

@@ -19,7 +19,7 @@ import { ChannelStorageService } from "./channelStorageService";
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
 
-    changeConnectionState(value: ConnectionState, clientId: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
@@ -32,6 +32,7 @@ export function createServiceEndpoints(
     id: string,
     connectionState: ConnectionState,
     submitFn: (type: MessageType, content: any) => number,
+    dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
     extraBlobs?: Map<string, string>,
@@ -42,7 +43,8 @@ export function createServiceEndpoints(
         (message) => {
             const envelope: IEnvelope = { address: id, contents: message };
             return submitFn(MessageType.Operation, envelope);
-        });
+        },
+        dirtyFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
 
     return {

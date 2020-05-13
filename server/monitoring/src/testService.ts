@@ -5,7 +5,6 @@
 
 /* eslint-disable prefer-template */
 import * as url from "url";
-import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
@@ -14,7 +13,7 @@ import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlici
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
 const packageManagerUrl = "https://packages.wu2.prague.office-int.com";
@@ -129,14 +128,9 @@ export async function testFluidService(config: Provider): Promise<void> {
         hostToken,
         new Map([[documentUrl, resolved]]));
 
-    const hostConfig: IBaseHostConfig = {
-        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
-        urlResolver: resolver,
-    };
-
     const loader = new Loader(
-        hostConfig.urlResolver,
-        hostConfig.documentServiceFactory,
+        resolver,
+        new RouterliciousDocumentServiceFactory(),
         new NodeCodeLoader(packageManagerUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
         config,
         {},

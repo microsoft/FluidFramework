@@ -392,7 +392,6 @@ export class PartialSequenceLengths {
         } else {
             seqPartialLen.len = seqPartialLen.seglen;
         }
-
     }
     public minLength = 0;
     public segmentCount = 0;
@@ -429,7 +428,6 @@ export class PartialSequenceLengths {
                 }
             }
         }
-
     }
 
     public getPartialLength(mergeTree: MergeTree, refSeq: number, clientId: number) {
@@ -530,7 +528,6 @@ export class PartialSequenceLengths {
             pLen += cli[cli.length - 1].len;
         }
         cli.push({ seq, len: pLen, seglen });
-
     }
 
     // Assumes sequence number already coalesced

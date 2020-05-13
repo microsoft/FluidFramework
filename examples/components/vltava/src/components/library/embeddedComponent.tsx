@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
+import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent(id: string): Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -19,7 +19,7 @@ interface IEmbeddedComponentWrapperState {
 
 /**
  * This wrapper handles the async-ness of loading a component.
- * This ideally shouldn't be here but is here for now to unblock me not knowing how to use EmbeddedComponent.
+ * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
 export class EmbeddedComponentWrapper
     extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>
@@ -33,8 +33,10 @@ export class EmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <EmbeddedComponent component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {

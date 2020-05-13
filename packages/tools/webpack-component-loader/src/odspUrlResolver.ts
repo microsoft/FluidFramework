@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { IUrlResolver, IResolvedUrl, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
 import {
-    getDriveItemByRootFileName,
     IOdspAuthRequestInfo,
+    getDriveItemByRootFileName,
 } from "@microsoft/fluid-odsp-utils";
 
-export class OdspUrlResolver implements IUrlResolver {
+export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(
@@ -20,6 +21,11 @@ export class OdspUrlResolver implements IUrlResolver {
     ) {}
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        try {
+            const resolvedUrl = await this.driverUrlResolver.resolve(request);
+            return resolvedUrl;
+        } catch (error) {}
+
         const url = new URL(request.url);
 
         const documentId = url.pathname.substr(1).split("/")[0];
@@ -44,5 +50,13 @@ export class OdspUrlResolver implements IUrlResolver {
     private formFilePath(documentId: string): string {
         const encoded = encodeURIComponent(`${documentId}.fluid`);
         return `/r11s/${encoded}`;
+    }
+
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        return this.driverUrlResolver.requestUrl(resolvedUrl, request);
+    }
+
+    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
+        return this.driverUrlResolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
     }
 }

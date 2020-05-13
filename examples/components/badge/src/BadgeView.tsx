@@ -25,6 +25,7 @@ import {
     IColor,
     Stack,
     TextField,
+    IContextualMenuItem,
 } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
@@ -47,7 +48,6 @@ export interface IBadgeViewState {
 }
 
 export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState> {
-
     private readonly defaultColor: string = "#fff";
     private readonly animation: string = "all 0.15s ease-in";
     private readonly cardPadding: string = "16px 24px";
@@ -75,12 +75,12 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
         initializeIcons();
     }
 
-    private _onClick(_, item: IBadgeType): void {
+    private _onClick(_, item: IContextualMenuItem): void {
         if (item.key === "new") {
             this.setState({ isDialogVisible: true });
         }
         else {
-            this._setCurrent(item);
+            this._setCurrent(item as IBadgeType);
         }
     }
 

@@ -11,14 +11,6 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 
-export function ReportConnectionTelemetry(
-    clientId: string | undefined,
-    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger)
-{
-    new ConnectionTelemetry(clientId, deltaManager, logger);
-}
-
 class ConnectionTelemetry {
     private pongCount: number = 0;
     private socketLatency = 0;
@@ -86,9 +78,18 @@ class ConnectionTelemetry {
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
-                value: Date.now() - this.opSendTimeForLatencyStatistics,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                value: Date.now() - this.opSendTimeForLatencyStatistics!,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }
     }
+}
+
+export function ReportConnectionTelemetry(
+    clientId: string | undefined,
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    logger: ITelemetryLogger)
+{
+    new ConnectionTelemetry(clientId, deltaManager, logger);
 }

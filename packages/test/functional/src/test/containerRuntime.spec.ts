@@ -66,12 +66,14 @@ describe("Container Runtime", () => {
             return messages as ISequencedDocumentMessage[];
         }
 
-        // function to process an inbound op. It adds a 1 ms delay per op.
+        // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
             scheduleManager.beginOperation(message);
 
+            // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
+            const processingDelay = DeltaScheduler.processingTime + 10;
             const startTime = Date.now();
-            while (Date.now() - startTime < 1) {}
+            while (Date.now() - startTime < processingDelay) {}
 
             scheduleManager.endOperation(undefined, message);
         }
@@ -88,7 +90,7 @@ describe("Container Runtime", () => {
             const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
             deltaManager = new DeltaManager(
-                service,
+                () => service,
                 client as IClient,
                 DebugLogger.create("fluid:testDeltaManager"),
                 false,
@@ -121,7 +123,7 @@ describe("Container Runtime", () => {
                     return {};
                 },
                 processSignal() {},
-            }, true);
+            });
         });
 
         afterEach(() => {
@@ -131,9 +133,10 @@ describe("Container Runtime", () => {
 
         it("Batch messages that take longer than DeltaScheduler's processing time to process", async () => {
             await startDeltaManager();
-            // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
-            // a reference for the number of messages we sent.
-            const count = DeltaScheduler.processingTime * 2;
+            // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
+            // we will send more than one batch ops. This should ensure that the total processing will take more than
+            // DeltaScheduler's processing time.
+            const count = 2;
             const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
@@ -149,24 +152,25 @@ describe("Container Runtime", () => {
 
         it("Non-batch messages that take longer than DeltaScheduler's processing time to process", async () => {
             await startDeltaManager();
-            // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
-            // a reference for the number of messages we sent.
-            const count = DeltaScheduler.processingTime * 2;
+            // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
+            // we will send more than one non-batch ops. This should ensure that we give up the JS turn after each
+            // message is processed.
+            const count = 2;
             const clientId: string = "test-client";
             let numberOfTurns = 1;
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
             await emitMessages(messages);
 
-            // Non-batch messages should take more than one turn. Keep yielding until we get all the
-            // batch events.
+            // Non-batch messages should take more than one turn (`count` turns in this case). Keep yielding until we
+            // get all the batch events.
             while (batchBegin < count) {
                 numberOfTurns++;
                 await yieldEventLoop();
             }
 
-            // Assert that the processing should have happened in more than one turn.
-            assert.strict(numberOfTurns > 1, "The processing should have taken more than one turn");
+            // Assert that the processing should have happened in `count` turns.
+            assert.strictEqual(numberOfTurns, count, "The processing should have taken more than one turn");
 
             // We should have received all the batch events.
             assert.strictEqual(count, batchBegin, "Did not receive correct batchBegin event for the batch");
@@ -176,9 +180,10 @@ describe("Container Runtime", () => {
         it(`A non-batch message followed by batch messages that take longer than
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
-            // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
-            // a reference for the number of messages we sent.
-            const count = DeltaScheduler.processingTime * 2;
+            // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
+            // we will send 1 non-batch op and more that one batch ops. This should ensure that we give up the JS turn
+            // after the non-batch op is processed and then process the batch ops together in the next turn.
+            const count = 3;
             const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
@@ -187,7 +192,15 @@ describe("Container Runtime", () => {
             messages[count - 1].metadata = { batch: false };
             await emitMessages(messages);
 
-            // The messages should be processed in a single turn. So, we should have received the batch events.
+            // We should have received the batch events for the non-batch message in the first turn.
+            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+
+            // Yield the event loop so that the batch messages can be processed.
+            await yieldEventLoop();
+
+            // We should have now received the batch events for the batch ops since they would have processed in
+            // a single turn.
             assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
         });
@@ -195,9 +208,10 @@ describe("Container Runtime", () => {
         it(`Batch messages followed by a non-batch message that take longer than
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
-            // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
-            // a reference for the number of messages we sent.
-            const count = DeltaScheduler.processingTime * 2;
+            // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
+            // we will send more that one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
+            // after the batch ops are processed and then process the non-batch op in the next turn.
+            const count = 3;
             const clientId: string = "test-client";
 
             const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
@@ -206,14 +220,15 @@ describe("Container Runtime", () => {
             messages[count - 2].metadata = { batch: false };
             await emitMessages(messages);
 
-            // We should have only received the batch events for the batch messages in this turn.
+            // We should have received the batch events for the batch messages in the first turn.
             assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
             assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
 
-            // Yield the event loop so that the single non-batch event can be processed.
+            // Yield the event loop so that the single non-batch op can be processed.
             await yieldEventLoop();
 
-            // We should have received the batch events for the non-batch event as well.
+            // We should have now received the batch events for the non-batch op since it would have processed in
+            // a single turn.
             assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
         });

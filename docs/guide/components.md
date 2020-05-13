@@ -94,15 +94,15 @@ easier re-use of HTML-based components along with other rich capabilities such a
 
 Fluid does provide a set of core interfaces on how components can be placed into containers or web experiences.
 
-### Core Rendering (IComponentHTMLVisual):
+### Core Rendering (IComponentHTMLView):
 
-The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLVisual. It supports a single
+The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLView. It supports a single
 method ‘render’, where HTML is written to output the display for the control.
 
 Here is the interface definition:
 
 ```typescript
-export interface IComponentHTMLVisual {
+export interface IComponentHTMLView {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
 ```
@@ -110,7 +110,7 @@ export interface IComponentHTMLVisual {
 Here is a sample implementation:
 
 ```typescript
-class MyDisplayComponent implements IComponentHTMLVisual {
+class MyDisplayComponent implements IComponentHTMLView {
   public render(parent: HTMLElement) {
     if (parent) {
       const div = document.createElement("div");
@@ -134,7 +134,7 @@ export interface IComponentHTMLOptions {
 
 ### Fluid Data Interfaces
 
-For an introduction to the Fluid Data model, please read [What is Fluid?](../../what-is-fluid.md)
+For an introduction to the Fluid Data model, please read [What is Fluid?](../what-is-fluid.md)
 
 The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing the
 `IComponentLoadable` interface.
@@ -201,10 +201,10 @@ export interface IComponentCursor extends IProvideComponentCursor {
 }
 ```
 
-[icomponenthtmlvisual]: ../../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
-[icomponentreactviewable]: ../../api/fluid-aqueduct-react.IComponentReactViewable.md
-[iprovidecomponenthtmlvisual]: ../../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
-[primedcomponent]: ../../api/fluid-aqueduct.PrimedComponent.md
-[shareddirectory]: ../../api/fluid-map.SharedDirectory.md
-[sharedmap]: ../../api/fluid-map.SharedMap.md
-[undo-redo]: ../../api/fluid-undo-redo.md
+[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
+[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
+[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedMap]: ../api/fluid-map.sharedmap.md
+[undo-redo]: ../api/fluid-undo-redo.md

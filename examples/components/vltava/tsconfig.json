@@ -1,21 +1,23 @@
 {
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
-        "esModuleInterop":true,
+        "esModuleInterop": true,
         "target": "es6",
-        "noImplicitAny": false,
-        "noUnusedLocals": true,
         "module": "esnext",
-        "moduleResolution": "node",
         "outDir": "dist",
-        "sourceMap": true,
-        "inlineSources": true,
-        "incremental": true,
         "jsx": "react",
-        "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "node", "react", "react-dom"]
+        "types": [
+            "jest",
+            "puppeteer",
+            "jest-environment-puppeteer",
+            "expect-puppeteer",
+            "react",
+            "react-dom"
+        ]
     },
     "include": [
         "src/**/*"

@@ -155,7 +155,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
                 const insertedText = newText.substring(start, newSelectionAbsolute.end);
 
                 if (insertedText.includes("\n")) {
-                    debugger; //TODO Can you paste newlines?
+                    debugger; // TODO Can you paste newlines?
                 }
 
                 const styleProp = draftStyleToSharedTextProp(editorState.getCurrentInlineStyle());

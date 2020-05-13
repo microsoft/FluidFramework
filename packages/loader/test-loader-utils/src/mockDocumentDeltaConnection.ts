@@ -12,6 +12,7 @@ import {
     INack,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -47,9 +48,10 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     public readonly parentBranch: string | null = null;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";
-    public initialMessages?: ISequencedDocumentMessage[];
-    public initialContents?: IContentMessage[];
-    public initialSignals?: ISignalMessage[];
+    public initialMessages: ISequencedDocumentMessage[] = [];
+    public initialContents: IContentMessage[] = [];
+    public initialSignals: ISignalMessage[] = [];
+    public initialClients: ISignalClient[] = [];
     public readonly serviceConfiguration = DefaultServiceConfiguration;
 
     constructor(
@@ -61,7 +63,7 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     }
 
     public submit(messages: IDocumentMessage[]): void {
-        if (this.submitHandler) {
+        if (this.submitHandler !== undefined) {
             this.submitHandler(messages);
         }
     }
@@ -69,12 +71,12 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
         this.submit(message);
     }
     public submitSignal(message: any): void {
-        if (this.submitSignalHandler) {
+        if (this.submitSignalHandler !== undefined) {
             this.submitSignalHandler(message);
         }
     }
     public disconnect(reason?: string) {
-        this.emit("disconnect", reason || "mock disconnect called");
+        this.emit("disconnect", reason ?? "mock disconnect called");
     }
 
     // Mock methods for raising events

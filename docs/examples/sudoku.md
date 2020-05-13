@@ -14,7 +14,7 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 First, clone the tutorial repository here: <https://github.com/microsoft/fluid-tutorial-sudoku>.
 
@@ -29,7 +29,7 @@ top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
 </vue-markdown>
 
-Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
 
 Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
@@ -38,7 +38,7 @@ Finally, you can open the folder in Visual Studio Code.
 
 ## Acknowledgements
 
-This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) NPM package by Dieter Luypaert
+This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) npm package by Dieter Luypaert
 (<https://github.com/Moeriki>) and the [@types/sudokus](https://www.npmjs.com/package/@types/sudokus) package by Florian
 Keller (<https://github.com/ffflorian>).
 
@@ -59,7 +59,7 @@ The project has the following folder layout:
             sudokuView.tsx
 ```
 
-The _src_ folder contains the source files for the Sudoku Fluid component.
+The _src/fluid-components_ folder contains the source files for the Sudoku Fluid component.
 
 ### Run the sample
 
@@ -131,12 +131,12 @@ in `src/fluidSudoku.tsx`.
 
 ```typescript
 export class FluidSudoku extends PrimedComponent
-  implements IComponentHTMLVisual, IComponentReactViewable {}
+  implements IComponentHTMLView, IComponentReactViewable {}
 ```
 
 This class extends the [PrimedComponent][] abstract base class. Our component is visual, so we need to implement the
-[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. In our case, we want to handle rendering
-ourselves rather than delegate it to another object, so we implement [IComponentHTMLVisual][].
+[IComponentHTMLView][] or [IProvideComponentHTMLView][] interfaces. In our case, we want to handle rendering
+ourselves rather than delegate it to another object, so we implement [IComponentHTMLView][].
 
 Since we are using React, we also implement the [IComponentReactViewable][] interface. This will enable a Fluid host or
 container to use this component both with and without React. A host using React will call the `createJSXElement` method
@@ -168,9 +168,9 @@ public createJSXElement(props?: any): JSX.Element {
 Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
 SudokuView React component as props.
 
-##### IComponentHTMLVisual
+##### IComponentHTMLView
 
-[IComponentHTMLVisual][] requires us to implement the `render()` method, which is straightforward since we're using the
+[IComponentHTMLView][] requires us to implement the `render()` method, which is straightforward since we're using the
 `SudokuView` React component to do the heavy lifting.
 
 ```typescript
@@ -465,10 +465,10 @@ Or check out [other examples](./README.md).
 
 <!-- Links -->
 
-[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
-[icomponentreactviewable]: ../api/fluid-aqueduct-react.IComponentReactViewable.md
-[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
-[primedcomponent]: ../api/fluid-aqueduct.PrimedComponent.md
-[shareddirectory]: ../api/fluid-map.SharedDirectory.md
-[sharedmap]: ../api/fluid-map.SharedMap.md
+[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
+[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
+[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedMap]: ../api/fluid-map.sharedmap.md
 [undo-redo]: ../api/fluid-undo-redo.md

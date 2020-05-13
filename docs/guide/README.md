@@ -15,18 +15,25 @@ development environment to build Fluid Framework solutions. You can use a Window
 
 #### Install NodeJS
 
-Install NodeJS **version 10** or **version 12**.
+Install NodeJS **version 10**.
+
+::: important
+
+You **must** use [NodeJS LTS version 10](https://nodejs.org/dist/latest-v10.x/). The toolchain has a known issue with
+later Node versions.
+
+:::
 
 - If you are using Windows, you can use the msi installers
   ([x86](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x86.msi) or
   [x64](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x64.msi)) for the easiest way to set up NodeJS
   (notice that these direct links evolve over time, so check the latest v10 from the above directory).
-- If you have NodeJS already installed, check that you have the correct version by using `node -v`. It should return
-  version 10.19.0 or 12.16.1.
+- If you have NodeJS already installed, check that you have the correct version by running `node -v`. It should return
+  version 10.19.0.
 
 ::: tip
 
-If you do not have NodeJS already installed, we stringly recommend using nvm to simplify installing and managing
+If you do not have NodeJS already installed, we strongly recommend using nvm to simplify installing and managing
 multiple NodeJS versions.
 
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)
@@ -40,7 +47,7 @@ If you are using Windows, install vsts-npm-auth globally using the following com
 
 `npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false`
 
-This tool is used to simplify the use of [authenticated NPM feeds](./package-feed.md).
+This tool is used to simplify the use of [authenticated npm feeds](./package-feed.md).
 
 #### Install a code editor
 
@@ -54,7 +61,7 @@ You can use any code editor or IDE that supports TypeScript to build with Fluid,
 
 You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples/README.md).
 
-#### Install a Chromium-based browser
+#### Install a modern browser
 
 !!!include(browsers.md)!!!
 

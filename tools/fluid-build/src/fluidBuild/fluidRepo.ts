@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { Package, Packages } from "../common/npmPackage";
-import {
-    globFn,
-    rimrafWithErrorAsync,
-    ExecAsyncResult,
-    execWithErrorAsync,
-} from "../common/utils";
+import { globFn } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
 import { FluidRepoBase } from "../common/fluidRepoBase";
+import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
+import { logVerbose } from "../common/logging";
+import { MonoRepo } from "../common/monoRepo";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -24,18 +21,6 @@ export interface IPackageMatchedOptions {
 };
 
 export class FluidRepo extends FluidRepoBase {
-
-    private readonly packageInstallDirectories = [
-        path.join(this.resolvedRoot, "common/build/build-common"),
-        path.join(this.resolvedRoot, "common/build/eslint-config-fluid"),
-        path.join(this.resolvedRoot, "common/lib/common-definitions"),
-        path.join(this.resolvedRoot, "common/lib/common-utils"),
-    ];
-    private readonly monoReposInstallDirectories = [
-        path.join(this.resolvedRoot),
-        this.serverDirectory,
-    ];
-
     constructor(resolvedRoot: string) {
         super(resolvedRoot);
     }
@@ -44,24 +29,10 @@ export class FluidRepo extends FluidRepoBase {
         return Packages.clean(this.packages.packages, false);
     }
 
-    public async install(nohoist: boolean) {
-        if (nohoist) {
-            return this.packages.noHoistInstall(this.resolvedRoot);
-        }
-        const installScript = "npm i";
-        const installPromises: Promise<ExecAsyncResult>[] = [];
-        for (const dir of [...this.packageInstallDirectories, ...this.monoReposInstallDirectories]) {
-            installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
-        }
-        const rets = await Promise.all(installPromises);
-
-        return !rets.some(ret => ret.error);
-    }
-
     public async uninstall() {
         const cleanPackageNodeModules = this.packages.cleanNodeModules();
         const removePromise = Promise.all(
-            this.monoReposInstallDirectories.map(dir => rimrafWithErrorAsync(path.join(dir, "node_modules"), dir))
+            [this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall()]
         );
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
@@ -86,19 +57,17 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        if (options.server) {
-            return this.matchWithFilter(pkg => pkg.directory.startsWith(this.serverDirectory));
-        }
-
-        // Default to client and example packages
-        return this.matchWithFilter(
-            pkg => pkg.directory.startsWith(this.clientDirectory) || pkg.directory.startsWith(this.exampleDirectory)
-        );
+        const matchMonoRepo = options.server ? MonoRepoKind.Server : MonoRepoKind.Client;
+        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
     }
 
-    public async checkScripts(fix: boolean) {
+    public async checkPackages(fix: boolean) {
         for (const pkg of this.packages.packages) {
-            FluidPackageCheck.checkScripts(this, pkg, fix);
+            if (FluidPackageCheck.checkScripts(this, pkg, fix)) {
+                await pkg.savePackageJson();
+            }
+            await FluidPackageCheck.checkNpmIgnore(pkg, fix);
+            await FluidPackageCheck.checkTsConfig(pkg, fix);
         }
     }
     public async depcheck() {
@@ -126,12 +95,11 @@ export class FluidRepo extends FluidRepoBase {
         return result.reduce((sum, value) => sum + value);
     }
 
-    public createBuildGraph(options: ISymlinkOptions, buildScript: string) {
-        return new BuildGraph(this.packages.packages, buildScript,
+    public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
+        return new BuildGraph(this.packages.packages, buildScriptNames,
             (pkg: Package) => {
-                const monoRepo = this.getMonoRepo(pkg);
                 return (dep: Package) => {
-                    return options.fullSymlink || this.isSameMonoRepo(monoRepo, dep);
+                    return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
                 }
             });
     }
@@ -139,7 +107,8 @@ export class FluidRepo extends FluidRepoBase {
     private matchWithFilter(callback: (pkg: Package) => boolean) {
         let matched = false;
         this.packages.packages.forEach((pkg) => {
-            if (callback(pkg)) {
+            if (!pkg.matched && callback(pkg)) {
+                logVerbose(`${pkg.nameColored}: matched`);
                 pkg.setMatched();
                 matched = true;
             }

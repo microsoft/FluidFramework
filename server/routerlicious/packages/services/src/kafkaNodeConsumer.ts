@@ -5,42 +5,56 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { IConsumer, IPartition, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import {
+    IConsumer,
+    IPartition,
+    IQueuedMessage,
+    IZookeeperClient,
+    IPartitionWithEpoch } from "@microsoft/fluid-server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
+import { ZookeeperClient } from "./zookeeperClient";
 
 // time before reconnecting after an error occurs
 const defaultReconnectDelay = 5000;
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafka.KafkaClient;
-    private offset: kafka.Offset;
     private consumerGroup: kafka.ConsumerGroup;
     private readonly events = new EventEmitter();
+    private readonly zookeeper: IZookeeperClient;
 
     constructor(
         private readonly clientOptions: kafka.KafkaClientOptions,
         clientId: string,
         public readonly groupId: string,
         public readonly topic: string,
+        private readonly zookeeperEndpoint?: string,
         private readonly topicPartitions?: number,
         private readonly topicReplicationFactor?: number,
         private readonly reconnectDelay: number = defaultReconnectDelay) {
         clientOptions.clientId = clientId;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connect();
+        if (zookeeperEndpoint) {
+            this.zookeeper = new ZookeeperClient(zookeeperEndpoint);
+        }
     }
 
     public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
-        const commitRequest = [{
+        // Although tagged as optional, kafka-node requies a value in the metadata field.
+        // Also logs are replayed from the last checkponited offset. To avoid reprocessing the last message
+        // twice, we checkpoint at offset + 1.
+        const commitRequest: kafka.OffsetCommitRequest[] = [{
+            metadata: "m",
             offset: queuedMessage.offset + 1,
             partition: partitionId,
             topic: this.topic,
         }];
 
         return new Promise<void>((resolve, reject) => {
-            this.offset.commit(this.groupId, commitRequest, (err, data) => {
+            this.consumerGroup.sendOffsetCommitRequest(commitRequest, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -53,6 +67,9 @@ export class KafkaNodeConsumer implements IConsumer {
     public async close(): Promise<void> {
         await util.promisify(((callback) => this.consumerGroup.close(false, callback)) as any)();
         await util.promisify(((callback) => this.client.close(callback)) as any)();
+        if (this.zookeeperEndpoint) {
+            this.zookeeper.close();
+        }
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -70,8 +87,6 @@ export class KafkaNodeConsumer implements IConsumer {
 
     private async connect() {
         this.client = new kafka.KafkaClient(this.clientOptions);
-        this.offset = new kafka.Offset(this.client);
-
         const groupId = this.groupId;
 
         try {
@@ -119,9 +134,18 @@ export class KafkaNodeConsumer implements IConsumer {
             this.events.emit("rebalancing", this.getPartitions(payloads));
         });
 
-        this.consumerGroup.on("rebalanced", () => {
+        this.consumerGroup.on("rebalanced", async () => {
             const payloads = (this.consumerGroup as any).topicPayloads;
-            this.events.emit("rebalanced", this.getPartitions(payloads));
+            const partitions = this.getPartitions(payloads);
+
+            let partitionsWithEpoch: IPartitionWithEpoch[];
+            try {
+                partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
+            } catch (err) {
+                this.events.emit("error", err);
+            }
+
+            this.events.emit("rebalanced", partitionsWithEpoch);
         });
 
         this.consumerGroup.on("message", (message: any) => {
@@ -143,5 +167,24 @@ export class KafkaNodeConsumer implements IConsumer {
             partition: parseInt(partition.partition, 10),
             topic: partition.topic,
         }));
+    }
+
+    private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
+        if (this.zookeeperEndpoint) {
+            const epochsP = new Array<Promise<number>>();
+            for (const partition of partitions) {
+                epochsP.push(this.zookeeper.getPartitionLeaderEpoch(this.topic, partition.partition));
+            }
+            const epochs = await Promise.all(epochsP);
+            const partitionsWithEpoch: IPartitionWithEpoch[] = [];
+            for (let i = 0; i < partitions.length; ++i) {
+                const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
+                partitionWithEpoch.leaderEpoch = epochs[i];
+                partitionsWithEpoch.push(partitionWithEpoch);
+            }
+            return partitionsWithEpoch;
+        } else {
+            return new Array(partitions.length).fill(0);
+        }
     }
 }

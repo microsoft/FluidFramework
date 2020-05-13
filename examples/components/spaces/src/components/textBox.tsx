@@ -9,16 +9,14 @@ import {
 import {
     CollaborativeTextArea,
 } from "@microsoft/fluid-aqueduct-react";
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 export const TextBoxName = `textbox`;
+export const FriendlyTextBoxName = "Text Box";
 
 /**
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
@@ -29,15 +27,16 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     public get IComponentReactViewable() { return this; }
 
     private static readonly factory =  new PrimedComponentFactory(
+        TextBoxName,
         TextBox,
         [SharedString.getFactory()],
-    );
+        {});
 
     public static getFactory() {
         return TextBox.factory;
     }
 
-    private text: SharedString;
+    private text: SharedString | undefined;
 
     /**
      * Do creation work
@@ -77,7 +76,8 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
      * Since this returns a JSX.Element it allows for an easier model.
      */
     public createJSXElement(): JSX.Element {
-        return <CollaborativeTextArea sharedString={this.text} />;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return <CollaborativeTextArea sharedString={this.text!} />;
     }
 
     // end IComponentReactViewable

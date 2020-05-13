@@ -4,8 +4,12 @@
  */
 
 // Fluid
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // React
 import * as React from "react";
@@ -16,6 +20,8 @@ import { Player, NoteProperties } from "./Player";
 import { PianoUtility } from "./PianoUtility";
 import { DAW } from "./daw";
 
+const musicaName = "@fluid-example/musica";
+
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
@@ -24,10 +30,9 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.player = new Player(audioContext);
-
     }
 
-    private player: Player;
+    private player: Player | undefined;
 
     public render(div: HTMLDivElement) {
         const reactRender = () => {
@@ -75,8 +80,9 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
    * Applies the given setting to the key corresponding to the given midi number.
    */
     private execPressKey(note: NoteProperties, clientId: string) {
-    // Make the sound.
-        this.player.playNote(note);
+        // Make the sound.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.player!.playNote(note);
 
         // Update visuals.
         const key = PianoUtility.findKeyFromMidiNumber(note.midiNumber);
@@ -90,18 +96,20 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
    * Stops the note for the given midi number.
    */
     private execStopNote(_midiNumber: number) {
-    // TODO: Stop the sound.
+        // TODO: Stop the sound.
     }
 }
 
 export const MusicaInstantiationFactory = new PrimedComponentFactory(
+    musicaName,
     Musica,
     [],
+    {},
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/musica",
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    musicaName,
     new Map([
-        ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
+        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

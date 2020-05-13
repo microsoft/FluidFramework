@@ -50,16 +50,22 @@ export interface ExecAsyncResult {
     stdout: string;
     stderr: string;
 }
-export async function execAsync(command: string, options: child_process.ExecOptions): Promise<ExecAsyncResult> {
+
+export async function execAsync(command: string, options: child_process.ExecOptions, pipeStdIn?: string): Promise<ExecAsyncResult> {
     return new Promise((resolve, reject) => {
-        child_process.exec(command, options, (error, stdout, stderr) => {
+        const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
-        })
+        });
+        
+        if (pipeStdIn) {
+            p.stdin.write(pipeStdIn);
+            p.stdin.end();
+        }
     });
 }
 
-export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string, warning: boolean = true): Promise<ExecAsyncResult> {
-    const ret = await execAsync(command, options);
+export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string, warning: boolean = true, pipeStdIn?: string): Promise<ExecAsyncResult> {
+    const ret = await execAsync(command, options, pipeStdIn);
     printExecError(ret, command, errorPrefix, warning);
     return ret;
 }
@@ -86,4 +92,47 @@ function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: stri
         console.warn(`${errorPrefix}: warning during command ${command}`);
         console.warn(`${errorPrefix}: ${ret.stderr}`);
     }
+}
+
+export function resolveNodeModule(basePath: string, lookupPath: string) {
+    let currentBasePath = basePath;
+    while (true) {
+        const tryPath = path.join(currentBasePath, "node_modules", lookupPath);
+        if (existsSync(tryPath)) {
+            return tryPath;
+        }
+        const nextBasePath = path.resolve(currentBasePath, "..");
+        if (nextBasePath === currentBasePath) {
+            break;
+        }
+        currentBasePath = nextBasePath;
+    }
+    return undefined;
+}
+
+export async function readJsonAsync(filename: string) {
+    const content = await readFileAsync(filename, "utf-8");
+    return JSON.parse(content);
+}
+
+export function readJsonSync(filename: string) {
+    const content = fs.readFileSync(filename, "utf-8");
+    return JSON.parse(content);
+}
+
+export async function lookUpDir(dir: string, callback: (currentDir: string) => boolean | Promise<boolean>) {
+    let curr = dir;
+    while (true) {
+        if (await callback(curr)) {
+            return curr;
+        }
+
+        const up = path.resolve(curr, "..");
+        if (up === curr) {
+            break;
+        }
+        curr = up;
+    }
+
+    return undefined;
 }

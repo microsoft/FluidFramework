@@ -6,9 +6,12 @@
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { Spaces } from "@fluid-example/spaces/dist/spaces";
-
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    Spaces,
+    IContainerComponentDetails,
+    IComponentRegistryDetails,
+} from "@fluid-example/spaces";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentRegistry,
@@ -18,13 +21,11 @@ import {
 
 import {
     Anchor,
+    AnchorName,
     TabsComponent,
     Vltava,
+    VltavaName,
 } from "./components";
-import {
-    IComponentRegistryDetails,
-    IContainerComponentDetails,
-} from "./interfaces";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -35,20 +36,28 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory>>
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>>
     {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );
-        if (index >= 0){
+        if (index >= 0) {
             return this.containerComponentArray[index].factory;
         }
 
         return undefined;
     }
 
-    public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
-        return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
+    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter(
+            (componentDetails) =>componentDetails.capabilities.includes(capability));
+    }
+
+    public hasCapability(type: string, capability: keyof IComponent) {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
+        return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
 }
 
@@ -57,35 +66,35 @@ const generateFactory = () => {
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
             factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
             factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
@@ -97,8 +106,8 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -106,7 +115,7 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new SimpleModuleInstantiationFactory(
+    return new ContainerRuntimeFactoryWithDefaultComponent(
         "anchor",
         [
             ...containerComponents,

@@ -1,22 +1,260 @@
-# 0.14 Breaking Changes
+# Breaking changes
+
+## 0.16 Breaking Changes
+
+- [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
+- [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
+- [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
+- [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
+- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [Providers in Aqueduct](#Providers-in-Aqueduct)
+- [Event Emitter Changes](#Event-Emitter-Changes)
+- [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
+- [Changes to TestResolver's `resolve` method](#Changes-to-TestResolver's-resolve-method)
+- [Changes to TestHost's `createAndAttachComponent` and `getComponent` methods](#Changes-to-TestHost's-createAndAttachComponent-and-getComponent-methods)
+
+### View interfaces moved to separate package
+
+View-related interfaces have been moved to package `@microsoft/fluid-view-interfaces`.  This includes `IComponentHTMLView`, `IComponentHTMLVisual`, `IComponentHTMLOptions`, `IComponentReactViewable`, and their related "provide" interfaces.
+
+### `IComponent*` Interfaces should now have string literal identifiers
+
+This change is non-breaking, but an update to our IComponent interface paradigm. Interfaces that use module augmentation on IComponent should export a string literal const with the same name as the interface.
+
+This const provides two benefits:
+
+1. This additional syntax will provide circular type safety so it's hared to mix up typings.
+2. This string can be used as a global runtime identifier for the interface. Since interfaces are a TypeScript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
+
+#### Old Pattern
+
+```typescript
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> { }
+}
+
+export interface IProvideComponentFoo {
+    readonly IComponentFoo: IComponentFoo;
+}
+
+export interface IComponentFoo extends IProvideComponentFoo {
+    bar()
+}
+```
+
+#### New Pattern
+
+```typescript
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> { }
+}
+
+export const IComponentFoo: keyof IProvideComponentFoo  = "IComponentFoo";
+
+export interface IProvideComponentFoo {
+    readonly IComponentFoo: IComponentFoo;
+}
+
+export interface IComponentFoo extends IProvideComponentFoo {
+    bar()
+}
+```
+
+### SharedComponentFactory and PrimedComponentFactory changes
+
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### PrimedComponent and SharedComponent interface changes
+
+There have been a few changes to the exposed interfaces on Primed & SharedComponents so that the id of components is generated uniquely by the runtime. Components can instead implement IComponentLoadable and be stored and retrieved from DDS' using their handles.
+1. createAndAttachComponent no longer has an id first parameter. This is to enforce a unique generation of the id by the runtime itself
+2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
+directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
+
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored.
+Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
+
+### Change to the ErrorType enum on IError
+
+`ErrorType.connectionError` has been replaced by the more granular set of `genericNetworkError`, `accessDeniedError`, and `fileNotFoundError`.
+
+Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
+they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
+
+### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+
+The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+
+### ContainerRuntime and LocalComponentContext createProps removal
+
+⚠️ There are additional changes in this area in 0.17 that obsolete this guidance and should be used instead when available.
+
+<details>
+<summary>Expand old guidance</summary>
+
+Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Override the constructor for the component to provide an optional initial state option.
+```typescript
+public constructor(
+    runtime: IComponentRuntime,
+    context: IComponentContext,
+    private initialState?: IClickerInitialState,
+) {
+    super(runtime, context);
+}
+```
+3. Implement `componentInitializingFirstTime()` in the component to optionally consume the initial state.
+4. Extend `PrimedComponentFactory` and override `createComponent(...)` to take an initial state object.  Wrap a call to the component constructor with the initial state in a function, and pass it to `super.createComponentWithConstructorFn(...)`.
+```typescript
+export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: IClickerInitialState,
+    ): Promise<IComponent & IComponentLoadable> {
+        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
+            return new ClickerWithInitialValue(r, c, initialState);
+        };
+        return super.createComponentWithConstructorFn(context, ctorFn);
+    }
+}
+```
+Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+</details>
+
+### Providers in Aqueduct
+
+Aqueduct now supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
+into the Container.
+
+Because of this change developers that consume `SharedComponentFactory` or `PrimedComponentFactory` now have to modify their signature to include the symbols for providers they are including. For integration there will be no symbols so it will be an empty object.
+
+```typescript
+export const MyClickerFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
+    Clicker,
+    [], // Distributed Data Structures
+    {}, // Provider Symbols
+);
+```
+
+See Aqueduct README for further details.
+
+### Event Emitter Changes
+
+We are moving to event emitters which include strong typing. So far this has been done for the following interfaces
+ - IQuorum
+ - ISharedObject
+
+ For the updated interface we will now be only supporting a minimal interface for listening to events, which includes: once, on, and off
+ We recommend switching instances of addListener, and removeListener to on and off respectivly.
+
+### WebCodeLoader Resolver & Seeding
+The web code loader's constructor now take a resolver, and is no longer directly coupled to veradccio. To load from verdaccio you should pass in the a new SemVerCdnCodeResolver which encapsulates the logic for loading from cdn's that support semantic versioning, like verdaccio.
+
+In addition we have fixed bugs and simplfied how module seeding works in the web code loader. Previously, seeded modules did not have their entrypoint protected from
+overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
+
+See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
+
+### Changes to TestResolver's `resolve` method
+TestResolver's `resolve` method now parses the URL in the passed request to get the ID of the container. It is the first part of the path in the URL.
+
+For example, in `http://localhost/fluidFrameworkDocument/componentId`, the container ID will be `fluidFrameworkDocument`.
+
+If a URL of this format is not passed to `resolve`, it will fail.
+
+This enables TestResolver to be used to resolve multiple Containers and not be bound to a single Container.
+
+### Changes to TestHost's `createAndAttachComponent` and `getComponent` methods
+TestHost's `createAndAttachComponent` and `getComponent` have been modified because of the changes in PrimedComponent / SharedComponent as detailed [here](#PrimedComponent-and-Shared-Component-interface-changes).
+
+`createAndAttachComponent` still accepts an `id` as before. However, it does not create a component with the given `id`. Instead, it creates a component and then sets the component's `handle` againt the `id` in a SharedDirectory.
+
+`getComponent` gets the `handle` for the given `id` from the SharedDirectory and then gets the component from the `handle`.
+
+This means that `getComponent` can only be used to get the component that was created via `createAndAttachComponent`.
+
+
+## 0.15 Breaking Changes
+
+- [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
+- [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
+- [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
+- [Base host no longer renders](#Base-host-no-longer-renders)
+
+### `getComponentRuntime` no longer on `IComponentContext`
+
+We've removed `getComponentRuntime` on `IComponentContext` and subsequently `ComponentContext`. Developers should not be getting the
+`ComponentRuntime` of other components. If you want to get another component you can currently store a `handle` to that component or you
+can get it via a `request(...)` to the ContainerRuntime.
+
+If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
+`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+scenario.
+
+### Container.reconnect, Container.reconnect changes
+
+autoReconnect property is gone, as well as reconnect() method.
+Use Container.setAutoReconnect() instead.
+
+Note that there is difference in behavior. It used to be that one needed to do
+
+```typescript
+Container.autoReconnect = false;
+Container.reconnect()
+```
+
+in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is enough.
+
+### 0.13 backwards compatibility removed
+
+- The following changes break compatibility between loader and runtime, meaning 0.15 loader cannot load 0.13 runtime and 0.13 loader cannot load 0.15 runtime:
+    - While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` and `ContainerRuntime` would not correctly handle being passed `baseSnapshot` as `null` in 0.13 and below, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
+    - `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned in 0.13 and below. This `IRuntimeState` can be an empty object, but cannot be null.
+
+### Base host no longer renders
+
+`BaseHost.start()` and `BaseHost.loadAndRender()` have been removed.  They have been replaced by `initializeContainer()`, which similarly resolves a container at the url provided and initializes it with the package provided if needed, but does not perform any rendering.
+
+To facilitate rendering `getComponent()` has also been added, which requests the component at the given url.  Once you've requested a component, you can take whatever steps you would like to render it (e.g. querying its interfaces or passing it into an adapter like `ReactAdapter` or `HTMLViewAdapter` from `@microsoft/fluid-view-adapters`).
+
+## 0.14 Breaking Changes
 
 - [Packages move and renamed](#packages-moved-and-renamed)
 - [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
-- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader--0.8)
 - [New Error types](#new-error-types)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
-- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext---createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
 - [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
 
-## Packages move and renamed
+### Packages moved and renamed
 
-### `fluid-core-utils` package renamed
+#### `fluid-core-utils` package renamed
 
 The package name is changed to `fluid-common-utils` to make it parallel to `fluid-common-definitions`
 
-### `fluid-local-test-server` package move and rename
+#### `fluid-local-test-server` package move and rename
 
 The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
 
@@ -28,7 +266,9 @@ TestDocumentServiceFactory
 TestResolver
 ```
 
-The following classes / interfaces have been renamed and have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+The following classes / interfaces have been renamed and have moved from `@microsoft/fluid-local-test-server` in
+`./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+
 ```text
 ITestDeltaConnectionServer -> ILocalDeltaConnectionServer
 TestDeltaConnectionServer -> LocalDeltaConnectionServer
@@ -42,63 +282,76 @@ The following packages have been renamed in `./packages`:
 @microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
 ```
 
-### `samples` and `chaincode` directories have been renamed to `examples` and `components` respectively
+#### `samples` and `chaincode` directories have been renamed to `examples` and `components` respectively
 
 The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
 
-## Top-level `type` on `IClient` removed
+### Top-level `type` on `IClient` removed
 
 The `type` field on `IClient` has been removed.
 
-## Remove back-compat support for loader <= 0.8
+### Remove back-compat support for loader <= 0.8
 
 Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
 Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 
-## New Error types
+### New Error types
+
 The following new error interfaces have been added:
+
 - `IWriteError` is thrown when ops are sent on a read-only document
 - `IFatalError` is thrown when a fatal error (500) is received from ODSP
 
-## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
+### `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
 
-The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
+The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature
+has been updated. The new function signature is as below:
+
 ```typescript
 public async createComponent(
         pkgOrId: string | undefined,
         pkg?: string,
         props?: any) {
 ```
-It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. However, ID is being deprecated so prefer passing undefined in its place (the runtime will generate an ID in this case). This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
+
+It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now.
+However, ID is being deprecated so prefer passing undefined in its place (the runtime will generate an ID in this case).
+This API will now attempt to create the specified package off the current sub-registry and if that fails, it will
+attempt to create it off the global registry.
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
-## `IComponentHandle` - Type parameter moved
+### `IComponentHandle` - Type parameter moved
+
 The type parameter previously on the `get()` method has moved to the `IComponentHandle` type.
 
 Old:
+
 ```ts
     map.get<IComponentHandle>(..).get<ISharedMap>();
 ```
+
 New:
+
 ```ts
     map.get<IComponentHandle<ISharedMap>>(..).get();
 ```
 
-## Changes to the render interfaces
+### Changes to the render interfaces
 
 The rendering interfaces have undergone several changes:
+
 - `IComponentHTMLRender` has been removed.  `IComponentHTMLView` now has a `render()` member, and `IComponentHTMLVisual` does not.  If your component renders, it should probably be an `IComponentHTMLView`.
 - Since `IComponentHTMLVisual` now only has the member `addView()`, it is mandatory.  If your component does not already implement `addView`, it should not be an `IComponentHTMLVisual`.
 - On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
 - `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.  You must implement the `IComponentHTMLView` member if you implement the interface.
 
-## Old runtime container cannot load new components
+### Old runtime container cannot load new components
 
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
 
-## PrimedComponent and SharedComponent interfaces are now more restrictive
+### PrimedComponent and SharedComponent interfaces are now more restrictive
 The following class variables have been changed from public -> protected
 In PrimedComponent:
 - root
@@ -108,9 +361,9 @@ In SharedComponent:
 - asComponent
 If you still need to access these methods, you can still do so by overloading the needed method in your class
 and making it public.
-An example of this can be seen in primedComponent.spec.ts 
+An example of this can be seen in primedComponent.spec.ts
 
-# 0.13 Breaking Changes
+## 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
 - [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
@@ -118,7 +371,7 @@ An example of this can be seen in primedComponent.spec.ts
 New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
 It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
 
-## Fluid Packages Require Consumers on TypeScript `>=3.6`
+### Fluid Packages Require Consumers on TypeScript `>=3.6`
 
 Fluid now requires consumers of our packages to use a TypeScript compiler version `>=3.6`. The Fluid `./packages` repo has upgraded to TypeScript `3.7.4`. TypeScript 3.7 has a breaking change to the `.d.ts` format having to do with getters and setters and is part of an effort to do [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations).
 
@@ -130,14 +383,14 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
-## IHost interface removed, Loader constructor signature updated
+### IHost interface removed, Loader constructor signature updated
 
 The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
 
-# 0.12 Breaking Changes
+## 0.12 Breaking Changes
 
 - [Packages moved from packages to server](#Packages-moved-from-packages-to-server)
 - [LoaderHeader enum moved from @microsoft/fluid-container-loader to @microsoft/fluid-container-definitions](#LoaderHeader-moved-to-fluid-container-definitions)
@@ -146,7 +399,7 @@ The IHost interface has been removed.  This primarily impacts the signature of t
 - [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
 - [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)
 
-## Packages moved from packages to server
+### Packages moved from packages to server
 
 There are a collection of packages that have moved from `./packages` to `./server`. This means these packages are now being versioned with the `./server` folder and not with the existing `./ packages` folder.
 
@@ -166,11 +419,11 @@ There are a collection of packages that have moved from `./packages` to `./serve
 @microsoft/fluid-server-test-utils
 ```
 
-## LoaderHeader moved to fluid-container-definitions
+### LoaderHeader moved to fluid-container-definitions
 
 `LoaderHeader` enum is a shared definitions between the runtime and the loader and is moved to fluid-container-definitions from fluid-container-loader
 
-## Driver interfaces moved to fluid-driver-definitions
+### Driver interfaces moved to fluid-driver-definitions
 
 The following interfaces/types have been moved to `@microsoft/fluid-protocol-definitions`:
 
@@ -225,19 +478,19 @@ OnlineStatus
 readAndParse
 ```
 
-## Top-level `type` on `IClient` deprecated
+### Top-level `type` on `IClient` deprecated
 
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
 
-## Support for `IFluidResolvedUrl.type` === "prague" removed
+### Support for `IFluidResolvedUrl.type` === "prague" removed
 
 As previously mentioned, `IFluidResolvedUrl.type` should now be "fluid". Backwards compatibility for type "prague" has now been removed.
 
-## `connect` header replaced with `pause` header; ability to load closed containers removed
+### `connect` header replaced with `pause` header; ability to load closed containers removed
 
 The comma-separated string `connect` header has been replaced with the boolean `pause` header. `pause: true` is equivalent to `connect: "open,pause"` and `pause: false` is equivalent to `connect: "open"`. If undefined, container will start unpaused. It is no longer possible to load a closed container. Instead, use a paused container.
 
-# 0.11 Breaking Changes
+## 0.11 Breaking Changes
 
 - [SequenceEvent start/end replaced with first/last](#SequenceEvent-startend-replaced-with-firstlast)
 - [Undefined keys and subdirectory names on SharedMap and SharedDirectory throw](#Undefined-keys-and-subdirectory-names-on-SharedMap-and-SharedDirectory-throw)
@@ -246,15 +499,15 @@ The comma-separated string `connect` header has been replaced with the boolean `
 - [`ContainerRuntime.load` now takes an array of requestHandlers instead of a createRequestHandler function](#ContainerRuntime.load-now-takes-an-array-of-requestHandlers-instead-of-a-createRequestHandler-function)
 - [`Loader` constructor takes a `Map<string, IProxyLoaderFactory>`](#Loader-constructor-takes-a-Mapstring-IProxyLoaderFactory)
 
-## SequenceEvent start/end replaced with first/last
+### SequenceEvent start/end replaced with first/last
 
 The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
 
-## Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
+### Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
 
 Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirectory, or creating a subdirectory with name `undefined` would appear to succeed but would cause inconsistencies in snapshotting.  This will now throw immediately upon trying to set an `undefined` key or subdirectory name.
 
-## SharedComponent extends IComponentHandles
+### SharedComponent extends IComponentHandles
 
 You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component samples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
 
@@ -262,7 +515,7 @@ Component handles that are stored on a SharedObject will become attached when th
 
 > Note: Components can currently still be created and retrieved via the container. This is not technically a breaking change.
 
-### Creating and Storing a Component
+#### Creating and Storing a Component
 
 Below we create a new component and store it directly in the root SharedDirectory
 
@@ -279,7 +532,8 @@ Below we are retrieving the Component from the root map.
 ```typescript
 const clicker = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
 ```
-## Remove ComponentFactoryTypes and ComponentRegistryTypes
+
+### Remove ComponentFactoryTypes and ComponentRegistryTypes
 
 Removed ComponentFactoryTypes and ComponentRegistryTypes. These types created problems as they broke feature discovery via the IComponent pattern.
 
@@ -288,13 +542,15 @@ ComponentFactoryTypes are un-used as the non-IComponent pattern has been depreca
 ComponentRegistryTypes should no longer be needed, as we now accept NamedComponentRegistryEntries which is compatible with getter version of ComponentRegistryTypes.
 For IComponentRegistrys you should make then named registries in the NamedComponentRegistryEntries.
 
-## `ContainerRuntime.load` now takes an array of requestHandlers instead of a createRequestHandler function
+### `ContainerRuntime.load` now takes an array of requestHandlers instead of a createRequestHandler function
+
 Instead of passing it a createRequestHandler function, passit an array of requestHandlers.
 
-## `Loader` constructor takes a `Map<string, IProxyLoaderFactory>`
+### `Loader` constructor takes a `Map<string, IProxyLoaderFactory>`
+
 Pass in a new Map<string, IProxyLoaderFactory>.
 
-# 0.10 Breaking Changes
+## 0.10 Breaking Changes
 
 - [`@fluid-example/tiny-web-host` prague -> fluid changes](#fluid-exampletiny-web-host-prague---fluid-changes)
 - [prague URIs changed to fluid](#prague-URIs-changed-to-fluid)
@@ -308,21 +564,28 @@ Pass in a new Map<string, IProxyLoaderFactory>.
 - [`IComponentForge` no longer necessary](#icomponentforge-no-longer-necessary)
 
 
-## `@fluid-example/tiny-web-host` prague -> fluid changes
+### `@fluid-example/tiny-web-host` prague -> fluid changes
+
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@fluid-example/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
 
-## prague URIs changed to fluid
+### prague URIs changed to fluid
+
 `prague://` and `prague-odsp://` URIs have been changed to `fluid://` and `fluid-odsp://` respectively.
 
-## DistributedSet removed
+### DistributedSet removed
+
 The DistributedSet value type has been removed.
 
-## `Stream` renamed to `Ink`
+### `Stream` renamed to `Ink`
+
 The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@microsoft/fluid-ink`.
 
-## insertAtReferencePosition
+### insertAtReferencePosition
+
 insertSiblingSegment has been removed and insertAtReferencePosition has been added.
+
 Before:
+
 ```typescript
     const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
     const insertOp = this.sequence.client.insertSiblingSegment(sg, insertSegment);
@@ -330,28 +593,38 @@ Before:
         this.sequence.submitSequenceMessage(insertOp);
     }
 ```
+
 After:
+
 ```typescript
     const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
     this.sequence.insertAtReferencePosition(
             this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
             insertSegment);
 ```
-## MergeTree Client No Longer Public on Sequence
+
+### MergeTree Client No Longer Public on Sequence
+
 The client property is not longer public on sequence. All existing and supported functionality should be used off sequence itself.
 
-## `.createValueType` replaces third argument to `.set`
+### `.createValueType` replaces third argument to `.set`
+
 Previously, to create a value type on an ISharedMap or IDirectory you would pass a third type argument to `.set`.  This functionality has been moved to a separate API, `.createValueType`.
+
 Before:
+
 ```typescript
 myMap.set("myKey", 0, CounterValueType.Name);
 ```
+
 After:
+
 ```typescript
 myMap.createValueType("myKey", CounterValueType.Name, 0);
 ```
 
-## Package rename
+### Package rename
+
 The following packages have been renamed:
 
 | old name                              | new name                                   |
@@ -449,10 +722,11 @@ The following packages have been renamed:
 | @prague/auspkn                        | @fluid-internal/auspkn                     |
 | @prague/service                       | @fluid-internal/server-service             |
 
-## Support for IPraguePackage removed
+### Support for IPraguePackage removed
+
 Support for IPraguePackage and the `"prague"` entry in `package.json` has been removed. It has been replaced by IFluidPackage and a `"fluid"` entry in `package.json`:
 
-```
+```json
 "fluid": {
     "browser": {
       "umd": {
@@ -465,24 +739,25 @@ Support for IPraguePackage and the `"prague"` entry in `package.json` has been r
   },
 ```
 
-## `IComponentForge` no longer necessary
+### `IComponentForge` no longer necessary
 
 `IComponentForge` is no longer necessary. If you use Aqueduct for your component, Component initialization will be done automatically on creation, so no need to call `IComponentForge.forge` explicitly any more.  If you implement IComponentForge, simply remove it.
 
-# 0.9 Breaking Changes (August 26, 2019)
+## 0.9 Breaking Changes (August 26, 2019)
 
 - [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
 - [Handles to SharedObjects must be used on map sets](#handles-to-sharedobjects-must-be-used-on-map-sets)
 - [`mergeTree` is now protected on `MergeTree.Client`](#mergetree-is-now-protected-on-mergetree.client)
 - [No more Value Type registration](#no-more-value-type-registration)
 
-## PrimedComponent root is now a SharedDirectory
+### PrimedComponent root is now a SharedDirectory
 
 Previously, the root provided by `PrimedComponent` was a `SharedMap`.  Now it is a `SharedDirectory`.
 
 This should be compatible for usage (e.g. existing calls to `get`, `set`, `wait`, etc. should work as before), but explicit type checks against `SharedMap` or `ISharedMap` should be updated to `SharedDirectory` and `ISharedDirectory` respectively.  Additionally, if your component is currently using a `SharedComponentFactory` you'll want to instead use a `PrimedComponentFactory` which will register the correct root factories on your behalf.
 
 Before:
+
 ```typescript
 export const ClickerInstantiationFactory = new SharedComponentFactory(
   Clicker,
@@ -493,6 +768,7 @@ export const ClickerInstantiationFactory = new SharedComponentFactory(
 ```
 
 After:
+
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
   Clicker,
@@ -502,14 +778,14 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 
 Alternatively you can register the `SharedDirectory` factory yourself (similar to how you were already registering the `SharedMap` factory), but the `PrimedComponentFactory` is recommended.
 
-## Handles to SharedObjects must be used on map sets
+### Handles to SharedObjects must be used on map sets
 
 It is no longer allowed to directly set a SharedObject as a map key. Instead its handle must be set. Get also only
 returns handles. You can retrieve the value by calling get on the handle.
 
 i.e. this
 
-```
+```typescript
 const map = SharedMap.create(runtime);
 root.set("test", map);
 const retrievedMap = root.get("test");
@@ -517,23 +793,25 @@ const retrievedMap = root.get("test");
 
 Becomes
 
-```
+```typescript
 const map = SharedMap.create(runtime);
 root.set("test", map.handle);
 const retrievedMap = await root.get<IComponentHandle>("test").get<ISharedMap>();
 ```
 
-## `mergeTree` is now protected on `MergeTree.Client`
+### `mergeTree` is now protected on `MergeTree.Client`
+
 The merge tree in Client should be interacted with indirectly through Client or Sequence methods, rather than directly as was possible before. See "[Updated sequence API to provide richer access to the underlying merge tree](#updated-sequence-api-to-provide-richer-access-to-the-underlying-merge-tree)" from 0.8 breaking changes for more info.
 
-## No more Value Type registration
+### No more Value Type registration
 
 Previously, you would register for value types on `SharedMap` and `SharedDirectory` either by passing an argument to the `MapFactory` or `DirectoryFactory` or by calling `registerValueType` on the map/directory itself.  Now all valid ValueTypes are registered by default.  You should remove these arguments/calls as they are no longer necessary and may cause compile errors.
 
-## `prague/*` -> `fluid/*` MIME type
+### `prague/*` -> `fluid/*` MIME type
+
 The `prague/component`, `prague/container`, and `prague/dataType` MIME types have been changed to `fluid/component`, `fluid/container`, and `fluid/dataType` respectively in requests/responses.
 
-# 0.8 Breaking Changes (August 13, 2019)
+## 0.8 Breaking Changes (August 13, 2019)
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)
 - [`sequence.annotateRange()` argument order changed](#sequenceannotaterange-argument-order-changed)
@@ -548,12 +826,12 @@ The `prague/component`, `prague/container`, and `prague/dataType` MIME types hav
 - [`SharedMap.values()` and `.entries()` unpack local values](#sharedmapvalues-and-entries-unpack-local-values)
 - [Deprecate @prague/app-datastore](#deprecate-pragueapp-datastore)
 
-## `IComponent` not to be derived from
+### `IComponent` not to be derived from
 
 `IComponent` is no longer intended to be derived from. Instead it serves as a Fluid specific form of 'any' and that
 clients can cast objects to in order to probe for implemented component interfaces.
 
-## `sequence.annotateRange()` argument order changed
+### `sequence.annotateRange()` argument order changed
 
 The `start` and `end` arguments of `sequence.annotateRange()` have been changed to the first two arguments to make the codebase more consistent. The new function signature is as below:
 
@@ -565,7 +843,7 @@ public annotateRange(
         combiningOp?: MergeTree.ICombiningOp) {
 ```
 
-## `sharedString.insertText()` argument order changed
+### `sharedString.insertText()` argument order changed
 
 The `pos` and `text` arguments of `sharedString.insertText()` have been switched to make it more consistent with other sharedString methods. The new function signature is as below:
 
@@ -573,11 +851,11 @@ The `pos` and `text` arguments of `sharedString.insertText()` have been switched
 public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ```
 
-## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
+### `mergeTree.getOffset()` -> `mergeTree.getPosition()`
 
 `mergeTree.getOffset()` and `Client.getOffset()` have been renamed to `getPosition()` to more accurately reflect their functionality.
 
-## Updated sequence API to provide richer access to the underlying merge tree
+### Updated sequence API to provide richer access to the underlying merge tree
 
 The following methods of mergeTree have been exposed on sequence:
 
@@ -592,11 +870,11 @@ The following methods of mergeTree have been exposed on sequence:
 
 If these are being accessed directly from the sequence or client, they should be changed to access through sequence, since these will become private in mergeTree/mergeTree client in the future.
 
-## ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
+### ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
 
 The `offset` member of the ISequenceDeltaRange interface has been renamed to `position`
 
-## IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
+### IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
 
 The following interfaces have moved:
 
@@ -614,11 +892,11 @@ The following interfaces have moved:
 `IRequest`
 `IResponse`
 
-## Query and List Removed From IComponent
+### Query and List Removed From IComponent
 
 The query and list methods have been removed from IComponent and been replaced with strongly type properties.
 
-### Component Consumers
+#### Component Consumers
 
 Consumers should update their code as follows.
 
@@ -636,7 +914,7 @@ const thing = component.IComponentThing;
 
 in both cases the consumer should check for undefined before using.
 
-### Component Implementors
+#### Component Implementors
 
 Component implementors no longer need to implement query, list, or supported interfaces. They now need to add a property for
 each interface they implement, or wish to expose. They will get compile time errors if they do not implement these properties for
@@ -678,7 +956,7 @@ class MyComponent implements IComponentThing {
 }
 ```
 
-### Component Interface Implementors
+#### Component Interface Implementors
 
 Component interface implementors must do the following so that their interfaces are exposed off IComponent for consumers,
 and so Component implementors get strong typing.
@@ -718,32 +996,32 @@ declare module "@prague/component-core-interfaces" {
 }
 ```
 
-## Deprecate @prague/app-component
+### Deprecate @prague/app-component
 
 @prague/app-component is deprecated. Please switch to use @prague/aqueduct for the new component interfaces
 
-## Value type op change
+### Value type op change
 
 In 0.7 and below, the type of a SharedMap message for value types (Counter, DistributedSet, etc.) would match the type
 ("counter", "distributedSet", etc.).  In 0.8 the message type is "act" for all value types.  Value type ops produced
 from runtimes before 0.8 are not compatible with 0.8 as a result (e.g. if replaying old ops).
 
-## `SharedMap.values()` and `.entries()` unpack local values
+### `SharedMap.values()` and `.entries()` unpack local values
 
 Previously, `SharedMap.values()` and `SharedMap.entries()` would iterate over `ILocalViewElement`s rather than the
 contained values.  To retrieve the contained values you would have then extracted the ILocalViewElement.localValue.
 In 0.8 these methods now iterate over the contained values directly, so calls to get the .localValue should be
 removed.
 
-## Deprecate @prague/app-datastore
+### Deprecate @prague/app-datastore
 
 The package @prague/app-datastore is deprecated. Please switch to use tiny-web-host
 
-# 0.7 Breaking Changes (July 30, 2019)
+## 0.7 Breaking Changes (July 30, 2019)
 
 - [instantiateComponent changes](#instantiatecomponent-changes)
 
-## instantiateComponent changes
+### instantiateComponent changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the
 method which is called with the runtime as an argument once the runtime is loaded and ready. This method will be
@@ -778,20 +1056,20 @@ ComponentRuntime.load(
 
 `instantiateComponent` is now a void return type.
 
-# 0.6 Breaking Changes (July 17, 2019)
+## 0.6 Breaking Changes (July 17, 2019)
 
 - [Interface renames](#interface-renames)
 - [defaultValueTypes is no longer global](#defaultvaluetypes-is-no-longer-global)
 - [ContainerRuntime registerRequestHandler passed into the constructor](#containerruntime-registerrequesthandler-passed-into-the-constructor)
 
-## Interface renames
+### Interface renames
 
 - Interface `IPragueResolvedUrl` renamed to `IFluidResolvedUrl`
 - Interface `IChaincodeFactory` renamed to `IRuntimeFactory`.
 - Deprecated `IComponent` interface has been removed
 - Deprecated `IPlatform` has been removed
 
-## defaultValueTypes is no longer global
+### defaultValueTypes is no longer global
 
 Previously, value types for `SharedMap`s were registered via calls to `registerDefaultValueType(type)`, which would add the type to a global collection.  This global has been replaced by a member on the extension, which can be set as a parameter to the `.getFactory()` method.  So for example, the following usage:
 
@@ -813,7 +1091,7 @@ const mapExtension = SharedMap.getFactory(mapValueTypes);
 
 You can also still register value types on a `SharedMap` itself via `map.registerValueType(type)` after it is created.
 
-## ContainerRuntime registerRequestHandler passed into the constructor
+### ContainerRuntime registerRequestHandler passed into the constructor
 
 Previously you would call something like this:
 
@@ -839,20 +1117,21 @@ const runtime = await ContainerRuntime.load(context, registry, createRequestHand
 
 We use a factory so we can pass in the runtime after it has been created to be used in the request routing.
 
-# 0.5 Breaking Changes (July 3, 2019)
+## 0.5 Breaking Changes (July 3, 2019)
+
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
 
 - [attach() on IChannel/ISharedObject is now register()](#attach-on-ichannelisharedobject-is-now-register)
 - [Separate Create and Attach Component](#separate-create-and-attach-component)
 - [Stream inheritance and Cell rename](#stream-inheritance-and-cell-rename)
 
-## attach() on IChannel/ISharedObject is now register()
+### attach() on IChannel/ISharedObject is now register()
 
 We always assumed that if you had a channel you were in a state that they could be attached. This is no longer true because of the Separate Create and Attach Component work (See below). Channels are tied to component runtime and if the runtime is not attached but you try to attach the channel bad things happen.
 
 The `register()` call, instead of simply attaching, will register a channel with the underlying component runtime. If the runtime is already attached it will attach the channel. If the runtime is not attached it will queue the channel to be attached when the runtime is attached.
 
-## Separate Create and Attach Component
+### Separate Create and Attach Component
 
 There used to be only one method to add a component that was called `createAndAttachComponent`. The logic lived on the `ContainerRuntime` and the method was piped through the `IComponentContext` and also lived on the `ComponentRuntime`.
 
@@ -862,12 +1141,12 @@ To attach a `ComponentRuntime` you need to call `attach()` on the `ComponentRunt
 
 For compatibility there is still a `createAndAttachComponent` method on the `ComponentRuntime`. This method simply calls `createComponent` then calls `attach()` right away on that new component before returning.
 
-## Stream inheritance and Cell rename
+### Stream inheritance and Cell rename
 
 - Stream no longer inherit from SharedMap.   Create a separate SharedMap if needed. This also mean Stream snapshot format has changed
 - class Cell is renamed SharedCell
 
-# 0.4 Breaking Changes (June 17, 2019)
+## 0.4 Breaking Changes (June 17, 2019)
 
 The IComponent in @prague/runtime-defintions and IPlatform in @prague/container-definitions have been deprecated and
 will be removed in the next release.
@@ -878,7 +1157,7 @@ All static methods have been changed from PascalCase to camelCase.
 
 Deleted sharepoint-socket-storage package from drivers. Moved all files from sharepoint-socket-storage to odsp-socket-storage.
 
-# 0.3 Breaking Changes (June 3, 2019)
+## 0.3 Breaking Changes (June 3, 2019)
 
 - [Legacy chaincode API removal](#legacy-chaincode-api-removal)
 - [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
@@ -889,14 +1168,14 @@ Deleted sharepoint-socket-storage package from drivers. Moved all files from sha
 - [Rename api-definitions package](#rename-api-definitions-package)
 - [Rename IDistributedObjectServices](#rename-idistributedobjectservices)
 
-## Legacy chaincode API removal
+### Legacy chaincode API removal
 
 The legacy definitions inside of @prague/runtime-defintions have been removed. This primarily was the `IChaincode`
 and `IRuntime` interfaces. These interfaces existed to make use of the legacy chaincode packages as the component
 runtime was bootstrapped. Now that these legacy packages have been converted to the updated API there is no longer
 a need to have these legacy interfaces in the core runtime.
 
-### instantiateComponent
+#### instantiateComponent
 
 In 0.2 `instantiateComponent` is defined as
 
@@ -922,14 +1201,14 @@ export interface IComponentFactory {
 If you were making use of the @prague/app-component package then there is a static helper function on `Component`
 called `createComponentFactory` that simplifies this startup behavior.
 
-### ComponentHost is now ComponentRuntime
+#### ComponentHost is now ComponentRuntime
 
 The old `ComponentHost` has been renamed `ComponentRuntime`.
 
 Similar to the underlying runtime this class serves as a common set of code used to manage the runtime behavior for
 a component. It deals with op routing, snapshot loads, and data structure management.
 
-### ComponentRuntime does not reference app code
+#### ComponentRuntime does not reference app code
 
 The old `ComponentHost` would take a reference to the dynamically loaded chaincode. This led to needing
 to dot into the runtime in most cases to find its component.
@@ -963,7 +1242,7 @@ return this._host;
 Developers should gain access to components in almost all cases by URL. The API will both make this simpler to do
 and begin requiring it in later PRs.
 
-### @prague/app-component Component
+#### @prague/app-component Component
 
 The Component defined in the app-component package largely has stayed the same. The one primary change is that
 it now takes in an `IComponentRegistry` rather than a map of strings to `IChaincodeComponent` constructors.
@@ -1005,7 +1284,8 @@ return Component.instantiateRuntime(
             ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
         ]));
 ```
-### @prague/merge-tree Remove ISegment.getType() and SegmentType enum
+
+#### @prague/merge-tree Remove ISegment.getType() and SegmentType enum
 
 We are trying to decouple merge tree from specific segment types, as
 the segment types are defined by the sequence, like sharedstring.
@@ -1020,8 +1300,8 @@ if(segment.getType() === SegmentType.Text){
     const marker = segment as Marker
     ...
 }
-
 ```
+
 Becomes:
 
 ```typescript
@@ -1036,7 +1316,7 @@ if(TextSegment.Is(segment)) {
 }
 ```
 
-### @prague/merge-tree Remove text specific functions from merge tree and move to SharedString
+#### @prague/merge-tree Remove text specific functions from merge tree and move to SharedString
 
 We are trying to decouple merge tree from specific segment types, as
 the segment types are defined by the sequence, like sharedstring.
@@ -1047,44 +1327,53 @@ and merge tree.
 sharedString.client.getTextAndMarkers("pg");
 sharedString.client.getText();
 ```
+
 Becomes:
 
 ```typescript
 sharedString.getTextAndMarkers("pg");
 sharedString.getText(start?, end?);
 ```
-## Container and Component Packages and Classes Renamed
+
+### Container and Component Packages and Classes Renamed
 
 The following classes and packages are renamed to align with what they are.
 
-```
+```text
 Context -> ContainerContext
 Runtime -> ContainerRuntime
 ```
-```
+
+```text
 Package @prague/runtime -> @prague/container-runtime
 Package @prague/component -> @prague/component-runtime
 ```
 
-## SparseMatrix moved
+### SparseMatrix moved
+
 Move SparseMatrix to @prague/sequence to avoid circular dependencies when adding to client-api
 
-## Rename one of the IComponentRegistry definition to ISharedObjectRegistry
+### Rename one of the IComponentRegistry definition to ISharedObjectRegistry
+
 The IComponentRegistry in component-runtime should be a ISharedObjectRegistry
 Also renamed ComponentRuntime.LoadFromSnapshot to ComponentRuntime.Load
 and switch the argument order for ContainerRuntime.Load to make those match
 
-## API ITree and ISnapshotTree "sha" properties have been renamed to "id"
+### API ITree and ISnapshotTree "sha" properties have been renamed to "id"
+
 The "sha" property has been renamed to "id" on the ITree and ISnapshotTree interfaces in  @prague/container-definitions since this property should not be assumed to be a sha. Storage drivers may need to be updated to accommodate this change
 
-## Rename IComponentContext getComponent method
+### Rename IComponentContext getComponent method
+
 To match what the method is returning, rename:
   `IComponentContext.getComponent` -> `IComponentContext.getComponentRuntime`
 
-## Rename api-definitions package
+### Rename api-definitions package
+
 This package no longer houses interface definitions, but rather has the base class of all the shared objects in the runtime.  Renaming:
   `@prague/api-definitions` -> `@prague/shared-object-common`
 
-## Rename IDistributedObjectServices
+### Rename IDistributedObjectServices
+
 Renaming for consistency with the rest of the runtime:
   `IDistributedObjectServices` -> `ISharedObjectServices`

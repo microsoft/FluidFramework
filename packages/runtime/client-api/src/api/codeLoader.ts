@@ -33,7 +33,11 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 export class Chaincode implements IComponentFactory {
+    public readonly type = "@fluid-internal/client-api";
+
     public get IComponentFactory() { return this; }
+
+    public constructor(private readonly closeFn: () => void) {}
 
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories
@@ -76,10 +80,10 @@ export class Chaincode implements IComponentFactory {
         }
 
         // Create the underlying Document
-        async function createDocument() {
+        const createDocument = async () => {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-            return new Document(runtime, context, root);
-        }
+            return new Document(runtime, context, root, this.closeFn);
+        };
         const documentP = createDocument();
 
         // And then return it from requests
@@ -95,7 +99,6 @@ export class Chaincode implements IComponentFactory {
 }
 
 export class ChaincodeFactory implements IRuntimeFactory {
-
     public get IRuntimeFactory() { return this; }
 
     /**
@@ -108,7 +111,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
-        const componentId = trimmed ? trimmed : "root";
+        const componentId = trimmed !== "" ? trimmed : rootMapId;
 
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
@@ -120,12 +123,12 @@ export class ChaincodeFactory implements IRuntimeFactory {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const chaincode = new Chaincode();
+        const chaincode = new Chaincode(context.closeFn);
 
         const runtime = await ContainerRuntime.load(
             context,
             [
-                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
+                [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
             [ChaincodeFactory.containerRequestHandler],
@@ -133,7 +136,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@fluid-internal/client-api")
+            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })
@@ -151,12 +154,12 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries?: NamedComponentRegistryEntries,
+        registries: NamedComponentRegistryEntries = [],
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(
                 runtimeOptions,
-                registries ? registries : []),
+                registries),
         };
     }
 

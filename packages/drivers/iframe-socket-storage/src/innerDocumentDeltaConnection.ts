@@ -37,9 +37,21 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public static async create(
         connection: IConnected,
-        outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
+        outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>): Promise<IDocumentDeltaConnection> {
+        const tempEmitter = new EventEmitter();
 
-        const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy);
+        const forwardEvent = (event: string, args: any[]) =>{
+            tempEmitter.emit(event, ... args);
+            return;
+        };
+
+        const innerProxy = {
+            forwardEvent,
+        };
+
+        await outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
+
+        const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy, tempEmitter);
 
         return deltaConnection;
     }
@@ -117,7 +129,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
 
@@ -126,7 +138,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         return this.details.initialContents;
     }
 
@@ -135,7 +147,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         return this.details.initialSignals;
     }
 
@@ -145,33 +157,19 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients;
     }
-
-    private readonly tempEmitter: EventEmitter;
 
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
      */
-    constructor(
+    private constructor(
         public details: IConnected,
-        public outerProxy: IOuterDocumentDeltaConnectionProxy) {
+        public outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>,
+        private readonly tempEmitter: EventEmitter) {
         super();
-
-        this.tempEmitter = new EventEmitter();
-
-        const forwardEvent = (event: string, args: any[]) => {
-            this.tempEmitter.emit(event, ...args);
-            return;
-        };
-
-        const innerProxy = {
-            forwardEvent,
-        };
-
-        outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
     }
 
     /**
@@ -181,7 +179,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @param listener - listener for the event
      */
     public on(event: string, listener: (...args: any[]) => void): this {
-
         this.tempEmitter.on(
             event,
             (...args: any[]) => {

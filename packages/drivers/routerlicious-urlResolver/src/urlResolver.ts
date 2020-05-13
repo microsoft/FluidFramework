@@ -11,9 +11,8 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { Provider } from "nconf";
 
@@ -23,10 +22,7 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 
-export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
-
-    public readonly isExperimentalUrlResolver = true;
-
+export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
         private readonly getToken: (() => Promise<string>) | undefined,
@@ -88,7 +84,6 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(documentId)}`;
 
-
         // In case of any additional parameters add them back to the url
         if (reqUrl.search) {
             const searchParams = reqUrl.search;
@@ -138,15 +133,6 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
             url: fluidUrl,
         };
         return resolved;
-    }
-
-    public async experimentalCreate(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
-        options: any,
-    ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
     }
 }
 

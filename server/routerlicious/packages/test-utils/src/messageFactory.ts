@@ -96,6 +96,7 @@ export class MessageFactory {
         const joinMessage: IClientJoin = {
             clientId: this.clientId,
             detail: {
+                mode: "write",
                 permission: [],
                 scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
                 details: {

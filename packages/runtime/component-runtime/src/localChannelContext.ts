@@ -23,6 +23,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
+    private readonly dirtyFn: () => void;
 
     constructor(
         id: string,
@@ -32,13 +33,16 @@ export class LocalChannelContext implements IChannelContext {
         private readonly componentContext: IComponentContext,
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
+        dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
-        if (!factory) {
+        if (factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
         }
 
         this.channel = factory.create(runtime, id);
+
+        this.dirtyFn = () => { dirtyFn(id); };
     }
 
     public async getChannel(): Promise<IChannel> {
@@ -49,7 +53,7 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel.isRegistered();
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
         if (!this.attached) {
             return;
@@ -83,6 +87,7 @@ export class LocalChannelContext implements IChannelContext {
             this.channel.id,
             this.componentContext.connectionState,
             this.submitFn,
+            this.dirtyFn,
             this.storageService);
         this.connection = services.deltaConnection;
         this.channel.connect(services);

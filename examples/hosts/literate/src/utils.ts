@@ -9,7 +9,7 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { parse } from "querystring";
 
 /**
- * The initializeChaincode method takes in a document and a desired NPM package and establishes a code quorum
+ * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
  * on this package.
  */
 export async function initializeChaincode(document: Container, pkg: IFluidCodeDetails): Promise<void> {

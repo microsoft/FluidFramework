@@ -19,17 +19,24 @@ export interface IClientSequenceNumber {
     scopes: string[];
 }
 
-export interface ICheckpoint {
+export interface ICheckpointParams extends IDeliCheckpoint {
+    queuedMessage: IQueuedMessage;
+    clear?: boolean;
+}
+
+export interface IDeliCheckpoint {
     branchMap: IRangeTrackerSnapshot;
     clients: IClientSequenceNumber[];
+    durableSequenceNumber: number;
     logOffset: number;
     sequenceNumber: number;
-    queuedMessage: IQueuedMessage;
+    epoch: number;
+    term: number;
 }
 
 export class CheckpointContext {
     private pendingUpdateP: Promise<void>;
-    private pendingCheckpoint: ICheckpoint;
+    private pendingCheckpoint: ICheckpointParams;
     private closed = false;
 
     constructor(
@@ -39,7 +46,7 @@ export class CheckpointContext {
         private readonly context: IContext) {
     }
 
-    public checkpoint(checkpoint: ICheckpoint) {
+    public checkpoint(checkpoint: ICheckpointParams) {
         // Exit early if already closed
         if (this.closed) {
             return;
@@ -77,17 +84,22 @@ export class CheckpointContext {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private checkpointCore(checkpoint: ICheckpoint) {
+    private checkpointCore(checkpoint: ICheckpointParams) {
+        const deli: string = checkpoint.clear ?
+            "" :
+            JSON.stringify({
+                branchMap: checkpoint.branchMap,
+                clients: checkpoint.clients,
+                logOffset: checkpoint.logOffset,
+                sequenceNumber: checkpoint.sequenceNumber,
+            });
         const updateP = this.collection.update(
             {
                 documentId: this.id,
                 tenantId: this.tenantId,
             },
             {
-                branchMap: checkpoint.branchMap,
-                clients: checkpoint.clients,
-                logOffset: checkpoint.logOffset,
-                sequenceNumber: checkpoint.sequenceNumber,
+                deli,
             },
             null);
 

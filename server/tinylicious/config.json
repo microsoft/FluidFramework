@@ -11,11 +11,12 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
         }
     },
     "alfred": {
-        "maxMessageSize": "16KB"
+        "maxMessageSize": "16KB",
+        "maxNumberOfClientsPerDocument": 1000000
     },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
@@ -32,7 +33,7 @@
     },
     "storage": "/var/lib/tinylicious",
     "db": {
-        "inMemory": false,
+        "inMemory": true,
         "path": "/var/lib/db"
     },
     "error": {

@@ -7,9 +7,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -18,7 +16,7 @@ import { Manager } from "../container-services";
 const buttonStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
     MozUserSelect: "none", // Firefox
-    msUserSelect: "none", //IE10+
+    msUserSelect: "none", // IE10+
     textAlign:"center",
     width: "100%",
     height:"100%",
@@ -29,20 +27,25 @@ const buttonStyle: React.CSSProperties = {
 const textStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
     MozUserSelect: "none", // Firefox
-    msUserSelect: "none", //IE10+
+    msUserSelect: "none", // IE10+
     display:"inline-block",
     cursor: "pointer",
 };
 
 export const ButtonName = "button";
+export const FriendlyButtonName = "Button";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Button example using view interfaces and stock component classes.
  */
 export class Button extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(Button, []);
+    private static readonly factory = new PrimedComponentFactory(
+        ButtonName,
+        Button,
+        [],
+        {});
 
     public static getFactory() {
         return Button.factory;

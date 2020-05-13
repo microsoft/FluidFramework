@@ -23,7 +23,7 @@ import {
 import { debug } from "./debug";
 import {
     ISharedMap,
-    IValueChanged,
+    ISharedMapEvents,
 } from "./interfaces";
 import {
     valueTypes,
@@ -80,7 +80,6 @@ export class MapFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
-
         const map = new SharedMap(id, runtime, attributes);
         await map.load(branchId, services);
 
@@ -101,7 +100,7 @@ export class MapFactory implements ISharedObjectFactory {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class SharedMap extends SharedObject implements ISharedMap {
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
    * Create a new shared map.
    * @param runtime - Component runtime the new shared map belongs to
@@ -246,23 +245,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-   * Registers a listener on the specified events
-   */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
    * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
    */
     public snapshot(): ITree {
@@ -326,7 +308,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     type: value.type,
                     value: value.value === undefined ? undefined : JSON.parse(value.value),
                 };
-
             }
         }
 
@@ -349,7 +330,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);

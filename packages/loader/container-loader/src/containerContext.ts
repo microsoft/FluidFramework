@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -20,6 +21,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -35,12 +38,16 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
+import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
-    public static async load(
+export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
+    public readonly isExperimentalContainerContext = true;
+    public static async createOrLoad(
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
@@ -51,12 +58,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        storage: IDocumentStorageService | null | undefined,
         errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (reason?: string) => void,
+        closeFn: (error?: IError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -70,7 +76,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             blobManager,
             deltaManager,
             quorum,
-            storage,
             loader,
             errorFn,
             submitFn,
@@ -80,7 +85,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             version,
             previousRuntimeState);
         await context.load();
-
         return context;
     }
 
@@ -106,7 +110,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this.container.parentBranch;
     }
 
@@ -150,7 +154,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this._baseSnapshot;
     }
 
+    public get storage(): IDocumentStorageService | undefined | null {
+        return this.container.storage;
+    }
+
     private runtime: IRuntime | undefined;
+
+    private _disposed = false;
+    public get disposed() {
+        return this._disposed;
+    }
 
     constructor(
         private readonly container: Container,
@@ -162,18 +175,28 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
-        public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: () => void,
+        public readonly closeFn: (error?: IError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
         super();
         this.logger = container.subLogger;
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.runtime!.dispose();
+        this.quorum.dispose();
+        this.deltaManager.dispose();
     }
 
     /**
@@ -186,27 +209,38 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.emit("refreshBaseSummary", snapshot);
     }
 
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
+    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
-        this.runtime!.changeConnectionState(value, clientId, version);
-        raiseConnectedEvent(this, value, clientId);
+    public getLoadedFromVersion(): IVersion | undefined {
+        return this.container.loadedFromVersion;
     }
 
-    public async stop(): Promise<IRuntimeState> {
-        let state = await this.runtime!.stop();
-        // back-compat: 0.14 runtimeState
-        if (!state) {
-            state = { snapshot: await this.runtime!.snapshot("", false) ?? undefined };
-        }
+    /**
+     * Snapshot and close the runtime, and return its state if available
+     */
+    public async snapshotRuntimeState(): Promise<IRuntimeState> {
+        return this.runtime!.stop();
+    }
 
-        // Dispose
-        this.quorum.dispose();
-        this.deltaManager.dispose();
+    public isLocal(): boolean {
+        return this.container.isLocal();
+    }
 
-        return state;
+    public isAttached(): boolean {
+        return this.container.isAttached();
+    }
+
+    public createSummary(): ISummaryTree {
+        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
+        assert(expRuntime?.isExperimentalRuntime);
+        return expRuntime.createSummary();
+    }
+
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
+        this.runtime!.changeConnectionState(value, clientId);
+        raiseConnectedEvent(this, value, clientId);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -235,6 +269,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
+    }
+
+    public hasNullRuntime() {
+        return this.runtime! instanceof NullRuntime;
     }
 
     private async load() {

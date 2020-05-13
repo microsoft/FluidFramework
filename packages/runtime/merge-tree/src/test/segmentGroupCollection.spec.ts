@@ -76,7 +76,6 @@ describe("segmentGroupCollection", () => {
         assert.equal(segmentCopy.segmentGroups.size, segmentGroupCount);
 
         while (!segment.segmentGroups.empty || !segmentCopy.segmentGroups.empty) {
-
             const segmentGroup = segment.segmentGroups.dequeue();
             const copySegmentGroup = segmentCopy.segmentGroups.dequeue();
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
@@ -10,8 +11,6 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
@@ -26,6 +25,7 @@ import {
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
@@ -48,11 +48,16 @@ export class Smde extends EventEmitter implements
     public get IComponentHTMLView() { return this; }
 
     public url: string;
-    private root: ISharedMap;
-    private text: SharedString;
-    private textArea: HTMLTextAreaElement;
-    private smde: SimpleMDE;
+    private root: ISharedMap | undefined;
+    private _text: SharedString | undefined;
+    private textArea: HTMLTextAreaElement | undefined;
+    private smde: SimpleMDE | undefined;
 
+    private get text() {
+        assert(this._text);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this._text!;
+    }
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
@@ -83,7 +88,7 @@ export class Smde extends EventEmitter implements
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
+        this._text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -109,7 +114,8 @@ export class Smde extends EventEmitter implements
     }
 
     private setupEditor() {
-        this.smde = new SimpleMDE({ element: this.textArea });
+        const smde = new SimpleMDE({ element: this.textArea });
+        this.smde = smde;
 
         const { parallelText } = this.text.getTextAndMarkers("pg");
         const text = parallelText.join("\n");
@@ -131,26 +137,26 @@ export class Smde extends EventEmitter implements
                     if (range.operation === MergeTreeDeltaType.INSERT) {
                         if (TextSegment.is(segment)) {
                             // TODO need to count markers
-                            this.smde.codemirror.replaceRange(
+                            smde.codemirror.replaceRange(
                                 segment.text,
-                                this.smde.codemirror.posFromIndex(range.position));
+                                smde.codemirror.posFromIndex(range.position));
                         } else if (Marker.is(segment)) {
-                            this.smde.codemirror.replaceRange(
+                            smde.codemirror.replaceRange(
                                 "\n",
-                                this.smde.codemirror.posFromIndex(range.position));
+                                smde.codemirror.posFromIndex(range.position));
                         }
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                         if (TextSegment.is(segment)) {
                             const textSegment = range.segment as TextSegment;
-                            this.smde.codemirror.replaceRange(
+                            smde.codemirror.replaceRange(
                                 "",
-                                this.smde.codemirror.posFromIndex(range.position),
-                                this.smde.codemirror.posFromIndex(range.position + textSegment.text.length));
+                                smde.codemirror.posFromIndex(range.position),
+                                smde.codemirror.posFromIndex(range.position + textSegment.text.length));
                         } else if (Marker.is(segment)) {
-                            this.smde.codemirror.replaceRange(
+                            smde.codemirror.replaceRange(
                                 "",
-                                this.smde.codemirror.posFromIndex(range.position),
-                                this.smde.codemirror.posFromIndex(range.position + 1));
+                                smde.codemirror.posFromIndex(range.position),
+                                smde.codemirror.posFromIndex(range.position + 1));
                         }
                     }
                 }
@@ -196,12 +202,15 @@ export class Smde extends EventEmitter implements
     // TODO: this should be an utility.
     private isReadonly() {
         const runtimeAsComponent = this.context.hostRuntime as IComponent;
-        const scopes = runtimeAsComponent.IComponentConfiguration.scopes;
+        const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }
 }
 
 class SmdeFactory implements IComponentFactory {
+    public static readonly type = "@chaincode/smde";
+    public readonly type = SmdeFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

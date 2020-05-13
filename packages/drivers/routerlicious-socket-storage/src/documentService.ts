@@ -4,14 +4,14 @@
  */
 
 import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
+import { IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
+import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { TokenProvider } from "./tokens";
 
@@ -19,8 +19,10 @@ import { TokenProvider } from "./tokens";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements api.IDocumentService {
+export class DocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     constructor(
+        public readonly resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
@@ -101,16 +103,13 @@ export class DocumentService implements api.IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(
-        client: IClient,
-        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return DocumentDeltaConnection.create(
+    public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        return R11sDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             io,
             client,
-            mode,
             this.ordererUrl);
     }
 

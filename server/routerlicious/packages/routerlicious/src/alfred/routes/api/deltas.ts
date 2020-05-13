@@ -23,7 +23,6 @@ export async function getDeltaContents(
     documentId: string,
     from?: number,
     to?: number): Promise<any[]> {
-
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
@@ -54,7 +53,6 @@ export async function getDeltas(
     documentId: string,
     from?: number,
     to?: number): Promise<ISequencedDocumentMessage[]> {
-
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
@@ -83,7 +81,6 @@ export async function getRawDeltas(
     collectionName: string,
     tenantId?: string,
     documentId?: string): Promise<IRawOperationMessage[]> {
-
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
 
@@ -112,7 +109,8 @@ export function create(
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
-    function stringToSequenceNumber(value: string): number {
+    function stringToSequenceNumber(value: any): number {
+        if (typeof value !== "string") { return undefined; }
         const parsedValue = parseInt(value, 10);
         return isNaN(parsedValue) ? undefined : parsedValue;
     }

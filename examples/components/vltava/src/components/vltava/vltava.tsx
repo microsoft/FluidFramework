@@ -4,14 +4,15 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import uuid from "uuid/v4";
 
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
+
+export const VltavaName = "vltava";
 
 /**
  * Vltava is an application experience
@@ -19,7 +20,7 @@ import { VltavaView } from "./view";
 export class Vltava extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(Vltava, []);
+    private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, [], {});
 
     public static getFactory() {
         return Vltava.factory;
@@ -36,7 +37,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const tabsComponent = await this.createAndAttachComponent(uuid(), "tabs");
+        const tabsComponent = await this.createAndAttachComponent("tabs");
         this.root.set("tabs-component-id", tabsComponent.handle);
     }
 

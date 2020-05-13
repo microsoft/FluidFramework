@@ -6,8 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
-import { NetworkError } from "@microsoft/fluid-driver-utils";
+import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import { createNetworkError } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -23,20 +23,17 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Error raising for socket.io issues
  */
-export function createErrorObject(handler: string, error: any, canRetry = true) {
-    // Note: we assume error object is a string here.
-    // If it's not (and it's an object), we would not get its content.
-    // That is likely Ok, as it may contain PII that will get logged to telemetry,
-    // so we do not want it there.
-    // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
-    const errorObj = new NetworkError(
+function createErrorObject(handler: string, error: any, canRetry = true) {
+    // Note: we suspect the incoming error object is either:
+    // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
+    // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
+    const errorObj: IError = createNetworkError(
         `socket.io error: ${handler}: ${error}`,
-        undefined,
         canRetry,
     );
 
@@ -72,10 +69,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-
         const socket = io(
             url,
             {
@@ -91,7 +86,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connectMessage: IConnect = {
             client,
             id,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
@@ -113,6 +108,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private _details: IConnected | undefined;
 
     private trackedListeners: IEventListener[] = [];
+
+    protected get hasDetails(): boolean {
+        return !!this._details;
+    }
 
     private get details(): IConnected {
         if (!this._details) {
@@ -217,7 +216,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         this.removeEarlyOpHandler();
 
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
@@ -225,10 +224,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         if (this.queuedMessages.length > 0) {
             // Some messages were queued.
             // add them to the list of initialMessages to be processed
-            if (!this.details.initialMessages) {
-                this.details.initialMessages = [];
-            }
-
             this.details.initialMessages.push(...this.queuedMessages);
             this.details.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.queuedMessages.length = 0;
@@ -241,18 +236,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         this.removeEarlyContentsHandler();
 
         assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
 
         if (this.queuedContents.length > 0) {
-            // Some contents were queued.
-            // add them to the list of initialContents to be processed
-            if (!this.details.initialContents) {
-                this.details.initialContents = [];
-            }
-
             this.details.initialContents.push(...this.queuedContents);
 
             this.details.initialContents.sort((a, b) =>
@@ -270,7 +259,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         this.removeEarlySignalHandler();
 
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
@@ -278,10 +267,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         if (this.queuedSignals.length > 0) {
             // Some signals were queued.
             // add them to the list of initialSignals to be processed
-            if (!this.details.initialSignals) {
-                this.details.initialSignals = [];
-            }
-
             this.details.initialSignals.push(...this.queuedSignals);
             this.queuedSignals.length = 0;
         }
@@ -294,7 +279,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients;
     }
 
     /**
@@ -367,14 +352,21 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
-        this.socket.disconnect();
         this.removeTrackedListeners(false);
+        this.socket.disconnect();
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    error.nonce !== undefined &&
+                    error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -394,6 +386,27 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    response.nonce !== undefined &&
+                    response.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
                 this.removeTrackedListeners(true);
                 resolve(response);
             });
@@ -470,9 +483,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
-    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, connectionListener: true, listener });
+        this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {

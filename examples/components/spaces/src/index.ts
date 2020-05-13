@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
-import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-
+import {
+    IProvideComponentFactory,
+    NamedComponentRegistryEntries,
+    IComponentRegistry,
+} from "@microsoft/fluid-runtime-definitions";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -20,30 +24,131 @@ import {
     TextBoxName,
     FacePile,
     FacePileName,
+    FriendlyButtonName,
+    FriendlyNumberName,
+    FriendlyFacePileName,
+    FriendlyTextBoxName,
 } from "./components";
-import {
-    Manager,
-} from "./container-services";
 import { Spaces } from "./spaces";
+import {
+    IContainerComponentDetails,
+} from "./interfaces";
 
-const componentName = "spaces";
+export * from "./spaces";
+export * from "./components";
+export * from "./interfaces";
 
-/**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
- */
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
-    new Map([
-        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-        [componentName, Promise.resolve(Spaces.getFactory())],
-        [ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())],
-        [ButtonName, Promise.resolve(Button.getFactory())],
-        [NumberName, Promise.resolve(Number.getFactory())],
-        [TextBoxName, Promise.resolve(TextBox.getFactory())],
-        [FacePileName, Promise.resolve(FacePile.getFactory())],
-        ["codemirror", Promise.resolve(cmfe)],
-        ["prosemirror", Promise.resolve(pmfe)],
-    ]),
-    [["manager", async (r) => new Manager(r)]],
-);
+export const SpacesComponentName = "spaces";
+
+export class InternalRegistry implements IComponentRegistry {
+    public get IComponentRegistry() { return this; }
+    public get IComponentRegistryDetails() { return this; }
+
+    constructor(
+        private readonly containerComponentArray: IContainerComponentDetails[],
+    ) {
+    }
+
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory> | undefined>
+    {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => name === containerComponent.type,
+        );
+        if (index >= 0) {
+            return this.containerComponentArray[index].factory;
+        }
+
+        return undefined;
+    }
+
+    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) =>
+            componentDetails.capabilities.includes(capability));
+    }
+
+    public hasCapability(type: string, capability: keyof IComponent) {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
+        return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
+    }
+}
+
+const generateFactory = () => {
+    const containerComponentsDefinition: IContainerComponentDetails[] = [
+        {
+            type: "clicker",
+            factory: Promise.resolve(ClickerInstantiationFactory),
+            friendlyName: "Clicker",
+            fabricIconName: "Touch",
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+        },
+        {
+            type: ButtonName as string,
+            factory: Promise.resolve(Button.getFactory()),
+            friendlyName: FriendlyButtonName,
+            fabricIconName: "ButtonControl",
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+        },
+        {
+            type: NumberName as string,
+            factory: Promise.resolve(Number.getFactory()),
+            friendlyName: FriendlyNumberName,
+            fabricIconName: "NumberField",
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+        },
+        {
+            type: FacePileName as string,
+            factory: Promise.resolve(FacePile.getFactory()),
+            friendlyName: FriendlyFacePileName,
+            fabricIconName: "People",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: TextBoxName as string,
+            factory: Promise.resolve(TextBox.getFactory()),
+            friendlyName: FriendlyTextBoxName,
+            fabricIconName: "TextField",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
+            friendlyName: "Code Mirror",
+            fabricIconName: "Code",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            friendlyName: "Prose Mirror",
+            fabricIconName: "Edit",
+            capabilities: ["IComponentHTMLView"],
+        },
+    ];
+
+    const containerComponents: [string, Promise<IProvideComponentFactory>][] = [];
+    containerComponentsDefinition.forEach((value) => {
+        containerComponents.push([value.type, value.factory]);
+    });
+
+    // We don't want to include the default wrapper component in our list of available components
+    containerComponents.push([ SpacesComponentName, Promise.resolve(Spaces.getFactory())]);
+    containerComponents.push([ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]);
+
+    const containerRegistries: NamedComponentRegistryEntries = [
+        ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
+    ];
+
+    // TODO: You should be able to specify the default registry instead of just a list of components
+    // and the default registry is already determined Issue:#1138
+    return new ContainerRuntimeFactoryWithDefaultComponent(
+        SpacesComponentName,
+        [
+            ...containerComponents,
+            ...containerRegistries,
+        ],
+    );
+};
+
+export const fluidExport = generateFactory();

@@ -24,7 +24,7 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 
-class NullRuntime extends EventEmitter implements IRuntime {
+export class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
         throw new Error("Not implemented");
     }
@@ -35,8 +35,15 @@ class NullRuntime extends EventEmitter implements IRuntime {
 
     public ready: Promise<void> | undefined;
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     constructor() {
         super();
+    }
+
+    public dispose(): void {
+        this._disposed = true;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -52,7 +59,7 @@ class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         return;
     }
 
@@ -77,7 +84,6 @@ class NullRuntime extends EventEmitter implements IRuntime {
 }
 
 export class NullChaincode implements IRuntimeFactory {
-
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new NullRuntime();
     }

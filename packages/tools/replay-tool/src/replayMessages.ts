@@ -232,7 +232,7 @@ class Document {
     public snapshot() {
         return this.container.snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
-            !this.args.incremental /*generateFullTreeNoOtimizations*/);
+            !this.args.incremental /* generateFullTreeNoOtimizations */);
     }
 
     public extractContent(): ContainerContent {
@@ -271,7 +271,9 @@ class Document {
 
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode();
+        const chaincode = new API.Chaincode(() => {
+            throw new Error("Can't close Document");
+        });
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
                 ["@ms/atmentions", Promise.resolve(chaincode)],
@@ -518,7 +520,6 @@ export class ReplayTool {
                 this.compareSnapshots(
                     content,
                     `${dir}/${this.mainDocument.getFileName()}`);
-
             } else if (this.args.write) {
                 fs.mkdirSync(dir, { recursive: true });
                 this.expandForReadabilityAndWriteOut(
@@ -587,7 +588,6 @@ export class ReplayTool {
                     this.documentPriorSnapshot = undefined;
                 });
         }
-
     }
 
     private async validateSaveAndLoad(content: ContainerContent, dir: string, final: boolean) {

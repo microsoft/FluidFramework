@@ -49,7 +49,7 @@ describe("SharedString Snapshot Version", () => {
             };
             const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
-            await sharedString.load(null/*branchId*/, services);
+            await sharedString.load(null/* branchId */, services);
             await sharedString.loaded;
 
             // test rebuilt sharedString
@@ -96,7 +96,7 @@ describe("SharedString Snapshot Version", () => {
             const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
-            const testData = JSON.stringify(testString.snapshot());
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1);
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }

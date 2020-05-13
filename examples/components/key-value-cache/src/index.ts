@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
     IComponent,
     IComponentRouter,
@@ -29,6 +30,8 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
+export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
+
 export interface IProvideKeyValue {
     readonly IKeyValue: IKeyValue;
 }
@@ -46,7 +49,6 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime, context);
         await kevValue.initialize();
@@ -57,7 +59,13 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     public get IComponentRouter() { return this; }
     public get IKeyValue() { return this; }
 
-    private root: ISharedMap;
+    private _root: ISharedMap | undefined;
+
+    public get root() {
+        assert(this._root);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this._root!;
+    }
 
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
     }
@@ -88,10 +96,10 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
+            this._root = SharedMap.create(this.runtime, "root");
+            this._root.register();
         } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
+            this._root = await this.runtime.getChannel("root") as ISharedMap;
         }
         if (this.context.leader) {
             console.log(`INITIAL LEADER`);
@@ -104,6 +112,8 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 }
 
 export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+    public static readonly type = "@fluid-example/key-value-cache";
+    public readonly type = KeyValueFactoryComponent.type;
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
@@ -126,7 +136,6 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: pathForComponent });
-
     }
 
     public instantiateComponent(context: IComponentContext): void {

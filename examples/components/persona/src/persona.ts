@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLVisual,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { SharedDirectory, IDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { initializeIcons } from "@uifabric/icons";
 import { PersonaView } from "./personaView";
 
@@ -39,8 +39,14 @@ export class Persona extends EventEmitter implements
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;
-    private details: IDirectory;
+    private _details: IDirectory | undefined;
     private readonly views = new Set<PersonaView>();
+
+    public get details() {
+        assert(this._details);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this._details!;
+    }
 
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
@@ -70,7 +76,7 @@ export class Persona extends EventEmitter implements
         }
 
         const root = await this.runtime.getChannel("root") as SharedDirectory;
-        this.details = root.getSubDirectory(Persona.subDirectory);
+        this._details = root.getSubDirectory(Persona.subDirectory);
 
         // If existing we do an update check
         if (this.runtime.existing) {
@@ -111,6 +117,9 @@ export class Persona extends EventEmitter implements
 }
 
 class PersonaFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/persona";
+    public readonly type = PersonaFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

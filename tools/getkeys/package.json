@@ -2,6 +2,7 @@
   "name": "getkeys",
   "version": "1.0.0",
   "description": "",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "index.js",

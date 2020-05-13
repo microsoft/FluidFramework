@@ -27,8 +27,10 @@ import * as git from "@microsoft/fluid-gitresources";
 import {
     ConnectionState,
     IBlob,
+    ICommittedProposal,
     IDocumentMessage,
     IQuorum,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -45,8 +47,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
 export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
@@ -191,8 +192,126 @@ class MockDeltaConnection implements IDeltaConnection {
         handler.setConnectionState(this.state);
     }
 
+    public dirty(): void {}
+
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
+    }
+}
+
+export class MockQuorum implements IQuorum, EventEmitter {
+    private readonly map = new Map<string, any>();
+    private readonly members: Map<string, ISequencedClient>;
+    private readonly eventEmitter = new EventEmitter();
+
+    constructor(... members: [string, Partial<ISequencedClient>][]) {
+        this.members = new Map(members as [string, ISequencedClient][] ?? []);
+    }
+
+    async propose(key: string, value: any) {
+        if (this.map.has(key)) {
+            assert.fail(`${key} exists`);
+        }
+        this.map.set(key, value);
+        this.eventEmitter.emit("approveProposal", 0, key, value);
+        this.eventEmitter.emit("commitProposal", 0, key, value);
+    }
+
+    has(key: string): boolean {
+        return this.map.has(key);
+    }
+
+    get(key: string) {
+        return this.map.get(key);
+    }
+
+    getApprovalData(key: string): ICommittedProposal | undefined {
+        throw new Error("Method not implemented.");
+    }
+
+    addMember(id: string, client: Partial<ISequencedClient>) {
+        this.members.set(id, client as ISequencedClient);
+        this.eventEmitter.emit("addMember");
+    }
+
+    removeMember(id: string) {
+        if (this.members.delete(id)) {
+            this.eventEmitter.emit("removeMember");
+        }
+    }
+
+    getMembers(): Map<string, ISequencedClient> {
+        return this.members;
+    }
+    getMember(clientId: string): ISequencedClient | undefined {
+        return this.getMembers().get(clientId);
+    }
+    disposed: boolean = false;
+
+    dispose(): void {
+        throw new Error("Method not implemented.");
+    }
+
+    addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    on(event: string | symbol, listener: (...args: any[]) => void): this {
+        switch (event) {
+            case "afterOn":
+                this.eventEmitter.on(event, listener);
+                return this;
+
+            case "addMember":
+            case "removeMember":
+            case "approveProposal":
+            case "commitProposal":
+                this.eventEmitter.on(event, listener);
+                this.eventEmitter.emit("afterOn", event);
+                return this;
+            default:
+                throw new Error("Method not implemented.");
+        }
+    }
+    once(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.eventEmitter.removeListener(event, listener);
+        return this;
+    }
+    off(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.eventEmitter.off(event, listener);
+        return this;
+    }
+    removeAllListeners(event?: string | symbol | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+    setMaxListeners(n: number): this {
+        throw new Error("Method not implemented.");
+    }
+    getMaxListeners(): number {
+        throw new Error("Method not implemented.");
+    }
+    listeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    rawListeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    emit(event: string | symbol, ...args: any[]): boolean {
+        throw new Error("Method not implemented.");
+    }
+    eventNames(): (string | symbol)[] {
+        throw new Error("Method not implemented.");
+    }
+    listenerCount(type: string | symbol): number {
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -201,7 +320,6 @@ class MockDeltaConnection implements IDeltaConnection {
  */
 export class MockRuntime extends EventEmitter
     implements IComponentRuntime, IComponentHandleContext {
-
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -211,16 +329,24 @@ export class MockRuntime extends EventEmitter
     public readonly id: string;
     public readonly existing: boolean;
     public readonly options: any = {};
-    public clientId: string = uuid();
+    public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
-    public readonly connected: boolean;
+    public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
+    public readonly quorum = new MockQuorum();
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
+    }
 
     public get active(): Promise<void> {
         return this.activeDeferred.promise;
@@ -254,7 +380,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public getQuorum(): IQuorum {
-        return null;
+        return this.quorum;
     }
 
     public getAudience(): IAudience {
@@ -309,7 +435,7 @@ export class MockRuntime extends EventEmitter
         return;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         return null;
     }
 
@@ -367,7 +493,6 @@ export class MockHistorian implements IHistorian {
                 if (blob.path === head) {
                     return this.read_r(tail, this.blobMap.get(blob.sha) as git.ITree);
                 }
-
             }
             assert(false, `historian.read() blob not found (recursive): ${head}`);
         }
@@ -481,6 +606,8 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         assert(false);
         return 0;
     }
+
+    public dirty(): void {}
 }
 
 /**

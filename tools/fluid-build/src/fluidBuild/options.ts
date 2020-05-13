@@ -14,7 +14,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     showExec: boolean;
     clean: boolean;
     matchedOnly: boolean
-    buildScript: string;
+    buildScriptNames: string[];
     build?: boolean;
     vscode: boolean;
     symlink: boolean;
@@ -26,7 +26,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     uninstall: boolean;
     concurrency: number;
     samples: boolean;
-    fixScripts: boolean;
+    fix: boolean;
 }
 
 // defaults
@@ -37,7 +37,7 @@ export const options: FastBuildOptions = {
     clean: false,
     match: [],
     matchedOnly: true,
-    buildScript: "build",
+    buildScriptNames: [],
     vscode: false,
     symlink: false,
     fullSymlink: undefined,
@@ -48,7 +48,7 @@ export const options: FastBuildOptions = {
     uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
-    fixScripts: false,
+    fix: false,
     all: false,
     server: false,
 };
@@ -62,13 +62,14 @@ Options:
      --all            Operate on all packages/monorepo (default: client monorepo)
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix            Auto fix warning from package check if possible
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
-     --install        Run NPM install for all packages/monorepo
+     --install        Run npm install for all packages/monorepo
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
      --reinstall      Same as --uninstall --install
      --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
-  -s --script <name>  NPM script to execute (default:build)
+  -s --script <name>  npm script to execute (default:build)
      --server         Operate on the server monorepo
      --symlink        Fix symlink between packages within monorepo (isolate mode)
      --symlink:full   Fix symlink between packages across monorepo (full mode)
@@ -157,8 +158,8 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--fixscripts") {
-            options.fixScripts = true;
+        if (arg === "--fix") {
+            options.fix = true;
             setBuild(false);
             continue;
         }
@@ -200,8 +201,8 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-s" || arg === "--script") {
             if (i !== process.argv.length - 1) {
-                options.buildScript = process.argv[++i];
-                options.build = true;
+                options.buildScriptNames.push(process.argv[++i]);
+                setBuild(true);
                 continue;
             }
             console.error("ERROR: Missing argument for --script");
@@ -260,5 +261,9 @@ export function parseOptions(argv: string[]) {
     if (error) {
         printUsage();
         process.exit(-1);
+    }
+
+    if (options.buildScriptNames.length === 0) {
+        options.buildScriptNames = ["build"];
     }
 }

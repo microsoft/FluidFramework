@@ -70,7 +70,6 @@ export const unregisterWithMatchMaker = async (
  * registerWithMatchMaker and unregisterWithMatchMaker functions.
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
-
     private readonly discoverableInterfacesMap: Map<keyof IComponent, IComponentDiscoverableInterfaces[]> = new Map();
 
     private readonly discoverInterfacesMap: Map<keyof IComponent, IComponentDiscoverInterfaces[]> = new Map();
@@ -82,12 +81,12 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
     ) {
         // Discover needs to go first to ensure we don't alert the component registering of itself.
         const discover = (component as IProvideComponentDiscoverInterfaces).IComponentDiscoverInterfaces;
-        if (discover){
+        if (discover) {
             this.registerDiscoverInterfaces(discover);
         }
 
         const discoverable = (component as IProvideComponentDiscoverableInterfaces).IComponentDiscoverableInterfaces;
-        if (discoverable){
+        if (discoverable) {
             // The below code is some crazy typescript magic that checks to see that the interface the component
             // is declaring as discoverable is implemented by the component itself. We can do this because
             // `keyof IComponent` allows us to iterate though to check if the component also implements a getter
@@ -106,7 +105,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
         component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
     ) {
         const discoverable = (component as IProvideComponentDiscoverableInterfaces).IComponentDiscoverableInterfaces;
-        if (discoverable){
+        if (discoverable) {
             discoverable.discoverableInterfaces.forEach((interfaceName) => {
                 let interfacesMap = this.discoverableInterfacesMap.get(interfaceName);
                 if (interfacesMap) {
@@ -117,7 +116,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
         }
 
         const discover = (component as IProvideComponentDiscoverInterfaces).IComponentDiscoverInterfaces;
-        if (discover){
+        if (discover) {
             discover.interfacesToDiscover.forEach((interfaceName) => {
                 let interfacesMap = this.discoverInterfacesMap.get(interfaceName);
                 if (interfacesMap) {
@@ -132,14 +131,15 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
         // For each discover interface we will add it to the map
         discover.interfacesToDiscover.forEach((interfaceName) => {
             // If it's the first interface of its type add it to the the map
-            if (!this.discoverInterfacesMap.has(interfaceName)){
+            if (!this.discoverInterfacesMap.has(interfaceName)) {
                 this.discoverInterfacesMap.set(interfaceName, []);
             }
 
             // Add the component the interface map
             const existingInterfaces = this.discoverInterfacesMap.get(interfaceName);
             assert(existingInterfaces);
-            existingInterfaces.push(discover);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            existingInterfaces!.push(discover);
 
             // Since we are adding a new discover component we need to notify that component if there are existing
             // discoverable components that match it's interface key.
@@ -154,14 +154,15 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
         // For each discover interface we will add it to the map
         discoverableComponent.discoverableInterfaces.forEach((interfaceName) => {
             // If it's the first interface of its type add it to the the map
-            if (!this.discoverableInterfacesMap.has(interfaceName)){
+            if (!this.discoverableInterfacesMap.has(interfaceName)) {
                 this.discoverableInterfacesMap.set(interfaceName, []);
             }
 
             // Add the component the interface map
             const existingInterfaces = this.discoverableInterfacesMap.get(interfaceName);
             assert(existingInterfaces);
-            existingInterfaces.push(discoverableComponent);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            existingInterfaces!.push(discoverableComponent);
 
             // Since we are adding a new discoverable component we need to notify existing discover components
             // that there is a new discoverable component.

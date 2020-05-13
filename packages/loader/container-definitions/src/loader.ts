@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IFluidCodeDetails, IFluidModule } from "./chaincode";
+import { IError, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**
@@ -26,26 +27,83 @@ export interface ICodeLoader {
 }
 
 /**
+* The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+ * that have been resolved and are ready to load
+ */
+export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    /**
+     * A resolved version of the fluid package. All fluid browser file entries should be absolute urls.
+     */
+    resolvedPackage: IFluidPackage;
+    /**
+     * If not undefined, this id will be used to cache the entry point for the code package
+     */
+    resolvedPackageCacheId: string | undefined;
+}
+
+/**
+ * Fluid code resolvers take a fluid code details, and resolve the
+ * full fuild package including absolute urls for the browser file entries.
+ * The fluid code resolver is coupled to a specific cdn and knows how to resolve
+ * the code detail for loading from that cdn. This include resolving to the most recent
+ * version of package that supports the provided code details.
+ */
+export interface IFluidCodeResolver{
+    /**
+     * Resolves a fluid code details into a form that can be loaded
+     * @param details - The fluid code details to resolve
+     * @returns - A IResolvedFluidCodeDetails where the
+     *            resolvedPackage's fluid file entries are absolute urls, and
+     *            an optional resolvedPackageCacheId if the loaded package should be
+     *            cached.
+     */
+    resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
+}
+
+/**
  * Code WhiteListing Interface
  */
 export interface ICodeWhiteList {
-    testSource(source: IFluidCodeDetails): Promise<boolean>;
+    testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-export interface IContainer extends EventEmitter {
+export interface IContainerEvents extends IEvent {
+    (event: "readonly", listener: (readonly: boolean) => void): void;
+    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
+    (event: "disconnected" | "joining", listener: () => void);
+    (event: "closed", listener: (error?: IError) => void);
+    (event: "error", listener: (error: IError) => void);
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "pong" | "processTime", listener: (latency: number) => void);
+    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
+}
+
+export interface IContainer extends IEventProvider<IContainerEvents> {
+
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
 }
 
-export interface IExperimentalContainer {
+export interface IExperimentalContainer extends IContainer {
 
-    readonly isExperimentalContainer: true;
+    isExperimentalContainer: true;
+
+    /**
+     * Represents the resolved url to the container.
+     */
+    resolvedUrl: IResolvedUrl | undefined;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
      */
-    experimentalIsAttached(): boolean;
+    isLocal(): boolean;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     * @deprecated - It will be replaced with isLocal.
+     */
+    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.
@@ -53,10 +111,11 @@ export interface IExperimentalContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    experimentalAttach(resolver: IUrlResolver, options: any): Promise<void>;
+    attach(request: IRequest): Promise<void>;
 }
 
 export interface ILoader {
+
     /**
      * Loads the resource specified by the URL + headers contained in the request object.
      */
@@ -72,7 +131,7 @@ export interface ILoader {
     resolve(request: IRequest): Promise<IContainer>;
 }
 
-export interface IExperimentalLoader {
+export interface IExperimentalLoader extends ILoader {
 
     isExperimentalLoader: true;
 
@@ -80,7 +139,7 @@ export interface IExperimentalLoader {
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explciitly attaches the container to a service provider.
      */
-    experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
+    createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
 export enum LoaderHeader {

@@ -4,12 +4,13 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable, TableDocumentItem } from "./table";
+import { TableSliceType } from "./componentTypes";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -24,8 +25,10 @@ export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        TableSliceType,
         TableSlice,
         [],
+        {},
     );
 
     public get name() { return this.root.get(ConfigKey.name); }
@@ -38,10 +41,6 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
@@ -117,6 +116,8 @@ export class TableSlice extends PrimedComponent implements ITable {
         const maybeConfig = props;
         this.root.set(ConfigKey.docId, maybeConfig.docId);
         this.root.set(ConfigKey.name, maybeConfig.name);
+        this.maybeDoc = await this.getComponent_UNSAFE(maybeConfig.docId);
+        this.root.set(maybeConfig.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
     }
@@ -135,7 +136,9 @@ export class TableSlice extends PrimedComponent implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
-            this.maybeDoc = await this.getComponent(docId);
+            // fetch handle from root
+            const handle = this.root.get<IComponentHandle<TableDocument>>(docId);
+            this.maybeDoc = await handle.get();
         }
     }
 

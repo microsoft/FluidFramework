@@ -11,7 +11,6 @@ import { CreationDriverUrlResolver } from "../creationDriverUrlResolver";
 import { CreationServerMessagesHandler } from "..";
 
 describe("Creation Driver", () => {
-
     let service: IDocumentService;
     let client: IClient;
     let documentDeltaConnection1: IDocumentDeltaConnection;
@@ -21,22 +20,22 @@ describe("Creation Driver", () => {
     beforeEach(async () => {
         const resolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const factory = new CreationDocumentServiceFactory();
-        resolved = (await resolver.resolve({url: `http://fluid.com?uniqueId=${docId}`})) as IFluidResolvedUrl;
+        resolved = (await resolver.resolve({ url: `http://fluid.com?uniqueId=${docId}` })) as IFluidResolvedUrl;
         service = await factory.createDocumentService(resolved);
         client = {
             mode: "write",
-            details: {capabilities: {interactive: false}},
+            details: { capabilities: { interactive: false } },
             permission: ["write"],
             scopes: [ScopeType.DocWrite],
-            user: {id: "user1"},
+            user: { id: "user1" },
         };
     });
 
     const delay = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     it("Initial driver connection details", async () => {
-        documentDeltaConnection1 = await service.connectToDeltaStream(client, "write");
-        documentDeltaConnection2 = await service.connectToDeltaStream(client, "write");
+        documentDeltaConnection1 = await service.connectToDeltaStream(client);
+        documentDeltaConnection2 = await service.connectToDeltaStream(client);
         assert.equal(documentDeltaConnection1.mode, "write", "Connection mode should be write.");
         assert.equal(documentDeltaConnection1.existing, false, "Document should not be existing.");
         assert.equal(documentDeltaConnection2.existing, true, "Document should be existing for second connection.");

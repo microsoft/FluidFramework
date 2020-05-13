@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { createNetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -22,46 +23,34 @@ export function throwOdspNetworkError(
     statusCode: number,
     canRetry: boolean,
     response?: Response,
-    online?: string) {
+    online?: string,
+) {
     let message = errorMessage;
+    let sprequestguid;
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
+        sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
     }
-    throw new OdspNetworkError(
-        message,
-        statusCode,
-        canRetry,
-        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
-        online,
-    );
-}
 
-export class OdspNetworkError extends NetworkError {
-    constructor(
-        errorMessage: string,
-        readonly statusCode: number,
-        readonly canRetry: boolean,
-        readonly sprequestguid?: string,
-        readonly online = OnlineStatus[isOnline()]) {
-        super(errorMessage, statusCode, canRetry, online);
-    }
+    const networkError = createNetworkError(
+        message,
+        canRetry,
+        statusCode,
+        undefined /* retryAfterSeconds */,
+        online);
+    (networkError as any).sprequestguid = sprequestguid;
+    throw networkError;
 }
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter) {
-    if (socketError.code === 500) {
-        return new FatalError(socketError.message);
-    } else if (socketError.retryAfter) {
-        return new ThrottlingError(socketError.message, socketError.retryAfter);
-    } else {
-        return new OdspNetworkError(
-            socketError.message,
-            socketError.code,
-            retryFilter?.(socketError.code) ?? true,
-        );
-    }
+export function errorObjectFromSocketError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
+    return createNetworkError(
+        socketError.message,
+        retryFilter?.(socketError.code) ?? true,
+        socketError.code,
+        socketError.retryAfter);
 }
 
 /**
@@ -132,8 +121,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
  * @param requestInit - fetch requestInit
  * @param retryPolicy - how to do retries
  */
-// eslint-disable-next-line @typescript-eslint/promise-function-async
-export function fetchHelper(
+export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
@@ -147,8 +135,8 @@ export function fetchHelper(
             throwOdspNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            // eslint-disable-next-line max-len
-            throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
+            throwOdspNetworkError(
+                `Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
@@ -202,4 +190,21 @@ export function isLocalStorageAvailable(): boolean {
         debug(`LocalStorage not available due to ${e}`);
         return false;
     }
+}
+
+export interface INewFileInfo {
+    siteUrl: string;
+    driveId: string;
+    filename: string;
+    filePath: string;
+    callback?(itemId: string, filename: string): void;
+}
+
+export interface INewFileInfoHeader {
+    newFileInfoPromise: Promise<INewFileInfo>,
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
 }

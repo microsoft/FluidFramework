@@ -10,7 +10,6 @@ import * as puppeteer from "puppeteer";
 import * as request from "request";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
-import { ISearchStorage } from "../searchStorage";
 
 export interface ICloseEvent {
     documentId: string;
@@ -26,7 +25,6 @@ export class PuppetMaster extends EventEmitter {
         gatewayUrl: string,
         agentType: string,
         jwtKey: string,
-        searchStorage: ISearchStorage,
         cache?: ICache): Promise<PuppetMaster> {
 
         const browser = await puppeteer.launch({
@@ -53,7 +51,6 @@ export class PuppetMaster extends EventEmitter {
             browser,
             page,
             token,
-            searchStorage,
             cache);
         await puppetMaster.launch();
 
@@ -69,7 +66,6 @@ export class PuppetMaster extends EventEmitter {
         private browser: puppeteer.Browser,
         private page: puppeteer.Page,
         private token: string,
-        private searchStorage: ISearchStorage,
         private cache?: ICache,
     ) {
         super();
@@ -119,11 +115,6 @@ export class PuppetMaster extends EventEmitter {
 
         if (this.agentType === "cache") {
             await this.upsertPageCache();
-        } else if (this.agentType === "search") {
-            const html = await this.getPageHTML();
-            await this.searchStorage.upload(this.getSearchKey(), html);
-            await this.page.close();
-            await this.browser.close();
         }
     }
 
@@ -149,18 +140,6 @@ export class PuppetMaster extends EventEmitter {
             };
             this.emit("close", closeEvent);
         });
-    }
-
-    private async getPageHTML() {
-        const htmlContent = await this.page.evaluate(() => {
-            return document.body.outerHTML;
-        });
-        return htmlContent;
-    }
-
-    private getSearchKey() {
-        const hostname = new URL(this.gatewayUrl).hostname;
-        return `${hostname}/${this.tenantId}/${this.documentId}.html`;
     }
 
     /**

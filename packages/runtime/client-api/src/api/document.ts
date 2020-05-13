@@ -58,7 +58,6 @@ export const getChaincodeRepo = (): string => chaincodeRepo;
  * A document is a collection of shared types.
  */
 export class Document extends EventEmitter {
-
     public get clientId(): string {
         return this.runtime.clientId;
     }
@@ -85,7 +84,7 @@ export class Document extends EventEmitter {
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.runtime.parentBranch;
     }
 
@@ -103,6 +102,7 @@ export class Document extends EventEmitter {
         public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
         private readonly root: ISharedMap,
+        private readonly closeFn: () => void,
     ) {
         super();
     }
@@ -193,9 +193,8 @@ export class Document extends EventEmitter {
     /**
      * Closes the document and detaches all listeners
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
-        return this.runtime.close();
+        return this.closeFn();
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -228,7 +227,7 @@ async function initializeChaincode(container: Container, pkg: IFluidCodeDetails)
     let code = quorum.get("code");
 
     // Back compat
-    if (!code) {
+    if (code === undefined) {
         code = quorum.get("code2");
     }
 

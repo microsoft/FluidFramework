@@ -41,6 +41,11 @@ export interface IConnect {
      * Connection mode of client.
      */
     mode: ConnectionMode;
+
+    /**
+     * An optional nonce used during connection to identify connection attempts
+     */
+    nonce?: string;
 }
 
 /**
@@ -75,22 +80,22 @@ export interface IConnected {
     /**
      * Messages sent during the connection
      */
-    initialMessages?: ISequencedDocumentMessage[];
+    initialMessages: ISequencedDocumentMessage[];
 
     /**
      * Contents sent during the connection
      */
-    initialContents?: IContentMessage[];
+    initialContents: IContentMessage[];
 
     /**
      * Signals sent during the connection
      */
-    initialSignals?: ISignalMessage[];
+    initialSignals: ISignalMessage[];
 
     /**
      * Prior clients already connected.
      */
-    initialClients?: ISignalClient[];
+    initialClients: ISignalClient[];
 
     /**
      * Protocol version selected by the server to communicate with the client
@@ -111,4 +116,9 @@ export interface IConnected {
      * Connection mode of client.
      */
     mode: ConnectionMode;
+
+    /**
+     * An optional nonce used during connection to identify connection attempts
+     */
+    nonce?: string;
 }

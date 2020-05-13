@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-services-core",
-  "version": "0.1002.0",
+  "version": "0.1004.3",
   "description": "Fluid services core definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -10,7 +10,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
@@ -22,17 +21,17 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-gitresources": "^0.1002.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-server-services-client": "^0.1002.0",
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-gitresources": "^0.1004.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
+    "@microsoft/fluid-server-services-client": "^0.1004.3",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.14.6",
     "debug": "^4.1.1",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

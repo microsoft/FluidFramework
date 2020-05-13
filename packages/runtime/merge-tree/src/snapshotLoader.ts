@@ -15,7 +15,6 @@ import { Snapshot } from "./snapshot";
 import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
-
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly client: Client,
@@ -24,7 +23,6 @@ export class SnapshotLoader {
     public async initialize(
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-
         const headerP = services.read(Snapshot.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
@@ -88,7 +86,6 @@ export class SnapshotLoader {
     private loadHeader(
         header: string,
         branchId: string): MergeTreeChunk {
-
         const chunk = Snapshot.processChunk(
             header,
             this.runtime.IComponentSerializer,
@@ -100,8 +97,16 @@ export class SnapshotLoader {
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
-        this.client.startCollaboration(
-            this.runtime.clientId,
+        // specify a default client id, "snapshot" here as we
+        // should enter collaboration/op sending mode if we load
+        // a snapshot in any case (summary or attach message)
+        // once we get a client id this will be called with that
+        // clientId in the connected event
+        // TODO: this won't support rehydrating a detached container
+        // we need to think more holistically about the dds state machine
+        // now that we differentiate attached vs local
+        this.client.startOrUpdateCollaboration(
+            this.runtime.clientId ?? "snapshot",
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)

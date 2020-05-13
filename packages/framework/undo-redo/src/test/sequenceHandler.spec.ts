@@ -73,7 +73,6 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         while (undoRedoStack.redoOperation()) { }
 
         assert.equal(sharedString.getText(), "");
-
     });
 
     it("Undo and Redo Insert", () => {
@@ -90,7 +89,6 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         while (undoRedoStack.redoOperation()) { }
 
         assert.equal(sharedString.getText(), text);
-
     });
 
     it("Undo and Redo Insert & Delete", () => {
@@ -111,7 +109,6 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         while (undoRedoStack.redoOperation()) { }
 
         assert.equal(sharedString.getText(), finalText, sharedString.getText());
-
     });
 
     it("Undo and redo insert of split segment", () => {

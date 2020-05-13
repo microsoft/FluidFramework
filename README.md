@@ -1,7 +1,5 @@
 # Fluid
 
-![Fluid](https://www.nasa.gov/sites/default/files/thumbnails/image/edu_fluid_large.jpg)
-
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
 Fluid enables distributed, collaborative applications by providing developers with eventually consistent [distributed

@@ -9,6 +9,7 @@ import * as assert from "assert";
 import { RangeTracker } from "@microsoft/fluid-common-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
+    ISequencedDocumentAugmentedMessage,
     IBranchOrigin,
     IClientJoin,
     IDocumentMessage,
@@ -17,12 +18,15 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize } from "@microsoft/fluid-server-services-client";
 import {
+    ControlMessageType,
     extractBoxcar,
     ICollection,
     IContext,
+    IControlMessage,
     IDocument,
     IMessage,
     INackMessage,
@@ -36,7 +40,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
+import { CheckpointContext, ICheckpointParams, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
@@ -51,7 +55,12 @@ enum SendType {
     Never,
 }
 
-export interface ITicketedMessageOutput {
+enum InstructionType {
+    ClearCache,
+    NoOp,
+}
+
+interface ITicketedMessageOutput {
 
     message: ITicketedMessage;
 
@@ -64,6 +73,8 @@ export interface ITicketedMessageOutput {
     send: SendType;
 
     nacked: boolean;
+
+    instruction: InstructionType;
 }
 
 /**
@@ -72,7 +83,13 @@ export interface ITicketedMessageOutput {
 const getBranchClientId = (branch: string) => `branch$${branch}`;
 
 export class DeliLambda implements IPartitionLambda {
-    private sequenceNumber: number = undefined;
+    private sequenceNumber: number;
+    private durableSequenceNumber: number;
+
+    // 'epoch' and 'term' are readonly and should never change when lambda is running.
+    private readonly term: number;
+    private readonly epoch: number;
+
     private logOffset: number;
 
     // Client sequence number mapping
@@ -82,6 +99,7 @@ export class DeliLambda implements IPartitionLambda {
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
+    private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
@@ -93,6 +111,7 @@ export class DeliLambda implements IPartitionLambda {
         private readonly context: IContext,
         private readonly tenantId: string,
         private readonly documentId: string,
+        readonly lastCheckpoint: IDeliCheckpoint,
         dbObject: IDocument,
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
@@ -100,10 +119,9 @@ export class DeliLambda implements IPartitionLambda {
         private readonly clientTimeout: number,
         private readonly activityTimeout: number,
         private readonly noOpConsolidationTimeout: number) {
-
         // Instantiate existing clients
-        if (dbObject.clients) {
-            for (const client of dbObject.clients) {
+        if (lastCheckpoint.clients) {
+            for (const client of lastCheckpoint.clients) {
                 this.clientSeqManager.upsertClient(
                     client.clientId,
                     client.clientSequenceNumber,
@@ -117,8 +135,8 @@ export class DeliLambda implements IPartitionLambda {
 
         // Setup branch information
         if (dbObject.parent) {
-            if (dbObject.branchMap) {
-                this.branchMap = new RangeTracker(dbObject.branchMap);
+            if (lastCheckpoint.branchMap) {
+                this.branchMap = new RangeTracker(lastCheckpoint.branchMap);
             } else {
                 // Initialize the range tracking window
                 this.branchMap = new RangeTracker(
@@ -139,17 +157,20 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // Initialize counting context
-        this.sequenceNumber = dbObject.sequenceNumber;
+        this.sequenceNumber = lastCheckpoint.sequenceNumber;
+        this.term = lastCheckpoint.term;
+        this.epoch = lastCheckpoint.epoch;
+        this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
-        this.logOffset = dbObject.logOffset;
+        this.logOffset = lastCheckpoint.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
     public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.offset < this.logOffset) {
+        if (rawMessage.offset <= this.logOffset) {
             return;
         }
 
@@ -158,7 +179,6 @@ export class DeliLambda implements IPartitionLambda {
         const boxcar = extractBoxcar(rawMessage);
 
         for (const message of boxcar.contents) {
-
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 
@@ -167,12 +187,15 @@ export class DeliLambda implements IPartitionLambda {
                 continue;
             }
 
+            this.lastInstruction = ticketedMessage.instruction;
+
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
                 this.checkIdleClients(ticketedMessage);
 
                 // Check for document inactivity.
-                if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
+                if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
+                    && this.noActiveClients) {
                     this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
                 }
 
@@ -199,6 +222,9 @@ export class DeliLambda implements IPartitionLambda {
         // Checkpoint the current state
         this.lastSendP.then(
             () => {
+                if (this.lastInstruction === InstructionType.ClearCache) {
+                    checkpoint.clear = true;
+                }
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
@@ -234,7 +260,11 @@ export class DeliLambda implements IPartitionLambda {
         if (messageOrder === IncomingMessageOrder.Duplicate) {
             return;
         } else if (messageOrder === IncomingMessageOrder.Gap) {
-            return this.createNackMessage(message);
+            return this.createNackMessage(
+                message,
+                400,
+                NackErrorType.BadRequestError,
+                `Gap detected in incoming op`);
         }
 
         // Cases only applies to non-integration messages
@@ -263,7 +293,11 @@ export class DeliLambda implements IPartitionLambda {
                 // Nack inexistent client.
                 const client = this.clientSeqManager.get(message.clientId);
                 if (!client || client.nack) {
-                    return this.createNackMessage(message);
+                    return this.createNackMessage(
+                        message,
+                        400,
+                        NackErrorType.BadRequestError,
+                        `Nonexistent client`);
                 }
                 // Verify that the message is within the current window.
                 // -1 check just for directly sent ops (e.g., using REST API).
@@ -278,12 +312,20 @@ export class DeliLambda implements IPartitionLambda {
                         true,
                         [],
                         true);
-                    return this.createNackMessage(message);
+                    return this.createNackMessage(
+                        message,
+                        400,
+                        NackErrorType.BadRequestError,
+                        `Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`);
                 }
                 // Nack if an unauthorized client tries to summarize.
                 if (message.operation.type === MessageType.Summarize) {
                     if (!canSummarize(client.scopes)) {
-                        return this.createNackMessage(message);
+                        return this.createNackMessage(
+                            message,
+                            403,
+                            NackErrorType.InvalidScopeError,
+                            `Client ${message.clientId} does not have summary permission`);
                     }
                 }
             }
@@ -377,8 +419,10 @@ export class DeliLambda implements IPartitionLambda {
                     message.timestamp,
                     true);
             } else {
-                // Don't rev for server sent no-ops or noClient ops.
-                if (!(message.operation.type === MessageType.NoOp || message.operation.type === MessageType.NoClient)) {
+                // Don't rev for server sent no-ops, noClient, or Control messages.
+                if (!(message.operation.type === MessageType.NoOp ||
+                    message.operation.type === MessageType.NoClient ||
+                    message.operation.type === MessageType.Control)) {
                     sequenceNumber = this.revSequenceNumber();
                 }
             }
@@ -395,8 +439,10 @@ export class DeliLambda implements IPartitionLambda {
             this.noActiveClients = false;
         }
 
-        // Sequence number was never rev'd for NoOps/noClients. We will decide now based on heuristics.
         let sendType = SendType.Immediate;
+        let instruction = InstructionType.NoOp;
+
+        // Sequence number was never rev'd for NoOps/noClients. We will decide now based on heuristics.
         if (message.operation.type === MessageType.NoOp) {
             // Set up delay sending of client sent no-ops
             if (message.clientId) {
@@ -421,10 +467,34 @@ export class DeliLambda implements IPartitionLambda {
             // Only rev if no clients have shown up since last noClient was sent to alfred.
             if (this.noActiveClients) {
                 sequenceNumber = this.revSequenceNumber();
+                message.operation.referenceSequenceNumber = sequenceNumber;
                 this.minimumSequenceNumber = sequenceNumber;
-                this.canClose = true;
             } else {
                 sendType = SendType.Never;
+            }
+        } else if (message.operation.type === MessageType.Control) {
+            sendType = SendType.Never;
+            const controlMessage = systemContent as IControlMessage;
+            if (controlMessage.type === ControlMessageType.UpdateDSN) {
+                this.context.log.info(
+                    `Update DSN for ${this.tenantId}/${this.documentId}: ${JSON.stringify(controlMessage)}`);
+                // TODO: Make specific interface type for controlContents. The schema should be more clear
+                // as we introduce more of these.
+                const controlContent = controlMessage.contents as
+                    {
+                        durableSequenceNumber: number
+                        clearCache: boolean
+                    };
+                // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
+                if (controlContent.clearCache && this.noActiveClients) {
+                    instruction = InstructionType.ClearCache;
+                    this.canClose = true;
+                    this.context.log.info(`Deli cache will be cleared for ${this.tenantId}/${this.documentId}`);
+                }
+                const dsn = controlContent.durableSequenceNumber;
+                assert(dsn >= this.durableSequenceNumber,
+                    `Incoming dsn@${dsn} < Current dsn@${this.durableSequenceNumber}`);
+                this.durableSequenceNumber = controlContent.durableSequenceNumber;
             }
         }
 
@@ -445,6 +515,7 @@ export class DeliLambda implements IPartitionLambda {
         };
 
         return {
+            instruction,
             message: sequencedMessage,
             msn: this.minimumSequenceNumber,
             nacked: false,
@@ -482,7 +553,12 @@ export class DeliLambda implements IPartitionLambda {
             traces: message.operation.traces,
             type: message.operation.type,
         };
-        if (systemContent !== undefined) {
+        if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
+            const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
+            const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
+            augmentedOutputMessage.additionalContent = checkpointData;
+            return augmentedOutputMessage;
+        } else if (systemContent !== undefined) { // TODO to consolidate the logic here
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
             systemOutputMessage.data = JSON.stringify(systemContent);
             return systemOutputMessage;
@@ -575,13 +651,22 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Creates a nack message for out of window/disconnected clients.
+     * Creates a nack message for clients.
      */
-    private createNackMessage(message: IRawOperationMessage): ITicketedMessageOutput {
+    private createNackMessage(
+        message: IRawOperationMessage,
+        code: number,
+        type: NackErrorType,
+        reason: string): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
             clientId: message.clientId,
             documentId: this.documentId,
             operation: {
+                content: {
+                    code,
+                    type,
+                    message: reason,
+                },
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
             },
@@ -589,6 +674,7 @@ export class DeliLambda implements IPartitionLambda {
             type: NackOperationType,
         };
         return {
+            instruction: InstructionType.NoOp,
             message: nackMessage,
             msn: this.minimumSequenceNumber,
             nacked: true,
@@ -631,13 +717,22 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
+    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
+        const deliCheckpoint = this.generateDeliCheckpoint();
+        const checkpoint = deliCheckpoint as ICheckpointParams;
+        checkpoint.queuedMessage = queuedMessage;
+        return checkpoint;
+    }
+
+    private generateDeliCheckpoint(): IDeliCheckpoint {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
+            durableSequenceNumber: this.durableSequenceNumber,
+            epoch: this.epoch,
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
-            queuedMessage,
+            term: this.term,
         };
     }
 

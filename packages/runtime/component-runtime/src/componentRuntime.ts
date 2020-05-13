@@ -45,10 +45,11 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
+    IExperimentalComponentRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
@@ -62,7 +63,10 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
+    IExperimentalComponentRuntime, IComponentHandleContext
+{
+    public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -88,7 +92,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.getQuorum(),
             context.getAudience(),
             context.snapshotFn,
-            context.closeFn,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -111,7 +114,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.leader;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.componentContext.clientId;
     }
 
@@ -124,7 +127,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get isAttached(): boolean {
-        return !this.isLocal;
+        return this._isAttached;
     }
 
     public get path(): string {
@@ -140,12 +143,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private isLocal: boolean;
+    private _isAttached: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -154,7 +160,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly componentContext: IComponentContext,
         public readonly documentId: string,
         public readonly id: string,
-        public readonly parentBranch: string,
+        public readonly parentBranch: string | null,
         public existing: boolean,
         public readonly options: any,
         private readonly blobManager: IBlobManager,
@@ -162,7 +168,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
-        private readonly closeFn: () => void,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
@@ -172,13 +177,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         const tree = componentContext.baseSnapshot;
 
         // Must always receive the component type inside of the attributes
-        if (tree && tree.trees) {
+        if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
                     this,
                     componentContext,
                     componentContext.storage,
                     (type, content) => this.submit(type, content),
+                    (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
@@ -197,7 +203,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         this.attachListener();
-        this.isLocal = !existing;
+        this._isAttached = existing;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -205,10 +211,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
     }
 
-    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
-        newComponentRuntime.attach();
-        return newComponentRuntime;
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        /**
+         * @deprecated in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        this.closed = true;
+
+        this.emit("dispose");
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -230,7 +245,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         // Otherwise defer to an attached request handler
-        if (!this.requestHandler) {
+        if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
             return this.requestHandler(request);
@@ -261,6 +276,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
+        assert(!this.contexts.has(id), "createChannel() with existing ID");
+
         const context = new LocalChannelContext(
             id,
             this.sharedObjectRegistry,
@@ -268,7 +285,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content) => this.submit(t, content));
+            (t, content) => this.submit(t, content),
+            (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -290,7 +308,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      */
     public registerChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (!this.isLocal) {
+        if (this._isAttached) {
             this.attachChannel(channel);
             return;
         } else {
@@ -304,6 +322,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
     }
 
+    public isLocal(): boolean {
+        const expComponentContext = this.componentContext as IExperimentalComponentContext;
+        assert(expComponentContext?.isExperimentalComponentContext);
+        return expComponentContext.isLocal();
+    }
+
     /**
      * Attaches this runtime to the container
      * This includes the following:
@@ -311,11 +335,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * 2. Attaching registered channels
      */
     public attach() {
-        if (!this.isLocal) {
+        if (this._isAttached) {
             return;
         }
 
-        if (this.boundhandles) {
+        if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attach();
             });
@@ -332,20 +356,20 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             channel.attach();
         });
 
-        this.isLocal = false;
+        this._isAttached = true;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }
 
     public bind(handle: IComponentHandle): void {
-        if (!this.boundhandles) {
+        if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
 
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients
@@ -408,33 +432,31 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITreeEntry[]> {
+    /**
+     * Stop the runtime.  snapshotInternal() is called separately if needed
+     */
+    public stop(): void {
         this.verifyNotClosed();
 
         this.closed = true;
-
-        return this.snapshotInternal(true);
-    }
-
-    public async close(): Promise<void> {
-        this.closeFn();
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
-        /* eslint-disable no-case-declarations */
         switch (message.type) {
-            case MessageType.Attach:
+            case MessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
 
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+                // If a non-local operation then go and create the object
+                // Otherwise mark it as officially attached.
                 if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
+                    assert(this.pendingAttach.has(attachMessage.id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    assert(!this.contexts.has(attachMessage.id), "Unexpected attach channel OP");
+
                     // Create storage service that wraps the attach data
-                    const origin = message.origin ? message.origin.id : this.documentId;
+                    const origin = message.origin?.id ?? this.documentId;
 
                     const flatBlobs = new Map<string, string>();
                     const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -444,6 +466,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext,
                         this.componentContext.storage,
                         (type, content) => this.submit(type, content),
+                        (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTree,
                         this.sharedObjectRegistry,
@@ -465,15 +488,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.contextsDeferred.set(attachMessage.id, deferred);
                     }
                 }
-
                 break;
+            }
 
             case MessageType.Operation:
                 this.processOp(message, local);
                 break;
             default:
         }
-        /* eslint-enable no-case-declarations */
 
         this.emit("op", message);
     }
@@ -574,6 +596,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content);
+    }
+
+    private setChannelDirty(address: string): void {
+        this.verifyNotClosed();
+        this.componentContext.setChannelDirty(address);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean) {

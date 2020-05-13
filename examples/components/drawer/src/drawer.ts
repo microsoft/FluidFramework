@@ -9,9 +9,7 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLVisual,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IPackageManager } from "@microsoft/fluid-host-service-interfaces";
@@ -19,6 +17,7 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { initializeIcons } from "@uifabric/icons";
 import * as semver from "semver";
@@ -62,7 +61,7 @@ export class Drawer extends EventEmitter implements
     ) {
         super();
 
-        // eslint-disable-next-line no-unused-expressions
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.context.clientId;
 
         this.url = context.id;
@@ -125,6 +124,9 @@ export class Drawer extends EventEmitter implements
 }
 
 class DrawerFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/drawer";
+    public readonly type = DrawerFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

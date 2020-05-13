@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // Import our local components
 // eslint-disable-next-line import/no-internal-modules
@@ -41,28 +46,28 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
     private readonly textDisplayId = "textDisplay-12345";
     private readonly incrementorId = "incrementor-12345";
 
-    private button: Button;
-    private textDisplay: TextDisplay;
-    private incrementor: Incrementor;
+    private button: Button | undefined;
+    private textDisplay: TextDisplay | undefined;
+    private incrementor: Incrementor | undefined;
 
     protected async componentInitializingFirstTime() {
     // Create a counter that will live on the SimpleDataSharing component
         this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         // Create a button, textDisplay, and incrementor component
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.buttonId, Button.chaincodeName);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.textDisplayId, TextDisplay.chaincodeName);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.incrementorId, Incrementor.chaincodeName);
+        const buttonComponent = await this.createAndAttachComponent(Button.chaincodeName);
+        this.root.set(this.buttonId, buttonComponent.handle);
+        const textComponent = await this.createAndAttachComponent(TextDisplay.chaincodeName);
+        this.root.set(this.textDisplayId, textComponent.handle);
+        const incrementorComponent = await this.createAndAttachComponent(Incrementor.chaincodeName);
+        this.root.set(this.incrementorId, incrementorComponent.handle);
     }
 
     protected async componentHasInitialized() {
     // Get all of our components
-        const buttonP = this.getComponent<Button>(this.buttonId, true);
-        const textDisplayP = this.getComponent<TextDisplay>(this.textDisplayId, true);
-        const incrementorP = this.getComponent<Incrementor>(this.incrementorId, true);
+        const buttonP = this.root.get<IComponentHandle<Button>>(this.buttonId).get();
+        const textDisplayP = this.root.get<IComponentHandle<TextDisplay>>(this.textDisplayId).get();
+        const incrementorP = this.root.get<IComponentHandle<Incrementor>>(this.incrementorId).get();
 
         // This is just an optimization to load all the components in parallel.
         [this.button, this.textDisplay, this.incrementor] = await Promise.all([buttonP, textDisplayP, incrementorP]);
@@ -81,17 +86,21 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
         div.append(textDisplayDiv, buttonDiv);
 
         // Render button and textDisplay
-        this.button.render(buttonDiv);
-        this.textDisplay.render(textDisplayDiv);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.button!.render(buttonDiv);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.textDisplay!.render(textDisplayDiv);
     }
 }
 
 export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     SimpleDataSharing,
     [],
+    {},
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     chaincodeName,
     new Map([
         [chaincodeName, Promise.resolve(SimpleDataSharingInstantiationFactory)],

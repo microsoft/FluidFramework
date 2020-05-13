@@ -10,13 +10,10 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
-    ConnectionMode,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 
 import {
-    IConnectionDetails,
-    IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
@@ -75,6 +72,7 @@ export class MockDeltaManager extends EventEmitter
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return undefined; }
 
+    public readonly readonly = false;
     public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
@@ -120,25 +118,10 @@ export class MockDeltaManager extends EventEmitter
     }
 
     public get active(): boolean {
-        return false;
+        return true;
     }
 
     public close(): void {}
-
-    public async connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails> {
-        return;
-    }
-
-    public async getDeltas(
-        reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        return [];
-    }
-
-    public attachOpHandler(
-        minSequenceNumber: number,
-        sequenceNumber: number,
-        handler: IDeltaHandlerStrategy,
-        resume: boolean) {}
 
     public submitSignal(content: any): void {}
 

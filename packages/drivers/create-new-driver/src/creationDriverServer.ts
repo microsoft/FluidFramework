@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -30,7 +31,6 @@ interface IAugmentedDocumentMessage {
  * Server implementation used by Creation driver.
  */
 export class CreationServerMessagesHandler {
-
     public static getInstance(documentId: string): CreationServerMessagesHandler {
         if (CreationServerMessagesHandler.urlMap.has(documentId)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -72,11 +72,6 @@ export class CreationServerMessagesHandler {
                     }
                 }
             }, Number.MAX_VALUE);
-    }
-
-
-    private createClientId() {
-        return `newFileCreationClient${this.totalClients}`;
     }
 
     /**
@@ -130,7 +125,7 @@ export class CreationServerMessagesHandler {
                 maxAckWaitTime: 600000,
             },
         };
-        const clientId: string = this.createClientId();
+        const clientId: string = uuid();
         const clientDetail: IClientJoin = {
             clientId,
             detail: connectMessage.client,
@@ -148,6 +143,8 @@ export class CreationServerMessagesHandler {
             serviceConfiguration: DefaultServiceConfiguration,
             initialClients: [{ clientId, client: connectMessage.client }],
             initialMessages: [joinMessage],
+            initialContents: [],
+            initialSignals: [],
             supportedVersions: connectMessage.versions,
             version: connectMessage.versions[connectMessage.versions.length - 1],
         };
@@ -216,8 +213,8 @@ export class CreationServerMessagesHandler {
      */
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: clientDetail.clientId,
-            clientSequenceNumber: 0,
+            clientId: null as any,
+            clientSequenceNumber: -1,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,

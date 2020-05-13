@@ -3,14 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ITree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentRuntime,
-    IObjectStorageService,
     ISharedObjectServices,
     IChannelAttributes,
 } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+
+export enum ConsensusResult {
+    Release,
+    Complete,
+}
+
+/**
+ * Callback provided to acquire() and waitAndAcquire() methods.
+ * @returns ConsensusResult indicating whether item was completed, or releases back to the queue.
+ */
+export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
 /**
  * Consensus Ordered Collection channel factory interface
@@ -27,6 +36,38 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
         attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
+}
+
+/**
+ * Events notifying about addition, acquisition, release and completion of items
+ */
+export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents{
+
+    /**
+     * Event fires when new item is added to the queue or
+     * an item previously acquired is returned back to a queue (including client loosing connection)
+     * @param newlyAdded - indicates if it's newly added item of previously acquired item
+     */
+    (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
+    /**
+     * Event fires when a client acquired an item
+     * Fires both for locally acquired items, as well as items acquired by remote clients
+     */
+    (event: "acquire", listener: (value: T, clientId?: string) => void): this;
+
+    /**
+     * "Complete event fires when a client completes an item.
+     */
+    (event: "complete", listener: (value: T) => void): this;
+
+    /**
+     * Event fires when locally acquired item is being released back to the queue.
+     * Please note that release process is asynchronous, so it takes a while for it to happen
+     * ("add" event will be fired as result of it)
+     * @param intentional - indicates whether release was intentional (result of returning
+     * ConsensusResult.Release from callback) or it happened as result of lost connection.
+     */
+    (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 }
 
 /**
@@ -49,7 +90,8 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */
-export interface IConsensusOrderedCollection<T = any> extends ISharedObject {
+export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
+
     /**
      * Adds a value to the collection
      */
@@ -57,13 +99,16 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject {
 
     /**
      * Retrieves a value from the collection.
+     * @returns Returns true (and calls callback with acquired value) if collection was not empty.
+     *          Otherwise returns false.
      */
-    remove(): Promise<T>;
+    acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 
     /**
      * Wait for a value to be available and remove it from the consensus collection
+     * Calls callback with retrieved value.
      */
-    waitAndRemove(): Promise<T>;
+    waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
 /**
@@ -72,16 +117,10 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject {
  * TODO: move this to be use in other place
  * TODO: currently input and output is not symmetrical, can they become symmetrical?
  */
-export interface ISnapshotable {
-    /**
-     * Load from snapshot in the storage
-     */
-    load(runtime: IComponentRuntime, storage: IObjectStorageService): Promise<void>;
+export interface ISnapshotable<T> {
+    asArray(): T[];
 
-    /**
-     * Generate a snapshot
-     */
-    snapshot(): ITree;
+    loadFrom(values: T[]): void;
 }
 
 /**
@@ -91,7 +130,7 @@ export interface ISnapshotable {
  * Object implementing this interface can be used as the data backing
  * for the ConsensusOrderedCollection
  */
-export interface IOrderedCollection<T = any> extends ISnapshotable {
+export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     /**
      * Adds a value to the collection
      */
@@ -100,7 +139,7 @@ export interface IOrderedCollection<T = any> extends ISnapshotable {
     /**
      * Retrieves a value from the collection.
      */
-    remove(): T | undefined;
+    remove(): T;
 
     /**
      * Return the size of the collection

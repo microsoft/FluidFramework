@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -22,6 +22,8 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -38,7 +40,7 @@ export interface IPerson {
 }
 
 /**
- * Typescript interface definition for fields within a NPM module's package.json.
+ * Typescript interface definition for fields within a npm module's package.json.
  */
 export interface IPackage {
     // General access for extended fields
@@ -94,7 +96,7 @@ export interface IFluidPackage extends IPackage {
  * @param pkg - the package json data to check if it is a fluid package.
  */
 export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
-    pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
+    pkg.fluid?.browser?.umd !== undefined;
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
@@ -127,7 +129,7 @@ export interface IRuntimeState {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
+export interface IRuntime extends IDisposable {
 
     /**
      * Executes a request against the runtime
@@ -142,9 +144,12 @@ export interface IRuntime {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId: string, version?: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
+     * @deprecated in 0.14 async stop()
+     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
+     *
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active
      */
@@ -161,30 +166,31 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IExperimentalRuntime {
+export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    // Bind the registered services once attached.
-    experimentalAttachServices(storageService: IDocumentStorageService): void;
+    createSummary(): ISummaryTree;
 }
 
 export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
+export const IMessageScheduler: keyof IProvideMessageScheduler = "IMessageScheduler";
+
 export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly parentBranch: string | undefined | null;
+    readonly parentBranch: string | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connectionState: ConnectionState;
@@ -220,6 +226,27 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 
+export interface IExperimentalContainerContext extends IContainerContext {
+    isExperimentalContainerContext: true;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     */
+    isLocal(): boolean;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     * @deprecated - It will be replaced with isLocal.
+     */
+    isAttached(): boolean;
+
+    getLoadedFromVersion(): IVersion | undefined;
+
+    createSummary(): ISummaryTree;
+}
+
+export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";
+
 export interface IProvideComponentTokenProvider {
     readonly IComponentTokenProvider: IComponentTokenProvider;
 }
@@ -231,6 +258,8 @@ export interface IComponentTokenProvider extends IProvideComponentTokenProvider 
 export interface IFluidModule {
     fluidExport: IComponent;
 }
+
+export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;

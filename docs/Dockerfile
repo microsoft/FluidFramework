@@ -1,11 +1,14 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.16-slim AS base
+FROM node:12.16.1-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
+        g++ \
         git \
+        make \
+        python \
         yarn
 
 RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
@@ -25,12 +28,16 @@ RUN yarn register-vuepress
 
 WORKDIR /
 RUN mkdir docs
+
 # Copy the root .npmrc to pull private packages
 COPY .npmrc docs/
 COPY docs/package*.json docs/
 
 WORKDIR /docs
-RUN npm install
+RUN npm ci
+
+# Link the forked version of vuepress
+RUN yarn link "vuepress"
 
 #############################
 # Copy the source and the api artifact
@@ -47,16 +54,17 @@ FROM copysrc AS docs
 
 WORKDIR /docs
 
-# Link the forked version of vuepress
-RUN yarn link "vuepress"
-
 # Build docs
 ARG VUEPRESS_BASE
+ARG MASTER_BRANCH_VERSION
+ARG THIS_VERSION
+ARG N1_VERSION
+ARG RELEASE_VERSION
 
 # write the arg into a temp file
 RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
 # set the environment variable right before running the build
-RUN VARIABLE=$(cat /root/vuepress_base); npm run build:ci
+RUN VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
 
 #############################
 FROM docs AS docpublish

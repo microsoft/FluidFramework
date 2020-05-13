@@ -26,21 +26,18 @@ describe("Component Context Tests", () => {
     });
 
     describe("LocalComponentContext Initialization", () => {
-
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => {};
+        const attachCb = (mR: IComponentRuntime) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            let registry: IComponentRegistry;
             const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
                 instantiateComponent: (context: IComponentContext) => { },
             };
-            // eslint-disable-next-line prefer-const
-            registry = {
-                IComponentRegistry: registry,
+            const registry: IComponentRegistry = {
+                get IComponentRegistry() { return registry; },
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -97,7 +94,7 @@ describe("Component Context Tests", () => {
         });
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
-            const registryWithSubRegistries: {[key: string]: any} = { };
+            const registryWithSubRegistries: { [key: string]: any } = {};
             registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
             registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
@@ -135,8 +132,7 @@ describe("Component Context Tests", () => {
         });
     });
 
-    describe("RemoteComponentContext Initialization" , () => {
-
+    describe("RemoteComponentContext Initialization", () => {
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
         const storage: Partial<IDocumentStorageService> = {};
@@ -218,6 +214,5 @@ describe("Component Context Tests", () => {
                 "Remote Component package does not match.");
             assert.equal(contents.snapshotFormatVersion, "0.1", "Remote Component snapshot version does not match.");
         });
-
     });
 });

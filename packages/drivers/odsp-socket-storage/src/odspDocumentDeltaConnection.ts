@@ -7,18 +7,19 @@ import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IConnect,
+    INack,
 } from "@microsoft/fluid-protocol-definitions";
-import { FatalError, ThrottlingError } from "@microsoft/fluid-driver-utils";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
+import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth
@@ -52,6 +53,8 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+    private readonly nonForwardEvents = ["nack"];
+
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
@@ -71,11 +74,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-
         const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
@@ -89,10 +90,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         const connectMessage: IConnect = {
             client,
             id: webSocketId,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            nonce: uuid(),
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
@@ -106,7 +108,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter);
+                    throw errorObjectFromSocketError(socketError, socketErrorRetryFilter);
                 }
             }
             throw errorObject;
@@ -153,7 +155,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socketReference.clearTimer();
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
-
         } else {
             const socket = io(
                 url,
@@ -174,12 +175,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // filter out retryable vs. non-retryable cases.
                 // Specifically, it will have one retry for 403 - see
                 // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
-                const error = errorObjectFromOdspError(socketError);
+                const error = errorObjectFromSocketError(socketError);
 
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
                 // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, error);
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /* socketProtocolError */, error);
             });
 
             socketReference = new SocketReference(socket);
@@ -200,7 +201,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | OdspNetworkError | ThrottlingError | FatalError) {
+        reason: string | IError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected
@@ -252,6 +253,25 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId);
+
+        // when possible emit nacks only when it targets this specific client/document
+        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
+            if (clientIdOrDocumentId.length === 0 ||
+                clientIdOrDocumentId === documentId ||
+                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                this.emit("nack", clientIdOrDocumentId, message);
+            }
+        });
+    }
+
+    protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+        if (!this.nonForwardEvents.includes(event)) {
+            super.addTrackedListener(event, listener);
+        } else {
+            // this is a "nonforward" event
+            // don't directly link up this socket event to the listener
+            // we will handle the event from a listener in the constructor
+        }
     }
 
     /**

@@ -13,8 +13,11 @@ describe("Yo fluid", function () {
 
     describe("React", () => {
         describe("With container", () => {
-            beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         name: "foobar",
                         template: "react",
@@ -22,9 +25,10 @@ describe("Yo fluid", function () {
                         description: "Fluid starter project",
                         path: "./foobar",
                     });
+                return runContext;
             });
 
-            it("Produces the expected files", async () => {
+            it("Produces the expected files", () => {
                 const expectedFiles = [
                     "src/main.tsx",
                     "src/index.ts",
@@ -45,11 +49,19 @@ describe("Yo fluid", function () {
                 ]
                 assert.noFile(unexpectedFiles);
             });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
+            });
         });
 
         describe("Without container", () => {
-            beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         name: "foobar",
                         template: "react",
@@ -57,9 +69,10 @@ describe("Yo fluid", function () {
                         description: "Fluid starter project",
                         path: "./foobar",
                     });
+                return runContext;
             });
 
-            it("Produces the expected files", async () => {
+            it("Produces the expected files", () => {
                 const expectedFiles = [
                     "src/main.tsx",
                     ".gitignore",
@@ -79,14 +92,22 @@ describe("Yo fluid", function () {
                     "src/index.ts",
                 ]
                 assert.noFile(unexpectedFiles);
+            });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
             });
         });
     });
 
     describe("Vanilla", () => {
         describe("With container", () => {
-            beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         name: "foobar",
                         template: "vanillaJS",
@@ -94,6 +115,7 @@ describe("Yo fluid", function () {
                         description: "Fluid starter project",
                         path: "./foobar",
                     });
+                return runContext;
             });
 
             it("Produces the expected files", async () => {
@@ -117,11 +139,19 @@ describe("Yo fluid", function () {
                 ]
                 assert.noFile(unexpectedFiles);
             });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
+            });
         });
 
         describe("Without container", () => {
-            beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         name: "foobar",
                         template: "vanillaJS",
@@ -129,6 +159,7 @@ describe("Yo fluid", function () {
                         description: "Fluid starter project",
                         path: "./foobar",
                     });
+                return runContext;
             });
 
             it("Produces the expected files", async () => {
@@ -151,6 +182,11 @@ describe("Yo fluid", function () {
                     "src/index.ts",
                 ]
                 assert.noFile(unexpectedFiles);
+            });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
             });
         });
     });

@@ -19,8 +19,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { ISubscriber, LocalOrderer } from "./localOrderer";
@@ -78,7 +77,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         permission: any,
         maxMessageSize: number,
         logger: ILogger) {
-
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.create(
             id,
@@ -104,7 +102,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         address: string,
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
-
         debug("Creating node", id);
 
         const nodeCollection = await databaseManager.getNodeCollection();
@@ -122,7 +119,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         existing: INode,
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
-
         const nodeCollection = await databaseManager.getNodeCollection();
         const newExpiration = Date.now() + timeoutLength;
 

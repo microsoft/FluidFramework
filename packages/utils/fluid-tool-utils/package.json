@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-tool-utils",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "Common utilities for Fluid tools",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -23,10 +22,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-odsp-utils": "^0.14.0"
+    "@microsoft/fluid-odsp-utils": "^0.16.5"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

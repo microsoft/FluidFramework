@@ -22,8 +22,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly storageService: IDeltaStorageService) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
         return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-undo-redo",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "Undo Redo",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -49,15 +48,15 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-map": "^0.14.0",
-    "@microsoft/fluid-merge-tree": "^0.14.0",
-    "@microsoft/fluid-sequence": "^0.14.0"
+    "@microsoft/fluid-map": "^0.16.5",
+    "@microsoft/fluid-merge-tree": "^0.16.5",
+    "@microsoft/fluid-sequence": "^0.16.5"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.14.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.16.5",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/random-js": "^1.0.31",
@@ -78,7 +77,7 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",

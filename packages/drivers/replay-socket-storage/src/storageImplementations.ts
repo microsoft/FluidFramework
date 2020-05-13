@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionMode,
     IClient,
     ISnapshotTree,
     ITree,
@@ -116,8 +115,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.docTree;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public read(blobId: string): Promise<string> {
+    public async read(blobId: string): Promise<string> {
         return this.storage.read(blobId);
     }
 }
@@ -147,7 +145,7 @@ export class StaticStorageDocumentService implements IDocumentService {
         return new EmptyDeltaStorageService();
     }
 
-    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // We have no delta stream, so make it not return forever...
         return new Promise(() => { });
     }

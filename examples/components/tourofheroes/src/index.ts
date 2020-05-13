@@ -8,15 +8,17 @@ import { APP_BASE_HREF } from "@angular/common";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
+    ComponentRegistryEntry,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    ComponentRegistryEntry,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -147,7 +149,11 @@ class GraphIQLView implements IComponentHTMLView {
 }
 
 const TourOfHeroesType = "@chaincode/tourofheroes";
-const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(TourOfHeroes, []);
+const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(
+    TourOfHeroesType,
+    TourOfHeroes,
+    [],
+    {});
 class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
     public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this; }
@@ -180,7 +186,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
         return runtime;
     }
 
-    private static async containerRequestHandler(request: IRequest, runtime: ContainerRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
         const componentRuntime = await runtime.getComponentRuntime("app", true);
         const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
 

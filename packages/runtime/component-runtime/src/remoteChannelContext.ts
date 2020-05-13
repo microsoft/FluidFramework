@@ -41,6 +41,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
         submitFn: (type: MessageType, content: any) => number,
+        dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
@@ -48,11 +49,12 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
-    ){
+    ) {
         this.services = createServiceEndpoints(
             this.id,
             this.componentContext.connectionState,
             submitFn,
+            () => dirtyFn(this.id),
             storageService,
             baseSnapshot,
             extraBlobs);
@@ -60,7 +62,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
-        if (!this.channelP) {
+        if (this.channelP === undefined) {
             this.channelP = this.loadChannel();
         }
 
@@ -72,7 +74,7 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {
             return;
@@ -105,12 +107,11 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel);
     }
 
-
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
         let attributes: IChannelAttributes | undefined;
-        if(this.services.objectStorage.contains(".attributes")){
+        if (this.services.objectStorage.contains(".attributes")) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
                 ".attributes");
@@ -122,8 +123,8 @@ export class RemoteChannelContext implements IChannelContext {
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
         // this as long as we support old attach messages
-        if (attributes === undefined){
-            if(this.attachMessageType === undefined){
+        if (attributes === undefined) {
+            if (this.attachMessageType === undefined) {
                 throw new Error("Channel type not available");
             }
             factory = this.registry.get(this.attachMessageType);

@@ -13,7 +13,6 @@ import {
     IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IDocumentMessage,
     INack,
@@ -22,9 +21,8 @@ import {
 export class DeltaConnection extends EventEmitter {
     public static async connect(
         service: IDocumentService,
-        client: IClient,
-        mode: ConnectionMode) {
-        const connection = await service.connectToDeltaStream(client, mode);
+        client: IClient) {
+        const connection = await service.connectToDeltaStream(client);
         return new DeltaConnection(connection);
     }
 
@@ -77,8 +75,7 @@ export class DeltaConnection extends EventEmitter {
         connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
-            const target = message[0].sequenceNumber;
-            this.emit("nack", target);
+            this.emit("nack", message[0]);
         });
 
         connection.on("disconnect", (reason) => {

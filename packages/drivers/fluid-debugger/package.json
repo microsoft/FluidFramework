@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-debugger",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -25,15 +24,15 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-driver-utils": "^0.14.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-replay-driver": "^0.14.0"
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-driver-definitions": "^0.16.5",
+    "@microsoft/fluid-driver-utils": "^0.16.5",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
+    "@microsoft/fluid-replay-driver": "^0.16.5"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",

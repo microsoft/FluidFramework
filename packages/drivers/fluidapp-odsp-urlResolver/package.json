@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-fluidapp-odsp-urlresolver",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "Url Resolver for fluid app urls.",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -27,13 +26,13 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-odsp-driver": "^0.14.0"
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.5",
+    "@microsoft/fluid-driver-definitions": "^0.16.5",
+    "@microsoft/fluid-odsp-driver": "^0.16.5"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

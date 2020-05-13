@@ -24,7 +24,6 @@ import { PropertySet } from "./properties";
  */
 export function createAnnotateMarkerOp(
     marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg {
-
     const id = marker.getId();
     if (!id) {
         return undefined;

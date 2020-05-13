@@ -5,7 +5,7 @@
 
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
 import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
-import { IProtocolState } from "@microsoft/fluid-protocol-definitions";
+import { IProtocolState, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 
 export interface IDocumentDetails {
@@ -29,6 +29,17 @@ export interface IDocumentStorage {
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 
     createFork(tenantId: string, id: string): Promise<string>;
+}
+
+export interface IExperimentalDocumentStorage extends IDocumentStorage {
+    isExperimentalDocumentStorage: true;
+
+    createDocument(
+        tenantId: string,
+        documentId: string,
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
 export interface IFork {
@@ -58,9 +69,16 @@ export interface IScribe {
     // Stored protocol state within the window. This is either the state at the MSN or the state at the
     // sequence number of the head summary.
     protocolState: IProtocolState;
+
+    // Ref of the last client generated summary
+    lastClientSummaryHead: string;
 }
 
 export interface IDocument {
+
+    // Schema version
+    version: string;
+
     createTime: number;
 
     documentId: string;
@@ -82,8 +100,7 @@ export interface IDocument {
         minimumSequenceNumber: number;
     };
 
-    // TODO package up the below under some kind of deli object
-    // Deli specific information - we might want to consolidate this into a field to separate it
+    // This field will be deprecated when all documents are updated to latest schema.
     clients: [{
         // Whether deli is allowed to evict the client from the MSN queue (i.e. due to timeouts, etc...)
         canEvict: boolean,
@@ -101,12 +118,18 @@ export interface IDocument {
         scopes: string[],
     }];
 
+    // This field will be deprecated when all documents are updated to latest schema.
     branchMap: IRangeTrackerSnapshot;
 
+    // This field will be deprecated when all documents are updated to latest schema.
     sequenceNumber: number;
 
+    // This field will be deprecated when all documents are updated to latest schema.
     logOffset: number;
 
-    // Scribe tracked summary context
+    // Scribe state
     scribe: string;
+
+    // Deli state
+    deli: string;
 }

@@ -22,7 +22,7 @@ const serHandle = {
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
     return JSON.stringify(target, (key, value) => {
-        return value && value.IComponentHandle
+        return value?.IComponentHandle !== undefined
             ? "#HANDLE"
             : value;
     });
@@ -94,8 +94,8 @@ describe("ComponentSerializer", () => {
 
         check(handle, serHandle);
         check([handle], [serHandle]);
-        check({handle}, {handle: serHandle});
-        check([{handle}, {handle}], [{handle: serHandle}, {handle: serHandle}]);
+        check({ handle }, { handle: serHandle });
+        check([{ handle }, { handle }], [{ handle: serHandle }, { handle: serHandle }]);
 
         it(`sizable json tree`, () => {
             const input: any = makeJson(

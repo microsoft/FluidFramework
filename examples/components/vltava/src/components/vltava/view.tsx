@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
+import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
 import { IVltavaDataModel } from "./dataModel";
@@ -18,7 +18,6 @@ interface IVltavaViewState {
     view: JSX.Element;
 }
 
-
 export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewState> {
     constructor(props: IVltavaViewProps) {
         super(props);
@@ -29,16 +28,15 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         };
 
         props.dataModel.on("membersChanged", (users) => {
-            this.setState({users});
+            this.setState({ users });
         });
     }
 
     async componentDidMount() {
         const component = await this.props.dataModel.getDefaultComponent();
         this.setState({
-            view: <EmbeddedComponent component={component} />,
+            view: <ReactViewAdapter component={component} />,
         });
-
     }
 
     render() {
@@ -50,7 +48,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                         height: "50px",
                         textAlign: "center",
                         borderBottom:"1px solid lightgray",
-                        boxSizing:"border-box"}}
+                        boxSizing:"border-box" }}
                 >
                     <div>
                         <h2>

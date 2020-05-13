@@ -17,8 +17,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
-    IComponentContext,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
@@ -34,7 +32,7 @@ import { TestCodeLoader } from "./";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+export class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public get IComponentRunnable() { return this; }
 
     /**
@@ -47,23 +45,25 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         config: {},
     };
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
-
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
 
-    // Make this function public so TestHost can use them
+    public stop() {
+        return;
+    }
+
     public async createAndAttachComponent<T extends IComponentLoadable>(
         id: string, type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(id, type, props);
+        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+            this.root.set(id, component.handle);
+            return component;
+        });
     }
 
-    // Make this function public so TestHost can use them
-    public async getComponent<T>(id: string): Promise<T> {
-        return super.getComponent<T>(id);
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**
@@ -150,9 +150,8 @@ export class TestHost {
     }
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
-    private rootResolver: (accept: TestRootComponent) => void;
 
-    private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    public readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -177,7 +176,11 @@ export class TestHost {
                 [
                     ...componentRegistry,
                     [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                        new PrimedComponentFactory(
+                            TestRootComponent.type,
+                            TestRootComponent,
+                            sharedObjectFactories,
+                            {}),
                     )],
                 ],
                 this.containerServiceRegistry),
@@ -194,9 +197,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
-            .then(this.rootResolver)
-            .catch((reason) => { throw new Error(`${reason}`); });
+        this.root = store.open<TestRootComponent>("testHostContainer", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
@@ -216,7 +217,7 @@ export class TestHost {
      * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param services component services for query interface
+     * @param props optional props to be passed to the component on creation
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
@@ -228,14 +229,11 @@ export class TestHost {
         return root.createAndAttachComponent<T>(id, type, props);
     }
 
-    /**
-     * Wait and get the component with the id.
+    /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent<T extends IComponentLoadable>(
-        id: string,
-    ): Promise<T> {
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
         const root = await this.root;
         return root.getComponent<T>(id);
     }

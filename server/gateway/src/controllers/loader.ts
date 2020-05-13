@@ -5,7 +5,7 @@
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -15,6 +15,7 @@ import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
@@ -91,6 +92,17 @@ class MailServices {
     }
 }
 
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
+
 export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
@@ -158,21 +170,22 @@ export async function initialize(
     // eslint-disable-next-line dot-notation
     window["allServices"] = services;
 
-    const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+    const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
     console.log(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
 
-    // Move the div hosting components into a shadow so it doesn't catch external formatting
-    const shadowHostDiv = document.createElement("div");
-    document.body.insertBefore(shadowHostDiv, div);
-    const shadowRoot = shadowHostDiv.attachShadow({mode: "open"});
-    shadowRoot.appendChild(div);
+    const container = await baseHost.initializeContainer(url, pkg?.details);
+
+    // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
+    // scenario.  In the next version of base-host it will only be for the upgrade scenario.
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, url, div);
 
     container.on("error", (error) => {
         console.error(error);

@@ -1,13 +1,14 @@
 ---
 home: true
-heroImage: /images/homescreen144.png
-# heroText: Fluid Framework
+# heroImage: /images/homescreen144.png
+heroText: "Fluid Framework"
+showHeroSymbol: true
 # tagline: State that flows
 # actionText: Get Started →
 # actionLink: /guide/
 # features:
-# - title: Simplicity First
-#   details: Minimal setup with markdown-centered project structure helps you focus on writing.
+# - title: Current version
+#   details: "0.14"
 # - title: Vue-Powered
 #   details: Enjoy the dev experience of Vue + webpack, use Vue components in markdown, and develop custom themes with Vue.
 # - title: Performant
@@ -15,7 +16,7 @@ heroImage: /images/homescreen144.png
 footer: Made with ❤ in Redmond.
 ---
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal' && $themeConfig.THIS_VERSION === $themeConfig.RELEASE_VERSION">
 
 ::: tip
 
@@ -36,14 +37,58 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-::: note What about Prague?
+<vue-markdown v-if="$themeConfig.THIS_VERSION === $themeConfig.MASTER_BRANCH_VERSION">
 
-Prague was the code name for the Fluid Framework. Fluid is the name we'll use going forward.
+::: danger Bleeding edge documentation
 
-`"Prague" === "Fluid" === "Fluid Framework"`
+This documentation is for the bleeding edge of the Fluid Framework. **You probably don't want this documentation.**
+Instead, you probably want <a :href="$themeConfig.RELEASE_URL">documentation for the current release version</a>,
+{{ $themeConfig.RELEASE_VERSION }}, or the <a :href="$themeConfig.N1_URL">previous supported release</a>,
+{{ $themeConfig.N1_VERSION }}.
+
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
+
+[Learn more about Fluid's release process](./contributing/release-process.md)
 
 :::
 
+</vue-markdown>
+<vue-markdown v-else-if="$themeConfig.THIS_VERSION === $themeConfig.RELEASE_VERSION">
+
+::: tip Fluid Framework v{{$themeConfig.RELEASE_VERSION}}
+
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
+
+[Learn more about Fluid's release process](./contributing/release-process.md)
+
+:::
+
+</vue-markdown>
+<vue-markdown v-else-if="$themeConfig.THIS_VERSION === $themeConfig.N1_VERSION">
+
+::: warning New Fluid release available
+
+This documentation is for an outdated version of the Fluid Framework. A new version of the Fluid Framework is available,
+version {{ $themeConfig.RELEASE_VERSION }}. You should consider upgrading as soon as possible.
+
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
+
+[Learn more about Fluid's release process](./contributing/release-process.md)
+
+:::
+
+</vue-markdown>
+
+::: danger TypeScript 3.6+ required
+
+Consumers of the Fluid Framework npm packages **must use a TypeScript version >= 3.6.**
+
+[Read more](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
+
+:::
 
 ## New to Fluid?
 
@@ -53,7 +98,7 @@ If you are new to the Fluid Framework, we recommend reading [What is Fluid?](./w
 
 Get up and running quickly using our [Getting Started guide](./guide/README.md).
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 ## Help
 

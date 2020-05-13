@@ -4,7 +4,7 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
@@ -14,7 +14,8 @@ import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
 /**
  * Basic implementation of a document service for testing.
  */
-export class TestDocumentService implements api.IDocumentService {
+export class TestDocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token
@@ -22,6 +23,7 @@ export class TestDocumentService implements api.IDocumentService {
      * @param documentId - ID of document
      */
     constructor(
+        public readonly resolvedUrl: api.IResolvedUrl,
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
@@ -51,24 +53,20 @@ export class TestDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(
-        client: IClient,
-        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        // socketStorage.DocumentDeltaStorageService?
+        client: IClient): Promise<api.IDocumentDeltaConnection> {
         return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.localDeltaConnectionServer.webSocketServer,
-            mode);
+            this.localDeltaConnectionServer.webSocketServer);
     }
 
     /**
      * Returns null
      */
     public async branch(): Promise<string> {
-        // eslint-disable-next-line no-null/no-null
-        return null;
+        throw new Error("Not implemented");
     }
 
     /**
@@ -89,9 +87,10 @@ export class TestDocumentService implements api.IDocumentService {
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createTestDocumentService(
+    resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string): api.IDocumentService {
-    return new TestDocumentService(localDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    return new TestDocumentService(resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }

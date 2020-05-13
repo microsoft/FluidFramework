@@ -18,8 +18,11 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
         this.data.push(value);
     }
 
-    public remove(): T | undefined {
-        return this.data.shift();
+    public remove(): T {
+        if (this.size() === 0) {
+            throw new Error("SnapshotableQueue is empty");
+        }
+        return this.data.shift() as T;
     }
 }
 

@@ -7,17 +7,11 @@
 import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     SharedString,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // Import parent textarea component:
 import {
@@ -30,6 +24,8 @@ import/no-unassigned-import */
 import * as tabSelector from "./utils/githubMissingJs";
 import "./styles/github-css-full-rip.css";
 const mdit = require("markdown-it")("commonmark");
+const pkg = require("../package.json");
+export const GithubCommentName = pkg.name as string;
 const divHTML = require("./styles/github-comment-only.html");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules,
 import/no-unassigned-import */
@@ -95,20 +91,6 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.forceDOMUpdate(this.textareaState.text);
     }
-
-    /**
-   * Final (static!) load function that allows the runtime to make async calls
-   * while creating the object.
-   *
-   * Primarily boilerplate code.
-   */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<GithubComment> {
-        const fluidComponent = new GithubComment(runtime, context);
-        await fluidComponent.initialize();
-
-        return fluidComponent;
-    }
-
 } // End GithubComment class
 
 /**
@@ -119,8 +101,10 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
  */
 export const GithubCommentInstantiationFactory =
     new PrimedComponentFactory(
+        GithubCommentName,
         GithubComment,
         [
             SharedString.getFactory(),
         ],
+        {},
     );

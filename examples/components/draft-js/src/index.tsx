@@ -4,13 +4,13 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -56,11 +56,13 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVie
 
 // ----- COMPONENT SETUP STUFF -----
 export const DraftInstantiationFactory = new PrimedComponentFactory(
+    DraftJsName,
     DraftJsExample,
     [SharedMap.getFactory(), SharedString.getFactory()],
+    {},
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     DraftJsName,
     new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
 );

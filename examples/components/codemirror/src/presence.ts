@@ -145,9 +145,9 @@ export class CodeMirrorPresenceManager extends EventEmitter {
         });
 
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
-            if (this.presenceMap.has(presenceInfo.userId)) {
-                const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
+            const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
 
+            if (previousUserInfo) {
                 // Clean all the previous markers
                 previousUserInfo.markers.forEach((marker) => {
                     marker.clear();
@@ -193,7 +193,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             cursorDot.style.position = "absolute";
             cursorDot.style.marginTop = "-2px";
             cursor.appendChild(cursorDot);
-
 
             const newUserInfo: ICodeMirrorPresenceInfo = {
                 cursor,

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-base",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "Shared package across different socket-storage implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -26,10 +25,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-driver-utils": "^0.14.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-driver-definitions": "^0.16.5",
+    "@microsoft/fluid-driver-utils": "^0.16.5",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.14.6",
     "@types/socket.io-client": "^1.4.32",
@@ -37,7 +36,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHTMLVisual,
-    IProvideComponentHTMLVisual,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import uuid from "uuid/v4";
+export const AnchorName = "anchor";
 
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisual {
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLView {
     private readonly defaultComponentId = "default-component-id";
-    private defaultComponentInternal: IComponentHTMLVisual | undefined;
+    private defaultComponentInternal: IComponentHTMLView | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -27,22 +24,22 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(Anchor, []);
+    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, [], {});
 
     public static getFactory() {
         return Anchor.factory;
     }
 
-    public get IComponentHTMLVisual() { return this.defaultComponent; }
+    public get IComponentHTMLView() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent(uuid(), "vltava");
+        const defaultComponent = await this.createAndAttachComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
     }
 
     protected async componentHasInitialized() {
         this.defaultComponentInternal =
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
-                .IComponentHTMLVisual;
+                .IComponentHTMLView;
     }
 }

@@ -48,7 +48,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                {op: {type: MergeTreeDeltaType.INSERT}});
+                { op: { type: MergeTreeDeltaType.INSERT } });
 
             assert.equal(eventCalled, 1);
         });
@@ -70,7 +70,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                {op: {type: MergeTreeDeltaType.INSERT}});
+                { op: { type: MergeTreeDeltaType.INSERT } });
 
             assert.equal(eventCalled, 1);
         });
@@ -86,7 +86,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                {op: {type: MergeTreeDeltaType.INSERT}});
+                { op: { type: MergeTreeDeltaType.INSERT } });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,
@@ -108,7 +108,7 @@ describe("MergeTree", () => {
                 ++remoteSequenceNumber,
                 "more ",
                 undefined,
-                {op: {type: MergeTreeDeltaType.INSERT}});
+                { op: { type: MergeTreeDeltaType.INSERT } });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,
@@ -127,7 +127,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 ReferenceType.Simple,
                 undefined,
-                {op: {type: MergeTreeDeltaType.INSERT}});
+                { op: { type: MergeTreeDeltaType.INSERT } });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,

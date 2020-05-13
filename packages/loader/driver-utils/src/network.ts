@@ -4,82 +4,26 @@
  */
 
 import {
-    IConnectionError,
+    IError,
+    IGenericNetworkError,
+    IAccessDeniedError,
+    IFileNotFoundError,
     IFatalError,
     IThrottlingError,
     IWriteError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 
-/**
- * Network error error class - used to communicate all  network errors
- */
-export class NetworkError extends Error implements IConnectionError {
-    readonly errorType: ErrorType.connectionError = ErrorType.connectionError;
-
-    constructor(
-        errorMessage: string,
-        readonly statusCode?: number,
-        readonly canRetry?: boolean,
-        readonly online = OnlineStatus[isOnline()],
-    ) {
-        super(errorMessage);
-    }
-
+class ErrorWithProps extends Error {
     // Return all properties
     public getCustomProperties(): object {
-        return copyObjectProps(this);
+        const props = {};
+        // Could not use {...this} because it does not return properties of base class.
+        for (const key of Object.getOwnPropertyNames(this)) {
+            props[key] = this[key];
+        }
+        return props;
     }
-}
-
-/**
- * Throttling error class - used to communicate all throttling errors
- */
-export class ThrottlingError extends Error implements IThrottlingError {
-    readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError;
-
-    constructor(errorMessage: string, readonly retryAfterSeconds: number) {
-        super(errorMessage);
-    }
-
-    public getCustomProperties() {
-        return copyObjectProps(this);
-    }
-}
-
-export class WriteError extends Error implements IWriteError {
-    readonly errorType: ErrorType.writeError = ErrorType.writeError;
-    public readonly critical = true;
-
-    constructor(errorMessage: string) {
-        super(errorMessage);
-    }
-
-    public getCustomProperties() {
-        return copyObjectProps(this);
-    }
-}
-
-export class FatalError extends Error implements IFatalError {
-    readonly errorType: ErrorType.fatalError = ErrorType.fatalError;
-    public readonly critical = true;
-
-    constructor(errorMessage: string) {
-        super(errorMessage);
-    }
-
-    public getCustomProperties() {
-        return copyObjectProps(this);
-    }
-}
-
-export function copyObjectProps(obj: object) {
-    const prop = {};
-    // Could not use {...obj} because it does not return properties of base class.
-    for (const key of Object.getOwnPropertyNames(obj)) {
-        prop[key] = obj[key];
-    }
-    return prop;
 }
 
 export enum OnlineStatus {
@@ -98,3 +42,113 @@ export function isOnline(): OnlineStatus {
     }
     return OnlineStatus.Unknown;
 }
+
+/**
+ * Network error error class - used to communicate general network errors
+ */
+class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError {
+    readonly errorType: ErrorType.genericNetworkError = ErrorType.genericNetworkError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * AccessDenied error class -
+ * used to communicate Unauthorized/Forbidden error responses from the server
+ */
+class AccessDeniedError extends ErrorWithProps implements IAccessDeniedError {
+    readonly errorType: ErrorType.accessDeniedError = ErrorType.accessDeniedError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * FileNotFound error class -
+ * used to communicate File Not Found errors from the server
+ */
+class FileNotFoundError extends ErrorWithProps implements IFileNotFoundError {
+    readonly errorType: ErrorType.fileNotFoundError = ErrorType.fileNotFoundError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * Throttling error class - used to communicate all throttling errors
+ */
+class ThrottlingError extends ErrorWithProps implements IThrottlingError {
+    readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError;
+
+    constructor(errorMessage: string, readonly retryAfterSeconds: number) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * Write error class - When attempting to write, without proper permissions
+ */
+class WriteError extends ErrorWithProps implements IWriteError {
+    readonly errorType: ErrorType.writeError = ErrorType.writeError;
+    public readonly critical = true;
+
+    constructor(errorMessage: string) {
+        super(errorMessage);
+    }
+}
+
+/**
+ * Fatal error class - when the server encountered a fatal error
+ */
+class FatalError extends ErrorWithProps implements IFatalError {
+    readonly errorType: ErrorType.fatalError = ErrorType.fatalError;
+    public readonly critical = true;
+
+    constructor(errorMessage: string) {
+        super(errorMessage);
+    }
+}
+
+export function createNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+    online: string = OnlineStatus[isOnline()],
+): IError {
+    if (statusCode === 401 || statusCode === 403) {
+        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
+    }
+    if (statusCode === 404) {
+        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
+    }
+    if (statusCode === 500) {
+        return new FatalError(errorMessage);
+    }
+    if (retryAfterSeconds !== undefined) {
+        return new ThrottlingError(errorMessage, retryAfterSeconds);
+    }
+    return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
+}
+
+export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
+export const createFatalError = (errorMessage: string) => (new FatalError(errorMessage) as IError);

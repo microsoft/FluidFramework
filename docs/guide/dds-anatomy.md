@@ -122,7 +122,7 @@ index).
      client that set last will get a single valueChanged event, while earlier setters will get an additional event for
      each set after their own.
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 ***
 

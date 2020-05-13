@@ -11,6 +11,7 @@ import { Task } from "./task";
 import { TscTask } from "./leaf/tscTask";
 import { getExecutableFromCommand } from "../../common/utils";
 import { TsLintTask, EsLintTask } from "./leaf/lintTasks";
+import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";
 
@@ -25,6 +26,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: s
     copyfiles: CopyfilesTask,
     echo: EchoTask,
     "gen-version": GenVerTask,
+    "api-extractor": ApiExtractorTask,
 };
 
 export class TaskFactory {
@@ -65,4 +67,9 @@ export class TaskFactory {
         return new UnknownLeafTask(node, command);
     }
 
-}
+    public static CreateScriptTasks(node: BuildPackage, scripts: string[]) {
+        if (scripts.length === 0) { return undefined; }
+        const tasks = scripts.map(value => TaskFactory.Create(node, `npm run ${value}`));
+        return tasks.length == 1? tasks[0] : new NPMTask(node, `npm run ${scripts.map(name => `npm run ${name}`).join(" && ")}`, tasks);
+    }
+};

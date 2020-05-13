@@ -15,8 +15,8 @@ import { defaultPartials } from "./partials";
 const readDir = promisify(fs.readdir);
 
 interface ITemplate {
-    ext: string;
-    full: string;
+    ext: string | null;
+    full: string | null;
     name: string;
 }
 

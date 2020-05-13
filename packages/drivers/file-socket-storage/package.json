@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-file-driver",
-  "version": "0.14.0",
+  "version": "0.16.5",
   "description": "A driver that reads/write from/to local file storage.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -25,16 +24,16 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-protocol-base": "^0.1002.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-replay-driver": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-driver-definitions": "^0.16.5",
+    "@microsoft/fluid-protocol-base": "^0.1004.2",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
+    "@microsoft/fluid-replay-driver": "^0.16.5",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.14.6",

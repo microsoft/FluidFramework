@@ -3,29 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
     IFluidModule,
     IFluidPackage,
-    IPackage,
+    IFluidCodeDetails,
+    IFluidCodeResolver,
+    IResolvedFluidCodeDetails,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
-import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import * as jwt from "jsonwebtoken";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { Deferred } from "@microsoft/fluid-common-utils";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
+import { MultiUrlResolver } from "./multiResolver";
+import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -34,6 +32,7 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
+    openMode?: "detached" | "attached";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -67,6 +66,7 @@ export interface IOdspRouteOptions extends IBaseRouteOptions {
     odspAccessToken?: string;
     pushAccessToken?: string;
     forceReauth?: boolean;
+    driveId?: string;
 }
 
 export type RouteOptions =
@@ -76,140 +76,24 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-const getUser = (): IDevServerUser => ({
-    id: uuid(),
-    name: getRandomName(),
-});
-
-async function loadScripts(files: string[], origin: string) {
-    // Add script to page, rather than load bundle directly
-    const scriptLoadP: Promise<string>[] = [];
-    const scriptIdPrefix = "fluidDevServerScriptToLoad";
-    let scriptIndex = 0;
-    files.forEach((file: string) => {
-        const script = document.createElement("script");
-        // Translate URLs to be webpack-dev-server relative URLs
-        script.src = `${origin}/${file}`;
-        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
-        script.id = scriptId;
-
-        scriptLoadP.push(new Promise((resolve) => {
-            script.onload = () => {
-                resolve(scriptId);
-            };
-        }));
-
-        document.body.appendChild(script);
-    });
-    return Promise.all(scriptLoadP);
-}
-
-function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
-    // Wrap the core component in a runtime
-    const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
-    const fluidModule = loadedComponentRaw as IFluidModule;
+function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
-        const runtimeFactory = new SimpleModuleInstantiationFactory(
-            packageName,
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+            packageJson.name,
             new Map([
-                [packageName, Promise.resolve(componentFactory)],
+                [packageJson.name, Promise.resolve(componentFactory)],
             ]),
         );
-        // eslint-disable-next-line dot-notation
-        window["componentMain"] = {
-            fluidExport: runtimeFactory,
-        };
-
-        packageJson.fluid.browser.umd.library = "componentMain";
-        packageJson.name = `${packageJson.name}-dev-server`;
-    }
-}
-
-async function getResolvedPackage(
-    packageJson: IPackage,
-    scriptIds: string[],
-): Promise<IResolvedPackage> {
-    // Start the creation of pkg.
-    if (!packageJson) {
-        return Promise.reject(new Error("No package specified"));
-    }
-
-    if (!isFluidPackage(packageJson)) {
-        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
-    }
-
-    const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
-    const legacyPackage = `${packageJson.name}@${packageJson.version}`;
-
-    const loadedScriptIds = await loadScripts(packageJson.fluid.browser.umd.files, window.location.origin);
-    loadedScriptIds.forEach((scriptId) => {
-        scriptIds.push(scriptId);
-    });
-
-    wrapIfComponentPackage(legacyPackage, packageJson);
-
-    return {
-        pkg: packageJson,
-        details: {
-            config: {
-                [`@${details.scope}:cdn`]: window.location.origin,
+        return {
+            fluidExport: {
+                IRuntimeFactory: runtimeFactory,
+                IComponentFactory: componentFactory,
             },
-            package: packageJson,
-        },
-        parsed: {
-            full: legacyPackage,
-            pkg: "NA",
-            name: "NA",
-            version: "NA",
-            scope: "NA",
-        },
-        packageUrl: "NA",
-    };
-}
-
-function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
-    switch (options.mode) {
-        case "docker":
-            return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3003",
-                "http://localhost:3001",
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-
-        case "r11s":
-            return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-
-        case "tinylicious":
-            return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3000",
-                "http://localhost:3000",
-                "tinylicious",
-                "12345",
-                getUser(),
-                options.bearerSecret);
-
-        case "spo":
-        case "spo-df":
-            return new OdspUrlResolver(
-                options.server,
-                { accessToken: options.odspAccessToken });
-
-        default: // Local
-            return new TestResolver(documentId);
+        };
     }
+    return fluidModule;
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -226,129 +110,167 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
+class WebpackCodeResolver implements IFluidCodeResolver {
+    constructor(private readonly options: IBaseRouteOptions) { }
+    async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+        const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
+        let pkg = details.package;
+        if (typeof pkg === "string") {
+            const resp = await fetch(`${baseUrl}/package.json`);
+            pkg = await resp.json() as IFluidPackage;
+        }
+        if (!isFluidPackage(pkg)) {
+            throw new Error("Not a fluid package");
+        }
+        const files = pkg.fluid.browser.umd.files;
+        for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
+            if (!files[i].startsWith("http")) {
+                files[i] = `${baseUrl}/${files[i]}`;
+            }
+        }
+        const parse = extractPackageIdentifierDetails(details.package);
+        return {
+            config: details.config,
+            package: details.package,
+            resolvedPackage: pkg,
+            resolvedPackageCacheId: parse.fullId,
+        };
+    }
+}
+
 export async function start(
     documentId: string,
-    packageJson: IPackage,
+    packageJson: IFluidPackage,
+    fluidModule: IFluidModule,
     options: RouteOptions,
     div: HTMLDivElement,
+    attachButton: HTMLButtonElement,
+    textArea: HTMLTextAreaElement,
+    attached: boolean,
 ): Promise<void> {
-    let documentServiceFactory: IDocumentServiceFactory;
-    let deltaConn: ILocalDeltaConnectionServer;
-
-    switch (options.mode) {
-        case "local": {
-            deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
-            documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-            break;
-        }
-        case "spo":
-        case "spo-df": {
-            // TODO: web socket token
-            documentServiceFactory = new OdspDocumentServiceFactory(
-                "webpack-component-loader",
-                async (siteUrl, refresh) => { return options.odspAccessToken; },
-                async (refresh) => { return options.pushAccessToken; },
-                { send: (event) => { return; } },
-            );
-            break;
-        }
-        default: {
-            documentServiceFactory = new RouterliciousDocumentServiceFactory(
-                false,
-                new DefaultErrorTracking(),
-                false,
-                true,
-                undefined,
-            );
-        }
+    let finalDocId = documentId;
+    if (attached) {
+        attachButton.style.display = "none";
+        textArea.style.display = "none";
+    } else {
+        finalDocId = getRandomName("-");
+    }
+    if (options.mode === "local") {
+        textArea.style.display = "none";
     }
 
-    const urlResolver = getUrlResolver(documentId, options);
+    const documentServiceFactory = getDocumentServiceFactory(finalDocId, options);
 
     // Construct a request
     const url = window.location.href;
+    const urlResolver = new MultiUrlResolver(window.location.origin, finalDocId, options);
 
-    // Create Package
-    const scriptIds: string[] = [];
-    const pkg = await getResolvedPackage(packageJson, scriptIds);
-    const codeDetails = pkg ? pkg.details : undefined;
+    const codeDetails: IFluidCodeDetails = {
+        package: packageJson,
+        config: {},
+    };
+    const packageSeed: [IFluidCodeDetails, IFluidModule] =
+        [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
 
-    const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
+    const host1Conf: IBaseHostConfig =
+        { codeResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
-        pkg,
-        scriptIds,
+        [packageSeed],
     );
-    const container1Promise = baseHost1.initializeContainer(
-        url,
-        codeDetails,
-    );
-
-    // Side-by-side mode
-    if (options.mode === "local" && !options.single) {
-        // New documentServiceFactory for right div, same everything else
-        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
-
-        // This will create a new Loader/Container/Component from the BaseHost above. This is
-        // intentional because we want to emulate two clients collaborating with each other.
-        const baseHost2 = new BaseHost(
-            hostConf2,
-            pkg,
-            scriptIds,
-        );
-        const container2Promise = baseHost2.initializeContainer(
+    let container1: Container;
+    if (!attached) {
+        if (!codeDetails) {
+            throw new Error("Code details must be defined for detached mode!!");
+        }
+        const loader = await baseHost1.getLoader();
+        container1 = await loader.createDetachedContainer(codeDetails);
+    } else {
+        container1 = await baseHost1.initializeContainer(
             url,
             codeDetails,
         );
+    }
 
+    const reqParser = new RequestParser({ url });
+    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
+    attachButton.disabled = false;
+    const urlDeferred = new Deferred<string>();
+    // Side-by-side mode
+    if (options.mode === "local" && !options.single) {
         const leftDiv = makeSideBySideDiv("sbs-left");
         const rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
+        await getComponentAndRender(container1, componentUrl, leftDiv);
+        // Handle the code upgrade scenario (which fires contextChanged)
+        container1.on("contextChanged", () => {
+            getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
+        });
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        urlDeferred.promise.then(async (containerUrl) => {
+            // New documentServiceFactory for right div, same everything else
+            const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(finalDocId, options);
+            const hostConf2 =
+                { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
-        await Promise.all([
-            container1Promise.then(async (container) => {
-                await startRendering(container, baseHost1, url, leftDiv);
-            }),
-            container2Promise.then(async (container) => {
-                await startRendering(container, baseHost2, url, rightDiv);
-            }),
-        ]);
+            // This will create a new Loader/Container/Component from the BaseHost above. This is
+            // intentional because we want to emulate two clients collaborating with each other.
+            const baseHost2 = new BaseHost(
+                hostConf2,
+                [packageSeed],
+            );
+            const container2 = await baseHost2.initializeContainer(
+                containerUrl,
+                codeDetails,
+            );
+
+            await getComponentAndRender(container2, componentUrl, rightDiv);
+            // Handle the code upgrade scenario (which fires contextChanged)
+            container2.on("contextChanged", () => {
+                getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
+            });
+        });
     } else {
-        const container = await container1Promise;
-        await startRendering(container, baseHost1, url, div);
+        await getComponentAndRender(container1, componentUrl, div);
+        // Handle the code upgrade scenario (which fires contextChanged)
+        container1.on("contextChanged", () => {
+            getComponentAndRender(container1, componentUrl, div).catch(() => { });
+        });
+    }
+    if (!attached) {
+        attachButton.onclick = async () => {
+            await container1.attach(urlResolver.createRequestForCreateNew(finalDocId))
+                .then(() => {
+                    const text = window.location.href.replace("create", finalDocId);
+                    textArea.innerText = text;
+                    urlDeferred.resolve(text);
+                    attachButton.style.display = "none";
+                }, (error) => {
+                    throw new Error(error);
+                });
+        };
+    } else {
+        urlDeferred.resolve(window.location.href);
     }
 }
 
-async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
-    });
-    await getComponentAndRender(baseHost, url, div);
-}
+async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+    const response = await container.request({ url });
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
+        return false;
+    }
+
+    const component = response.value as IComponent;
     if (component === undefined) {
         return;
     }
 
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
-}
-
-export function getUserToken(bearerSecret: string) {
-    const user = getUser();
-
-    return jwt.sign({ user }, bearerSecret);
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }

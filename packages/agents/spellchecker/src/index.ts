@@ -9,6 +9,8 @@ import * as Sequence from "@microsoft/fluid-sequence";
 import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
+export const ISpellChecker: keyof IProvideSpellChecker = "ISpellChecker";
+
 export interface IProvideSpellChecker {
     readonly ISpellChecker: ISpellChecker;
 }
@@ -23,7 +25,6 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 export class SpellChecker implements IComponentRouter, ISpellChecker {
-
     public get IComponentRouter() { return this; }
     public get ISpellChecker() { return this; }
 
@@ -48,5 +49,4 @@ export class SpellChecker implements IComponentRouter, ISpellChecker {
         const spellchecker = new Spellchecker(sharedString, dict);
         spellchecker.checkSharedString();
     }
-
 }
