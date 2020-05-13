@@ -17,26 +17,27 @@ export async function hashFile(file: Buffer): Promise<string> {
     // Use the browser native Web Crypto API when available for perf
     // Node doesn't support this API and doesn't appear to have any interest in doing so:
     // https://github.com/nodejs/node/issues/2833
-    // crypto.subtle is not available when not under secure context (https)
-    if (typeof crypto !== "object" || crypto === null || typeof(crypto.subtle) !== "function") {
+    if (typeof crypto !== "object" || crypto === null) {
         const engine = new sha1();
         return engine.update(file).digest("hex");
     }
 
     // Fallback to sha.js library if subtlecrypto fails for whatever reason
+    // e.g. SHA-1 is unsupported or because crypto.subtle is not available
+    // when not under secure context (https)
     // (while this workaround exists, we must also use the same alg in both places)
     try {
-        const hash = await crypto.subtle.digest("SHA-1", file)
+        const hash = await crypto.subtle.digest("SHA-1", file);
         const hashArray = new Uint8Array(hash);
         const hashHex = Array.prototype.map.call(hashArray, function(byte) {
             return byte.toString(16).padStart(2, "0");
         }).join("");
 
         return hashHex;
-    } catch(error) {
+    } catch (error) {
         const engine = new sha1();
         return engine.update(file).digest("hex");
-    };
+    }
 }
 
 /**
