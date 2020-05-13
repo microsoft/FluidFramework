@@ -27,7 +27,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test:ci": "echo No test for this package",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "tsc:watch": "tsc --watch"
   },
   "devDependencies": {

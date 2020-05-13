@@ -19,7 +19,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "tsc": "tsc --esModuleInterop"
   },
   "dependencies": {
     "@fluid-internal/client-api": "^0.19.0",

@@ -27,7 +27,7 @@
     "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "testfarm": "node dist/test/testFarm.js",
-    "tsc": "tsc"
+    "tsc": "tsc --esModuleInterop"
   },
   "nyc": {
     "all": true,

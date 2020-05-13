@@ -21,7 +21,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "tsc:watch": "tsc --watch"
   },
   "devDependencies": {

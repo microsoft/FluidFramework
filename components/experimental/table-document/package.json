@@ -23,7 +23,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe --exit",
-    "tsc": "tsc"
+    "tsc": "tsc --esModuleInterop"
   },
   "nyc": {
     "all": true,

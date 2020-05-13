@@ -24,7 +24,7 @@
     "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "tsc": "tsc"
+    "tsc": "tsc --esModuleInterop"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.17538",

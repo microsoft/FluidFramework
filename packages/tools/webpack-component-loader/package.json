@@ -24,7 +24,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "webpack --color --config webpack.config.js"
   },
   "nyc": {

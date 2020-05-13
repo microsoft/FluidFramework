@@ -29,7 +29,7 @@
     "start": "docker-compose -f docker-compose.r11s.yml up -V",
     "test": "mocha --recursive dist/test --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "parallel-webpack --config webpack.config.js",
     "webpack:dev": "parallel-webpack --config webpack.config.js",
     "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",

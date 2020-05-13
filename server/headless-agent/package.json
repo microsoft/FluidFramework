@@ -15,7 +15,7 @@
     "start": "docker-compose up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",
     "test": "node dist/puppeteer/cli.js -u https://www.wu2-ppe.prague.office-int.com -d samasoa5agaz -t search",
-    "tsc": "tsc"
+    "tsc": "tsc --esModuleInterop"
   },
   "dependencies": {
     "@microsoft/fluid-base-host": "^0.13.19190",

@@ -20,7 +20,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
   },

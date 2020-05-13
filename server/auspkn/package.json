@@ -11,7 +11,7 @@
     "start": "node dist/www.js",
     "start:watch": "nodemon dist/www.js",
     "test": "nyc --all --temp-directory nyc/.nyc_output --cache-dir nyc/.cache --report-dir nyc/report -x dist/test/**/* mocha dist/test",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "tsc:watch": "tsc --watch",
     "tslint": "tslint 'src/**/*.ts'"
   },

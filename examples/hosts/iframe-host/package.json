@@ -25,7 +25,7 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": " npm run build:copy & webpack-dev-server --content-base dist/",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "webpack --env build"
   },
   "dependencies": {

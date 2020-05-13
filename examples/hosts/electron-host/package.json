@@ -15,7 +15,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "electron": "electron ./dist/index.html",
     "electron:test": "electron --inspect=5858 ./dist/index.html",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env build"
   },

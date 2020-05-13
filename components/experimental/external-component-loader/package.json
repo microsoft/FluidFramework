@@ -28,7 +28,7 @@
     "test": "npm run test:jest",
     "test:buildclicker": "cd ../clicker && test -e dist/main.bundle.js || npm run webpack",
     "test:jest": "npm run test:buildclicker && jest",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

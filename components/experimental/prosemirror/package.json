@@ -27,7 +27,7 @@
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
-    "tsc": "tsc",
+    "tsc": "tsc --esModuleInterop",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
   },
