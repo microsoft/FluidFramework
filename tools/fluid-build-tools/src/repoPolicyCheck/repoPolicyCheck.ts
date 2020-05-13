@@ -6,6 +6,7 @@
 import * as fs from "fs";
 import * as readline from "readline";
 import * as child_process from "child_process";
+import * as path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
 import sortPackageJson from "sort-package-json";
@@ -273,6 +274,7 @@ function routeToHandlers(file: string) {
 }
 
 let lineReader: readline.Interface;
+let relPath = "";
 if (program.stdin) {
     // prepare to read standard input line by line
     process.stdin.setEncoding('utf8');
@@ -281,7 +283,8 @@ if (program.stdin) {
         terminal: false
     });
 } else {
-    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard"]);
+    relPath = child_process.execSync("git rev-parse --show-cdup", { encoding: "utf8" }).trim();
+    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard", "--full-name"]);
     lineReader = readline.createInterface({
         input: p.stdout,
         terminal: false
@@ -291,10 +294,11 @@ if (program.stdin) {
 let count = 0;
 let processed = 0;
 lineReader.on('line', line => {
-    if (pathRegex.test(line) && fs.existsSync(line)) {
+    const filePath = path.join(relPath, line).trim();
+    if (pathRegex.test(line) && fs.existsSync(filePath)) {
         count++;
         if (exclusions.every(value => !value.test(line))) {
-            routeToHandlers(line.trim());
+            routeToHandlers(filePath);
             processed++;
         } else {
             console.log(`Excluded: ${line}`);
