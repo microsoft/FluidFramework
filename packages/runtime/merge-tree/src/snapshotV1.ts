@@ -20,8 +20,8 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
-import MergeTree from "./mergeTree";
-import Properties from "./properties";
+import * as MergeTree from "./mergeTree";
+import * as Properties from "./properties";
 import {
     IJSONSegmentWithMergeInfo,
     JsonSegmentSpecs,
@@ -108,10 +108,10 @@ export class SnapshotV1 {
         const headerChunk = chunks.shift();
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
-        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index)=>{
+        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
             const id = index.toString();
             this.header.orderedChunkMetadata.push({ id });
-            return  {
+            return {
                 mode: FileMode.File,
                 path: id,
                 type: TreeEntry[TreeEntry.Blob],
@@ -129,7 +129,7 @@ export class SnapshotV1 {
         });
 
         const tree: ITree = {
-            entries:[
+            entries: [
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,

@@ -5,8 +5,8 @@
 
 import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
-import ops from "./ops";
-import Properties from "./properties";
+import * as ops from "./ops";
+import * as Properties from "./properties";
 import { LocalReferenceCollection } from "./localReference";
 
 export interface IJSONTextSegment extends ops.IJSONSegment {
@@ -123,11 +123,11 @@ export interface ITextAccumulator {
 }
 
 export class MergeTreeTextHelper {
-    constructor(private readonly mergeTree: MergeTree) {}
+    constructor(private readonly mergeTree: MergeTree) { }
 
     public getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number) {
         const range = this.getValidRange(start, end, refSeq, clientId);
-        const accum: ITextAccumulator =  {
+        const accum: ITextAccumulator = {
             parallelArrays: true,
             parallelMarkerLabel: label,
             parallelMarkers: [],
@@ -155,7 +155,7 @@ export class MergeTreeTextHelper {
     public getText(refSeq: number, clientId: number, placeholder = "", start?: number, end?: number) {
         const range = this.getValidRange(start, end, refSeq, clientId);
 
-        const accum: ITextAccumulator =  { textSegment: new TextSegment(""), placeholder };
+        const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
         if (MergeTree.traceGatherText) {
             console.log(
@@ -187,7 +187,7 @@ export class MergeTreeTextHelper {
     }
 
     private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-                                   end: number, accumText: ITextAccumulator) => {
+        end: number, accumText: ITextAccumulator) => {
         if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(
@@ -199,8 +199,8 @@ export class MergeTreeTextHelper {
             if (accumText.parallelArrays) {
                 // tslint:disable-next-line: no-suspicious-comment
                 // TODO: let clients pass in function to get tag
-                const tags =  [] as string[];
-                const initTags =  [] as string[];
+                const tags = [] as string[];
+                const initTags = [] as string[];
 
                 if (segment.properties && (segment.properties["font-weight"])) {
                     tags.push("b");
@@ -208,7 +208,7 @@ export class MergeTreeTextHelper {
                 if (segment.properties && (segment.properties["text-decoration"])) {
                     tags.push("u");
                 }
-                const remTags =  [] as string[];
+                const remTags = [] as string[];
                 if (tags.length > 0) {
                     for (const tag of tags) {
                         if (!accumText.tagsInProgress.includes(tag)) {
@@ -256,7 +256,7 @@ export class MergeTreeTextHelper {
         } else {
             if (accumText.placeholder && (accumText.placeholder.length > 0)) {
                 if (accumText.placeholder === "*") {
-                    const marker =  segment as Marker;
+                    const marker = segment as Marker;
                     accumText.textSegment.text += `\n${marker.toString()}`;
                 } else {
                     for (let i = 0; i < segment.cachedLength; i++) {
@@ -264,7 +264,7 @@ export class MergeTreeTextHelper {
                     }
                 }
             } else if (accumText.parallelArrays) {
-                const marker =  segment as Marker;
+                const marker = segment as Marker;
                 if (marker.hasTileLabel(accumText.parallelMarkerLabel)) {
                     accumText.parallelMarkers.push(marker);
                     accumText.parallelText.push(accumText.textSegment.text);

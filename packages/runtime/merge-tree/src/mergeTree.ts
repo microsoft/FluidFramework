@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
 import assert from "assert";
-import Base from "./base";
-import Collections from "./collections";
+import * as Base from "./base";
+import * as Collections from "./collections";
 import {
     LocalClientId,
     NonCollabClient,
@@ -24,9 +24,9 @@ import {
     MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import ops from "./ops";
+import * as ops from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-import Properties from "./properties";
+import * as Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
@@ -1273,7 +1273,7 @@ export class MergeTree {
                 // and update the block's info.
                 for (let childIndex = 0;
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
-                    childIndex++ , nodeIndex++                               // Advance to next child & node
+                    childIndex++, nodeIndex++                               // Advance to next child & node
                 ) {
                     // Insert the next node into the current block
                     this.addNode(block, nodes[nodeIndex]);
@@ -2012,7 +2012,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker> this.getMarkerFromId(relativePos.id);
+            marker = <Marker>this.getMarkerFromId(relativePos.id);
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);

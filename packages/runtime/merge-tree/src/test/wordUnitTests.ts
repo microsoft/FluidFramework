@@ -10,7 +10,7 @@ import path from "path";
 import random from "random-js";
 import { LocalReference } from "../localReference";
 import * as ops from "../ops";
-import Properties from "../properties";
+import * as Properties from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 

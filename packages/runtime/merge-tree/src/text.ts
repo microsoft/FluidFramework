@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import MergeTree from "./mergeTree";
-import ops from "./ops";
+import * as MergeTree from "./mergeTree";
+import * as ops from "./ops";
 import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
