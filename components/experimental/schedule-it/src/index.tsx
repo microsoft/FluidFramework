@@ -29,7 +29,10 @@ import {
     IPersonState,
     IPersonReducer,
     IDateReducer,
+    IDateMap,
+    IPersonMap,
 } from "./interface";
+import { PrimedContext } from "./context";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -39,7 +42,7 @@ interface ScheduleItProps {
     root: ISharedDirectory,
 }
 
-function useCommentReducer(props: ScheduleItProps):  {
+function useCommentReducer(props: ScheduleItProps) {
     const { root } = props;
     const rootToInitialStateComments = new Map<string, keyof ICommentState>();
     rootToInitialStateComments.set("comments", "comments");
@@ -55,20 +58,20 @@ function useCommentReducer(props: ScheduleItProps):  {
     return useReducerFluid<ICommentState, ICommentReducer>(commentProps);
 }
 
-function usePeopleReducer(props: ScheduleItProps) {
+function usePersonReducer(props: ScheduleItProps) {
     const { root } = props;
-    const rootToInitialStatePeople = new Map<string, keyof IPersonState>();
-    rootToInitialStatePeople.set("people", "peopleMap");
-    const stateToRootPeople = new Map<keyof IPersonState, string>();
-    stateToRootPeople.set("peopleMap", "people");
-    const peopleProps = {
+    const rootToInitialStatePerson = new Map<string, keyof IPersonState>();
+    rootToInitialStatePerson.set("person", "personMap");
+    const stateToRootPerson = new Map<keyof IPersonState, string>();
+    stateToRootPerson.set("personMap", "person");
+    const personProps = {
         root,
-        initialState: { peopleMap: defaultPeople },
+        initialState: { personMap: defaultPeople },
         reducer: PersonReducer,
-        rootToInitialState: rootToInitialStatePeople,
-        stateToRoot: stateToRootPeople,
+        rootToInitialState: rootToInitialStatePerson,
+        stateToRoot: stateToRootPerson,
     };
-    return useReducerFluid<IPersonState, IPersonReducer>(peopleProps);
+    return useReducerFluid<IPersonState, IPersonReducer>(personProps);
 }
 
 function useDateReducer(props: ScheduleItProps) {
@@ -89,12 +92,23 @@ function useDateReducer(props: ScheduleItProps) {
 
 function ScheduleItView(props: ScheduleItProps) {
     const [commentState, commentDispatch] = useCommentReducer(props);
-    const [peopleState, peopleDispatch] = usePeopleReducer(props);
+    const [personState, personDispatch] = usePersonReducer(props);
     const [dateState, dateDispatch] = useDateReducer(props);
 
     return (
         <div>
-            <button onClick={() => { commentDispatch("increment"); }}>+</button>
+            <PrimedContext.Provider
+                value={{
+                    comments: commentState.comments,
+                    commentDispatch,
+                    personMap: personState.personMap,
+                    personDispatch,
+                    dateMap: dateState.dateMap,
+                    dateDispatch,
+                }}
+            >
+                <button onClick={() => { commentDispatch("add"); }}>+</button>
+            </PrimedContext.Provider>
         </div>
     );
 }
@@ -110,7 +124,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFirstTime() {
         this.root.set("comments", defaultComments);
-        this.root.set("people", defaultPeople);
+        this.root.set("person", defaultPeople);
         this.root.set("dates", defaultDates);
     }
 

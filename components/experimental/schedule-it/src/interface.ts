@@ -1,5 +1,5 @@
 import {
-    IFluidReducer, FluidFunctionalComponentState,
+    FluidFunctionalComponentState, FluidStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
 
 export interface IDate {
@@ -33,7 +33,7 @@ export interface IPersonMap {
 }
 
 export interface IPersonState extends FluidFunctionalComponentState {
-    peopleMap: IPersonMap
+    personMap: IPersonMap
 }
 
 export interface IDateMap {
@@ -45,20 +45,29 @@ export interface IDateState extends FluidFunctionalComponentState {
 }
 
 export interface ICommentState extends FluidFunctionalComponentState {
-    comments: string[];
+    comments: string[]
 }
 
-export interface ICommentReducer extends IFluidReducer<ICommentState>{
-    add:  (state: ICommentState, args: {newComment: string}) => ICommentState
+export interface ICommentReducer {
+    add: FluidStateUpdateFunction<ICommentState>
 }
 
-export interface IDateReducer extends IFluidReducer<IDateState>{
-    set: (oldState: IDateState, args: {key: string, time: IDate}) => IDateState
+export interface IDateReducer {
+    set: FluidStateUpdateFunction<IDateState>
 }
 
-export interface IPersonReducer extends IFluidReducer<IPersonState> {
-    updateName: (state: IPersonState, args: {key: string, name: string}) => IPersonState,
-    updateAvailability: (state: IPersonState, args: {key: string, availability: IAvailability}) => IPersonState,
-    addPerson: (state: IPersonState) => IPersonState,
-    removePerson: (state: IPersonState, args: {key: string}) => IPersonState
+export interface IPersonReducer {
+    updateName: FluidStateUpdateFunction<IPersonState>
+    updateAvailability: FluidStateUpdateFunction<IPersonState>,
+    addPerson: FluidStateUpdateFunction<IPersonState>,
+    removePerson: FluidStateUpdateFunction<IPersonState>,
+}
+
+export interface IViewProps {
+    comments?: string[];
+    dateMap?: IDateMap;
+    personMap?: IPersonMap;
+    commentDispatch?: (type: keyof ICommentReducer, ...args: any) => void,
+    personDispatch?: (type: keyof IPersonReducer, ...args: any) => void,
+    dateDispatch?: (type: keyof IDateReducer, ...args: any) => void,
 }

@@ -75,47 +75,59 @@ export const defaultPeople: IPersonMap = {
 };
 
 export const CommentReducer: ICommentReducer = {
-    add:  (state: ICommentState, args: {newComment: string}) => {
-        state.comments.push(args.newComment);
-        return state;
+    add: {
+        function: (state: ICommentState, args: {newComment: string}) => {
+            state.comments.push(args.newComment);
+            return state;
+        },
     },
 };
 
 export const DateReducer: IDateReducer = {
-    set: (state: IDateState, args: {key: string, time: IDate}) => {
-        state.dateMap[args.key] = args.time;
-        return state;
+    set: {
+        function: (state: IDateState, args: {key: string, time: IDate}) => {
+            state.dateMap[args.key] = args.time;
+            return state;
+        },
     },
 };
 
 export const PersonReducer: IPersonReducer = {
-    updateName: (state: IPersonState, args: {key: string, name: string}) => {
-        state.peopleMap[args.key].name = name;
-        return state;
+    updateName: {
+        function: (state: IPersonState, args: {key: string, name: string}) => {
+            state.personMap[args.key].name = name;
+            return state;
+        },
     },
-    updateAvailability: (state: IPersonState, args: {key: string, availability: IAvailability}) => {
-        const { dateKey, availabilityType } = args.availability;
-        state.peopleMap[args.key].availabilityMap[dateKey].availabilityType = availabilityType;
-        return state;
+    updateAvailability: {
+        function: (state: IPersonState, args: {key: string, availability: IAvailability}) => {
+            const { dateKey, availabilityType } = args.availability;
+            state.personMap[args.key].availabilityMap[dateKey].availabilityType = availabilityType;
+            return state;
+        },
     },
-    addPerson: (state: IPersonState) => {
-        const newPerson: IPerson = {
-            key: uuid(),
-            name: "",
-            availabilityMap: {
-                today: { dateKey: "today",  availabilityType: AvailableType.No },
-                tomorrow: { dateKey: "tomorrow", availabilityType: AvailableType.No },
-                dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.No },
-            },
-        };
-        state.peopleMap[newPerson.key] = newPerson;
-        return state;
+    addPerson: {
+        function: (state: IPersonState) => {
+            const newPerson: IPerson = {
+                key: uuid(),
+                name: "",
+                availabilityMap: {
+                    today: { dateKey: "today",  availabilityType: AvailableType.No },
+                    tomorrow: { dateKey: "tomorrow", availabilityType: AvailableType.No },
+                    dayAfter: { dateKey: "dayAfter", availabilityType: AvailableType.No },
+                },
+            };
+            state.personMap[newPerson.key] = newPerson;
+            return state;
+        },
     },
-    removePerson: (state: IPersonState, args: {key: string}) => {
-        if (state.peopleMap[args.key] !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete state.peopleMap[args.key];
-        }
-        return state;
+    removePerson: {
+        function: (state: IPersonState, args: {key: string}) => {
+            if (state.personMap[args.key] !== undefined) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete state.personMap[args.key];
+            }
+            return state;
+        },
     },
 };
