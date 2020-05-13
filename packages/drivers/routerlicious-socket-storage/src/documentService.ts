@@ -19,7 +19,7 @@ import { TokenProvider } from "./tokens";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+export class DocumentService implements api.IDocumentService {
     public readonly isExperimentalDocumentService = true;
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,

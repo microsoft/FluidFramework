@@ -13,9 +13,9 @@
     "upload": "npm run build && npm run push && npm run deploy"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.1.4408",
-    "@microsoft/fluid-merge-tree": "^0.1.4408",
-    "@microsoft/fluid-runtime-definitions": "^0.1.4408",
+    "@prague/client-api": "^0.1.4408",
+    "@prague/merge-tree": "^0.1.4408",
+    "@prague/runtime-definitions": "^0.1.4408",
     "@prague/shared-string": "^0.1.4408",
     "@prague/socket-storage": "^0.1.4184",
     "jsonwebtoken": "^8.4.0",

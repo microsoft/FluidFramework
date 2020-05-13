@@ -62,7 +62,8 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     }
 
     public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
-        return this.root.get<IComponentHandle<T>>(id).get();
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**
@@ -191,7 +192,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
+        this.root = store.open<TestRootComponent>("testHostContainer", TestRootComponent.codeProposal, "", scope);
     }
 
     /**

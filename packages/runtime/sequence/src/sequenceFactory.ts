@@ -4,7 +4,11 @@
  */
 
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";

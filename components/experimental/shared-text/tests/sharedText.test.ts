@@ -6,7 +6,11 @@
 import { globals } from "../jest.config";
 
 describe("sharedText", () => {
-    jest.setTimeout(30000);
+    beforeAll(async () => {
+        // Wait for the page to load first before running any tests
+        // so this time isn't attributed to the first test
+        await page.goto(globals.PATH, { waitUntil: "load" });
+    }, 45000);
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });

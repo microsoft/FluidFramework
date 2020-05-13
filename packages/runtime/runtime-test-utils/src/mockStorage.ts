@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 
 /**
  * Mock implementation of IObjectStorageService based on ITree input.

@@ -66,7 +66,7 @@ describe("Container", () => {
         } catch (error) {
             success = false;
         }
-        assert.equal(success, true);
+        assert.strictEqual(success, true);
     });
 
     it("Load container unsuccessfully", async () => {
@@ -98,7 +98,7 @@ describe("Container", () => {
             const err = error as IGeneralError;
             success = err.error as boolean;
         }
-        assert.equal(success, false);
+        assert.strictEqual(success, false);
     });
 
     it("Load container with error", async () => {
@@ -126,11 +126,11 @@ describe("Container", () => {
                 testResolver);
             assert.fail("Error expected");
         } catch (error) {
-            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
+            assert.strictEqual(error.errorType, ErrorType.generalError, "Error is not a general error");
             const generalError = error as IGeneralError;
             success = generalError.error as boolean;
         }
-        assert.equal(success, false);
+        assert.strictEqual(success, false);
     });
 
     it("Raise disconnected event", async () => {
@@ -158,10 +158,10 @@ describe("Container", () => {
             testRequest,
             testResolved,
             testResolver);
-        assert.equal(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.disconnect();
-        assert.equal(container.connectionState, ConnectionState.Disconnected,
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
         deltaConnection.removeAllListeners();
     });
@@ -191,12 +191,12 @@ describe("Container", () => {
             testRequest,
             testResolved,
             testResolver);
-        assert.equal(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.emitError("Test Error");
-        assert.equal(container.connectionState, ConnectionState.Disconnected,
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
-        assert.equal(container.closed, false, "Container should not be closed");
+        assert.strictEqual(container.closed, false, "Container should not be closed");
         deltaConnection.removeAllListeners();
     });
 
@@ -228,17 +228,17 @@ describe("Container", () => {
         container.on("error", () => {
             errorRaised = true;
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         const err = {
             message: "Test error",
             canRetry: false,
         };
         deltaConnection.emitError(err);
-        assert.equal(container.connectionState, ConnectionState.Disconnected,
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
-        assert.equal(container.closed, true, "Container should be closed");
-        assert.equal(errorRaised, true, "Error event should be raised.");
+        assert.strictEqual(container.closed, true, "Container should be closed");
+        assert.strictEqual(errorRaised, true, "Error event should be raised.");
         deltaConnection.removeAllListeners();
     });
 
@@ -269,12 +269,28 @@ describe("Container", () => {
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         container.close();
-        assert.equal(container.connectionState, ConnectionState.Disconnected,
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
-        assert.equal(container.closed, true, "Container should be closed");
+        assert.strictEqual(container.closed, true, "Container should be closed");
         deltaConnection.removeAllListeners();
+    });
+
+    it("Check client details and Id", async () => {
+        const container = await Container.load(
+            "tenantId/documentId",
+            serviceFactory,
+            codeLoader,
+            {},
+            {},
+            loader,
+            testRequest,
+            testResolved,
+            testResolver);
+        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.clientDetails.capabilities.interactive, true,
+            "Client details should be set with interactive as true");
     });
 });

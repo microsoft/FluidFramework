@@ -4,7 +4,7 @@
  */
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 
