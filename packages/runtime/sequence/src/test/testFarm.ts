@@ -41,7 +41,7 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 import JsDiff from "diff";
 import random from "random-js";
 import Xmldoc from "xmldoc";
-import SharedString from "../intervalCollection";
+import * as SharedString from "../intervalCollection";
 
 const clock = () => process.hrtime();
 

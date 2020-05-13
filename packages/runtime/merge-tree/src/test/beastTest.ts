@@ -14,8 +14,8 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 import JsDiff from "diff";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
-import MergeTree from "../";
-import Base from "../base";
+import * as MergeTree from "../";
+import * as Base from "../base";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { createRemoveRangeOp } from "../opBuilder";
 import { TextSegment } from "../textSegment";

@@ -6,8 +6,8 @@
 import assert from "assert";
 import fs from "fs";
 import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment } from "../";
-import ops from "../ops";
-import Properties from "../properties";
+import * as ops from "../ops";
+import * as Properties from "../properties";
 import { loadText } from "../text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {

@@ -8,7 +8,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
 import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
 
-import map from "../";
+import * as map from "../";
 import { SharedMap } from "../map";
 
 describe("Routerlicious", () => {

@@ -15,7 +15,7 @@ import {
     MockSharedObjectServices,
 } from "@microsoft/fluid-test-runtime-utils";
 
-import map from "../";
+import * as map from "../";
 import { SharedDirectory } from "../directory";
 
 async function populate(directory: map.ISharedDirectory, content: object) {
