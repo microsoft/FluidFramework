@@ -80,6 +80,7 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
             id,
             summary,
             sequenceNumber,
+            1,
             values);
 
         createP.then(
