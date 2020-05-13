@@ -7,7 +7,7 @@ export interface IDate {
     date: Date;
 }
 
-export enum AvailableType {
+export enum AvailabilityType {
     No = 0,
     Maybe = 1,
     Yes = 2
@@ -15,7 +15,7 @@ export enum AvailableType {
 
 export interface IAvailability {
     dateKey: string;
-    availabilityType: AvailableType;
+    availabilityType: AvailabilityType;
 }
 
 export interface AvailabilityMap{
@@ -44,8 +44,13 @@ export interface IDateState extends FluidFunctionalComponentState {
     dateMap: IDateMap
 }
 
+export interface IComment {
+    name: string;
+    message: string;
+}
+
 export interface ICommentState extends FluidFunctionalComponentState {
-    comments: string[]
+    comments: IComment[]
 }
 
 export interface ICommentReducer {
@@ -64,7 +69,7 @@ export interface IPersonReducer {
 }
 
 export interface IViewProps {
-    comments?: string[];
+    comments?: IComment[];
     dateMap?: IDateMap;
     personMap?: IPersonMap;
     commentDispatch?: (type: keyof ICommentReducer, ...args: any) => void,

@@ -40,6 +40,7 @@
     "@microsoft/fluid-map": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-view-interfaces": "^0.18.0",
+    "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "uuid": "^3.3.2"

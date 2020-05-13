@@ -168,7 +168,7 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A> {
 }
 
 export interface FluidStateUpdateFunction<S> {
-    function: (oldState: S, args?: any) => S;
+    function: (oldState: S, ...args: any) => S;
 }
 
 export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>

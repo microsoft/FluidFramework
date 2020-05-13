@@ -8,16 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import {
-    FluidProps,
-    FluidReducerProps,
-    FluidFunctionalComponentState,
-    FluidReactComponent,
-    useStateFluid,
-    useReducerFluid,
-    IFluidReducer,
-    createFluidContext,
-} from "@microsoft/fluid-aqueduct-react";
+import { useReducerFluid } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -29,10 +20,9 @@ import {
     IPersonState,
     IPersonReducer,
     IDateReducer,
-    IDateMap,
-    IPersonMap,
 } from "./interface";
 import { PrimedContext } from "./context";
+import { ScheduleItView } from "./view";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -90,7 +80,7 @@ function useDateReducer(props: ScheduleItProps) {
     return useReducerFluid<IDateState, IDateReducer>(dateProps);
 }
 
-function ScheduleItView(props: ScheduleItProps) {
+function ScheduleItApp(props: ScheduleItProps) {
     const [commentState, commentDispatch] = useCommentReducer(props);
     const [personState, personDispatch] = usePersonReducer(props);
     const [dateState, dateDispatch] = useDateReducer(props);
@@ -107,7 +97,7 @@ function ScheduleItView(props: ScheduleItProps) {
                     dateDispatch,
                 }}
             >
-                <button onClick={() => { commentDispatch("add"); }}>+</button>
+                <ScheduleItView />
             </PrimedContext.Provider>
         </div>
     );
@@ -136,7 +126,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
     public render(div: HTMLElement) {
         ReactDOM.render(
             <div>
-                <ScheduleItView
+                <ScheduleItApp
                     root={this.root}
                 />
             </div>,
