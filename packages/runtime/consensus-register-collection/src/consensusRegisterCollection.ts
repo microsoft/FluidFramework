@@ -66,6 +66,25 @@ interface IRegisterOperation {
 }
 
 /**
+ * IRegisterOperation format in versions < 0.17
+ */
+interface IRegisterOperationOld<T> {
+    key: string;
+    type: "write";
+    value: {
+        type: "Plain",
+        value: T,
+    };
+    refSeq: number;
+}
+
+/** Incoming ops could match any of these types */
+type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
+
+/** Distinguish between incoming op formats so we know which type it is */
+const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
+
+/**
  * A record of the pending operation awaiting ack
  */
 interface IPendingRecord {
@@ -235,7 +254,7 @@ export class ConsensusRegisterCollection<T>
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
-            const op: IRegisterOperation = message.contents;
+            const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
@@ -243,9 +262,12 @@ export class ConsensusRegisterCollection<T>
                     const refSeqWhenCreated = op.refSeq;
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
+                    const value = incomingOpMatchesCurrentFormat(op)
+                        ? this.parse(op.serializedValue) as T
+                        : op.value.value;
                     const winner = this.processInboundWrite(
                         op.key,
-                        this.parse(op.serializedValue),
+                        value,
                         refSeqWhenCreated,
                         message.sequenceNumber,
                         local);
