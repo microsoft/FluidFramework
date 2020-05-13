@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@microsoft/fluid-map";
-import ui from "../ui";
+import * as ui from "../ui";
 
 export class Video extends ui.Component {
     private readonly message: HTMLSpanElement;

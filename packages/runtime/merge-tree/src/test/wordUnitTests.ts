@@ -9,7 +9,7 @@ import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { LocalReference } from "../localReference";
-import ops from "../ops";
+import * as ops from "../ops";
 import Properties from "../properties";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";

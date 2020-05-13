@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import ui from "../ui";
+import * as ui from "../ui";
 
 export class Image extends ui.Component {
     private message: HTMLSpanElement;

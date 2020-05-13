@@ -9,7 +9,7 @@ import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protoco
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IIntegerRange } from "./base";
-import Collections from "./collections";
+import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReference } from "./localReference";
 import {
@@ -27,9 +27,9 @@ import {
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
-import OpBuilder from "./opBuilder";
-import ops from "./ops";
-import Properties from "./properties";
+import * as OpBuilder from "./opBuilder";
+import * as ops from "./ops";
+import * as Properties from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { SortedSegmentSet } from "./sortedSegmentSet";

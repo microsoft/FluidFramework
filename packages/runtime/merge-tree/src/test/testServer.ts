@@ -15,7 +15,7 @@ import {
     ISegment,
     MergeTree,
 } from "../mergeTree";
-import Properties from "../properties";
+import * as ops from "../ops";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 

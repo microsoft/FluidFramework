@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { CharacterCodes } from "./characterCodes";
 import { Cursor } from "./cursor";
-import domutils from "./domutils";
+import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
-import ui from "./rectangle";
+import * as ui from "./rectangle";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

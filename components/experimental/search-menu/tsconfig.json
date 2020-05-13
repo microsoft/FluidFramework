@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "strictNullChecks": false,
+        "esModuleInterop": true,
         "outDir": "dist"
     },
     "include": [

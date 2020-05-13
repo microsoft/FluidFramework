@@ -9,7 +9,7 @@ import { IInk } from "@microsoft/fluid-ink";
 import { ISharedMap } from "@microsoft/fluid-map";
 import MergeTree from "@microsoft/fluid-merge-tree";
 import Sequence from "@microsoft/fluid-sequence";
-import ui from "../ui";
+import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";

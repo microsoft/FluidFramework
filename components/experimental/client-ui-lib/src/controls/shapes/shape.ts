@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import ui from "../../ui";
+import * as ui from "../../ui";
 
 export interface IShape {
     render(context2D: CanvasRenderingContext2D, offset: ui.IPoint);

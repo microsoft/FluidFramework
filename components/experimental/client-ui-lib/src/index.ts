@@ -5,10 +5,10 @@
 
 // Packaging and re-exporting of fluid UI framework
 
-import controls from "./controls";
+import * as controls from "./controls";
 // eslint-disable-next-line import/no-duplicates
-import Text from "./text";
-import ui from "./ui";
+import * as Text from "./text";
+import * as ui from "./ui";
 
 export { ui };
 

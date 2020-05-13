@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import ui from "../ui";
+import * as ui from "../ui";
 import { ScrollBar } from "./scrollBar";
 
 const scrollAreaWidth = 18;
