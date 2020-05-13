@@ -14,14 +14,14 @@
 ## Expectations from host implementers
 It's expected that host will listen to various events described in other sections of the document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
 Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details
-1. "["disconnected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
-2. ["closed"](#Closure): If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
-3. ["readonly" event](#Readonly-states): Host should have some indication to user that document is not editable.
+1. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
+2. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
+3. ["readonly"](#Readonly-states) event: Host should have some indication to user that document is not editable. User permissions can change over lifetime of Container, but they can't change per conneciton session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
 ## Expectations from container runtime and components implementers
 1. Respect ["readonly" state](#Readonly-states). In this state container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
 2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & component runtimes provided by Fluid Framework
-3. Respect "["disconnected"](#Connectivity-events) state and not not submit Ops when disconnected.
+3. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
 4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes document's code version upgrades).
 
 ## Fluid Loader
@@ -55,6 +55,8 @@ When container is closed, the following is true (in no particular order):
 2. "closed" event fires on container with optional error object (indicating reason for closure; if missing - closure was due to host closing container)
 3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true)  indicating to all components that container is read-only, and components should not allow local edits, as they are not going to make it.
 4. "disconnected" event fires, if connection was active at the moment of container closure.
+
+`"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is closed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
 
 ## Audience
 `Container.audience` exposes an object that tracks all connected clients to same document.
@@ -120,23 +122,28 @@ Please note that hosts can implement various strategies on how to handle disconn
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a component that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such component).
 
 ## Readonly states
-`Container.readonlyPermissions` (and `DeltaManager.readonlyPermissions`) indicates to host if file is writable or not. There are two  cases when it's true:
+`Container.readonlyPermissions` (and `DeltaManager.readonlyPermissions`) indicates to host if file is writable or not. There are two cases when it's true:
 
 1. User has no write permissions to to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
 
 Please note that this property (as well as `readonly` property discussed below) can be `undefined` when runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
 
-This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in `Container.forceReadonly(false)` state.
+User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+
+This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in the absence of readonly state being overridden via `Container.forceReadonly`.
 
 Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like
    - Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of document (container)
    - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:
-- **true**: either Container.readonlyPermissions === true or Container.forceReadonly(true) was called
-- **false**: Container.readonlyPermissions == false and Container.forceReadonly(false) was called (or this API was never called - false is default state)
-- **undefined**: Container.forceReadonly(false) is current state (same as above) and we do not know yet if current user has write access to a file.
+- **true**: One of the following is true:
+   - Container.readonlyPermissions === true
+   - Container.forceReadonly(true) was called
+   - Container is closed
+- **false**: None of the above (Container.forceReadonly was never called or last call was with false), plus it's none that user has write permissions to a file (see below for more details)
+- **undefined**: Same as above, but we do not know yet if current user has write access to a file (because there were no successful connection to ordering service yet).
 
 Readonly events are accessible by components and DDSs (through ContainerRuntime.deltaManager). It's expected that components adhere to requirements and expose read-only (or rather 'no edit') experiences.
 
