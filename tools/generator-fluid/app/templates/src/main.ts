@@ -19,13 +19,19 @@ const diceValueKey = "diceValue";
  */
 interface IDiceRoller extends EventEmitter {
     /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    rollDice: () => void;
-    /**
      * Get the dice value as a number.
      */
-    getDiceValue: () => number;
+    readonly value: number;
+
+    /**
+     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     */
+    roll: () => void;
+
+    /**
+     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     */
+    on(event: "diceRolled", listener: () => void): this;
 }
 
 class DiceRollerView implements IComponentHTMLView {
@@ -37,19 +43,19 @@ class DiceRollerView implements IComponentHTMLView {
         const diceSpan = document.createElement("span");
         diceSpan.classList.add("diceSpan");
         diceSpan.style.fontSize = "50px";
-        diceSpan.textContent = this.getDiceChar(this.model.getDiceValue());
+        diceSpan.textContent = this.getDiceChar(this.model.value);
         div.appendChild(diceSpan);
 
         const rollButton = document.createElement("button");
         rollButton.classList.add("rollButton");
         rollButton.textContent = "Roll";
-        rollButton.onclick = this.model.rollDice;
+        rollButton.onclick = this.model.roll;
         div.appendChild(rollButton);
 
         // When the value of the dice changes we will re-render the
         // value in the dice span
         this.model.on("diceRolled", () => {
-            diceSpan.textContent = this.getDiceChar(this.model.getDiceValue());
+            diceSpan.textContent = this.getDiceChar(this.model.value);
         });
     }
 
@@ -60,7 +66,7 @@ class DiceRollerView implements IComponentHTMLView {
 }
 
 /**
- * Dice roller example using view interfaces and stock component classes.
+ * The DiceRoller is our implementation of the IDiceRoller interface.
  */
 export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
@@ -93,13 +99,13 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
         view.render(div);
     }
 
-    public readonly rollDice = () => {
+    public get value() {
+        return this.root.get(diceValueKey);
+    }
+
+    public readonly roll = () => {
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set(diceValueKey, rollValue);
-    };
-
-    public readonly getDiceValue = () => {
-        return this.root.get(diceValueKey);
     };
 }
 
