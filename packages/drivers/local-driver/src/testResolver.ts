@@ -10,7 +10,6 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
@@ -20,7 +19,7 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
  * Resolves URLs by providing fake URLs which succeed with the other
  * related test classes.
  */
-export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class TestResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
@@ -35,12 +34,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        let documentId;
-        if (request.headers?.[CreateNewHeader.createNew]) {
-            documentId = parsedUrl.pathname.substr(1).split("/")[1];
-            return this.resolveHelper(documentId);
-        }
-        documentId = parsedUrl.pathname.substr(1).split("/")[0];
+        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
         return this.resolveHelper(documentId);
     }
 
@@ -72,18 +66,19 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(documentId);
+        assert(documentId, "The resolvedUrl must have a documentId");
+
         const response: IResponse = {
             mimeType: "text/plain",
-            value: `https://localhost:3000/${documentId}/${url}`,
+            value: `http://localhost:3000/${documentId}/${url}`,
             status: 200,
         };
         return response;
     }
 
-    public createCreateNewRequest(id: string): IRequest {
+    public createCreateNewRequest(documentId: string): IRequest {
         const createNewRequest: IRequest = {
-            url: `http://localhost:3000/${this.tenantId}/${id}`,
+            url: `http://localhost:3000/${documentId}`,
             headers: {
                 [CreateNewHeader.createNew]: true,
             },

@@ -4,7 +4,7 @@
  */
 
 import { IResponse, IComponent, IComponentRouter, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { RequestParser, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
 
 // TODO: should this just be "s"?

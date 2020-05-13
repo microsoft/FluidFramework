@@ -4,10 +4,10 @@
  */
 import * as assert from "assert";
 import {
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";
@@ -86,7 +86,10 @@ describe("Component Creation Tests", () => {
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: globalRegistry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: globalRegistry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
             summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
         });
 

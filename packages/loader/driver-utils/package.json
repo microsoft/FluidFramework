@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-utils",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Collection of utility functions for Fluid drivers",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -44,10 +44,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1"
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-driver-definitions": "^0.18.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

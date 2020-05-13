@@ -1,13 +1,30 @@
 # Breaking changes
 
+## 0.18 Breaking Changes
+
+- [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
+- [ConsensusRegisterCollection now supports storing handles](#ConsensusRegisterCollection-now-supports-storing-handles)
+
+### `App Id` removed as a parameter to OdspDocumentServiceFactory
+`@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
+
+### ConsensusRegisterCollection now supports storing handles
+ConsensusRegisterCollection will properly serialize/deserialize handles added as values.
+
 ## 0.17 Breaking Changes
+
+### FileNotFoundError is now FileNotFoundOrAccessDeniedError and AccessDeniedError to AuthorizationError
 
 - [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
+- [ConsensusRegisterCollection can no longer store SharedObjects](#ConsensusRegisterCollection-can-no-longer-store-SharedObjects)
 
 ### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+
 The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+IComponentContext still has the hostRuntime param but it is now marked with a deprecated flag and will be removed in 0.18
 
 ### Updates to ContainerRuntime and LocalComponentContext createProps removal
 
@@ -38,6 +55,17 @@ protected async componentInitializingFirstTime(
 ```
 As with previous guidance, components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
 
+### `SimpleContainerRuntimeFactory` removed
+
+`SimpleContainerRuntimeFactory` was deprecated in 0.16, and has now been removed in 0.17.
+
+### ConsensusRegisterCollection can no longer store SharedObjects
+
+`ConsensusRegisterCollection` no longer supports storing SharedObjects directly,
+and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
+We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
+In a subsequent release, support will be added for storing handles but due to n/n-1 constraints, in 0.17 neither are supported.
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
@@ -51,7 +79,8 @@ As with previous guidance, components should ensure that only strongly typed ini
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
 - [Event Emitter Changes](#Event-Emitter-Changes)
 - [WebCodeLoader Resolver & Seeding](#WebCodeLoader-Resolver-&-Seeding)
-
+- [Changes to TestResolver's `resolve` method](#Changes-to-TestResolver's-resolve-method)
+- [Changes to TestHost's `createAndAttachComponent` and `getComponent` methods](#Changes-to-TestHost's-createAndAttachComponent-and-getComponent-methods)
 
 ### View interfaces moved to separate package
 
@@ -136,6 +165,11 @@ The createComponent call in IComponentContext is now deprecated. Instead, users 
 
 ### ContainerRuntime and LocalComponentContext createProps removal
 
+⚠️ There are additional changes in this area in 0.17 that obsolete this guidance and should be used instead when available.
+
+<details>
+<summary>Expand old guidance</summary>
+
 Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
 1. Create an interface for the initial state that defines what may be provided to the component.
 ```typescript
@@ -169,6 +203,7 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
 }
 ```
 Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+</details>
 
 ### Providers in Aqueduct
 
@@ -204,6 +239,25 @@ In addition we have fixed bugs and simplfied how module seeding works in the web
 overwritting. The new mechanism takes in the the fluidCodeDetails, and optionally fluid module's instance. If the fluid module is not provided, the fluidCodeDetails will immediately be loaded. Whenever a matching fluidCodeDetails is loaded, the seeded module will be return.
 
 See packages\tools\webpack-component-loader\src\loader.ts for an example of a custom resolver and seeding
+
+### Changes to TestResolver's `resolve` method
+TestResolver's `resolve` method now parses the URL in the passed request to get the ID of the container. It is the first part of the path in the URL.
+
+For example, in `http://localhost/fluidFrameworkDocument/componentId`, the container ID will be `fluidFrameworkDocument`.
+
+If a URL of this format is not passed to `resolve`, it will fail.
+
+This enables TestResolver to be used to resolve multiple Containers and not be bound to a single Container.
+
+### Changes to TestHost's `createAndAttachComponent` and `getComponent` methods
+TestHost's `createAndAttachComponent` and `getComponent` have been modified because of the changes in PrimedComponent / SharedComponent as detailed [here](#PrimedComponent-and-Shared-Component-interface-changes).
+
+`createAndAttachComponent` still accepts an `id` as before. However, it does not create a component with the given `id`. Instead, it creates a component and then sets the component's `handle` againt the `id` in a SharedDirectory.
+
+`getComponent` gets the `handle` for the given `id` from the SharedDirectory and then gets the component from the `handle`.
+
+This means that `getComponent` can only be used to get the component that was created via `createAndAttachComponent`.
+
 
 ## 0.15 Breaking Changes
 

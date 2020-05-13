@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

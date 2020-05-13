@@ -70,7 +70,7 @@ describe("SharedString", () => {
     });
 
     it("can sync SharedString to a newly loaded container", async () => {
-        const text = "syncToNewConatiner";
+        const text = "syncToNewContainer";
         sharedString1.insertText(0, text);
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 

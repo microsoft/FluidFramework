@@ -27,18 +27,17 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     ComponentRegistryEntry,
+    IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
+    IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     IEnvelope,
-    IContainerRuntime,
     IInboundSignalMessage,
-    IExperimentalContainerRuntime,
-    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -47,7 +46,7 @@ import { v4 as uuid } from "uuid";
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
@@ -64,15 +63,14 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
-    IExperimentalComponentContext
+export abstract class ComponentContext extends EventEmitter implements
+    IComponentContext,
+    IComponentContextLegacy,
+    IDisposable
 {
     public readonly isExperimentalComponentContext = true;
-
     public isLocal(): boolean {
-        const expContainerRuntime = this._containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        return expContainerRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || !this.isAttached;
     }
 
     public get documentId(): string {
@@ -142,6 +140,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._containerRuntime;
     }
 
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    public get hostRuntime(): IContainerRuntime {
+        return this._containerRuntime;
+    }
+
     public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
     }
@@ -153,11 +159,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._isAttached;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntime) => void;
-    protected componentRuntime: IComponentRuntime | undefined;
+    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
@@ -168,12 +174,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntime) => void,
+        attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntime) => {
+        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             attach(componentRuntime);
             this._isAttached = true;
         };
@@ -204,7 +210,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.containerRuntime.logger.sendErrorEvent(
+                this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
@@ -215,7 +221,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any,
+    ): Promise<IComponentRuntimeChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -258,9 +268,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntime> {
+    public async realize(): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -295,9 +305,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+    public async realizeWithFn(
+        realizationFn: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             realizationFn(this);
         }
 
@@ -352,12 +364,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
         return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
         return this._containerRuntime.getAudience();
     }
 
@@ -393,6 +403,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return { entries, id: null };
     }
 
+    /**
+     * @deprecated 0.18.Should call request on the runtime directly
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const runtime = await this.realize();
         return runtime.request(request);
@@ -461,7 +474,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime) {
+    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
@@ -494,6 +507,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+
+        // notify the runtime if they want to propagate up. Used for logging.
+        this.containerRuntime.notifyComponentInstantiated(this);
     }
 
     /**
@@ -547,7 +563,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new Error("Context is closed");
         }
     }
 }
@@ -639,7 +655,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntime) => void,
+        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */

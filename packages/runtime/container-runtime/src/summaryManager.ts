@@ -84,14 +84,14 @@ type ShouldSummarizeState = {
     stopReason: StopReason;
 };
 
-const defaultThrottleMaxDelayMs = 30 * 1000;
 const defaultThrottleDelayWindowMs = 60 * 1000;
+const defaultThrottleMaxDelayMs = 30 * 1000;
+// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
 const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 /**
  * Used to give increasing delay times for throttling a single functionality.
  * Delay is based on previous attempts within specified time window, ignoring actual delay time.
- * Default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc) up to max delay (default 30s)
  */
 class Throttler {
     private startTimes: number[] = [];
@@ -134,8 +134,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
     private readonly startThrottler = new Throttler(
-        defaultThrottleMaxDelayMs,
         defaultThrottleDelayWindowMs,
+        defaultThrottleMaxDelayMs,
         defaultThrottleDelayFunction,
     );
     private opsUntilFirstConnect = -1;
@@ -160,7 +160,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     ) {
         super();
 
-        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+        this.logger = ChildLogger.create(
+            parentLogger,
+            "SummaryManager",
+            undefined,
+            { clientId: () => this.latestClientId });
 
         this.connected = context.connected;
         if (this.connected) {
@@ -292,6 +296,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
             return;
         }

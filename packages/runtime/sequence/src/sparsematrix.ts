@@ -18,7 +18,7 @@ import {
     ISharedObjectServices,
     Jsonable,
     JsonablePrimitive,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";

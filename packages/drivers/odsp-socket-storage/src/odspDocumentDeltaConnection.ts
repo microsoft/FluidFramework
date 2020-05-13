@@ -15,6 +15,8 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
@@ -92,6 +94,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            nonce: uuid(),
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);

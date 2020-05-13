@@ -11,7 +11,6 @@ import {
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
-    IExperimentalDocumentService,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -43,10 +42,9 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService, IExperimentalDocumentService {
+export class OdspDocumentService implements IDocumentService {
     public readonly isExperimentalDocumentService = true;
     /**
-     * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
      * is also referred to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -59,7 +57,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
      * @param newFileInfoPromise - promise to supply info needed to create a new file.
      */
     public static async create(
-        appId: string,
         resolvedUrl: IResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
@@ -85,7 +82,8 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache);
+                    cache,
+                    storageFetchWrapper);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
@@ -97,7 +95,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             }
         }
         return new OdspDocumentService(
-            appId,
             odspResolvedUrl,
             getStorageToken,
             getWebsocketToken,
@@ -117,6 +114,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
+        storageFetchWrapper: IFetchWrapper,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
@@ -143,6 +141,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 getStorageToken,
                 Promise.resolve(newFileParams),
                 cache,
+                storageFetchWrapper,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,
@@ -172,7 +171,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     private readonly isOdc: boolean;
 
     /**
-     * @param appId - app id used for telemetry for network requests
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
      * to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
@@ -183,7 +181,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
      * @param socketIOClientP - promise to the socket io library required by the driver
      */
     constructor(
-        private readonly appId: string,
         public readonly odspResolvedUrl: IOdspResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
@@ -254,7 +251,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
-            { app_id: this.appId },
             this.odspResolvedUrl.hashedDocumentId,
             this.odspResolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
@@ -281,7 +277,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         };
 
         return new OdspDeltaStorageService(
-            { app_id: this.appId },
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
@@ -343,7 +338,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         return getSocketStorageDiscovery(
-            this.appId,
             this.odspResolvedUrl.driveId,
             this.odspResolvedUrl.itemId,
             this.odspResolvedUrl.siteUrl,
