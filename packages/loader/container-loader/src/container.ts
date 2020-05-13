@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -25,7 +26,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
@@ -368,9 +368,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
-        this.subLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
+        this.subLogger = ChildLogger.create(
             logger,
+            undefined,
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
@@ -380,7 +380,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             });
 
         // Prefix all events in this file with container-loader
-        this.logger = ChildLogger.create(this.subLogger, "Container");
+        this.logger = ChildLogger.create(this.subLogger, "Container", { containerId: uuid() });
 
         this.on("error", (error: any) => {
             this.logContainerError(error);
@@ -594,7 +594,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => {});
+        this.connectToDeltaStream().catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -788,7 +788,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
             startConnectionP = this.connectToDeltaStream(connectionArgs);
-            startConnectionP.catch((error) => {});
+            startConnectionP.catch((error) => { });
         }
 
         this.storageService = await this.getDocumentStorageService();
