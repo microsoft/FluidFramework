@@ -82,7 +82,7 @@ export class MemberList extends React.Component<IProps, IState> {
         )
       .filter(([id, _]) => this.knownHumanMemberIds.has(id))
             .map(([id, sc]) => {
-                let name: string = (sc.client.user as any).displayName || (sc.client.user as any).name;
+                let name: string = (sc.client.user).displayName || (sc.client.user).name;
                 let initials: string;
                 if (name) {
                     const nameWords = name.replace("_", " ").split(" ");

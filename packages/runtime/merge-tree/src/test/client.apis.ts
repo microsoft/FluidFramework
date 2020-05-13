@@ -47,7 +47,7 @@ export function clientGetPropertiesAtPositionTest() {
 }
 
 function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posStart: number,
-    posAfterEnd: number, verbose = false) {
+                                     posAfterEnd: number, verbose = false) {
     const segExtents = client.getRangeExtentsOfPosition(pos);
     const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
     if ((!result) && verbose) {

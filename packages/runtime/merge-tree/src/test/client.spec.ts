@@ -235,7 +235,7 @@ describe("TestClient", () => {
     describe(".annotateMarker", () => {
         it("annotate valid marker", () => {
             const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
-                [MergeTree.reservedMarkerIdKey]: "123"
+                [MergeTree.reservedMarkerIdKey]: "123",
             });
             assert(insertOp);
             const markerInfo = client.getContainingSegment(0);

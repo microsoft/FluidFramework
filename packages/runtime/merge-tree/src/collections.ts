@@ -97,7 +97,7 @@ export class List<T> {
     }
 
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T {
-        for (let entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
+        for (let entry = <List<T>> this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
                 return (entry.data);
             }
