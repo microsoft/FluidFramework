@@ -1284,6 +1284,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async getContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
+        if (this.context.getContainerUrl === undefined) {
+            return {
+                mimeType: "text/plain",
+                status: 500,
+                value: "getContainerUrl not implemented. Please ugrade the host's loader.",
+            };
+        }
         return this.context.getContainerUrl(relativeRequest);
     }
 

@@ -223,8 +223,10 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     /**
      * Get an absolute url to the container based on the provided relativeRequest.
      * @param relativeRequest - A relative request within the container
+     *
+     * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getContainerUrl?(relativeRequest: IRequest): Promise<IResponse>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
