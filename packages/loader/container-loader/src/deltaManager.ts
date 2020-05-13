@@ -12,7 +12,7 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent, TelemetryLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -513,7 +513,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (connectRepeatCount > 1) {
                 this.logger.sendTelemetryEvent({
                     attempts: connectRepeatCount,
-                    duration: (performanceNow() - connectStartTime).toFixed(0),
+                    duration: TelemetryLogger.formatTick(performanceNow() - connectStartTime),
                     eventName: "MultipleDeltaConnectionFailures",
                 });
             }

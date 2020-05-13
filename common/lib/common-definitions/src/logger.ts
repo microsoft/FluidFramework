@@ -84,7 +84,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
 
     /**
-     * Send error telemetry event
+     * Send performance telemetry event
      * @param event - Event to send
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
