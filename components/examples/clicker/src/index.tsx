@@ -75,8 +75,8 @@ interface IActionReducer {
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (oldState: CounterFunctionalState, args?: {step: number}) => {
-            return { value: args === undefined ? oldState.value + 1  : oldState.value + args.step };
+        function: (oldState: CounterFunctionalState, step: number) => {
+            return { value: step === undefined ? oldState.value + 1  : oldState.value + step };
         },
     },
 };

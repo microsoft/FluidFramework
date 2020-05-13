@@ -195,7 +195,8 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
     const combinedReducer = React.useCallback((type: keyof A, ...args: any) => {
         const action =  reducer[(type)];
         if (action && instanceOfStateUpdateFunction(action)) {
-            setState((action as any)(state, args));
+            const result = (action.function as any)(state, ...args);
+            setState(result);
         } else {
             throw new Error(
                 `Action with key ${action} does not
