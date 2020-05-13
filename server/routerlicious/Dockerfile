@@ -3,6 +3,9 @@
 
 FROM node:12.16.3-slim AS base
 
+# To auth against private VSTS
+ARG NPM_TOKEN
+
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
         python \
@@ -18,9 +21,6 @@ RUN chmod +x /tini
 
 # Copy over and build the server
 WORKDIR /usr/src/server
-
-# To auth against private VSTS
-ARG NPM_TOKEN
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY LICENSE.txt .
