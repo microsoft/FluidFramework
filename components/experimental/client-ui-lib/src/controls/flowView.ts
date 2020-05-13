@@ -30,9 +30,9 @@ import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
-import ui from "../ui";
+import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
-import domutils from "./domutils";
+import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
@@ -1565,7 +1565,7 @@ export interface IExcludedRectangle extends ui.Rectangle {
 }
 
 function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
-    const r = <IExcludedRectangle> new ui.Rectangle(x, y, w, h);
+    const r = <IExcludedRectangle>new ui.Rectangle(x, y, w, h);
     r.id = id;
     r.left = true;
     r.curY = 0;
@@ -1674,7 +1674,7 @@ export class Viewport {
                         exclu.floatL = true;
                     }
                 }
-                let excluDiv = <IRefDiv> this.viewHasInclusion(irdoc.referenceDocId);
+                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.referenceDocId);
 
                 // Move the inclusion
                 if (excluDiv) {

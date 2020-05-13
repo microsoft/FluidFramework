@@ -5,7 +5,7 @@
 
 import MergeTree from "@microsoft/fluid-merge-tree";
 import Sequence from "@microsoft/fluid-sequence";
-import Paragraph from "./paragraph";
+import * as Paragraph from "./paragraph";
 
 type SharedString = Sequence.SharedString;
 

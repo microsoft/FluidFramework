@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import ui from "../ui";
+import * as ui from "../ui";
 
 export class Title extends ui.Component {
     public viewportRect: ui.Rectangle;

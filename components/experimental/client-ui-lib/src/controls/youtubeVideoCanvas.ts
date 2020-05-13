@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@microsoft/fluid-map";
-import ui from "../ui";
+import * as ui from "../ui";
 // eslint-disable-next-line import/no-internal-modules
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 

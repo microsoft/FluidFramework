@@ -6,9 +6,9 @@
 import assert from "assert";
 import api from "@fluid-internal/client-api";
 import ink from "@microsoft/fluid-ink";
-import ui from "../ui";
+import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
-import recognizer from "./shapeRecognizer";
+import * as recognizer from "./shapeRecognizer";
 
 export enum SegmentCircleInclusive {
     None,
