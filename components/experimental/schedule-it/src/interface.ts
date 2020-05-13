@@ -38,7 +38,7 @@ export interface IPeopleState {
 
 export interface IDateMap {
     [key: string]: IDate
-};
+}
 
 export interface IDateState {
     dateMap: IDateMap
@@ -61,4 +61,4 @@ export interface IPeopleReducer extends IFluidReducer<IPeopleState> {
     updateAvailability: (state: IPeopleState, args: {key: string, availability: IAvailability}) => IPeopleState,
     addPerson: (state: IPeopleState) => IPeopleState,
     removePerson: (state: IPeopleState, args: {key: string}) => IPeopleState
-};
+}
