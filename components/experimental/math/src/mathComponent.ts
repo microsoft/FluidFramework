@@ -32,7 +32,7 @@ import Sequence from "@microsoft/fluid-sequence";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import Katex from "katex";
-import MathExpr from "./mathExpr";
+import * as MathExpr from "./mathExpr";
 
 const directionToCursorDirection = {
     [Direction.left]: ComponentCursorDirection.Left,

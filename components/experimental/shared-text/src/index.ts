@@ -17,7 +17,7 @@ import {
     IComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import sharedTextComponent from "./component";
+import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");

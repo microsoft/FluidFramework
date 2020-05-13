@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import MathExpr from "../mathExpr";
+import * as MathExpr from "../mathExpr";
 
 // MathExpr.testMatch();
 // MathExpr.testLCD();

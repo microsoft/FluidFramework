@@ -8,7 +8,7 @@ import { parse } from "querystring";
 import url from "url";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
-import API from "@fluid-internal/client-api";
+import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponent,
