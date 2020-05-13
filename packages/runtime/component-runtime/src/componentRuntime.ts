@@ -146,7 +146,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private _isAttached: boolean;
@@ -214,12 +213,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             return;
         }
         this._disposed = true;
-
-        /**
-         * @deprecated in 0.14 async stop()
-         * Converge closed with _disposed when removing async stop()
-         */
-        this.closed = true;
 
         this.emit("dispose");
     }
@@ -383,14 +376,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
-
         return this.quorum;
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
-
         return this.audience;
     }
 
@@ -426,15 +415,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    /**
-     * Stop the runtime.  snapshotInternal() is called separately if needed
-     */
-    public stop(): void {
-        this.verifyNotClosed();
-
-        this.closed = true;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
@@ -644,7 +624,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
