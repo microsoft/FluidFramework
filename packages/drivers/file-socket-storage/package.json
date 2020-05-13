@@ -26,8 +26,8 @@
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.16.0",
     "@microsoft/fluid-driver-definitions": "^0.17.3",
-    "@microsoft/fluid-protocol-base": "^0.1004.2",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
+    "@microsoft/fluid-protocol-base": "^0.1004.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@microsoft/fluid-replay-driver": "^0.17.3",
     "debug": "^4.1.1"
   },
