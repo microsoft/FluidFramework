@@ -17,6 +17,7 @@ import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentMountableView } from "@microsoft/fluid-view-interfaces";
 import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
@@ -266,5 +267,11 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
     const mountableView: IComponentMountableView = component.IComponentMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
+        return;
     }
+
+    // If we don't get a mountable view back, we're likely dealing with a bundle that has a
+    // non-BaseContainerRuntimeFactory.  Hopefully it is something that we can adapt successfully.
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }

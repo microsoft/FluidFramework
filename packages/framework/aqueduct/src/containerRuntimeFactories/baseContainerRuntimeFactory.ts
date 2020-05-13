@@ -24,10 +24,10 @@ import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/flu
 import { MountableView } from "@microsoft/fluid-view-adapters";
 
 /**
- * The MountableView shim is only required if the view needs to be rendered by a separate React instance.  Since
- * MountableView internalizes the ReactDOM.render() call, it ensures we will be using the same React instance as
- * was used to create the component.  When the view is bundled together with the app this layer isn't necessary.
- * However, our webpack-component-loader is rendering from a separate bundle.
+ * Repackaging responses as MountableView is only required if the view needs to be rendered by a separate React
+ * instance.  Since MountableView internalizes the ReactDOM.render() call, it ensures we will be using the same
+ * React instance as was used to create the component.  When the view is bundled together with the app this layer
+ * isn't necessary.  However, our webpack-component-loader is rendering from a separate bundle.
  * @param response - The view response that should be bundled into an MountableView
  */
 const repackAsMountableView = (response: IResponse | undefined) => {
