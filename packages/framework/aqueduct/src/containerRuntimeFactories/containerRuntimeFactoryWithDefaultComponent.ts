@@ -4,7 +4,6 @@
  */
 
 import {
-    componentRuntimeRequestHandler,
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
@@ -19,12 +18,10 @@ const defaultComponentId = "default";
 const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
-            return componentRuntimeRequestHandler(
-                new RequestParser({
-                    url: defaultComponentId,
-                    headers: request.headers,
-                }),
-                runtime);
+            return runtime.request({
+                url: defaultComponentId,
+                headers: request.headers,
+            });
         }
         return undefined;
     };

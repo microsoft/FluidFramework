@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
     ComponentRegistry,
     ContainerRuntime,
+    RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import {
@@ -19,6 +21,42 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+import { MountableView } from "@microsoft/fluid-view-adapters";
+
+/**
+ * The MountableView shim is only required if the view needs to be rendered by a separate React instance.  Since
+ * MountableView internalizes the ReactDOM.render() call, it ensures we will be using the same React instance as
+ * was used to create the component.  When the view is bundled together with the app this layer isn't necessary.
+ * However, our webpack-component-loader is rendering from a separate bundle.
+ * @param response - The view response that should be bundled into an MountableView
+ */
+const repackAsMountableView = (response: IResponse | undefined) => {
+    // Only repack successful requests
+    if (response?.status !== 200) {
+        return response;
+    }
+    if (!MountableView.canMount(response.value)) {
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: `Could not get a mountable view for the requested resource`,
+        };
+    }
+
+    return {
+        status: 200,
+        mimeType: "fluid/component",
+        value: new MountableView(response.value),
+    };
+};
+
+const defaultRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    const componentRuntimeRequestHandlerResponse = await componentRuntimeRequestHandler(request, runtime);
+    if (request.headers?.mountableView as boolean | undefined === true) {
+        return repackAsMountableView(componentRuntimeRequestHandlerResponse);
+    }
+    return componentRuntimeRequestHandlerResponse;
+};
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
@@ -62,7 +100,7 @@ export class BaseContainerRuntimeFactory implements
             this.registryEntries,
             [
                 ...this.requestHandlers,
-                componentRuntimeRequestHandler,
+                defaultRequestHandler,
             ],
             undefined,
             dc);
