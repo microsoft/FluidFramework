@@ -22,24 +22,6 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/fluid)
 
-## Build and Deployment Status
-
-|Environment|Status|
-|-----------|------|
-|Service|[![Service Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=3)|
-|API|[![API Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/10/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=10)|
-
-Deployment Status
-
-|Environment|Status|
-|-----------|------|
-|[WestUS2 Production](https://www.wu2.prague.office-int.com/)|[![WestUS2 Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/5)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=5&_a=environment-summary)|
-|[WestUS2 PPE](https://www.wu2-ppe.prague.office-int.com/)|[![WestUS2 PPE](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/8)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=8&_a=environment-summary)|
-|[WestUS2-2](https://www.wu2-2.prague.office-int.com/)|[![WestUS2-2](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/40)]()|
-|[EastUS2](https://www.eu2.prague.office-int.com/)|[![EastUS2](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/36)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=11&_a=environment-summary)|
-|[WestEU](https://www.we.prague.office-int.com/)|[![WestEU](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/43)]()|
-
-
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
@@ -50,28 +32,45 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### Standalone
 
-* [Git LFS](https://git-lfs.github.com/) (comes by default with most git installations)
 * [Docker](https://www.docker.com/)
     * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well. 
     * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
 
 #### For Development
 
-* [Node v8.x](https://nodejs.org/en/)
+* [Node v12.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
 
-### Development 
+### Authorizing to private NPM feed
 
-For the development setup we map your source tree directly into the container. This allows you to build/edit on your local
-machine with your toolchain of choice. And the output is then run inside the container.
+Routerlicious takes a dependency on a set of common Fluid Framework packages stored in VSTS. We follow the standard
+practices defined at https://docs.npmjs.com/docker-and-private-modules in order to make use of these inside of
+our container builds.
 
-To start the service for development run the following commands:
+In order to get an access token navigate to https://offnet.visualstudio.com/officenet/_packaging?_a=connect&feed=fluid.
+Then choose NPM and then follow the steps in the "Other" tab. Then store the base64 encoded token in a `NPM_TOKEN`
+environment variable. Be sure to choose the correct permissions for the personal access token.
+
+### Development
+
+Docker is the preferred method of development. To build the service simply type:
+
+`docker-compose build --build-arg NPM_TOKEN=${NPM_TOKEN}`
+
+And to run
+
+`docker-compose up`
+
+We also support volume mounting your local drive into the container which provides a faster dev loop.
+
+To start the service with your local drive mounted run the following commands:
 
 ```sh
 npm install
 npm run build
 npm start
 ```
+
 To stop the service run `npm stop`. If you also want to clean up any mounted volumes (to get to a fully clean state) run `npm run stop:full`.
 
 If you also need debugging you can run:
@@ -93,9 +92,10 @@ or
 ### Standalone
 
 You can also just run the service directly with Docker. To do so you first need to authenticate to our private
-container registry by running:
+container registry by following the steps at https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication#individual-login-with-azure-ad
 
-* `docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io`
+Once you've installed the Azure CLI and authenticated you can auth against our container registry with
+* `az acr login --name prague`
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
