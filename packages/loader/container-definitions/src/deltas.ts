@@ -117,7 +117,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
      * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
      * in all cases container runtime and components should respect readonly state and not allow local changes.
      *
-     * It is undefined if we did not yet established websocket connection
+     * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
     readonly?: boolean;

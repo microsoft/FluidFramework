@@ -256,7 +256,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * making changes to components.
      * Readonly state can be because of no storage write permission,
      * or due to host forcing readonly mode for container.
-     * It is undefined if we did not yet established websocket connection
+     * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
     public get readonly() {
@@ -268,7 +268,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     /**
      * Tells if user has no write permissions for file in storage
-     * It is undefined if we did not yet established websocket connection
+     * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
     public get readonlyPermissions() {

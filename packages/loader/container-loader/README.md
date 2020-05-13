@@ -13,15 +13,16 @@
 
 ## Expectations from host implementers
 It's expected that host will listen to various events described in other sections of the document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
-1. "disconnected" event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
-2. "closed": If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
-3. "readonly" event: Host should have some indication to user that document is not editable.
+Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details
+1. "["disconnected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
+2. ["closed"](#Closure): If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & readonly state when it is closed (because of error or not).
+3. ["readonly" event](#Readonly-states): Host should have some indication to user that document is not editable.
 
 ## Expectations from container runtime and components implementers
-1. Respect "readonly" state. In this spate container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
-2. Maintain OPs in flight until observed they are acknowledged by server. Resubmit any lost ops on reconnection.
-3. Not submit ops when in disconnected state
-4. "dispose" event 
+1. Respect ["readonly" state](#Readonly-states). In this state container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
+2. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & component runtimes provided by Fluid Framework
+3. Respect "["disconnected"](#Connectivity-events) state and not not submit Ops when disconnected.
+4. Respect ["dispose"](#Closure) event and treat it as combination of "readonly" and "disconnected" states. I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes document's code version upgrades).
 
 ## Fluid Loader
 
@@ -42,7 +43,7 @@ Container is returned as result of Loader.resolve() call. Loader can cache conta
 `ILoaderHeader` in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
 
 ### Connectivity
-Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest ops would be processed, allowing local changes to flow form client to server. `Container.connected` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes.
+Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest Ops would be processed, allowing local changes to flow form client to server. `Container.connected` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes.
 
 ### Closure
 Container can be closed directly by host by calling `Container.close()`. Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
@@ -108,9 +109,9 @@ Container also exposes `Container.connected` property to indicate current state.
 
 In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingError error is raised through `"error"` handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (`IThrottlingError.retryAfterSeconds`).
 
-Container will also not attempt to reconnect on lost connection if `Container.setAutoReconnect(false)` was called prior to loss of connection. This might be useful if hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of ops generated by other clients while this client was not connected.
+Container will also not attempt to reconnect on lost connection if `Container.setAutoReconnect(false)` was called prior to loss of connection. This might be useful if hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of Ops generated by other clients while this client was not connected.
 
-Components should almost never listen to these events (see more on [Readonly states](#Readonly-states), and should use consensus DDSs if they need to synchronize activity across clients. DDSs listen for these events to know when to resubmit pending ops.
+Components should almost never listen to these events (see more on [Readonly states](#Readonly-states), and should use consensus DDSs if they need to synchronize activity across clients. DDSs listen for these events to know when to resubmit pending Ops.
 
 Hosting application can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent.  Also if container was offline for very long period of time due to `Container.setAutoReconnect(false)` being called, it might take a while to get connected and current.
 
@@ -119,14 +120,23 @@ Please note that hosts can implement various strategies on how to handle disconn
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a component that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such component).
 
 ## Readonly states
-Container and DeltaManager expose `"readonly"` event and property. There are three cases when container can be read-only:
+`Container.readonlyPermissions` (and `DeltaManager.readonlyPermissions`) indicates to host if file is writable or not. There are two  cases when it's true:
+
 1. User has no write permissions to to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
-3. Host can force readonly-mode for a container via calling `Container.forceReadonly(true)`. Later can be used in couple scenarios like
+
+Please note that this property (as well as `readonly` property discussed below) can be `undefined` when runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
+
+This value is not affected by `Container.forceReadonly` calls discussed below and can be used by hosts to indicate to users if it's possible to edit a file in `Container.forceReadonly(false)` state.
+
+Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like
    - Loss of connectivity, in scenarios where host choses method od preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of document (container)
    - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
-`Container.readonlyPermissions` indicates to host if file is writable or not. This value does not depend on `Container.forceReadonly` calls and can be used by hosts to indicate to users if it's possible to edit a file in `Container.forceReadonly(false)` state.
+Container and DeltaManager expose `"readonly"` event and property. It can have 3 states:
+- **true**: either Container.readonlyPermissions === true or Container.forceReadonly(true) was called
+- **false**: Container.readonlyPermissions == false and Container.forceReadonly(false) was called (or this API was never called - false is default state)
+- **undefined**: Container.forceReadonly(false) is current state (same as above) and we do not know yet if current user has write access to a file.
 
 Readonly events are accessible by components and DDSs (through ContainerRuntime.deltaManager). It's expected that components adhere to requirements and expose read-only (or rather 'no edit') experiences.
 
