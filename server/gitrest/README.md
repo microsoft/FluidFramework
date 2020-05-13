@@ -8,7 +8,7 @@ Provides a REST API to a GitHub repository. It's API is based off of GitHub's RE
 
 Because nodegit is built as a native module it's simplest to build and run historian from within a Docker container.
 
-To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicoius/README.md#authorizing-to-private-npm-feed)
+To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
 
 We reuse our production container for this purpose. In development mode this does a double build (once in the
 container build and a second time when mounting your source directory). Future work may want to create a development

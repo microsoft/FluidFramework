@@ -1,6 +1,6 @@
 ## Testing changes under gateway
 
-To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicoius/README.md#authorizing-to-private-npm-feed)
+To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
 
 In addition to the standard install/build, also:
 * Run install and build under gateway (running build from a parent dir doesn't build gateway)
