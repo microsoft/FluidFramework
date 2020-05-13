@@ -63,7 +63,7 @@ const makeMountableViewRequestHandler = (requestHandlers: RuntimeRequestHandler[
     return async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.headers?.mountableView === true) {
             // Unset the header in case the request is reissued to avoid double repacking.
-            request.headers.mountableView = undefined;
+            delete request.headers.mountableView;
             const response = await issueRequestNormally(request, runtime);
             return repackAsMountableView(response);
         }
