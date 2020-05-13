@@ -4,7 +4,7 @@
  */
 
 import { RedisClient } from "redis";
-import * as util from "util";
+import util from "util";
 import { ICache } from "./definitions";
 
 /**

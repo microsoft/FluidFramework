@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import * as path from "path";
+import path from "path";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {

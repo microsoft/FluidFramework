@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import * as fs from "fs";
-import * as util from "util";
+import fs from "fs";
+import util from "util";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,

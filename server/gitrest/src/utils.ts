@@ -4,10 +4,10 @@
  */
 
 import * as resources from "@microsoft/fluid-gitresources";
-import * as fs from "fs";
+import fs from "fs";
 import * as git from "nodegit";
-import * as path from "path";
-import * as util from "util";
+import path from "path";
+import util from "util";
 
 const exists = util.promisify(fs.exists);
 

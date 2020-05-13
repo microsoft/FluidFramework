@@ -5,7 +5,7 @@
 
 import { commonOptions } from "./commonOptions";
 import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
-import * as path from "path";
+import path from "path";
 import { logVerbose } from "./logging";
 
 async function isFluidRootLerna(dir: string) {

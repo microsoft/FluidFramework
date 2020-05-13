@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import * as child_process from "child_process";
-import * as fs from "fs";
+import fs from "fs";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
@@ -726,8 +726,8 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)) {
+        if (snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)
+            !== content.snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }

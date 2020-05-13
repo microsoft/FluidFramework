@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import { DocumentStorage } from "@microsoft/fluid-server-services";
 import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";

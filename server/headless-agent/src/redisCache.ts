@@ -4,7 +4,7 @@
  */
 
 import { RedisClient } from "redis";
-import * as util from "util";
+import util from "util";
 
 /**
  * Interface for a page object cache

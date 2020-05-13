@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise, no-shadow */
 
-import * as path from "path";
+import path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";
 import { LocalReference } from "../localReference";

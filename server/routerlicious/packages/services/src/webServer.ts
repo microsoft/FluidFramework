@@ -5,7 +5,7 @@
 
 import * as http from "http";
 import { AddressInfo } from "net";
-import * as util from "util";
+import util from "util";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as socketIo from "./socketIoServer";
 

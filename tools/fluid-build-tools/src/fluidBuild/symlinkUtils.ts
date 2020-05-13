@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import { Package } from "../common/npmPackage";
 import { logVerbose, logStatus } from "../common/logging";
 import {
@@ -18,7 +18,7 @@ import {
 } from "../common/utils";
 import { FluidRepo } from "./fluidRepo";
 import * as semver from "semver";
-import * as fs from "fs";
+import fs from "fs";
 import { MonoRepo } from "../common/monoRepo";
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
@@ -143,7 +143,7 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         if (depBuildPackage) {
             const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
             const satisfied = semver.satisfies(depBuildPackage.version, version);
-            logVerbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
+            logVerbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied ? "satisfied" : "not satisfied"} by range ${version}`);
             if (!satisfied) {
                 if (sameMonoRepo) {
                     console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)

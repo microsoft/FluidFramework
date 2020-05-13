@@ -5,7 +5,7 @@
 
 import { AsyncPriorityQueue } from "async";
 import assert from "assert";
-import * as path from "path";
+import path from "path";
 import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGraph";
 import { logStatus, logVerbose } from "../../../common/logging";
 import { options } from "../../options";

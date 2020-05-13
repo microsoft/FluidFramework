@@ -13,8 +13,8 @@
 /* eslint-disable no-shadow */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 // eslint-disable-next-line import/no-duplicates
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 // eslint-disable-next-line no-duplicate-imports

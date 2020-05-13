@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 import { Stream } from "stream";
 import { Router } from "express";
 import * as minio from "minio";

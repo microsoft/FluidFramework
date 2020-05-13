@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 // tslint:disable-next-line: ordered-imports
 import { getRandomName, IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";

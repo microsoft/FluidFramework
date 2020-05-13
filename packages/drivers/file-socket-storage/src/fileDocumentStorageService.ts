@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import * as fs from "fs";
+import fs from "fs";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";

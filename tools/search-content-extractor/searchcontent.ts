@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as util from "util";
+import fs from "fs";
+import util from "util";
 
 export let snapshotArgument = null;
 

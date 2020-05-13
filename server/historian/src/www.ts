@@ -6,7 +6,7 @@
 import * as debug from "debug";
 import * as http from "http";
 import * as nconf from "nconf";
-import * as path from "path";
+import path from "path";
 import * as redis from "redis";
 import * as winston from "winston";
 import * as app from "./app";
@@ -35,7 +35,7 @@ winston.configure({
 (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
 // override the default log format to not include the timestamp since winston will do this for us
 // tslint:disable-next-line:only-arrow-functions
-(debug as any).formatArgs = function(args) {
+(debug as any).formatArgs = function (args) {
   const name = this.namespace;
   args[0] = name + " " + args[0];
 };
@@ -47,9 +47,9 @@ const riddler = new services.RiddlerService(riddlerEndpoint);
 const redisConfig = provider.get("redis");
 const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
 if (redisConfig.tls) {
-    redisOptions.tls = {
-        serverName: redisConfig.host,
-    };
+  redisOptions.tls = {
+    serverName: redisConfig.host,
+  };
 }
 
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);

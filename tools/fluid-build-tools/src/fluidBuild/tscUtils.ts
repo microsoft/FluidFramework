@@ -4,7 +4,7 @@
  */
 
 import * as ts from "typescript";
-import * as path from "path";
+import path from "path";
 
 export function parseCommandLine(command: string) {
     // TODO: parse the command line for real, split space for now.

@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import * as util from "util";
+import util from "util";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 import * as redis from "redis";

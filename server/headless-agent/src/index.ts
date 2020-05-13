@@ -4,7 +4,7 @@
  */
 
 import { runService } from "@microsoft/fluid-server-services-utils";
-import * as path from "path";
+import path from "path";
 import { HeadlessResourcesFactory, HeadlessRunnerFactory } from "./runnerFactory";
 
 runService(

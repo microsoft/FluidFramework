@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 

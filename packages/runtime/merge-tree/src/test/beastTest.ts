@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
 
 import assert from "assert";
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -1145,7 +1145,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]> new MergeTree.SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]>new MergeTree.SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);

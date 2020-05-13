@@ -5,7 +5,7 @@
 
 import * as nconf from "nconf";
 import * as rimrafCallback from "rimraf";
-import * as util from "util";
+import util from "util";
 
 export const defaultProvider = new nconf.Provider({}).defaults({
     logger: {

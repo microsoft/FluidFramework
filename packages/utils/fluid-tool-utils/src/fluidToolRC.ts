@@ -5,10 +5,10 @@
 
 /* eslint-disable unicorn/filename-case */
 
-import * as fs from "fs";
+import fs from "fs";
 import * as os from "os";
-import * as path from "path";
-import * as util from "util";
+import path from "path";
+import util from "util";
 import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
 
 export interface IAsyncCache<K, T> {

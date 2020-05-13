@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-
-import * as path from "path";
+import path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";

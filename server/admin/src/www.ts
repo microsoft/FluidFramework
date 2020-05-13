@@ -4,7 +4,7 @@
  */
 
 import * as utils from "@microsoft/fluid-server-services-utils";
-import * as path from "path";
+import path from "path";
 import { AdminResourcesFactory, AdminRunnerFactory } from "./runnerFactory";
 
 utils.runService(

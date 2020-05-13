@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import * as glob from "glob";
-import * as util from "util";
-import * as fs from "fs";
+import util from "util";
+import fs from "fs";
 import * as child_process from "child_process";
 
 export function getExecutableFromCommand(command: string) {
@@ -56,7 +56,7 @@ export async function execAsync(command: string, options: child_process.ExecOpti
         const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
         });
-        
+
         if (pipeStdIn) {
             p.stdin.write(pipeStdIn);
             p.stdin.end();

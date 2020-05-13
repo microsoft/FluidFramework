@@ -5,7 +5,7 @@
 
 import { Package, Packages } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
-import * as path from "path";
+import path from "path";
 
 interface ILayerInfo {
     deps?: string[];
@@ -77,7 +77,7 @@ class LayerNode extends BaseNode {
         if (this.packages.size < 2) {
             return `\n    ${nodes.join("\n    ")}`;
         }
-        const sameRank = this.dotSameRank? "\n      rank=\"same\"": "";
+        const sameRank = this.dotSameRank ? "\n      rank=\"same\"" : "";
         return `
     subgraph cluster_${this.dotName} {
       label = "${this.dotName}"${sameRank}
@@ -117,7 +117,7 @@ class GroupNode extends BaseNode {
         // default to true
         return this.groupInfo.dot !== false;
     }
-    
+
     private get dotSameRank() {
         // default to false
         return this.groupInfo.dotSameRank === true;
@@ -135,7 +135,7 @@ class GroupNode extends BaseNode {
     }
 
     public generateDotSubgraph() {
-        const sameRank = this.dotSameRank? "\n    rank=\"same\"": "";
+        const sameRank = this.dotSameRank ? "\n    rank=\"same\"" : "";
         const subGraphs = this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("");
         if (!this.dotGroup) {
             return subGraphs;

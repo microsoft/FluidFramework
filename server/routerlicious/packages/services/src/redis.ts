@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
+import util from "util";
 import { ICache } from "@microsoft/fluid-server-services-core";
 import { RedisClient } from "redis";
 

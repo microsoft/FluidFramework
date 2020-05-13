@@ -6,7 +6,7 @@
 import { FluidRepo } from "./fluidRepo";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
-import * as path from "path";
+import path from "path";
 import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
 import * as TscUtils from "./tscUtils";
 import sortPackageJson from "sort-package-json";

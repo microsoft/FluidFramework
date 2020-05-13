@@ -4,7 +4,7 @@
  */
 
 import { Package, Packages } from "./npmPackage";
-import * as path from "path";
+import path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync, readFileAsync, ExecAsyncResult, writeFileAsync} from "./utils";
 
 export enum MonoRepoKind {

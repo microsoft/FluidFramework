@@ -5,7 +5,7 @@
 
 import * as dns from "dns";
 import * as os from "os";
-import * as util from "util";
+import util from "util";
 
 export async function getHostIp(): Promise<string> {
     const hostname = os.hostname();

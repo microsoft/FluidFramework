@@ -11,7 +11,7 @@ import { Timer } from "../common/timer";
 import { existsSync } from "../common/utils";
 import { BuildResult } from "./buildGraph";
 import { parseOptions, options } from "./options";
-import * as path from "path";
+import path from "path";
 import chalk from "chalk";
 
 parseOptions(process.argv);
@@ -92,7 +92,7 @@ async function main() {
         await repo.checkPackages(options.fix);
         timer.time("Check scripts completed");
 
-        
+
         if (options.clean || options.build !== false) {
             logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 

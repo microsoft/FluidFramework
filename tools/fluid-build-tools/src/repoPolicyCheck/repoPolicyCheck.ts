@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import * as readline from "readline";
 import * as child_process from "child_process";
-import * as path from "path";
+import path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
 import sortPackageJson from "sort-package-json";

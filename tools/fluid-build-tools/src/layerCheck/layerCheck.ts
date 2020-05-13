@@ -7,7 +7,7 @@ import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import * as path from "path";
+import path from "path";
 import { writeFileAsync } from "../common/utils";
 import { FluidRepoBase } from "../common/fluidRepoBase";
 

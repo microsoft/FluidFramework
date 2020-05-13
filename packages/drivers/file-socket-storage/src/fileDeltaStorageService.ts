@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import * as fs from "fs";
+import fs from "fs";
 import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 

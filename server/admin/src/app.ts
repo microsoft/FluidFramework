@@ -12,12 +12,12 @@ import * as cookieParser from "cookie-parser";
 import * as express from "express";
 import { Express } from "express";
 import * as expressSession from "express-session";
-import * as fs from "fs";
+import fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as passportOpenIdConnect from "passport-openidconnect";
-import * as path from "path";
+import path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import split = require("split");
@@ -104,7 +104,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
-        const options: redis.ClientOpts  = { auth_pass: redisPass };
+        const options: redis.ClientOpts = { auth_pass: redisPass };
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: redisHost,
@@ -121,15 +121,15 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     const microsoftConfiguration = config.get("login:microsoft");
     passport.use(
         new passportOpenIdConnect.Strategy({
-                authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
-                callbackURL: "/auth/callback",
-                clientID: microsoftConfiguration.clientId,
-                clientSecret: microsoftConfiguration.secret,
-                issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
-                passReqToCallback: true,
-                skipUserProfile: true,
-                tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
-            },
+            authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
+            callbackURL: "/auth/callback",
+            clientID: microsoftConfiguration.clientId,
+            clientSecret: microsoftConfiguration.secret,
+            issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
+            passReqToCallback: true,
+            skipUserProfile: true,
+            tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+        },
             (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
                 return done(null, jwtClaims);
             },

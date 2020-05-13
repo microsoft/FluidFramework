@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "./runnerFactory";
 

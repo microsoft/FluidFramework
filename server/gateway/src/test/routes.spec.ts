@@ -4,7 +4,7 @@
  */
 
 import * as nconf from "nconf";
-import * as path from "path";
+import path from "path";
 import * as supertest from "supertest";
 import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import { Alfred } from "../alfred";

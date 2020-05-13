@@ -6,7 +6,7 @@
 import { LeafTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
-import * as path from "path";
+import path from "path";
 import { BuildPackage } from "../../buildGraph";
 
 export class EchoTask extends LeafTask {
@@ -105,7 +105,7 @@ export class CopyfilesTask extends LeafTask {
                 }
                 currRelPath = currRelPath.substring(index + 1);
             }
-            
+
             return path.join(dstPath, currRelPath);
         });
         return this.isFileSame(srcFiles, dstFiles);

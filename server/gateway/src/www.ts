@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import { runService } from "@microsoft/fluid-server-services-utils";
 import { GatewayResourcesFactory, GatewayRunnerFactory } from "./runnerFactory";
 

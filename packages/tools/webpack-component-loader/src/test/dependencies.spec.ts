@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 
 describe("Check Dependencies", () => {
     it("verify no fluid packages", async () => {
