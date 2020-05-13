@@ -27,7 +27,7 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.17.3",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2"
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
