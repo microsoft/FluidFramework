@@ -65,10 +65,6 @@ interface IErrorReconnectInfo {
      */
     reason: string;
     /**
-     * True if the error can be reconnected after.
-     */
-    canReconnect: boolean;
-    /**
      * Delay before reconnecting in seconds.
      */
     reconnectDelay?: number;
@@ -86,7 +82,6 @@ const getRetryDelayFromError = (error: any): number | undefined => error?.retryA
 function getErrorReconnectInfo(reason: string, error: any): IErrorReconnectInfo {
     return {
         reason,
-        canReconnect: canRetryOnError(error),
         reconnectDelay: getRetryDelayFromError(error),
         getError: () => createIError(error),
     };
@@ -94,9 +89,8 @@ function getErrorReconnectInfo(reason: string, error: any): IErrorReconnectInfo 
 function getNackReconnectInfo(nackContent: INackContent): IErrorReconnectInfo {
     return {
         reason: `Nacked: ${nackContent.message}`,
-        canReconnect: ![403, 429].includes(nackContent.code),
         reconnectDelay: nackContent.retryAfter,
-        getError() { return createFatalError(this.reason); },
+        getError() { return createFatalError(this.reason, ![403, 429].includes(nackContent.code)); },
     };
 }
 
@@ -858,6 +852,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (delayTime > 0) {
             const throttlingError: IThrottlingError = {
                 errorType: ErrorType.throttlingError,
+                canRetry: true,
                 message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delayTime / 1000,
             };
@@ -928,8 +923,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 ? getNackReconnectInfo(message.content)
                 : {
                     reason: "Nacked: Unknown reason",
-                    canReconnect: true,
-                    getError() { return createFatalError(this.reason); },
+                    getError() { return createFatalError(this.reason, true); },
                 };
 
             if (this.reconnectMode !== ReconnectMode.Enabled) {
@@ -1050,7 +1044,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.disconnectFromDeltaStream(reconnectInfo.reason);
 
         // If reconnection is not an option, close the DeltaManager
-        const canRetry = reconnectInfo.canReconnect;
+        const canRetry = canRetryOnError(reconnectInfo.getError());
         if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and

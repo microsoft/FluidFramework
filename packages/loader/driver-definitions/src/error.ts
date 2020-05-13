@@ -48,7 +48,7 @@ IServiceError | ISummarizingError | IWriteError | IFatalError;
 export interface IErrorBase {
     readonly errorType: ErrorType;
     readonly message: string;
-    readonly canRetry?: boolean;
+    readonly canRetry: boolean;
     readonly online?: string;
 }
 

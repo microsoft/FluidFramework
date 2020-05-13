@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import {
     IError,
     IGenericNetworkError,
@@ -56,8 +57,8 @@ class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError
 
     constructor(
         errorMessage: string,
+        readonly canRetry: boolean,
         readonly statusCode?: number,
-        readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
@@ -74,7 +75,7 @@ class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
 
     constructor(
         errorMessage: string,
-        readonly canRetry?: boolean,
+        readonly canRetry: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
@@ -91,7 +92,7 @@ class FileNotFoundOrAccessDeniedError extends ErrorWithProps implements IFileNot
 
     constructor(
         errorMessage: string,
-        readonly canRetry?: boolean,
+        readonly canRetry: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
@@ -107,10 +108,11 @@ class OutOfStorageError extends ErrorWithProps implements IOutOfStorageError {
 
     constructor(
         errorMessage: string,
-        readonly canRetry?: boolean,
+        readonly canRetry: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
+        assert(!canRetry);
     }
 }
 
@@ -123,10 +125,11 @@ class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameErr
 
     constructor(
         errorMessage: string,
-        readonly canRetry?: boolean,
+        readonly canRetry: boolean,
         readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
+        assert(!canRetry);
     }
 }
 
@@ -135,8 +138,13 @@ class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameErr
  */
 class ThrottlingError extends ErrorWithProps implements IThrottlingError {
     readonly errorType = ErrorType.throttlingError;
+    readonly canRetry = true;
 
-    constructor(errorMessage: string, readonly retryAfterSeconds: number) {
+    constructor(
+        errorMessage: string,
+        readonly retryAfterSeconds: number,
+        readonly statusCode?: number,
+    ) {
         super(errorMessage);
     }
 }
@@ -158,9 +166,11 @@ class WriteError extends ErrorWithProps implements IWriteError {
  */
 class FatalError extends ErrorWithProps implements IFatalError {
     readonly errorType = ErrorType.fatalError;
-    public readonly canRetry = false;
 
-    constructor(errorMessage: string) {
+    constructor(
+        errorMessage: string,
+        readonly canRetry: boolean,
+    ) {
         super(errorMessage);
     }
 }
@@ -172,26 +182,38 @@ export function createNetworkError(
     retryAfterSeconds?: number,
     online: string = OnlineStatus[isOnline()],
 ): IError {
-    if (statusCode === 401 || statusCode === 403) {
-        return new AuthorizationError(errorMessage, canRetry, online);
+    let error: IError;
+
+    switch (statusCode) {
+        case 401:
+        case 403:
+            error = new AuthorizationError(errorMessage, canRetry, online);
+            break;
+        case 404:
+            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry, online);
+            break;
+        case 500:
+            error = new FatalError(errorMessage, canRetry);
+            break;
+        case 507:
+            error = new OutOfStorageError(errorMessage, canRetry, online);
+            break;
+        case 414:
+        case invalidFileNameErrorCode:
+            error = new InvalidFileNameError(errorMessage, canRetry, online);
+            break;
+        default:
+            if (retryAfterSeconds !== undefined && canRetry) {
+                error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+            } else {
+                error = new GenericNetworkError(errorMessage, canRetry, statusCode, online);
+            }
     }
-    if (statusCode === 404) {
-        return new FileNotFoundOrAccessDeniedError(errorMessage, canRetry, online);
-    }
-    if (statusCode === 500) {
-        return new FatalError(errorMessage);
-    }
-    if (statusCode === 507) {
-        return new OutOfStorageError(errorMessage, canRetry, online);
-    }
-    if (statusCode === 414 || statusCode === invalidFileNameErrorCode) {
-        return new InvalidFileNameError(errorMessage, canRetry, online);
-    }
-    if (retryAfterSeconds !== undefined) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds);
-    }
-    return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
+
+    return error;
 }
 
-export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
-export const createFatalError = (errorMessage: string) => (new FatalError(errorMessage) as IError);
+export const createWriteError =
+    (errorMessage: string) => new WriteError(errorMessage) as IError;
+export const createFatalError =
+    (errorMessage: string, canRetry: boolean) => new FatalError(errorMessage, canRetry) as IError;

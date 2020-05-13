@@ -17,6 +17,7 @@ export function createIError(error: any): IError {
     if (typeof error === "object" && error !== null) {
         if (error.errorType === undefined) {
             return {
+                canRetry: false,
                 ...error,
                 errorType: ErrorType.generalError,
                 error,
@@ -28,12 +29,14 @@ export function createIError(error: any): IError {
         return {
             errorType: ErrorType.generalError,
             message : error,
+            canRetry: false,
             error: new Error(error),
         };
     } else {
         const specificError: IError = {
             errorType: ErrorType.generalError,
             message: `${error}`,
+            canRetry: false,
             error,
         };
         return specificError;

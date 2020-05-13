@@ -11,6 +11,7 @@ import {
     IFluidResolvedUrl,
     ErrorType,
     IDocumentServiceFactory,
+    IThrottlingError,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, createNetworkError, createWriteError } from "@microsoft/fluid-driver-utils";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
@@ -205,16 +206,12 @@ describe("Errors Types", () => {
     it("ThrottlingError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /* canRetry */,
+            true /* canRetry */,
             400 /* statusCode */,
-            100 /* retryAfterSeconds */);
+            100 /* retryAfterSeconds */) as IThrottlingError;
         assertCustomPropertySupport(networkError);
-        if (networkError.errorType !== ErrorType.throttlingError) {
-            assert.fail("Error should be a throttlingError");
-        }
-        else {
-            assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
-        }
+        assert.equal(networkError.errorType, ErrorType.throttlingError, "Error should be a throttlingError");
+        assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
     });
 
     it("WriteError Test", async () => {
@@ -249,7 +246,7 @@ describe("Errors Types", () => {
         };
         const error1 = createIError(err1);
         const error2 = createIError(Object.freeze(err2));
-        assert.equal(error1.canRetry, true, "Error should contain critical property.");
-        assert.equal(error2.canRetry, undefined, "Error should not contain critical property.");
+        assert.equal(error1.canRetry, false, "Can retry false 1.");
+        assert.equal(error2.canRetry, false, "Can retry false 2");
     });
 });
