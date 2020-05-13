@@ -196,7 +196,7 @@ describe("Container", () => {
         deltaConnection.emitError("Test Error");
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
-        assert.strictEqual(container.closed, false, "Container should not be closed");
+        assert.strictEqual(container.closed, true, "Container should be closed");
         deltaConnection.removeAllListeners();
     });
 
