@@ -1065,7 +1065,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (this.reconnectMode === ReconnectMode.Enabled) {
             if (reconnectInfo.reconnectDelay !== undefined) {
-                this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay, error);
+                this.emitDelayInfo(RetryFor.DeltaStream, reconnectInfo.reconnectDelay, reconnectInfo.getError());
                 await waitForConnectedState(reconnectInfo.reconnectDelay * 1000);
             }
 
