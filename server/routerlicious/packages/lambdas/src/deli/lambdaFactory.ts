@@ -174,7 +174,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     // Another aspect is the starting summary. What happens when epoch ticks and we never had a prior summary?
     // For now we are just skipping the step if no prior summary was present.
-    // TODO: May be alfred/deli should create a summary at inception? 
+    // TODO: May be alfred/deli should create a summary at inception?
     private async resetCheckpointOnEpochTick(
         tenantId: string,
         documentId: string,
