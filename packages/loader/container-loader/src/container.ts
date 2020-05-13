@@ -84,7 +84,7 @@ import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { IConnectionArgs, DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
@@ -415,7 +415,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.protocolHandler.close();
         }
 
-        this.context?.dispose();
+        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -553,7 +553,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
 
-        this._deltaManager.autoReconnect = reconnect;
+        this._deltaManager.setAutomaticReconnect(reconnect);
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
@@ -1173,9 +1173,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let durationFromDisconnected: number | undefined;
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
-        let autoReconnect: boolean | undefined;
+        let autoReconnect: ReconnectMode | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager.autoReconnect;
+            autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
             if (value === ConnectionState.Connected) {
