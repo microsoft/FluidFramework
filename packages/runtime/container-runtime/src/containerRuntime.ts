@@ -709,8 +709,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [componentId, contextD] of this.contextsDeferred) {
             contextD.promise.then((context) => {
                 context.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
+            }).catch((contextError) => {
+                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
             });
         }
 
@@ -889,8 +889,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
-        this.verifyNotClosed();
-
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1491,6 +1489,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return clientSequenceNumber;
     }
 
+    /**
+     * Throw an error if the runtime is closed.  Methods that are expected to potentially
+     * be called after dispose due to asynchrony should not call this.
+     */
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
