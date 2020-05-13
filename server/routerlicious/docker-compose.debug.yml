@@ -3,32 +3,32 @@ services:
     alfred:
         ports:
             - "5858:5858"
-        command: node --inspect=0.0.0.0:5858 dist/alfred/www.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/alfred/www.js
     deli:
         ports:
             - "5859:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js deli /usr/src/server/server/routerlicious/packages/routerlicious/dist/deli/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
     scriptorium:
         ports:
             - "5860:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js scriptorium /usr/src/server/server/routerlicious/packages/routerlicious/dist/scriptorium/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
     copier:
         ports:
             - "5861:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js copier /usr/src/server/server/routerlicious/packages/routerlicious/dist/copier/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
     scribe:
         ports:
             - "5862:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js scribe /usr/src/server/server/routerlicious/packages/routerlicious/dist/scribe/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
     foreman:
         ports:
             - "5863:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js foreman /usr/src/server/server/routerlicious/packages/routerlicious/dist/foreman/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js foreman /usr/src/server/packages/routerlicious/dist/foreman/index.js
     routemaster:
         ports:
             - "5864:5858"
-        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js routemaster /usr/src/server/server/routerlicious/packages/lambdas-driver/dist/document-router/index.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js routemaster /usr/src/server/packages/lambdas-driver/dist/document-router/index.js
     riddler:
         ports:
             - "5865:5858"
-        command: node --inspect=0.0.0.0:5858 dist/riddler/www.js
+        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/riddler/www.js

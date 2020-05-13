@@ -1,8 +1,0 @@
-{
-  "name": "chaincode-loader",
-  "version": "0.0.1",
-  "description": "Headless chaincode loader",
-  "license": "MIT",
-  "author": "Microsoft",
-  "main": "index.js"
-}

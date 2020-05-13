@@ -7,7 +7,7 @@ import * as React from "react";
 
 import { SharedMap } from "@microsoft/fluid-map";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 

@@ -50,10 +50,11 @@
   },
   "dependencies": {
     "@microsoft/fluid-agent-scheduler": "^0.18.0",
-    "@microsoft/fluid-common-definitions": "^0.16.0",
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
     "@microsoft/fluid-common-utils": "^0.17.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-container-definitions": "^0.18.0",
+    "@microsoft/fluid-container-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-driver-utils": "^0.18.0",
     "@microsoft/fluid-protocol-base": "^0.1004.2",

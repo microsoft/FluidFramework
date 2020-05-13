@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";

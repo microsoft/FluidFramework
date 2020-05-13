@@ -47,7 +47,9 @@ if (program.path) {
 const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
 const licenseId = 'MIT';
 const author = 'Microsoft';
-const serverDockerfilePath = "server/routerlicious/r11s-Dockerfile";
+const serverPath = "server/routerlicious/";
+const serverDockerfilePath = `${serverPath}Dockerfile`
+
 function getDockerfileCopyText(packageFilePath) {
     const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
     return `COPY ${packageDir}/package*.json ${packageDir}/`;
@@ -198,7 +200,8 @@ const handlers = [
         name: "dockerfile-packages",
         match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
         handler: file => {
-            const dockerfileCopyText = getDockerfileCopyText(file);
+            // strip server path since all paths are relative to server directory
+            const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
 
             const dockerfileContents = getOrAddLocalMap(
                 "dockerfileContents",
