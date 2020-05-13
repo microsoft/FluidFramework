@@ -132,10 +132,10 @@ export interface IContainerRuntimeBase extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
 
     /**
-     * Request an absolute url to the conatiner based on the provided relativeRequest.
+     * Get an absolute url to the container based on the provided relativeRequest.
      * @param relativeRequest - A relative request within the container
      */
-    requestContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -347,6 +347,12 @@ export interface IComponentContext extends EventEmitter {
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url to the containe rbased on the provided relativeRequest.
+     * @param relativeRequest - A relative request within the container
+     */
+    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 /**

@@ -1283,8 +1283,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return summaryTree;
     }
 
-    public async requestContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
-        return this.context.requestContainerUrl(relativeRequest);
+    public async getContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
+        return this.context.getContainerUrl(relativeRequest);
     }
 
     private async generateSummary(

@@ -221,10 +221,10 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 
     /**
-     * Request an absolute url to the conatiner based on the provided relativeRequest.
+     * Get an absolute url to the container based on the provided relativeRequest.
      * @param relativeRequest - A relative request within the container
      */
-    requestContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
