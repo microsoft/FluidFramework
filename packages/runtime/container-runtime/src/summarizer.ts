@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -12,18 +13,17 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
+import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { ErrorType, IError, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
-    IDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { ErrorType, ISummarizingError, ISummaryContext, IError } from "@microsoft/fluid-driver-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
-import { RunWhileConnectedCoordinator, IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -43,7 +43,14 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComponentLoadable {
+export interface ISummarizerEvents extends IEvent {
+    /**
+     * An event indicating that the Summarizer is having problems summarizing
+     */
+    (event: "summarizingError", listener: (description: string) => void);
+}
+export interface ISummarizer
+    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -51,10 +58,6 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
     stop(reason?: string): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
-    /**
-     * An event indicating that the Summarizer is having problems summarizing
-     */
-    on(event: "summarizingError", listener: (description: string) => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -173,7 +176,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
-        summarizingError: (description: string) => void,
+        raiseSummarizingError: (description: string) => void,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -185,7 +188,7 @@ export class RunningSummarizer implements IDisposable {
             lastOpSeqNumber,
             firstAck,
             immediateSummary,
-            summarizingError);
+            raiseSummarizingError);
 
         await summarizer.waitStart();
 
@@ -218,7 +221,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
-        private readonly summarizingError: (description: string) => void,
+        private readonly raiseSummarizingError: (description: string) => void,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -233,7 +236,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             this.configuration.maxAckWaitTime,
             () => {
-                this.summarizingError("SummaryAckWaitTimeout");
+                this.raiseSummarizingError("SummaryAckWaitTimeout");
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
@@ -379,6 +382,7 @@ export class RunningSummarizer implements IDisposable {
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
         if (!summaryData || !summaryData.submitted) {
             // Did not send the summary op
+            this.raiseSummarizingError("Error while generating or submitting summary");
             return undefined;
         }
 
@@ -430,7 +434,7 @@ export class RunningSummarizer implements IDisposable {
 
             return true;
         } else {
-            this.summarizingError("SummaryNack");
+            this.raiseSummarizingError("SummaryNack");
             return false;
         }
     }
