@@ -26,11 +26,11 @@ This is an npm package containing a lightweight express server. It will be run f
 
 ## Setup
 
-
+WARNING: Ensure your component is on the same minor version of the Fluid Framework as Fluid Preview. Otherwise, you will face errors due to breaking changes between versions.
 
 1) Make sure your root .npmrc contains the following line:
 
-@microsoft:registry=https://packages.wu2.prague.office-int.com
+@microsoft:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
 
 @microsoft:always-auth=true
 
