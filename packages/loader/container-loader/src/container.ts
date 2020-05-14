@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -17,6 +18,7 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
+    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -24,7 +26,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
@@ -255,8 +256,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._loadedFromVersion;
     }
 
-    public get readonly(): boolean | undefined {
+    /**
+     * {@inheritDoc DeltaManager.readonly}
+     */
+    public get readonly() {
         return this._deltaManager.readonly;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readonlyPermissions}
+     */
+    public get readonlyPermissions() {
+        return this._deltaManager.readonlyPermissions;
     }
 
     public forceReadonly(readonly: boolean) {
@@ -367,12 +378,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
-        this.subLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
+        this.subLogger = ChildLogger.create(
             logger,
+            undefined,
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+                containerId: uuid(),
             },
             {
                 docId: () => this.id,
@@ -593,7 +605,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => {});
+        this.connectToDeltaStream().catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -787,7 +799,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
             startConnectionP = this.connectToDeltaStream(connectionArgs);
-            startConnectionP.catch((error) => {});
+            startConnectionP.catch((error) => { });
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -1036,7 +1048,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component;
+        let component: IFluidModule;
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
         try {
             component = await this.codeLoader.load(pkg);
