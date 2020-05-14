@@ -60,7 +60,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param webSocketId - webSocket ID
+     * @param documentId - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -70,17 +70,23 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     public static async create(
         tenantId: string,
-        webSocketId: string,
+        documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
+        // enable multiplexing when the websocket url does not include the tenant/document id
+        const parsedUrl = new URL(url);
+        const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
+
+        // do not include the specific tenant/doc id in the ref key when multiplexing
+        // this will allow multiple documents to share the same websocket connection
+        const socketReferenceKey = enableMultiplexing ? url : `${url},${tenantId},${documentId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -89,7 +95,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         const connectMessage: IConnect = {
             client,
-            id: webSocketId,
+            id: documentId,
             mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
@@ -97,7 +103,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             nonce: uuid(),
         };
 
-        const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
+        const deltaConnection = new OdspDocumentDeltaConnection(socket, documentId, socketReferenceKey);
 
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
@@ -128,6 +134,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         timeoutMs: number,
         key: string,
         url: string,
+        enableMultiplexing: boolean,
         tenantId: string,
         documentId: string,
         telemetryLogger: ITelemetryLogger): SocketReference {
@@ -156,14 +163,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
         } else {
+            const query = enableMultiplexing ? undefined : { documentId, tenantId };
+
             const socket = io(
                 url,
                 {
                     multiplex: false, // Don't rely on socket.io built-in multiplexing
-                    query: {
-                        documentId,
-                        tenantId,
-                    },
+                    query,
                     reconnection: false,
                     transports: ["websocket"],
                     timeout: timeoutMs,
