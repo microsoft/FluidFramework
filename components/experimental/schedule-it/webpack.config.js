@@ -21,7 +21,10 @@ module.exports = env => {
             rules: [{ 
                 test: /\.tsx?$/,
                 loader: "ts-loader"
-            }]
+            },{
+                test: /\.css$/,
+                loader:"css-loader"
+            }],
         },
         output: {
             filename: "[name].bundle.js",

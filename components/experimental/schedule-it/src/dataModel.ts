@@ -113,7 +113,9 @@ export const PersonSelector: IPersonSelector = {
 export const PersonReducer: IPersonReducer = {
     updateName: {
         function: (state: IPersonState, dataProps, key: string, name: string) => {
-            state.personMap.set(key, name);
+            const person = state.personMap.get<IPerson>(key);
+            person.name = name;
+            state.personMap.set(key, person);
             return state;
         },
     },

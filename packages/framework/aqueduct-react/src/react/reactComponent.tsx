@@ -107,26 +107,32 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
 
 export interface FluidFunctionalComponentState {
     handleMap?: HandleMap;
+    isInitialized?: boolean;
 }
 
 export const instanceOfIComponentLoadable = (object: any): object is IComponentLoadable =>
     "IComponentLoadable" in object;
 
+function getByValue(map, searchValue) {
+    for (const [key, value] of map.entries()) {
+        if (value === searchValue)
+        {return key;}
+    }
+}
+
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
-[S, ((newState: S) => void)] {
+[S, ((newState: S, fromRootUpdate?: boolean) => void)] {
     const [ reactState, reactSetState ] = React.useState<S>(props.initialState);
     const { root, stateToRoot } = props;
-    const fluidSetState = React.useCallback((newState: Partial<S>) => {
+    const fluidSetState = React.useCallback((newState: Partial<S>, fromRootUpdate = false) => {
         reactSetState({ ...reactState, ...newState, isInitialized: true });
-        if (stateToRoot !== undefined) {
+        if (stateToRoot !== undefined && !fromRootUpdate) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 if (newState[stateKey] !== undefined) {
                     const rootData = root.get(rootKey);
                     if (instanceOfIComponentLoadable(newState[stateKey])) {
                         const stateData = (newState[stateKey] as unknown as IComponentLoadable).handle;
-                        if (rootData !== stateData) {
-                            root.set(rootKey, stateData);
-                        }
+                        root.set(rootKey, stateData);
                     } else if (rootData !== newState[stateKey]) {
                         root.set(rootKey, newState[stateKey]);
                     }
@@ -135,19 +141,21 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
         }
     }, [root, stateToRoot, reactState, reactSetState]);
 
-    if (stateToRoot !== undefined) {
-        stateToRoot.forEach((rootKey, stateKey) => {
-            root.on("valueChanged", (change, local) => {
-                if (change.key === rootKey) {
-                    getFromRoot(root, rootKey).then((newData) => {
-                        if (newData !== reactState[stateKey] || instanceOfIComponentLoadable(newData)) {
-                            const newState: Partial<S> = {};
-                            newState[stateKey] = newData as any;
-                            fluidSetState(newState);
-                        }
-                    });
-                }
-            });
+    if (stateToRoot !== undefined && !reactState.isInitialized) {
+        reactState.isInitialized = true;
+        root.on("valueChanged", (change, local) => {
+            if (Array.from(stateToRoot.values()).includes(change.key)) {
+                const rootKey = change.key;
+                const stateKey = getByValue(stateToRoot, rootKey);
+                getFromRoot(root, rootKey).then((newData) => {
+                    if (newData !== reactState[stateKey] || instanceOfIComponentLoadable(newData)) {
+                        const newState: Partial<S> = {};
+                        newState.isInitialized = true;
+                        newState[stateKey] = newData as any;
+                        fluidSetState(newState, true);
+                    }
+                });
+            }
         });
     }
 
@@ -236,7 +244,7 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A, B>(
             if (handleMapData.get(handle) === undefined) {
                 handle.get().then((component) => {
                     handleMapData.set(handle, component);
-                    setState({ ...state, handleMap: handleMapData });
+                    setState({ ...state, handleMap: handleMapData }, true);
                 });
             }
             return (action.function as any)(state, dataProps, handle);

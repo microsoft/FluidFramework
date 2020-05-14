@@ -11,7 +11,7 @@ import {
 } from "office-ui-fabric-react";
 import { SharedMap } from "@microsoft/fluid-map";
 import { PrimedContext } from "./context";
-import { IPerson, AvailabilityType, IComment, IAvailability } from "./interface";
+import { IPerson, AvailabilityType, IComment, IAvailability, IDate } from "./interface";
 initializeIcons();
 
 export const ScheduleItView = () => {
@@ -30,26 +30,24 @@ export const ScheduleItView = () => {
         return <div>{"Context is not providing data correctly"}</div>;
     }
     const [currentComment, setCurrentComment] = React.useState("");
-    const [newName, setNewName] = React.useState("");
 
-    const onRenderHeader = (items: SharedMap) => {
-        // const content = Object.entries(items).map(([key, item]) => {
-        //     return (
-        //         <div className="headerCell" key={key} style={{ width: "25%" }}>
-        //             <DatePicker
-        //                 value={item.date}
-        //                 onSelectDate={(newDate) => dateDispatch("set", newDate)}
-        //             />
-        //         </div>
-        //     );
-        // });
+    const onRenderHeader = (dates: SharedMap) => {
+        const content: JSX.Element[] = [];
+        for (const dateKey of dates.keys()) {
+            const date = dates.get<IDate>(dateKey);
+            content.push(
+                <div className="headerCell" key={dateKey} style={{ width: "25%" }}>
+                    <label>{date.key}</label>
+                </div>,
+            );
+        }
 
         return (
             <Stack className="header" horizontal tokens={{ childrenGap: 10 }}>
                 <div className="headerCell" style={{ width: "25%" }}>
                     {"People"}
                 </div>
-                {/* {content} */}
+                {content}
             </Stack>
         );
     };
@@ -92,13 +90,11 @@ export const ScheduleItView = () => {
                 <div className="cell" key="name" style={{ width: "25%" }}>
                     <TextField
                         value={person.name}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                personDispatch("updateName", personKey, newName);
-                                setNewName("");
+                        onChange={(e, v) => {
+                            if (v !== undefined) {
+                                personDispatch("updateName", personKey, v);
                             }
                         }}
-                        onChange={(e, v) => setNewName("v")}
                     />
                 </div>
                 {checkmarks}

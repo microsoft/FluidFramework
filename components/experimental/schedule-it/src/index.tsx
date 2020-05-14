@@ -216,5 +216,5 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
 }
 
 // ----- FACTORY SETUP -----
-export const ScheduleItInstantiationFactory = new PrimedComponentFactory(ScheduleItName, ScheduleIt, [], {});
+export const ScheduleItInstantiationFactory = new PrimedComponentFactory(ScheduleItName, ScheduleIt, [SharedMap.getFactory()], {});
 export const fluidExport = ScheduleItInstantiationFactory;
