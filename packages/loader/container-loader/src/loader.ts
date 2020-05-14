@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as uuid from "uuid";
+import uuid from "uuid";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -18,7 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -138,7 +138,6 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-    private readonly logger?: ITelemetryBaseLogger;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],
@@ -147,11 +146,9 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly options: any,
         private readonly scope: IComponent,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-        logger?: ITelemetryBaseLogger,
+        private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
-
-        this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
 
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
