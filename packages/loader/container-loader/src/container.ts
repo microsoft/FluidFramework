@@ -169,8 +169,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     container.removeListener("closed", onClosed);
                     perfEvent.end(props);
                     res(container);
-                })
-                .catch((error) => {
+                },
+                (error) => {
                     perfEvent.cancel(undefined, error);
                     const err = createIError(error);
                     onClosed(err);

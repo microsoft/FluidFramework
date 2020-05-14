@@ -5,39 +5,61 @@
 
 // tslint:disable: no-unsafe-any
 export enum ErrorType {
-    // Some error, most likely an exception caught by runtime and propagated to container as critical error
+    /**
+     * Some error, most likely an exception caught by runtime and propagated to container as critical error
+     */
     generalError,
 
+    /**
     // Some non-categorized (below) networking error
+     */
     genericNetworkError,
 
+    /**
     // Access denied - user does not have enough privileges to open a file, or continue to operate on a file
+     */
     authorizationError,
 
+    /**
     // File not found, or file deleted during session
+     */
     fileNotFoundOrAccessDeniedError,
 
-    // Storage is out of space
+    /**
+    * Storage is out of space
+     */
     outOfStorageError,
 
-    // Invalid file name (at creation of the file)
+    /**
+    * Invalid file name (at creation of the file)
+     */
     invalidFileNameError,
 
-    // Throttling error from server. Server is busy and is asking not to reconnect for some time
+    /**
+    * Throttling error from server. Server is busy and is asking not to reconnect for some time
+     */
     throttlingError,
 
-    // Service error. Not used
+    /**
+    * Service error. Not used
+     */
     serviceError,
 
-    // Summarizing error. Currently raised on summarizing container only.
-    // Work is planned to propagate these errors to main container.
+    /**
+    * Summarizing error. Currently raised on summarizing container only.
+    * Work is planned to propagate these errors to main container.
+     */
     summarizingError,
 
-    // User does not have write permissions to a file, but is changing content of a file.
-    // That might be indication of some component error - components should not generate ops in readonly mode.
+    /**
+    * User does not have write permissions to a file, but is changing content of a file.
+    * That might be indication of some component error - components should not generate ops in readonly mode.
+     */
     writeError,
 
-    // Some fatal server error (usually 500).
+    /**
+    * Some fatal server error (usually 500).
+     */
     fatalError,
 }
 

@@ -17,10 +17,9 @@ export function createIError(error: any): IError {
     if (typeof error === "object" && error !== null) {
         if (error.errorType === undefined) {
             return {
-                canRetry: false,
                 ...error,
+                canRetry: false,
                 errorType: ErrorType.generalError,
-                error,
                 message: error.message ?? `${error}`,
             };
         }

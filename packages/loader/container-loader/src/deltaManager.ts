@@ -781,7 +781,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
             await waitForConnectedState(delay * 1000);
-            await waitForConnectedState(delay * 1000);
         }
 
         // Might need to change to non-error event
