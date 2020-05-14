@@ -55,6 +55,11 @@ export class BaseContainerRuntimeFactory implements
             dc.register(entry.type, entry.provider);
         }
 
+        // Create a scope object that passes through everything except for IComponentDependencySynthesizer
+        // which we will replace with the new one we just created.
+        const scope: any = context.scope;
+        scope.IComponentDependencySynthesizer = dc;
+
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
@@ -63,7 +68,7 @@ export class BaseContainerRuntimeFactory implements
                 componentRuntimeRequestHandler,
             ],
             undefined,
-            dc);
+            scope);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
         dc.register(IContainerRuntime, runtime);
