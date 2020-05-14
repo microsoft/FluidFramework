@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-undo-redo";
-export const pkgVersion = "0.17.4";
+export const pkgVersion = "0.17.5";

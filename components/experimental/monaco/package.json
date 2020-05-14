@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/monaco",
-  "version": "0.17.4",
+  "version": "0.17.5",
   "description": "Monaco code editor",
   "license": "MIT",
   "author": "Microsoft",
@@ -31,21 +31,21 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.17.4",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.4",
-    "@microsoft/fluid-container-definitions": "^0.17.4",
-    "@microsoft/fluid-framework-experimental": "^0.17.4",
-    "@microsoft/fluid-merge-tree": "^0.17.4",
-    "@microsoft/fluid-runtime-definitions": "^0.17.4",
-    "@microsoft/fluid-sequence": "^0.17.4",
-    "@microsoft/fluid-view-interfaces": "^0.17.4",
+    "@microsoft/fluid-aqueduct": "^0.17.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.5",
+    "@microsoft/fluid-container-definitions": "^0.17.5",
+    "@microsoft/fluid-framework-experimental": "^0.17.5",
+    "@microsoft/fluid-merge-tree": "^0.17.5",
+    "@microsoft/fluid-runtime-definitions": "^0.17.5",
+    "@microsoft/fluid-sequence": "^0.17.5",
+    "@microsoft/fluid-view-interfaces": "^0.17.5",
     "@types/node": "^10.14.6",
     "monaco-editor": "^0.15.6"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.17.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.17.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
