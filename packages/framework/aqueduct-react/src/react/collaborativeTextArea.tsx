@@ -8,6 +8,7 @@ import * as React from "react";
 interface IProps {
     sharedString: SharedString;
     spellCheck?: boolean;
+    className?: string;
     style?: React.CSSProperties;
 }
 
@@ -134,6 +135,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
                 rows={20}
                 cols={50}
                 ref={this.ref}
+                className={this.props.className}
                 style={this.props.style}
                 spellCheck={this.props.spellCheck ? this.props.spellCheck : false}
                 onBeforeInput={this.updateSelection}
@@ -141,7 +143,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
                 onClick={this.updateSelection}
                 onContextMenu={this.updateSelection}
                 onInput={this.handleChange}
-                value={this.state.text}/>
+                value={this.state.text} />
         );
     }
 
