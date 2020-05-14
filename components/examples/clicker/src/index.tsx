@@ -18,7 +18,6 @@ import {
     FluidStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -76,15 +75,15 @@ interface IActionReducer {
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (oldState: CounterFunctionalState, runtime: IComponentRuntime, step: number) => {
+        function: (oldState: CounterFunctionalState, dataProps, step: number) => {
             return { value: step === undefined ? oldState.value + 1  : oldState.value + step };
         },
     },
 };
 
-function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctionalState, IActionReducer>) {
+function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctionalState, IActionReducer, {}>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer>(props);
+    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer, {}>(props);
 
     return (
         <div>
@@ -173,6 +172,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                     initialState={{ value: this.root.get("counterClicksReducer") }}
                     stateToRoot={stateToRootReducer}
                     reducer={ActionReducer}
+                    selector={{}}
                 />
                 <CounterReactFunctionalContext
                     root={this.root}

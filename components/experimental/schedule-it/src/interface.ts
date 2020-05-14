@@ -1,5 +1,5 @@
 import {
-    FluidFunctionalComponentState, FluidStateUpdateFunction, FluidAsyncStateUpdateFunction,
+    FluidFunctionalComponentState, FluidStateUpdateFunction, FluidSelectorFunction,
 } from "@microsoft/fluid-aqueduct-react";
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
@@ -31,13 +31,7 @@ export interface IDefaultPerson {
 }
 
 export interface IPerson {
-    availabilityMap: SharedMap;
-    name: string;
-    key: string;
-}
-
-export interface IPersonData {
-    availabilityMapHandle: IComponentHandle;
+    availabilityMapHandle: IComponentHandle<SharedMap>;
     name: string;
     key: string;
 }
@@ -77,9 +71,13 @@ export interface IDateReducer {
 
 export interface IPersonReducer {
     updateName: FluidStateUpdateFunction<IPersonState>
-    updateAvailability: FluidAsyncStateUpdateFunction<IPersonState>,
+    updateAvailability: FluidStateUpdateFunction<IPersonState>,
     addPerson: FluidStateUpdateFunction<IPersonState>,
     removePerson: FluidStateUpdateFunction<IPersonState>,
+}
+
+export interface IPersonSelector {
+    getAvailabilityMap: FluidSelectorFunction<IPersonState, SharedMap>;
 }
 
 export interface IViewProps {
@@ -89,4 +87,5 @@ export interface IViewProps {
     commentDispatch?: (type: keyof ICommentReducer, ...args: any) => void,
     personDispatch?: (type: keyof IPersonReducer, ...args: any) => void,
     dateDispatch?: (type: keyof IDateReducer, ...args: any) => void,
+    personFetch?: (type: keyof IPersonSelector, handle: IComponentHandle) => (any | undefined),
 }

@@ -7,43 +7,18 @@
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 
 export interface FluidProps<P, S> {
     root: ISharedDirectory;
     initialState: S,
-    reactComponentProps?: ComponentProps<P, S>,
     stateToRoot?: Map<keyof S, string>,
-}
-
-interface ComponentProps<P, S> {
-    props: P;
-    propToInitialState?: Map<keyof P, keyof S>,
+    handleMap?: HandleMap;
 }
 
 async function getFromRoot<T>(root: ISharedDirectory, key: string): Promise<T> {
     const value = root.get(key);
     return value.IComponentHandle ? (value as IComponentHandle<T>).get() : value as T;
-}
-
-function initializeState<P,S>(props: FluidProps<P,S>) {
-    const {
-        initialState,
-        reactComponentProps,
-    } = props;
-    const combinedState = initialState;
-    if (reactComponentProps !== undefined && reactComponentProps.propToInitialState !== undefined) {
-        reactComponentProps.propToInitialState.forEach((stateKey, propKey) => {
-            const value = reactComponentProps.props[propKey];
-            if (typeof value === typeof combinedState[stateKey]) {
-                combinedState[stateKey] = value as any;
-            } else {
-                throw new Error(
-                    `Prop with key ${propKey} does not match the type for state with key ${stateKey}`);
-            }
-        });
-    }
-    return combinedState;
 }
 
 /**
@@ -62,7 +37,7 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
             initialState,
         } = props;
 
-        this.state = initializeState(props);
+        this.state = initialState;
         this.stateToRoot = stateToRoot;
         this._root = root;
         if (stateToRoot !== undefined) {
@@ -131,8 +106,11 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
 }
 
 export interface FluidFunctionalComponentState {
-    isInitialized?: boolean
+    handleMap?: HandleMap;
 }
+
+export const instanceOfIComponentLoadable = (object: any): object is IComponentLoadable =>
+    "IComponentLoadable" in object;
 
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
 [S, ((newState: S) => void)] {
@@ -142,66 +120,86 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
         reactSetState({ ...reactState, ...newState, isInitialized: true });
         if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
-                const rootData = root.get(rootKey);
-                if (rootData !==  newState[stateKey]) {
-                    root.set(rootKey, newState[stateKey]);
+                if (newState[stateKey] !== undefined) {
+                    const rootData = root.get(rootKey);
+                    if (instanceOfIComponentLoadable(newState[stateKey])) {
+                        const stateData = (newState[stateKey] as unknown as IComponentLoadable).handle;
+                        if (rootData !== stateData) {
+                            root.set(rootKey, stateData);
+                        }
+                    } else if (rootData !== newState[stateKey]) {
+                        root.set(rootKey, newState[stateKey]);
+                    }
                 }
             });
         }
     }, [root, stateToRoot, reactState, reactSetState]);
 
-    let nextState: S = reactState;
-    if (!reactState.isInitialized) {
-        nextState = { ...initializeState(props), isInitialized: true };
-        if (stateToRoot !== undefined) {
-            stateToRoot.forEach((rootKey, stateKey) => {
-                root.on("valueChanged", (change, local) => {
-                    if (change.key === rootKey) {
-                        getFromRoot(root, rootKey).then((newData) => {
-                            if (newData !== reactState[stateKey]) {
-                                const newState: Partial<S> = {};
-                                newState[stateKey] = newData as any;
-                                newState.isInitialized = true;
-                                fluidSetState(newState);
-                            }
-                        });
-                    }
-                });
+    if (stateToRoot !== undefined) {
+        stateToRoot.forEach((rootKey, stateKey) => {
+            root.on("valueChanged", (change, local) => {
+                if (change.key === rootKey) {
+                    getFromRoot(root, rootKey).then((newData) => {
+                        if (newData !== reactState[stateKey] || instanceOfIComponentLoadable(newData)) {
+                            const newState: Partial<S> = {};
+                            newState[stateKey] = newData as any;
+                            fluidSetState(newState);
+                        }
+                    });
+                }
             });
-        }
+        });
     }
 
-    return [nextState, fluidSetState];
+    return [reactState, fluidSetState];
 }
 
-export interface FluidReducerProps<S extends FluidFunctionalComponentState, A> {
+export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B> {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     initialState: S,
     reducer: A,
+    selector: B,
     stateToRoot?: Map<keyof S, string>,
-    selector?: keyof S
+    // Needed for nested DDS'
+    handleMap?: HandleMap,
+}
+
+export type HandleMap = Map<IComponentHandle, IComponentLoadable>;
+
+export interface IFluidDataProps {
+    runtime: IComponentRuntime,
+    handleMap: HandleMap,
 }
 
 export interface FluidStateUpdateFunction<S> {
-    function: (oldState: S, runtime: IComponentRuntime, ...args: any) => S;
+    function: (oldState: S, dataProps: IFluidDataProps, ...args: any) => S;
 }
 
 export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>
     "function" in object;
 
 export interface FluidAsyncStateUpdateFunction<S> {
-    function: (oldState: S, runtime: IComponentRuntime, ...args: any) => Promise<S>;
+    function: (oldState: S, dataProps: IFluidDataProps, ...args: any) => Promise<S>;
 }
 
 export const instanceOfAsyncStateUpdateFunction = <S,>(object: any): object is FluidAsyncStateUpdateFunction<S> =>
     "function" in object;
 
-export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
-    props: FluidReducerProps<S, A>,
-): [S, (type: keyof A, ...args: any) => void] {
+export interface FluidSelectorFunction<S, T>{
+    function: (state: S, dataProps: IFluidDataProps, handle: IComponentHandle<T>) => T | undefined;
+}
+
+export const instanceOfSelectorFunction = <S,T,>(object: any): object is FluidSelectorFunction<S,T> =>
+    "function" in object;
+
+export function useReducerFluid<S extends FluidFunctionalComponentState, A, B>(
+    props: FluidReducerProps<S, A, B>,
+): [S, (type: keyof A, ...args: any) => void, (type: keyof B, handle: IComponentHandle) => any] {
     const {
+        handleMap,
         reducer,
+        selector,
         root,
         runtime,
         stateToRoot,
@@ -212,23 +210,44 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
         root,
         initialState,
         stateToRoot,
+        handleMap,
     });
 
     const combinedReducer = React.useCallback((type: keyof A, ...args: any) => {
         const action =  reducer[(type)];
+        const dataProps: IFluidDataProps = { runtime, handleMap: handleMap ?? new Map() };
         if (action && instanceOfStateUpdateFunction(action)) {
-            const result = (action.function as any)(state, runtime, ...args);
+            const result = (action.function as any)(state, dataProps, ...args);
             setState(result);
         } else if (action && instanceOfAsyncStateUpdateFunction(action)) {
-            (action.function as any)(state, runtime, ...args).then((result) => setState(result));
+            (action.function as any)(state, dataProps, ...args).then((result) => setState(result));
         } else {
             throw new Error(
                 `Action with key ${action} does not
                  exist in the reducers provided`);
         }
-    }, [reducer, state, setState]);
+    }, [reducer, state, setState, runtime, handleMap]);
 
-    return [state, combinedReducer];
+    const combinedSelector = React.useCallback((type: keyof B, handle: IComponentHandle) => {
+        const action =  selector[(type)];
+        const handleMapData = handleMap ?? new Map();
+        const dataProps: IFluidDataProps = { runtime, handleMap: handleMapData };
+        if (action && instanceOfSelectorFunction(action)) {
+            if (handleMapData.get(handle) === undefined) {
+                handle.get().then((component) => {
+                    handleMapData.set(handle, component);
+                    setState({ ...state, handleMap: handleMapData });
+                });
+            }
+            return (action.function as any)(state, dataProps, handle);
+        } else {
+            throw new Error(
+                `Action with key ${action} does not
+                 exist in the reducers provided`);
+        }
+    }, [reducer, state, setState, runtime, handleMap]);
+
+    return [state, combinedReducer, combinedSelector];
 }
 
 export function createFluidContext<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):

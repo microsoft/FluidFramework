@@ -13,8 +13,16 @@ import { ISharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import { useReducerFluid } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { defaultComments, defaultPeople, defaultDates, CommentReducer, PersonReducer, DateReducer } from "./dataModel";
+import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    defaultComments,
+    defaultPeople,
+    defaultDates,
+    CommentReducer,
+    PersonReducer,
+    DateReducer,
+    PersonSelector,
+} from "./dataModel";
 import {
     IDateState,
     ICommentReducer,
@@ -23,6 +31,7 @@ import {
     IPersonReducer,
     IDateReducer,
     IPerson,
+    IPersonSelector,
 } from "./interface";
 import { PrimedContext } from "./context";
 import { ScheduleItView } from "./view";
@@ -34,13 +43,14 @@ export const ScheduleItName = pkg.name as string;
 interface ScheduleItProps {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
+    handleMap: Map<IComponentHandle, IComponentLoadable>;
     initialPersonState: IPersonState;
     initialDateState: IDateState;
     initialCommentState: ICommentState;
 }
 
 function useCommentReducer(props: ScheduleItProps) {
-    const { root, runtime } = props;
+    const { handleMap, root, runtime } = props;
     const rootToInitialStateComments = new Map<string, keyof ICommentState>();
     rootToInitialStateComments.set("comments", "comments");
     const stateToRootComments = new Map<keyof ICommentState, string>();
@@ -48,45 +58,51 @@ function useCommentReducer(props: ScheduleItProps) {
     const commentProps = {
         root,
         runtime,
+        handleMap,
         initialState: props.initialCommentState,
         reducer: CommentReducer,
+        selector: {},
         rootToInitialState: rootToInitialStateComments,
         stateToRoot: stateToRootComments,
     };
-    return useReducerFluid<ICommentState, ICommentReducer>(commentProps);
+    return useReducerFluid<ICommentState, ICommentReducer, {}>(commentProps);
 }
 
 function usePersonReducer(props: ScheduleItProps) {
-    const { root, runtime } = props;
+    const { handleMap, root, runtime } = props;
     const stateToRootPerson = new Map<keyof IPersonState, string>();
     stateToRootPerson.set("personMap", "person");
     const personProps = {
         root,
         runtime,
+        handleMap,
         initialState: props.initialPersonState,
         reducer: PersonReducer,
+        selector: PersonSelector,
         stateToRoot: stateToRootPerson,
     };
-    return useReducerFluid<IPersonState, IPersonReducer>(personProps);
+    return useReducerFluid<IPersonState, IPersonReducer, IPersonSelector>(personProps);
 }
 
 function useDateReducer(props: ScheduleItProps) {
-    const { root, runtime } = props;
+    const { handleMap, root, runtime } = props;
     const stateToRootDates = new Map<keyof IDateState, string>();
     stateToRootDates.set("dateMap", "dates");
     const dateProps = {
         root,
         runtime,
+        handleMap,
         initialState: props.initialDateState,
         reducer: DateReducer,
+        selector: {},
         stateToRoot: stateToRootDates,
     };
-    return useReducerFluid<IDateState, IDateReducer>(dateProps);
+    return useReducerFluid<IDateState, IDateReducer, {}>(dateProps);
 }
 
 function ScheduleItApp(props: ScheduleItProps) {
     const [commentState, commentDispatch] = useCommentReducer(props);
-    const [personState, personDispatch] = usePersonReducer(props);
+    const [personState, personDispatch, personFetch] = usePersonReducer(props);
     const [dateState, dateDispatch] = useDateReducer(props);
 
     return (
@@ -97,6 +113,7 @@ function ScheduleItApp(props: ScheduleItProps) {
                     commentDispatch,
                     personMap: personState.personMap,
                     personDispatch,
+                    personFetch,
                     dateMap: dateState.dateMap,
                     dateDispatch,
                 }}
@@ -117,6 +134,9 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
     private _initialDateState?: IDateState;
     private _initialCommentState?: ICommentState;
 
+    private readonly _handleMap:
+    Map<IComponentHandle, IComponentLoadable> = new Map<IComponentHandle, IComponentLoadable>();
+
     /**
      * Do setup work here
      */
@@ -127,13 +147,16 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
         const personMap = SharedMap.create(this.runtime);
         Object.entries(defaultPeople).forEach(([key, defaultPerson], i) => {
             const newAvailabilityMap = SharedMap.create(this.runtime);
+            Object.entries(defaultPerson.availabilityMap).forEach(([dateKey, availabilityItem], j) => {
+                newAvailabilityMap.set(dateKey, availabilityItem);
+            });
             const newPerson: IPerson = {
                 key,
-                name: "",
-                availabilityMap: newAvailabilityMap,
-                availabilityMapHandle: newAvailabilityMap.handle,
+                name: defaultPerson.name,
+                availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
             personMap.set(key, newPerson);
+            this._handleMap.set(newAvailabilityMap.handle, newAvailabilityMap);
         });
         this.root.set("person", personMap.handle);
         this._initialPersonState = { personMap };
@@ -148,7 +171,15 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFromExisting() {
         this._initialCommentState = { comments: this.root.get("comments") };
-        this._initialPersonState = { personMap: await this.root.get<IComponentHandle<SharedMap>>("person").get() };
+
+        const personMap = await this.root.get<IComponentHandle<SharedMap>>("person").get();
+        this._initialPersonState = { personMap };
+        for (const key of personMap.keys()) {
+            const person = personMap.get<IPerson>(key);
+            const availabilityMap = await person.availabilityMapHandle.get();
+            this._handleMap.set(person.availabilityMapHandle, availabilityMap);
+        }
+
         this._initialDateState = { dateMap: await this.root.get<IComponentHandle<SharedMap>>("dates").get() };
     }
 
@@ -161,13 +192,15 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
         if (
             this._initialDateState !== undefined &&
             this._initialPersonState !== undefined &&
-            this._initialCommentState !== undefined
+            this._initialCommentState !== undefined &&
+            this._handleMap !== undefined
         ) {
             ReactDOM.render(
                 <div>
                     <ScheduleItApp
                         runtime={this.runtime}
                         root={this.root}
+                        handleMap={this._handleMap}
                         initialCommentState={this._initialCommentState}
                         initialPersonState={this._initialPersonState}
                         initialDateState={this._initialDateState}
