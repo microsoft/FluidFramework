@@ -59,7 +59,6 @@ export interface IContainerRuntimeBase extends
     IProvideComponentSerializer,
     /* TODO: Used by spaces. we should switch to IoC to provide the global registry */
     IProvideComponentRegistry {
->>>>>>> 11e596b6c925506c1b8d03626346d99dd2c66d76:packages/runtime/runtime-definitions/src/componentContext.ts
 
     readonly logger: ITelemetryLogger;
     readonly clientDetails: IClientDetails;
@@ -97,6 +96,7 @@ export interface IContainerRuntimeBase extends
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by
@@ -224,7 +224,7 @@ export interface ISummaryTracker {
  * Represents the context for the component. It is used by the component runtime to
  * get information and call functionality to the container.
  */
-export interface IComponentContext {
+export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
     /**
@@ -265,6 +265,8 @@ export interface IComponentContext {
      */
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
+
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Returns the current quorum.

@@ -622,11 +622,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
-        this.componentContext.containerRuntime.on("leader", (clientId: string) => {
-            this.emit("leader", clientId);
+        this.componentContext.on("leader", () => {
+            this.emit("leader");
         });
-        this.componentContext.containerRuntime.on("notleader", (clientId: string) => {
-            this.emit("notleader", clientId);
+        this.componentContext.on("notleader", () => {
+            this.emit("notleader");
         });
     }
 

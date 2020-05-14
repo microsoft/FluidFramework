@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import * as EventEmitter from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -72,12 +73,6 @@ export abstract class ComponentContext extends EventEmitter implements
     // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
-    }
-
-    // Back-compat: supporting <= 0.16 clients
-    public on(event: "leader" | "notleader", listener: () => void) {
-        this.hostRuntime.on(event, listener);
-        return this;
     }
 
     public isLocal(): boolean {
@@ -325,7 +320,8 @@ export abstract class ComponentContext extends EventEmitter implements
 
         assert(this.connected === connected);
 
-        const runtime: IComponentRuntimeChannel = this.componentRuntime;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
 
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
@@ -459,6 +455,22 @@ export abstract class ComponentContext extends EventEmitter implements
 
     public error(err: any): void {
         this.containerRuntime.error(err);
+    }
+
+    /**
+     * Updates the leader.
+     * @param leadership - Whether this client is the new leader or not.
+     */
+    public updateLeader(leadership: boolean) {
+        // Leader events are ignored if the component is not yet loaded
+        if (!this.loaded) {
+            return;
+        }
+        if (leadership) {
+            this.emit("leader");
+        } else {
+            this.emit("notleader");
+        }
     }
 
     public bindRuntime(componentRuntime: IComponentRuntimeChannel) {

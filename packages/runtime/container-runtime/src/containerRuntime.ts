@@ -1550,9 +1550,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         assert(this.clientId);
         if (this.leader) {
             assert(this.connected && this.deltaManager && this.deltaManager.active);
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("notleader", this.clientId);
+            this.emit("notleader");
+        }
+
+        for (const [, context] of this.contexts) {
+            context.updateLeader(this.leader);
         }
 
         if (this.leader) {
