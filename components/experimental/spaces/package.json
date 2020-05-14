@@ -37,6 +37,7 @@
   "dependencies": {
     "@fluid-example/clicker": "^0.18.0",
     "@fluid-example/codemirror": "^0.18.0",
+    "@fluid-example/collaborative-textarea": "^0.18.0",
     "@fluid-example/prosemirror": "^0.18.0",
     "@microsoft/fluid-aqueduct": "^0.18.0",
     "@microsoft/fluid-aqueduct-react": "^0.18.0",

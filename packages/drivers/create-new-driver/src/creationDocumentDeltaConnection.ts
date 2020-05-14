@@ -190,7 +190,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
     }
 
     /**
-     * Initialize the details for the connction and send the join op.
+     * Initialize the details for the connection and send the join op.
      * @param client - Client who initiated the connection.
      * @param mode - Mode of the connection.
      */

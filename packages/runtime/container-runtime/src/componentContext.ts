@@ -46,7 +46,7 @@ import { v4 as uuid } from "uuid";
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
@@ -198,7 +198,7 @@ export abstract class ComponentContext extends EventEmitter implements
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.containerRuntime.logger.sendErrorEvent(
+                this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
@@ -361,12 +361,10 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
         return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
         return this._containerRuntime.getAudience();
     }
 
@@ -562,7 +560,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new Error("Context is closed");
         }
     }
 }

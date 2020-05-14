@@ -704,8 +704,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [componentId, contextD] of this.contextsDeferred) {
             contextD.promise.then((context) => {
                 context.dispose();
-            }).catch((error) => {
-                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
+            }).catch((contextError) => {
+                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, contextError);
             });
         }
 
@@ -880,8 +880,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
-        this.verifyNotClosed();
-
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1478,6 +1476,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return clientSequenceNumber;
     }
 
+    /**
+     * Throw an error if the runtime is closed.  Methods that are expected to potentially
+     * be called after dispose due to asynchrony should not call this.
+     */
     private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
@@ -1603,7 +1605,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isnt needed
+            // We have to call get version to get the treeId for r11s; this isn't needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("FailedToGetVersion",
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

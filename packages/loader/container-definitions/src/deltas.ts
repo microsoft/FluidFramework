@@ -108,7 +108,18 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Flag to indicate whether the client can write or not.
     active: boolean;
 
-    // Tells if user has no permissions to change document
+    /**
+     * Tells if container is in read-only mode.
+     * Components should listen for "readonly" notifications and disallow user making changes to components.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     *
+     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
+     * in all cases container runtime and components should respect readonly state and not allow local changes.
+     *
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     */
     readonly?: boolean;
 
     close(): void;

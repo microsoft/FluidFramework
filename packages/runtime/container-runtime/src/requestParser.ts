@@ -28,7 +28,7 @@ export class RequestParser implements IRequest {
     }
 
     private requestPathParts: readonly string[] | undefined;
-    private readonly query: string;
+    public readonly query: string;
     constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
         if (queryStartIndex >= 0) {

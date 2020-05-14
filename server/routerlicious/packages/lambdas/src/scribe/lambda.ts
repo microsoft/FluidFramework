@@ -8,6 +8,7 @@
 import * as assert from "assert";
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
+    generateServiceProtocolEntries,
     IQuorumSnapshot,
     ProtocolOpHandler,
     getQuorumTreeEntries,
@@ -45,6 +46,7 @@ import {
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
+import { fetchLatestSummaryState, initializeProtocol } from "./summaryHelper";
 
 export class ScribeLambda extends SequencedLambda {
     // Value of the last processed Kafka offset
@@ -57,7 +59,7 @@ export class ScribeLambda extends SequencedLambda {
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
     // Messages not yet included within protocolHandler
-    private readonly pendingMessages: Deque<ISequencedDocumentMessage>;
+    private pendingMessages: Deque<ISequencedDocumentMessage>;
 
     // Current sequence/msn of the last processed offset
     private sequenceNumber = 0;
@@ -78,7 +80,8 @@ export class ScribeLambda extends SequencedLambda {
         scribe: IScribe,
         private readonly storage: IGitManager,
         private readonly producer: IProducer,
-        private readonly protocolHandler: ProtocolOpHandler,
+        private protocolHandler: ProtocolOpHandler,
+        private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
         private readonly generateServiceSummary: boolean,
@@ -87,10 +90,7 @@ export class ScribeLambda extends SequencedLambda {
         super(context);
 
         this.lastOffset = scribe.logOffset;
-        this.sequenceNumber = scribe.sequenceNumber;
-        this.minSequenceNumber = scribe.minimumSequenceNumber;
-        this.lastClientSummaryHead = scribe.lastClientSummaryHead;
-
+        this.setStateFromCheckpoint(scribe);
         // Filter and keep messages up to protocol state.
         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
             messages.filter((message) => message.sequenceNumber > scribe.protocolState.sequenceNumber));
@@ -108,6 +108,31 @@ export class ScribeLambda extends SequencedLambda {
         for (const baseMessage of boxcar.contents) {
             if (baseMessage.type === SequencedOperationType) {
                 const value = baseMessage as ISequencedOperationMessage;
+
+                // back-compat check
+                if (this.term && value.operation.term) {
+                    if (value.operation.term < this.term) {
+                        continue;
+                    } else if (value.operation.term > this.term) {
+                        const lastSummary = await fetchLatestSummaryState(this.storage, this.documentId);
+                        if (!lastSummary.fromSummary) {
+                            throw Error(`Required summary can't be fetched`);
+                        }
+                        this.term = lastSummary.term;
+                        const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
+                        this.protocolHead = lastSummary.protocolHead;
+                        this.protocolHandler = initializeProtocol(this.documentId, lastScribe, this.term);
+                        this.setStateFromCheckpoint(lastScribe);
+                        this.pendingMessages = new Deque<ISequencedDocumentMessage>(
+                            lastSummary.messages.filter(
+                                (op) => op.sequenceNumber > lastScribe.protocolState.sequenceNumber));
+                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                        if (this.pendingP) {
+                            this.pendingP = undefined;
+                        }
+                        await this.deleteCheckpoint(lastScribe.sequenceNumber + 1, false);
+                    }
+                }
 
                 if (value.operation.sequenceNumber <= this.sequenceNumber) {
                     continue;
@@ -143,6 +168,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber,
+                            value.operation.term,
                             scribeCheckpoint);
                         this.protocolHead = this.protocolHandler.sequenceNumber;
                         this.context.log.info(
@@ -228,7 +254,9 @@ export class ScribeLambda extends SequencedLambda {
             return;
         }
 
-        this.pendingP = clearCache ? this.deleteCheckpoint() : this.writeCheckpoint(checkpoint);
+        this.pendingP = clearCache ?
+            this.deleteCheckpoint(this.protocolHead, true) :
+            this.writeCheckpoint(checkpoint);
         this.pendingP.then(
             () => {
                 this.pendingP = undefined;
@@ -250,7 +278,7 @@ export class ScribeLambda extends SequencedLambda {
     /**
      * Removes the checkpoint information from MongoDB
      */
-    private async deleteCheckpoint() {
+    private async deleteCheckpoint(sequenceNumber: number, lte: boolean) {
         // Clears the checkpoint information from mongodb.
         await this.documentCollection.update(
             {
@@ -266,7 +294,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: this.sequenceNumber },
+                "operation.sequenceNumber": lte ? { $lte: sequenceNumber } : { $gte: sequenceNumber },
                 "tenantId": this.tenantId,
             });
         this.context.log.info(`Scribe cache is cleared for ${this.tenantId}/${this.documentId}`);
@@ -343,6 +371,7 @@ export class ScribeLambda extends SequencedLambda {
         sequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
+        summaryTerm: number,
         checkpoint: IScribe,
     ): Promise<void> {
         // If the sequence number for the protocol head is greater than current sequence number then we
@@ -394,13 +423,13 @@ export class ScribeLambda extends SequencedLambda {
 
         // At this point the summary op and its data are all valid and we can perform the write to history
         const protocolEntries: ITreeEntry[] =
-            getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, quorumSnapshot);
+            getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, summaryTerm, quorumSnapshot);
 
         // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
         const logTailEntries = await this.generateLogtailEntries(sequenceNumber, summarySequenceNumber + 1);
 
         // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+        const serviceProtocolEntries = generateServiceProtocolEntries(
             op.additionalContent,
             JSON.stringify(checkpoint));
 
@@ -469,7 +498,7 @@ export class ScribeLambda extends SequencedLambda {
         const logTailEntries = await this.generateLogtailEntries(this.protocolHead, sequenceNumber + 1);
 
         // Create service protocol entries combining scribe and deli states.
-        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+        const serviceProtocolEntries = generateServiceProtocolEntries(
             serviceContent,
             JSON.stringify(checkpoint));
 
@@ -511,7 +540,7 @@ export class ScribeLambda extends SequencedLambda {
                 email: "praguertdev@microsoft.com",
                 name: "Routerlicious Service",
             },
-            message: "Service_Summary",
+            message: `Service Summary @${sequenceNumber}`,
             parents: [lastCommit.sha],
             tree: gitTree.sha,
         };
@@ -565,33 +594,6 @@ export class ScribeLambda extends SequencedLambda {
             },
         ];
         return logTailEntries;
-    }
-
-    private generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[] {
-        const serviceProtocolEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "deli",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: deli,
-                    encoding: "utf-8",
-                },
-            },
-        ];
-
-        serviceProtocolEntries.push(
-            {
-                mode: FileMode.File,
-                path: "scribe",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: scribe,
-                    encoding: "utf-8",
-                },
-            },
-        );
-        return serviceProtocolEntries;
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {
@@ -667,5 +669,11 @@ export class ScribeLambda extends SequencedLambda {
             [message],
             this.tenantId,
             this.documentId);
+    }
+
+    private setStateFromCheckpoint(scribe: IScribe) {
+        this.sequenceNumber = scribe.sequenceNumber;
+        this.minSequenceNumber = scribe.minimumSequenceNumber;
+        this.lastClientSummaryHead = scribe.lastClientSummaryHead;
     }
 }

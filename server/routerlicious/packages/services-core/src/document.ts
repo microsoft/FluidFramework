@@ -39,6 +39,7 @@ export interface IExperimentalDocumentStorage extends IDocumentStorage {
         documentId: string,
         summary: ISummaryTree,
         sequenceNumber: number,
+        term: number,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
