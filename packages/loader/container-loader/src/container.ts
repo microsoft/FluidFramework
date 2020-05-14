@@ -72,7 +72,6 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
-    ITokenClaims,
     ITree,
     ITreeEntry,
     IVersion,
@@ -80,7 +79,6 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -161,9 +159,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             logger);
 
-        // REVIEW: What's the point of setting scopes here if it will be overwritten on first connection,
-        // and it will not match it (due to view-only connection, of read-only permissions)?
-        container._scopes = container.getScopes(resolvedUrl);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
@@ -241,7 +236,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _clientId: string | undefined;
     private _id: string | undefined;
-    private _scopes: string[] | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
@@ -337,8 +331,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get scopes(): string[] | undefined {
-        // Likely should just get it from deltaManager and not track it manually.
-        return this._scopes;
+        return this._deltaManager.scopes;
     }
 
     public get clientDetails(): IClientDetails {
@@ -1115,7 +1108,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.on("connect", (details: IConnectionDetails) => {
             const oldState = this._connectionState;
             this._connectionState = ConnectionState.Connecting;
-            this._scopes = details.claims.scopes;
 
             // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
             // (have received the join message for the client ID)
@@ -1146,7 +1138,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
-            this._scopes = undefined;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
@@ -1336,11 +1327,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const local = this._clientId === message.clientId;
             this.context!.processSignal(message, local);
         }
-    }
-
-    private getScopes(resolvedUrl: IFluidResolvedUrl | undefined): string[] {
-        return resolvedUrl?.tokens?.jwt ?
-            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**

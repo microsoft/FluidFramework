@@ -110,6 +110,11 @@ export class ContainerContext implements IContainerContext {
         return this.container.parentBranch;
     }
 
+    // Back-compat: supporting <= 0.16 components
+    public get connectionState(): ConnectionState {
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
+    }
+
     public get connected(): boolean {
         return this.container.connected;
     }
@@ -155,11 +160,6 @@ export class ContainerContext implements IContainerContext {
     private _disposed = false;
     public get disposed() {
         return this._disposed;
-    }
-
-    // Back-compat: supporting <= 0.16 components
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     constructor(

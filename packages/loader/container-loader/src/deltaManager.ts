@@ -224,6 +224,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection ? this.connection.details.serviceConfiguration : undefined;
     }
 
+    public get scopes(): string[] | undefined {
+        return this.connection ? this.connection.details.claims.scopes : undefined;
+    }
+
     public get active(): boolean {
         const res = this.inQuorum && this.connectionMode === "write";
         // user can't have r/w connection when user has only read permissions.

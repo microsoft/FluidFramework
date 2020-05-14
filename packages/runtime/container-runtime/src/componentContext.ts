@@ -70,11 +70,6 @@ export abstract class ComponentContext extends EventEmitter implements
 {
     public readonly isExperimentalComponentContext = true;
 
-    // Back-compat: supporting <= 0.16 components
-    public get connectionState(): ConnectionState {
-        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
-    }
-
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }
@@ -116,6 +111,11 @@ export abstract class ComponentContext extends EventEmitter implements
 
     public get leader(): boolean {
         return this._containerRuntime.leader;
+    }
+
+    // Back-compat: supporting <= 0.16 components
+    public get connectionState(): ConnectionState {
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => void {
