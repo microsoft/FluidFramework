@@ -144,8 +144,6 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
                 onContextMenu={this.updateSelection}
                 onInput={this.handleChange}
                 value={this.state.text} />
-
-
         );
     }
 
