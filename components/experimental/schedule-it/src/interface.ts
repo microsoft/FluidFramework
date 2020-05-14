@@ -1,6 +1,8 @@
 import {
-    FluidFunctionalComponentState, FluidStateUpdateFunction,
+    FluidFunctionalComponentState, FluidStateUpdateFunction, FluidAsyncStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
+import { SharedMap } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
 export interface IDate {
     key: string;
@@ -18,30 +20,42 @@ export interface IAvailability {
     availabilityType: AvailabilityType;
 }
 
-export interface AvailabilityMap{
+export interface IDefaultAvailabilityMap{
     [key: string]: IAvailability
 }
 
-export interface IPerson {
-    availabilityMap: AvailabilityMap;
+export interface IDefaultPerson {
+    availabilityMap: IDefaultAvailabilityMap;
     name: string;
     key: string;
 }
 
-export interface IPersonMap {
-    [key: string]: IPerson
+export interface IPerson {
+    availabilityMap: SharedMap;
+    name: string;
+    key: string;
+}
+
+export interface IPersonData {
+    availabilityMapHandle: IComponentHandle;
+    name: string;
+    key: string;
+}
+
+export interface IDefaultPersonMap {
+    [key: string]: IDefaultPerson
 }
 
 export interface IPersonState extends FluidFunctionalComponentState {
-    personMap: IPersonMap
+    personMap: SharedMap;
 }
 
-export interface IDateMap {
-    [key: string]: IDate
+export interface IDefaultDateMap {
+    [key: string]: IDate;
 }
 
 export interface IDateState extends FluidFunctionalComponentState {
-    dateMap: IDateMap
+    dateMap: SharedMap;
 }
 
 export interface IComment {
@@ -63,15 +77,15 @@ export interface IDateReducer {
 
 export interface IPersonReducer {
     updateName: FluidStateUpdateFunction<IPersonState>
-    updateAvailability: FluidStateUpdateFunction<IPersonState>,
+    updateAvailability: FluidAsyncStateUpdateFunction<IPersonState>,
     addPerson: FluidStateUpdateFunction<IPersonState>,
     removePerson: FluidStateUpdateFunction<IPersonState>,
 }
 
 export interface IViewProps {
     comments?: IComment[];
-    dateMap?: IDateMap;
-    personMap?: IPersonMap;
+    dateMap?: SharedMap;
+    personMap?: SharedMap;
     commentDispatch?: (type: keyof ICommentReducer, ...args: any) => void,
     personDispatch?: (type: keyof IPersonReducer, ...args: any) => void,
     dateDispatch?: (type: keyof IDateReducer, ...args: any) => void,

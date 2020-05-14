@@ -1,4 +1,7 @@
 import { v4 as uuid } from "uuid";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { SharedMap } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IDate,
     IPerson,
@@ -10,8 +13,8 @@ import {
     ICommentState,
     IDateReducer,
     IPersonReducer,
-    IPersonMap,
-    IDateMap,
+    IDefaultPersonMap,
+    IDefaultDateMap,
     IComment,
 } from "./interface";
 
@@ -21,7 +24,7 @@ const dayAfter = new Date(today.getTime() + 24 * 60 * 60 * 1000 * 2);
 
 export const defaultComments: IComment[] = [];
 
-export const defaultDates: IDateMap = {
+export const defaultDates: IDefaultDateMap = {
     today: {
         key: "today",
         date: today,
@@ -36,7 +39,7 @@ export const defaultDates: IDateMap = {
     },
 };
 
-export const defaultPeople: IPersonMap = {
+export const defaultPeople: IDefaultPersonMap = {
     1: {
         key: "1",
         name: "Bruno",
@@ -77,7 +80,7 @@ export const defaultPeople: IPersonMap = {
 
 export const CommentReducer: ICommentReducer = {
     add: {
-        function: (state: ICommentState, newComment: string, name: string) => {
+        function: (state: ICommentState, runtime: IComponentRuntime, newComment: string, name: string) => {
             state.comments.push({ message: newComment, name });
             return state;
         },
@@ -86,8 +89,8 @@ export const CommentReducer: ICommentReducer = {
 
 export const DateReducer: IDateReducer = {
     set: {
-        function: (state: IDateState, key: string, time: IDate) => {
-            state.dateMap[key] = time;
+        function: (state: IDateState, runtime: IComponentRuntime, key: string, time: IDate) => {
+            state.dateMap.set(key, time);
             return state;
         },
     },
@@ -95,38 +98,38 @@ export const DateReducer: IDateReducer = {
 
 export const PersonReducer: IPersonReducer = {
     updateName: {
-        function: (state: IPersonState, args: {key: string, name: string}) => {
-            state.personMap[args.key].name = name;
+        function: (state: IPersonState, runtime: IComponentRuntime, key: string, name: string) => {
+            state.personMap.set(key, name);
             return state;
         },
     },
     updateAvailability: {
-        function: (state: IPersonState, key: string, availability: IAvailability) => {
+        function: async (state: IPersonState, runtime: IComponentRuntime, key: string, availability: IAvailability) => {
             const { dateKey, availabilityType } = availability;
-            state.personMap[key].availabilityMap[dateKey].availabilityType = availabilityType;
+            const availabilityMap = await state.personMap.get<IComponentHandle<SharedMap>>(key).get();
+            const availabilityItem = availabilityMap.get<IAvailability>(dateKey);
+            availabilityItem.availabilityType = availabilityType;
+            availabilityMap.set(dateKey, availabilityItem);
             return state;
         },
     },
     addPerson: {
-        function: (state: IPersonState) => {
+        function: (state: IPersonState, runtime: IComponentRuntime) => {
+            const newAvailabilityMap = SharedMap.create(runtime);
             const newPerson: IPerson = {
                 key: uuid(),
                 name: "",
-                availabilityMap: {
-                    today: { dateKey: "today",  availabilityType: AvailabilityType.No },
-                    tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.No },
-                    dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.No },
-                },
+                availabilityMap: newAvailabilityMap,
+                availabilityMapHandle: newAvailabilityMap.handle,
             };
-            state.personMap[newPerson.key] = newPerson;
+            state.personMap.set(newPerson.key, newPerson);
             return state;
         },
     },
     removePerson: {
-        function: (state: IPersonState, args: {key: string}) => {
-            if (state.personMap[args.key] !== undefined) {
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete state.personMap[args.key];
+        function: (state: IPersonState, runtime: IComponentRuntime, key: string) => {
+            if (state.personMap.get(key) !== undefined) {
+                state.personMap.set(key, undefined);
             }
             return state;
         },

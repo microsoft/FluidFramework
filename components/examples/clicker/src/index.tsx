@@ -18,6 +18,7 @@ import {
     FluidStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -75,7 +76,7 @@ interface IActionReducer {
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (oldState: CounterFunctionalState, step: number) => {
+        function: (oldState: CounterFunctionalState, runtime: IComponentRuntime, step: number) => {
             return { value: step === undefined ? oldState.value + 1  : oldState.value + step };
         },
     },
@@ -142,25 +143,15 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        const initialState: CounterState = { value: 0 };
-
-        const rootToInitialState = new Map<string, keyof CounterState>();
-        rootToInitialState.set("counterClicks", "value");
         const stateToRoot = new Map<keyof CounterState, string>();
         stateToRoot.set("value", "counterClicks");
 
-        const rootToInitialStateFunctional = new Map<string, keyof CounterState>();
-        rootToInitialStateFunctional.set("counterClicksFunctional", "value");
         const stateToRootFunctional = new Map<keyof CounterState, string>();
         stateToRootFunctional.set("value", "counterClicksFunctional");
 
-        const rootToInitialStateReducer = new Map<string, keyof CounterState>();
-        rootToInitialStateReducer.set("counterClicksReducer", "value");
         const stateToRootReducer = new Map<keyof CounterState, string>();
         stateToRootReducer.set("value", "counterClicksReducer");
 
-        const rootToInitialStateContext = new Map<string, keyof CounterState>();
-        rootToInitialStateContext.set("counterClicksContext", "value");
         const stateToRootContext = new Map<keyof CounterState, string>();
         stateToRootContext.set("value", "counterClicksContext");
 
@@ -168,27 +159,24 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
             <div>
                 <CounterReactView
                     root={this.root}
-                    reactComponentDefaultState={initialState}
-                    rootToInitialState={rootToInitialState}
+                    initialState={{ value: this.root.get("counterClicks") }}
                     stateToRoot={stateToRoot}
                 />
                 <CounterReactFunctional
                     root={this.root}
-                    reactComponentDefaultState={initialState}
-                    rootToInitialState={rootToInitialStateFunctional}
+                    initialState={{ value: this.root.get("counterClicksFunctional") }}
                     stateToRoot={stateToRootFunctional}
                 />
                 <CounterReactFunctionalReducer
                     root={this.root}
-                    initialState={initialState}
-                    rootToInitialState={rootToInitialStateReducer}
+                    runtime={this.runtime}
+                    initialState={{ value: this.root.get("counterClicksReducer") }}
                     stateToRoot={stateToRootReducer}
                     reducer={ActionReducer}
                 />
                 <CounterReactFunctionalContext
                     root={this.root}
-                    reactComponentDefaultState={initialState}
-                    rootToInitialState={rootToInitialStateContext}
+                    initialState={{ value: this.root.get("counterClicksContext") }}
                     stateToRoot={stateToRootContext}
                 />
             </div>,

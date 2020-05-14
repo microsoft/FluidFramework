@@ -9,8 +9,9 @@ import {
     IconButton,
     PrimaryButton,
 } from "office-ui-fabric-react";
+import { SharedMap } from "@microsoft/fluid-map";
 import { PrimedContext } from "./context";
-import { IDateMap, IPersonMap, IPerson, AvailabilityType, IComment } from "./interface";
+import { IPerson, AvailabilityType, IComment, IAvailability } from "./interface";
 initializeIcons();
 
 export const ScheduleItView = () => {
@@ -29,7 +30,7 @@ export const ScheduleItView = () => {
     }
     const [currentComment, setCurrentComment] = React.useState("");
 
-    const onRenderHeader = (items: IDateMap) => {
+    const onRenderHeader = (items: SharedMap) => {
         // const content = Object.entries(items).map(([key, item]) => {
         //     return (
         //         <div className="headerCell" key={key} style={{ width: "25%" }}>
@@ -51,48 +52,52 @@ export const ScheduleItView = () => {
         );
     };
 
-    const onRenderRow = (item: IPerson, personKey: string): JSX.Element => {
-        const checkmarks = Object.entries(item.availabilityMap).map(([keyA, itemA], i) => {
-            return (
-                <div className="cell" key={keyA} style={{ width: "25%" }}>
+    const onRenderRow = (person: IPerson, personKey: string): JSX.Element => {
+        const checkmarks: JSX.Element[] = [];
+        for (const dateKey of person.availabilityMap.keys()) {
+            const availabilityItem = person.availabilityMap.get<IAvailability>(dateKey);
+            checkmarks.push(
+                <div className="cell" key={dateKey} style={{ width: "25%" }}>
                     <Dropdown
                         options={[
                             { key: AvailabilityType.No, text: "No" },
                             { key: AvailabilityType.Maybe, text: "Maybe" },
                             { key: AvailabilityType.Yes, text: "Yes" },
                         ]}
-                        selectedKey={itemA.availabilityType}
+                        selectedKey={availabilityItem.availabilityType}
                         onChange={(e, o) => {
                             if (o !== undefined) {
                                 personDispatch(
                                     "updateAvailability",
                                     personKey,
                                     {
-                                        dateKey: itemA.dateKey,
+                                        dateKey: availabilityItem.dateKey,
                                         availabilityType: o.key as number,
                                     },
                                 );
                             }
                         }}
                     />
-                </div>
+                </div>,
             );
-        });
+        }
 
         return (
             <Stack className="row" key={personKey} horizontal tokens={{ childrenGap: 10 }}>
                 <div className="cell" key="name" style={{ width: "25%" }}>
-                    <TextField value={item.name} onChange={(e, v) => personDispatch("updateName", personKey, v)} />
+                    <TextField value={person.name} onChange={(e, v) => personDispatch("updateName", personKey, v)} />
                 </div>
                 {checkmarks}
             </Stack>
         );
     };
 
-    const onRenderRows = (items: IPersonMap): JSX.Element => {
-        const rows = Object.entries(items).map(([personKey, item]) => {
-            return onRenderRow(item, personKey);
-        });
+    const onRenderRows = (items: SharedMap): JSX.Element => {
+        const rows: JSX.Element[] = [];
+        for (const personKey of items.keys()) {
+            const item = items.get<IPerson>(personKey);
+            rows.push(onRenderRow(item, personKey));
+        }
         return <div className="rows">{rows}</div>;
     };
 

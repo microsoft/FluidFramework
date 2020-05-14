@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -5,12 +6,13 @@
 
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
 export interface FluidProps<P, S> {
     root: ISharedDirectory;
-    reactComponentDefaultState: S,
+    initialState: S,
     reactComponentProps?: ComponentProps<P, S>,
-    rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
 }
 
@@ -19,19 +21,17 @@ interface ComponentProps<P, S> {
     propToInitialState?: Map<keyof P, keyof S>,
 }
 
+async function getFromRoot<T>(root: ISharedDirectory, key: string): Promise<T> {
+    const value = root.get(key);
+    return value.IComponentHandle ? (value as IComponentHandle<T>).get() : value as T;
+}
+
 function initializeState<P,S>(props: FluidProps<P,S>) {
     const {
-        root,
-        rootToInitialState,
-        reactComponentDefaultState,
+        initialState,
         reactComponentProps,
     } = props;
-    const combinedState = reactComponentDefaultState;
-    if (rootToInitialState !== undefined) {
-        rootToInitialState.forEach((stateKey, rootKey) => {
-            combinedState[stateKey] = root.get(rootKey);
-        });
-    }
+    const combinedState = initialState;
     if (reactComponentProps !== undefined && reactComponentProps.propToInitialState !== undefined) {
         reactComponentProps.propToInitialState.forEach((stateKey, propKey) => {
             const value = reactComponentProps.props[propKey];
@@ -59,6 +59,7 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
         const {
             stateToRoot,
             root,
+            initialState,
         } = props;
 
         this.state = initializeState(props);
@@ -68,26 +69,35 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
                     if (change.key === rootKey) {
-                        const newData = this.getFromRoot(rootKey);
-                        if (newData !== this.state[stateKey]) {
-                            const newState: S = this.state;
-                            if (typeof newState[stateKey] === typeof newData) {
-                                newState[stateKey] = newData as any;
-                                this.setState(newState);
-                            } else {
-                                throw new Error(
-                                    `Root value with key ${rootKey} does not
-                                     match the type for state with key ${stateKey}`);
+                        this.getFromRoot(rootKey).then((newData) => {
+                            if (newData !== this.state[stateKey]) {
+                                const newState: Partial<S> = {};
+                                if (typeof initialState[stateKey] === typeof newData) {
+                                    newState[stateKey] = newData as any;
+                                    this.setPartialState(newState);
+                                } else {
+                                    throw new Error(
+                                        `Root value with key ${rootKey} does not
+                                         match the type for state with key ${stateKey}`);
+                                }
                             }
-                        }
+                        });
                     }
                 });
             });
         }
     }
 
-    public getFromRoot<T, A>(key: string, getter?: (root: ISharedDirectory, args?: A) => T, args?: A): T {
-        return getter === undefined ? this._root.get<T>(key) : getter(this._root, args);
+    public async getFromRoot<T, A>(
+        key: string,
+        getter?:
+        (root: ISharedDirectory, args?: A) => T, args?: A): Promise<T> {
+        if (getter === undefined) {
+            const value = this._root.get(key);
+            return value.IComponentHandle ? (value as IComponentHandle<T>).get() : value as T;
+        } else {
+            return getter(this._root, args);
+        }
     }
 
     public setOnRoot<T, A>(
@@ -102,14 +112,19 @@ export abstract class FluidReactComponent<P,S> extends React.Component<FluidProp
         }
     }
 
+    public async setPartialState(newState: Partial<S>) {
+        this.setState({ ...this.state, ...newState });
+    }
+
     public setState(newState: S) {
         super.setState(newState);
         if (this.stateToRoot !== undefined) {
             this.stateToRoot.forEach((rootKey, stateKey) => {
-                const rootData = this.getFromRoot(rootKey);
-                if (rootData !==  newState[stateKey]) {
-                    this.setOnRoot(rootKey, newState[stateKey]);
-                }
+                this.getFromRoot(rootKey).then((rootData) => {
+                    if (rootData !== newState[stateKey]) {
+                        this.setOnRoot(rootKey, newState[stateKey]);
+                    }
+                });
             });
         }
     }
@@ -121,10 +136,10 @@ export interface FluidFunctionalComponentState {
 
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
 [S, ((newState: S) => void)] {
-    const [ reactState, reactSetState ] = React.useState<S>(props.reactComponentDefaultState);
+    const [ reactState, reactSetState ] = React.useState<S>(props.initialState);
     const { root, stateToRoot } = props;
-    const fluidSetState = React.useCallback((newState: S) => {
-        reactSetState({ ...newState, isInitialized: true });
+    const fluidSetState = React.useCallback((newState: Partial<S>) => {
+        reactSetState({ ...reactState, ...newState, isInitialized: true });
         if (stateToRoot !== undefined) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 const rootData = root.get(rootKey);
@@ -142,13 +157,14 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
             stateToRoot.forEach((rootKey, stateKey) => {
                 root.on("valueChanged", (change, local) => {
                     if (change.key === rootKey) {
-                        const newData = root.get(rootKey);
-                        if (newData !== reactState[stateKey]) {
-                            const newState: S = reactState;
-                            newState[stateKey] = newData;
-                            newState.isInitialized = true;
-                            fluidSetState(newState);
-                        }
+                        getFromRoot(root, rootKey).then((newData) => {
+                            if (newData !== reactState[stateKey]) {
+                                const newState: Partial<S> = {};
+                                newState[stateKey] = newData as any;
+                                newState.isInitialized = true;
+                                fluidSetState(newState);
+                            }
+                        });
                     }
                 });
             });
@@ -160,18 +176,25 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
 
 export interface FluidReducerProps<S extends FluidFunctionalComponentState, A> {
     root: ISharedDirectory,
+    runtime: IComponentRuntime,
     initialState: S,
     reducer: A,
-    rootToInitialState?: Map<string, keyof S>
     stateToRoot?: Map<keyof S, string>,
     selector?: keyof S
 }
 
 export interface FluidStateUpdateFunction<S> {
-    function: (oldState: S, ...args: any) => S;
+    function: (oldState: S, runtime: IComponentRuntime, ...args: any) => S;
 }
 
 export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>
+    "function" in object;
+
+export interface FluidAsyncStateUpdateFunction<S> {
+    function: (oldState: S, runtime: IComponentRuntime, ...args: any) => Promise<S>;
+}
+
+export const instanceOfAsyncStateUpdateFunction = <S,>(object: any): object is FluidAsyncStateUpdateFunction<S> =>
     "function" in object;
 
 export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
@@ -180,23 +203,24 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A>(
     const {
         reducer,
         root,
-        rootToInitialState,
+        runtime,
         stateToRoot,
         initialState,
     } = props;
 
     const [state, setState] = useStateFluid<{},S>({
         root,
-        reactComponentDefaultState: initialState,
-        rootToInitialState,
+        initialState,
         stateToRoot,
     });
 
     const combinedReducer = React.useCallback((type: keyof A, ...args: any) => {
         const action =  reducer[(type)];
         if (action && instanceOfStateUpdateFunction(action)) {
-            const result = (action.function as any)(state, ...args);
+            const result = (action.function as any)(state, runtime, ...args);
             setState(result);
+        } else if (action && instanceOfAsyncStateUpdateFunction(action)) {
+            (action.function as any)(state, runtime, ...args).then((result) => setState(result));
         } else {
             throw new Error(
                 `Action with key ${action} does not
