@@ -67,6 +67,13 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve({});
     }
 
+    public createSummary(): ISummaryTree {
+        return {
+            tree: {},
+            type: SummaryType.Tree,
+        };
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public request(request: IRequest): Promise<IResponse> {
         return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });

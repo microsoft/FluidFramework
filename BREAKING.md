@@ -1,6 +1,15 @@
 # Breaking changes
 
+## 0.18 Breaking Changes
+
+- [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
+
+### `App Id` removed as a parameter to OdspDocumentServiceFactory
+`@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
+
 ## 0.17 Breaking Changes
+
+### FileNotFoundError is now FileNotFoundOrAccessDeniedError and AccessDeniedError to AuthorizationError
 
 - [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 - [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)

@@ -21,9 +21,13 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
-    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
+import {
+    IContainerRuntime,
+} from "@microsoft/fluid-container-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

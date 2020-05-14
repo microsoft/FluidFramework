@@ -8,7 +8,7 @@ import "mocha";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { Serializable } from "@microsoft/fluid-runtime-definitions";
+import { Serializable } from "@microsoft/fluid-component-runtime-definitions";
 import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";

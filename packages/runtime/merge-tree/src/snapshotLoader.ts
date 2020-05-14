@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { fromBase64ToUtf8, ChildLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";

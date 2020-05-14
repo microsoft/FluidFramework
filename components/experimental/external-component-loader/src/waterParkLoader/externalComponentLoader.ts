@@ -11,10 +11,14 @@ import {
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallbacks, IComponentOptions, SpacesCompatibleToolbar } from "@fluid-example/spaces";
+import {
+    IComponentCallbacks,
+    IProvideComponentCollectorSpaces,
+    SpacesCompatibleToolbar,
+} from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -24,9 +28,15 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
 // the package.json for the package, and also make sure you've run webpack there first.  These will only be
 // available when running on localhost.
 const localComponents = [
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\todo",
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\examples\\components\\clicker",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
+
+/**
+ * The view component must support certain interfaces to work with the waterpark.
+ */
+export type WaterParkCompatibleView =
+    IComponentHandle & IComponentLoadable & IProvideComponentCollectorSpaces;
 
 /**
  * Component that loads extneral components via their url
@@ -44,7 +54,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<IComponent> | undefined;
+    private viewComponentP: Promise<WaterParkCompatibleView> | undefined;
 
     private savedElement: HTMLElement | undefined;
     private error: string | undefined;
@@ -53,7 +63,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    public setViewComponent(component: IComponent & IComponentLoadable) {
+    public setViewComponent(component: WaterParkCompatibleView) {
         this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
@@ -139,7 +149,7 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
+        const viewComponentHandle = this.root.get<IComponentHandle<WaterParkCompatibleView>>(this.viewComponentMapID);
         if (viewComponentHandle !== undefined) {
             this.viewComponentP = viewComponentHandle.get();
         }
@@ -160,8 +170,9 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             const viewComponent = await this.viewComponentP;
-            if (viewComponent.IComponentCollection === undefined || this.runtime.IComponentRegistry === undefined) {
-                throw new Error("View component is empty or is not an IComponentCollection!!");
+            if (viewComponent.IComponentCollectorSpaces === undefined
+                || this.runtime.IComponentRegistry === undefined) {
+                throw new Error("View component is empty or is not an IComponentCollector!!");
             }
 
             const urlReg = await this.runtime.IComponentRegistry.get("url");
@@ -170,7 +181,7 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             const pkgReg = await urlReg.IComponentRegistry.get(value) as IComponent;
-            let componentRuntime: IComponentRuntime;
+            let componentRuntime: IComponentRuntimeChannel;
             const id = uuid();
             if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
                 componentRuntime = await this.context.containerRuntime.createComponent(
@@ -202,7 +213,7 @@ export class ExternalComponentLoader extends PrimedComponent
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
+            viewComponent.IComponentCollectorSpaces.addItem({
                 component: component as IComponent & IComponentLoadable,
                 type: value,
             });

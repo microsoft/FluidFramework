@@ -26,18 +26,17 @@ import {
     MessageType,
     ConnectionState,
 } from "@microsoft/fluid-protocol-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     ComponentRegistryEntry,
+    IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
+    IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     IEnvelope,
-    IContainerRuntime,
     IInboundSignalMessage,
-    IExperimentalContainerRuntime,
-    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -63,8 +62,10 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext implements IComponentContext, IDisposable,
-    IExperimentalComponentContext
+export abstract class ComponentContext extends EventEmitter implements
+    IComponentContext,
+    IComponentContextLegacy,
+    IDisposable
 {
     public readonly isExperimentalComponentContext = true;
 
@@ -79,16 +80,8 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return this;
     }
 
-    // Back-compat: supporting <= 0.16 clients
-    public off(event: "leader" | "notleader", listener: () => void) {
-        this.hostRuntime.off(event, listener);
-        return this;
-    }
-
     public isLocal(): boolean {
-        const expContainerRuntime = this._containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        return expContainerRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || !this.isAttached;
     }
 
     public get documentId(): string {
@@ -173,11 +166,11 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return this._isAttached;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntime) => void;
-    protected componentRuntime: IComponentRuntime | undefined;
+    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
@@ -188,10 +181,12 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntime) => void,
+        attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
-        this.attach = (componentRuntime: IComponentRuntime) => {
+        super();
+
+        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             attach(componentRuntime);
             this._isAttached = true;
         };
@@ -219,7 +214,11 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any,
+    ): Promise<IComponentRuntimeChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -262,9 +261,9 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntime> {
+    public async realize(): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -299,9 +298,11 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return this.componentRuntimeDeferred.promise;
     }
 
-    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+    public async realizeWithFn(
+        realizationFn: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             realizationFn(this);
         }
 
@@ -324,8 +325,7 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
 
         assert(this.connected === connected);
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const runtime: IComponentRuntime = this.componentRuntime!;
+        const runtime: IComponentRuntimeChannel = this.componentRuntime;
 
         // Back-compat: supporting <= 0.16 components
         if (runtime.setConnectionState) {
@@ -406,6 +406,9 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         return { entries, id: null };
     }
 
+    /**
+     * @deprecated 0.18.Should call request on the runtime directly
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const runtime = await this.realize();
         return runtime.request(request);
@@ -458,7 +461,7 @@ export abstract class ComponentContext implements IComponentContext, IDisposable
         this.containerRuntime.error(err);
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime) {
+    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
@@ -639,7 +642,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntime) => void,
+        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */

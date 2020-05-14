@@ -8,9 +8,12 @@ To build the API documentation, do the following from the root of the repository
 npm install
 npm run build
 npm run build:docs
+npm run build:gendocs
 ```
 
-This will create many Markdown files under `docs/api/`. These files should *not* be committed to git.
+The `build:docs` script will generate a JSON representation of all the TSDoc comments, and then `build:gendocs` will convert that to a tree of markdown files, under `docs/api/`. These files should *not* be committed to git.
+
+You may run the `build` and `build:docs` scripts from a particular package directory, but `build:gendocs` can only be run from the root.
 
 ## Building documentation site with Vuepress
 

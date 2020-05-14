@@ -16,7 +16,7 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";

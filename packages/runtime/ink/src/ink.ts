@@ -11,7 +11,11 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+    IObjectStorageService,
+    IChannelAttributes,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";

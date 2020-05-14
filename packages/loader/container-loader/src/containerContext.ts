@@ -20,8 +20,6 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-    IExperimentalRuntime,
-    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
@@ -43,7 +41,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext implements IContainerContext, IExperimentalContainerContext {
+export class ContainerContext implements IContainerContext {
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
@@ -216,14 +214,11 @@ export class ContainerContext implements IContainerContext, IExperimentalContain
         return this.container.isLocal();
     }
 
-    public isAttached(): boolean {
-        return this.container.isAttached();
-    }
-
     public createSummary(): ISummaryTree {
-        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
-        assert(expRuntime?.isExperimentalRuntime);
-        return expRuntime.createSummary();
+        if (!this.runtime) {
+            throw new Error("Runtime should be there to take summary");
+        }
+        return this.runtime.createSummary();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

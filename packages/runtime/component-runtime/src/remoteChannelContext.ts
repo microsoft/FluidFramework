@@ -15,8 +15,10 @@ import {
 import {
     IChannel,
     IChannelAttributes,
-    IComponentContext,
     IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
+import {
+    IComponentContext,
     ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";

@@ -9,11 +9,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-contain
 import { ConnectionState, Loader } from "@microsoft/fluid-container-loader";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import {
-    IComponentContext,
-    IExperimentalComponentContext,
-    IExperimentalContainerRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     LocalCodeLoader,
@@ -64,24 +60,26 @@ describe("Detached Container", () => {
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.equal(container.isLocal(), true, "Container should be detached");
-        assert.equal(container.closed, false, "Container should be open");
-        assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.equal(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
-        assert.equal(container.connectionState, ConnectionState.Disconnected,
+        assert.strictEqual(container.isLocal(), true, "Container should be detached");
+        assert.strictEqual(container.closed, false, "Container should be open");
+        assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
+        assert.strictEqual(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in disconnected state!!");
-        assert.equal(container.chaincodePackage.package, pkg.package,
+        assert.strictEqual(container.chaincodePackage.package, pkg.package,
             "Package should be same as provided");
-        assert.equal(container.id, "", "Detached container's id should be empty string");
+        assert.strictEqual(container.id, "", "Detached container's id should be empty string");
+        assert.strictEqual(container.clientDetails.capabilities.interactive, true,
+            "Client details should be set with interactive as true");
     });
 
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
         await container.attach(request);
-        assert.equal(container.isLocal(), false, "Container should be attached");
-        assert.equal(container.closed, false, "Container should be open");
-        assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.equal(container.id, documentId, "Doc id is not matching!!");
+        assert.strictEqual(container.isLocal(), false, "Container should be attached");
+        assert.strictEqual(container.closed, false, "Container should be open");
+        assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
+        assert.strictEqual(container.id, documentId, "Doc id is not matching!!");
     });
 
     it("Components in detached container", async () => {
@@ -101,20 +99,14 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const subComponent = subResponse.value as ITestFluidComponent;
-        assert.equal(subComponent.context.storage, undefined, "No storage should be there!!");
-        assert.equal(subComponent.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(subComponent.context.storage, undefined, "No storage should be there!!");
+        assert.strictEqual(subComponent.runtime.isAttached, true, "Component should be attached!!");
 
         // Get the sub component's root channel and verify that it is attached.
         const testChannel = await subComponent.runtime.getChannel("root");
-        assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
-        const expComponentContext = subComponent.context as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), true, "Component should be local!!");
-
-        const expContainerRuntime = subComponent.context.containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        assert.equal(expContainerRuntime.isLocal(), true, "Container should be local!!");
+        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isLocal(), true, "Channel should be local!!");
+        assert.strictEqual(subComponent.context.isLocal(), true, "Component should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -136,18 +128,14 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as ITestFluidComponent;
-        assert.equal(testComponent.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(testComponent.runtime.isAttached, true, "Component should be attached!!");
 
         // Get the sub component's "root" channel and verify that it is attached.
         const testChannel = await testComponent.runtime.getChannel("root");
-        assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
-        const expComponentContext = testComponent.context as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), false, "Component should not be local!!");
-        const expContainerRuntime = testComponent.context.containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        assert.equal(expContainerRuntime.isLocal(), false, "Container should be attached!!");
+        assert.strictEqual(testChannel.isRegistered(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel.isLocal(), false, "Channel should not be local!!");
+
+        assert.strictEqual(testComponent.context.isLocal(), false, "Component should not be local!!");
     });
 
     it("Load attached container and check for components", async () => {
@@ -175,15 +163,15 @@ describe("Detached Container", () => {
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });
         const subComponent2 = response2.value as ITestFluidComponent;
-        assert.equal(subComponent2.runtime.isAttached, true, "Component should be attached!!");
+        assert.strictEqual(subComponent2.runtime.isAttached, true, "Component should be attached!!");
 
         // Verify the attributes of the root channel of both sub components.
         const testChannel1 = await subComponent1.runtime.getChannel("root");
         const testChannel2 = await subComponent2.runtime.getChannel("root");
-        assert.equal(testChannel2.isRegistered(), true, "Channel should be registered!!");
-        assert.equal(testChannel2.isLocal(), false, "Channel should be registered!!");
-        assert.equal(testChannel2.isRegistered(), testChannel1.isRegistered(),
+        assert.strictEqual(testChannel2.isRegistered(), true, "Channel should be registered!!");
+        assert.strictEqual(testChannel2.isLocal(), false, "Channel should be registered!!");
+        assert.strictEqual(testChannel2.isRegistered(), testChannel1.isRegistered(),
             "Value for registration should be same!!");
-        assert.equal(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
+        assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
     });
 });

@@ -11,7 +11,8 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
+import { IChannel } from "@microsoft/fluid-component-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 

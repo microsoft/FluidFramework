@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
@@ -41,5 +41,12 @@ export class MultiUrlResolver implements IUrlResolver {
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         return configurableUrlResolver(this.urlResolvers, request);
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }

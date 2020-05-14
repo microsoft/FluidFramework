@@ -14,6 +14,7 @@ import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec, execNoError } from "./utils";
+import * as os from "os";
 
 function printUsage() {
     console.log(
@@ -35,12 +36,12 @@ function versionCheck() {
 type VersionBumpType = "minor" | "patch";
 
 let paramBumpVersionKind: VersionBumpType | undefined;
-let paramBumpDep = false;
-let paramBumpDepClient = false;
-let paramBumpDepServer = false;
-let paramLocal = false;
+const paramBumpDepPackages = new Map<string, string | undefined>();
+let paramPush = true;
+let paramPublishCheck = true;
+let paramRelease = false;
 let paramClean = false;
-const paramBumpDepPackages = new Set<string>();
+let paramCommit = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -63,19 +64,22 @@ function parseOptions(argv: string[]) {
         }
 
         if (arg === "-d" || arg === "--dep") {
-            const dep = process.argv[++i];
-            if (dep === undefined) {
+            const depArg = process.argv[++i];
+            if (depArg === undefined) {
                 console.error("ERROR: Missing arguments for --dep");
                 process.exit(-1);
             }
-            if (dep.toLowerCase() === "client") {
-                paramBumpDepClient = true;
-            } else if (dep.toLowerCase() === "server") {
-                paramBumpDepServer = true;
+            const split = depArg.split("=");
+            const dep = split[0];
+            const version = split[1];
+
+            if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
+                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Client], version);
+            } else if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
+                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Server], version);
             } else {
-                paramBumpDepPackages.add(dep);
+                paramBumpDepPackages.set(dep, version);
             }
-            paramBumpDep = true;
             continue;
         }
 
@@ -90,12 +94,29 @@ function parseOptions(argv: string[]) {
         }
 
         if (arg === "--local") {
-            paramLocal = true;
+            paramPush = false;
+            paramPublishCheck = false;
+            continue;
+        }
+
+        if (arg === "--test") {
+            paramPush = false;
+            // still do publish check assuming it is already published even when we don't push
             continue;
         }
 
         if (arg === "--cleanOnError") {
             paramClean = true;
+            continue;
+        }
+
+        if (arg === "--commit") {
+            paramCommit = true;
+            continue;
+        }
+
+        if (arg === "--release") {
+            paramRelease = true;
             continue;
         }
 
@@ -149,17 +170,16 @@ class BumpVersion {
      * @param bumpPackageMap the map of package that needs to bump
      * @param release use release or pre-release version in dependencies
      */
-    private static async bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, Package>, changedVersion?: VersionBag, release: boolean = false) {
+    private static async bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, { pkg: Package, version: string }>, changedVersion?: VersionBag) {
         let changed = false;
-        const suffix = release ? "" : "-0";
         for (const { name, dev } of pkg.combinedDependencies) {
-            const depPackage = bumpPackageMap.get(name);
-            if (depPackage && !MonoRepo.isSame(depPackage.monoRepo, pkg.monoRepo)) {
-                const depVersion = `^${depPackage.version}${suffix}`;
+            const dep = bumpPackageMap.get(name);
+            if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
+                const depVersion = `^${dep.version}`;
                 const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
                 if (dependencies[name] !== depVersion) {
                     if (changedVersion) {
-                        BumpVersion.saveVersion(changedVersion, name, depVersion, depPackage.monoRepo);
+                        BumpVersion.saveVersion(changedVersion, name, depVersion, dep.pkg.monoRepo);
                     }
                     changed = true;
                     dependencies[name] = depVersion;
@@ -326,7 +346,8 @@ class BumpVersion {
     private async bumpGeneratorFluid(versionBump: VersionBumpType) {
         console.log("  Bumping generator version");
 
-        await BumpVersion.bumpPackageDependencies(this.templatePackage, this.fullPackageMap);
+        const bumpDepMap = new Map(this.repo.packages.packages.map(pkg => [pkg.name, { pkg, version: `${pkg.version}-0` }]));
+        await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpDepMap);
         await exec(`npm version ${versionBump}`, this.templatePackage.directory, "bump yo template");
         await exec(`npm version ${versionBump}`, this.generatorPackage.directory, "bump yo generator");
 
@@ -379,12 +400,16 @@ class BumpVersion {
     }
 
     private async pushTag(tag: string) {
-        while (!await this.prompt(`>>> Push tag ${tag} to remote?`)) {
-            if (await this.prompt('>>> Abort?')) {
-                fatal("Operation stopped");
+        if (paramPush) {
+            while (!await this.prompt(`>>> Push tag ${tag} to remote?`)) {
+                if (await this.prompt('>>> Abort?')) {
+                    fatal("Operation stopped");
+                }
             }
+            return this.gitRepo.pushTag(tag, this.remote);
+        } else {
+            console.log(`    SKIPPED: pushing tag ${tag}`);
         }
-        return this.gitRepo.pushTag(tag, this.remote);
     }
 
     /**
@@ -399,19 +424,57 @@ class BumpVersion {
     }
 
     /**
-     * Wait until a package has be published
-     * @param pkg package to wait until it is published
+     * Wait until a set of package has be published
+     * @param packages array of packages to wait until it is published
      */
-    private async ensurePublished(pkg: Package) {
-        process.stdout.write(`    Waiting for package to publish ${pkg.name}@${pkg.version}...`);
-        const start = Date.now();
-        while (true) {
-            if (await this.checkPublished(pkg)) {
-                console.log();
-                return;
+    private async ensureAllPublished(packages: Package[]) {
+        // Wait for packages
+        if (paramPublishCheck) {
+            // Only non-private package would be published.
+            let currPackages = packages.filter(pkg => !pkg.packageJson.private);
+            const concurrency = os.cpus().length;
+            const start = Date.now();
+            let clearLineLength = 0;
+            const sameLineWrite = (str: string) => {
+                const outstr = str.padEnd(clearLineLength);
+                clearLineLength = str.length;
+                process.stdout.write(`\r${outstr}`);
             }
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            process.stdout.write(`\r    Waiting for package to publish ${pkg.name}@${pkg.version}...${((Date.now() - start) / 1000).toFixed(0)}s`);
+            while (currPackages.length) {
+                // Check the first package every 5s.
+                const pkg = currPackages[0];
+                sameLineWrite(`    Waiting for package to publish ${pkg.name}@${pkg.version}...`);
+
+                while (true) {
+                    if (await this.checkPublished(pkg)) {
+                        break;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    sameLineWrite(`    Waiting for package to publish ${pkg.name}@${pkg.version}...${((Date.now() - start) / 1000).toFixed(0)}s`);
+                }
+                currPackages = currPackages.slice(1);
+
+                // Do parallel check to speed up
+                sameLineWrite(`    Checking packages ${packages.length - currPackages.length}/${packages.length}`);
+                while (currPackages.length) {
+                    const checkSlice = currPackages.slice(0, concurrency);
+                    const pendingSlice = currPackages.slice(concurrency);
+                    const check =
+                        await Promise.all(checkSlice.map(async pkg => { return { pkg, published: await this.checkPublished(pkg) } }));
+                    const unpublished = check.filter(result => !result.published).map(result => result.pkg);
+                    if (unpublished.length) {
+                        // Go back to waiting one at a time if some package hasn't published yet
+                        currPackages = unpublished.concat(pendingSlice);
+                        break;
+                    }
+                    currPackages = pendingSlice;
+                    sameLineWrite(`    Checking packages ${packages.length - currPackages.length}/${packages.length}`);
+                }
+            }
+            sameLineWrite(`    ${packages.length} packages published`);
+            console.log();
+        } else {
+            console.log("    SKIPPED: waiting for package to published");
         }
     }
 
@@ -464,15 +527,13 @@ class BumpVersion {
      * @param packages the package that to be released now if needed
      */
     private async releasePackage(packageNeedBump: Set<Package>, packages: string[]) {
-        
-
         // Filter out the packages that need to be released
         const packageToBump: Package[] = [];
-        const packageNeedBumpName = new Set<string>();
+        const packageNeedBumpName = new Map<string, string | undefined>();
         for (const pkg of packageNeedBump) {
             if (packages.includes(pkg.name)) {
                 packageToBump.push(pkg);
-                packageNeedBumpName.add(pkg.name);
+                packageNeedBumpName.set(pkg.name, undefined);
             }
         }
 
@@ -481,7 +542,7 @@ class BumpVersion {
         }
 
         console.log(`  Releasing ${packages.join(" ")}`);
-        
+
         // Tagging release
         for (const pkg of packageToBump) {
             if (!await this.checkPublished(pkg)) {
@@ -491,9 +552,7 @@ class BumpVersion {
                 }
                 const tagName = `${name}_v${pkg.version}`;
                 await this.addTag(tagName);
-                if (!paramLocal) {
-                    await this.pushTag(tagName);
-                }
+                await this.pushTag(tagName);
             } else {
                 // Resumed
                 if (!await this.prompt(`>>> Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
@@ -502,19 +561,13 @@ class BumpVersion {
             }
         }
 
-        if (!paramLocal) {
-            // Wait for packages
-            for (const pkg of packageToBump) {
-                if (!pkg.packageJson.private) {
-                    await this.ensurePublished(pkg);
-                }
-            }
-        }
+        // Wait for packages
+        await this.ensureAllPublished(packageToBump);
 
         // Fix the pre-release dependency and update package lock
         console.log("    Fix pre-release dependencies");
         const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packageToBump.map(pkg => pkg.name).join(" ")}`;
-        return this.bumpDependencies(fixPrereleaseCommitMessage, false, false, packageNeedBumpName, !paramLocal, true);
+        return this.bumpDependencies(fixPrereleaseCommitMessage, packageNeedBumpName, paramPublishCheck, true, true);
     }
 
     private async releaseMonoRepo(oldVersions: VersionBag, monoRepo: MonoRepo) {
@@ -526,10 +579,7 @@ class BumpVersion {
             const oldVersion = oldVersions[kind];
             const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
             await this.addTag(tagName);
-
-            if (!paramLocal) {
-                await this.pushTag(tagName);
-            }
+            await this.pushTag(tagName);
         } else {
             // Resumed
             if (!await this.prompt(`>>> ${kind} already published. Skip publish and bump version after?`)) {
@@ -537,27 +587,14 @@ class BumpVersion {
             }
         }
 
-        if (!paramLocal) {
-            // Wait for packages
-            for (const pkg of monoRepo.packages) {
-                if (!pkg.packageJson.private) {
-                    await this.ensurePublished(pkg);
-                }
-            }
-        }
+        await this.ensureAllPublished(monoRepo.packages);
 
         // Fix the pre-release dependency and update package lock
         console.log("    Fix pre-release dependencies");
         const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${kind.toLowerCase()}`;
-        let bumpDepClient = false;
-        let bumpDepServer = false;
-
-        if (monoRepo.kind === MonoRepoKind.Client) {
-            bumpDepClient = true;
-        } else {
-            bumpDepServer = true;
-        }
-        return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDepClient, bumpDepServer, new Set(), !paramLocal, true);
+        const bumpDep = new Map<string, string | undefined>();
+        bumpDep.set(MonoRepoKind[monoRepo.kind], undefined)
+        return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDep, paramPublishCheck, true, true);
     }
 
     public async releaseGeneratorFluid() {
@@ -565,9 +602,7 @@ class BumpVersion {
         const tagName = `generator-fluid_v${this.generatorPackage.version}`;
         if (!await this.gitRepo.getShaForTag(tagName)) {
             await this.addTag(tagName);
-            if (!paramLocal) {
-                await this.pushTag(tagName);
-            }
+            await this.pushTag(tagName);
         } else {
             // Resumed
             if (!await this.prompt(`>>> ${tagName} already exists. Skip publish and bump version after?`)) {
@@ -689,50 +724,47 @@ class BumpVersion {
      * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
      * 
      * @param repo the repo to operate one
-     * @param bumpDepClient update dependencies to client packages to current in repo version
-     * @param bumpDepServer update dependencies to server packages to current in repo version
      * @param bumpDepPackages update dependencies to these set of packages to current in repo version
      * @param updateLock whether to update the lock file (by npm i) or not
      * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
      */
-    public async bumpDependencies(commitMessage: string, bumpDepClient: boolean, bumpDepServer: boolean, bumpDepPackages: Set<string>, updateLock: boolean, release: boolean = false) {
-        const bumpPackages = this.repo.packages.packages.filter(pkg => {
-            if (bumpDepClient && pkg.monoRepo === this.repo.clientMonoRepo) {
-                return true;
-            }
-            if (bumpDepServer && pkg.monoRepo === this.repo.serverMonoRepo) {
-                return true;
-            }
-            if (bumpDepPackages.has(pkg.name)) {
-                return true;
-            }
-            return false;
-        });
-
+    public async bumpDependencies(commitMessage: string, bumpDepPackages: Map<string, string | undefined>, updateLock: boolean, commit: boolean = false, release: boolean = false) {
+        const suffix = release ? "" : "-0";
+        const bumpPackages = this.repo.packages.packages.map(pkg => {
+            const matchName = pkg.monoRepo ? MonoRepoKind[pkg.monoRepo.kind] : pkg.name;
+            const matched = bumpDepPackages.has(matchName);
+            // Only add the suffix if it is not user specified
+            const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
+            return { matched, pkg, version };
+        }).filter(rec => rec.matched);
         if (bumpPackages.length === 0) {
             fatal("Unable to find dependencies to bump");
         }
 
         let changed = false;
         const updateLockPackage: Package[] = [];
-        const bumpPackageMap = new Map<string, Package>(bumpPackages.map(pkg => [pkg.name, pkg]));
+        const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, version: rec.version }]));
         const changedVersion: VersionBag = {};
         for (const pkg of this.repo.packages.packages) {
-            if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, changedVersion, release)) {
+            if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, changedVersion)) {
                 updateLockPackage.push(pkg);
                 changed = true;
             }
         }
 
-        if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, changedVersion, release)) {
+        if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, changedVersion)) {
             // Template package don't need to update lock
             changed = true;
         }
 
-        if (updateLockPackage.length !== 0) {
-            if (updateLock) {
-                // Fix package lock
-                await FluidRepoBase.ensureInstalled(updateLockPackage, false);
+        if (changed) {
+            if (updateLockPackage.length !== 0) {
+                if (updateLock) {
+                    // Fix package lock
+                    await FluidRepoBase.ensureInstalled(updateLockPackage, false);
+                } else {
+                    console.log("    SKIPPED: updating lock file");
+                }
             }
 
             let changedVersionString: string[] = [];
@@ -740,7 +772,9 @@ class BumpVersion {
                 changedVersionString.push(`${name.padStart(40)} -> ${changedVersion[name]}`);
             }
             const changedVersionMessage = changedVersionString.join("\n");
-            await this.gitRepo.commit(`${commitMessage}\n\n${changedVersionMessage}`, "bumping dependencies");
+            if (commit) {
+                await this.gitRepo.commit(`${commitMessage}\n\n${changedVersionMessage}`, "bump dependencies");
+            }
             console.log(changedVersionMessage);
         } else {
             console.log("    No dependencies need to be updated");
@@ -784,11 +818,16 @@ async function main() {
     const bv = new BumpVersion(gitRepo, await gitRepo.getCurrentBranchName(), remote);
 
     try {
-        if (paramBumpDep) {
+        if (paramBumpDepPackages.size) {
+            if (paramRelease) {
+                fatal("Conflicting switches --release and --dep");
+            }
             console.log("Bumping dependencies");
-            await bv.bumpDependencies("Bump dependencies version", paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages, !paramLocal);
-        } else {
+            await bv.bumpDependencies("Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
+        } else if (paramRelease) {
             await bv.bumpVersion();
+        } else {
+            fatal("Missing flag --release or --dep");
         }
     } catch (e) {
         if (!e.fatal) { throw e; }

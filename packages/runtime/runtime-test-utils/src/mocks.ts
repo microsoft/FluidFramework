@@ -43,7 +43,7 @@ import {
     IDeltaHandler,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { v4 as uuid } from "uuid";
@@ -349,6 +349,10 @@ export class MockRuntime extends EventEmitter
     }
     public createChannel(id: string, type: string): IChannel {
         return null;
+    }
+
+    public isLocal(): boolean {
+        return true;
     }
 
     public registerChannel(channel: IChannel): void {

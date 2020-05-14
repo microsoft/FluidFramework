@@ -51,21 +51,6 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 }
 
 /**
- * Message send by client attaching local data structure.
- * Contains snapshot of data structure which is the current state of this data structure.
- */
-export interface IAttachMessage {
-    // The identifier for the object
-    id: string;
-
-    // The type of object
-    type: string;
-
-    // Initial snapshot of the document (contains ownership)
-    snapshot: ITree;
-}
-
-/**
  * Handler provided by shared data structure to process incoming ops.
  */
 export interface IDeltaHandler {
