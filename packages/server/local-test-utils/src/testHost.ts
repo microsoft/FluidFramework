@@ -7,6 +7,8 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
+    ContainerServiceRegistryEntries,
+    generateContainerServicesRequestHandler,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -163,7 +165,8 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
-        private readonly containerServiceRegistry: DependencyContainerRegistry = [],
+        private readonly providerEntries: DependencyContainerRegistry = [],
+        private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
@@ -179,7 +182,8 @@ export class TestHost {
                         {}),
                 )],
             ],
-            this.containerServiceRegistry,
+            this.providerEntries,
+            [generateContainerServicesRequestHandler(this.containerServiceRegistry)],
         );
 
         const store = new TestDataStore(
@@ -205,6 +209,7 @@ export class TestHost {
             this.sharedObjectFactories,
             this.deltaConnectionServer,
             this.scope,
+            this.providerEntries,
             this.containerServiceRegistry);
     }
 
