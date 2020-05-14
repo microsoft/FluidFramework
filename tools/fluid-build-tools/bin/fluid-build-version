@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../dist/buildVersion/buildVersion.js');
+require("../dist/buildVersion/buildVersion.js");

@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../dist/repoPolicyCheck/repoPolicyCheck.js');
+require("../dist/repoPolicyCheck/repoPolicyCheck.js");

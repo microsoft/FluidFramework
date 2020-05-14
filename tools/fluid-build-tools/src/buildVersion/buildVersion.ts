@@ -16,7 +16,7 @@
  *      The computed version output to the console.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
