@@ -4,18 +4,19 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient, NackErrorType } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
+import { TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentServiceFactory } from "./";
 
 /**
  * Basic implementation of a document service for testing.
  */
 export class TestDocumentService implements api.IDocumentService {
     public readonly isExperimentalDocumentService = true;
+    private documentDeltaConnection: TestDocumentDeltaConnection | undefined;
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token
@@ -28,6 +29,7 @@ export class TestDocumentService implements api.IDocumentService {
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
+        private readonly documentServiceFactory: TestDocumentServiceFactory,
     ) { }
 
     /**
@@ -54,12 +56,23 @@ export class TestDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(
         client: IClient): Promise<api.IDocumentDeltaConnection> {
-        return TestDocumentDeltaConnection.create(
+        this.documentDeltaConnection = await TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
             this.localDeltaConnectionServer.webSocketServer);
+
+        const clientId = this.documentDeltaConnection.clientId;
+
+        // Add this document service for the clientId in the document service factory.
+        this.documentServiceFactory.addDocumentServiceClientId(clientId, this);
+
+        // Add a listener to remove this document service when the client is diconnected.
+        this.documentDeltaConnection.on("disconnect", () => {
+            this.documentServiceFactory.removeDocumentServiceClientId(clientId);
+        });
+        return this.documentDeltaConnection;
     }
 
     /**
@@ -76,6 +89,30 @@ export class TestDocumentService implements api.IDocumentService {
         // eslint-disable-next-line no-null/no-null
         return null;
     }
+
+    /**
+     * Send a "disconnect" message on the client's socket.
+     * @param disconnectReason - The reason of the disconnection.
+     */
+    public disconnectClient(disconnectReason): void {
+        if (this.documentDeltaConnection === undefined) {
+            throw new Error("Document delta connection has not been yet connected");
+        }
+        this.documentDeltaConnection.disconnectClient(disconnectReason);
+    }
+
+    /**
+     * Send a "nack" message on the client's socket.
+     * @param code - An error code number that represents the error. It will be a valid HTTP error code.
+     * @param type - Type of the Nack.
+     * @param message - A message about the nack for debugging/logging/telemetry purposes.
+     */
+    public nackClient(code?: number, type?: NackErrorType, message?: any) {
+        if (this.documentDeltaConnection === undefined) {
+            throw new Error("Document delta connection has not been yet connected");
+        }
+        this.documentDeltaConnection.nackClient(code, type, message);
+    }
 }
 
 /**
@@ -91,6 +128,8 @@ export function createTestDocumentService(
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
-    documentId: string): api.IDocumentService {
-    return new TestDocumentService(resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    documentId: string,
+    documentServiceFactory: TestDocumentServiceFactory): api.IDocumentService {
+    return new TestDocumentService(
+        resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId, documentServiceFactory);
 }
