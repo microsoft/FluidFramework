@@ -57,12 +57,7 @@ export class BaseContainerRuntimeFactory implements
 
         // Create a scope object that passes through everything except for IComponentDependencySynthesizer
         // which we will replace with the new one we just created.
-        const scope: any = {};
-        for (const key of Object.keys(context.scope)) {
-            if (key !== "IComponentDependencySynthesizer") {
-                scope[key] = context.scope[key];
-            }
-        }
+        const scope: any = context.scope;
         scope.IComponentDependencySynthesizer = dc;
 
         const runtime = await ContainerRuntime.load(
