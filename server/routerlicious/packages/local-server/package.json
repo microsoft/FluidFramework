@@ -21,6 +21,8 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "test": "mocha --recursive dist/test -r make-promises-safe",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js"
   },
@@ -45,6 +47,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
     "@microsoft/fluid-server-lambdas": "^0.1005.0",
     "@microsoft/fluid-server-memory-orderer": "^0.1005.0",
     "@microsoft/fluid-server-services-client": "^0.1005.0",
