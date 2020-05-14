@@ -54,6 +54,7 @@ export class ProtocolOpHandler {
         private readonly branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
+        public term: number,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
@@ -146,6 +147,7 @@ export class ProtocolOpHandler {
             branch: this.branchId,
             minimumSequenceNumber: this.minimumSequenceNumber,
             sequenceNumber: this.sequenceNumber,
+            term: this.term,
         };
 
         const summary: ISummaryTree = {
