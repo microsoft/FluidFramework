@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-ordered-collection",
-  "version": "0.16.5",
+  "version": "0.16.6",
   "description": "Consensus Collection",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,8 +50,8 @@
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.16.0",
     "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-runtime-definitions": "^0.16.5",
-    "@microsoft/fluid-shared-object-base": "^0.16.5",
+    "@microsoft/fluid-runtime-definitions": "^0.16.6",
+    "@microsoft/fluid-shared-object-base": "^0.16.6",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
@@ -59,7 +59,7 @@
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.16.5",
+    "@microsoft/fluid-test-runtime-utils": "^0.16.6",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
