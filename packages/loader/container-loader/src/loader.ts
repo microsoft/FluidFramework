@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import uuid from "uuid";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
