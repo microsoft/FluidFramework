@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "esModuleInterop": true,
         "strictNullChecks": false,
         "rootDir": "./src",
         "jsx": "react",
