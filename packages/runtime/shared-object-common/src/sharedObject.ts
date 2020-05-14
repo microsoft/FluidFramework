@@ -187,7 +187,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const isRegistered = (!!this.services || this.registered);
-        assert(isRegistered ? true : this.isLocal());
+        assert(isRegistered || this.isLocal());
         return isRegistered;
     }
 
