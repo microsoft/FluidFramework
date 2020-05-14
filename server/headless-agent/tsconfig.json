@@ -7,7 +7,6 @@
         "noImplicitAny": true,
         "noUnusedLocals": true,
         "outDir": "dist",
-        "esModuleInterop": true,
         "rootDir": "./src",
         "sourceMap": true,
         "resolveJsonModule": true,

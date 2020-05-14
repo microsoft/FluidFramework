@@ -5,7 +5,6 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "esModuleInterop": true,
         "rootDir": "./src",
         "outDir": "./dist",
         "types": ["mocha"]

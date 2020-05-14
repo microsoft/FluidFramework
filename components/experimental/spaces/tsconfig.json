@@ -7,7 +7,6 @@
     "compilerOptions": {
         "target": "es6",
         "declarationDir": "./dist",
-        "esModuleInterop": true,
         "outDir": "./dist",
         "jsx": "react",
         "types": [
