@@ -8,18 +8,16 @@ function webPartsHandler(req) {
 }
 
 function setListeners() {
-    chrome.webRequest.onBeforeRequest.addListener(
-        webPartsHandler,
-        {
-            urls: [
-                "https://*.microsoft.sharepoint-df.com/*/getclientsidewebparts",
-                "https://*.microsoft-my.sharepoint-df.com/*/getclientsidewebparts",
-                "https://*.microsoft-my.sharepoint.com/*/getclientsidewebparts",
-                "https://microsofteur-my.sharepoint.com/*/getclientsidewebparts"
-            ]
-        },
-        ['requestBody', 'blocking']
-    );
+  chrome.webRequest.onBeforeRequest.addListener(
+    webPartsHandler,
+    {
+      urls: [
+        "https://*.sharepoint-df.com/*/getclientsidewebparts",
+        "https://*.sharepoint.com/*/getclientsidewebparts"
+      ]
+    },
+    ['requestBody', 'blocking']
+  );
 }
 
 function removeListeners() {

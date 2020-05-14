@@ -10,7 +10,7 @@ import { RequestParser } from "./requestParser";
 
 /**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
-  * The provided handlers sequentially applied until one is able to statify the request.
+  * The provided handlers sequentially applied until one is able to satisfy the request.
   */
 export class RuntimeRequestHandlerBuilder {
     private readonly handlers: RuntimeRequestHandler[] = [];
