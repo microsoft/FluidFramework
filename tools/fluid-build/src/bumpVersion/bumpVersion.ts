@@ -39,7 +39,7 @@ let paramBumpVersionKind: VersionBumpType | undefined;
 const paramBumpDepPackages = new Map<string, string | undefined>();
 let paramPush = true;
 let paramPublishCheck = true;
-let paramRelease = false;
+let paramRelease: string | undefined;
 let paramClean = false;
 let paramCommit = false;
 
@@ -116,7 +116,15 @@ function parseOptions(argv: string[]) {
         }
 
         if (arg === "--release") {
-            paramRelease = true;
+            if (paramRelease) {
+                fatal("Can't do multiple release at once");
+            }
+            paramRelease = process.argv[++i];
+            if (paramRelease === undefined || paramRelease.startsWith("--") || paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
+                paramRelease = MonoRepoKind[MonoRepoKind.Client];
+            } else if (paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
+                paramRelease = MonoRepoKind[MonoRepoKind.Server];
+            }
             continue;
         }
 
@@ -295,16 +303,22 @@ class BumpVersion {
      * 
      * @param pkg the package to bump dependency versions
      * @param bumpPackageMap the map of package that needs to bump
-     * @param release use release or pre-release version in dependencies
+     * @param release if we are releasing, only patch the pre-release dependencies
+     * @param changedVersion the version bag to collect version that is changed
      */
-    private static async bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, { pkg: Package, version: string }>, changedVersion?: VersionBag) {
+    private static async bumpPackageDependencies(
+        pkg: Package,
+        bumpPackageMap: Map<string, { pkg: Package, version: string }>,
+        release: boolean,
+        changedVersion?: VersionBag
+    ) {
         let changed = false;
         for (const { name, dev } of pkg.combinedDependencies) {
             const dep = bumpPackageMap.get(name);
             if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
                 const depVersion = `^${dep.version}`;
                 const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
-                if (dependencies[name] !== depVersion) {
+                if (release ? dependencies[name] === `${depVersion}-0` : dependencies[name] !== depVersion) {
                     if (changedVersion) {
                         changedVersion.add(dep.pkg, depVersion);
                     }
@@ -356,15 +370,39 @@ class BumpVersion {
      * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages 
      * has the same version to the current version in the repo and needs to be bumped as well
      */
-    private async collectionBumpInfo() {
+    private async collectionBumpInfo(releaseName: string) {
         console.log("  Resolving published dependencies");
 
         const packageNeedBump = new Set<Package>();
+        let clientNeedBump = false;
         let serverNeedBump = false;
 
-        // TODO: Allow bumping from a different layer then the client
-        const pendingDepCheck = [...this.repo.clientMonoRepo.packages];
         const depVersions = new ReferenceVersionBag();
+        const pendingDepCheck = [];
+        // TODO: Allow bumping from a different layer then the client
+        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
+            pendingDepCheck.push(...this.repo.clientMonoRepo.packages);
+            clientNeedBump = true;
+            // Fake these for printing.
+            const firstClientPackage = this.repo.clientMonoRepo.packages[0];
+            depVersions.add(firstClientPackage, firstClientPackage.version);
+            depVersions.add(this.generatorPackage, this.generatorPackage.version);
+            depVersions.add(this.templatePackage, this.templatePackage.version);
+        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
+            pendingDepCheck.push(...this.repo.serverMonoRepo.packages);
+            const firstServerPackage = this.repo.serverMonoRepo.packages[0];
+            depVersions.add(firstServerPackage, firstServerPackage.version);
+            serverNeedBump = true;
+        } else {
+            const pkg = this.fullPackageMap.get(releaseName);
+            if (!pkg) {
+                fatal(`Can't find package ${releaseName} to release`);
+            }
+            pendingDepCheck.push(pkg);
+            packageNeedBump.add(pkg);
+            depVersions.add(pkg, pkg.version);
+        }
+
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -377,10 +415,10 @@ class BumpVersion {
                         // If it is the same repo, there are all related, and we would have added them to the pendingDepCheck as a set already.
                         // Just verify that the two package has the same version and the dependency has the same version
                         if (pkg.version !== depBuildPackage.version) {
-                            fatal(`Inconsistent package version within ${MonoRepoKind[pkg.monoRepo!.kind]} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`);
+                            fatal(`Inconsistent package version within ${MonoRepoKind[pkg.monoRepo!.kind].toLowerCase()} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`);
                         }
                         if (version !== `^${depBuildPackage.version}`) {
-                            fatal(`Inconsistent version dependency within ${MonoRepoKind[pkg.monoRepo!.kind]} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`);
+                            fatal(`Inconsistent version dependency within ${MonoRepoKind[pkg.monoRepo!.kind].toLowerCase()} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`);
                         }
                         continue;
                     }
@@ -409,12 +447,6 @@ class BumpVersion {
             }
         }
 
-        // Fake these for printing.
-        const firstClientPackage = this.repo.clientMonoRepo.packages[0];
-        depVersions.add(firstClientPackage, firstClientPackage.version);
-        depVersions.add(this.generatorPackage, this.generatorPackage.version);
-        depVersions.add(this.templatePackage, this.templatePackage.version);
-
         const repoVersions = this.collectVersions();
         console.log("Release Versions:");
         for (const [name, repoVersion] of repoVersions) {
@@ -423,7 +455,7 @@ class BumpVersion {
         }
         console.log();
 
-        return { serverNeedBump, packageNeedBump, repoVersions };
+        return { clientNeedBump, serverNeedBump, packageNeedBump, repoVersions };
     }
 
     /**
@@ -431,13 +463,16 @@ class BumpVersion {
      * 
      * @param versionBump the kind of version bump
      */
-    private async bumpRepo(versionBump: VersionBumpType, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
+    private async bumpRepo(versionBump: VersionBumpType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
         const bumpMonoRepo = async (monoRepo: MonoRepo) => {
             return exec(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
         }
 
-        console.log("  Bumping client version");
-        await bumpMonoRepo(this.repo.clientMonoRepo)
+        if (clientNeedBump) {
+            console.log("  Bumping client version");
+            await bumpMonoRepo(this.repo.clientMonoRepo);
+            await this.bumpGeneratorFluid(versionBump);
+        }
 
         if (serverNeedBump) {
             console.log("  Bumping server version");
@@ -466,7 +501,9 @@ class BumpVersion {
         console.log("  Bumping generator version");
 
         const bumpDepMap = new Map(this.repo.packages.packages.map(pkg => [pkg.name, { pkg, version: `${pkg.version}-0` }]));
-        await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpDepMap);
+
+        // Immediate depend on the pre-release bit for the generator to begin with.
+        await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpDepMap, false);
         await exec(`npm version ${versionBump}`, this.templatePackage.directory, "bump yo template");
         await exec(`npm version ${versionBump}`, this.generatorPackage.directory, "bump yo generator");
 
@@ -483,13 +520,12 @@ class BumpVersion {
      * @param packageNeedBump the set of packages that needs to be bump
      * @param oldVersions old versions
      */
-    private async bumpCurrentBranch(versionBump: VersionBumpType, serverNeedBump: boolean, packageNeedBump: Set<Package>, oldVersions: VersionBag) {
-        await this.bumpRepo(versionBump, serverNeedBump, packageNeedBump);
-        await this.bumpGeneratorFluid(versionBump);
+    private async bumpCurrentBranch(versionBump: VersionBumpType, releaseName: string, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>, oldVersions: VersionBag) {
+        await this.bumpRepo(versionBump, clientNeedBump, serverNeedBump, packageNeedBump);
 
         const currentBranchName = await this.gitRepo.getCurrentBranchName();
         const newVersions = this.collectVersions();
-        const clientNewVersion = newVersions.get(MonoRepoKind[MonoRepoKind.Client]);
+        const releaseNewVersion = newVersions.get(releaseName);
 
         let repoState = "";
         for (const [name, newVersion] of newVersions) {
@@ -500,8 +536,8 @@ class BumpVersion {
                 repoState += `\n${name.padStart(40)}: ${newVersion.padStart(10)} (unchanged)`;
             }
         }
-        console.log(`  Committing version bump to ${clientNewVersion} into ${currentBranchName}`);
-        await this.gitRepo.commit(`Bump development version for clients to ${clientNewVersion}\n${repoState}`, "create bumped version commit");
+        console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName}`);
+        await this.gitRepo.commit(`Bump development version for ${releaseName} to ${releaseNewVersion}\n${repoState}`, "create bumped version commit");
         return `Repo Versions in branch ${currentBranchName}:${repoState}`;
     }
 
@@ -717,7 +753,7 @@ class BumpVersion {
         console.log("    Fix pre-release dependencies");
         const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${kind.toLowerCase()}`;
         const bumpDep = new Map<string, string | undefined>();
-        bumpDep.set(MonoRepoKind[monoRepo.kind], undefined)
+        bumpDep.set(kind, undefined);
         return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDep, paramPublishCheck, true, true);
     }
 
@@ -742,11 +778,15 @@ class BumpVersion {
      * 
      * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
      */
-    public async bumpVersion() {
+    public async bumpVersion(releaseName: string) {
         const versionBump = await this.getVersionBumpKind();
-        console.log(`Bumping ${versionBump} version`);
+        if (versionBump !== "patch" && releaseName !== MonoRepoKind[MonoRepoKind.Client]) {
+            fatal(`Can't do ${versionBump} release on '${releaseName.toLowerCase()}' packages, only patch release is allowed`);
+        }
 
-        const { serverNeedBump, packageNeedBump, repoVersions } = await this.collectionBumpInfo();
+        console.log(`Bumping ${versionBump} version of ${releaseName.toLowerCase()}`);
+
+        const { clientNeedBump, serverNeedBump, packageNeedBump, repoVersions } = await this.collectionBumpInfo(releaseName);
 
         // Make sure everything is installed
         await this.repo.install();
@@ -754,9 +794,9 @@ class BumpVersion {
         // -----------------------------------------------------------------------------------------------------
         // Create the release development branch if it is it not a patch upgrade
         // -----------------------------------------------------------------------------------------------------
-        const releaseVersion = repoVersions.get(MonoRepoKind[MonoRepoKind.Client]);
+        const releaseVersion = repoVersions.get(releaseName);
         if (!releaseVersion) {
-            fatal("Missing client packages");
+            fatal(`Missing ${releaseName} packages`);
         }
         let releaseBranch: string;
         if (versionBump !== "patch") {
@@ -781,9 +821,9 @@ class BumpVersion {
         // ------------------------------------------------------------------------------------------------------------------
         // Create the release in a temporary merge/<release version>, fix pre-release dependency (if needed) and create tag.
         // ------------------------------------------------------------------------------------------------------------------
-        console.log(`Creating release ${releaseVersion}`);
+        console.log(`Creating ${releaseName} release ${releaseVersion}`);
 
-        const pendingReleaseBranch = `merge/${releaseVersion}`;
+        const pendingReleaseBranch = `merge/${releaseName}_v${releaseVersion}`;
         console.log(`  Creating temporary release branch ${pendingReleaseBranch}`);
         const commit = await this.gitRepo.getShaForBranch(pendingReleaseBranch);
         if (commit) {
@@ -804,8 +844,11 @@ class BumpVersion {
             await this.releaseMonoRepo(repoVersions, this.repo.serverMonoRepo);
         }
 
-        await this.releaseMonoRepo(repoVersions, this.repo.clientMonoRepo);
-        await this.releaseGeneratorFluid();
+        if (clientNeedBump) {
+            await this.releaseMonoRepo(repoVersions, this.repo.clientMonoRepo);
+            await this.releaseGeneratorFluid();
+        }
+
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -814,10 +857,10 @@ class BumpVersion {
         let allRepoState: string = "";
         if (versionBump !== "patch") {
             unreleased_branch = `merge/${this.originalBranchName}`
-            console.log(`Creating bump ${versionBump} version for development in branch ${unreleased_branch}`)
+            console.log(`Bumping ${versionBump} version for development in branch ${unreleased_branch}`)
 
             await this.createBranch(unreleased_branch);
-            const minorRepoState = await this.bumpCurrentBranch(versionBump, serverNeedBump, packageNeedBump, repoVersions);
+            const minorRepoState = await this.bumpCurrentBranch(versionBump, releaseName, clientNeedBump, serverNeedBump, packageNeedBump, repoVersions);
             allRepoState += `\n${minorRepoState}`;
 
             // switch package to pendingReleaseBranch
@@ -830,9 +873,9 @@ class BumpVersion {
         // ------------------------------------------------------------------------------------------------------------------
         // Create the patch version bump for development in a temporary merge/<release version> on top fo the release commit
         // ------------------------------------------------------------------------------------------------------------------
-        console.log(`Creating bump patch version for development in branch ${pendingReleaseBranch}`)
+        console.log(`Bumping patch version for development in branch ${pendingReleaseBranch}`)
         // Do the patch version bump
-        const patchRepoState = await this.bumpCurrentBranch("patch", serverNeedBump, packageNeedBump, repoVersions);
+        const patchRepoState = await this.bumpCurrentBranch("patch", releaseName, clientNeedBump, serverNeedBump, packageNeedBump, repoVersions);
         allRepoState += `\n${patchRepoState}`;
 
         console.log("======================================================================================================");
@@ -873,13 +916,13 @@ class BumpVersion {
         const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, version: rec.version }]));
         const changedVersion = new VersionBag();
         for (const pkg of this.repo.packages.packages) {
-            if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, changedVersion)) {
+            if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, release, changedVersion)) {
                 updateLockPackage.push(pkg);
                 changed = true;
             }
         }
 
-        if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, changedVersion)) {
+        if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, release, changedVersion)) {
             // Template package don't need to update lock
             changed = true;
         }
@@ -890,21 +933,22 @@ class BumpVersion {
                     // Fix package lock
                     await FluidRepoBase.ensureInstalled(updateLockPackage, false);
                 } else {
-                    console.log("    SKIPPED: updating lock file");
+                    console.log("      SKIPPED: updating lock file");
                 }
             }
 
             let changedVersionString: string[] = [];
-            for (const name in changedVersion) {
-                changedVersionString.push(`${name.padStart(40)} -> ${changedVersion.get(name)}`);
+            for (const [name, version] of changedVersion) {
+                changedVersionString.push(`${name.padStart(40)} -> ${version}`);
             }
             const changedVersionMessage = changedVersionString.join("\n");
             if (commit) {
                 await this.gitRepo.commit(`${commitMessage}\n\n${changedVersionMessage}`, "bump dependencies");
             }
+            console.log(`      ${commitMessage}`);
             console.log(changedVersionMessage);
         } else {
-            console.log("    No dependencies need to be updated");
+            console.log("      No dependencies need to be updated");
         }
     }
 
@@ -952,7 +996,7 @@ async function main() {
             console.log("Bumping dependencies");
             await bv.bumpDependencies("Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
         } else if (paramRelease) {
-            await bv.bumpVersion();
+            await bv.bumpVersion(paramRelease);
         } else {
             fatal("Missing flag --release or --dep");
         }
