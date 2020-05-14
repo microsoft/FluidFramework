@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "esModuleInterop": true,
         "target": "es6",
         "module": "esnext",
         "outDir": "dist",
