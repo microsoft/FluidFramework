@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// import * as assert from "assert";
+import * as assert from "assert";
 import { describe } from "mocha";
 import { Mode, processContent } from "../replayMultipleFiles";
 
@@ -11,10 +11,14 @@ describe("Snapshots", function() {
     this.timeout(300000);
 
     it("Stress Test", async () => {
-        return processContent(Mode.Stress);
+        await processContent(Mode.Stress).catch((error) => {
+            assert.fail("Back compat test fails with error");
+        });
     });
 
     it("Backward Compat", async () => {
-        return processContent(Mode.Compare);
+        await processContent(Mode.Compare).catch((error) => {
+            assert.fail("Back compat test fails with error");
+        });
     });
 });

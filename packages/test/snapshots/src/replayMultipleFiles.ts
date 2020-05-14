@@ -36,10 +36,17 @@ export async function processOneFile(args: IWorkerArgs) {
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
 
-    const res = await new ReplayTool(replayArgs).Go();
-    if (!res) {
-        throw new Error(`Error processing ${args.folder}`);
-    }
+    await new ReplayTool(replayArgs).Go()
+        .then((success) => {
+            if (!success) {
+                console.log("success ", success);
+                process.exit(1);
+            }
+        })
+        .catch((error) => {
+            console.error(`ERROR: ${error}`);
+            process.exit(2);
+        });
 }
 
 export async function processContent(mode: Mode, concurrently = true) {

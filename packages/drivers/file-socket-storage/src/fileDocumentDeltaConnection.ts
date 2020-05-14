@@ -15,6 +15,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
@@ -30,7 +31,7 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [],
+    scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
     tenantId: "",
     user: {
         id: "",
