@@ -111,7 +111,7 @@ export interface FluidFunctionalComponentState {
 }
 
 export const instanceOfIComponentLoadable = (object: any): object is IComponentLoadable =>
-    "IComponentLoadable" in object;
+    object === Object(object) && "IComponentLoadable" in object;
 
 function getByValue(map, searchValue) {
     for (const [key, value] of map.entries()) {
@@ -184,21 +184,21 @@ export interface FluidStateUpdateFunction<S> {
 }
 
 export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>
-    "function" in object;
+    object === Object(object) && "function" in object;
 
 export interface FluidAsyncStateUpdateFunction<S> {
     function: (oldState: S, dataProps: IFluidDataProps, ...args: any) => Promise<S>;
 }
 
 export const instanceOfAsyncStateUpdateFunction = <S,>(object: any): object is FluidAsyncStateUpdateFunction<S> =>
-    "function" in object;
+    object === Object(object) && "function" in object;
 
 export interface FluidSelectorFunction<S, T>{
     function: (state: S, dataProps: IFluidDataProps, handle: IComponentHandle<T>) => T | undefined;
 }
 
 export const instanceOfSelectorFunction = <S,T,>(object: any): object is FluidSelectorFunction<S,T> =>
-    "function" in object;
+    object === Object(object) && "function" in object;
 
 export function useReducerFluid<S extends FluidFunctionalComponentState, A, B>(
     props: FluidReducerProps<S, A, B>,
