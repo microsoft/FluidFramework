@@ -10,17 +10,19 @@ import { ErrorType, IError } from "@microsoft/fluid-driver-definitions";
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function createIError(error: any): IError {
+export function createIError(error: any, canRetryArg?: boolean): IError {
     assert(error !== undefined);
+    const canRetry = canRetryArg === true;
 
     // eslint-disable-next-line no-null/no-null
     if (typeof error === "object" && error !== null) {
-        if (error.errorType === undefined) {
+        // if canRetryArg is passed in, it overwrites actual value in error object
+        if (error.errorType === undefined || canRetryArg !== undefined) {
             return {
-                ...error,
-                canRetry: false,
                 errorType: ErrorType.generalError,
-                message: error.message ?? `${error}`,
+                message: `${error}`,
+                ...error,
+                canRetry,
             };
         }
         return error;
@@ -28,14 +30,14 @@ export function createIError(error: any): IError {
         return {
             errorType: ErrorType.generalError,
             message : error,
-            canRetry: false,
+            canRetry,
             error: new Error(error),
         };
     } else {
         const specificError: IError = {
             errorType: ErrorType.generalError,
             message: `${error}`,
-            canRetry: false,
+            canRetry,
             error,
         };
         return specificError;

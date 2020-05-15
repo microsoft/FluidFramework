@@ -83,7 +83,7 @@ function getErrorReconnectInfo(reason: string, error: any): IErrorReconnectInfo 
     return {
         reason,
         reconnectDelay: getRetryDelayFromError(error),
-        getError: () => createIError(error),
+        getError: () => createIError(error, true), // all disconnect errors are retryable!
     };
 }
 function getNackReconnectInfo(nackContent: INackContent): IErrorReconnectInfo {
@@ -708,7 +708,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // count since something prevented us from seeing those deltas
                 from = lastFetch;
             } catch (origError) {
-                const error = createIError(origError);
+                canRetry = canRetry && canRetryOnError(origError);
+                const error = createIError(origError, canRetry);
 
                 logNetworkFailure(
                     this.logger,
@@ -721,7 +722,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     },
                     origError);
 
-                if (!canRetry || !canRetryOnError(origError)) {
+                if (!canRetry) {
                     // It's game over scenario.
                     telemetryEvent.cancel({ category: "error" }, origError);
                     this.close(error);
