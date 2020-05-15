@@ -73,9 +73,9 @@ export interface ISummarizingError {
     readonly description: string;
     critical?: boolean;
     /**
-     * Whether this error was raised by summarizer container or parent. Used to avoid logging errors twice.
+     * Whether this error has already been logged. Used to avoid logging errors twice.
      */
-    readonly raisedOnSummarizer?: boolean;
+    readonly logged?: boolean;
 }
 
 export interface IWriteError {

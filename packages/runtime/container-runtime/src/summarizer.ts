@@ -15,6 +15,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { ErrorType, IError, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { createSummarizingError } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -47,7 +48,7 @@ export interface ISummarizerEvents extends IEvent {
     /**
      * An event indicating that the Summarizer is having problems summarizing
      */
-    (event: "summarizingError", listener: (description: string) => void);
+    (event: "summarizingError", listener: (error: ISummarizingError) => void);
 }
 export interface ISummarizer
     extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
@@ -657,7 +658,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
             this.immediateSummary,
-            (description: string) => this.emit("summarizingError", description),
+            (description: string) =>
+                this.emit("summarizingError", createSummarizingError(`Summarizer: ${description}`, true)),
         );
         this.runningSummarizer = runningSummarizer;
 

@@ -149,7 +149,7 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
 class SummarizingError extends ErrorWithProps implements ISummarizingError {
     readonly errorType: ErrorType.summarizingError = ErrorType.summarizingError;
 
-    constructor(readonly description: string, readonly raisedOnSummarizer: boolean = false) {
+    constructor(readonly description: string, readonly logged: boolean = false) {
         super(description);
     }
 }
@@ -210,4 +210,4 @@ export const createWriteError = (errorMessage: string) => (new WriteError(errorM
 export const createFatalError = (errorMessage: string) => (new FatalError(errorMessage) as IError);
 
 export const createSummarizingError =
-    (details: string, raisedOnSummarizer?: boolean) => (new SummarizingError(details, raisedOnSummarizer) as IError);
+    (details: string, logged?: boolean) => (new SummarizingError(details, logged) as IError);

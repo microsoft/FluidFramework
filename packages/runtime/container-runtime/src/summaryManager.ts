@@ -4,10 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
+import { ISummarizingError } from "@microsoft/fluid-driver-definitions";
 import { createSummarizingError } from "@microsoft/fluid-driver-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { ISummarizer, Summarizer } from "./summarizer";
@@ -318,9 +319,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
-            summarizer.on("summarizingError", (description: string) => {
-                this.context.error(createSummarizingError(`Summarizer: ${description}`, true));
-            });
+            summarizer.on("summarizingError", (error: ISummarizingError) => this.context.error(error));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({

@@ -39,7 +39,6 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
-    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -394,15 +393,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
-        this.on("error", (error: IError | string) => {
-            // don't log errors raised by summarizer since summarizer already logged them
-            if (typeof error === "object" &&
-                error?.errorType === ErrorType.summarizingError &&
-                error.raisedOnSummarizer &&
-                this.client.details.type !== "summarizer") {
-                return;
+        this.on("error", (error: any) => {
+            // Some "error" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (error?.logged !== true) {
+                this.logContainerError(error);
             }
-            this.logContainerError(error);
         });
 
         this._deltaManager = this.createDeltaManager();
