@@ -28,7 +28,7 @@
     "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-driver-utils": "^0.18.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.14.6",
     "@types/socket.io-client": "^1.4.32",

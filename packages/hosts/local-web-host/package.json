@@ -30,7 +30,7 @@
     "@microsoft/fluid-container-loader": "^0.18.0",
     "@microsoft/fluid-local-driver": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
-    "@microsoft/fluid-server-local-server": "^0.1005.0-0",
+    "@microsoft/fluid-server-local-server": "^0.1004.3",
     "@microsoft/fluid-view-adapters": "^0.18.0",
     "uuid": "^3.3.2"
   },
