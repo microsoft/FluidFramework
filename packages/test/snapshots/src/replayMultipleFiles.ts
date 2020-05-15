@@ -39,7 +39,6 @@ export async function processOneFile(args: IWorkerArgs) {
     await new ReplayTool(replayArgs).Go()
         .then((success) => {
             if (!success) {
-                console.log("success ", success);
                 process.exit(1);
             }
         })
