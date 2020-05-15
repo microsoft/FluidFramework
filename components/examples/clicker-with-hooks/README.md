@@ -4,7 +4,7 @@
 increments the counter. This is a basic example component using the interface model and stock
 classes.
 
-**Clicker** there are 3 different implementations here using the useFluidState, useFluidReducer, and createFluidContext hooks
+**Clicker with Hooks** contains 3 different implementations of Clicker using the useFluidState, useFluidReducer, and createFluidContext hooks respectively
 
 ## Getting Started
 
