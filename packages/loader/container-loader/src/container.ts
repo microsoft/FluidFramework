@@ -159,8 +159,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             logger);
 
-        container.service = await serviceFactory.createDocumentService(resolvedUrl);
-
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
             const onError = (err) => {
@@ -489,7 +487,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
-                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+                this.subLogger,
             );
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
@@ -798,6 +796,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param pause - start the container in a paused state
      */
     private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl!, this.subLogger);
+
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
