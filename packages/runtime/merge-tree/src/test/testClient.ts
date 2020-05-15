@@ -225,6 +225,7 @@ export class TestClient extends Client {
             referenceSequenceNumber: refSeq,
             sequenceNumber: seq,
             timestamp: Date.now(),
+            term: 1,
             traces: [],
             type: MessageType.Operation,
         };

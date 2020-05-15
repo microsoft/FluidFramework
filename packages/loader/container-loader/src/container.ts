@@ -648,6 +648,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -730,6 +731,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
         entries.push({
             mode: FileMode.File,
@@ -870,6 +872,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: "",
             sequenceNumber: 0,
             minimumSequenceNumber: 0,
+            term: 1,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
@@ -919,6 +922,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
+                term: 1,
             };
         }
 
@@ -966,6 +970,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             members,
             proposals,
             values,

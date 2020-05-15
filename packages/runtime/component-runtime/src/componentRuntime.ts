@@ -602,6 +602,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: message.type,
         };
