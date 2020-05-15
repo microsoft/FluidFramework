@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -35,7 +35,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const pathName = new URL(resolvedUrl.url).pathname;
@@ -66,7 +66,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             sequenceNumber,
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl);
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**
@@ -74,7 +74,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);
