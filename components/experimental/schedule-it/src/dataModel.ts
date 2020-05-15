@@ -6,7 +6,6 @@ import { HandleMap } from "@microsoft/fluid-aqueduct-react";
 import {
     IDate,
     IPerson,
-    // AvailabilityType,
     IAvailability,
     IDateState,
     IPersonState,
@@ -43,42 +42,42 @@ export const defaultDates: IDefaultDateMap = {
 };
 
 export const defaultPeople: IDefaultPersonMap = {
-    // 1: {
-    //     key: "1",
-    //     name: "Bruno",
-    //     availabilityMap: {
-    //         today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
-    //         tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.Maybe },
-    //         dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Maybe },
-    //     },
-    // },
-    // 2: {
-    //     key: "2",
-    //     name: "Tamine",
-    //     availabilityMap: {
-    //         today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
-    //         tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.Yes },
-    //         dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.No },
-    //     },
-    // },
-    // 3: {
-    //     key: "3",
-    //     name: "Jodom",
-    //     availabilityMap: {
-    //         today: { dateKey: "today",  availabilityType: AvailabilityType.Maybe },
-    //         tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.No },
-    //         dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Yes },
-    //     },
-    // },
-    // 4: {
-    //     key: "4",
-    //     name: "Michelle",
-    //     availabilityMap: {
-    //         today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
-    //         tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.No },
-    //         dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Maybe },
-    //     },
-    // },
+    1: {
+        key: "1",
+        name: "Bruno",
+        availabilityMap: {
+            today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
+            tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.Maybe },
+            dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Maybe },
+        },
+    },
+    2: {
+        key: "2",
+        name: "Tamine",
+        availabilityMap: {
+            today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
+            tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.Yes },
+            dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.No },
+        },
+    },
+    3: {
+        key: "3",
+        name: "Jodom",
+        availabilityMap: {
+            today: { dateKey: "today",  availabilityType: AvailabilityType.Maybe },
+            tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.No },
+            dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Yes },
+        },
+    },
+    4: {
+        key: "4",
+        name: "Michelle",
+        availabilityMap: {
+            today: { dateKey: "today", availabilityType: AvailabilityType.Yes },
+            tomorrow: { dateKey: "tomorrow", availabilityType: AvailabilityType.No },
+            dayAfter: { dateKey: "dayAfter", availabilityType: AvailabilityType.Maybe },
+        },
+    },
 };
 
 export const CommentReducer: ICommentReducer = {

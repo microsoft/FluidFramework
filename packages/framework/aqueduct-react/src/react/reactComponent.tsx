@@ -129,11 +129,10 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
         if (stateToRoot !== undefined && !fromRootUpdate) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 if (newState[stateKey] !== undefined) {
-                    const rootData = root.get(rootKey);
                     if (instanceOfIComponentLoadable(newState[stateKey])) {
                         const stateData = (newState[stateKey] as unknown as IComponentLoadable).handle;
                         root.set(rootKey, stateData);
-                    } else if (rootData !== newState[stateKey]) {
+                    } else {
                         root.set(rootKey, newState[stateKey]);
                     }
                 }
