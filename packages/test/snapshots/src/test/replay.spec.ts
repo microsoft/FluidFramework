@@ -12,7 +12,7 @@ describe("Snapshots", function() {
 
     it("Stress Test", async () => {
         await processContent(Mode.Stress).catch((error) => {
-            assert.fail("Back compat test fails with error");
+            assert.fail("Stress test fails with error");
         });
     });
 
