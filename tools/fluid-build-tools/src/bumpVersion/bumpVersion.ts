@@ -113,8 +113,14 @@ function parseOptions(argv: string[]) {
             if (paramRelease) {
                 fatal("Can't do multiple release at once");
             }
-            paramRelease = process.argv[++i];
-            if (paramRelease === undefined || paramRelease.startsWith("--") || paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
+            paramRelease = process.argv[i + 1];
+            if (paramRelease === undefined || paramRelease.startsWith("--")) {
+                paramRelease = MonoRepoKind[MonoRepoKind.Client];
+            } else {
+                i++;
+            }
+
+            if (paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
                 paramRelease = MonoRepoKind[MonoRepoKind.Client];
             } else if (paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
                 paramRelease = MonoRepoKind[MonoRepoKind.Server];
@@ -126,9 +132,11 @@ function parseOptions(argv: string[]) {
             if (paramVersionName) {
                 fatal("Can't do multiple release at once");
             }
-            paramVersionName = process.argv[++i];
+            paramVersionName = process.argv[i];
             if (paramVersionName === undefined || paramVersionName.startsWith("--")) {
                 paramVersionName = MonoRepoKind[MonoRepoKind.Client];
+            } else {
+                i++;
             }
 
             const split = paramVersionName.split("=");
@@ -317,7 +325,7 @@ class ReferenceVersionBag extends VersionBag {
                 ...await this.getPublishedDependencies(versionSpec, true),
                 ...await this.getPublishedDependencies(versionSpec, false),
             };
-            
+
             // Add it to pending for processing
             for (const d in dep) {
                 const depPkg = this.fullPackageMap.get(d);
@@ -550,7 +558,7 @@ class BumpVersion {
         const repoVersions = this.collectVersions();
         for (const [name, repoVersion] of repoVersions) {
             const depVersion = versions.get(name) ?? "undefined";
-            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${repoVersion !== depVersion? (depVersion !== "undefined"? "(published)" : "") : "(local)"}`);
+            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${repoVersion !== depVersion ? (depVersion !== "undefined" ? "(published)" : "") : "(local)"}`);
         }
         console.log();
     }
@@ -567,6 +575,7 @@ class BumpVersion {
 
         if (clientNeedBump) {
             console.log("  Bumping client version");
+            await this.bumpLegacyDependencies(versionBump);
             await bumpMonoRepo(this.repo.clientMonoRepo);
             await this.bumpGeneratorFluid(versionBump);
         }
@@ -607,6 +616,35 @@ class BumpVersion {
         // Generate has changed. Reload.
         this.generatorPackage.reload();
         this.templatePackage.reload();
+    }
+
+    private async bumpLegacyDependencies(versionBump: VersionBumpType) {
+        if (versionBump !== "patch") {
+            // Assumes that we want N/N-1 testing
+            const pkg = this.fullPackageMap.get("@fluid-internal/end-to-end-tests");
+            if (!pkg) {
+                fatal("Unable to find package @fluid-internal/end-to-end-tests");
+            }
+            for (const { name, version, dev } of pkg.combinedDependencies) {
+                if (!version.startsWith("npm:")) {
+                    continue;
+                }
+
+                const spec = version.substring(4);
+                const split = spec.split("@");
+                if (split.length <= 1) {
+                    continue;
+                }
+                const range = split.pop();
+                const packageName = split.join("@");
+                const depPackage = this.fullPackageMap.get(packageName);
+                if (depPackage) {
+                    const dep = dev? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
+                    dep[name] = `npm:${packageName}@^${depPackage.version}`;
+                }
+            }
+            pkg.savePackageJson();
+        }
     }
 
     /**
