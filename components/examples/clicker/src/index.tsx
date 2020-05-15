@@ -29,7 +29,7 @@ class CounterReactView extends FluidReactComponent<{}, CounterState> {
         return (
             <div>
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {`Regular Component: ${this.state.value}`}
+                    {this.state.value}
                 </span>
                 <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
             </div>
