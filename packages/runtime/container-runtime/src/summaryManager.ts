@@ -314,7 +314,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const delayMs = this.startThrottler.getDelay();
         if (delayMs >= defaultThrottleMaxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
-            this.context.error(createSummarizingError("SummaryManager: Max Throttle Delay"));
+            this.context.error(createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay"));
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
