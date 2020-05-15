@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { v4 as uuid } from "uuid";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedMap } from "@microsoft/fluid-map";
