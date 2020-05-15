@@ -6,7 +6,6 @@
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -150,8 +149,7 @@ async function loadContainer(
             // eslint-disable-next-line @typescript-eslint/unbound-method
             config.getStorageToken,
             // eslint-disable-next-line @typescript-eslint/unbound-method
-            config.getWebsocketToken,
-            new BaseTelemetryNullLogger());
+            config.getWebsocketToken);
     } else if (protocol === "fluid:") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,

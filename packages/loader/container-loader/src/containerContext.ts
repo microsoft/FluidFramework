@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -22,7 +22,6 @@ import {
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
-import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IClientDetails,
@@ -42,7 +41,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
+export class ContainerContext implements IContainerContext {
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
@@ -111,12 +110,13 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.parentBranch;
     }
 
+    // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
-        return this.container.connectionState;
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.container.connected;
     }
 
     public get canSummarize(): boolean {
@@ -167,7 +167,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IRuntimeFactory,
-        private _baseSnapshot: ISnapshotTree | null,
+        private readonly _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -181,7 +181,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
-        super();
         this.logger = container.subLogger;
     }
 
@@ -194,16 +193,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.runtime!.dispose(error);
         this.quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    /**
-     * DEPRECATED
-     * back-compat: 0.13 refreshBaseSummary
-     */
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this._baseSnapshot = snapshot;
-        // Need to notify runtime of the update
-        this.emit("refreshBaseSummary", snapshot);
     }
 
     public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
@@ -232,9 +221,19 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.runtime.createSummary();
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
-        this.runtime!.changeConnectionState(value, clientId);
-        raiseConnectedEvent(this, value, clientId);
+    public setConnectionState(connected: boolean, clientId?: string) {
+        const runtime = this.runtime!;
+
+        assert(this.connected === connected);
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(this.connectionState, clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

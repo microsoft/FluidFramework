@@ -31,7 +31,6 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "publish-local": "lerna run publish-local --stream",
     "restart": "docker-compose restart gateway && docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart foreman && docker-compose restart paparazzi",
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
