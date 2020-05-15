@@ -297,8 +297,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // per document op handling
                 super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
                     if (!this.enableMultiplexing || this.documentId === documentId) {
-                        console.log("processing", this.documentId, msgs);
-                        // only pass through ops meant for this document
                         listener(documentId, msgs);
                     }
                 });
@@ -308,7 +306,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // per document signal handling
                 super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
                     if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
-                        // pass through signals meant for this document when possible
                         listener(msg, documentId);
                     }
                 });
@@ -341,9 +338,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             const reason = "client closing connection";
 
-            if (this.enableMultiplexing && this.hasDetails) {
+            if (this.enableMultiplexing && !socketProtocolError && this.hasDetails) {
                 // tell the server we are disconnecting this client from the document
-                this.socket.emit("disconnect_document", this.documentId, this.clientId);
+                this.socket.emit("disconnect_document", this.clientId, this.documentId);
             }
 
             OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);

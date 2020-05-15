@@ -360,13 +360,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                // If we sent a nonce and the server supports nonces, check that the nonces match
-                if (connectMessage.nonce !== undefined &&
-                    error.nonce !== undefined &&
-                    error.nonce !== connectMessage.nonce) {
-                    return;
-                }
-
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -426,6 +419,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    error.nonce !== undefined &&
+                    error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
