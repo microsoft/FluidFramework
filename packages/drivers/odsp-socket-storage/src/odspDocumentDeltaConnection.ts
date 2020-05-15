@@ -196,7 +196,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socketReference = new SocketReference(socket);
 
             OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
-            debug(`Created new socketio reference for ${key}`);
+            debug(`Created new socketio reference for ${key}. multiplexing: ${enableMultiplexing}`);
         }
 
         return socketReference;
@@ -265,21 +265,30 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         private socketReferenceKey: string | undefined,
         private readonly enableMultiplexing?: boolean) {
         super(socket, documentId);
+
+        if (enableMultiplexing) {
+            // remove the default listeners and replace them with multiplex ready ones
+            socket.removeListener("op", this.earlyOpHandler);
+            socket.removeListener("signal", this.earlySignalHandler);
+
+            this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
+                if (this.documentId === messageDocumentId) {
+                    debug(`Queued early ops for ${this.documentId}`, msgs.length);
+                    this.queuedMessages.push(...msgs);
+                }
+            };
+
+            this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
+                if (!messageDocumentId || messageDocumentId === this.documentId) {
+                    debug(`Queued early signal for ${this.documentId}`, msg);
+                    this.queuedSignals.push(msg);
+                }
+            };
+
+            socket.addEventListener("op", this.earlyOpHandler);
+            socket.addEventListener("signal", this.earlySignalHandler);
+        }
     }
-
-    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-        if (this.documentId === documentId) {
-            debug(`Queued early ops for ${this.documentId}`, msgs.length);
-            this.queuedMessages.push(...msgs);
-        }
-    };
-
-    protected earlySignalHandler?= (msg: ISignalMessage, documentId?: string) => {
-        if (!documentId || documentId === this.documentId) {
-            debug(`Queued early signal for ${this.documentId}`, msg);
-            this.queuedSignals.push(msg);
-        }
-    };
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         // override some event listeners in order to support multiple documents/clients over the same websocket
@@ -287,8 +296,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             case "op":
                 // per document op handling
                 super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                    console.log(`receieved op for ${this.documentId}`, documentId, msgs);
-                    if (this.documentId === documentId) {
+                    if (!this.enableMultiplexing || this.documentId === documentId) {
+                        console.log("processing", this.documentId, msgs);
                         // only pass through ops meant for this document
                         listener(documentId, msgs);
                     }
@@ -298,7 +307,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             case "signal":
                 // per document signal handling
                 super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
-                    if (!documentId || documentId === this.documentId) {
+                    if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
                         // pass through signals meant for this document when possible
                         listener(msg, documentId);
                     }
