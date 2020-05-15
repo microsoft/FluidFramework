@@ -10,7 +10,6 @@ interface IProps {
     id: string;
     className?: string;
     style?: React.CSSProperties;
-
 }
 
 interface IState {
