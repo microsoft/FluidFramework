@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-container-runtime": "^0.18.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2"
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
