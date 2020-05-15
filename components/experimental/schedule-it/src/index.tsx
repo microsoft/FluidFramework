@@ -64,6 +64,8 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
                 availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
             personMap.set(key, newPerson);
+            // Optional Step: You can preload the nested components before initial render,
+            // but you can also pass an empty handle map to allow them to be dynamically loaded in on fetch
             this._handleMap.set(newAvailabilityMap.handle, newAvailabilityMap);
         });
         this.root.set("person", personMap.handle);
