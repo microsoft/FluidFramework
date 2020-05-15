@@ -126,7 +126,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param details - details of the websocket connection
      */
     protected constructor(
-        private readonly socket: SocketIOClient.Socket,
+        protected readonly socket: SocketIOClient.Socket,
         public documentId: string) {
         super();
 
@@ -442,17 +442,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         });
     }
 
-    protected earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
-    protected earlyContentHandler ?= (msg: IContentMessage) => {
+    protected earlyContentHandler?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     };
 
-    protected earlySignalHandler ?= (msg: ISignalMessage) => {
+    protected earlySignalHandler?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     };

@@ -103,7 +103,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             nonce: uuid(),
         };
 
-        const deltaConnection = new OdspDocumentDeltaConnection(socket, documentId, socketReferenceKey);
+        const deltaConnection = new OdspDocumentDeltaConnection(
+            socket,
+            documentId,
+            socketReferenceKey,
+            enableMultiplexing);
 
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
@@ -253,24 +257,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
      * @param socketReferenceKey - socket reference key
+     * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     constructor(
         socket: SocketIOClient.Socket,
         documentId: string,
-        private socketReferenceKey: string | undefined) {
+        private socketReferenceKey: string | undefined,
+        private readonly enableMultiplexing?: boolean) {
         super(socket, documentId);
     }
 
     protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         if (this.documentId === documentId) {
-            debug("Queued early ops", msgs.length);
+            debug(`Queued early ops for ${this.documentId}`, msgs.length);
             this.queuedMessages.push(...msgs);
         }
     };
 
     protected earlySignalHandler?= (msg: ISignalMessage, documentId?: string) => {
         if (!documentId || documentId === this.documentId) {
-            debug("Queued early signals");
+            debug(`Queued early signal for ${this.documentId}`, msg);
             this.queuedSignals.push(msg);
         }
     };
@@ -281,6 +287,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             case "op":
                 // per document op handling
                 super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+                    console.log(`receieved op for ${this.documentId}`, documentId, msgs);
                     if (this.documentId === documentId) {
                         // only pass through ops meant for this document
                         listener(documentId, msgs);
@@ -324,6 +331,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             this.socketReferenceKey = undefined;
 
             const reason = "client closing connection";
+
+            if (this.enableMultiplexing && this.hasDetails) {
+                // tell the server we are disconnecting this client from the document
+                this.socket.emit("disconnect_document", this.documentId, this.clientId);
+            }
+
             OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
 
             // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
