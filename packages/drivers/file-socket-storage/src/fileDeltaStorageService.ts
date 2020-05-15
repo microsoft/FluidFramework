@@ -17,7 +17,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 
     constructor(private readonly path: string) {
         console.log("path ", this.path);
-        const data = fs.readFileSync(`${this.path}//messages.json`);
+        const data = fs.readFileSync(`${this.path}/messages.json`);
         console.log("data ", data.toString("utf-8").substr(0, 5000));
         this.messages = JSON.parse(data.toString("utf-8"));
         console.log(" after messages ");
