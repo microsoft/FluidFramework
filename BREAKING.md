@@ -4,12 +4,17 @@
 
 - [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
 - [ConsensusRegisterCollection now supports storing handles](#ConsensusRegisterCollection-now-supports-storing-handles)
+- [OdspDocumentServiceFactory no longer requires a logger]
+(#OdspDocumentServiceFactory-no-longer-requires-a-logger)
 
 ### `App Id` removed as a parameter to OdspDocumentServiceFactory
 `@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
 
 ### ConsensusRegisterCollection now supports storing handles
 ConsensusRegisterCollection will properly serialize/deserialize handles added as values.
+
+### OdspDocumentServiceFactory no longer requires a logger
+The logger will be passed in on createDocumentService or createContainer, no need to pass in one on construction of OdspDocumentServiceFactory.
 
 ## 0.17 Breaking Changes
 
