@@ -43,7 +43,7 @@ export async function processOneFile(args: IWorkerArgs) {
             }
         })
         .catch((error) => {
-            console.error(`ERROR: ${error}`);
+            console.error(`ERRORS: ${error}`);
             process.exit(2);
         });
 }
