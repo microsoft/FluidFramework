@@ -119,32 +119,31 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             return div;
         }
     }
-
-    function ScheduleItApp(props: ScheduleItProps) {
-        const [commentState, commentDispatch] = useCommentReducer(props);
-        const [personState, personDispatch, personFetch] = usePersonReducer(props);
-        const [dateState, dateDispatch] = useDateReducer(props);
-    
-        return (
-            <div>
-                <PrimedContext.Provider
-                    value={{
-                        comments: commentState.comments,
-                        commentDispatch,
-                        personMap: personState.personMap,
-                        personDispatch,
-                        personFetch,
-                        dateMap: dateState.dateMap,
-                        dateDispatch,
-                    }}
-                >
-                    <ScheduleItView />
-                </PrimedContext.Provider>
-            </div>
-        );
-    }
-
     // #endregion IComponentHTMLView
+}
+
+function ScheduleItApp(props: ScheduleItProps) {
+    const [commentState, commentDispatch] = useCommentReducer(props);
+    const [personState, personDispatch, personFetch] = usePersonReducer(props);
+    const [dateState, dateDispatch] = useDateReducer(props);
+
+    return (
+        <div>
+            <PrimedContext.Provider
+                value={{
+                    comments: commentState.comments,
+                    commentDispatch,
+                    personMap: personState.personMap,
+                    personDispatch,
+                    personFetch,
+                    dateMap: dateState.dateMap,
+                    dateDispatch,
+                }}
+            >
+                <ScheduleItView />
+            </PrimedContext.Provider>
+        </div>
+    );
 }
 
 // ----- FACTORY SETUP -----
@@ -152,6 +151,6 @@ export const ScheduleItInstantiationFactory = new PrimedComponentFactory(
     ScheduleItName,
     ScheduleIt,
     [SharedMap.getFactory()],
-    {}
+    {},
 );
 export const fluidExport = ScheduleItInstantiationFactory;

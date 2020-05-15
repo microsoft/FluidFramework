@@ -25,9 +25,9 @@ export const ScheduleItView = () => {
         commentDispatch,
         personMap,
         personDispatch,
+        personFetch,
         dateMap,
         dateDispatch,
-        personFetch,
     } = React.useContext(PrimedContext);
 
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -103,6 +103,10 @@ export const ScheduleItView = () => {
                     />
                 </div>
                 {checkmarks}
+                <IconButton
+                    onClick={() => personDispatch("removePerson", personKey)}
+                    iconProps={{ iconName: "CalculatorSubtract" }}
+                />
             </Stack>
         );
     };
