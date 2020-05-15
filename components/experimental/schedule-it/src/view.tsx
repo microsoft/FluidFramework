@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-internal-modules */
 
 import * as React from "react";
+import DatePicker from "react-datepicker";
 import {
     Stack,
     FocusZone,
@@ -18,6 +20,8 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { PrimedContext } from "./context";
 import { IPerson, AvailabilityType, IComment, IAvailability, IDate } from "./interface";
 initializeIcons();
+// eslint-disable-next-line import/no-unassigned-import
+import "react-datepicker/dist/react-datepicker.css";
 
 export const ScheduleItView = () => {
     const {
@@ -42,7 +46,10 @@ export const ScheduleItView = () => {
             const date = dates.get<IDate>(dateKey);
             content.push(
                 <div className="headerCell" key={dateKey} style={{ width: "25%" }}>
-                    <label>{date.key}</label>
+                    <DatePicker
+                        selected={new Date(date.date)}
+                        disabled
+                    />
                 </div>,
             );
         }
