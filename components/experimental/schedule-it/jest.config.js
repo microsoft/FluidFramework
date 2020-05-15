@@ -12,5 +12,6 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', 'dist'],
   transform: {
 		"^.+\\.ts?$": "ts-jest"
-	},
+  },
+  testEnvironment: "jsdom"
 };

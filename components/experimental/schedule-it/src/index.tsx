@@ -106,7 +106,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             this._handleMap !== undefined
         ) {
             ReactDOM.render(
-                <div>
+                <div id="schedule-it-app">
                     <ScheduleItApp
                         runtime={this.runtime}
                         root={this.root}
