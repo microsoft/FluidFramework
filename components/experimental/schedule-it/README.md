@@ -1,6 +1,6 @@
-# Clicker Component
+# Schedule-It Component
 
-This is a basic example component using the interface model and stock classes.
+This is a basic scheduling component to showcase the usage of React Fluid hooks for larger-scale React applications that require data-view separation
 
 ## Getting Started
 
