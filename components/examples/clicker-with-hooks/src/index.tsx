@@ -13,7 +13,7 @@ import {
     FluidFunctionalComponentState,
     useStateFluid,
     useReducerFluid,
-    createFluidContext,
+    createContextFluid,
     FluidStateUpdateFunction,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -84,7 +84,7 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
 }
 
 function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
-    const [FluidProvider, FluidConsumer, initialValue] = createFluidContext(props);
+    const [FluidProvider, FluidConsumer, initialValue] = createContextFluid(props);
     return (
         <div>
             <FluidProvider value={initialValue}>
