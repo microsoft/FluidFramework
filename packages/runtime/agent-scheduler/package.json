@@ -21,10 +21,6 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local",
-    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
     "tsc": "tsc"
   },
   "nyc": {

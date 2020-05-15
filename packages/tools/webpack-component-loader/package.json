@@ -16,7 +16,6 @@
     "build:full:compile": "npm run build:compile",
     "build:webpack": "npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
