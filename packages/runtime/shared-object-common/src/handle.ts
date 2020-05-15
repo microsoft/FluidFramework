@@ -20,6 +20,7 @@ import { ISharedObject } from "./types";
  * and loads shared object.
  */
 export class SharedObjectComponentHandle implements IComponentHandle {
+    private attachingState: boolean = false;
     /**
      * The set of handles to other shared objects that should be registered before this one.
      */
@@ -64,15 +65,25 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * When attaching the handle, it registers the associated shared object.
      */
     public attach(): void {
+        // If this handle is already in attaching state in the graph, no need to attach again.
+        if (this.attachingState) {
+            return;
+        }
+        this.attachingState = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attach();
+                if (!handle.isAttached) {
+                    handle.attach();
+                }
             }
 
             this.bound = undefined;
         }
-
+        if (!this.routeContext.isAttached) {
+            this.routeContext.attach();
+        }
         this.value.register();
+        this.attachingState = false;
     }
 
     /**

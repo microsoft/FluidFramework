@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
-    NamedComponentRegistryEntries,
+    NamedComponentRegistryEntries, IComponentContext, IComponentRuntimeChannel,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -26,6 +26,7 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { TestDataStore } from "./testDataStore";
 import { TestCodeLoader } from "./";
 
@@ -59,6 +60,14 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
             this.root.set(id, component.handle);
             return component;
         });
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string[], realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
+        const componentRuntimeChannel = await (this.context.containerRuntime as IContainerRuntime)
+            .createComponentWithRealizationFn(pkg, realizationFn);
+        return componentRuntimeChannel;
     }
 
     public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {

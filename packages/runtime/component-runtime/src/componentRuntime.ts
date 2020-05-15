@@ -337,7 +337,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                handle.attach();
+                if (!handle.isAttached) {
+                    handle.attach();
+                }
             });
             this.boundhandles = undefined;
         }
@@ -568,6 +570,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+        // If this handle is already attached no need to attach again.
+        if (channel.handle?.isAttached) {
+            return;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();

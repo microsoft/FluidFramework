@@ -36,8 +36,10 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     register(): void;
 
     /**
-     * Returns whether the given shared object is local.
+     * Returns whether the given shared object is local. It is local if either it is not attached or
+     * container is not attached to storage.
      * @returns True if the given shared object is local
+     *
      */
     isLocal(): boolean;
 
@@ -49,7 +51,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 
     /**
      * Returns whether the given shared object is attached to parent component. Parent component
-     * could itself be unattached. It does not matter if the container is live or local.
+     * should also be attached. It does not matter if the container is live or local.
      * @returns True if the given shared object is attached
      */
     isAttached(): boolean;

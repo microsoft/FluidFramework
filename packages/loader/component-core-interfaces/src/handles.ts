@@ -35,7 +35,8 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     isAttached: boolean;
 
     /**
-     * Attaches the context and any bound handles to the document.
+     * Attaches the context and any bound handles to the container. It means they are reachable from the container.
+     * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     attach(): void;
 

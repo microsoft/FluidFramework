@@ -222,6 +222,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 
     /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
 

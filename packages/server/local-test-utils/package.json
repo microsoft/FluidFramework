@@ -50,6 +50,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-container-definitions": "^0.18.0",
     "@microsoft/fluid-container-loader": "^0.18.0",
+    "@microsoft/fluid-container-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-local-driver": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
