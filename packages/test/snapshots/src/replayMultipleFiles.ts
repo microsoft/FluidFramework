@@ -23,7 +23,7 @@ export interface IWorkerArgs {
 export async function processOneFile(args: IWorkerArgs) {
     const replayArgs = new ReplayArgs();
 
-    replayArgs.verbose = false;
+    replayArgs.verbose = true;
     replayArgs.inDirName = args.folder;
     replayArgs.outDirName = args.folder;
     replayArgs.snapFreq = args.snapFreq;

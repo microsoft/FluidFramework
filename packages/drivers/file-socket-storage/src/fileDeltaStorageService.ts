@@ -16,8 +16,11 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     private lastOps: api.ISequencedDocumentMessage[] = [];
 
     constructor(private readonly path: string) {
+        console.log("path ", this.path);
         const data = fs.readFileSync(`${this.path}//messages.json`);
+        console.log("data ", data.toString("utf-8").substr(0, 50));
         this.messages = JSON.parse(data.toString("utf-8"));
+        console.log(" after messages ");
     }
 
     public async get(
