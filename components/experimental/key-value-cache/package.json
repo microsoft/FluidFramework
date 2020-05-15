@@ -12,7 +12,7 @@
     "build:compile": "npm run tsc",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",    
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run webpack:dev",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
