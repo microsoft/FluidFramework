@@ -96,7 +96,8 @@ class KeyValueLoader {
             result.data,
             config,
             {},
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
+            // TODO fix when updating packages to latest - for now cast to fix compilation error
+            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS) as any,
             hostConf,
         );
 

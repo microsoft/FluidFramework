@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../dist/bumpVersion/bumpVersion.js');
+require("../dist/bumpVersion/bumpVersion.js");

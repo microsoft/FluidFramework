@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluidpreview-intercept-reroute-server",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Lightweight express server for intercepting Fluid Preview's request for client side packages",
   "license": "MIT",
   "author": "Microsoft",
@@ -8,6 +8,7 @@
     "fluidpreview-intercept-reroute-server": "./bin/www"
   },
   "scripts": {
+    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/",
     "start": "node ./bin/www",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
