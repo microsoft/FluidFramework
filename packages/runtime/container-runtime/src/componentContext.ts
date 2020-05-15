@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { EventEmitter } from "events";
+import * as EventEmitter from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -17,15 +17,15 @@ import {
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
+import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
+    ConnectionState,
 } from "@microsoft/fluid-protocol-definitions";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
@@ -69,6 +69,7 @@ export abstract class ComponentContext extends EventEmitter implements
     IDisposable
 {
     public readonly isExperimentalComponentContext = true;
+
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }
@@ -112,8 +113,9 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.leader;
     }
 
+    // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
-        return this._containerRuntime.connectionState;
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => void {
@@ -183,20 +185,6 @@ export abstract class ComponentContext extends EventEmitter implements
             attach(componentRuntime);
             this._isAttached = true;
         };
-        // back-compat: 0.14 uploadSummary
-        this.summaryTracker.addRefreshHandler(async () => {
-            // We do not want to get the snapshot unless we have to.
-            // If the component runtime is listening on refreshBaseSummary
-            // event, then that means it is older version and requires the
-            // component context to emit this event.
-            if (this.listeners("refreshBaseSummary")?.length > 0) {
-                const subtree = await this.summaryTracker.getSnapshotTree();
-                if (subtree) {
-                    // This subtree may not yet exist in acked summary, so only emit if found.
-                    this.emit("refreshBaseSummary", subtree);
-                }
-            }
-        });
     }
 
     public dispose(): void {
@@ -322,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -330,10 +318,19 @@ export abstract class ComponentContext extends EventEmitter implements
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.changeConnectionState(value, clientId);
+        assert(this.connected === connected);
 
-        raiseConnectedEvent(this, value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(this.connectionState, clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {
@@ -468,9 +465,9 @@ export abstract class ComponentContext extends EventEmitter implements
             return;
         }
         if (leadership) {
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("notleader", this.clientId);
+            this.emit("notleader");
         }
     }
 
