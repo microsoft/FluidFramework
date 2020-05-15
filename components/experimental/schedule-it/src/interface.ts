@@ -1,8 +1,9 @@
 import {
     FluidFunctionalComponentState, FluidStateUpdateFunction, FluidSelectorFunction,
 } from "@microsoft/fluid-aqueduct-react";
-import { SharedMap } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { SharedMap, ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 
 export interface IDate {
     key: string;
@@ -88,4 +89,13 @@ export interface IViewProps {
     personDispatch?: (type: keyof IPersonReducer, ...args: any) => void,
     dateDispatch?: (type: keyof IDateReducer, ...args: any) => void,
     personFetch?: (type: keyof IPersonSelector, handle: IComponentHandle) => (any | undefined),
+}
+
+export interface ScheduleItProps {
+    root: ISharedDirectory,
+    runtime: IComponentRuntime,
+    handleMap: Map<IComponentHandle, IComponentLoadable>;
+    initialPersonState: IPersonState;
+    initialDateState: IDateState;
+    initialCommentState: ICommentState;
 }

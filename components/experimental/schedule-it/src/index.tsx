@@ -9,120 +9,28 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { ISharedDirectory, SharedMap } from "@microsoft/fluid-map";
-import { useReducerFluid } from "@microsoft/fluid-aqueduct-react";
+import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import {
     defaultComments,
     defaultPeople,
     defaultDates,
-    CommentReducer,
-    PersonReducer,
-    DateReducer,
-    PersonSelector,
-} from "./dataModel";
+} from "./data";
 import {
     IDateState,
-    ICommentReducer,
     ICommentState,
     IPersonState,
-    IPersonReducer,
-    IDateReducer,
     IPerson,
-    IPersonSelector,
+    ScheduleItProps,
 } from "./interface";
 import { PrimedContext } from "./context";
 import { ScheduleItView } from "./view";
+import { useCommentReducer, usePersonReducer, useDateReducer } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ScheduleItName = pkg.name as string;
-
-interface ScheduleItProps {
-    root: ISharedDirectory,
-    runtime: IComponentRuntime,
-    handleMap: Map<IComponentHandle, IComponentLoadable>;
-    initialPersonState: IPersonState;
-    initialDateState: IDateState;
-    initialCommentState: ICommentState;
-}
-
-function useCommentReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
-    const rootToInitialStateComments = new Map<string, keyof ICommentState>();
-    rootToInitialStateComments.set("comments", "comments");
-    const stateToRootComments = new Map<keyof ICommentState, string>();
-    stateToRootComments.set("comments", "comments");
-    const commentProps = {
-        root,
-        runtime,
-        handleMap,
-        initialState: props.initialCommentState,
-        reducer: CommentReducer,
-        selector: {},
-        rootToInitialState: rootToInitialStateComments,
-        stateToRoot: stateToRootComments,
-    };
-    return useReducerFluid<ICommentState, ICommentReducer, {}>(commentProps);
-}
-
-function usePersonReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
-    const stateToRootPerson = new Map<keyof IPersonState, string>();
-    stateToRootPerson.set("personMap", "person");
-    const personProps = {
-        root,
-        runtime,
-        handleMap,
-        initialState: props.initialPersonState,
-        reducer: PersonReducer,
-        selector: PersonSelector,
-        stateToRoot: stateToRootPerson,
-    };
-    return useReducerFluid<IPersonState, IPersonReducer, IPersonSelector>(personProps);
-}
-
-function useDateReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
-    const stateToRootDates = new Map<keyof IDateState, string>();
-    stateToRootDates.set("dateMap", "dates");
-    const dateProps = {
-        root,
-        runtime,
-        handleMap,
-        initialState: props.initialDateState,
-        reducer: DateReducer,
-        selector: {},
-        stateToRoot: stateToRootDates,
-    };
-    return useReducerFluid<IDateState, IDateReducer, {}>(dateProps);
-}
-
-function ScheduleItApp(props: ScheduleItProps) {
-    const [commentState, commentDispatch] = useCommentReducer(props);
-    const [personState, personDispatch, personFetch] = usePersonReducer(props);
-    const [dateState, dateDispatch] = useDateReducer(props);
-
-    return (
-        <div>
-            <PrimedContext.Provider
-                value={{
-                    comments: commentState.comments,
-                    commentDispatch,
-                    personMap: personState.personMap,
-                    personDispatch,
-                    personFetch,
-                    dateMap: dateState.dateMap,
-                    dateDispatch,
-                }}
-            >
-                <ScheduleItView />
-            </PrimedContext.Provider>
-        </div>
-    );
-}
 
 /**
  * ScheduleIt example using Fluid React hooks
@@ -210,6 +118,30 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             );
             return div;
         }
+    }
+
+    function ScheduleItApp(props: ScheduleItProps) {
+        const [commentState, commentDispatch] = useCommentReducer(props);
+        const [personState, personDispatch, personFetch] = usePersonReducer(props);
+        const [dateState, dateDispatch] = useDateReducer(props);
+    
+        return (
+            <div>
+                <PrimedContext.Provider
+                    value={{
+                        comments: commentState.comments,
+                        commentDispatch,
+                        personMap: personState.personMap,
+                        personDispatch,
+                        personFetch,
+                        dateMap: dateState.dateMap,
+                        dateDispatch,
+                    }}
+                >
+                    <ScheduleItView />
+                </PrimedContext.Provider>
+            </div>
+        );
     }
 
     // #endregion IComponentHTMLView
