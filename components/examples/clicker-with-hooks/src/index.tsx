@@ -1,0 +1,176 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import {
+    FluidProps,
+    FluidReducerProps,
+    FluidFunctionalComponentState,
+    useStateFluid,
+    useReducerFluid,
+    createFluidContext,
+    FluidStateUpdateFunction,
+} from "@microsoft/fluid-aqueduct-react";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const ClickerWithHooksName = pkg.name as string;
+
+// ----- REACT STUFF -----
+
+interface CounterState {
+    value: number;
+}
+
+// ---- React Functional Component w/ useState ----
+
+interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
+
+function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+    // Declare a new state variable, which we'll call "count"
+    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+
+    return (
+        <div>
+            <span
+                className="clickerWithHooks-value-class-functional"
+                id={`clickerWithHooks-functional-value-${Date.now().toString()}`}
+            >
+                {`Functional Component: ${state.value}`}
+            </span>
+            <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+        </div>
+    );
+}
+
+// ---- React Functional Component w/ useReducer ----
+
+interface IActionReducer {
+    increment:  FluidStateUpdateFunction<CounterFunctionalState>,
+}
+
+const ActionReducer: IActionReducer = {
+    increment: {
+        function: (oldState: CounterFunctionalState, dataProps, step: number) => {
+            return { value: step === undefined ? oldState.value + 1  : oldState.value + step };
+        },
+    },
+};
+
+function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctionalState, IActionReducer, {}>) {
+    // Declare a new state variable, which we'll call "count"
+    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer, {}>(props);
+
+    return (
+        <div>
+            <span
+                className="clickerWithHooks-value-class-reducer"
+                id={`clickerWithHooks-reducer-value-${Date.now().toString()}`}
+            >
+                {`Functional Reducer Component: ${state.value}`}
+            </span>
+            <button onClick={() => { dispatch("increment"); }}>+</button>
+            <button onClick={() => { dispatch("increment", 2); }}>++</button>
+        </div>
+    );
+}
+
+function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
+    const [FluidProvider, FluidConsumer, initialValue] = createFluidContext(props);
+    return (
+        <div>
+            <FluidProvider value={initialValue}>
+                <div>
+                    <FluidConsumer>
+                        {({ state, setState }) =>
+                            <div>
+                                <span
+                                    className="clickerWithHooks-value-class-context"
+                                    id={`clickerWithHooks-context-value-${Date.now().toString()}`}
+                                >
+                                    {`Context Component: ${state.value}`}
+                                </span>
+                                <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+                            </div>}
+                    </FluidConsumer>
+                </div>
+            </FluidProvider>
+        </div>
+    );
+}
+
+/**
+ * Basic ClickerWithHooks example using new interfaces and stock component classes.
+ */
+export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
+
+    /**
+     * Do setup work here
+     */
+    protected async componentInitializingFirstTime() {
+        this.root.set("counterClicksFunctional", 0);
+        this.root.set("counterClicksReducer", 0);
+        this.root.set("counterClicksContext", 0);
+    }
+
+    // #region IComponentHTMLView
+
+    /**
+     * Will return a new ClickerWithHooks view
+     */
+    public render(div: HTMLElement) {
+        const stateToRootFunctional = new Map<keyof CounterState, string>();
+        stateToRootFunctional.set("value", "counterClicksFunctional");
+
+        const stateToRootReducer = new Map<keyof CounterState, string>();
+        stateToRootReducer.set("value", "counterClicksReducer");
+
+        const stateToRootContext = new Map<keyof CounterState, string>();
+        stateToRootContext.set("value", "counterClicksContext");
+
+        ReactDOM.render(
+            <div>
+                <CounterReactFunctional
+                    root={this.root}
+                    initialState={{ value: this.root.get("counterClicksFunctional") }}
+                    stateToRoot={stateToRootFunctional}
+                />
+                <CounterReactFunctionalReducer
+                    root={this.root}
+                    runtime={this.runtime}
+                    initialState={{ value: this.root.get("counterClicksReducer") }}
+                    stateToRoot={stateToRootReducer}
+                    reducer={ActionReducer}
+                    selector={{}}
+                />
+                <CounterReactFunctionalContext
+                    root={this.root}
+                    initialState={{ value: this.root.get("counterClicksContext") }}
+                    stateToRoot={stateToRootContext}
+                />
+            </div>,
+            div,
+        );
+        return div;
+    }
+
+    // #endregion IComponentHTMLView
+}
+
+// ----- FACTORY SETUP -----
+export const ClickerWithHooksInstantiationFactory = new PrimedComponentFactory(
+    ClickerWithHooksName,
+    ClickerWithHooks,
+    [],
+    {},
+);
+export const fluidExport = ClickerWithHooksInstantiationFactory;
