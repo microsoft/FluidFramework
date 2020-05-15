@@ -148,8 +148,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
+            const version = request.headers && request.headers[LoaderHeader.version];
+            const pause = request.headers && request.headers[LoaderHeader.pause];
+
+            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+
             const onClosed = (err?: IError) => {
-                container.removeListener("closed", onClosed);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
@@ -159,14 +163,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             };
             container.on("closed", onClosed);
 
-            const version = request.headers && request.headers[LoaderHeader.version];
-            const pause = request.headers && request.headers[LoaderHeader.pause];
-
-            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
-
             container.load(version, !!pause)
-                .then((props) => {
+                .finally(() => {
                     container.removeListener("closed", onClosed);
+                })
+                .then((props) => {
                     perfEvent.end(props);
                     res(container);
                 },
@@ -622,7 +623,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * For critical errors, please call Container.close(error).
      * @param error - an error to raise
      */
-
     public raiseContainerError(error: IError) {
         this.emit("error", error);
     }
