@@ -70,8 +70,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     /**
      * Create a IDocumentService for a document
      *
-     * @param resolvedUrl the URL to the document to create IDocumentService for
-     * @param logger optional logger to use for the document service that overrides the logger given to the factory
+     * @param resolvedUrl - the URL to the document to create IDocumentService for
+     * @param logger - optional logger to use for the document service that overrides the logger given to the factory
      */
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
