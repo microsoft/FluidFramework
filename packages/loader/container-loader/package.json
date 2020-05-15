@@ -50,19 +50,20 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.17.0-0",
-    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-container-definitions": "^0.18.0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-driver-utils": "^0.18.0",
-    "@microsoft/fluid-protocol-base": "^0.1004.2",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
+    "@microsoft/fluid-protocol-base": "^0.1004.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@types/double-ended-queue": "^2.1.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.11",
-    "performance-now": "^2.1.0"
+    "performance-now": "^2.1.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
