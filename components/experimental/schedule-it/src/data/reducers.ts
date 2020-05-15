@@ -79,7 +79,7 @@ export const PersonReducer: IPersonReducer = {
     removePerson: {
         function: (state: IPersonState, dataProps, key: string) => {
             if (state.personMap.get(key) !== undefined) {
-                state.personMap.set(key, undefined);
+                state.personMap.delete(key);
             }
             return state;
         },

@@ -115,7 +115,9 @@ export const ScheduleItView = () => {
         const rows: JSX.Element[] = [];
         for (const personKey of items.keys()) {
             const item = items.get<IPerson>(personKey);
-            rows.push(onRenderRow(item, personKey));
+            if (item !== undefined) {
+                rows.push(onRenderRow(item, personKey));
+            }
         }
         return <div className="rows">{rows}</div>;
     };
