@@ -148,7 +148,7 @@ export class ProtocolOpHandler {
             branch: this.branchId,
             minimumSequenceNumber: this.minimumSequenceNumber,
             sequenceNumber: this.sequenceNumber,
-            term: this.term ?? 1,
+            term: this.term,
         };
 
         const summary: ISummaryTree = {
