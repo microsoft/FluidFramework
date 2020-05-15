@@ -4,12 +4,16 @@
 
 - [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
 - [ConsensusRegisterCollection now supports storing handles](#ConsensusRegisterCollection-now-supports-storing-handles)
+- [Summarizing errors on parent container](#Summarizing-errors-on-parent-container)
 
 ### `App Id` removed as a parameter to OdspDocumentServiceFactory
 `@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
 
 ### ConsensusRegisterCollection now supports storing handles
 ConsensusRegisterCollection will properly serialize/deserialize handles added as values.
+
+### Summarizing errors on parent container
+The parent container of the summarizing container will now raise "error" events related to summarization problems. These will be of type `ISummarizingError` and will have a description indicating either a problem creating the summarizing container, a problem generating a summary, or a nack or ack wait timeout from the server.
 
 ## 0.17 Breaking Changes
 

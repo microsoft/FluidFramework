@@ -406,7 +406,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
-            this.logContainerError(error);
+            // Some "error" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (error?.logged !== true) {
+                this.logContainerError(error);
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
