@@ -627,7 +627,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async getContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
+    public async getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse> {
         if (this.resolvedUrl === undefined) {
             return {
                 status: 400,

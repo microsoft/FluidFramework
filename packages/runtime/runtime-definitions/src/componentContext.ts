@@ -132,10 +132,10 @@ export interface IContainerRuntimeBase extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
 
     /**
-     * Get an absolute url to the container based on the provided relativeRequest.
+     * Get an absolute url for a provided container-relative request.
      * @param relativeRequest - A relative request within the container
      */
-    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 /**
@@ -352,7 +352,7 @@ export interface IComponentContext extends EventEmitter {
      * Get an absolute url to the containe rbased on the provided relativeRequest.
      * @param relativeRequest - A relative request within the container
      */
-    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 /**

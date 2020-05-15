@@ -45,7 +45,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     IComponentReactViewable {
     private text: SharedString;
     private innerIdCell: ISharedCell;
-    private _absoluteUrl: string;
+    private _absoluteUrl: string | undefined;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
@@ -100,8 +100,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                 }
             }
         });
-
-        const urlResponse = await this.context.getContainerUrl({ url: this.url });
+        const urlResponse = await this.context.getAbsoluteUrl({ url: this.url });
         if (urlResponse.status === 200) {
             this._absoluteUrl = urlResponse.value as string;
         }

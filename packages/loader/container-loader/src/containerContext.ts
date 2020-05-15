@@ -269,8 +269,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.runtime! instanceof NullRuntime;
     }
 
-    public async getContainerUrl?(relativeRequest: IRequest): Promise<IResponse> {
-        return this.container.getContainerUrl(relativeRequest);
+    public async getAbsoluteUrl?(relativeRequest: IRequest): Promise<IResponse> {
+        return this.container.getAbsoluteUrl(relativeRequest);
     }
 
     private async load() {

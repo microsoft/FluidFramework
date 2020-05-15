@@ -103,11 +103,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest): Promise<void>;
 
     /**
-     * Get an absolute url to the container based on the provided relativeRequest.
+     * Get an absolute url for a provided container-relative request.
      * @param relativeRequest - A relative request within the container
      *
      */
-    getContainerUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
 }
 
 export interface ILoader {

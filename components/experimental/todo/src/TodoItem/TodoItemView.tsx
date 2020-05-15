@@ -80,7 +80,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                         name="OpenSubComponent"
                         id={this.props.todoItemModel.absoluteUrl}
                         style={this.buttonStyle}
-                        onClick={() => window.open(this.props.todoItemModel?.absoluteUrl, "_blank")}
+                        onClick={() => window.open(this.props.todoItemModel.absoluteUrl, "_blank")}
                         hidden={this.props.todoItemModel.absoluteUrl === undefined}>↗
                     </button>
                     <button

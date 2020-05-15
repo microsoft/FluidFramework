@@ -512,8 +512,8 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
-    public async getContainerUrl(relativeRequest: IRequest): Promise<IResponse> {
-        return this._containerRuntime.getContainerUrl(relativeRequest);
+    public async getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse> {
+        return this._containerRuntime.getAbsoluteUrl(relativeRequest);
     }
 
     /**
