@@ -58,7 +58,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-gitresources": "^0.1005.0",
     "@microsoft/fluid-protocol-definitions": "^0.1005.0",
     "@microsoft/fluid-server-kafka-orderer": "^0.1005.0",
