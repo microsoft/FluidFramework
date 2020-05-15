@@ -27,7 +27,7 @@
     "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
     "@microsoft/fluid-driver-utils": "^0.18.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@microsoft/fluid-replay-driver": "^0.18.0"
   },
   "devDependencies": {
