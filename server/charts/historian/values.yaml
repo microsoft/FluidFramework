@@ -6,13 +6,13 @@ historian:
   name: historian
   image: prague.azurecr.io/historian:4049
   redis:
-    url: pesky-cat-redis
+    url: redis_url
     port: 6379
     tls: false
-  host: historian.r11s-wu2.prague.office-int.com
-  cert: wu2-tls-certificate
-  ingressClass: nginx-prod
-  riddler: http://pesky-platypus-riddler
+  host: historian_host
+  cert: historian_cert
+  ingressClass: ingress_class
+  riddler: riddler_url
 
 gitrest:
   name: gitrest
