@@ -31,6 +31,7 @@ import {
     Trace,
     LazyPromise,
     ChildLogger,
+    raiseConnectedEvent,
 } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
@@ -38,11 +39,9 @@ import {
     BlobTreeEntry,
     buildSnapshotTree,
     isSystemType,
-    raiseConnectedEvent,
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     IChunkedOp,
     IClientDetails,
     IDocumentMessage,
@@ -423,10 +422,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return runtime;
     }
 
-    public get connectionState(): ConnectionState {
-        return this.context.connectionState;
-    }
-
     public get id(): string {
         return this.context.id;
     }
@@ -534,7 +529,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private _leader = false;
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.context.connected;
     }
 
     public get leader(): boolean {
@@ -688,7 +683,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.previousState.nextSummarizerP,
             !!this.previousState.reload);
 
-        if (this.context.connectionState === ConnectionState.Connected) {
+        if (this.context.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(this.context.clientId!);
         }
@@ -798,12 +793,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        assert(this.connectionState === value);
+        assert(this.connected === connected);
 
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             // Once we are connected, all acks are accounted.
             // If there are any pending ops, DDSs will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
@@ -817,7 +812,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         for (const [component, componentContext] of this.contexts) {
             try {
-                componentContext.changeConnectionState(value, clientId);
+                componentContext.setConnectionState(connected, clientId);
             } catch (error) {
                 this.logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
@@ -827,13 +822,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        try {
-            raiseConnectedEvent(this, value, clientId);
-        } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError", clientId }, error);
-        }
+        raiseConnectedEvent(this.logger, this, connected, clientId);
 
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             assert(clientId);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(clientId!);
@@ -1558,16 +1549,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
+        assert(this.clientId);
         if (this.leader) {
             assert(this.connected && this.deltaManager && this.deltaManager.active);
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("noleader", this.clientId);
+            this.emit("notleader");
         }
 
         for (const [, context] of this.contexts) {
             context.updateLeader(this.leader);
         }
+
         if (this.leader) {
             this.runTaskAnalyzer();
         }
