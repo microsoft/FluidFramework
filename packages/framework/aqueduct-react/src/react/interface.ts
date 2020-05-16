@@ -59,3 +59,21 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B
     // Needed for nested DDS'
     handleMap?: HandleMap,
 }
+
+export interface FluidContextProps<P,S,C> extends FluidProps<P,S> {
+    reactContext: Partial<C>
+}
+
+export interface FluidContextState<S,C> {
+    state: S,
+    setState: (state: S) => void,
+    reactContext: Partial<C>
+}
+
+export interface FluidContext<S,C> {
+    Provider: React.ProviderExoticComponent<React.ProviderProps<FluidContextState<S,C>>>,
+    Consumer: React.Consumer<FluidContextState<S,C>>,
+    usePrimedContext: () => FluidContextState<S,C>,
+    state: S,
+    setState: (newState: S) => void,
+}

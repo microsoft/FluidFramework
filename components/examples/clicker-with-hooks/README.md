@@ -29,9 +29,3 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
-
-## Data model
-
-Badge uses the following distributed data structures:
-
-- SharedDirectory - root

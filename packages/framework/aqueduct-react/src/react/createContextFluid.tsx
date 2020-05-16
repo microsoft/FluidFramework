@@ -4,16 +4,18 @@
  */
 
 import * as React from "react";
-import { FluidFunctionalComponentState, FluidProps } from "./interface";
+import { FluidFunctionalComponentState, FluidContextProps, FluidContext } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 
-export function createContextFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
-[
-    React.ProviderExoticComponent<React.ProviderProps<{ state: S; setState: (newState: S) => void; }>>,
-    React.Consumer<{ state: S; setState: (newState: S) => void; }>,
-    {state: S, setState: (newState: S) => void},
-] {
+export function createContextFluid<P,S extends FluidFunctionalComponentState,C>(props: FluidContextProps<P,S,C>):
+FluidContext<S,C> {
     const [state, setState] = useStateFluid(props);
-    const FluidContext = React.createContext({ state, setState });
-    return [FluidContext.Provider, FluidContext.Consumer, { state, setState }];
+    const PrimedFluidContext = React.createContext({ state, setState, reactContext: props.reactContext });
+    return {
+        Provider: PrimedFluidContext.Provider,
+        Consumer: PrimedFluidContext.Consumer,
+        usePrimedContext: () => React.useContext(PrimedFluidContext),
+        state,
+        setState,
+    };
 }

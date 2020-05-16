@@ -84,25 +84,34 @@ function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctiona
 }
 
 function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
-    const [FluidProvider, FluidConsumer, initialValue] = createContextFluid(props);
+    const reactContext = {};
+    const { Provider, Consumer, state, setState } = createContextFluid<{}, CounterFunctionalState, {}>(
+        {
+            reactContext,
+            ...props,
+        },
+    );
     return (
         <div>
-            <FluidProvider value={initialValue}>
+            <Provider value={{ state, setState, reactContext }}>
                 <div>
-                    <FluidConsumer>
-                        {({ state, setState }) =>
+                    <Consumer>
+                        {(context) =>
                             <div>
                                 <span
                                     className="clickerWithHooks-value-class-context"
                                     id={`clickerWithHooks-context-value-${Date.now().toString()}`}
                                 >
-                                    {`Context Component: ${state.value}`}
+                                    {`Context Component: ${context.state.value}`}
                                 </span>
-                                <button onClick={() => { setState({ ...state, value: state.value + 1 }); }}>+</button>
+                                <button
+                                    onClick={() => { context.setState({ ...state, value: context.state.value + 1 }); }}
+                                >{"+"}
+                                </button>
                             </div>}
-                    </FluidConsumer>
+                    </Consumer>
                 </div>
-            </FluidProvider>
+            </Provider>
         </div>
     );
 }
