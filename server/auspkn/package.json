@@ -2,10 +2,10 @@
   "name": "@fluid-internal/auspkn",
   "version": "0.1.0",
   "description": "Unpkg like implementation that works with historian",
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/www.js",
-  "repository": "https://github.com/microsoft/FluidFramework",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
     "start": "node dist/www.js",
