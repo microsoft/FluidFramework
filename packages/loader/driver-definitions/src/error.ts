@@ -72,6 +72,10 @@ export interface ISummarizingError {
     readonly errorType: ErrorType.summarizingError;
     readonly description: string;
     critical?: boolean;
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     */
+    readonly logged?: boolean;
 }
 
 export interface IWriteError {

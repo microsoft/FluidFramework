@@ -6,7 +6,6 @@
 import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
@@ -54,14 +53,14 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel.isRegistered();
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
         if (!this.attached) {
             return;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.connection!.setConnectionState(value);
+        this.connection!.setConnectionState(connected);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
@@ -86,7 +85,7 @@ export class LocalChannelContext implements IChannelContext {
 
         const services = createServiceEndpoints(
             this.channel.id,
-            this.componentContext.connectionState,
+            this.componentContext.connected,
             this.submitFn,
             this.dirtyFn,
             this.storageService);
