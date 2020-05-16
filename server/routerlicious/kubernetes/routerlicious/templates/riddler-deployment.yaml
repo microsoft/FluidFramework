@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "riddler.fullname" . }}
@@ -9,6 +9,9 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "routerlicious.name" . }}
   replicas: {{ .Values.riddler.replicas }}
   template:
     metadata:
@@ -28,7 +31,7 @@ spec:
           containerPort: 5000
         command:
           - 'node'
-          - 'dist/riddler/www.js'
+          - 'packages/routerlicious/dist/riddler/www.js'
         env:
         - name: DEBUG
           value: "fluid:*"
@@ -36,7 +39,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/server/routerlicious/packages/routerlicious/config/config.json
+          mountPath: /usr/src/server/packages/routerlicious/config/config.json
           subPath: config.json
       dnsConfig:
         options:
