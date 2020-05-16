@@ -70,7 +70,7 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A, B>(
                 `Action with key ${action} does not
                  exist in the reducers provided`);
         }
-    }, [reducer, state, setState, runtime, handleMap]);
+    }, [selector, state, setState, runtime, handleMap]);
 
     return [state, combinedReducer, combinedSelector];
 }
