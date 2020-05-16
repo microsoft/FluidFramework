@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { useReducerFluid } from "@microsoft/fluid-aqueduct-react";
+import { useReducerFluid, FluidReducerProps } from "@microsoft/fluid-aqueduct-react";
 import {
     CommentReducer,
     PersonReducer,
@@ -27,18 +27,15 @@ export const DatesRootKey = "dates";
 
 export function useCommentReducer(props: ScheduleItProps) {
     const { handleMap, root, runtime } = props;
-    const rootToInitialStateComments = new Map<string, keyof ICommentState>();
-    rootToInitialStateComments.set("comments", "comments");
     const stateToRootComments = new Map<keyof ICommentState, string>();
     stateToRootComments.set("comments", "comments");
-    const commentProps = {
+    const commentProps: FluidReducerProps<ICommentState, ICommentReducer, {}> = {
         root,
         runtime,
         handleMap,
         initialState: props.initialCommentState,
         reducer: CommentReducer,
         selector: {},
-        rootToInitialState: rootToInitialStateComments,
         stateToRoot: stateToRootComments,
     };
     return useReducerFluid<ICommentState, ICommentReducer, {}>(commentProps);
@@ -47,8 +44,8 @@ export function useCommentReducer(props: ScheduleItProps) {
 export function usePersonReducer(props: ScheduleItProps) {
     const { handleMap, root, runtime } = props;
     const stateToRootPerson = new Map<keyof IPersonState, string>();
-    stateToRootPerson.set("personMap", "person");
-    const personProps = {
+    stateToRootPerson.set("personMap", PeopleRootKey);
+    const personProps: FluidReducerProps<IPersonState, IPersonReducer, IPersonSelector> = {
         root,
         runtime,
         handleMap,
@@ -63,8 +60,8 @@ export function usePersonReducer(props: ScheduleItProps) {
 export function useDateReducer(props: ScheduleItProps) {
     const { handleMap, root, runtime } = props;
     const stateToRootDates = new Map<keyof IDateState, string>();
-    stateToRootDates.set("dateMap", "dates");
-    const dateProps = {
+    stateToRootDates.set("dateMap", DatesRootKey);
+    const dateProps: FluidReducerProps<IDateState, IDateReducer, {}> = {
         root,
         runtime,
         handleMap,
