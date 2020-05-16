@@ -152,9 +152,10 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
 
 class SummarizingError extends ErrorWithProps implements ISummarizingError {
     readonly errorType = ErrorType.summarizingError;
+    readonly canRetry = true;
 
-    constructor(readonly description: string, readonly logged: boolean = false) {
-        super(description);
+    constructor(readonly errorMessage: string, readonly logged: boolean = false) {
+        super(errorMessage);
     }
 }
 
