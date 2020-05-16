@@ -29,16 +29,18 @@ export function useReducerFluid<S extends FluidFunctionalComponentState, A, B>(
         initialState,
     } = props;
 
+    const handleMapDefined =  handleMap ?? new Map();
+
     const [state, setState] = useStateFluid<{},S>({
         root,
         initialState,
         stateToRoot,
-        handleMap,
+        handleMap: handleMapDefined,
     });
 
     const combinedReducer = React.useCallback((type: keyof A, ...args: any) => {
         const action =  reducer[(type)];
-        const dataProps: IFluidDataProps = { runtime, handleMap: handleMap ?? new Map() };
+        const dataProps: IFluidDataProps = { runtime, handleMap: handleMapDefined };
         if (action && instanceOfStateUpdateFunction(action)) {
             const result = (action.function as any)(state, dataProps, ...args);
             setState(result);

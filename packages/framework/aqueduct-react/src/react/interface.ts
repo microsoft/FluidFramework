@@ -56,7 +56,8 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B
     reducer: A,
     selector: B,
     stateToRoot?: Map<keyof S, string>,
-    // Needed for nested DDS'
+    // Required for nested DDS', can be empty or pre-loaded but it needs to be constructed
+    // if nested components will be used
     handleMap?: HandleMap,
 }
 

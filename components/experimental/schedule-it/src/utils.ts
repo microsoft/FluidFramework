@@ -21,6 +21,10 @@ import {
     ScheduleItProps,
 } from "./interface";
 
+export const CommentsRootKey = "comments";
+export const PeopleRootKey = "people";
+export const DatesRootKey = "dates";
+
 export function useCommentReducer(props: ScheduleItProps) {
     const { handleMap, root, runtime } = props;
     const rootToInitialStateComments = new Map<string, keyof ICommentState>();

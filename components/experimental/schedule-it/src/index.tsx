@@ -26,7 +26,14 @@ import {
 } from "./interface";
 import { PrimedContext } from "./context";
 import { ScheduleItView } from "./view";
-import { useCommentReducer, usePersonReducer, useDateReducer } from "./utils";
+import {
+    useCommentReducer,
+    usePersonReducer,
+    useDateReducer,
+    CommentsRootKey,
+    DatesRootKey,
+    PeopleRootKey,
+} from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -49,7 +56,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("comments", defaultComments);
+        this.root.set(CommentsRootKey, defaultComments);
         this._initialCommentState = { comments: defaultComments };
 
         const personMap = SharedMap.create(this.runtime);
@@ -66,23 +73,25 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             personMap.set(key, newPerson);
             // Optional Step: You can preload the nested components before initial render,
             // but you can also pass an empty handle map to allow them to be dynamically loaded in on fetch
+            // The only requirement is that a Map (empty or otherwise) be constructed and passed in if there
+            // are nested DDS'
             this._handleMap.set(newAvailabilityMap.handle, newAvailabilityMap);
         });
-        this.root.set("person", personMap.handle);
+        this.root.set(PeopleRootKey, personMap.handle);
         this._initialPersonState = { personMap };
 
         const dateMap = SharedMap.create(this.runtime);
         Object.entries(defaultDates).forEach(([key, defaultDate], i) => {
             dateMap.set(key, defaultDate);
         });
-        this.root.set("dates", dateMap.handle);
+        this.root.set(DatesRootKey, dateMap.handle);
         this._initialDateState = { dateMap };
     }
 
     protected async componentInitializingFromExisting() {
-        this._initialCommentState = { comments: this.root.get("comments") };
+        this._initialCommentState = { comments: this.root.get(CommentsRootKey) };
 
-        const personMap = await this.root.get<IComponentHandle<SharedMap>>("person").get();
+        const personMap = await this.root.get<IComponentHandle<SharedMap>>(PeopleRootKey).get();
         this._initialPersonState = { personMap };
         for (const key of personMap.keys()) {
             const person = personMap.get<IPerson>(key);
@@ -90,7 +99,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             this._handleMap.set(person.availabilityMapHandle, availabilityMap);
         }
 
-        this._initialDateState = { dateMap: await this.root.get<IComponentHandle<SharedMap>>("dates").get() };
+        this._initialDateState = { dateMap: await this.root.get<IComponentHandle<SharedMap>>(DatesRootKey).get() };
     }
 
     // #region IComponentHTMLView
