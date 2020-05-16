@@ -213,8 +213,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.version;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
-        return this.connection!.details.serviceConfiguration;
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
+        return this.connection ? this.connection.details.serviceConfiguration : undefined;
+    }
+
+    public get scopes(): string[] | undefined {
+        return this.connection ? this.connection.details.claims.scopes : undefined;
     }
 
     public get active(): boolean {

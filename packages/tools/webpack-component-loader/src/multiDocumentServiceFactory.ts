@@ -24,7 +24,6 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         new OdspDocumentServiceFactory(
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
-            { send: () => { return; } },
             undefined,
             undefined,
             undefined,

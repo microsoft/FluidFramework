@@ -98,10 +98,8 @@ export function create(store: nconf.Provider): Router {
         }
 
         const contents = await fetchFile(
-            packageDetails.name,
-            fetchVersion,
+            fetchVersionDetails,
             packageDetails.path,
-            npmUrl,
             auth.username,
             auth.password);
 

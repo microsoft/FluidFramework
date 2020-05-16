@@ -24,7 +24,6 @@
     "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
   },
@@ -36,7 +35,7 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-common-utils": "^0.17.0",
+    "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-webpack-component-loader": "^0.18.0",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

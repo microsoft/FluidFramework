@@ -51,11 +51,32 @@ In order to get an access token navigate to https://offnet.visualstudio.com/offi
 Then choose NPM and then follow the steps in the "Other" tab. Then store the base64 encoded token in a `NPM_TOKEN`
 environment variable. Be sure to choose the correct permissions for the personal access token.
 
+In Powershell
+```
+[System.Environment]::SetEnvironmentVariable('NPM_TOKEN','[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]',[System.EnvironmentVariableTarget]::User)
+```
+
+In Bash
+```
+$EDITOR ~/.profile
+```
+Add the following line at the bottom of the file 
+```
+     export NPM_TOKEN=[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]
+```
+
 ### Development
 
 Docker is the preferred method of development. To build the service simply type:
 
-`docker-compose build --build-arg NPM_TOKEN=${NPM_TOKEN}`
+In Powershell
+```
+docker-compose build --build-arg NPM_TOKEN=$env:NPM_TOKEN
+```
+In Bash
+```
+docker-compose build --build-arg NPM_TOKEN=$NPM_TOKEN
+```
 
 And to run
 

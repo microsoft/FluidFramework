@@ -15,6 +15,7 @@ import {
     IThrottlingError,
     IWriteError,
     ErrorType,
+    ISummarizingError,
 } from "@microsoft/fluid-driver-definitions";
 
 class ErrorWithProps extends Error {
@@ -149,6 +150,14 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
     }
 }
 
+class SummarizingError extends ErrorWithProps implements ISummarizingError {
+    readonly errorType = ErrorType.summarizingError;
+
+    constructor(readonly description: string, readonly logged: boolean = false) {
+        super(description);
+    }
+}
+
 /**
  * Write error class - When attempting to write, without proper permissions
  */
@@ -217,3 +226,6 @@ export const createWriteError =
     (errorMessage: string) => new WriteError(errorMessage) as IError;
 export const createFatalError =
     (errorMessage: string, canRetry: boolean) => new FatalError(errorMessage, canRetry) as IError;
+
+export const createSummarizingError =
+    (details: string, logged?: boolean) => (new SummarizingError(details, logged) as IError);
