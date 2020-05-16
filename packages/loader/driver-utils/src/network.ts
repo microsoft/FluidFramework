@@ -6,10 +6,10 @@
 import * as assert from "assert";
 import {
     IError,
-    IGenericNetworkError,
     IAuthorizationError,
     IFileNotFoundOrAccessDeniedError,
-    IFatalError,
+    IGenericNetworkError,
+    IOfflineError,
     IOutOfStorageError,
     IInvalidFileNameError,
     IThrottlingError,
@@ -36,8 +36,10 @@ export enum OnlineStatus {
     Unknown,
 }
 
+export const offlineFetchFailureStatusCode: number = 709;
+export const fetchFailureStatusCode: number = 710;
 // Status code for invalid file name error in odsp driver.
-export const invalidFileNameErrorCode: number = 710;
+export const invalidFileNameErrorCode: number = 711;
 
 // It tells if we have local connection only - we might not have connection to web.
 // No solution for node.js (other than resolve dns names / ping specific sites)
@@ -51,16 +53,15 @@ export function isOnline(): OnlineStatus {
 }
 
 /**
- * Network error error class - used to communicate general network errors
+ * Generic network error class.
  */
 class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError {
-    readonly errorType: ErrorType.genericNetworkError = ErrorType.genericNetworkError;
+    readonly errorType = ErrorType.genericNetworkError;
 
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
         readonly statusCode?: number,
-        readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
     }
@@ -77,7 +78,6 @@ class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
     }
@@ -94,7 +94,6 @@ class FileNotFoundOrAccessDeniedError extends ErrorWithProps implements IFileNot
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
     }
@@ -110,7 +109,6 @@ class OutOfStorageError extends ErrorWithProps implements IOutOfStorageError {
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
         assert(!canRetry);
@@ -127,7 +125,6 @@ class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameErr
     constructor(
         errorMessage: string,
         readonly canRetry: boolean,
-        readonly online: string = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
         assert(!canRetry);
@@ -174,8 +171,8 @@ class WriteError extends ErrorWithProps implements IWriteError {
 /**
  * Fatal error class - when the server encountered a fatal error
  */
-class FatalError extends ErrorWithProps implements IFatalError {
-    readonly errorType = ErrorType.fatalError;
+class OfflineError extends ErrorWithProps implements IOfflineError {
+    readonly errorType = ErrorType.offlineError;
 
     constructor(
         errorMessage: string,
@@ -185,48 +182,63 @@ class FatalError extends ErrorWithProps implements IFatalError {
     }
 }
 
+export const createWriteError =
+    (errorMessage: string) => new WriteError(errorMessage) as IError;
+
+export function createGenericNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    retryAfterSeconds?: number,
+    statusCode?: number)
+{
+    let error: IError;
+    if (retryAfterSeconds !== undefined && canRetry) {
+        error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
+    }
+    else {
+        error = new GenericNetworkError(errorMessage, canRetry, statusCode);
+    }
+    return error;
+}
+
+export const createSummarizingError =
+    (details: string, logged?: boolean) => (new SummarizingError(details, logged) as IError);
+
 export function createNetworkError(
     errorMessage: string,
     canRetry: boolean,
     statusCode?: number,
     retryAfterSeconds?: number,
-    online: string = OnlineStatus[isOnline()],
 ): IError {
     let error: IError;
 
     switch (statusCode) {
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, canRetry, online);
+            error = new AuthorizationError(errorMessage, canRetry);
             break;
         case 404:
-            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry, online);
+            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry);
             break;
         case 500:
-            error = new FatalError(errorMessage, canRetry);
+            error = new GenericNetworkError(errorMessage, canRetry);
             break;
         case 507:
-            error = new OutOfStorageError(errorMessage, canRetry, online);
+            error = new OutOfStorageError(errorMessage, canRetry);
             break;
         case 414:
         case invalidFileNameErrorCode:
-            error = new InvalidFileNameError(errorMessage, canRetry, online);
+            error = new InvalidFileNameError(errorMessage, canRetry);
             break;
+        case offlineFetchFailureStatusCode:
+            error = new OfflineError(errorMessage, canRetry);
+            break;
+
+        case fetchFailureStatusCode:
         default:
-            if (retryAfterSeconds !== undefined && canRetry) {
-                error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
-            } else {
-                error = new GenericNetworkError(errorMessage, canRetry, statusCode, online);
-            }
+            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
     }
 
+    (error as any).online = OnlineStatus[isOnline()];
     return error;
 }
-
-export const createWriteError =
-    (errorMessage: string) => new WriteError(errorMessage) as IError;
-export const createFatalError =
-    (errorMessage: string, canRetry: boolean) => new FatalError(errorMessage, canRetry) as IError;
-
-export const createSummarizingError =
-    (details: string, logged?: boolean) => (new SummarizingError(details, logged) as IError);

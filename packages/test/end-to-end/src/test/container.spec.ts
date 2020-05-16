@@ -9,7 +9,7 @@ import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, ConnectionState, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
-    IGeneralError,
+    IGenericError,
     ErrorType,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
@@ -94,7 +94,7 @@ describe("Container", () => {
                 testResolver);
             assert.fail("Error expected");
         } catch (error) {
-            const err = error as IGeneralError;
+            const err = error as IGenericError;
             success = err.error as boolean;
         }
         assert.strictEqual(success, false);
@@ -125,9 +125,9 @@ describe("Container", () => {
                 testResolver);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ErrorType.generalError, "Error is not a general error");
-            const generalError = error as IGeneralError;
-            success = generalError.error as boolean;
+            assert.strictEqual(error.errorType, ErrorType.genericError, "Error is not a general error");
+            const genericError = error as IGenericError;
+            success = genericError.error as boolean;
         }
         assert.strictEqual(success, false);
     });

@@ -8,64 +8,60 @@ export enum ErrorType {
     /**
      * Some error, most likely an exception caught by runtime and propagated to container as critical error
      */
-    generalError,
+    genericError,
 
     /**
-    // Some non-categorized (below) networking error
+     * Some non-categorized (below) networking error
+     * Include errors like  fatal server error (usually 500).
      */
     genericNetworkError,
 
     /**
-    // Access denied - user does not have enough privileges to open a file, or continue to operate on a file
+     * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
      */
     authorizationError,
 
     /**
-    // File not found, or file deleted during session
+     * File not found, or file deleted during session
      */
     fileNotFoundOrAccessDeniedError,
 
     /**
-    * Storage is out of space
+     * Storage is out of space
      */
     outOfStorageError,
 
     /**
-    * Invalid file name (at creation of the file)
+     * Invalid file name (at creation of the file)
      */
     invalidFileNameError,
 
     /**
-    * Throttling error from server. Server is busy and is asking not to reconnect for some time
+     * Throttling error from server. Server is busy and is asking not to reconnect for some time
      */
     throttlingError,
 
     /**
-    * Service error. Not used
-     */
-    serviceError,
-
-    /**
-    * Summarizing error. Currently raised on summarizing container only.
-    * Work is planned to propagate these errors to main container.
+     * Summarizing error. Currently raised on summarizing container only.
+     * Work is planned to propagate these errors to main container.
      */
     summarizingError,
 
     /**
-    * User does not have write permissions to a file, but is changing content of a file.
-    * That might be indication of some component error - components should not generate ops in readonly mode.
+     * User does not have write permissions to a file, but is changing content of a file.
+     * That might be indication of some component error - components should not generate ops in readonly mode.
      */
     writeError,
 
     /**
-    * Some fatal server error (usually 500).
+     * We can not reach server due to computer being offline.
      */
-    fatalError,
+    offlineError,
 }
 
-export type IError = IGeneralError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
-IGenericNetworkError | IAuthorizationError | IFileNotFoundOrAccessDeniedError |
-IServiceError | ISummarizingError | IWriteError | IFatalError;
+export type IError = IGenericError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
+IAuthorizationError | IFileNotFoundOrAccessDeniedError |
+ISummarizingError | IWriteError | IGenericNetworkError | IOfflineError;
 
 export interface IErrorBase {
     readonly errorType: ErrorType;
@@ -74,8 +70,8 @@ export interface IErrorBase {
     readonly online?: string;
 }
 
-export interface IGeneralError extends IErrorBase {
-    readonly errorType: ErrorType.generalError;
+export interface IGenericError extends IErrorBase {
+    readonly errorType: ErrorType.genericError;
     error: any;
 }
 
@@ -105,10 +101,6 @@ export interface IInvalidFileNameError extends IErrorBase {
     readonly errorType: ErrorType.invalidFileNameError;
 }
 
-export interface IServiceError extends IErrorBase {
-    readonly errorType: ErrorType.serviceError;
-}
-
 export interface ISummarizingError extends IErrorBase {
     readonly errorType: ErrorType.summarizingError;
     /**
@@ -121,6 +113,6 @@ export interface IWriteError extends IErrorBase {
     readonly errorType: ErrorType.writeError;
 }
 
-export interface IFatalError extends IErrorBase {
-    readonly errorType: ErrorType.fatalError;
+export interface IOfflineError extends IErrorBase {
+    readonly errorType: ErrorType.offlineError;
 }

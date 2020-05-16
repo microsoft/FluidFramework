@@ -72,7 +72,7 @@ describe("Errors Types", () => {
 
             assert.fail("Error expected");
         } catch (error) {
-            assert.equal(error.errorType, ErrorType.generalError, "Error should be a generalError");
+            assert.equal(error.errorType, ErrorType.genericError, "Error should be a genericError");
         }
     });
 
@@ -107,15 +107,27 @@ describe("Errors Types", () => {
             "Test Message",
             true /* canRetry */,
             400 /* statusCode */,
-            undefined /* retryAfterSeconds */,
-            "foo" /* online */);
+            undefined /* retryAfterSeconds */);
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("Error should be a genericNetworkError");
         }
         else {
             assert.equal(networkError.canRetry, true, "canRetry should be preserved");
             assert.equal(networkError.statusCode, 400, "status code should be preserved");
-            assert.equal(networkError.online, "foo", "online status should be preserved");
+        }
+    });
+
+    it("GenericNetworkError Test", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /* canRetry */,
+            500 /* statusCode */);
+        assertCustomPropertySupport(networkError);
+        if (networkError.errorType !== ErrorType.genericNetworkError) {
+            assert.fail("Error should be a genericNetworkError");
+        }
+        else {
+            assert.equal(networkError.canRetry, false, "Error should be critical");
         }
     });
 
@@ -187,20 +199,6 @@ describe("Errors Types", () => {
         assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
             "Error should be an InvalidFileNameError");
         assertCustomPropertySupport(networkError);
-    });
-
-    it("FatalError Test", async () => {
-        const networkError = createNetworkError(
-            "Test Message",
-            false /* canRetry */,
-            500 /* statusCode */);
-        assertCustomPropertySupport(networkError);
-        if (networkError.errorType !== ErrorType.fatalError) {
-            assert.fail("Error should be a fatalError");
-        }
-        else {
-            assert.equal(networkError.canRetry, false, "Error should be critical");
-        }
     });
 
     it("ThrottlingError Test", async () => {
