@@ -53,7 +53,10 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     initialState: S,
+    // All data mutation should be done in reducers
     reducer: A,
+    // Any local objects can be fetched directly,
+    // any Fluid components need to use a selector to be synchronously fetched
     selector: B,
     stateToRoot?: Map<keyof S, string>,
     // Required for nested DDS', can be empty or pre-loaded but it needs to be constructed
