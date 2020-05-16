@@ -6,13 +6,13 @@ historian:
   name: historian
   image: prague.azurecr.io/historian:4049
   redis:
-    url: lumpy-condor-redis
+    url: pesky-cat-redis
     port: 6379
     tls: false
-  host: historian.wu2.prague.office-int.com
+  host: historian.r11s-wu2.prague.office-int.com
   cert: wu2-tls-certificate
   ingressClass: nginx-prod
-  riddler: http://wiggly-wombat-riddler
+  riddler: http://pesky-platypus-riddler
 
 gitrest:
   name: gitrest
@@ -20,7 +20,7 @@ gitrest:
   mode: latest
   persistence:
     storageClass: managed-premium
-    size: 1024Gi
+    size: 4094Gi
     accessMode: ReadWriteOnce
 
 gitssh:
