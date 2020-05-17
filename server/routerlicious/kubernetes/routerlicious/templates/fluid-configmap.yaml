@@ -176,12 +176,5 @@ data:
             {{- range $i, $tenant := .Values.riddler.tenants }}
             {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
             {{- end }}
-        ],
-        "metric": {
-            "client": "",
-            "telegraf": {
-                "host": "polling-telegraf-service.metric",
-                "port": 8094
-            }
-        }
+        ]
     }
