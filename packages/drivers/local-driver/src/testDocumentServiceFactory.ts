@@ -64,6 +64,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             id,
             appSummary,
             sequenceNumber,
+            documentAttributes.term,
             quorumValues,
         );
         return this.createDocumentService(resolvedUrl, logger);
