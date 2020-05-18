@@ -6,7 +6,6 @@
 import * as assert from "assert";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
@@ -167,7 +166,7 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                new SnapshotTreeHolder(snapshotTree),
+                Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
@@ -199,7 +198,7 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                new SnapshotTreeHolder(snapshotTree),
+                Promise.resolve(snapshotTree),
                 containerRuntime,
                 new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,

@@ -4,19 +4,36 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
+import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {
+    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
+        for (const path in tree.trees) {
+            ChannelStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
+        }
+
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
+        for (const blob in tree.blobs) {
+            results[`${base}${blob}`] = tree.blobs[blob];
+        }
+    }
+
     private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
 
     constructor(
-        tree: SnapshotTreeHolder | undefined,
+        tree: Promise<ISnapshotTree> | undefined,
         private readonly storage: IDocumentStorageService,
         private readonly extraBlobs?: Promise<Map<string, string>>,
     ) {
+        // Create a map from paths to blobs
         if (tree !== undefined) {
-            this.flattenedTreeP = tree.getFlattenedTree();
+            const flattenedTree: { [path: string]: string } = {};
+            this.flattenedTreeP = tree.then((snapshotTree) => {
+                ChannelStorageService.flattenTree("", snapshotTree, flattenedTree);
+                return flattenedTree;
+            });
         } else {
             this.flattenedTreeP = Promise.resolve({});
         }

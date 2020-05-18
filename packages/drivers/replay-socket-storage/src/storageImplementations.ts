@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree, buildSnapshotTreeAsync, SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTreeAsync } from "@microsoft/fluid-protocol-base";
 import {
     IClient,
     ISnapshotTree,
@@ -35,8 +35,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected docTreeHolder: SnapshotTreeHolder;
-    protected blobs: Promise<Map<string, string>>;
+    protected docTreeP: Promise<ISnapshotTree>;
+    protected blobsP: Promise<Map<string, string>>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
@@ -44,9 +44,9 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         super();
         this.commits = json.commits;
 
-        const treeHolderAndMap = buildSnapshotTree(json.tree.entries);
-        this.docTreeHolder = treeHolderAndMap.treeHolder;
-        this.blobs = treeHolderAndMap.blobMap;
+        const blobs = new Map<string, string>();
+        this.docTreeP = buildSnapshotTreeAsync(json.tree.entries, blobs);
+        this.blobsP = this.docTreeP.then((docTree) => { return blobs; });
     }
 
     public async getVersions(
@@ -65,7 +65,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
         if (!versionRequested || versionRequested.id === "latest") {
-            return this.docTreeHolder.snapshotTree;
+            return this.docTreeP;
         }
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
@@ -78,15 +78,15 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            const blobMap = await this.blobs;
+            const blobMap = await this.blobsP;
             this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTreeAsync(tree.entries, blobMap);
-            this.blobs = Promise.resolve(blobMap);
+            this.blobsP = Promise.resolve(blobMap);
         }
         return snapshotTree;
     }
 
     public async read(blobId: string): Promise<string> {
-        const blob = (await this.blobs).get(blobId);
+        const blob = (await this.blobsP).get(blobId);
         if (blob !== undefined) {
             return blob;
         }

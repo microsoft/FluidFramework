@@ -24,9 +24,8 @@ import {
     Deferred,
 } from "@microsoft/fluid-common-utils";
 import {
-    buildSnapshotTree,
+    buildSnapshotTreeAsync,
     raiseConnectedEvent,
-    SnapshotTreeHolder,
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
@@ -187,7 +186,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     (type, content) => this.submit(type, content),
                     (address: string) => this.setChannelDirty(address),
                     path,
-                    new SnapshotTreeHolder(tree.trees[path]),
+                    tree.trees[path],
                     this.sharedObjectRegistry,
                     undefined /* extraBlobs */,
                     componentContext.branch,
@@ -459,7 +458,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     // Create storage service that wraps the attach data
                     const origin = message.origin?.id ?? this.documentId;
 
-                    const treeHolderAndMap = buildSnapshotTree(attachMessage.snapshot.entries);
+                    const flatBlobs = new Map<string, string>();
+                    const snapshotTreeP = buildSnapshotTreeAsync(attachMessage.snapshot.entries, flatBlobs);
+                    const flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
@@ -468,9 +469,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         (type, content) => this.submit(type, content),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
-                        treeHolderAndMap.treeHolder,
+                        snapshotTreeP,
                         this.sharedObjectRegistry,
-                        treeHolderAndMap.blobMap,
+                        flatBlobsP,
                         origin,
                         this.componentContext.summaryTracker.createOrGetChild(
                             attachMessage.id,

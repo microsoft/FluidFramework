@@ -37,10 +37,9 @@ import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/flu
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
-    buildSnapshotTree,
+    buildSnapshotTreeAsync,
     isSystemType,
     raiseConnectedEvent,
-    SnapshotTreeHolder,
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
@@ -635,7 +634,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
                 key,
-                typeof value === "string" ? value : new SnapshotTreeHolder(value),
+                typeof value === "string" ? value : Promise.resolve(value),
                 this,
                 this.storage,
                 this.containerScope,
@@ -1149,21 +1148,19 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 }
 
                 const attachMessage = message.contents as IAttachMessage;
-                let flatBlobs: Promise<Map<string, string>> | undefined;
-                let treeHolder: SnapshotTreeHolder | null = null;
+                const flatBlobs = new Map<string, string>();
+                let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
-                    const treeHolderAndMap = buildSnapshotTree(attachMessage.snapshot.entries);
-                    treeHolder = treeHolderAndMap.treeHolder;
-                    flatBlobs = treeHolderAndMap.blobMap;
+                    snapshotTreeP = buildSnapshotTreeAsync(attachMessage.snapshot.entries, flatBlobs);
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
-                    treeHolder,
+                    snapshotTreeP,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs ?? new Map()),
+                    new BlobCacheStorageService(this.storage, flatBlobs),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);

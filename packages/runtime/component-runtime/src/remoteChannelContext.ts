@@ -6,10 +6,10 @@
 import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -43,7 +43,7 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (type: MessageType, content: any) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: SnapshotTreeHolder,
+        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
@@ -56,7 +56,7 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            baseSnapshot,
+            Promise.resolve(baseSnapshot),
             extraBlobs);
     }
 

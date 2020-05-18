@@ -17,7 +17,7 @@ import {
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry, raiseConnectedEvent, SnapshotTreeHolder } from "@microsoft/fluid-protocol-base";
+import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IDocumentMessage,
@@ -565,7 +565,7 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: SnapshotTreeHolder | string | null,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -601,9 +601,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.initSnapshotValue
-                    ? await this.initSnapshotValue.snapshotTree
-                    : null;
+                tree = await this.initSnapshotValue;
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {
