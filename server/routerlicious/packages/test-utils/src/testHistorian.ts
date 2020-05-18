@@ -130,7 +130,8 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        const val = await this.refs.findOne({ _id: ref });
+        const _id = ref.startsWith("refs/") ? ref.substr(5) : ref;
+        const val = await this.refs.findOne({ _id });
         if (val) {
             return {
                 ref: val.value.ref,
@@ -143,15 +144,17 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        await this.refs.insertOne({ _id: params.ref, value: params });
+        const _id = params.ref.startsWith("refs/") ? params.ref.substr(5) : params.ref;
+        await this.refs.insertOne({ _id, value: params });
         return this.getRef(params.ref);
     }
 
     public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+        const _id = ref.startsWith("refs/") ? ref.substr(5) : ref;
         if (params.force) {
-            await this.refs.upsert({ _id: ref }, { sha: params.sha, ref }, {});
+            await this.refs.upsert({ _id }, { sha: params.sha, ref }, {});
         } else {
-            await this.refs.update({ _id: ref }, { sha: params.sha, ref }, {});
+            await this.refs.update({ _id }, { sha: params.sha, ref }, {});
         }
         return this.getRef(ref);
     }
