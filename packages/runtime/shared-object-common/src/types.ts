@@ -48,6 +48,13 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isRegistered(): boolean;
 
     /**
+     * Returns whether the given shared object is attached to parent component. Parent component
+     * should also be attached. It does not matter if the container is live or local.
+     * @returns True if the given shared object is attached
+     */
+    isAttached(): boolean;
+
+    /**
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object
      */
