@@ -37,7 +37,7 @@ import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/flu
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
-    buildSnapshotTreeAsync,
+    buildSnapshotTree,
     isSystemType,
     raiseConnectedEvent,
     TreeTreeEntry,
@@ -1151,7 +1151,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 const flatBlobs = new Map<string, string>();
                 let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
-                    snapshotTreeP = buildSnapshotTreeAsync(attachMessage.snapshot.entries, flatBlobs);
+                    snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                 }
 
                 // Include the type of attach message which is the pkg of the component to be

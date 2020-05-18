@@ -52,7 +52,7 @@ import {
     combineAppAndProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
 import {
-    buildSnapshotTreeAsync,
+    buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
@@ -642,7 +642,7 @@ export class Container
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot) {
-            snapshot = await buildSnapshotTreeAsync(previousContextState.snapshot.entries, blobs);
+            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         if (blobs.size > 0) {

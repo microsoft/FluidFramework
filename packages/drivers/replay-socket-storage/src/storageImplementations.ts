@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTreeAsync } from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
 import {
     IClient,
     ISnapshotTree,
@@ -45,7 +45,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         this.commits = json.commits;
 
         const blobs = new Map<string, string>();
-        this.docTreeP = buildSnapshotTreeAsync(json.tree.entries, blobs);
+        this.docTreeP = buildSnapshotTree(json.tree.entries, blobs);
         this.blobsP = this.docTreeP.then((docTree) => { return blobs; });
     }
 
@@ -79,7 +79,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
             }
 
             const blobMap = await this.blobsP;
-            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTreeAsync(tree.entries, blobMap);
+            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTree(tree.entries, blobMap);
             this.blobsP = Promise.resolve(blobMap);
         }
         return snapshotTree;
