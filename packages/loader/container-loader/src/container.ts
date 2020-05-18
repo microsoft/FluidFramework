@@ -56,7 +56,6 @@ import {
     QuorumProxy,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState as ConnectionStateToBeDeleted, // deprecated, to be removed on next server bump
     FileMode,
     IClient,
     IClientDetails,
@@ -1279,10 +1278,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const state = this._connectionState === ConnectionState.Connected;
         this.context!.setConnectionState(state, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(
-            // TODO: Deprecated, to be removed on next server bump
-            state ? ConnectionStateToBeDeleted.Connected : ConnectionStateToBeDeleted.Disconnected,
-            this.clientId);
+        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {
