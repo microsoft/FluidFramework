@@ -7,6 +7,8 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
+    ContainerServiceRegistryEntries,
+    generateContainerServicesRequestHandler,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -62,7 +64,8 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     }
 
     public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
-        return this.root.get<IComponentHandle<T>>(id).get();
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**
@@ -162,7 +165,8 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
-        private readonly containerServiceRegistry: DependencyContainerRegistry = [],
+        private readonly providerEntries: DependencyContainerRegistry = [],
+        private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
@@ -178,7 +182,8 @@ export class TestHost {
                         {}),
                 )],
             ],
-            this.containerServiceRegistry,
+            this.providerEntries,
+            [generateContainerServicesRequestHandler(this.containerServiceRegistry)],
         );
 
         const store = new TestDataStore(
@@ -191,7 +196,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
+        this.root = store.open<TestRootComponent>("testHostContainer", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
@@ -204,6 +209,7 @@ export class TestHost {
             this.sharedObjectFactories,
             this.deltaConnectionServer,
             this.scope,
+            this.providerEntries,
             this.containerServiceRegistry);
     }
 

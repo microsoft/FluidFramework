@@ -9,7 +9,8 @@ import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitio
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -71,7 +72,7 @@ export class TestComponent extends PrimedComponent {
 const testComponentFactory = new PrimedComponentFactory(
     TestComponent.type,
     TestComponent,
-    [ SharedString.getFactory() ],
+    [SharedString.getFactory()],
     {},
 );
 
@@ -86,7 +87,7 @@ describe("LocalLoader", () => {
     let containerDeltaEventManager: DocumentDeltaEventManager;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -189,7 +190,7 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-                const factory = new TestFluidComponentFactory([[ "text", SharedString.getFactory() ]]);
+                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
                 const component = await getComponent<ITestFluidComponent>("default", container);
                 text = await component.getSharedObject("text");
@@ -214,7 +215,7 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
 
-                const factory = new TestFluidComponentFactory([[ "text", SharedString.getFactory() ]]);
+                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
 
                 const container1 = await createContainer(factory);
                 component1 = await getComponent<ITestFluidComponent>("default", container1);

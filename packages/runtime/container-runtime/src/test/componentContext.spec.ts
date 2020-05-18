@@ -8,10 +8,10 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
@@ -29,7 +29,7 @@ describe("Component Context Tests", () => {
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IComponentFactory = {
@@ -41,7 +41,10 @@ describe("Component Context Tests", () => {
                 get: async (pkg) => Promise.resolve(factory),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {
@@ -101,7 +104,10 @@ describe("Component Context Tests", () => {
             registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registryWithSubRegistries,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
                 ["TestComp", "SubComp"],
@@ -147,7 +153,10 @@ describe("Component Context Tests", () => {
             registry.get = async (pkg) => Promise.resolve(factory);
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
+            containerRuntime = {
+                IComponentRegistry: registry,
+                notifyComponentInstantiated: (c) => {},
+            } as ContainerRuntime;
         });
 
         it("Check RemotedComponent Attributes", async () => {

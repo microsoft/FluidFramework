@@ -4,14 +4,13 @@
  */
 
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { ChildLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
-    IExperimentalDocumentService,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -43,10 +42,9 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService, IExperimentalDocumentService {
+export class OdspDocumentService implements IDocumentService {
     public readonly isExperimentalDocumentService = true;
     /**
-     * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
      * is also referred to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -59,11 +57,10 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
      * @param newFileInfoPromise - promise to supply info needed to create a new file.
      */
     public static async create(
-        appId: string,
         resolvedUrl: IResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
-        logger: ITelemetryBaseLogger,
+        logger: ITelemetryBaseLogger | undefined,
         storageFetchWrapper: IFetchWrapper,
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
@@ -71,11 +68,8 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            logger,
-            { docId: odspResolvedUrl.hashedDocumentId });
         if (odspResolvedUrl.createNewOptions) {
+            const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
             const event = PerformanceEvent.start(templogger,
                 {
                     eventName: "CreateNew",
@@ -88,8 +82,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                     cache,
                     storageFetchWrapper);
                 const props = {
-                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                    itemId: odspResolvedUrl.itemId,
+                    docId: odspResolvedUrl.hashedDocumentId,
                 };
                 event.end(props);
             } catch (error) {
@@ -98,7 +91,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             }
         }
         return new OdspDocumentService(
-            appId,
             odspResolvedUrl,
             getStorageToken,
             getWebsocketToken,
@@ -114,7 +106,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public static async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger: ITelemetryBaseLogger | undefined,
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
@@ -135,7 +127,10 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             filePath,
             filename: odspResolvedUrl.fileName,
         };
-        const event = PerformanceEvent.start(logger,
+
+        const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
+
+        const event = PerformanceEvent.start(templogger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
@@ -148,11 +143,10 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 storageFetchWrapper,
                 createNewSummary);
             const props = {
-                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                itemId: odspResolvedUrl.itemId,
+                docId: odspResolvedUrl.hashedDocumentId,
             };
 
-            const docService = factory.createDocumentService(odspResolvedUrl);
+            const docService = factory.createDocumentService(odspResolvedUrl, logger);
             event.end(props);
             return docService;
         } catch (error) {
@@ -175,7 +169,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     private readonly isOdc: boolean;
 
     /**
-     * @param appId - app id used for telemetry for network requests
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
      * to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
@@ -186,11 +179,10 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
      * @param socketIOClientP - promise to the socket io library required by the driver
      */
     constructor(
-        private readonly appId: string,
         public readonly odspResolvedUrl: IOdspResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
-        logger: ITelemetryBaseLogger,
+        logger: ITelemetryBaseLogger | undefined,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
@@ -199,11 +191,9 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
-        this.logger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            logger,
+        this.logger = ChildLogger.create(logger,
+            "OdspDriver",
             {
-                docId: this.odspResolvedUrl.hashedDocumentId,
                 odc: this.isOdc,
             });
 
@@ -257,7 +247,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
-            { app_id: this.appId },
             this.odspResolvedUrl.hashedDocumentId,
             this.odspResolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
@@ -284,7 +273,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         };
 
         return new OdspDeltaStorageService(
-            { app_id: this.appId },
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
@@ -346,7 +334,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
         return getSocketStorageDiscovery(
-            this.appId,
             this.odspResolvedUrl.driveId,
             this.odspResolvedUrl.itemId,
             this.odspResolvedUrl.siteUrl,

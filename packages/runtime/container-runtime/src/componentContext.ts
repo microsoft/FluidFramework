@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { EventEmitter } from "events";
+import * as EventEmitter from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -17,28 +17,27 @@ import {
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
+import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
+    ConnectionState,
 } from "@microsoft/fluid-protocol-definitions";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import {
     ComponentRegistryEntry,
+    IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
+    IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     IEnvelope,
-    IContainerRuntime,
     IInboundSignalMessage,
-    IExperimentalContainerRuntime,
-    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -47,7 +46,7 @@ import { v4 as uuid } from "uuid";
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
@@ -64,15 +63,15 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
-    IExperimentalComponentContext
+export abstract class ComponentContext extends EventEmitter implements
+    IComponentContext,
+    IComponentContextLegacy,
+    IDisposable
 {
     public readonly isExperimentalComponentContext = true;
 
     public isLocal(): boolean {
-        const expContainerRuntime = this._containerRuntime as IExperimentalContainerRuntime;
-        assert(expContainerRuntime?.isExperimentalContainerRuntime);
-        return expContainerRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || !this.isAttached;
     }
 
     public get documentId(): string {
@@ -114,8 +113,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._containerRuntime.leader;
     }
 
+    // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
-        return this._containerRuntime.connectionState;
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => void {
@@ -161,11 +161,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._isAttached;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntime) => void;
-    protected componentRuntime: IComponentRuntime | undefined;
+    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
@@ -176,29 +176,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntime) => void,
+        attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntime) => {
+        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             attach(componentRuntime);
             this._isAttached = true;
         };
-        // back-compat: 0.14 uploadSummary
-        this.summaryTracker.addRefreshHandler(async () => {
-            // We do not want to get the snapshot unless we have to.
-            // If the component runtime is listening on refreshBaseSummary
-            // event, then that means it is older version and requires the
-            // component context to emit this event.
-            if (this.listeners("refreshBaseSummary")?.length > 0) {
-                const subtree = await this.summaryTracker.getSnapshotTree();
-                if (subtree) {
-                    // This subtree may not yet exist in acked summary, so only emit if found.
-                    this.emit("refreshBaseSummary", subtree);
-                }
-            }
-        });
     }
 
     public dispose(): void {
@@ -212,7 +198,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.containerRuntime.logger.sendErrorEvent(
+                this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
@@ -223,7 +209,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any,
+    ): Promise<IComponentRuntimeChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -266,9 +256,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntime> {
+    public async realize(): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -303,9 +293,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+    public async realizeWithFn(
+        realizationFn: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             realizationFn(this);
         }
 
@@ -318,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -326,10 +318,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.changeConnectionState(value, clientId);
+        assert(this.connected === connected);
 
-        raiseConnectedEvent(this, value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(this.connectionState, clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {
@@ -360,12 +361,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
         return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
         return this._containerRuntime.getAudience();
     }
 
@@ -401,6 +400,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return { entries, id: null };
     }
 
+    /**
+     * @deprecated 0.18.Should call request on the runtime directly
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const runtime = await this.realize();
         return runtime.request(request);
@@ -463,13 +465,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
         if (leadership) {
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("notleader", this.clientId);
+            this.emit("notleader");
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime) {
+    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
@@ -502,6 +504,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+
+        // notify the runtime if they want to propagate up. Used for logging.
+        this.containerRuntime.notifyComponentInstantiated(this);
     }
 
     /**
@@ -555,7 +560,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new Error("Context is closed");
         }
     }
 }
@@ -647,7 +652,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntime) => void,
+        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */

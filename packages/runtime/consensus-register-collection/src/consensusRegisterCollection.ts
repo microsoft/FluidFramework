@@ -16,7 +16,7 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
@@ -42,14 +42,13 @@ interface ILocalRegister<T> {
     sequenceNumber: number;
 }
 
-const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> =>
-    ({
-        sequenceNumber,
-        value: {
-            type: "Plain",
-            value,
-        },
-    });
+const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> => ({
+    sequenceNumber,
+    value: {
+        type: "Plain",
+        value,
+    },
+});
 
 /**
  * An operation for consensus register collection
@@ -57,7 +56,7 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 interface IRegisterOperation {
     key: string;
     type: "write";
-    value: string;
+    serializedValue: string;
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
@@ -65,6 +64,25 @@ interface IRegisterOperation {
     // as client can ingest ops in between.
     refSeq: number;
 }
+
+/**
+ * IRegisterOperation format in versions < 0.17
+ */
+interface IRegisterOperationOld<T> {
+    key: string;
+    type: "write";
+    value: {
+        type: "Plain",
+        value: T,
+    };
+    refSeq: number;
+}
+
+/** Incoming ops could match any of these types */
+type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
+
+/** Distinguish between incoming op formats so we know which type it is */
+const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
 
 /**
  * A record of the pending operation awaiting ack
@@ -134,7 +152,7 @@ export class ConsensusRegisterCollection<T>
         const serializedValue = this.stringify(value);
 
         if (this.isLocal()) {
-            // JSON-roundtrip value even for local writes
+            // JSON-roundtrip value for local writes to match the behavior of going through the wire
             this.processInboundWrite(key, this.parse(serializedValue), 0, 0, true);
             return true;
         }
@@ -142,7 +160,7 @@ export class ConsensusRegisterCollection<T>
         const message: IRegisterOperation = {
             key,
             type: "write",
-            value: serializedValue,
+            serializedValue,
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
 
@@ -236,7 +254,7 @@ export class ConsensusRegisterCollection<T>
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
-            const op: IRegisterOperation = message.contents;
+            const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
@@ -244,9 +262,12 @@ export class ConsensusRegisterCollection<T>
                     const refSeqWhenCreated = op.refSeq;
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber);
 
+                    const value = incomingOpMatchesCurrentFormat(op)
+                        ? this.parse(op.serializedValue) as T
+                        : op.value.value;
                     const winner = this.processInboundWrite(
                         op.key,
-                        this.parse(op.value),
+                        value,
                         refSeqWhenCreated,
                         message.sequenceNumber,
                         local);
@@ -337,7 +358,7 @@ export class ConsensusRegisterCollection<T>
     private onLocalMessageAck(message: ISequencedDocumentMessage, winner: boolean) {
         const pending = this.pendingLocalMessages.shift();
         strongAssert(pending);
-        assert(message.clientSequenceNumber === pending.clientSequenceNumber,
+        assert.strictEqual(message.clientSequenceNumber, pending.clientSequenceNumber,
             "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }

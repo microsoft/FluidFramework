@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import {
-    IRequest,
+    IRequest, IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -133,6 +133,13 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             url: fluidUrl,
         };
         return resolved;
+    }
+
+    public async requestUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): Promise<IResponse> {
+        throw new Error("Not implmented");
     }
 }
 

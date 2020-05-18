@@ -21,9 +21,13 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
-    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
+import {
+    IContainerRuntime,
+} from "@microsoft/fluid-container-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -50,7 +54,7 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const kevValue = new KeyValue(runtime, context);
+        const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
 
         return kevValue;
@@ -67,7 +71,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         return this._root!;
     }
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime) {
     }
 
     public set(key: string, value: any): void {
@@ -100,13 +104,6 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
             this._root.register();
         } else {
             this._root = await this.runtime.getChannel("root") as ISharedMap;
-        }
-        if (this.context.leader) {
-            console.log(`INITIAL LEADER`);
-        } else {
-            this.context.on("leader", () => {
-                console.log(`LEADER NOW`);
-            });
         }
     }
 }

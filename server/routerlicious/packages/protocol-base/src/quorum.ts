@@ -6,7 +6,6 @@
 import * as assert from "assert";
 import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
-    ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
@@ -363,8 +362,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         return immediateNoOp;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
-        if (value === ConnectionState.Disconnected) {
+    public setConnectionState(connected: boolean, clientId?: string) {
+        if (!connected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject("Client got disconnected");
             });

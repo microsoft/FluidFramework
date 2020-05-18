@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-component-base",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Component base.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,15 +50,15 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-component-runtime": "^0.17.0",
-    "@microsoft/fluid-container-definitions": "^0.17.0",
-    "@microsoft/fluid-container-runtime": "^0.17.0",
-    "@microsoft/fluid-map": "^0.17.0",
-    "@microsoft/fluid-runtime-definitions": "^0.17.0",
-    "@microsoft/fluid-shared-object-base": "^0.17.0"
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-common-utils": "^0.18.0-0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-component-runtime": "^0.18.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
+    "@microsoft/fluid-container-definitions": "^0.18.0",
+    "@microsoft/fluid-container-runtime": "^0.18.0",
+    "@microsoft/fluid-runtime-definitions": "^0.18.0",
+    "@microsoft/fluid-shared-object-base": "^0.18.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

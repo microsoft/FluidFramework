@@ -261,7 +261,7 @@ describe("Routerlicious", () => {
                 commitSequenceNumber: 0,
                 sequenceNumber: 0,
             };
-            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, [["code", proposal]]);
+            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
             assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");

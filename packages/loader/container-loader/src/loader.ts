@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import * as uuid from "uuid";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -16,9 +17,8 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
-    IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { DebugLogger, Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -100,6 +100,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container");
+    }
+
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -129,12 +133,12 @@ function createCachedResolver(resolver: IUrlResolver) {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
+export class Loader extends EventEmitter implements ILoader {
+    public readonly isExperimentalLoader = true;
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-
-    public readonly isExperimentalLoader = true;
+    private readonly logger?: ITelemetryBaseLogger;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],
@@ -143,9 +147,11 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         private readonly options: any,
         private readonly scope: IComponent,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-        private readonly logger?: ITelemetryBaseLogger,
+        logger?: ITelemetryBaseLogger,
     ) {
         super();
+
+        this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
 
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
@@ -192,7 +198,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
-        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
         const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
 

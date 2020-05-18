@@ -10,7 +10,6 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -34,7 +33,7 @@ import * as jwt from "jsonwebtoken";
  * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
-export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class InsecureUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 

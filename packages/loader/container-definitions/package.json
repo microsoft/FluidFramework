@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-container-definitions",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Fluid container definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,10 +25,10 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1"
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-driver-definitions": "^0.18.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

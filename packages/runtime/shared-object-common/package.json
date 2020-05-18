@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-shared-object-base",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "Fluid document loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,12 +25,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-container-definitions": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
-    "@microsoft/fluid-runtime-definitions": "^0.17.0",
+    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-common-utils": "^0.18.0-0",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
+    "@microsoft/fluid-container-definitions": "^0.18.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.14.6",
