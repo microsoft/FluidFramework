@@ -221,7 +221,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      *
      * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getAbsoluteUrl?(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl?(relativeRequest: string): Promise<string | undefined>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.

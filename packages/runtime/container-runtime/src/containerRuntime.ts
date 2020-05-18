@@ -1274,13 +1274,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return summaryTree;
     }
 
-    public async getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse> {
+    public async getAbsoluteUrl(relativeRequest: string): Promise<string | undefined> {
         if (this.context.getAbsoluteUrl === undefined) {
-            return {
-                mimeType: "text/plain",
-                status: 500,
-                value: "getAbsoluteUrl not implemented. Please ugrade the host's loader.",
-            };
+            return undefined;
         }
         return this.context.getAbsoluteUrl(relativeRequest);
     }

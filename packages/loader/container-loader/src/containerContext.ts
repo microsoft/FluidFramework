@@ -268,7 +268,7 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
-    public async getAbsoluteUrl?(relativeRequest: IRequest): Promise<IResponse> {
+    public async getAbsoluteUrl?(relativeRequest: string): Promise<string | undefined> {
         return this.container.getAbsoluteUrl(relativeRequest);
     }
 

@@ -136,7 +136,7 @@ export interface IContainerRuntimeBase extends
      * Get an absolute url for a provided container-relative request.
      * @param relativeRequest - A relative request within the container
      */
-    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: string): Promise<string | undefined>;
 }
 
 /**
@@ -357,7 +357,7 @@ export interface IComponentContext extends EventEmitter {
      * Get an absolute url to the containe rbased on the provided relativeRequest.
      * @param relativeRequest - A relative request within the container
      */
-    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: string): Promise<string | undefined>;
 }
 
 /**

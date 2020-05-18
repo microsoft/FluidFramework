@@ -100,9 +100,20 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                 }
             }
         });
-        const urlResponse = await this.context.getAbsoluteUrl({ url: this.url });
-        if (urlResponse.status === 200) {
-            this._absoluteUrl = urlResponse.value as string;
+
+        if (this.context.connected) {
+            this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
+        } else {
+            this.context.deltaManager.on(
+                "connect",
+                () => {
+                    this.context.getAbsoluteUrl(this.url)
+                        .then((url)=>{
+                            this._absoluteUrl = url;
+                            return undefined;
+                        })
+                        .catch(()=>{});
+                });
         }
     }
 

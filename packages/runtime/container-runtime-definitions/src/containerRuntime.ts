@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent, IRequest, IResponse,
+    IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -137,5 +137,5 @@ export interface IContainerRuntime extends
      * Get an absolute url for a provided container-relative request.
      * @param relativeRequest - A relative request within the container
      */
-    getAbsoluteUrl(relativeRequest: IRequest): Promise<IResponse>;
+    getAbsoluteUrl(relativeRequest: string): Promise<string | undefined>;
 }
