@@ -41,9 +41,31 @@ with any additional questions or comments.
 
 Get up and running quickly using our documentation at <https://aka.ms/fluid>.
 
-## Directory Structure
+## Code Structure
 
-_Coming soon._
+The core code is built into several large chunks ("minirepos", managed using Lerna) which are versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the minirepos there are plenty of packages which are versioned independently.
+
+Here's the breakdown of the repo:
+
+* Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
+  * [Packages](./packages)
+  * [Example Components](./components/examples)
+  * [Experimental Components](./components/experimental)
+  * [Example host](./examples/hosts/iframe-host)
+* Reference Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
+  * [Packages](./server/routerlicious/packages)
+* Common Packages
+  * [Common Definitions](./common/lib/common-definitions)
+  * [Common Utils](./common/lib/common-utils)
+* Internal/Misc Packages
+  * [Build Common](./common/build/build-common)
+  * [ESlint Config](./common/build/eslint-config-fluid)
+  * Other Example Hosts
+    * [Electron Host](./examples/hosts/electron-host)
+    * [Literate](./examples/hosts/literate)
+  * [Docs](./docs)
+  * [Tools](./tools)
+  * [Other Server Packages](./server) (excluding [Routerlicious](./server/routerlicious) itself)
 
 ## Building
 
