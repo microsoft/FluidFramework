@@ -4,11 +4,11 @@ uid: package-feed
 
 # Fluid private npm feed
 
-Currently, our packages are published on our [VSTS npm feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague).
+Currently, our packages are published on our [VSTS npm feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=fluid).
 
 Here are the step to configure your machine to pull Fluid packages from there.
 
-Prerequisites: [Node (with npm)](https://nodejs.org) installed
+Prerequisites: [Node.js](https://nodejs.org); !!!include(node-versions.md)!!!
 
 1. Install `vsts-npm-auth`:
 
