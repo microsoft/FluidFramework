@@ -217,11 +217,11 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     /**
      * Get an absolute url for a provided container-relative request.
-     * @param relativeRequest - A relative request within the container
+     * @param relativeUrl - A relative request within the container
      *
      * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    getAbsoluteUrl?(relativeRequest: string): Promise<string | undefined>;
+    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.

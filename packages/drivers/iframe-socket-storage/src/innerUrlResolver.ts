@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
@@ -18,10 +18,10 @@ export class InnerUrlResolver implements IUrlResolver {
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

@@ -40,6 +40,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
+    IUrlResolverLegacy,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -491,11 +492,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
-            if (response.status !== 200) {
-                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
-            }
-            this.originalRequest = { url: response.value };
+            const url = await this.getAbsoluteUrl("");
+            this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
@@ -640,12 +638,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.context!.hasNullRuntime();
     }
 
-    public async getAbsoluteUrl(relativeRequest: string): Promise<string | undefined> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
         if (this.resolvedUrl === undefined) {
             throw new Error("Container not attached to storage");
         }
-        const url = await this.urlResolver.requestUrl(this.resolvedUrl, { url: relativeRequest });
-        return url.value;
+
+        return this.urlResolver.getAbsoluteUrl(
+            this.resolvedUrl,
+            relativeUrl);
     }
 
     private async reloadContextCore(): Promise<void> {

@@ -8,7 +8,7 @@ import * as child_process from "child_process";
 import * as fs from "fs";
 import * as API from "@fluid-internal/client-api";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-common-utils";
@@ -150,10 +150,10 @@ class ContainerUrlResolver implements IUrlResolver {
         return this.cache.get(request.url);
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 export class CreationDriverUrlResolver implements IUrlResolver {
@@ -28,10 +28,10 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         return response;
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

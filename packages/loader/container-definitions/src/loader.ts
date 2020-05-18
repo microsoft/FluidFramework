@@ -104,10 +104,10 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
     /**
      * Get an absolute url for a provided container-relative request.
-     * @param relativeRequest - A relative request within the container
+     * @param relativeUrl - A relative request within the container
      *
      */
-    getAbsoluteUrl(relativeRequest: string): Promise<string | undefined>;
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 export interface ILoader {

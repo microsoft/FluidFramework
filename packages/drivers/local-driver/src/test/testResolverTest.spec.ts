@@ -36,13 +36,9 @@ describe("Local Driver Resolver", () => {
         it("should successfully create requestUrl for a component from resolvedUrl", async () => {
             const resolvedUrl = await resolver.resolve(request);
             const componentId = "component";
-            const response = await resolver.requestUrl(resolvedUrl, { url: componentId });
-
-            assert.equal(response.status, "200", "Status code should be 200");
-            assert.equal(response.mimeType, "text/plain", "Mime type should be text/plain");
-
+            const response = await resolver.getAbsoluteUrl(resolvedUrl, componentId);
             const expectedUrl = `http://localhost:3000/${documentId}/${componentId}`;
-            assert.equal(response.value, expectedUrl, "The requestUrl should match");
+            assert.equal(response, expectedUrl, "The requestUrl should match");
         });
     });
 

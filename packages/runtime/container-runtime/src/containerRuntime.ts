@@ -1274,11 +1274,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return summaryTree;
     }
 
-    public async getAbsoluteUrl(relativeRequest: string): Promise<string | undefined> {
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
         if (this.context.getAbsoluteUrl === undefined) {
-            return undefined;
+            throw new Error("Driver does not implement getAbsoluteUrl");
         }
-        return this.context.getAbsoluteUrl(relativeRequest);
+        return this.context.getAbsoluteUrl(relativeUrl);
     }
 
     private async generateSummary(
