@@ -1,3 +1,3 @@
 # @microsoft/eslint-config-fluid
 
-_Coming soon..._
+A shared ESLint config used by all the Fluid Framework packages
