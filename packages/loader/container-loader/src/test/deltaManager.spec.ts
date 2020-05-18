@@ -90,7 +90,7 @@ describe("Loader", () => {
                     logger,
                     false,
                 );
-                deltaManager.attachOpHandler(0, 0, {
+                deltaManager.attachOpHandler(0, 0, 1, {
                     process: (message) => intendedResult,
                     processSignal() {},
                 });

@@ -661,7 +661,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
-            term: 1,
+            term: this._deltaManager.referenceTerm,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -740,11 +740,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
+        const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
-            term: 1,
+            term: this._deltaManager.referenceTerm,
         };
         entries.push({
             mode: FileMode.File,
@@ -886,8 +886,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: 0,
-            minimumSequenceNumber: 0,
             term: 1,
+            minimumSequenceNumber: 0,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
@@ -945,7 +945,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        return readAndParse<IDocumentAttributes>(storage, attributesHash);
+        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+        // Back-compat for older summaries with no term
+        if (attributes.term === undefined) {
+            attributes.term = 1;
+        }
+
+        return attributes;
     }
 
     private async loadAndInitializeProtocolState(
@@ -1180,6 +1187,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             {
                 process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
