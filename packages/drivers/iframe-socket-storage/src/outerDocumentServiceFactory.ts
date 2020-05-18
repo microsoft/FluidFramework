@@ -21,7 +21,7 @@ import {
     IVersion,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import * as Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
@@ -116,7 +116,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

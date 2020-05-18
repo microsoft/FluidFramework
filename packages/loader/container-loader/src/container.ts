@@ -28,6 +28,7 @@ import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
+    raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
@@ -53,10 +54,8 @@ import {
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-    raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     FileMode,
     IClient,
     IClientDetails,
@@ -72,7 +71,6 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
-    ITokenClaims,
     ITree,
     ITreeEntry,
     IVersion,
@@ -80,7 +78,6 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -107,6 +104,23 @@ export interface IContainerConfig {
     canReconnect?: boolean;
     originalRequest?: IRequest;
     id?: string;
+}
+
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
 }
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
@@ -143,9 +157,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
             },
             logger);
-
-        container._scopes = container.getScopes(resolvedUrl);
-        container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
@@ -222,14 +233,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _clientId: string | undefined;
     private _id: string | undefined;
-    private _scopes: string[] | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
-    private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
@@ -303,7 +312,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * configuration details returned as part of the initial connection.
      */
     public get serviceConfiguration(): IServiceConfiguration | undefined {
-        return this._serviceConfiguration;
+        return this._deltaManager.serviceConfiguration;
     }
 
     /**
@@ -319,7 +328,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Set once this.connected is true, otherwise undefined
      */
     public get scopes(): string[] | undefined {
-        return this._scopes;
+        return this._deltaManager.scopes;
     }
 
     public get clientDetails(): IClientDetails {
@@ -394,7 +403,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
-            this.logContainerError(error);
+            // Some "error" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (error?.logged !== true) {
+                this.logContainerError(error);
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -473,7 +486,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
-                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+                this.subLogger,
             );
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
@@ -648,6 +661,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -730,6 +744,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
         entries.push({
             mode: FileMode.File,
@@ -782,6 +797,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param pause - start the container in a paused state
      */
     private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl!, this.subLogger);
+
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -870,6 +887,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: "",
             sequenceNumber: 0,
             minimumSequenceNumber: 0,
+            term: 1,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
@@ -919,6 +937,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
+                term: 1,
             };
         }
 
@@ -966,6 +985,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             members,
             proposals,
             values,
@@ -984,10 +1004,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (clientId === this.pendingClientId) {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`,
-                    this.pendingClientId,
-                    details.client.scopes,
-                    this._deltaManager.serviceConfiguration);
+                    `joined @ ${details.sequenceNumber}`);
             }
         });
 
@@ -1097,20 +1114,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         deltaManager.on("connect", (details: IConnectionDetails) => {
-            this.setConnectionState(
-                ConnectionState.Connecting,
-                "websocket established",
-                details.clientId,
-                details.claims.scopes,
-                details.serviceConfiguration);
+            const oldState = this._connectionState;
+            this._connectionState = ConnectionState.Connecting;
+
+            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
+            // (have received the join message for the client ID)
+            // This is especially important in the reconnect case. It's possible there could be outstanding
+            // ops sent by this client, so we should keep the old client id until we see our own client's
+            // join message. after we see the join message for out new connection with our new client id,
+            // we know there can no longer be outstanding ops that we sent with the previous client id.
+            this.pendingClientId = details.clientId;
+
+            this.emit("joining");
+
+            // Report telemetry after we set client id!
+            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState, "websocket established");
 
             if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined as readonly`,
-                    details.clientId,
-                    details.claims.scopes,
-                    deltaManager.serviceConfiguration);
+                    `joined as readonly`);
             }
 
             // Back-compat for new client and old server.
@@ -1214,19 +1237,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
     private setConnectionState(
         value: ConnectionState,
-        reason: string,
-        clientId: string,
-        scopes: string[],
-        configuration: IServiceConfiguration);
-    private setConnectionState(
-        value: ConnectionState,
-        reason: string,
-        clientId?: string,
-        scopes?: string[],
-        configuration?: IServiceConfiguration) {
+        reason: string) {
+        assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1235,18 +1249,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        this._scopes = scopes;
-        this._serviceConfiguration = configuration;
 
-        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-        // (have received the join message for the client ID)
-        // This is especially important in the reconnect case. It's possible there could be outstanding
-        // ops sent by this client, so we should keep the old client id until we see our own client's
-        // join message. after we see the join message for out new connection with our new client id,
-        // we know there can no longer be outstanding ops that we sent with the previous client id.
-        if (value === ConnectionState.Connecting) {
-            this.pendingClientId = clientId;
-        } else if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1271,9 +1275,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
-        raiseConnectedEvent(this, this._connectionState, this.clientId);
+
+        const state = this._connectionState === ConnectionState.Connected;
+        this.context!.setConnectionState(state, this.clientId);
+        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
+        raiseConnectedEvent(this.logger, this, state, this.clientId);
+
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
@@ -1325,11 +1332,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const local = this._clientId === message.clientId;
             this.context!.processSignal(message, local);
         }
-    }
-
-    private getScopes(resolvedUrl: IFluidResolvedUrl | undefined): string[] {
-        return resolvedUrl?.tokens?.jwt ?
-            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**

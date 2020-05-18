@@ -24,7 +24,6 @@
     "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
   },
