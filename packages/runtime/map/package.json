@@ -52,9 +52,12 @@
     "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
+    "@microsoft/fluid-map-definitions": "^0.18.0",
+    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-protocol-base": "^0.1004.3",
     "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@microsoft/fluid-shared-object-base": "^0.18.0",
+    "@microsoft/fluid-shared-object-base-definitions": "^0.18.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

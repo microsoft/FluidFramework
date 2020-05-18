@@ -9,7 +9,8 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { SharedMap, IDirectory } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { DdsCollectionComponent } from "./ddsCollection";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

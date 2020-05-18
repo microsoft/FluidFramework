@@ -5,7 +5,8 @@
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@microsoft/fluid-map";
+import { IDirectory, ISharedDirectory } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import React, { useEffect, useRef, useState } from "react";
 

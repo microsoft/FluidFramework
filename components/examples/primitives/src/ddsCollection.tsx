@@ -4,7 +4,8 @@
  */
 
 import * as React from "react";
-import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { ISharedMap, SharedMap, IDirectory } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 

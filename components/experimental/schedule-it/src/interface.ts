@@ -4,10 +4,14 @@
  */
 
 import {
-    FluidFunctionalComponentState, FluidStateUpdateFunction, FluidSelectorFunction,
+    FluidFunctionalComponentState,
+    FluidStateUpdateFunction,
+    FluidComponentSelectorFunction,
+    IFluidDataProps,
+    FluidComponentMap,
 } from "@microsoft/fluid-aqueduct-react";
 import { SharedMap, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 
 export interface IDate {
@@ -68,22 +72,22 @@ export interface ICommentState extends FluidFunctionalComponentState {
 }
 
 export interface ICommentReducer {
-    add: FluidStateUpdateFunction<ICommentState>
+    add: FluidStateUpdateFunction<ICommentState,IFluidDataProps>
 }
 
 export interface IDateReducer {
-    set: FluidStateUpdateFunction<IDateState>
+    set: FluidStateUpdateFunction<IDateState,IFluidDataProps>
 }
 
 export interface IPersonReducer {
-    updateName: FluidStateUpdateFunction<IPersonState>
-    updateAvailability: FluidStateUpdateFunction<IPersonState>,
-    addPerson: FluidStateUpdateFunction<IPersonState>,
-    removePerson: FluidStateUpdateFunction<IPersonState>,
+    updateName: FluidStateUpdateFunction<IPersonState,IFluidDataProps>
+    updateAvailability: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
+    addPerson: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
+    removePerson: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
 }
 
 export interface IPersonSelector {
-    getAvailabilityMap: FluidSelectorFunction<IPersonState, SharedMap>;
+    getAvailabilityMap: FluidComponentSelectorFunction<IPersonState, IFluidDataProps, SharedMap>;
 }
 
 export interface IViewProps {
@@ -99,7 +103,7 @@ export interface IViewProps {
 export interface ScheduleItProps {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
-    handleMap: Map<IComponentHandle, IComponentLoadable>;
+    fluidComponentMap: FluidComponentMap;
     initialPersonState: IPersonState;
     initialDateState: IDateState;
     initialCommentState: ICommentState;

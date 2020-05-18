@@ -4,54 +4,98 @@
  */
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 export interface FluidProps<P, S> {
     root: ISharedDirectory;
     initialState: S,
+    fluidComponentMap: FluidComponentMap;
     stateToRoot?: Map<keyof S, string>,
-    handleMap?: HandleMap;
 }
 
 export interface FluidFunctionalComponentState {
-    handleMap?: HandleMap;
+    fluidComponentMap?: FluidComponentMap;
     isInitialized?: boolean;
 }
 
 export const instanceOfIComponentLoadable = (object: any): object is IComponentLoadable =>
     object === Object(object) && "IComponentLoadable" in object;
 
-export type HandleMap = Map<IComponentHandle, IComponentLoadable>;
+export interface IFluidComponent {
+    component: IComponent & IComponentLoadable,
+    isListened?: boolean,
+}
+
+export type FluidComponentMap = Map<IComponentHandle, IFluidComponent>;
 
 export interface IFluidDataProps {
     runtime: IComponentRuntime,
-    handleMap: HandleMap,
+    fluidComponentMap: FluidComponentMap,
 }
 
-export interface FluidStateUpdateFunction<S> {
-    function: (oldState: S, dataProps: IFluidDataProps, ...args: any) => S;
+export interface FluidEffectFunction<S, C extends IFluidDataProps> {
+    function: (oldState: S, dataProps: C, ...args: any) => void;
 }
 
-export const instanceOfStateUpdateFunction = <S,>(object: any): object is FluidStateUpdateFunction<S> =>
+export const instanceOfEffectFunction = <S, C extends IFluidDataProps>(
+    object: any,
+): object is FluidEffectFunction<S, C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidAsyncStateUpdateFunction<S> {
-    function: (oldState: S, dataProps: IFluidDataProps, ...args: any) => Promise<S>;
+export interface FluidAsyncEffectFunction<S, C extends IFluidDataProps> {
+    function: (oldState: S, dataProps: C, ...args: any) => Promise<void>;
 }
 
-export const instanceOfAsyncStateUpdateFunction = <S,>(object: any): object is FluidAsyncStateUpdateFunction<S> =>
+export const instanceOfAsyncEffectFunction = <S, C extends IFluidDataProps>(
+    object: any,
+): object is FluidAsyncEffectFunction<S, C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidSelectorFunction<S, T>{
-    function: (state: S, dataProps: IFluidDataProps, handle: IComponentHandle<T>) => T | undefined;
+export interface FluidStateUpdateFunction<S extends FluidFunctionalComponentState, C extends IFluidDataProps> {
+    function: (oldState: S, dataProps: C, ...args: any) => IStateUpdateResult<S>;
 }
 
-export const instanceOfSelectorFunction = <S,T,>(object: any): object is FluidSelectorFunction<S,T> =>
+export const instanceOfStateUpdateFunction = <S extends FluidFunctionalComponentState, C extends IFluidDataProps>(
+    object: any,
+): object is FluidStateUpdateFunction<S, C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B> {
+export interface FluidAsyncStateUpdateFunction<S extends FluidFunctionalComponentState, C extends IFluidDataProps> {
+    function: (oldState: S, dataProps: C, ...args: any) => Promise<IStateUpdateResult<S>>;
+}
+
+export interface IStateUpdateResult<S extends FluidFunctionalComponentState> {
+    state: S,
+    newComponentHandles?: IComponentHandle[],
+}
+
+export const instanceOfAsyncStateUpdateFunction = <S, C extends IFluidDataProps>(
+    object: any,
+): object is FluidAsyncStateUpdateFunction<S,C> =>
+    object === Object(object) && "function" in object;
+
+export interface FluidSelectorFunction<S, C extends IFluidDataProps,T>{
+    function: (state: S, dataProps: C) => T | undefined;
+}
+
+export interface FluidComponentSelectorFunction<S, C extends IFluidDataProps, T extends IComponentLoadable>{
+    function: (state: S, dataProps: C, handle: IComponentHandle<T>) => T | undefined;
+}
+
+export const instanceOfSelectorFunction = <S,C extends IFluidDataProps,T>
+(object: any): object is FluidSelectorFunction<S,C,T> =>
+    object === Object(object) && "function" in object;
+
+export const instanceOfComponentSelectorFunction = <S,C extends IFluidDataProps, T extends IComponentLoadable>
+(object: any): object is FluidComponentSelectorFunction<S,C,T> =>
+    object === Object(object) && "function" in object;
+
+export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B, C extends IFluidDataProps> {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
+    // Required for nested DDS', can be empty or pre-loaded but it needs to be constructed
+    // if nested components will be used
+    fluidComponentMap: FluidComponentMap,
     initialState: S,
     // All data mutation should be done in reducers
     reducer: A,
@@ -59,9 +103,8 @@ export interface FluidReducerProps<S extends FluidFunctionalComponentState, A, B
     // any Fluid components need to use a selector to be synchronously fetched
     selector: B,
     stateToRoot?: Map<keyof S, string>,
-    // Required for nested DDS', can be empty or pre-loaded but it needs to be constructed
-    // if nested components will be used
-    handleMap?: HandleMap,
+    // Optional param to add to the dataProps being passed to the reducers
+    dataProps?: C
 }
 
 export interface FluidContextProps<P,S,C> extends FluidProps<P,S> {

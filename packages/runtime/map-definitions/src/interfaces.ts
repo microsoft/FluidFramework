@@ -4,23 +4,9 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base-definitions";
 import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
-
-/**
- * Type of "valueChanged" event parameter.
- */
-export interface IValueChanged {
-    /**
-     * The key storing the value that changed.
-     */
-    key: string;
-
-    /**
-     * The value that was stored at the key prior to the change.
-     */
-    previousValue: any;
-}
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
@@ -147,7 +133,7 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
      * @param value - Value to set
      * @returns The IDirectory itself
      */
-    set<T = any>(key: string, value: T): this;
+    set<T = any>(key: string, value: T, keyPrefix?: string): this;
 
     /**
      * Creates an IDirectory child of this IDirectory.
@@ -196,7 +182,9 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents{
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage,
-        target: IEventThisPlaceHolder) => void);
+        target: IEventThisPlaceHolder,
+        keyPrefix?: string,
+    ) => void);
 }
 
 /**
@@ -204,16 +192,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents{
  */
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectory {
 
-}
-
-/**
- * Type of "valueChanged" event parameter for SharedDirectory
- */
-export interface IDirectoryValueChanged extends IValueChanged {
-    /**
-     * The absolute path to the IDirectory storing the key which changed.
-     */
-    path: string;
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents{

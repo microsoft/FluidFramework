@@ -9,8 +9,8 @@ import { IComponent, IComponentHandle, IComponentLoadable } from "@microsoft/flu
 import {
     ISharedDirectory,
     IDirectory,
-    IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";

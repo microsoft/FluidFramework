@@ -39,6 +39,7 @@
     "@microsoft/fluid-cell": "^0.18.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
+    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-sequence": "^0.18.0",
     "@microsoft/fluid-view-adapters": "^0.18.0",

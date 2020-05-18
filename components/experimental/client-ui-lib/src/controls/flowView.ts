@@ -21,6 +21,7 @@ import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import * as types from "@microsoft/fluid-map";
+import { IValueChanged } from "@microsoft/fluid-map-component-definitions";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
@@ -5099,7 +5100,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
 
-        this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
+        this.sharedString.on("valueChanged", (delta: IValueChanged) => {
             this.queueRender(undefined, true);
         });
 

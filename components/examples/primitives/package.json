@@ -33,6 +33,7 @@
     "@microsoft/fluid-aqueduct": "^0.18.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
+    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-view-interfaces": "^0.18.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"

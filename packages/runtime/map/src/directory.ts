@@ -19,17 +19,19 @@ import {
     ISharedObjectServices,
 } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import { debug } from "./debug";
 import {
     IDirectory,
-    IDirectoryValueChanged,
     ISerializableValue,
     ISerializedValue,
     ISharedDirectory,
     IValueOpEmitter,
     IValueTypeOperationValue,
     ISharedDirectoryEvents,
-} from "./interfaces";
+} from "@microsoft/fluid-map-definitions";
+import {
+    IDirectoryValueChanged,
+} from "@microsoft/fluid-map-component-definitions";
+import { debug } from "./debug";
 import {
     ILocalValue,
     LocalValueMaker,

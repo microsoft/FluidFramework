@@ -65,6 +65,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
                     root={this.root}
                     initialState={{ value: this.root.get("counterClicks") }}
                     stateToRoot={stateToRoot}
+                    fluidComponentMap={new Map()}
                 />
             </div>,
             div,

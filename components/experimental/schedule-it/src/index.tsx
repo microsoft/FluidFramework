@@ -11,7 +11,8 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { FluidComponentMap, IFluidComponent } from "@microsoft/fluid-aqueduct-react";
 import {
     defaultComments,
     defaultPeople,
@@ -49,8 +50,7 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
     private _initialDateState?: IDateState;
     private _initialCommentState?: ICommentState;
 
-    private readonly _handleMap:
-    Map<IComponentHandle, IComponentLoadable> = new Map<IComponentHandle, IComponentLoadable>();
+    private readonly _fluidComponentMap: FluidComponentMap = new Map<IComponentHandle, IFluidComponent>();
 
     /**
      * Do setup work here
@@ -73,9 +73,13 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             personMap.set(key, newPerson);
             // Optional Step: You can preload the nested components before initial render,
             // but you can also pass an empty handle map to allow them to be dynamically loaded in on fetch
-            // The only requirement is that a Map (empty or otherwise) be constructed and passed in if there
-            // are nested DDS'
-            this._handleMap.set(newAvailabilityMap.handle, newAvailabilityMap);
+            // The only requirement is that a Map (empty or otherwise) be constructed and passed in
+            // Do NOT set the isListened optional param on the map items to true,
+            // unless you have already explicitly set listeners for this component's changes.
+            // Otherwise, any updates to it will NOT trigger state updates in your component
+            this._fluidComponentMap.set(newAvailabilityMap.handle, {
+                component: newAvailabilityMap,
+            });
         });
         this.root.set(PeopleRootKey, personMap.handle);
         this._initialPersonState = { personMap };
@@ -96,7 +100,9 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
         for (const key of personMap.keys()) {
             const person = personMap.get<IPerson>(key);
             const availabilityMap = await person.availabilityMapHandle.get();
-            this._handleMap.set(person.availabilityMapHandle, availabilityMap);
+            this._fluidComponentMap.set(person.availabilityMapHandle, {
+                component: availabilityMap,
+            });
         }
 
         this._initialDateState = { dateMap: await this.root.get<IComponentHandle<SharedMap>>(DatesRootKey).get() };
@@ -112,14 +118,14 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
             this._initialDateState !== undefined &&
             this._initialPersonState !== undefined &&
             this._initialCommentState !== undefined &&
-            this._handleMap !== undefined
+            this._fluidComponentMap !== undefined
         ) {
             ReactDOM.render(
                 <div id="schedule-it-app">
                     <ScheduleItApp
                         runtime={this.runtime}
                         root={this.root}
-                        handleMap={this._handleMap}
+                        fluidComponentMap={this._fluidComponentMap}
                         initialCommentState={this._initialCommentState}
                         initialPersonState={this._initialPersonState}
                         initialDateState={this._initialDateState}

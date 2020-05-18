@@ -2,31 +2,24 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-floating-promises */
 
 import * as React from "react";
-import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { FluidFunctionalComponentState, FluidProps, instanceOfIComponentLoadable } from "./interface";
-
-async function getFromRoot<T>(root: ISharedDirectory, key: string): Promise<T> {
-    const value = root.get(key);
-    return value.IComponentHandle ? (value as IComponentHandle<T>).get() : value as T;
-}
-
-function getByValue(map, searchValue) {
-    for (const [key, value] of map.entries()) {
-        if (value === searchValue)
-        {return key;}
-    }
-}
+import { IComponentLoadable, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    FluidFunctionalComponentState,
+    FluidProps,
+    instanceOfIComponentLoadable,
+    IFluidComponent,
+} from "./interface";
+import {  updateStateAndComponentMap } from "./updateStateAndComponentMap";
 
 export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
 [S, ((newState: S, fromRootUpdate?: boolean) => void)] {
     const [ reactState, reactSetState ] = React.useState<S>(props.initialState);
-    const { root, stateToRoot } = props;
+    const { root, stateToRoot, fluidComponentMap } = props;
     const fluidSetState = React.useCallback((newState: Partial<S>, fromRootUpdate = false) => {
-        reactSetState({ ...reactState, ...newState, isInitialized: true });
+        const newCombinedState = { ...reactState, ...newState, isInitialized: true };
+        reactSetState(newCombinedState);
         if (stateToRoot !== undefined && !fromRootUpdate) {
             stateToRoot.forEach((rootKey, stateKey) => {
                 if (newState[stateKey] !== undefined) {
@@ -43,20 +36,22 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
 
     if (stateToRoot !== undefined && !reactState.isInitialized) {
         reactState.isInitialized = true;
-        root.on("valueChanged", (change, local) => {
-            if (Array.from(stateToRoot.values()).includes(change.key)) {
-                const rootKey = change.key;
-                const stateKey = getByValue(stateToRoot, rootKey);
-                getFromRoot(root, rootKey).then((newData) => {
-                    if (newData !== reactState[stateKey] || instanceOfIComponentLoadable(newData)) {
-                        const newState: Partial<S> = {};
-                        newState.isInitialized = true;
-                        newState[stateKey] = newData as any;
-                        fluidSetState(newState, true);
-                    }
-                });
+        const unlistenedComponentHandles: IComponentHandle[] = [];
+        fluidComponentMap.forEach((value: IFluidComponent, key: IComponentHandle) => {
+            if (!value.isListened && value.component.handle !== undefined) {
+                unlistenedComponentHandles.push(value.component.handle);
             }
         });
+        // This can be disabled as the state update will be triggered after the promises resolve
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        updateStateAndComponentMap(
+            unlistenedComponentHandles,
+            fluidComponentMap,
+            root,
+            reactState,
+            reactSetState,
+            stateToRoot,
+        );
     }
 
     return [reactState, fluidSetState];

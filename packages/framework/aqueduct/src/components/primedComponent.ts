@@ -8,14 +8,15 @@ import {
     IComponentHandle,
     IRequest,
     IResponse,
+    IComponentPrimed,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
-
 /**
  * PrimedComponent is a base component that is primed with a root directory and task manager. It
  * ensures that both are created and ready before you can access it.
@@ -31,6 +32,7 @@ import { SharedComponent } from "./sharedComponent";
  */
 export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends SharedComponent<P, S, E>
+    implements IComponentPrimed
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
@@ -52,6 +54,19 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         }
     }
 
+    public get IComponentPrimed() {
+        return this;
+    }
+
+    public addListenerToRootValueChanged(
+        listener: (
+            changed: IDirectoryValueChanged,
+            local: boolean,
+        ) => void,
+    ): void {
+        this.root.on("valueChanged", listener);
+    }
+
     /**
      * The root directory will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
@@ -60,7 +75,6 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         if (!this.internalRoot) {
             throw new Error(this.getUninitializedErrorString(`root`));
         }
-
         return this.internalRoot;
     }
 

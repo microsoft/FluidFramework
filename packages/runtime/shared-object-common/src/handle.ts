@@ -9,7 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedObject } from "./types";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base-definitions";
 
 /**
  * Component handle for shared object

@@ -4,10 +4,9 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { HandleMap } from "@microsoft/fluid-aqueduct-react";
+import { IFluidDataProps } from "@microsoft/fluid-aqueduct-react";
 import {
     IDate,
     IPerson,
@@ -26,7 +25,7 @@ export const CommentReducer: ICommentReducer = {
     add: {
         function: (state: ICommentState, dataProps, newComment: string, name: string) => {
             state.comments.push({ message: newComment, name });
-            return state;
+            return { state };
         },
     },
 };
@@ -35,7 +34,7 @@ export const DateReducer: IDateReducer = {
     set: {
         function: (state: IDateState, dataProps, key: string, time: IDate) => {
             state.dateMap.set(key, time);
-            return state;
+            return { state };
         },
     },
 };
@@ -46,22 +45,23 @@ export const PersonReducer: IPersonReducer = {
             const person = state.personMap.get<IPerson>(key);
             person.name = name;
             state.personMap.set(key, person);
-            return state;
+            return { state };
         },
     },
     updateAvailability: {
         function: (state: IPersonState, dataProps, key: string, availability: IAvailability) => {
             const { dateKey, availabilityType } = availability;
             const person = state.personMap.get<IPerson>(key);
-            const availabilityMap = dataProps.handleMap.get(person.availabilityMapHandle) as SharedMap;
+            const availabilityMap = (dataProps.fluidComponentMap
+                .get(person.availabilityMapHandle)?.component) as SharedMap;
             const availabilityItem = availabilityMap.get<IAvailability>(dateKey);
             availabilityItem.availabilityType = availabilityType;
             availabilityMap.set(dateKey, availabilityItem);
-            return state;
+            return { state };
         },
     },
     addPerson: {
-        function: (state: IPersonState, dataProps: { runtime: IComponentRuntime, handleMap: HandleMap }) => {
+        function: (state: IPersonState, dataProps: IFluidDataProps) => {
             const newAvailabilityMap = SharedMap.create(dataProps.runtime);
             Object.entries(defaultDates).forEach(([key, date]) => {
                 newAvailabilityMap.set(key, { dateKey: date.key, availabilityType: AvailabilityType.No });
@@ -71,9 +71,8 @@ export const PersonReducer: IPersonReducer = {
                 name: "",
                 availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
-            dataProps.handleMap.set(newAvailabilityMap.handle, newAvailabilityMap);
             state.personMap.set(newPerson.key, newPerson);
-            return state;
+            return { state, newComponentHandles: [newAvailabilityMap.handle] };
         },
     },
     removePerson: {
@@ -81,7 +80,7 @@ export const PersonReducer: IPersonReducer = {
             if (state.personMap.get(key) !== undefined) {
                 state.personMap.delete(key);
             }
-            return state;
+            return { state };
         },
     },
 };

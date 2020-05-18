@@ -15,6 +15,7 @@ import {
     useReducerFluid,
     createContextFluid,
     FluidStateUpdateFunction,
+    IFluidDataProps,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -54,21 +55,22 @@ function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
 // ---- React Functional Component w/ useReducer ----
 
 interface IActionReducer {
-    increment:  FluidStateUpdateFunction<CounterFunctionalState>,
+    increment:  FluidStateUpdateFunction<CounterFunctionalState, IFluidDataProps>,
 }
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (oldState: CounterFunctionalState, dataProps, step: number) => {
-            return { value: step === undefined ? oldState.value + 1  : oldState.value + step };
+        function: (state: CounterFunctionalState, dataProps, step: number) => {
+            state.value =  step === undefined ? state.value + 1  : state.value + step;
+            return { state };
         },
     },
 };
 
-function CounterReactFunctionalReducer(props: FluidReducerProps<CounterFunctionalState, IActionReducer, {}>) {
-    // Declare a new state variable, which we'll call "count"
-    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer, {}>(props);
-
+function CounterReactFunctionalReducer(
+    props: FluidReducerProps<CounterFunctionalState, IActionReducer, {}, IFluidDataProps>,
+) {
+    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer, {}, IFluidDataProps>(props);
     return (
         <div>
             <span
@@ -150,11 +152,13 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
             <div>
                 <CounterReactFunctional
                     root={this.root}
+                    fluidComponentMap={new Map()}
                     initialState={{ value: this.root.get("counterClicksFunctional") }}
                     stateToRoot={stateToRootFunctional}
                 />
                 <CounterReactFunctionalReducer
                     root={this.root}
+                    fluidComponentMap={new Map()}
                     runtime={this.runtime}
                     initialState={{ value: this.root.get("counterClicksReducer") }}
                     stateToRoot={stateToRootReducer}
@@ -163,6 +167,7 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                 />
                 <CounterReactFunctionalContext
                     root={this.root}
+                    fluidComponentMap={new Map()}
                     initialState={{ value: this.root.get("counterClicksContext") }}
                     stateToRoot={stateToRootContext}
                 />

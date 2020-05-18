@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
+import { MapKernel } from "@microsoft/fluid-map";
+import { IValueChanged } from "@microsoft/fluid-map-component-definitions";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
     FileMode,

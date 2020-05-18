@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { useReducerFluid, FluidReducerProps } from "@microsoft/fluid-aqueduct-react";
+import { useReducerFluid, FluidReducerProps, IFluidDataProps } from "@microsoft/fluid-aqueduct-react";
 import {
     CommentReducer,
     PersonReducer,
@@ -26,49 +26,49 @@ export const PeopleRootKey = "people";
 export const DatesRootKey = "dates";
 
 export function useCommentReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
+    const { fluidComponentMap, root, runtime } = props;
     const stateToRootComments = new Map<keyof ICommentState, string>();
     stateToRootComments.set("comments", "comments");
-    const commentProps: FluidReducerProps<ICommentState, ICommentReducer, {}> = {
+    const commentProps: FluidReducerProps<ICommentState, ICommentReducer, {}, IFluidDataProps> = {
         root,
         runtime,
-        handleMap,
+        fluidComponentMap,
         initialState: props.initialCommentState,
         reducer: CommentReducer,
         selector: {},
         stateToRoot: stateToRootComments,
     };
-    return useReducerFluid<ICommentState, ICommentReducer, {}>(commentProps);
+    return useReducerFluid<ICommentState, ICommentReducer, {}, IFluidDataProps>(commentProps);
 }
 
 export function usePersonReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
+    const { fluidComponentMap, root, runtime } = props;
     const stateToRootPerson = new Map<keyof IPersonState, string>();
     stateToRootPerson.set("personMap", PeopleRootKey);
-    const personProps: FluidReducerProps<IPersonState, IPersonReducer, IPersonSelector> = {
+    const personProps: FluidReducerProps<IPersonState, IPersonReducer, IPersonSelector, IFluidDataProps> = {
         root,
         runtime,
-        handleMap,
+        fluidComponentMap,
         initialState: props.initialPersonState,
         reducer: PersonReducer,
         selector: PersonSelector,
         stateToRoot: stateToRootPerson,
     };
-    return useReducerFluid<IPersonState, IPersonReducer, IPersonSelector>(personProps);
+    return useReducerFluid<IPersonState, IPersonReducer, IPersonSelector, IFluidDataProps>(personProps);
 }
 
 export function useDateReducer(props: ScheduleItProps) {
-    const { handleMap, root, runtime } = props;
+    const { fluidComponentMap, root, runtime } = props;
     const stateToRootDates = new Map<keyof IDateState, string>();
     stateToRootDates.set("dateMap", DatesRootKey);
-    const dateProps: FluidReducerProps<IDateState, IDateReducer, {}> = {
+    const dateProps: FluidReducerProps<IDateState, IDateReducer, {}, IFluidDataProps> = {
         root,
         runtime,
-        handleMap,
+        fluidComponentMap,
         initialState: props.initialDateState,
         reducer: DateReducer,
         selector: {},
         stateToRoot: stateToRootDates,
     };
-    return useReducerFluid<IDateState, IDateReducer, {}>(dateProps);
+    return useReducerFluid<IDateState, IDateReducer, {}, IFluidDataProps>(dateProps);
 }

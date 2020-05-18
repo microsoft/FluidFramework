@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@microsoft/fluid-map-definitions";
 
 /**
  * Factory for the creation and loading of Counters.

@@ -8,6 +8,7 @@ import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -17,7 +18,6 @@ import {
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
-import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  *  Base class from which all shared objects derive

@@ -10,7 +10,8 @@ import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { ISpacesStoredComponent, ISpacesStorage } from "./spacesStorage";
+
+import { PrimedContext } from "../context";
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
@@ -35,7 +36,7 @@ interface ISpacesEditPaneProps {
 }
 
 const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
-    (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
+    (props: ISpacesEditPaneProps) => {
         const componentUrl = `${window.location.href}/${props.url}`;
         return (
             <div className="spaces-edit-pane">
@@ -62,7 +63,7 @@ interface ISpacesComponentViewProps {
 }
 
 const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
-    (props: React.PropsWithChildren<ISpacesComponentViewProps>) => {
+    (props: ISpacesComponentViewProps) => {
         const [component, setComponent] = React.useState<IComponent | undefined>(undefined);
 
         React.useEffect(() => {
@@ -88,27 +89,21 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
     };
 
 interface ISpacesStorageViewProps {
-    storage: ISpacesStorage;
     editable: boolean;
 }
 
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
-    (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
-        const [componentMap, setComponentMap] =
-            React.useState<Map<string, ISpacesStoredComponent>>(props.storage.componentList);
-
-        React.useEffect(() => {
-            const onComponentListChanged = (newMap: Map<string, Layout>) => {
-                setComponentMap(newMap);
-            };
-            props.storage.on("componentListChanged", onComponentListChanged);
-            return () => {
-                props.storage.off("componentListChanged", onComponentListChanged);
-            };
-        });
-
+    (props: ISpacesStorageViewProps) => {
+        const {
+            dispatch,
+            state,
+        } = React.useContext(PrimedContext);
+        if (dispatch === undefined || state === undefined) {
+            return <div>{"Context is not providing data correctly"}</div>;
+        }
+        const { componentMap } = state;
         // Render nothing if there are no components
-        if (props.storage.componentList.size === 0) {
+        if (componentMap === undefined || componentMap.size === 0) {
             return <></>;
         }
 
@@ -121,7 +116,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             element: HTMLElement,
         ) => {
             const key = newItem.i.split("_")[0];
-            props.storage.updateLayout(key, newItem);
+            dispatch("updateLayout", key, newItem);
         };
 
         const components: JSX.Element[] = [];
@@ -138,7 +133,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                         url={url}
                         editable={props.editable}
                         getComponent={async () => model.handle.get()}
-                        removeComponent={() => props.storage.removeItem(url)}
+                        removeComponent={() => dispatch("removeComponent", url)}
                     />
                 </div>,
             );

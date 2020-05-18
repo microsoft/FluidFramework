@@ -11,9 +11,9 @@ import {
 } from "office-ui-fabric-react";
 import {
     IInternalRegistryEntry,
-    ISpacesProps,
     Templates,
-} from ".";
+} from "./interfaces";
+import { PrimedContext } from "./context";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
@@ -31,15 +31,21 @@ const componentButtonStyle: React.CSSProperties = {
 initializeIcons();
 
 interface ISpacesToolbarProps {
-    spacesProps: ISpacesProps;
-    components: IInternalRegistryEntry[];
     editable: boolean;
     setEditable: (editable: boolean) => void;
 }
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
-        const templatesAvailable = props.spacesProps.templatesAvailable ?? false;
+        const {
+            dispatch,
+            fetch,
+            supportedComponents,
+        } = React.useContext(PrimedContext);
+        if (dispatch === undefined || fetch === undefined || supportedComponents === undefined) {
+            return <div>{"Context is not providing data correctly"}</div>;
+        }
+        const templatesAvailable = fetch("areTemplatesAvailable") ?? false;
 
         const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
         const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);
@@ -55,16 +61,14 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
         );
         const componentButtonList: JSX.Element[] = [];
         if (componentListOpen) {
-            props.components.forEach(((supportedComponent: IInternalRegistryEntry) => {
+            supportedComponents.forEach(((supportedComponent: IInternalRegistryEntry) => {
                 componentButtonList.push(
                     <Button
                         style={dropDownButtonStyle}
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
-                            if (props.spacesProps.addComponent) {
-                                props.spacesProps.addComponent(supportedComponent.type);
-                            }
+                            dispatch("addComponent", supportedComponent.type);
                             setComponentListOpen(false);
                         }}
                     >
@@ -94,9 +98,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    if (props.spacesProps.applyTemplate) {
-                                        props.spacesProps.applyTemplate(Templates[template]);
-                                    }
+                                    dispatch("applyTemplate", Templates[template]);
                                     setTemplateListOpen(false);
                                 }}
                             >

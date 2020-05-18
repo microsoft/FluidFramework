@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { Layout } from "react-grid-layout";
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import {
-    IComponentHandle,
+    IComponentHandle, IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { ISpacesStoredComponent, ComponentMapKey } from "../interfaces";
 
 /**
  * ISpacesStorage describes the public API surface of SpacesStorage.
  */
-export interface ISpacesStorage extends EventEmitter {
+export interface ISpacesStorage {
     /**
      * The list of components being stored.
      */
@@ -41,21 +42,11 @@ export interface ISpacesStorage extends EventEmitter {
 }
 
 /**
- * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
- * supporting export to template.
- */
-export interface ISpacesStoredComponent {
-    handle: IComponentHandle;
-    type: string;
-    layout: Layout;
-}
-
-/**
  * SpacesStorage is a component which maintains a collection of other components and a grid-based layout for rendering.
  */
 export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
-
+    private _componentDirectory: ISharedDirectory | undefined;
     private static readonly factory = new PrimedComponentFactory(
         SpacesStorage.ComponentName,
         SpacesStorage,
@@ -64,12 +55,27 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
         [],
     );
 
+    protected async componentInitializingFirstTime() {
+        this._componentDirectory = SharedDirectory.create(this.runtime);
+        this.root.set(ComponentMapKey, this._componentDirectory.handle);
+    }
+
+    protected async componentInitializingFromExisting() {
+        this._componentDirectory = await this.root.get<IComponentHandle<ISharedDirectory>>(ComponentMapKey).get();
+    }
+
+    public async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
+        pkg: string,
+        props?: any): Promise<T> {
+        return super.createAndAttachComponent(pkg, props);
+    }
+
     public static getFactory() {
         return SpacesStorage.factory;
     }
 
     public get componentList(): Map<string, ISpacesStoredComponent> {
-        return this.root;
+        return this._componentDirectory || this.root.get<SharedDirectory>(ComponentMapKey);
     }
 
     public addItem(handle: IComponentHandle, type: string, layout?: Layout): string {
@@ -78,8 +84,7 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
             type,
             layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },
         };
-
-        this.root.set(handle.path, model);
+        this._componentDirectory?.set(handle.path, model, ComponentMapKey);
         return handle.path;
     }
 
@@ -95,11 +100,5 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
         };
         this.root.set(key, model);
-    }
-
-    protected async componentHasInitialized() {
-        this.root.on("valueChanged", () => {
-            this.emit("componentListChanged", new Map(this.componentList.entries()));
-        });
     }
 }

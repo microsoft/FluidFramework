@@ -11,12 +11,14 @@ import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     ISerializableValue,
     ISerializedValue,
-    IValueChanged,
     IValueOpEmitter,
     IValueType,
     IValueTypeOperationValue,
     ISharedMapEvents,
-} from "./interfaces";
+} from "@microsoft/fluid-map-definitions";
+import {
+    IValueChanged,
+} from "@microsoft/fluid-map-component-definitions";
 import {
     ILocalValue,
     LocalValueMaker,
@@ -53,14 +55,14 @@ interface IMapValueTypeOperation {
     type: "act";
 
     /**
-     * Map key being modified.
-     */
-    key: string;
-
-    /**
      * Value of the operation, specific to the value type.
      */
     value: IValueTypeOperationValue;
+
+    /**
+     * Map key being modified.
+     */
+    key: string;
 }
 
 /**
@@ -73,14 +75,14 @@ interface IMapSetOperation {
     type: "set";
 
     /**
-     * Map key being modified.
-     */
-    key: string;
-
-    /**
      * Value to be set on the key.
      */
     value: ISerializableValue;
+
+    /**
+     * Map key being modified.
+     */
+    key: string;
 }
 
 /**
@@ -308,7 +310,7 @@ export class MapKernel {
     /**
      * {@inheritDoc ISharedMap.set}
      */
-    public set(key: string, value: any) {
+    public set(key: string, value: any, keyPrefix?: string) {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
@@ -486,10 +488,16 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
      */
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage): void {
+    private setCore(
+        key: string,
+        value: ILocalValue,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        keyPrefix?: string,
+    ): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
-        const event: IValueChanged = { key, previousValue };
+        const event: IValueChanged = { key, previousValue, keyPrefix };
         this.eventEmitter.emit("valueChanged", event, local, op, this);
     }
 
