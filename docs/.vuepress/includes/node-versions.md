@@ -1,1 +1,1 @@
-Fluid supports Node.js LTS versions 10 and greater.
+Fluid supports Node.js LTS versions 12.16 and greater.
