@@ -168,7 +168,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber,
-                            value.operation.term,
+                            value.operation.term ?? 1,
                             scribeCheckpoint);
                         this.protocolHead = this.protocolHandler.sequenceNumber;
                         this.context.log.info(

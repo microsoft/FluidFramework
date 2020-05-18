@@ -69,10 +69,7 @@ export class OdspDocumentService implements IDocumentService {
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         if (odspResolvedUrl.createNewOptions) {
-            const templogger: ITelemetryLogger = ChildLogger.create(
-                logger,
-                "OdspDriver",
-                { docId: odspResolvedUrl.hashedDocumentId });
+            const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
             const event = PerformanceEvent.start(templogger,
                 {
                     eventName: "CreateNew",
@@ -85,7 +82,7 @@ export class OdspDocumentService implements IDocumentService {
                     cache,
                     storageFetchWrapper);
                 const props = {
-                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                    docId: odspResolvedUrl.hashedDocumentId,
                 };
                 event.end(props);
             } catch (error) {
@@ -131,10 +128,7 @@ export class OdspDocumentService implements IDocumentService {
             filename: odspResolvedUrl.fileName,
         };
 
-        const templogger: ITelemetryLogger = ChildLogger.create(
-            logger,
-            "OdspDriver",
-            { docId: odspResolvedUrl.hashedDocumentId });
+        const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
 
         const event = PerformanceEvent.start(templogger,
             {
@@ -149,7 +143,7 @@ export class OdspDocumentService implements IDocumentService {
                 storageFetchWrapper,
                 createNewSummary);
             const props = {
-                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                docId: odspResolvedUrl.hashedDocumentId,
             };
 
             const docService = factory.createDocumentService(odspResolvedUrl, logger);
@@ -200,7 +194,6 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = ChildLogger.create(logger,
             "OdspDriver",
             {
-                docId: this.odspResolvedUrl.hashedDocumentId,
                 odc: this.isOdc,
             });
 

@@ -56,7 +56,6 @@ import {
     QuorumProxy,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState as ConnectionStateToBeDeleted, // deprecated, to be removed on next server bump
     FileMode,
     IClient,
     IClientDetails,
@@ -673,6 +672,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -755,6 +755,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: 1,
         };
         entries.push({
             mode: FileMode.File,
@@ -897,6 +898,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: "",
             sequenceNumber: 0,
             minimumSequenceNumber: 0,
+            term: 1,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
@@ -946,6 +948,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
+                term: 1,
             };
         }
 
@@ -993,6 +996,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             members,
             proposals,
             values,
@@ -1285,10 +1289,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const state = this._connectionState === ConnectionState.Connected;
         this.context!.setConnectionState(state, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(
-            // TODO: Deprecated, to be removed on next server bump
-            state ? ConnectionStateToBeDeleted.Connected : ConnectionStateToBeDeleted.Disconnected,
-            this.clientId);
+        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {

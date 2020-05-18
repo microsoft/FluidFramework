@@ -1512,6 +1512,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: innerContents.type,
         };

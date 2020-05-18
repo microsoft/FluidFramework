@@ -22,7 +22,7 @@ export interface IDocumentAttributes {
     /**
      * Term number at which the snapshot was taken
      */
-    term: number;
+    term: number | undefined;
 }
 
 export enum FileMode {
