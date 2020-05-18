@@ -26,7 +26,9 @@ Yes! <https://aka.ms/fluid/>
 
 ## Why aren't commandline tools working?
 
-You may need to upgrade NodeJS. Make sure you're using NodeJS versions 10 or 12.
+You may need to upgrade Node.js.
+
+!!!include(node-versions.md)!!!
 
 ## Do you have any suggested reading before I get started?
 
@@ -37,8 +39,3 @@ But it's more fun to [start hacking](../guide/yo-fluid.md)!
 ## Can I contribute to Fluid?
 
 Yes! See our [contribution guide](../contributing/README.md).
-
-## What is the difference between Fluid and Prague?
-
-Prague was the initial code name for the project and prototype effort. Fluid (Framework) is the official name that was
-announced at //Build. We are in the process of transitioning to the new name.
