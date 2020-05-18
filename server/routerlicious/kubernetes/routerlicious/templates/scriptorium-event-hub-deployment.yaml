@@ -31,7 +31,7 @@ spec:
           - 'node'
           - 'packages/routerlicious/dist/event-hub-service/index.js'
           - 'scriptorium'
-          - '/usr/src/server/server/routerlicious/dist/scriptorium/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/scriptorium/index.js'
         env:
         - name: DEBUG
           value: "fluid:*"
