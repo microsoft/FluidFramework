@@ -40,22 +40,10 @@ describe("Ops on Reconnect", () => {
     let firstContainerComp1Directory: SharedDirectory;
 
     /**
-     * Yields control in the JavaScript event loop.
-     */
-    async function yieldEventLoop(): Promise<void> {
-        await new Promise<void>((resolve) => {
-            setTimeout(resolve, 0);
-        });
-    }
-
-    /**
-     * Waits for the given Container to get reconnected. Yields the JS event loop until the Container
-     * gets to Connected state.
+     * Waits for the "connected" event from the given container.
      */
     async function waitForContainerReconnection(container: Container): Promise<void> {
-        do {
-            await yieldEventLoop();
-        } while (container.connectionState !== ConnectionState.Connected);
+        await new Promise((resolve) => container.once("connected", () => resolve()));
     }
 
     async function createContainer(): Promise<Container> {
