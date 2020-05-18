@@ -13,26 +13,8 @@ import {
     ITree,
     ITreeEntry,
     TreeEntry,
-    SummaryType,
-    SummaryObject,
 } from "@microsoft/fluid-protocol-definitions";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
-
-/**
- * Create a flatten view of an array of ITreeEntry
- *
- * @param tree - an array of ITreeEntry to flatten
- * @param blobMap - a map of blob's sha1 to content
- * @returns A flatten with of the ITreeEntry
- */
-async function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): Promise<git.ITree> {
-    const entries = await flattenCore("", tree, blobMap);
-    return {
-        sha: "",
-        tree: entries,
-        url: "",
-    };
-}
 
 async function flattenCore(
     path: string,
@@ -90,44 +72,19 @@ async function flattenCore(
 }
 
 /**
- * Take a summary object and returns its git mode.
+ * Create a flatten view of an array of ITreeEntry
  *
- * @param value - summary object
- * @returns the git mode of summary object
+ * @param tree - an array of ITreeEntry to flatten
+ * @param blobMap - a map of blob's sha1 to content
+ * @returns A flatten with of the ITreeEntry
  */
-export function getGitMode(value: SummaryObject): string {
-    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-    switch (type) {
-        case SummaryType.Blob:
-            return FileMode.File;
-        case SummaryType.Commit:
-            return FileMode.Commit;
-        case SummaryType.Tree:
-            return FileMode.Directory;
-        default:
-            throw new Error();
-    }
-}
-
-/**
- * Take a summary object and returns its type.
- *
- * @param value - summary object
- * @returns the type of summary object
- */
-export function getGitType(value: SummaryObject): string {
-    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-
-    switch (type) {
-        case SummaryType.Blob:
-            return "blob";
-        case SummaryType.Commit:
-            return "commit";
-        case SummaryType.Tree:
-            return "tree";
-        default:
-            throw new Error();
-    }
+async function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): Promise<git.ITree> {
+    const entries = await flattenCore("", tree, blobMap);
+    return {
+        sha: "",
+        tree: entries,
+        url: "",
+    };
 }
 
 /**
@@ -138,7 +95,7 @@ export function getGitType(value: SummaryObject): string {
  */
 export async function buildSnapshotTree(
     entries: ITreeEntry[],
-    blobMap: Map<string, string>
+    blobMap: Map<string, string>,
 ): Promise<ISnapshotTree> {
     const flattened = await flatten(entries, blobMap);
     return buildHierarchy(flattened);

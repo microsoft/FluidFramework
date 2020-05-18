@@ -7,7 +7,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTree } from "@microsoft/fluid-driver-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 

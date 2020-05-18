@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTree } from "@microsoft/fluid-driver-utils";
 import {
     IClient,
     ISnapshotTree,

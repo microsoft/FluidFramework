@@ -61,7 +61,7 @@
     "@microsoft/fluid-container-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-driver-base": "^0.18.0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
-    "@microsoft/fluid-driver-utils": "^0.18.0",
+    "@microsoft/fluid-driver-utils": "^0.18.0-0",
     "@microsoft/fluid-experimental-creation-driver": "^0.18.0",
     "@microsoft/fluid-local-driver": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",

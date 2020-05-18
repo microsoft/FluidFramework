@@ -42,6 +42,7 @@ import {
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
+    buildSnapshotTree,
     createIError,
     readAndParse,
     OnlineStatus,
@@ -50,7 +51,6 @@ import {
     combineAppAndProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
 import {
-    buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,

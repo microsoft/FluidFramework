@@ -24,10 +24,8 @@ import {
     Deferred,
     raiseConnectedEvent,
 } from "@microsoft/fluid-common-utils";
-import {
-    buildSnapshotTree,
-    TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+import { buildSnapshotTree } from "@microsoft/fluid-driver-utils";
+import { TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,

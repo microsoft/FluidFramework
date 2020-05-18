@@ -33,7 +33,7 @@
     "@microsoft/fluid-container-definitions": "^0.18.0",
     "@microsoft/fluid-container-loader": "^0.18.0",
     "@microsoft/fluid-driver-definitions": "^0.18.0",
-    "@microsoft/fluid-driver-utils": "^0.18.0",
+    "@microsoft/fluid-driver-utils": "^0.18.0-0",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.18.0",
     "@microsoft/fluid-odsp-driver": "^0.18.0",
     "@microsoft/fluid-odsp-urlresolver": "^0.18.0",
