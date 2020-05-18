@@ -40,7 +40,6 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
-    IUrlResolverLegacy,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
