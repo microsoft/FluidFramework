@@ -19,7 +19,8 @@ import {
 } from "@microsoft/fluid-driver-utils";
 import { ISummaryTree, NackErrorType } from "@microsoft/fluid-protocol-definitions";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
-import { createTestDocumentService, TestDocumentService } from "./testDocumentService";
+import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
+import { createTestDocumentService } from "./testDocumentService";
 
 /**
  * Implementation of document service factory for testing.
@@ -29,7 +30,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-test:";
 
     // A map of clientId to TestDocumentService.
-    private readonly documentServices: Map<string, TestDocumentService> = new Map();
+    private readonly documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection> = new Map();
 
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -101,42 +102,34 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             tokenProvider,
             tenantId,
             documentId,
-            this);
-    }
-
-    public addDocumentServiceClientId(clientId: string, documentService: TestDocumentService) {
-        this.documentServices.set(clientId, documentService);
-    }
-
-    public removeDocumentServiceClientId(clientId: string) {
-        this.documentServices.delete(clientId);
+            this.documentDeltaConnectionsMap);
     }
 
     /**
-     * Gets the document service for the clientId and asks it to disconnect the client.
+     * Gets the document delta connection for the clientId and asks it to disconnect the client.
      * @param clientId - The ID of the client to be disconnected.
      * @param disconnectReason - The reason of the disconnection.
      */
     public disconnectClient(clientId: string, disconnectReason: string) {
-        if (this.documentServices.has(clientId) === false) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
             throw new Error(`No client with the id: ${clientId}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.documentServices.get(clientId)!.disconnectClient(disconnectReason);
+        this.documentDeltaConnectionsMap.get(clientId)!.disconnectClient(disconnectReason);
     }
 
     /**
-     * Gets the document service for the clientId and asks it to nack the client.
+     * Gets the document delta connection for the clientId and asks it to nack the client.
      * @param clientId - The ID of the client to be Nack'd.
      * @param code - An error code number that represents the error. It will be a valid HTTP error code.
      * @param type - Type of the Nack.
      * @param message - A message about the nack for debugging/logging/telemetry purposes.
      */
     public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
-        if (this.documentServices.has(clientId) === false) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
             throw new Error(`No client with the id: ${clientId}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.documentServices.get(clientId)!.nackClient(code, type, message);
+        this.documentDeltaConnectionsMap.get(clientId)!.nackClient(code, type, message);
     }
 }

@@ -10,7 +10,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-contain
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { SharedMap, SharedDirectory } from "@microsoft/fluid-map";
-import { MessageType, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -38,6 +38,25 @@ describe("Ops on Reconnect", () => {
     let firstContainerComp1Map1: SharedMap;
     let firstContainerComp1Map2: SharedMap;
     let firstContainerComp1Directory: SharedDirectory;
+
+    /**
+     * Yields control in the JavaScript event loop.
+     */
+    async function yieldEventLoop(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            setTimeout(resolve, 0);
+        });
+    }
+
+    /**
+     * Waits for the given Container to get reconnected. Yields the JS event loop until the Container
+     * gets to Connected state.
+     */
+    async function waitForContainerReconnection(container: Container): Promise<void> {
+        do {
+            await yieldEventLoop();
+        } while (container.connectionState !== ConnectionState.Connected);
+    }
 
     async function createContainer(): Promise<Container> {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
@@ -94,15 +113,20 @@ describe("Ops on Reconnect", () => {
         containerDeltaEventManager.registerDocuments(firstContainerComp1.runtime);
     });
 
-    it("can resend ops on reconnection that were sent in disconnected / Nack'd state", async () => {
+    it("can resend ops on reconnection that were sent in disconnected state", async () => {
+        const clientId = firstContainer.clientId;
+
         // Create a second container and set up a listener to store the received map / directory values.
-        let receivedKeyValues: [string, string][] = [];
+        const receivedKeyValues: [string, string][] = [];
         const secondContainer = await createContainer();
         secondContainer.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === MessageType.Operation) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== "_scheduler") {
-                    const content = message.contents.contents.content.contents;
+                    // The client ID of firstContainer should have changed on disconnect.
+                    assert.notEqual(message.clientId, clientId, "The clientId did not change after disconnect");
+
+                    const content = envelope.contents.content.contents;
                     const key = content.key;
                     const value = content.value.value;
                     receivedKeyValues.push([ key, value ]);
@@ -115,7 +139,10 @@ describe("Ops on Reconnect", () => {
         containerDeltaEventManager.registerDocuments(secondContainerComp1.runtime);
 
         // Disconnect the client.
-        documentServiceFactory.disconnectClient(firstContainer.clientId, "Disconnected for testing");
+        documentServiceFactory.disconnectClient(clientId, "Disconnected for testing");
+
+        // The Container should be in disconnected state.
+        assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
 
         // Set values in DDSes in disconnected state.
         firstContainerComp1Map1.set("key1", "value1");
@@ -123,21 +150,52 @@ describe("Ops on Reconnect", () => {
         firstContainerComp1Map2.set("key3", "value3");
         firstContainerComp1Map2.set("key4", "value4");
 
-        // Wait for the ops to get processed.
+        // Wait for the Container to get reconnected.
+        await waitForContainerReconnection(firstContainer);
+
+        // Wait for the ops to get processed by both the containers.
         await containerDeltaEventManager.process();
 
-        const expectedKeyValues1: string[][] = [
+        const expectedKeyValues: string[][] = [
             [ "key1", "value1" ],
             [ "key2", "value2" ],
             [ "key3", "value3" ],
             [ "key4", "value4" ],
         ];
         assert.deepStrictEqual(
-            expectedKeyValues1, receivedKeyValues, "Did not receive the ops that were sent in disconnected state");
+            expectedKeyValues, receivedKeyValues, "Did not receive the ops that were sent in disconnected state");
+    });
+
+    it("can resend ops on reconnection that were sent in Nack'd state", async () => {
+        const clientId = firstContainer.clientId;
+
+        // Create a second container and set up a listener to store the received map / directory values.
+        const receivedKeyValues: [string, string][] = [];
+        const secondContainer = await createContainer();
+        secondContainer.on("op", (message: ISequencedDocumentMessage) => {
+            if (message.type === MessageType.Operation) {
+                const envelope = message.contents as IEnvelope;
+                if (envelope.address !== "_scheduler") {
+                    // The client ID of firstContainer should have changed on disconnect.
+                    assert.notEqual(message.clientId, clientId, "The clientId did not change after disconnect");
+
+                    const content = envelope.contents.content.contents;
+                    const key = content.key;
+                    const value = content.value.value;
+                    receivedKeyValues.push([ key, value ]);
+                }
+            }
+        });
+
+        // Get component1 on the second container.
+        const secondContainerComp1 = await getComponent("default", secondContainer);
+        containerDeltaEventManager.registerDocuments(secondContainerComp1.runtime);
 
         // Nack the client.
-        documentServiceFactory.nackClient(firstContainer.clientId);
-        receivedKeyValues = [];
+        documentServiceFactory.nackClient(clientId);
+
+        // The Container should be in disconnected state because DeltaManager disconnects on getting Nack'd.
+        assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
 
         // Set values in DDSes in disconnected state.
         firstContainerComp1Map1.set("key1", "value1");
@@ -145,16 +203,19 @@ describe("Ops on Reconnect", () => {
         firstContainerComp1Directory.set("key3", "value3");
         firstContainerComp1Directory.set("key4", "value4");
 
-        // Wait for the ops to get processed.
+        // Wait for the Container to get reconnected.
+        await waitForContainerReconnection(firstContainer);
+
+        // Wait for the ops to get processed by both the containers.
         await containerDeltaEventManager.process();
 
-        const expectedKeyValues2: string[][] = [
+        const expectedKeyValues: string[][] = [
             [ "key1", "value1" ],
             [ "key2", "value2" ],
             [ "key3", "value3" ],
             [ "key4", "value4" ],
         ];
         assert.deepStrictEqual(
-            expectedKeyValues2, receivedKeyValues, "Did not receive the ops that were sent in Nack'd state");
+            expectedKeyValues, receivedKeyValues, "Did not receive the ops that were sent in Nack'd state");
     });
 });
