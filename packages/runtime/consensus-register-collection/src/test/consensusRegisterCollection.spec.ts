@@ -8,7 +8,6 @@ import {
     FileMode,
     IBlob,
     ITree,
-    ConnectionState,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
@@ -47,7 +46,7 @@ describe("ConsensusRegisterCollection", () => {
 
             beforeEach(() => {
                 crc.connect(runtime.services);
-                deltaConnection.state = ConnectionState.Connected;
+                deltaConnection.connected = true;
             });
 
             it("Can create a collection", () => {
@@ -159,9 +158,9 @@ describe("ConsensusRegisterCollection", () => {
         it("message not sent before connect", async () => {
             crc.connect(runtime.services);
 
-            deltaConnection.state = ConnectionState.Disconnected;
+            deltaConnection.connected = false;
             const writeP =  crc.write("test", "test");
-            deltaConnection.state = ConnectionState.Connected;
+            deltaConnection.connected = true;
             deltaConnFactory.processAllMessages();
             const res = await writeP;
             assert(res);
@@ -171,10 +170,9 @@ describe("ConsensusRegisterCollection", () => {
             crc.connect(runtime.services);
 
             const writeP = crc.write("test", "test");
-            deltaConnection.state = ConnectionState.Disconnected;
-            deltaConnection.state = ConnectionState.Connecting;
+            deltaConnection.connected = false;
             deltaConnFactory.processAllMessages();
-            deltaConnection.state = ConnectionState.Connected;
+            deltaConnection.connected = true;
             deltaConnFactory.processAllMessages();
             const res = await writeP;
             assert(res);
@@ -184,10 +182,9 @@ describe("ConsensusRegisterCollection", () => {
             crc.connect(runtime.services);
 
             const writeP =  crc.write("test", "test");
-            deltaConnection.state = ConnectionState.Disconnected;
-            deltaConnection.state = ConnectionState.Connecting;
+            deltaConnection.connected = false;
             deltaConnFactory.clearMessages();
-            deltaConnection.state = ConnectionState.Connected;
+            deltaConnection.connected = true;
             deltaConnFactory.processAllMessages();
             const res = await writeP;
             assert(res);

@@ -22,14 +22,13 @@ import {
 import {
     ChildLogger,
     Deferred,
+    raiseConnectedEvent,
 } from "@microsoft/fluid-common-utils";
 import {
     buildSnapshotTree,
-    raiseConnectedEvent,
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
@@ -100,12 +99,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public get IComponentRouter() { return this; }
 
-    public get connectionState(): ConnectionState {
-        return this.componentContext.connectionState;
-    }
-
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.componentContext.connected;
     }
 
     public get leader(): boolean {
@@ -358,21 +353,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
         }
 
         for (const [, object] of this.contexts) {
-            object.changeConnectionState(value, clientId);
+            object.setConnectionState(connected, clientId);
         }
 
-        raiseConnectedEvent(this, value, clientId);
+        raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
     public getQuorum(): IQuorum {
@@ -613,14 +608,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return channelContext;
     }
 
-    // Ideally the component runtime should drive this. But the interface change just for this
-    // is probably an overkill.
     private attachListener() {
-        this.componentContext.on("leader", (clientId: string) => {
-            this.emit("leader", clientId);
+        this.componentContext.on("leader", () => {
+            this.emit("leader");
         });
-        this.componentContext.on("notleader", (clientId: string) => {
-            this.emit("notleader", clientId);
+        this.componentContext.on("notleader", () => {
+            this.emit("notleader");
         });
     }
 

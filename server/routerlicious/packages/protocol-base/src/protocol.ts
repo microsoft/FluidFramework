@@ -49,17 +49,18 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
  */
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
-
+    public readonly term: number;
     constructor(
         private readonly branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
-        public term: number,
+        term: number | undefined,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void) {
+        this.term = term ?? 1;
         this.quorum = new Quorum(
             minimumSequenceNumber,
             members,

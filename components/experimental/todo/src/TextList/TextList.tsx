@@ -42,7 +42,7 @@ export class TextList extends PrimedComponent implements
 
     protected async componentHasInitialized() {
         console.log("componentHasInitialized setting listener");
-        this.context.on("op", (e) => {
+        this.runtime.on("op", (e) => {
             console.log(JSON.stringify(e));
         });
     }

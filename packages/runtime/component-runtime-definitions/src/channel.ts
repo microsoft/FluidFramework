@@ -4,7 +4,7 @@
  */
 
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState, ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
 declare module "@microsoft/fluid-container-definitions" {
@@ -62,14 +62,14 @@ export interface IDeltaHandler {
     /**
      * State change events to indicate changes to the delta connection
      */
-    setConnectionState(state: ConnectionState): void;
+    setConnectionState(connected: boolean): void;
 }
 
 /**
  * Interface to represent a connection to a delta notification stream.
  */
 export interface IDeltaConnection {
-    state: ConnectionState;
+    connected: boolean;
 
     /**
      * Send new messages to the server. Returns the client ID for the message. Must be in a connected state
