@@ -8,6 +8,12 @@ import { Stream } from "stream";
 import * as tar from "tar-stream";
 import * as zlib from "zlib";
 
+export interface IPackageDetails {
+    dist: {
+        tarball: string,
+    };
+}
+
 /**
  * Fetches an npm package from an npm registry.  This will get a tarball
  * from the registry and stream the unzipped data returning a buffer of
@@ -20,18 +26,14 @@ import * as zlib from "zlib";
  * @param password - password for npm package registry
  */
 export async function fetchFile(
-    name: string,
-    version: string,
+    details: IPackageDetails,
     path: string,
-    baseUrl: string,
     username: string,
-    password: string): Promise<Buffer> {
-
+    password: string,
+): Promise<Buffer> {
     const auth = { username, password };
-    const url = `${baseUrl}/${encodeURI(name)}/${encodeURI(version)}`;
-    const details = await axios.get(url, { auth });
 
-    const data = await axios.get<Stream>(details.data.dist.tarball, { auth, responseType: "stream" });
+    const data = await axios.get<Stream>(details.dist.tarball, { auth, responseType: "stream" });
 
     const extract = tar.extract();
     const gunzip = zlib.createGunzip();

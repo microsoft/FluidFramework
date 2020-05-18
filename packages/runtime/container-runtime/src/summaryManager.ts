@@ -4,10 +4,12 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
+import { ISummarizingError } from "@microsoft/fluid-driver-definitions";
+import { createSummarizingError } from "@microsoft/fluid-driver-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { ISummarizer, Summarizer } from "./summarizer";
 
@@ -160,7 +162,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     ) {
         super();
 
-        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+        this.logger = ChildLogger.create(
+            parentLogger,
+            "SummaryManager",
+            undefined,
+            { clientId: () => this.latestClientId });
 
         this.connected = context.connected;
         if (this.connected) {
@@ -292,6 +298,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
             return;
         }
@@ -305,8 +312,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
+        if (delayMs >= defaultThrottleMaxDelayMs) {
+            // we can't create a summarizer for some reason; raise error on container
+            this.context.error(createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay"));
+        }
+
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
+            summarizer.on("summarizingError", (error: ISummarizingError) => this.context.error(error));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({

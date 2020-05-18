@@ -17,7 +17,6 @@ import {
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
@@ -59,13 +58,20 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         return;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<IRuntimeState> {
         return Promise.resolve({});
+    }
+
+    public createSummary(): ISummaryTree {
+        return {
+            tree: {},
+            type: SummaryType.Tree,
+        };
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

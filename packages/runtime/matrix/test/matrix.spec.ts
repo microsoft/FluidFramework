@@ -8,7 +8,7 @@ import "mocha";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { Serializable } from "@microsoft/fluid-runtime-definitions";
+import { Serializable } from "@microsoft/fluid-component-runtime-definitions";
 import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
@@ -286,8 +286,6 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-
-        // TODO: Vet IMatrixConsumers w/multiple clients
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
             await TestHost.sync(host1, host2);
@@ -581,6 +579,25 @@ describe("Matrix", () => {
                 matrix1.removeRows(1,1);
                 matrix2.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, ["A", "B", "C"]);
                 await expect();
+            });
+
+            // This case is interesting because the removal of [0..1] is split on client2 to straddle the
+            // inserted "B".
+            it("overlapping insert/set vs. remove/insert/set", async () => {
+                matrix1.insertRows(0,1);    // numRows: 0, numCols: 0
+                matrix1.insertCols(0,4);    // numRows: 1, numCols: 0
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 4, [0,1,2,3]);
+                await expect([
+                    [0, 1, 2, 3]
+                ]);
+                matrix2.insertCols(1,1);    // numRows: 1, numCols: 5
+                matrix2.setCells(/* row: */ 0, /* col: */ 1, /* numCols: */ 1, ["A"]);
+                matrix1.removeCols(0,2);    // numRows: 1, numCols: 2
+                matrix1.insertCols(0,1);    // numRows: 1, numCols: 3
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, ["B"]);
+                await expect([
+                    ["B", "A", 2, 3]
+                ]);
             });
         });
     });

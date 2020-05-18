@@ -62,6 +62,11 @@ export class CacheBase {
 
     public put(key: string, value: any, expiryTime?: number) {
         this.cache.set(key, value);
+        if (value instanceof Promise) {
+            value.catch(() => {
+                this.remove(key);
+            });
+        }
         if (expiryTime) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.gc(key, expiryTime);

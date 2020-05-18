@@ -8,9 +8,8 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -25,9 +24,8 @@ import { createTestDocumentService } from "./testDocumentService";
 /**
  * Implementation of document service factory for testing.
  */
-export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
-
     public readonly protocolName = "fluid-test:";
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -37,7 +35,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const pathName = new URL(resolvedUrl.url).pathname;
@@ -66,9 +64,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
             id,
             appSummary,
             sequenceNumber,
+            documentAttributes.term ?? 1,
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl);
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**
@@ -76,7 +75,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);

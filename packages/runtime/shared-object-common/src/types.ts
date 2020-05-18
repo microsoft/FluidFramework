@@ -4,7 +4,7 @@
  */
 
 import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { IChannel, ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
 import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
@@ -21,7 +21,6 @@ export interface IProvideSharedObject {
 export interface ISharedObjectEvents extends IErrorEvent  {
     (event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
-    (event: "disconnected" | "connected" | "processed", listener: () => void);
 }
 
 /**
@@ -46,6 +45,13 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
      * @returns True if the given shared object is registered
      */
     isRegistered(): boolean;
+
+    /**
+     * Returns whether the given shared object is attached to parent component. Parent component
+     * could itself be unattached. It does not matter if the container is live or local.
+     * @returns True if the given shared object is attached
+     */
+    isAttached(): boolean;
 
     /**
      * Gets a form of the object that can be serialized.

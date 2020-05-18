@@ -10,9 +10,11 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedObjectFactory, ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { LazyPromise } from "@microsoft/fluid-common-utils";
 import { SharedComponent } from "./sharedcomponent";
@@ -64,9 +66,9 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     }
 
     public create(parentContext: IComponentContext, props?: any) {
-        const { hostRuntime, packagePath } = parentContext;
+        const { containerRuntime, packagePath } = parentContext;
 
-        const childContext = hostRuntime.createComponentContext(
+        const childContext = containerRuntime.createComponentContext(
             packagePath.concat(this.type),
             props);
 

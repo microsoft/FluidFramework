@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -23,9 +22,7 @@ import { OdspDocumentService } from "./odspDocumentService";
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory
-{
+export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
@@ -35,7 +32,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         return OdspDocumentService.createContainer(
             createNewSummary,
@@ -44,11 +41,11 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.cache,
             this.getStorageToken,
             this,
+            this.storageFetchWrapper,
         );
     }
 
     /**
-   * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -59,7 +56,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param odspCache - This caches response for joinSession.
    */
     constructor(
-        private readonly appId: string,
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryBaseLogger,
@@ -70,7 +66,10 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         this.cache = new OdspCache(permanentCache);
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         // A hint for driver if document was opened before by this factory
@@ -79,11 +78,10 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         this.documentsOpened.add(docId);
 
         return OdspDocumentService.create(
-            this.appId,
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
-            this.logger,
+            logger ?? this.logger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             import("./getSocketIo").then((m) => m.getSocketIo()),

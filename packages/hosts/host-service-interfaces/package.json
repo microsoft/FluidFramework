@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-host-service-interfaces",
-  "version": "0.16.4",
+  "version": "0.18.0",
   "description": "Host component service interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,8 +25,8 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.4",
-    "@microsoft/fluid-container-definitions": "^0.16.4"
+    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-container-definitions": "^0.18.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

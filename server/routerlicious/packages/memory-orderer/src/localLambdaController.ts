@@ -8,13 +8,15 @@ import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-ser
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
+export type LocalLambdaControllerState = "created" | "starting" | "started" | "closed";
+
 /**
  * Controls lambda startups and subscriptions for localOrderer
  */
 export class LocalLambdaController extends EventEmitter implements IKafkaSubscriber {
     public lambda: IPartitionLambda | undefined;
 
-    private closed = false;
+    private _state: LocalLambdaControllerState = "created";
     private startTimer: NodeJS.Timeout | undefined;
 
     constructor(
@@ -26,17 +28,23 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.kafaka.subscribe(this);
     }
 
+    public get state() {
+        return this._state;
+    }
+
     public async start() {
-        if (this.closed) {
+        if (this._state === "closed") {
             return;
         }
-
         try {
             this.lambda = await this.starter(this.setup, this.context);
-
+            if (this._state === "created") {
+                this._state = "started";
+            }
             this.emit("started", this.lambda);
-
-            if (this.closed) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore
+            if (this._state === "closed") {
                 // Close was probably called while starting
                 this.close();
             }
@@ -52,7 +60,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
     }
 
     public close() {
-        this.closed = true;
+        this._state = "closed";
 
         if (this.lambda) {
             this.lambda.close();

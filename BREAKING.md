@@ -1,5 +1,80 @@
 # Breaking changes
 
+## 0.18 Breaking Changes
+
+- [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)
+- [ConsensusRegisterCollection now supports storing handles](#ConsensusRegisterCollection-now-supports-storing-handles)
+- [Summarizing errors on parent container](#Summarizing-errors-on-parent-container)
+- [OdspDocumentServiceFactory no longer requires a logger]
+(#OdspDocumentServiceFactory-no-longer-requires-a-logger)
+
+### `App Id` removed as a parameter to OdspDocumentServiceFactory
+`@microsoft/fluid-odsp-driver` no longer requires consumers to pass in an app id as an input. Consumers should simply remove this parameter from the OdspDocumentServiceFactory/OdspDocumentServiceFactoryWithCodeSplit constructor.
+
+### ConsensusRegisterCollection now supports storing handles
+ConsensusRegisterCollection will properly serialize/deserialize handles added as values.
+
+### Summarizing errors on parent container
+The parent container of the summarizing container will now raise "error" events related to summarization problems. These will be of type `ISummarizingError` and will have a description indicating either a problem creating the summarizing container, a problem generating a summary, or a nack or ack wait timeout from the server.
+
+### OdspDocumentServiceFactory no longer requires a logger
+The logger will be passed in on createDocumentService or createContainer, no need to pass in one on construction of OdspDocumentServiceFactory.
+
+## 0.17 Breaking Changes
+
+### FileNotFoundError is now FileNotFoundOrAccessDeniedError and AccessDeniedError to AuthorizationError
+
+- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
+- [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [SimpleContainerRuntimeFactory removed](#SimpleContainerRuntimeFactory-removed)
+- [ConsensusRegisterCollection can no longer store SharedObjects](#ConsensusRegisterCollection-can-no-longer-store-SharedObjects)
+
+### IHostRuntime is now IContainerRuntime, hostRuntime in IComponentContext is now containerRuntime
+
+The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
+The hostRuntime param in IComponentContext has also been updated to be called containerRuntime
+IComponentContext still has the hostRuntime param but it is now marked with a deprecated flag and will be removed in 0.18
+
+### Updates to ContainerRuntime and LocalComponentContext createProps removal
+
+Guidance for migrating from ContainerRuntime and LocalComponentContext createProps as described [previously in 0.16 notes](#ContainerRuntime-and-LocalComponentContext-createProps-removal) is updated.  To specify creation props, consumers should do the following:
+
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Specify the generic type for the initial state object in the component.  The same generic exists in the factory as well, but does not need to be specified there because it is inferred from the provided component constructor at creation.
+```typescript
+export class ClickerWithInitialValue
+    extends PrimedComponent<{}, IClickerInitialState>
+    implements IComponentHTMLView
+{
+    ...
+}
+```
+3. Implement `componentInitializingFirstTime(...)` in the component to optionally consume the initial state.
+```typescript
+protected async componentInitializingFirstTime(
+    initialState?: IClickerInitialState)
+{
+    ...
+}
+```
+As with previous guidance, components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
+### `SimpleContainerRuntimeFactory` removed
+
+`SimpleContainerRuntimeFactory` was deprecated in 0.16, and has now been removed in 0.17.
+
+### ConsensusRegisterCollection can no longer store SharedObjects
+
+`ConsensusRegisterCollection` no longer supports storing SharedObjects directly,
+and files with SharedObjects serialized within a ConsensusRegisterCollection will no longer open.
+We don't believe it's ever been used this way so there should be no such files, but please reach out if you see errors.
+In a subsequent release, support will be added for storing handles but due to n/n-1 constraints, in 0.17 neither are supported.
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
@@ -8,7 +83,7 @@
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
-- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
 - [Event Emitter Changes](#Event-Emitter-Changes)
@@ -92,10 +167,10 @@ Users can also pass in an optional function to get the value from their director
 Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
 they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
 
-### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+### Changes to createComponent in IComponentContext, IContainerRuntime, and ContainerRuntime
 
-The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
-The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+The createComponent call in IContainerRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IContainerRuntime to add component from the runtime.
 
 ### ContainerRuntime and LocalComponentContext createProps removal
 
@@ -207,7 +282,7 @@ We've removed `getComponentRuntime` on `IComponentContext` and subsequently `Com
 can get it via a `request(...)` to the ContainerRuntime.
 
 If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
-`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+`...context.containerRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
 scenario.
 
 ### Container.reconnect, Container.reconnect changes
@@ -320,7 +395,7 @@ However, ID is being deprecated so prefer passing undefined in its place (the ru
 This API will now attempt to create the specified package off the current sub-registry and if that fails, it will
 attempt to create it off the global registry.
 
-For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IContainerRuntime`.
 
 ### `IComponentHandle` - Type parameter moved
 

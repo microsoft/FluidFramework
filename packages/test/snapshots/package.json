@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-snapshots",
-  "version": "0.16.4",
+  "version": "0.18.0",
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -45,8 +45,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-replay-tool": "^0.16.4"
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
+    "@microsoft/fluid-replay-tool": "^0.18.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",

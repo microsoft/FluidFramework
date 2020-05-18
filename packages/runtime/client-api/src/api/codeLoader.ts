@@ -15,14 +15,13 @@ import {
     IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
-import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IComponentContext,
     IComponentFactory,
-    IHostRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
@@ -48,7 +47,6 @@ export class Chaincode implements IComponentFactory {
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
         const consensusQueueFactory = ConsensusQueue.getFactory();
-        const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
         const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
@@ -62,7 +60,6 @@ export class Chaincode implements IComponentFactory {
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);
         modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
@@ -106,7 +103,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         const trimmed = request.url
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));

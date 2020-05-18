@@ -25,7 +25,7 @@ export function create(
     producer: IProducer,
     appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();
-    const deltasRoute = deltas.create(config, mongoManager, appTenants);
+    const deltasRoute = deltas.create(config, tenantManager, mongoManager, appTenants);
     const documentsRoute = documents.create(storage, appTenants);
     const apiRoute = api.create(config, producer, tenantManager, storage);
 
