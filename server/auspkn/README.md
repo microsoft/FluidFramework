@@ -2,4 +2,4 @@
 
 # Auspkn
 
-Provides REST API access to npm packages
+Provides REST API access to npm packages, targeting the internal Azure DevOps feed endpoint today.

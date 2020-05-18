@@ -15,9 +15,17 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-## Installing
+## Getting started using the Fluid Framework
 
-_Coming soon._
+You may be here because you want to...
+
+- Build a Component
+- Build a Container
+- Host Fluid containers in your application
+- Develop a new DDS
+- Implement a Fluid server
+
+All of these are documented at <https://aka.ms/fluid>.
 
 ## Contributing
 
@@ -37,10 +45,6 @@ with any additional questions or comments.
 * Help each other in the [Fluid Community Discord]() **(community channel not yet created)**
 * Join the discussion on Twitter **(hashtag not established yet)**
 
-## Documentation
-
-Get up and running quickly using our documentation at <https://aka.ms/fluid>.
-
 ## Code Structure
 
 The core code is built into several large chunks ("minirepos", managed using Lerna) which are versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the minirepos there are plenty of packages which are versioned independently.
@@ -52,11 +56,13 @@ Here's the breakdown of the repo:
   * [Example Components](./components/examples)
   * [Experimental Components](./components/experimental)
   * [Example host](./examples/hosts/iframe-host)
-* Reference Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
+* Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
   * [Common Definitions](./common/lib/common-definitions)
   * [Common Utils](./common/lib/common-utils)
+* Auxiliary Microservices supporting Routerlicious
+  * [Server dir](./server) (excluding [Routerlicious](./server/routerlicious) itself)
 * Internal/Misc Packages
   * [Build Common](./common/build/build-common)
   * [ESlint Config](./common/build/eslint-config-fluid)
@@ -65,7 +71,6 @@ Here's the breakdown of the repo:
     * [Literate](./examples/hosts/literate)
   * [Docs](./docs)
   * [Tools](./tools)
-  * [Other Server Packages](./server) (excluding [Routerlicious](./server/routerlicious) itself)
 
 ## Building
 
@@ -89,8 +94,6 @@ npm run build:fast
 
 ## Testing
 
-### Running the tests
-
 You can run the tests from root to run all tests (via lerna), or you can run a scoped set of tests by running the command from the directory you're interested in.
 
 > Note: Some of the tests depend on test collateral that lives in a submodule here: <https://github.com/microsoft/FluidFrameworkTestData>.  You may choose to fetch that collateral into your local repository, which is required to run all the tests - otherwise some will be skipped. First install git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
@@ -102,19 +105,19 @@ You can run the tests from root to run all tests (via lerna), or you can run a s
 >  ```
 >
 
-#### Run the tests
+### Run the tests
 
 ```bash
 npm run test
 ```
 
-#### Include code coverage
+### Include code coverage
 
 ```bash
 npm run test:coverage
 ```
 
-#### Mimic the official CI build
+### Mimic the official CI build
 
 _Note: The official build uses npm run test:full, which doesn’t work on windows._
 
@@ -123,11 +126,11 @@ npm run test:coverage
 npm run test:copyresults
 ```
 
-#### Run tests from within VS Code
+### Run tests from within VS Code
 
 We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
 
-## Try it out locally
+## Run it out locally
 
 ### Single browser window, two panes
 
