@@ -15,7 +15,7 @@ import {
     IObjectStorageService,
     Serializable,
     IChannelAttributes,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";

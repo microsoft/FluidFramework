@@ -70,6 +70,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         documentId: string,
         summary: ISummaryTree,
         sequenceNumber: number,
+        term: number,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId);
@@ -85,7 +86,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
             values,
         };
         const entries: ITreeEntry[] =
-            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, quorumSnapshot);
+            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             gitManager.createTree({ entries, id: null }),

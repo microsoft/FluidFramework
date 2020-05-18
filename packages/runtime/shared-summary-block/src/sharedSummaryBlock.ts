@@ -16,7 +16,7 @@ import {
     IObjectStorageService,
     Jsonable,
     AsJsonable,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@microsoft/fluid-component-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,

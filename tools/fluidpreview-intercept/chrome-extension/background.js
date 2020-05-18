@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-function webPartsHandler(req){
-  return { redirectUrl: 'http://localhost:3000/getclientsidewebparts' };
+function webPartsHandler(req) {
+    return { redirectUrl: 'http://localhost:3000/getclientsidewebparts' };
 }
 
 function setListeners() {
@@ -12,8 +12,8 @@ function setListeners() {
     webPartsHandler,
     {
       urls: [
-        "https://*.microsoft.sharepoint-df.com/*/getclientsidewebparts",
-        "https://microsofteur-my.sharepoint.com/*/getclientsidewebparts"
+        "https://*.sharepoint-df.com/*/getclientsidewebparts",
+        "https://*.sharepoint.com/*/getclientsidewebparts"
       ]
     },
     ['requestBody', 'blocking']
@@ -21,7 +21,7 @@ function setListeners() {
 }
 
 function removeListeners() {
-  chrome.webRequest.onBeforeRequest.removeListener(webPartsHandler);
+    chrome.webRequest.onBeforeRequest.removeListener(webPartsHandler);
 }
 
 setListeners();

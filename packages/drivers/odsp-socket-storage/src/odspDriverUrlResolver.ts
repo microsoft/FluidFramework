@@ -7,7 +7,6 @@ import * as assert from "assert";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IUrlResolver,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
@@ -32,7 +31,7 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     constructor() { }
 

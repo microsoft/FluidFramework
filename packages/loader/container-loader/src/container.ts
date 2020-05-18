@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -17,15 +18,14 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
+    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
@@ -37,9 +37,6 @@ import {
     IFluidResolvedUrl,
     IUrlResolver,
     IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory,
-    IExperimentalDocumentService,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
@@ -88,7 +85,7 @@ import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { IConnectionArgs, DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
@@ -112,11 +109,9 @@ export interface IContainerConfig {
     id?: string;
 }
 
-export class Container
-    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
-    public static version = "^0.1.0";
-
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public readonly isExperimentalContainer = true;
+    public static version = "^0.1.0";
 
     /**
      * Load container.
@@ -261,8 +256,18 @@ export class Container
         return this._loadedFromVersion;
     }
 
-    public get readonly(): boolean | undefined {
+    /**
+     * {@inheritDoc DeltaManager.readonly}
+     */
+    public get readonly() {
         return this._deltaManager.readonly;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readonlyPermissions}
+     */
+    public get readonlyPermissions() {
+        return this._deltaManager.readonlyPermissions;
     }
 
     public forceReadonly(readonly: boolean) {
@@ -373,12 +378,13 @@ export class Container
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
-        this.subLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
+        this.subLogger = ChildLogger.create(
             logger,
+            undefined,
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+                containerId: uuid(),
             },
             {
                 docId: () => this.id,
@@ -426,7 +432,7 @@ export class Container
             this.protocolHandler.close();
         }
 
-        this.context?.dispose();
+        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -437,10 +443,6 @@ export class Container
 
     public isLocal(): boolean {
         return !this.attached;
-    }
-
-    public isAttached(): boolean {
-        return this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -468,21 +470,15 @@ export class Container
 
         try {
             // Actually go and create the resolved document
-            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
-            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
-            this.service = await expDocFactory.createContainer(
+            this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
                 ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
             );
-            const expDocService = this.service as IExperimentalDocumentService;
-            assert(expDocService?.isExperimentalDocumentService);
-            const resolvedUrl = expDocService.resolvedUrl;
+            const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-            assert(expUrlResolver?.isExperimentalUrlResolver);
-            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
             if (response.status !== 200) {
                 throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
             }
@@ -564,7 +560,7 @@ export class Container
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
 
-        this._deltaManager.autoReconnect = reconnect;
+        this._deltaManager.setAutomaticReconnect(reconnect);
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
@@ -609,7 +605,7 @@ export class Container
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => {});
+        this.connectToDeltaStream().catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -803,7 +799,7 @@ export class Container
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
             startConnectionP = this.connectToDeltaStream(connectionArgs);
-            startConnectionP.catch((error) => {});
+            startConnectionP.catch((error) => { });
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -877,7 +873,7 @@ export class Container
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
-        const commitedCodeProposal: ICommittedProposal = {
+        const committedCodeProposal: ICommittedProposal = {
             key: "code",
             value: source,
             approvalSequenceNumber: 0,
@@ -887,7 +883,7 @@ export class Container
 
         const members: [string, ISequencedClient][] = [];
         const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", commitedCodeProposal]];
+        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
 
         this.attachDeltaManagerOpHandler(attributes);
 
@@ -1052,7 +1048,7 @@ export class Container
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component;
+        let component: IFluidModule;
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
         try {
             component = await this.codeLoader.load(pkg);
@@ -1178,9 +1174,9 @@ export class Container
         let durationFromDisconnected: number | undefined;
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
-        let autoReconnect: boolean | undefined;
+        let autoReconnect: ReconnectMode | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager.autoReconnect;
+            autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
             if (value === ConnectionState.Connected) {
