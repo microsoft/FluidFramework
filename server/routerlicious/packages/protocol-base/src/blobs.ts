@@ -137,7 +137,7 @@ export function getGitType(value: SummaryObject): string {
  */
 export async function buildSnapshotTree(
     entries: ITreeEntry[],
-    blobMap: Map<string, string>
+    blobMap: Map<string, string>,
 ): Promise<ISnapshotTree> {
     const flattened = await flatten(entries, blobMap);
     return buildHierarchy(flattened);
