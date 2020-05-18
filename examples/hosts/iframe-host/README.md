@@ -1,3 +1,3 @@
-# Fluid Example IFrame Host
+# @fluid-example/iframe-host
 
 _Coming soon..._

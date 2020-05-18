@@ -1,5 +1,5 @@
 ---
-uid:  loaders
+uid: loaders
 ---
 
 # Literate Fluid Loader

@@ -1,3 +1,3 @@
-# Fluid Example Electron Host
+# @prague/electron-host
 
 _Coming soon..._
