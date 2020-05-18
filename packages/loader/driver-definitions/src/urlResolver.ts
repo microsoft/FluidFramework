@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
