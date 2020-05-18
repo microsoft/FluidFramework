@@ -17,63 +17,20 @@ import {
     SummaryObject,
 } from "@microsoft/fluid-protocol-definitions";
 
-export class SnapshotTreeHolder {
-    private readonly flattenedTree: { [path: string]: string } = {};
-    private readonly flattenedTreeP: Promise<void>;
-    public readonly snapshotTree: Promise<ISnapshotTree>;
-
-    public constructor(
-        snapshotTree: Promise<ISnapshotTree> | ISnapshotTree,
-    ) {
-        this.snapshotTree = Promise.resolve(snapshotTree);
-        this.flattenedTreeP = this.snapshotTree.then((tree) => {
-            this.flattenTree("", tree, this.flattenedTree);
-        });
-    }
-
-    private flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
-        // eslint-disable-next-line guard-for-in, no-restricted-syntax
-        for (const path in tree.trees) {
-            this.flattenTree(`${base}${path}/`, tree.trees[path], results);
-        }
-
-        // eslint-disable-next-line guard-for-in, no-restricted-syntax
-        for (const blob in tree.blobs) {
-            results[`${base}${blob}`] = tree.blobs[blob];
-        }
-    }
-
-    public async getFlattenedTree(): Promise<{ [path: string]: string }> {
-        return this.flattenedTreeP.then(() => { return this.flattenedTree; });
-    }
-}
-
 /**
  * Create a flatten view of an array of ITreeEntry
  *
  * @param tree - an array of ITreeEntry to flatten
  * @param blobMap - a map of blob's sha1 to content
- * @returns An object with promise of the flattened ITree with of contents of the ITreeEntry and
- * a promise with the blob map (map of blobs' sha1 to content)
+ * @returns A flatten with of the ITreeEntry
  */
-function flatten(tree: ITreeEntry[]): { tree: Promise<git.ITree>, blobMap: Promise<Map<string, string>> } {
-    const blobMap = new Map<string, string>();
-    const treeEntriesP = flattenCore("", tree, blobMap);
-
-    const gitTreeP = treeEntriesP.then((treeEntries) => {
-        const gitTree = {
-            sha: "",
-            tree: treeEntries,
-            url: "",
-        };
-        return gitTree;
-    });
-    // Wrap blobMap in a Promise that doesn't resolve until after gitTreeP resolves
-    const blobMapP = gitTreeP.then((gitTree) => {
-        return blobMap;
-    });
-
-    return { tree: gitTreeP, blobMap: blobMapP };
+async function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): Promise<git.ITree> {
+    const entries = await flattenCore("", tree, blobMap);
+    return {
+        sha: "",
+        tree: entries,
+        url: "",
+    };
 }
 
 async function flattenCore(
@@ -175,45 +132,15 @@ export function getGitType(value: SummaryObject): string {
 /**
  * Build a tree hierarchy base on an array of ITreeEntry
  *
- * @param entries - an array of ITreeEntry to flatten
- * @returns an object with a SnapshotTreeHolder (which wraps a promise of the hierarchical snapshot tree)
- * and of the blob map (map of blobs' sha1 to content)
+ * @param blobMap - a map of blob's sha1 to content
+ * @returns the hierarchical tree
  */
-export function buildSnapshotTree(
+export async function buildSnapshotTree(
     entries: ITreeEntry[],
-): { treeHolder: SnapshotTreeHolder, blobMap: Promise<Map<string, string>> } {
-    const treeAndMap = flatten(entries);
-    const snapshotTree = treeAndMap.tree.then((tree) => {
-        return buildHierarchy(tree);
-    });
-
-    return {
-        treeHolder: new SnapshotTreeHolder(snapshotTree),
-        blobMap: treeAndMap.blobMap,
-    };
-}
-
-/**
-* Build a tree hierarchy base on an array of ITreeEntry
-* Similar to buildSnapshotTree, except takes an existing blobMap to augment
-*
-* @param entries - an array of ITreeEntry to flatten
-* @param blobMap - a map of blob's sha1 to content
-* @returns the hierarchical tree, with its blobs added to the provided blobMap
-* (map of blobs' sha1 to content)
-*/
-export async function buildSnapshotTreeAsync(
-    entries: ITreeEntry[],
-    blobMap: Map<string, string>,
+    blobMap: Map<string, string>
 ): Promise<ISnapshotTree> {
-    const holderAndBlobMap = buildSnapshotTree(entries);
-
-    // Set the new blobs in the provided blobMap
-    (await holderAndBlobMap.blobMap).forEach((value, key) => {
-        blobMap.set(key, value);
-    });
-
-    return holderAndBlobMap.treeHolder.snapshotTree;
+    const flattened = await flatten(entries, blobMap);
+    return buildHierarchy(flattened);
 }
 
 /**
