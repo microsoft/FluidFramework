@@ -28,17 +28,17 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.17.0",
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
+    "@microsoft/fluid-common-utils": "^0.18.1-0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.1",
     "@microsoft/fluid-container-definitions": "^0.18.1",
     "@microsoft/fluid-driver-definitions": "^0.18.1",
     "@microsoft/fluid-driver-utils": "^0.18.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1-0",
     "@microsoft/fluid-routerlicious-driver": "^0.18.1",
-    "@microsoft/fluid-server-local-server": "^0.1005.0-0",
-    "@microsoft/fluid-server-services-client": "^0.1005.0-0",
-    "@microsoft/fluid-server-services-core": "^0.1005.0-0",
-    "@microsoft/fluid-server-test-utils": "^0.1005.0-0",
+    "@microsoft/fluid-server-local-server": "^0.1005.1-0",
+    "@microsoft/fluid-server-services-client": "^0.1005.1-0",
+    "@microsoft/fluid-server-services-core": "^0.1005.1-0",
+    "@microsoft/fluid-server-test-utils": "^0.1005.1-0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
