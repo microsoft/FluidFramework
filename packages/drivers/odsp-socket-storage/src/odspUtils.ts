@@ -15,6 +15,9 @@ import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 
+/** Parse the given url and return the origin (host name) */
+export const getOrigin = (url: string) => new URL(url).origin;
+
 /**
  * Throws network error - an object with a bunch of network related properties
  */

@@ -18,10 +18,9 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo, getOrigin } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { getOrigin } from "./vroom";
 import { IFetchWrapper } from "./fetchWrapper";
 
 export interface IFileCreateResponse {

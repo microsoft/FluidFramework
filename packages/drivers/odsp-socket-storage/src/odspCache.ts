@@ -27,6 +27,7 @@ export interface IOdspCache {
 }
 
 //* todo: Write good comments
+//* todo: double-check expirations
 export class OdspCache implements IOdspCache {
     /**
      * Permanent cache of
@@ -37,7 +38,7 @@ export class OdspCache implements IOdspCache {
      * want to use the same getLatest result.
      */
     public readonly snapshotCache = new PromiseCache<string, IOdspSnapshot>({
-        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
+        expiry: { policy: "sliding", durationMs: 10 * 1000 },
     });
 
     /**
@@ -50,7 +51,7 @@ export class OdspCache implements IOdspCache {
     });
 
     /**
-     * 
+     *
      */
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 

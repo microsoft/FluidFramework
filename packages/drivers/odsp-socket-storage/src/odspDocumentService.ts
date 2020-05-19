@@ -29,7 +29,7 @@ import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } from "./odspUtils";
-import { getSocketStorageDiscovery } from "./vroom";
+import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -333,14 +333,21 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
-        return getSocketStorageDiscovery(
-            this.odspResolvedUrl.driveId,
-            this.odspResolvedUrl.itemId,
-            this.odspResolvedUrl.siteUrl,
-            this.logger,
-            this.getStorageToken,
-            this.cache,
-            this.joinSessionKey);
+        const executeFetch = async () => {
+            return fetchJoinSession(
+                this.odspResolvedUrl.driveId,
+                this.odspResolvedUrl.itemId,
+                this.odspResolvedUrl.siteUrl,
+                "opStream/joinSession",
+                "POST",
+                this.logger,
+                this.getStorageToken,
+            );
+        };
+
+        // Note: The sessionCache is configured with a sliding expiry of 1 hour,
+        // so if we've fetched the join session within the last hour we won't run executeFetch again now.
+        return this.cache.sessionCache.addOrGet(this.joinSessionKey, executeFetch);
     }
 
     /**
