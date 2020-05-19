@@ -8,7 +8,7 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import utils from "@microsoft/fluid-server-services-utils";
 import winston from "winston";
-import app from "./app";
+import * as app from "./app";
 
 export class RiddlerRunner implements utils.IRunner {
     private server: http.Server;

@@ -12,8 +12,8 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import agent from "./agent";
-import api from "./api";
+// import agent from "./agent";
+import * as api from "./api";
 
 export interface IRoutes {
     agent: Router;

@@ -8,7 +8,7 @@ import { TestContext } from "@microsoft/fluid-server-test-utils";
 import assert from "assert";
 import nconf from "nconf";
 import path from "path";
-import plugin from "../../document-router";
+import { create as pluginCreate } from "../../document-router";
 
 describe("document-router", () => {
     describe("Plugin", () => {
@@ -21,7 +21,7 @@ describe("document-router", () => {
 
         beforeEach(async () => {
             config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
-            factory = await plugin.create(config);
+            factory = await pluginCreate(config);
         });
 
         describe(".create", () => {

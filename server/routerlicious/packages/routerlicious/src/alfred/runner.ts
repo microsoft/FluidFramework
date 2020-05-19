@@ -21,7 +21,7 @@ import winston from "winston";
 import { createMetricClient } from "@microsoft/fluid-server-services";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
-import app from "./app";
+import * as app from "./app";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;

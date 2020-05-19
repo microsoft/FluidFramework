@@ -7,7 +7,7 @@ import http from "http";
 import { AddressInfo } from "net";
 import util from "util";
 import core from "@microsoft/fluid-server-services-core";
-import socketIo from "./socketIoServer";
+import { create as socketIoCreate } from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 
@@ -55,7 +55,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = socketIo.create(this.redisConfig, server);
+        const socketIoServer = socketIoCreate(this.redisConfig, server);
 
         return new WebServer(httpServer, socketIoServer);
     }

@@ -13,9 +13,9 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import api from "./api";
-import deltas from "./deltas";
-import documents from "./documents";
+import * as api from "./api";
+import * as deltas from "./deltas";
+import * as documents from "./documents";
 
 export function create(
     config: Provider,

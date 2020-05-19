@@ -8,7 +8,7 @@ import bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
 import winston from "winston";
-import api from "./api";
+import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");

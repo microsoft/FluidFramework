@@ -21,7 +21,7 @@ import morgan from "morgan";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import alfredRoutes from "./routes";
+import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");

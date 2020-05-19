@@ -11,7 +11,7 @@ import {
 } from "@microsoft/fluid-server-test-utils";
 import assert from "assert";
 import nconf from "nconf";
-import plugin from "../../document-router";
+import { create as pluginCreate } from "../../document-router";
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
 describe("document-router", () => {
@@ -33,7 +33,7 @@ describe("document-router", () => {
             defaultMessageFactory = new MessageFactory("test", "test");
             kafkaMessageFactory = new KafkaMessageFactory();
             config = (new nconf.Provider({})).defaults(defaultConfig).use("memory");
-            factory = await plugin.create(config);
+            factory = await pluginCreate(config);
             context = new TestContext();
             lambda = await factory.create(config, context);
         });
