@@ -122,6 +122,9 @@ export interface IDocumentMessage {
     // Server provided metadata about the operation
     serverMetadata?: any;
 
+    // Optional server provided timestamp for when the op was submitted
+    timestamp?: number;
+
     // Traces related to the packet.
     traces?: ITrace[];
 }

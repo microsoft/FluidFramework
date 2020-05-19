@@ -551,7 +551,7 @@ export class DeliLambda implements IPartitionLambda {
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
             term: this.term,
-            timestamp: Date.now(),
+            timestamp: message.operation.timestamp ?? Date.now(),
             traces: message.operation.traces,
             type: message.operation.type,
         };
