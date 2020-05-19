@@ -30,7 +30,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.18.1",
     "@microsoft/fluid-component-runtime-definitions": "^0.18.1",
     "@microsoft/fluid-container-definitions": "^0.18.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.14.6",

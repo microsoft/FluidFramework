@@ -36,7 +36,7 @@
     "@microsoft/fluid-driver-definitions": "^0.18.1",
     "@microsoft/fluid-driver-utils": "^0.18.1",
     "@microsoft/fluid-iframe-driver": "^0.18.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "@microsoft/fluid-routerlicious-driver": "^0.18.1",
     "@microsoft/fluid-test-runtime-utils": "^0.18.1",
     "@microsoft/fluid-view-adapters": "^0.18.1",

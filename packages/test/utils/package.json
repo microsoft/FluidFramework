@@ -56,7 +56,7 @@
     "@microsoft/fluid-local-driver": "^0.18.1",
     "@microsoft/fluid-map": "^0.18.1",
     "@microsoft/fluid-runtime-definitions": "^0.18.1",
-    "@microsoft/fluid-server-local-server": "^0.1005.1-0",
+    "@microsoft/fluid-server-local-server": "^0.1005.1",
     "@microsoft/fluid-shared-object-base": "^0.18.1"
   },
   "devDependencies": {
