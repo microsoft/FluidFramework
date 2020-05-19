@@ -64,6 +64,7 @@
     "@microsoft/fluid-driver-utils": "^0.18.0",
     "@microsoft/fluid-experimental-creation-driver": "^0.18.0",
     "@microsoft/fluid-local-driver": "^0.18.0",
+    "@microsoft/fluid-local-test-utils": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
     "@microsoft/fluid-merge-tree": "^0.18.0",
     "@microsoft/fluid-odsp-driver": "^0.18.0",
