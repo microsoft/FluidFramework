@@ -38,7 +38,7 @@ export class OdspCache implements IOdspCache {
      * want to use the same getLatest result.
      */
     public readonly snapshotCache = new PromiseCache<string, IOdspSnapshot>({
-        expiry: { policy: "sliding", durationMs: 10 * 1000 },
+        expiry: { policy: "absolute", durationMs: 10 * 1000 },
     });
 
     /**
