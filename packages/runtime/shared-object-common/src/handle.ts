@@ -66,7 +66,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      */
     public attach(): void {
         // If this handle is already in attaching state in the graph, no need to attach again.
-        if (this.isHandleAttached || this.isAttached) {
+        if (this.isHandleAttached) {
             return;
         }
         this.isHandleAttached = true;

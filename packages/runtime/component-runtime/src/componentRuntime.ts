@@ -337,9 +337,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                if (!handle.isAttached) {
-                    handle.attach();
-                }
+                handle.attach();
             });
             this.boundhandles = undefined;
         }
@@ -360,6 +358,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
