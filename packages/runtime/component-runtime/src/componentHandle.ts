@@ -36,7 +36,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public attach(): void {
-        // If this handle is already in attaching state in the graph, no need to attach again.
+        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
         if (this.isHandleAttached) {
             return;
         }
