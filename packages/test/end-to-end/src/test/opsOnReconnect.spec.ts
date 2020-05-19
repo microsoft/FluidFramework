@@ -34,10 +34,12 @@ describe("Ops on Reconnect", () => {
     let documentServiceFactory: TestDocumentServiceFactory;
     let containerDeltaEventManager: DocumentDeltaEventManager;
     let firstContainer: Container;
+    let firstContainerClientId: string;
     let firstContainerComp1: ITestFluidComponent & IComponentLoadable;
     let firstContainerComp1Map1: SharedMap;
     let firstContainerComp1Map2: SharedMap;
     let firstContainerComp1Directory: SharedDirectory;
+    let receivedValues: [string, string, boolean | undefined][] = [];
 
     /**
      * Waits for the "connected" event from the given container.
@@ -87,20 +89,21 @@ describe("Ops on Reconnect", () => {
         return response.value as ITestFluidComponent & IComponentLoadable;
     }
 
-    async function setupSecondContainersComponent(clientId: string, receivedKeyValues: [string, string][]):
-    Promise<ITestFluidComponent> {
+    async function setupSecondContainersComponent(): Promise<ITestFluidComponent> {
         const secondContainer = await createContainer();
         secondContainer.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === MessageType.Operation) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== "_scheduler") {
                     // The client ID of firstContainer should have changed on disconnect.
-                    assert.notEqual(message.clientId, clientId, "The clientId did not change after disconnect");
+                    assert.notEqual(
+                        message.clientId, firstContainerClientId, "The clientId did not change after disconnect");
 
                     const content = envelope.contents.content.contents;
                     const key = content.key;
                     const value = content.value.value;
-                    receivedKeyValues.push([ key, value ]);
+                    const batch = message.metadata?.batch;
+                    receivedValues.push([ key, value, batch ]);
                 }
             }
         });
@@ -129,14 +132,13 @@ describe("Ops on Reconnect", () => {
 
     describe("Ops on Container reconnect", () => {
         it("can resend ops on reconnection that were sent in disconnected state", async () => {
-            const clientId = firstContainer.clientId;
-            const receivedKeyValues: [string, string][] = [];
+            firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
-            await setupSecondContainersComponent(clientId, receivedKeyValues);
+            await setupSecondContainersComponent();
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(clientId, "Disconnected for testing");
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
             assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
@@ -153,25 +155,24 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedKeyValues: string[][] = [
-                [ "key1", "value1" ],
-                [ "key2", "value2" ],
-                [ "key3", "value3" ],
-                [ "key4", "value4" ],
+            const expectedValues: string[][] = [
+                [ "key1", "value1", undefined /* batch */ ],
+                [ "key2", "value2", undefined /* batch */ ],
+                [ "key3", "value3", undefined /* batch */ ],
+                [ "key4", "value4", undefined /* batch */ ],
             ];
             assert.deepStrictEqual(
-                expectedKeyValues, receivedKeyValues, "Did not receive the ops that were sent in disconnected state");
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend ops on reconnection that were sent in Nack'd state", async () => {
-            const clientId = firstContainer.clientId;
-            const receivedKeyValues: [string, string][] = [];
+            firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
-            await setupSecondContainersComponent(clientId, receivedKeyValues);
+            await setupSecondContainersComponent();
 
             // Nack the client.
-            documentServiceFactory.nackClient(clientId);
+            documentServiceFactory.nackClient(firstContainerClientId);
 
             // The Container should be in disconnected state because DeltaManager disconnects on getting Nack'd.
             assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
@@ -188,27 +189,26 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedKeyValues: string[][] = [
-                [ "key1", "value1" ],
-                [ "key2", "value2" ],
-                [ "key3", "value3" ],
-                [ "key4", "value4" ],
+            const expectedValues: string[][] = [
+                [ "key1", "value1", undefined /* batch */ ],
+                [ "key2", "value2", undefined /* batch */ ],
+                [ "key3", "value3", undefined /* batch */ ],
+                [ "key4", "value4", undefined /* batch */ ],
             ];
             assert.deepStrictEqual(
-                expectedKeyValues, receivedKeyValues, "Did not receive the ops that were sent in Nack'd state");
+                expectedValues, receivedValues, "Did not receive the ops that were sent in Nack'd state");
         });
     });
 
     describe("Op ordering on Container reconnect", () => {
-        it("can send ops in a component in right order on connect", async () => {
-            const clientId = firstContainer.clientId;
-            const receivedKeyValues: [string, string][] = [];
+        it("can resend ops in a component in right order on connect", async () => {
+            firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
-            await setupSecondContainersComponent(clientId, receivedKeyValues);
+            await setupSecondContainersComponent();
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(clientId, "Disconnected for testing");
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
             assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
@@ -227,18 +227,19 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedKeyValues: string[][] = [
-                [ "key1", "value1" ],
-                [ "key2", "value2" ],
-                [ "key3", "value3" ],
-                [ "key4", "value4" ],
-                [ "key5", "value5" ],
-                [ "key6", "value6" ],
+            const expectedValues: string[][] = [
+                [ "key1", "value1", undefined /* batch */ ],
+                [ "key2", "value2", undefined /* batch */ ],
+                [ "key3", "value3", undefined /* batch */ ],
+                [ "key4", "value4", undefined /* batch */ ],
+                [ "key5", "value5", undefined /* batch */ ],
+                [ "key6", "value6", undefined /* batch */ ],
             ];
-            assert.deepStrictEqual(expectedKeyValues, receivedKeyValues);
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
-        it("can send ops in multiple components in right order on connect", async () => {
+        it("can resend ops in multiple components in right order on connect", async () => {
             // Create component2 in the first container.
             const firstContainerComp2 =
                 await firstContainerComp1.context.createComponentWithRealizationFn(
@@ -251,11 +252,10 @@ describe("Ops on Reconnect", () => {
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
             const firstContainerComp2Map2 = await firstContainerComp2.getSharedObject<SharedMap>(map2Id);
 
-            const clientId = firstContainer.clientId;
-            const receivedKeyValues: [string, string][] = [];
+            firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
-            const secondContainerComp1 = await setupSecondContainersComponent(clientId, receivedKeyValues);
+            const secondContainerComp1 = await setupSecondContainersComponent();
 
             // Get component2 in the second container.
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
@@ -265,7 +265,7 @@ describe("Ops on Reconnect", () => {
             containerDeltaEventManager.registerDocuments(secondContainerComp2.runtime);
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(clientId, "Disconnected for testing");
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
             assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
@@ -286,51 +286,30 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedKeyValues: string[][] = [
-                [ "key1", "value1" ],
-                [ "key2", "value2" ],
-                [ "key3", "value3" ],
-                [ "key4", "value4" ],
-                [ "key5", "value5" ],
-                [ "key6", "value6" ],
-                [ "key7", "value7" ],
-                [ "key8", "value8" ],
+            const expectedValues: string[][] = [
+                [ "key1", "value1", undefined /* batch */ ],
+                [ "key2", "value2", undefined /* batch */ ],
+                [ "key3", "value3", undefined /* batch */ ],
+                [ "key4", "value4", undefined /* batch */ ],
+                [ "key5", "value5", undefined /* batch */ ],
+                [ "key6", "value6", undefined /* batch */ ],
+                [ "key7", "value7", undefined /* batch */ ],
+                [ "key8", "value8", undefined /* batch */ ],
             ];
-            assert.deepStrictEqual(expectedKeyValues, receivedKeyValues);
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
     });
 
     describe("Op batching on Container reconnect", () => {
-        it("can send batch ops in a component in right order on attach", async () => {
-            const clientId = firstContainer.clientId;
-            const receivedKeyValues: [string, string, boolean | undefined][] = [];
+        it("can resend batch ops in a component in right order on attach", async () => {
+            firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
-            const secondContainer = await createContainer();
-            secondContainer.on("op", (message: ISequencedDocumentMessage) => {
-                if (message.type === MessageType.Operation) {
-                    const envelope = message.contents as IEnvelope;
-                    if (envelope.address !== "_scheduler") {
-                        // The client ID of firstContainer should have changed on disconnect.
-                        assert.notEqual(message.clientId, clientId, "The clientId did not change after disconnect");
-
-                        const content = message.contents.contents.content.contents;
-                        const key = content.key;
-                        const value = content.value.value;
-                        const batch = message.metadata?.batch;
-                        receivedKeyValues.push([ key, value, batch ]);
-                    }
-                }
-            });
-
-            // Get component1 on the second container.
-            const secondContainerComp1 = await getComponent("default", secondContainer);
-            containerDeltaEventManager.registerDocuments(secondContainerComp1.runtime);
-
-            await containerDeltaEventManager.process();
+            await setupSecondContainersComponent();
 
             // Disconnect the client.
-            documentServiceFactory.disconnectClient(clientId, "Disconnected for testing");
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
             // The Container should be in disconnected state.
             assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
@@ -354,15 +333,20 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedKeyValues: [string, string, boolean | undefined][] = [
-                [ "key1", "value1", true ],
-                [ "key2", "value2", undefined ],
-                [ "key3", "value3", false ],
-                [ "key4", "value4", true ],
-                [ "key5", "value5", undefined ],
-                [ "key6", "value6", false ],
+            const expectedValues: [string, string, boolean | undefined][] = [
+                [ "key1", "value1", true /* batch */ ],
+                [ "key2", "value2", undefined /* batch */ ],
+                [ "key3", "value3", false /* batch */ ],
+                [ "key4", "value4", true /* batch */ ],
+                [ "key5", "value5", undefined /* batch */ ],
+                [ "key6", "value6", false /* batch */ ],
             ];
-            assert.deepStrictEqual(expectedKeyValues, receivedKeyValues);
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
+    });
+
+    afterEach(() => {
+        receivedValues = [];
     });
 });
