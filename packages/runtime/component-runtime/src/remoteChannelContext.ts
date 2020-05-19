@@ -41,7 +41,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
-        submitFn: (type: MessageType, content: any, metadata? : any) => number,
+        submitFn: (type: MessageType, content: any, metadata: unknown) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
@@ -84,7 +84,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: any): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
@@ -96,10 +96,10 @@ export class RemoteChannelContext implements IChannelContext {
         }
     }
 
-    public reSubmitOp(content: any, metadata?: any) {
+    public reSubmit(content: any, metadata: unknown) {
         assert(this.isLoaded);
 
-        this.services.deltaConnection.reSubmitOp(content, metadata);
+        this.services.deltaConnection.reSubmit(content, metadata);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {

@@ -35,7 +35,7 @@ interface IMapMessageHandler {
      * @param local - Whether the message originated from the local client
      * @param message - The full message
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, sequenceNumber?: number): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, metadata?: unknown): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -157,13 +157,13 @@ export class MapKernel {
      */
     private readonly pendingKeys: Map<string, number> = new Map();
 
-    private pendingSequenceNumber: number = -1;
+    private messageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
      * number of that clear operation.  Otherwise, is -1.
      */
-    private pendingClearSequenceNumber: number = -1;
+    private pendingClearMessageId: number = -1;
 
     /**
      * Object to create encapsulations of the values stored in the map.
@@ -181,7 +181,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any, sequenceNumber?: number) => void,
+        private readonly submitMessage: (op: any, messageId: number) => void,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -456,7 +456,7 @@ export class MapKernel {
      * @param op - The operation to attempt to submit
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any, sequenceNumber?: number): boolean {
+    public trySubmitMessage(op: any, metadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             this.messageHandlers.get(type).submit(op as IMapOperation);
@@ -471,12 +471,12 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, sequenceNumber?: number): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
                 .get(op.type)
-                .process(op, local, message, sequenceNumber);
+                .process(op, local, message, metadata);
             return true;
         }
         return false;
@@ -572,9 +572,9 @@ export class MapKernel {
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): boolean {
-        if (this.pendingClearSequenceNumber !== -1) {
+        if (this.pendingClearMessageId !== -1) {
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }
@@ -583,9 +583,10 @@ export class MapKernel {
             // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
             // and don't process the op.
             if (local) {
-                assert(sequenceNumber !== undefined);
-                const pendingKeySequenceNumber = this.pendingKeys.get(op.key);
-                if (pendingKeySequenceNumber === sequenceNumber) {
+                assert(metadata !== undefined);
+                const messageId = metadata as number;
+                const pendingKeyMessageId = this.pendingKeys.get(op.key);
+                if (pendingKeyMessageId === messageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -605,10 +606,11 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message, sequenceNumber?) => {
+                process: (op: IMapClearOperation, local, message, metadata?) => {
                     if (local) {
-                        if (this.pendingClearSequenceNumber === sequenceNumber) {
-                            this.pendingClearSequenceNumber = -1;
+                        const messageId = metadata as number;
+                        if (this.pendingClearMessageId === messageId) {
+                            this.pendingClearMessageId = -1;
                         }
                         return;
                     }
@@ -625,8 +627,8 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message, sequenceNumber?) => {
-                    if (!this.needProcessKeyOperation(op, local, message, sequenceNumber)) {
+                process: (op: IMapDeleteOperation, local, message, metadata?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, metadata)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -638,8 +640,8 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message, sequenceNumber?) => {
-                    if (!this.needProcessKeyOperation(op, local, message, sequenceNumber)) {
+                process: (op: IMapSetOperation, local, message, metadata?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, metadata)) {
                         return;
                     }
 
@@ -659,7 +661,7 @@ export class MapKernel {
         messageHandlers.set(
             "act",
             {
-                process: (op: IMapValueTypeOperation, local, message, sequenceNumber) => {
+                process: (op: IMapValueTypeOperation, local, message, metadata?) => {
                     // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {
@@ -677,7 +679,8 @@ export class MapKernel {
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op: IMapValueTypeOperation) => {
-                    this.submitMessage(op);
+                    // Send the messageId as -1 because we don't care about the ack.
+                    this.submitMessage(op, -1 /* messageId */);
                 },
             });
 
@@ -689,9 +692,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const sequenceNumber = ++this.pendingSequenceNumber;
-        this.submitMessage(op, sequenceNumber);
-        this.pendingClearSequenceNumber = sequenceNumber;
+        const messageId = ++this.messageId;
+        this.submitMessage(op, messageId);
+        this.pendingClearMessageId = messageId;
     }
 
     /**
@@ -699,9 +702,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const sequenceNumber = ++this.pendingSequenceNumber;
-        this.submitMessage(op, sequenceNumber);
-        this.pendingKeys.set(op.key, sequenceNumber);
+        const messageId = ++this.messageId;
+        this.submitMessage(op, messageId);
+        this.pendingKeys.set(op.key, messageId);
     }
 
     /**
@@ -726,7 +729,8 @@ export class MapKernel {
                     value: translatedParams,
                 },
             };
-            this.submitMessage(op);
+            // Send the messageId as -1 because we don't care about the ack.
+            this.submitMessage(op, -1 /* messageId */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);

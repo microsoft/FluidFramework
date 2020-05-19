@@ -163,11 +163,10 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    protected onConnect(pending: any[]) {
-        debug(`${this.id} is now connected`);
-        for (const message of pending) {
-            this.intervalMapKernel.trySubmitMessage(message);
-        }
+    protected onConnect(pending: any[]) {}
+
+    protected reSubmit(content: any, metadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, metadata);
     }
 
     protected onDisconnect() {

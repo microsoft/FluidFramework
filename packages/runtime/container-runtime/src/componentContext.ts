@@ -119,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
+    public get submitFn(): (type: MessageType, contents: any, metadata?: unknown) => void {
         return this._containerRuntime.submitFn;
     }
 
@@ -334,7 +334,7 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: any): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
@@ -409,7 +409,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any, metadata?: any): number {
+    public submitMessage(type: MessageType, content: any, metadata?: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
         return this.submitOp(type, content, metadata);
@@ -551,7 +551,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any, metadata?: any): number {
+    private submitOp(type: MessageType, content: any, metadata?: unknown): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -563,9 +563,9 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitFn(MessageType.Operation, envelope, metadata);
     }
 
-    public reSubmitOp(content: any, metadata?: any) {
+    public reSubmit(type: MessageType, content: any, metadata?: unknown) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.reSubmitOp(content, metadata);
+        this.componentRuntime!.reSubmit(type, content, metadata);
     }
 
     private verifyNotClosed() {

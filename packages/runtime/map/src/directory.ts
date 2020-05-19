@@ -61,7 +61,7 @@ interface IDirectoryMessageHandler {
         op: IDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        metadata?: number,
+        metadata?: unknown,
     ): void;
 
     /**
@@ -602,8 +602,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @returns The client sequence number
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, clientSequenceNumber?: number): number {
-        return this.submitLocalMessage(op, clientSequenceNumber);
+    public submitDirectoryMessage(op: IDirectoryOperation, messageId: number): number {
+        return this.submitLocalMessage(op, messageId);
     }
 
     /**
@@ -628,7 +628,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             };
 
-            this.submitDirectoryMessage(op);
+            // Send the messageId as -1 because we don't care about the ack.
+            this.submitDirectoryMessage(op, -1 /* messageId */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -647,7 +648,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      */
     protected onConnect(pending: any[]) {}
 
-    protected reSubmitOp(content: any, metadata?: any) {
+    protected reSubmit(content: any, metadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         handler.submit(message);
@@ -787,10 +788,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "clear",
             {
-                process: (op: IDirectoryClearOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectoryClearOperation, local, message, metadata?) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
-                        subdir.processClearMessage(op, local, message, sequenceNumber);
+                        subdir.processClearMessage(op, local, message, metadata);
                     }
                 },
                 submit: (op: IDirectoryClearOperation) => {
@@ -804,10 +805,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "delete",
             {
-                process: (op: IDirectoryDeleteOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectoryDeleteOperation, local, message, metadata?) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
-                        subdir.processDeleteMessage(op, local, message, sequenceNumber);
+                        subdir.processDeleteMessage(op, local, message, metadata);
                     }
                 },
                 submit: (op: IDirectoryDeleteOperation) => {
@@ -821,11 +822,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "set",
             {
-                process: (op: IDirectorySetOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectorySetOperation, local, message, metadata?) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
-                        subdir.processSetMessage(op, context, local, message, sequenceNumber);
+                        subdir.processSetMessage(op, context, local, message, metadata);
                     }
                 },
                 submit: (op: IDirectorySetOperation) => {
@@ -840,10 +841,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "createSubDirectory",
             {
-                process: (op: IDirectoryCreateSubDirectoryOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectoryCreateSubDirectoryOperation, local, message, metadata?) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
-                        parentSubdir.processCreateSubDirectoryMessage(op, local, message, sequenceNumber);
+                        parentSubdir.processCreateSubDirectoryMessage(op, local, message, metadata);
                     }
                 },
                 submit: (op: IDirectoryCreateSubDirectoryOperation) => {
@@ -858,10 +859,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "deleteSubDirectory",
             {
-                process: (op: IDirectoryDeleteSubDirectoryOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectoryDeleteSubDirectoryOperation, local, message, metadata?) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
-                        parentSubdir.processDeleteSubDirectoryMessage(op, local, message, sequenceNumber);
+                        parentSubdir.processDeleteSubDirectoryMessage(op, local, message, metadata);
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation) => {
@@ -880,7 +881,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "act",
             {
-                process: (op: IDirectoryValueTypeOperation, local, message, sequenceNumber?) => {
+                process: (op: IDirectoryValueTypeOperation, local, message, metadata?) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     // Subdir might not exist if we deleted it
                     if (!subdir) {
@@ -902,7 +903,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op) => {
-                    this.submitDirectoryMessage(op);
+                    // Send the messageId as -1 because we don't care about the ack.
+                    this.submitDirectoryMessage(op, -1 /* messageId */);
                 },
             },
         );
@@ -939,13 +941,13 @@ class SubDirectory implements IDirectory {
      */
     private readonly pendingSubDirectories: Map<string, number> = new Map();
 
-    private pendingSequenceNumber: number = -1;
+    private messageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
      * number of that clear operation.  Otherwise, is -1.
      */
-    private pendingClearSequenceNumber: number = -1;
+    private pendingClearMessageId: number = -1;
 
     /**
      * Constructor.
@@ -1263,12 +1265,13 @@ class SubDirectory implements IDirectory {
         op: IDirectoryClearOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): void {
         if (local) {
-            assert(sequenceNumber !== undefined);
-            if (this.pendingClearSequenceNumber === sequenceNumber) {
-                this.pendingClearSequenceNumber = -1;
+            assert(metadata !== undefined);
+            const messageId = metadata as number;
+            if (this.pendingClearMessageId === messageId) {
+                this.pendingClearMessageId = -1;
             }
             return;
         }
@@ -1287,9 +1290,9 @@ class SubDirectory implements IDirectory {
         op: IDirectoryDeleteOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): void {
-        if (!this.needProcessStorageOperation(op, local, message, sequenceNumber)) {
+        if (!this.needProcessStorageOperation(op, local, message, metadata)) {
             return;
         }
         this.deleteCore(op.key, local, message);
@@ -1307,9 +1310,9 @@ class SubDirectory implements IDirectory {
         context: ILocalValue,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): void {
-        if (!this.needProcessStorageOperation(op, local, message, sequenceNumber)) {
+        if (!this.needProcessStorageOperation(op, local, message, metadata)) {
             return;
         }
         this.setCore(op.key, context, local, message);
@@ -1326,9 +1329,9 @@ class SubDirectory implements IDirectory {
         op: IDirectoryCreateSubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): void {
-        if (!this.needProcessSubDirectoryOperations(op, local, message, sequenceNumber)) {
+        if (!this.needProcessSubDirectoryOperations(op, local, message, metadata)) {
             return;
         }
         this.createSubDirectoryCore(op.subdirName, local, message);
@@ -1345,9 +1348,9 @@ class SubDirectory implements IDirectory {
         op: IDirectoryDeleteSubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): void {
-        if (!this.needProcessSubDirectoryOperations(op, local, message, sequenceNumber)) {
+        if (!this.needProcessSubDirectoryOperations(op, local, message, metadata)) {
             return;
         }
         this.deleteSubDirectoryCore(op.subdirName, local, message);
@@ -1359,9 +1362,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        const sequenceNumber = ++this.pendingSequenceNumber;
-        this.directory.submitDirectoryMessage(op, sequenceNumber);
-        this.pendingClearSequenceNumber = sequenceNumber;
+        const messageId = ++this.messageId;
+        this.directory.submitDirectoryMessage(op, messageId);
+        this.pendingClearMessageId = messageId;
     }
 
     /**
@@ -1370,9 +1373,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        const sequenceNumber = ++this.pendingSequenceNumber;
-        this.directory.submitDirectoryMessage(op, sequenceNumber);
-        this.pendingKeys.set(op.key, sequenceNumber);
+        const messageId = ++this.messageId;
+        this.directory.submitDirectoryMessage(op, messageId);
+        this.pendingKeys.set(op.key, messageId);
     }
 
     /**
@@ -1381,9 +1384,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        const sequenceNumber = ++this.pendingSequenceNumber;
-        this.directory.submitDirectoryMessage(op, sequenceNumber);
-        this.pendingSubDirectories.set(op.subdirName, sequenceNumber);
+        const messageId = ++this.messageId;
+        this.directory.submitDirectoryMessage(op, messageId);
+        this.pendingSubDirectories.set(op.subdirName, messageId);
     }
 
     /**
@@ -1454,9 +1457,9 @@ class SubDirectory implements IDirectory {
         op: IDirectoryKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): boolean {
-        if (this.pendingClearSequenceNumber !== -1) {
+        if (this.pendingClearMessageId !== -1) {
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }
@@ -1465,9 +1468,10 @@ class SubDirectory implements IDirectory {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
-                assert(sequenceNumber !== undefined);
-                const pendingKeySequenceNumber = this.pendingKeys.get(op.key);
-                if (pendingKeySequenceNumber === sequenceNumber) {
+                assert(metadata !== undefined);
+                const messageId = metadata as number;
+                const pendingKeyMessageId = this.pendingKeys.get(op.key);
+                if (pendingKeyMessageId === messageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -1490,13 +1494,14 @@ class SubDirectory implements IDirectory {
         op: IDirectorySubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        sequenceNumber?: number,
+        metadata?: unknown,
     ): boolean {
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
-                assert(sequenceNumber !== undefined);
-                const pendingSubDirectorySequenceNumber = this.pendingSubDirectories.get(op.subdirName);
-                if (pendingSubDirectorySequenceNumber === sequenceNumber) {
+                assert(metadata !== undefined);
+                const messageId = metadata as number;
+                const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
+                if (pendingSubDirectoryMessageId === messageId) {
                     this.pendingSubDirectories.delete(op.subdirName);
                 }
             }

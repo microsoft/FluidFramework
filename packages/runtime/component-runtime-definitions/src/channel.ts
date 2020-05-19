@@ -52,20 +52,26 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 }
 
 /**
- * Handler provided by shared data structure to process incoming ops.
+ * Handler provided by shared data structure to process requests from the runtime.
  */
 export interface IDeltaHandler {
     /**
      * Processes the op.
      */
-    process: (message: ISequencedDocumentMessage, local: boolean, metadata?: any) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) => void;
 
     /**
      * State change events to indicate changes to the delta connection
      */
     setConnectionState(connected: boolean): void;
 
-    reSubmitOp(message: any, metadata?: any): void;
+    /**
+     * Called when the runtime asks the DDS to resubmit an op. This may be because the Container reconnected and
+     * this op was not acked.
+     * @param message - The original message that was submitted.
+     * @param metadata - The original metadata that was submitted.
+     */
+    reSubmit(message: any, metadata: unknown): void;
 }
 
 /**
@@ -75,10 +81,12 @@ export interface IDeltaConnection {
     connected: boolean;
 
     /**
-     * Send new messages to the server. Returns the client ID for the message. Must be in a connected state
-     * to submit a message.
+     * Send new messages to the server.
+     * @param messageContent - The content of the message to be sent.
+     * @param metadata - The metadata associated with the message. This is not sent to the server. It is sent back
+     * when asked to process the message or if the message has to be resubmitted.
      */
-    submit(messageContent: any, metadata?: any): number;
+    submit(messageContent: any, metadata: unknown): number;
 
     /**
      * Attaches a message handler to the delta connection

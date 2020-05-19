@@ -76,7 +76,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import * as Deque from "double-ended-queue";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
@@ -95,6 +94,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
+import { PendingStateHandler } from "./pendingStateHandler";
 import { pkgVersion } from "./packageVersion";
 
 interface ISummaryTreeWithStats {
@@ -135,23 +135,6 @@ export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedS
 }
 
 export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
-
-export enum PendingStateType {
-    Message = "message",
-    Flush = "flush",
-}
-
-export interface IPendingMessage {
-    clientSequenceNumber: number;
-    type: MessageType;
-    content: any;
-    metadata?: any;
-}
-
-export interface IPendingState {
-    type: PendingStateType;
-    content: FlushMode | IPendingMessage;
-}
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -488,7 +471,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, metadata?: any) => number {
+    public get submitFn(): (type: MessageType, contents: any, metadata?: unknown) => number {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
@@ -499,6 +482,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     public get snapshotFn(): (message: string) => Promise<void> {
         return this.context.snapshotFn;
+    }
+
+    public get reSubmitFn(): (content: any, metadata?: unknown) => void {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        return this.reSubmit;
     }
 
     public get closeFn(): (error?: CriticalContainerError) => void {
@@ -579,6 +567,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
     private readonly requestHandler = new RuntimeRequestHandlerBuilder();
+    private readonly pendingStateHanlder: PendingStateHandler;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -588,8 +577,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
-
-    private readonly pendingStates = new Deque<IPendingState>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -658,6 +645,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         );
 
         this.deltaSender = this.deltaManager;
+
+        this.pendingStateHanlder = new PendingStateHandler(
+            this,
+            ChildLogger.create(this.logger, "PendingStateHandler"),
+        );
 
         this.deltaManager.on("allSentOpsAckd", () => {
             // If we are not fully connected, then we have no clue if there are any pending ops
@@ -818,33 +810,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
-    private replaypendingStates(states: IPendingState[]) {
-        const savedFlushMode = this.flushMode;
-        for (const state of states) {
-            switch (state.type) {
-                case PendingStateType.Flush:
-                    {
-                        const flushMode = state.content as FlushMode;
-                        this.setFlushMode(flushMode);
-                    }
-                    break;
-                case PendingStateType.Message:
-                    {
-                        const message = state.content as IPendingMessage;
-                        if (message.type === MessageType.Operation) {
-                            this.reSubmitOperation(message.content, message.metadata);
-                        } else {
-                            this.submit(message.type, message.content);
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-        this.setFlushMode(savedFlushMode);
-    }
-
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -856,9 +821,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
 
-            const pendingstates = this.pendingStates.toArray();
-            this.pendingStates.clear();
-            this.replaypendingStates(pendingstates);
+            this.pendingStateHanlder.replayPendingStates();
         }
 
         for (const [component, componentContext] of this.contexts) {
@@ -967,10 +930,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this._flushMode = mode;
 
-        this.pendingStates.push({
-            type: PendingStateType.Flush,
-            content: mode,
-        });
+        this.pendingStateHanlder.addFlushMode(mode);
     }
 
     public flush(): void {
@@ -1176,37 +1136,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { summaryStats, summaryTree };
     }
 
-    private processPendingMessage(message: ISequencedDocumentMessage): any {
-        const pendingState = this.pendingStates.peekFront();
-        if (pendingState === undefined) {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
-            return;
-        }
-
-        if (pendingState.type === PendingStateType.Flush) {
-            this.pendingStates.shift();
-            return this.processPendingMessage(message);
-        }
-
-        const firstPendingMessage = pendingState.content as IPendingMessage;
-
-        // Disconnected ops should never be processed. They should have been fully sent on connected
-        assert(firstPendingMessage.clientSequenceNumber !== -1,
-            `processing disconnected op ${firstPendingMessage.clientSequenceNumber}`);
-
-        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-        // in order we only need to check the beginning of the local list.
-        if (firstPendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
-            assert.equal(firstPendingMessage.clientSequenceNumber, message.clientSequenceNumber);
-            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
-            return;
-        }
-
-        this.pendingStates.shift();
-
-        return firstPendingMessage.metadata;
-    }
-
     private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
         let remotedComponentContext: RemotedComponentContext;
 
@@ -1217,10 +1146,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             message = this.processRemoteChunkedMessage(messageArg);
         }
 
-        let localMessageMetadata: any;
-        // Do not process a local chunked op untill all pieces are available.
+        let localMessageMetadata: unknown;
+        // Do not process a local chunked op until all pieces are available.
         if (local && message.type !== MessageType.ChunkedOp) {
-            localMessageMetadata = this.processPendingMessage(message);
+            localMessageMetadata = this.pendingStateHanlder.processPendingMessage(message);
         }
 
         // Old prepare part
@@ -1513,7 +1442,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any, metadata?: any): number {
+    private submit(type: MessageType, content: any, metadata?: unknown): number {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1552,17 +1481,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        const pendingMessage: IPendingMessage = {
-            clientSequenceNumber,
-            type,
-            content,
-            metadata,
-        };
-
-        this.pendingStates.push({
-            type: PendingStateType.Message,
-            content: pendingMessage,
-        });
+        this.pendingStateHanlder.addMessage(type, clientSequenceNumber, content, metadata);
 
         return clientSequenceNumber;
     }
@@ -1595,16 +1514,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private reSubmitOperation(content: any, metadata?: any) {
+    private reSubmit(content: any, metadata?: unknown) {
         const envelope = content as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         assert(componentContext, "There should be a component context for the op");
 
-        const innerContents = envelope.contents as { content: any; type: string };
-        componentContext.reSubmitOp(innerContents.content, metadata);
+        const innerContents = envelope.contents as { content: any; type: MessageType };
+        componentContext.reSubmit(innerContents.type, innerContents.content, metadata);
     }
 
-    private processOperation(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };

@@ -249,13 +249,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - Content of the message
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, metadata?: any): number {
+    protected submitLocalMessage(content: any, metadata?: unknown): number {
         if (this.isLocal()) {
             return -1;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, metadata);
+        return this.services!.deltaConnection.submit(content, metadata ?? "");
     }
 
     /**
@@ -328,8 +328,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             setConnectionState: (connected: boolean) => {
                 this.setConnectionState(connected);
             },
-            reSubmitOp: (content, metadata?) => {
-                this.reSubmitOp(content, metadata);
+            reSubmit: (content, metadata) => {
+                this.reSubmit(content, metadata);
             },
         });
 
@@ -377,7 +377,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.emit("op", message, local, this);
     }
 
-    protected reSubmitOp(content: any, metadata?: any) {
+    protected reSubmit(content: any, metadata: unknown) {
         this.submitLocalMessage(content, metadata);
     }
 }

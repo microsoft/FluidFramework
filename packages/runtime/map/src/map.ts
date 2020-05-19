@@ -359,14 +359,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected onConnect(pending: any[]) {}
 
-    protected reSubmitOp(content: any, metadata?: any) {
+    protected reSubmit(content: any, metadata: unknown) {
         this.kernel.trySubmitMessage(content, metadata);
     }
 
     /**
    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
         if (message.type === MessageType.Operation) {
             this.kernel.tryProcessMessage(message, local, metadata);
         }

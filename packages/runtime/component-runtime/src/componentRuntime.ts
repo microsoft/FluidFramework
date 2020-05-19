@@ -174,7 +174,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this,
                     componentContext,
                     componentContext.storage,
-                    (type, content, metadata?) => this.submit(type, content, metadata),
+                    (type, content, metadata) => this.submit(type, content, metadata),
                     (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
@@ -270,7 +270,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content, metadata?) => this.submit(t, content, metadata),
+            (t, content, metadata) => this.submit(t, content, metadata),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
@@ -359,13 +359,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        // Resend all pending attach messages prior to notifying clients
-        if (connected) {
-            for (const [, message] of this.pendingAttach) {
-                this.submit(MessageType.Attach, message);
-            }
-        }
-
         for (const [, object] of this.contexts) {
             object.setConnectionState(connected, clientId);
         }
@@ -415,7 +408,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
+    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
@@ -441,7 +434,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         this,
                         this.componentContext,
                         this.componentContext.storage,
-                        (type, content, contentMetadata?) => this.submit(type, content, contentMetadata),
+                        (type, content, contentMetadata) => this.submit(type, content, contentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTreeP,
@@ -518,8 +511,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
-    public submitMessage(type: MessageType, content: any) {
-        this.submit(type, content);
+    public submitMessage(type: MessageType, content: any, metadata?: unknown) {
+        this.submit(type, content, metadata);
     }
 
     public submitSignal(type: string, content: any) {
@@ -570,27 +563,30 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            if (this.connected) {
-                this.submit(MessageType.Attach, message);
-            }
+            this.submit(MessageType.Attach, message);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
-    private submit(type: MessageType, content: any, metadata?: any): number {
+    private submit(type: MessageType, content: any, metadata?: unknown): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content, metadata);
     }
 
-    public reSubmitOp(content: any, metadata?: any) {
-        const envelope = content as IEnvelope;
-        const channelContext = this.contexts.get(envelope.address);
-        assert(channelContext, "There should be a channel context for the op");
+    public reSubmit(type: MessageType, content: any, metadata?: unknown) {
+        this.verifyNotClosed();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.reSubmitOp(envelope.contents, metadata);
+        // Send mesages that are ops to the respective channel. For all other messages, just submit it again.
+        switch (type) {
+            case MessageType.Operation:
+                assert(metadata !== undefined, "No metadata found for the op");
+                this.reSubmitOp(content, metadata);
+                break;
+            default:
+                this.submit(type, content);
+        }
     }
 
     private setChannelDirty(address: string): void {
@@ -598,7 +594,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.setChannelDirty(address);
     }
 
-    private processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -622,6 +618,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         channelContext.processOp(transformed, local, metadata);
         return channelContext;
+    }
+
+    private reSubmitOp(content: any, metadata: unknown) {
+        const envelope = content as IEnvelope;
+        const channelContext = this.contexts.get(envelope.address);
+        assert(channelContext, "There should be a channel context for the op");
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        channelContext!.reSubmit(envelope.contents, metadata);
     }
 
     private attachListener() {
