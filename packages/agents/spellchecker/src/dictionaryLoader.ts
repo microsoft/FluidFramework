@@ -4,7 +4,7 @@
  */
 
 import url from "url";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import request from "request";
 
 export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<number>> {

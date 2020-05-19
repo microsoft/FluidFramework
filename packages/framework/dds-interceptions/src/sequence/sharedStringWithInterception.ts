@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 

@@ -7,7 +7,7 @@
 
 import SearchMenu from "@fluid-example/search-menu";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import Katex from "katex";
 import { CharacterCodes } from "./characterCodes";
 

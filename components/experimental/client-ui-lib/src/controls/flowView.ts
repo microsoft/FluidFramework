@@ -21,7 +21,7 @@ import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import types from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import Sequence from "@microsoft/fluid-sequence";
@@ -1565,7 +1565,7 @@ export interface IExcludedRectangle extends ui.Rectangle {
 }
 
 function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
-    const r = <IExcludedRectangle> new ui.Rectangle(x, y, w, h);
+    const r = <IExcludedRectangle>new ui.Rectangle(x, y, w, h);
     r.id = id;
     r.left = true;
     r.curY = 0;
@@ -1674,7 +1674,7 @@ export class Viewport {
                         exclu.floatL = true;
                     }
                 }
-                let excluDiv = <IRefDiv> this.viewHasInclusion(irdoc.referenceDocId);
+                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.referenceDocId);
 
                 // Move the inclusion
                 if (excluDiv) {

@@ -7,7 +7,7 @@ import api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IInk } from "@microsoft/fluid-ink";
 import { ISharedMap } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import Sequence from "@microsoft/fluid-sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";

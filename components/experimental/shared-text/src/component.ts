@@ -23,7 +23,7 @@ import {
     ISharedMap,
     SharedMap,
 } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import {
     IProvideSharedString,

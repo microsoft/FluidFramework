@@ -16,7 +16,7 @@
 import fs from "fs";
 import path from "path";
 // eslint-disable-next-line import/no-duplicates
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 // eslint-disable-next-line no-duplicate-imports
 import {
     TextSegment,

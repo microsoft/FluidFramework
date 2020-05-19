@@ -7,7 +7,7 @@ import api from "@fluid-internal/client-api";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";

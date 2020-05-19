@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import Sequence from "@microsoft/fluid-sequence";
 import { CharacterCodes } from "./characterCodes";
 

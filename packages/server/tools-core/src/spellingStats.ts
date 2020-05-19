@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import path from "path";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 
 const corpusFilenames = ["pp.txt", "huckfinn.txt", "shakespeare.txt", "tomsawyer.txt", "ulysses.txt"];
 

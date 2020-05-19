@@ -8,7 +8,7 @@ import path from "path";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";
 import * as author from "./author";

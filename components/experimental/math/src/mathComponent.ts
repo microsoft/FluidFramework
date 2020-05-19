@@ -26,7 +26,7 @@ import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import Sequence from "@microsoft/fluid-sequence";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";

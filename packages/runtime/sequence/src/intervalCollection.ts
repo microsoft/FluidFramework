@@ -7,7 +7,7 @@
 
 import { EventEmitter } from "events";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@microsoft/fluid-map";
-import MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 export interface ISerializedInterval {
