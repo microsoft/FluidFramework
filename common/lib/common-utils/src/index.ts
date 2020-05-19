@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./indexNode";
 export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./disposal";
