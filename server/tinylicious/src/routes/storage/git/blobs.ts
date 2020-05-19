@@ -7,7 +7,7 @@ import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-
 import { Router } from "express";
 import git from "isomorphic-git";
 import nconf from "nconf";
-import utils from "../utils";
+import * as utils from "../utils";
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();

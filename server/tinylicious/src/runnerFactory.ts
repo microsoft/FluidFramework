@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import utils from "@microsoft/fluid-server-services-utils";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { TinyliciousResources } from "./resources";
 import { TinyliciousRunner } from "./runner";
 

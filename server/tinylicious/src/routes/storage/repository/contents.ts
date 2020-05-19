@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import utils from "../utils";
+import * as utils from "../utils";
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();

@@ -7,7 +7,7 @@ import { ICreateRefParams, IPatchRefParams, IRef } from "@microsoft/fluid-gitres
 import { Router } from "express";
 import git from "isomorphic-git";
 import nconf from "nconf";
-import utils from "../utils";
+import * as utils from "../utils";
 
 function refToIRef(ref: string, sha: string): IRef {
     return {

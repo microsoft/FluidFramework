@@ -9,8 +9,8 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import ordering from "./ordering";
-import storage from "./storage";
+import * as ordering from "./ordering";
+import * as storage from "./storage";
 
 export interface IRoutes {
     ordering: Router;
