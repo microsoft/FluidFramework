@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-external-component-loader",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "description": "Loads external components based on their url",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -33,14 +33,14 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/spaces": "^0.18.1",
-    "@microsoft/fluid-aqueduct": "^0.18.1",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.1",
-    "@microsoft/fluid-container-definitions": "^0.18.1",
-    "@microsoft/fluid-container-runtime-definitions": "^0.18.1",
-    "@microsoft/fluid-runtime-definitions": "^0.18.1",
-    "@microsoft/fluid-view-interfaces": "^0.18.1",
-    "@microsoft/fluid-web-code-loader": "^0.18.1",
+    "@fluid-example/spaces": "^0.19.0",
+    "@microsoft/fluid-aqueduct": "^0.19.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-container-definitions": "^0.19.0",
+    "@microsoft/fluid-container-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-view-interfaces": "^0.19.0",
+    "@microsoft/fluid-web-code-loader": "^0.19.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "uuid": "^3.3.2"
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.18.1",
+    "@microsoft/fluid-webpack-component-loader": "^0.19.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
