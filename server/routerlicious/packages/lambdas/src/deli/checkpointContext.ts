@@ -32,6 +32,7 @@ export interface IDeliCheckpoint {
     sequenceNumber: number;
     epoch: number;
     term: number;
+    lastTicketedTimestamp: number;
 }
 
 export class CheckpointContext {
@@ -95,6 +96,7 @@ export class CheckpointContext {
                 sequenceNumber: checkpoint.sequenceNumber,
                 epoch: checkpoint.epoch,
                 term: checkpoint.term,
+                lastTicketedTimestamp: checkpoint.lastTicketedTimestamp,
             };
             deli = JSON.stringify(deliCheckpoint);
         }

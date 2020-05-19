@@ -99,6 +99,7 @@ export class DeliLambda implements IPartitionLambda {
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
+    private lastTicketedTimestamp: number;
     private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
     private noopTimer: any;
@@ -160,6 +161,7 @@ export class DeliLambda implements IPartitionLambda {
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
+        this.lastTicketedTimestamp = lastCheckpoint.lastTicketedTimestamp ?? 0;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
@@ -540,6 +542,11 @@ export class DeliLambda implements IPartitionLambda {
         sequenceNumber: number,
         systemContent,
     ): ISequencedDocumentMessage {
+        const timestamp = message.operation.timestamp === undefined ?
+            Date.now() :
+            Math.max(message.operation.timestamp, this.lastTicketedTimestamp);
+        this.lastTicketedTimestamp = timestamp;
+
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
@@ -551,7 +558,7 @@ export class DeliLambda implements IPartitionLambda {
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
             term: this.term,
-            timestamp: message.operation.timestamp ?? Date.now(),
+            timestamp,
             traces: message.operation.traces,
             type: message.operation.type,
         };
@@ -735,6 +742,7 @@ export class DeliLambda implements IPartitionLambda {
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
             term: this.term,
+            lastTicketedTimestamp: this.lastTicketedTimestamp,
         };
     }
 

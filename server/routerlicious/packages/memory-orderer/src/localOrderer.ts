@@ -64,6 +64,7 @@ const DefaultDeli: IDeliCheckpoint = {
     logOffset: -1,
     sequenceNumber: 0,
     term: 1,
+    lastTicketedTimestamp: 0,
 };
 
 class WebSocketSubscriber implements ISubscriber {

@@ -29,6 +29,7 @@ export async function migrateSchema(
             logOffset: object.logOffset,
             sequenceNumber: object.sequenceNumber,
             term,
+            lastTicketedTimestamp: 0,
         };
         await collection.update(
             {
