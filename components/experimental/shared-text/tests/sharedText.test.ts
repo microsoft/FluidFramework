@@ -12,14 +12,9 @@ describe("sharedText", () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
     }, 45000);
 
-    beforeAll(async () => {
-        await page.goto(globals.PATH, { waitUntil: "load" });
-    });
-
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
         await page.waitFor(() => window["fluidStarted"]);
-        await page.waitFor(1000);
     });
 
     test("The title of the document is the same for both users", async () => {
