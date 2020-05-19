@@ -19,6 +19,7 @@ import {
     IInternalRegistryEntry,
     ISpacesProps,
     SpacesStorageKey,
+    ISpacesStoredComponent,
 } from "./interfaces";
 import { setTemplate, useReducer } from "./utils";
 import { PrimedContext } from "./context";
@@ -54,14 +55,17 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         if (this.storageComponent === undefined) {
             throw new Error("Spaces can't render, storage not found");
         }
-        const componentMap: FluidComponentMap = new Map();
-        componentMap.set(this.storageComponent.handle, { component: this.storageComponent });
+        const fluidComponentMap: FluidComponentMap = new Map();
+        fluidComponentMap.set(this.storageComponent.handle, { component: this.storageComponent });
+
+        const localComponentMap = new Map<string, ISpacesStoredComponent>();
 
         ReactDOM.render(
             <SpacesApp
                 root={this.root}
                 runtime={this.runtime}
-                fluidComponentMap={componentMap}
+                localComponentMap={localComponentMap}
+                fluidComponentMap={fluidComponentMap}
                 supportedComponents={this.supportedComponents}
                 syncedStorage={this.storageComponent}
                 componentRegistry={this.internalRegistry?.IComponentRegistry}

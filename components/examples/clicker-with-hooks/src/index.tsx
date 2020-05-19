@@ -10,7 +10,7 @@ import {
 import {
     FluidProps,
     FluidReducerProps,
-    FluidFunctionalComponentState,
+    IFluidFunctionalComponentViewState,
     useStateFluid,
     useReducerFluid,
     createContextFluid,
@@ -33,7 +33,7 @@ interface CounterState {
 
 // ---- React Functional Component w/ useState ----
 
-interface CounterFunctionalState extends FluidFunctionalComponentState, CounterState {}
+interface CounterFunctionalState extends IFluidFunctionalComponentViewState, CounterState {}
 
 function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
     // Declare a new state variable, which we'll call "count"

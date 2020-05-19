@@ -51,17 +51,21 @@ export async function setTemplate(storage?: SpacesStorage) {
 }
 
 export function useReducer(props: ISpacesProps) {
-    const { fluidComponentMap, root, runtime, componentRegistry, syncedStorage } = props;
+    const { localComponentMap, fluidComponentMap, root, runtime, componentRegistry, syncedStorage } = props;
     const stateToRootMap = new Map<keyof ISpacesViewState, string>();
     stateToRootMap.set("componentMap", ComponentMapKey);
     const reducerProps: FluidReducerProps<ISpacesViewState, ISpacesReducer, ISpacesSelector, ISpacesDataProps> = {
         root,
         runtime,
         fluidComponentMap,
-        initialState: { componentMap: syncedStorage.componentList },
+        initialState: { componentMap: localComponentMap },
         reducer: SpacesReducer,
         selector: SpacesSelector,
         stateToRoot: stateToRootMap,
+        rootToState: (syncedState: ISpacesViewState) => {
+            syncedState.componentMap = root.get("componentMap");
+            return syncedState;
+        },
         dataProps: {
             runtime,
             fluidComponentMap,

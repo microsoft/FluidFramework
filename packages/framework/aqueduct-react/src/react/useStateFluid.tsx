@@ -2,39 +2,76 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+// This is disabled as we are using state updates to indicate
+// when certain promises are resolved
+/* eslint-disable @typescript-eslint/no-floating-promises */
 
 import * as React from "react";
-import { IComponentLoadable, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
-    FluidFunctionalComponentState,
+    IFluidFunctionalComponentViewState,
     FluidProps,
-    instanceOfIComponentLoadable,
     IFluidComponent,
+    IFluidFunctionalComponentFluidState,
 } from "./interface";
-import {  updateStateAndComponentMap } from "./updateStateAndComponentMap";
+import {
+    updateStateAndComponentMap,
+    syncStateAndRoot,
+    rootCallbackListener,
+} from "./updateStateAndComponentMap";
 
-export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: FluidProps<P,S>):
-[S, ((newState: S, fromRootUpdate?: boolean) => void)] {
-    const [ reactState, reactSetState ] = React.useState<S>(props.initialState);
-    const { root, stateToRoot, fluidComponentMap } = props;
-    const fluidSetState = React.useCallback((newState: Partial<S>, fromRootUpdate = false) => {
+export function useStateFluid<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(props: FluidProps<SV,SF>):
+[SV, ((newState: SV, fromRootUpdate?: boolean) => void)] {
+    const {
+        root,
+        initialFluidState,
+        initialViewState,
+        fluidToView,
+        viewToFluid,
+        fluidComponentMap,
+    } = props;
+    const [ reactState, reactSetState ] = React.useState<SV>(initialViewState);
+
+    const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false) => {
         const newCombinedState = { ...reactState, ...newState, isInitialized: true };
-        reactSetState(newCombinedState);
-        if (stateToRoot !== undefined && !fromRootUpdate) {
-            stateToRoot.forEach((rootKey, stateKey) => {
-                if (newState[stateKey] !== undefined) {
-                    if (instanceOfIComponentLoadable(newState[stateKey])) {
-                        const stateData = (newState[stateKey] as unknown as IComponentLoadable).handle;
-                        root.set(rootKey, stateData);
-                    } else {
-                        root.set(rootKey, newState[stateKey]);
-                    }
-                }
-            });
+        if (!fromRootUpdate) {
+            syncStateAndRoot(
+                fromRootUpdate,
+                root,
+                reactState,
+                reactSetState,
+                fluidComponentMap,
+                viewToFluid,
+                fluidToView,
+            );
+        } else {
+            reactSetState(newCombinedState);
         }
-    }, [root, stateToRoot, reactState, reactSetState]);
+    }, [root, viewToFluid, reactState, reactSetState, fluidComponentMap]);
 
-    if (stateToRoot !== undefined && !reactState.isInitialized) {
+    const rootCallback = React.useCallback(
+        (change: IDirectoryValueChanged, local: boolean) => {
+            const callback = rootCallbackListener(
+                fluidComponentMap,
+                true,
+                root,
+                reactState,
+                reactSetState,
+                viewToFluid,
+                fluidToView,
+            );
+            return callback(change, local);
+        }, [root, fluidToView, viewToFluid, reactState, reactSetState, fluidComponentMap]);
+
+    if (viewToFluid !== undefined && !reactState.isInitialized) {
+        if (root.get("syncedState") === undefined) {
+            root.set("syncedState", initialFluidState);
+        }
+        root.on("valueChanged", rootCallback);
         reactState.isInitialized = true;
         const unlistenedComponentHandles: IComponentHandle[] = [];
         fluidComponentMap.forEach((value: IFluidComponent, key: IComponentHandle) => {
@@ -42,15 +79,16 @@ export function useStateFluid<P,S extends FluidFunctionalComponentState>(props: 
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });
-        // This can be disabled as the state update will be triggered after the promises resolve
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         updateStateAndComponentMap(
             unlistenedComponentHandles,
             fluidComponentMap,
+            false,
             root,
             reactState,
             reactSetState,
-            stateToRoot,
+            rootCallback,
+            viewToFluid,
+            fluidToView,
         );
     }
 

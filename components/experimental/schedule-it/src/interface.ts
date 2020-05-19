@@ -4,7 +4,7 @@
  */
 
 import {
-    FluidFunctionalComponentState,
+    IFluidFunctionalComponentViewState,
     FluidStateUpdateFunction,
     FluidComponentSelectorFunction,
     IFluidDataProps,
@@ -50,7 +50,7 @@ export interface IDefaultPersonMap {
     [key: string]: IDefaultPerson
 }
 
-export interface IPersonState extends FluidFunctionalComponentState {
+export interface IPersonState extends IFluidFunctionalComponentViewState {
     personMap: SharedMap;
 }
 
@@ -58,7 +58,7 @@ export interface IDefaultDateMap {
     [key: string]: IDate;
 }
 
-export interface IDateState extends FluidFunctionalComponentState {
+export interface IDateState extends IFluidFunctionalComponentViewState {
     dateMap: SharedMap;
 }
 
@@ -67,7 +67,7 @@ export interface IComment {
     message: string;
 }
 
-export interface ICommentState extends FluidFunctionalComponentState {
+export interface ICommentState extends IFluidFunctionalComponentViewState {
     comments: IComment[]
 }
 

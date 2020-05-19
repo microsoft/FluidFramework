@@ -4,11 +4,15 @@
  */
 
 import * as React from "react";
-import { FluidFunctionalComponentState, FluidContextProps, FluidContext } from "./interface";
+import { IFluidFunctionalComponentViewState, FluidContextProps, FluidContext } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 
-export function createContextFluid<P,S extends FluidFunctionalComponentState,C>(props: FluidContextProps<P,S,C>):
-FluidContext<S,C> {
+export function createContextFluid<
+    SV extends IFluidFunctionalComponentViewState,
+    SR extends IFluidFunctionalComponentViewState,
+    C,
+>(props: FluidContextProps<SV,SR,C>):
+FluidContext<SV,C> {
     const [state, setState] = useStateFluid(props);
     const PrimedFluidContext = React.createContext({ state, setState, reactContext: props.reactContext });
     return {

@@ -7,7 +7,13 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { FluidReactComponent } from "@microsoft/fluid-aqueduct-react";
+import {
+    FluidReactComponent,
+    IFluidFunctionalComponentFluidState,
+    IFluidFunctionalComponentViewState,
+    ViewToFluidMap,
+    FluidToViewMap,
+} from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -20,11 +26,15 @@ export const ClickerName = pkg.name as string;
 
 // ---- React Class Component ----
 
-interface CounterState {
+interface CounterReactState extends IFluidFunctionalComponentViewState {
     value: number;
 }
 
-class CounterReactView extends FluidReactComponent<{}, CounterState> {
+interface CounterFluidState extends IFluidFunctionalComponentFluidState {
+    value: number
+}
+
+class CounterReactView extends FluidReactComponent<CounterReactState, CounterFluidState> {
     render() {
         return (
             <div>
@@ -56,15 +66,34 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        const stateToRoot = new Map<keyof CounterState, string>();
-        stateToRoot.set("value", "counterClicks");
+        const viewToFluid: ViewToFluidMap<CounterReactState,CounterFluidState> = new Map();
+        viewToFluid.set("value", {
+            rootKey: "value",
+            rootConverter: (viewState: Partial<CounterReactState>) => {
+                return {
+                    value: viewState.value,
+                };
+            },
+        });
+
+        const fluidToView: FluidToViewMap<CounterReactState,CounterFluidState> = new Map();
+        fluidToView.set("value", {
+            stateKey: "value",
+            viewConverter: (syncedState: Partial<CounterFluidState>, fluidComponentMap) => {
+                return {
+                    value: syncedState.value,
+                };
+            },
+        });
 
         ReactDOM.render(
             <div>
                 <CounterReactView
                     root={this.root}
-                    initialState={{ value: this.root.get("counterClicks") }}
-                    stateToRoot={stateToRoot}
+                    initialViewState={{ value: this.root.get("counterClicks") }}
+                    initialFluidState={{ value: this.root.get("counterClicks") }}
+                    viewToFluid={viewToFluid}
+                    fluidToView={fluidToView}
                     fluidComponentMap={new Map()}
                 />
             </div>,

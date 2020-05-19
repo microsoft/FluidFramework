@@ -5,7 +5,7 @@ import { IComponentHandle, IComponent } from "@microsoft/fluid-component-core-in
 import {
     IFluidDataProps,
     FluidSelectorFunction,
-    FluidFunctionalComponentState,
+    IFluidFunctionalComponentViewState,
     FluidEffectFunction,
     FluidStateUpdateFunction,
     FluidAsyncStateUpdateFunction,
@@ -30,7 +30,7 @@ export interface ISpacesViewContext {
     state?: ISpacesViewState,
 }
 
-export interface ISpacesViewState extends FluidFunctionalComponentState {
+export interface ISpacesViewState extends IFluidFunctionalComponentViewState {
     componentMap: Map<string, ISpacesStoredComponent>,
 }
 
@@ -47,6 +47,7 @@ export interface ISpacesStoredComponent {
 export interface ISpacesProps {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
+    localComponentMap: Map<string, ISpacesStoredComponent>,
     fluidComponentMap: FluidComponentMap;
     supportedComponents: IInternalRegistryEntry[];
     syncedStorage: SpacesStorage;

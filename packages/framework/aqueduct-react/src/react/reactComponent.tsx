@@ -6,89 +6,97 @@
 
 import * as React from "react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { FluidProps } from "./interface";
+import {
+    FluidProps,
+    IFluidFunctionalComponentFluidState,
+    IFluidFunctionalComponentViewState,
+    IRootConverter,
+    IViewConverter,
+    FluidComponentMap,
+} from "./interface";
+import { rootCallbackListener, syncStateAndRoot } from "./updateStateAndComponentMap";
 
 /**
  * A react component with a root, initial props, and a root to state mapping
  */
-export abstract class FluidReactComponent<P,S> extends React.Component<FluidProps<P,S>, S> {
+export abstract class FluidReactComponent<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+> extends React.Component<FluidProps<SV,SF>, SV> {
     private readonly _root: ISharedDirectory;
-    readonly stateToRoot?: Map<keyof S, string>;
+    private readonly viewToFluid?: Map<keyof SV, IRootConverter<SV,SF>>;
+    private readonly fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>;
+    private readonly fluidComponentMap?: FluidComponentMap;
     constructor(
-        props: FluidProps<P,S>,
+        props: FluidProps<SV,SF>,
     ) {
         super(props);
         const {
-            stateToRoot,
+            fluidToView,
+            viewToFluid,
             root,
-            initialState,
+            initialViewState,
+            initialFluidState,
+            fluidComponentMap,
         } = props;
 
-        this.state = initialState;
-        this.stateToRoot = stateToRoot;
+        this.state = initialViewState;
+        this.viewToFluid = viewToFluid;
+        this.fluidToView = fluidToView;
+        this.fluidComponentMap = fluidComponentMap;
         this._root = root;
-        if (stateToRoot !== undefined) {
-            stateToRoot.forEach((rootKey, stateKey) => {
-                root.on("valueChanged", (change, local) => {
-                    if (change.key === rootKey) {
-                        this.getFromRoot(rootKey).then((newData) => {
-                            if (newData !== this.state[stateKey]) {
-                                const newState: Partial<S> = {};
-                                if (typeof initialState[stateKey] === typeof newData) {
-                                    newState[stateKey] = newData as any;
-                                    this.setPartialState(newState);
-                                } else {
-                                    throw new Error(
-                                        `Root value with key ${rootKey} does not
-                                         match the type for state with key ${stateKey}`);
-                                }
-                            }
-                        });
-                    }
-                });
-            });
+        if (root.get("syncedState") === undefined) {
+            root.set("syncedState", initialFluidState);
         }
+        const rootCallback = rootCallbackListener(
+            fluidComponentMap,
+            true,
+            root,
+            this.state,
+            this._setStateFromRoot.bind(this),
+            viewToFluid,
+            fluidToView,
+        );
+        root.on("valueChanged", rootCallback);
     }
 
-    public async getFromRoot<T, A>(
-        key: string,
-        getter?:
-        (root: ISharedDirectory, args?: A) => T, args?: A): Promise<T> {
-        if (getter === undefined) {
-            const value = this._root.get(key);
-            return value.IComponentHandle ? (value as IComponentHandle<T>).get() : value as T;
-        } else {
-            return getter(this._root, args);
-        }
-    }
-
-    public setOnRoot<T, A>(
-        key: string,
-        value: T,
-        setter?: (root: ISharedDirectory, value: T, args?: A) => void,
-        args?: A): void {
-        if (setter === undefined) {
-            this._root.set<T>(key, value);
-        } else {
-            setter(this._root, value, args);
-        }
-    }
-
-    public async setPartialState(newState: Partial<S>) {
-        this.setState({ ...this.state, ...newState });
-    }
-
-    public setState(newState: S) {
+    private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean) {
         super.setState(newState);
-        if (this.stateToRoot !== undefined) {
-            this.stateToRoot.forEach((rootKey, stateKey) => {
-                this.getFromRoot(rootKey).then((rootData) => {
-                    if (rootData !== newState[stateKey]) {
-                        this.setOnRoot(rootKey, newState[stateKey]);
-                    }
-                });
-            });
+        if (fromRootUpdate) {
+            this._setRoot(newState, fromRootUpdate);
+        }
+    }
+
+    private _setRoot(newState: SV, fromRootUpdate = false) {
+        const newCombinedState = { ...this.state, ...newState };
+        if (!fromRootUpdate && this.fluidComponentMap) {
+            syncStateAndRoot(
+                fromRootUpdate,
+                this._root,
+                newCombinedState,
+                this._setStateFromRoot.bind(this),
+                this.fluidComponentMap,
+                this.viewToFluid,
+                this.fluidToView,
+            );
+        } else {
+            this.setState(newCombinedState);
+        }
+    }
+
+    public setState(newState: SV) {
+        if (this.fluidComponentMap) {
+            syncStateAndRoot(
+                false,
+                this._root,
+                newState,
+                this._setStateFromRoot.bind(this),
+                this.fluidComponentMap,
+                this.viewToFluid,
+                this.fluidToView,
+            );
+        } else if (this.state !== newState) {
+            return super.setState(newState);
         }
     }
 }
