@@ -6,6 +6,7 @@
 import * as assert from "assert";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { BlobCacheStorageService } from "@microsoft/fluid-driver-utils";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentRuntimeChannel,
@@ -17,7 +18,6 @@ import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { BlobCacheStorageService } from "../blobCacheStorageService";
 
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;

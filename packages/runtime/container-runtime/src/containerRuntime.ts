@@ -34,7 +34,12 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree, readAndParse, createIError } from "@microsoft/fluid-driver-utils";
+import {
+    BlobCacheStorageService,
+    buildSnapshotTree,
+    readAndParse,
+    createIError,
+} from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     isSystemType,
@@ -73,7 +78,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -1140,9 +1144,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
+                let flatBlobsP = Promise.resolve(flatBlobs);
                 let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
                     snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobs' validity is contingent on snapshotTreeP's resolution
+                    flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
@@ -1151,7 +1158,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     attachMessage.id,
                     snapshotTreeP,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);

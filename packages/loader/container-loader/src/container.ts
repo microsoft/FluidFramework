@@ -42,6 +42,7 @@ import {
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
+    BlobCacheStorageService,
     buildSnapshotTree,
     createIError,
     readAndParse,
@@ -89,7 +90,6 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);

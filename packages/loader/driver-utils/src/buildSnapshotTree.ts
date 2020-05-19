@@ -90,7 +90,9 @@ async function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): Promis
 /**
  * Build a tree hierarchy base on an array of ITreeEntry
  *
- * @param blobMap - a map of blob's sha1 to content
+ * @param entries - an array of ITreeEntry to flatten
+ * @param blobMap - a map of blob's sha1 to content that gets filled with content from entries
+ * NOTE: blobMap's validity is contingent on the returned promise's resolution
  * @returns the hierarchical tree
  */
 export async function buildSnapshotTree(
