@@ -40,7 +40,8 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     attach(): void;
 
     /**
-     * Binds the given handle to this one. A bound handle will also be attached once this handle is attached.
+     * Binds the given handle to this one or attach the given handle if this handle is attached.
+     * A bound handle will also be attached once this handle is attached.
      */
     bind(handle: IComponentHandle): void;
 }
