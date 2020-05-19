@@ -643,12 +643,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         debug(`Directory ${this.id} is now disconnected`);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-     */
-    protected onConnect(pending: any[]) {}
-
-    protected reSubmit(content: any, metadata: unknown) {
+    protected OnReSubmit(content: any, metadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         handler.submit(message);

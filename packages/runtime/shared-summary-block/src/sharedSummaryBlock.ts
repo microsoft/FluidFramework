@@ -138,12 +138,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-     */
-    protected onConnect(pending: any[]) {}
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/fluid-shared-object-base#SharedObject.registerCore}
      */
     protected registerCore() {}
 

@@ -274,9 +274,19 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Called when the object has fully connected to the delta stream
      * Default implementation for DDS, override if different behavior is required.
-     * @param pending - Messages received while disconnected
      */
-    protected onConnect(pending: any[]) {}
+    protected onConnect() {}
+
+    /**
+     * Called when a message has to be resubmitted. This typically happens after a reconnection for
+     * unacked messages.
+     * Default implementation for DDS, override if different behavior is required.
+     * @param content - The content of the original message.
+     * @param metadata - The metadata associated with the original message.
+     */
+    protected onReSubmit(content: any, metadata: unknown) {
+        this.submitLocalMessage(content, metadata);
+    }
 
     /**
      * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
@@ -362,7 +372,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         } else {
             // Call this for now so that DDSes like ConsensesOrderedCollection that maintain their own pending
             // messages will work.
-            this.onConnect([]);
+            this.onConnect();
         }
     }
 
@@ -377,7 +387,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.emit("op", message, local, this);
     }
 
-    protected reSubmit(content: any, metadata: unknown) {
-        this.submitLocalMessage(content, metadata);
+    /**
+     * Called when a message has to be resubmitted. This typically happens after a reconnection for
+     * unacked messages.
+     * @param content - The content of the original message.
+     * @param metadata - The metadata associated with the original message.
+     */
+    private reSubmit(content: any, metadata: unknown) {
+        this.onReSubmit(content, metadata);
     }
 }

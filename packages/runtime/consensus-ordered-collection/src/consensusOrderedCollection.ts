@@ -287,12 +287,14 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
+
+    protected OnReSubmit(content: any, metadata: unknown) {}
 
     protected async loadCore(
         branchId: string,

@@ -446,7 +446,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
         const groupOp = this.client.resetPendingSegmentsToOp();
@@ -459,7 +459,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected reSubmit(content: any, metadata: unknown) {
+    protected OnReSubmit(content: any, metadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, metadata);
     }
 

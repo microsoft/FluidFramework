@@ -354,12 +354,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         debug(`Map ${this.id} is now disconnected`);
     }
 
-    /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
-     */
-    protected onConnect(pending: any[]) {}
-
-    protected reSubmit(content: any, metadata: unknown) {
+    protected OnReSubmit(content: any, metadata: unknown) {
         this.kernel.trySubmitMessage(content, metadata);
     }
 
