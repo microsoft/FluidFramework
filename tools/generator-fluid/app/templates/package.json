@@ -1,6 +1,6 @@
 {
   "name": "@yo-fluid/dice-roller",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "description": "Minimal Fluid example to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "author": "Microsoft",
