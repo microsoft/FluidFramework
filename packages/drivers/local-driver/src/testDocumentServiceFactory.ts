@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -17,8 +17,9 @@ import {
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryTree, NackErrorType } from "@microsoft/fluid-protocol-definitions";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
 import { createTestDocumentService } from "./testDocumentService";
 
 /**
@@ -27,6 +28,10 @@ import { createTestDocumentService } from "./testDocumentService";
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-test:";
+
+    // A map of clientId to TestDocumentService.
+    private readonly documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection> = new Map();
+
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      */
@@ -35,7 +40,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const pathName = new URL(resolvedUrl.url).pathname;
@@ -64,9 +69,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             id,
             appSummary,
             sequenceNumber,
+            documentAttributes.term ?? 1,
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl);
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**
@@ -74,7 +80,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);
@@ -96,6 +105,35 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             this.localDeltaConnectionServer,
             tokenProvider,
             tenantId,
-            documentId);
+            documentId,
+            this.documentDeltaConnectionsMap);
+    }
+
+    /**
+     * Gets the document delta connection for the clientId and asks it to disconnect the client.
+     * @param clientId - The ID of the client to be disconnected.
+     * @param disconnectReason - The reason of the disconnection.
+     */
+    public disconnectClient(clientId: string, disconnectReason: string) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
+            throw new Error(`No client with the id: ${clientId}`);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.documentDeltaConnectionsMap.get(clientId)!.disconnectClient(disconnectReason);
+    }
+
+    /**
+     * Gets the document delta connection for the clientId and asks it to nack the client.
+     * @param clientId - The ID of the client to be Nack'd.
+     * @param code - An error code number that represents the error. It will be a valid HTTP error code.
+     * @param type - Type of the Nack.
+     * @param message - A message about the nack for debugging/logging/telemetry purposes.
+     */
+    public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
+        if (!this.documentDeltaConnectionsMap.has(clientId)) {
+            throw new Error(`No client with the id: ${clientId}`);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.documentDeltaConnectionsMap.get(clientId)!.nackClient(code, type, message);
     }
 }

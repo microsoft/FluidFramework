@@ -13,6 +13,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 
 export class ComponentHandle implements IComponentHandle {
+    private isHandleAttached: boolean = false;
     private bound: Set<IComponentHandle> | undefined;
 
     public get IComponentRouter(): IComponentRouter { return this; }
@@ -35,6 +36,11 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public attach(): void {
+        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
+        if (this.isHandleAttached) {
+            return;
+        }
+        this.isHandleAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
                 handle.attach();
@@ -42,11 +48,14 @@ export class ComponentHandle implements IComponentHandle {
 
             this.bound = undefined;
         }
-
         this.routeContext.attach();
     }
 
     public bind(handle: IComponentHandle) {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }

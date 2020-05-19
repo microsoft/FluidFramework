@@ -157,6 +157,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
+    private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
@@ -206,6 +207,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.baseSequenceNumber;
     }
 
+    public get referenceTerm(): number {
+        return this.baseTerm;
+    }
+
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
@@ -220,8 +225,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.version;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
-        return this.connection!.details.serviceConfiguration;
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
+        return this.connection ? this.connection.details.serviceConfiguration : undefined;
+    }
+
+    public get scopes(): string[] | undefined {
+        return this.connection ? this.connection.details.claims.scopes : undefined;
     }
 
     public get active(): boolean {
@@ -399,12 +408,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
+        term: number,
         handler: IDeltaHandlerStrategy,
     ) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
         this.baseSequenceNumber = sequenceNumber;
+        this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 
@@ -1205,6 +1216,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1, "non-seq seq#");
         this.baseSequenceNumber = message.sequenceNumber;
+
+        // Back-compat for older server with no term
+        this.baseTerm = message.term === undefined ? 1 : message.term;
 
         this.emit("beforeOpProcessing", message);
 

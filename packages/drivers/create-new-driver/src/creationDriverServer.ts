@@ -198,6 +198,7 @@ export class CreationServerMessagesHandler {
             sequenceNumber: this.sequenceNumber++,
             timestamp: Date.now(),
             traces: message.traces !== undefined ? message.traces : [],
+            term: 1,
             type: message.type,
             metadata: message.metadata,
         };
@@ -222,6 +223,7 @@ export class CreationServerMessagesHandler {
             timestamp: Date.now(),
             traces: [],
             data: JSON.stringify(clientDetail),
+            term: 1,
             type: MessageType.ClientJoin,
         };
         return joinMessage;

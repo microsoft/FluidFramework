@@ -8,6 +8,10 @@
   "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
+  "browser": {
+    "./dist/indexNode.js": "./dist/indexBrowser.js",
+    "./lib/indexNode.js": "./lib/indexBrowser.js"
+  },
   "types": "dist/index.d.ts",
   "scripts": {
     "bench": "ts-node bench/src/index.ts",

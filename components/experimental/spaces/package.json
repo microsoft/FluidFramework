@@ -30,7 +30,6 @@
     "test": "npm run test:jest",
     "test:jest": "jest",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
@@ -44,7 +43,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-framework-interfaces": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-sequence": "^0.18.0",
     "@microsoft/fluid-view-adapters": "^0.18.0",
