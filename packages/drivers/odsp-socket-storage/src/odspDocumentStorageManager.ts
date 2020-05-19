@@ -276,6 +276,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
+                // Note: This lambda shouldn't be run more than once in a 10s window
+                // based on the expected configuration of the PromiseCache snapshotCache (used below)
                 const fetchOdspSnapshot = async () => {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -288,30 +290,28 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        const odspSnapshot: IOdspSnapshot = response.content;
+                        const snapshot: IOdspSnapshot = response.content;
 
                         const props = {
-                            trees: odspSnapshot.trees ? odspSnapshot.trees.length : 0,
-                            blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
-                            ops: odspSnapshot.ops.length,
+                            trees: snapshot.trees ? snapshot.trees.length : 0,
+                            blobs: snapshot.blobs ? snapshot.blobs.length : 0,
+                            ops: snapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
                             sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                             contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
-                        return odspSnapshot;
+                        return snapshot;
                     } catch (error) {
                         event.cancel({}, error);
                         throw error;
                     }
                 };
+                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
+                const odspSnapshot = await this.cache.snapshotCache.addOrGet(snapshotCacheKey, fetchOdspSnapshot);
 
-                const odspCacheKey: string = `${this.documentId}/getlatest`;
-                //* rename
-                const theThing = await this.cache.snapshotCache.addOrGet(odspCacheKey, fetchOdspSnapshot);
-
-                const { trees, tree, blobs, ops, sha } = theThing;
+                const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
                     this.initTreesCache(trees);
@@ -331,7 +331,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
                 // instead of "Tree"
                 if (tree) {
-                    this.treesCache.set(theThing.sha, (theThing as any) as resources.ITree);
+                    this.treesCache.set(sha, (odspSnapshot as any) as resources.ITree);
                 }
 
                 if (blobs) {
