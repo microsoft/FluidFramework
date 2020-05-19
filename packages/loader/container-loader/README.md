@@ -13,19 +13,17 @@
 
 ## Expectations from host implementers
 It's expected that host will listen to various events described in other sections of the document and conveys correctly (in some form) information to the user to ensure that user is aware of various situations and is not going to lose data.
-Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details
-1. ["readonly"](#Read-only-states) event: Host should have some indication to user that document is not editable. User permissions can change over lifetime of Container, but they can't change per conneciton session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
+Please see specific sections for more details on these states and events - this section only serves as a summary and does not go into details.
+1. ["readonly"](#Read-only-states) event: Host should have some indication to user that document is not editable. User permissions can change over lifetime of Container, but they can't change per connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 2. ["disconnected" and "connected"](#Connectivity-events) event: Host can either notify user about no connectivity (and potential data loss if container is closed) or disallow edits via `Container.forceReadonly(true)`
-3. ["closed"](#Closure) event: If raised with error, host is responsible for conveying error in some form to the user. Container is left in disconnected & read-only state when it is closed (because of error or not).
+3. ["closed"](#Closure) event: Raised when container is closed. Container is left in both the disconnected and read-only states when closed. If the event is raised with an error, host is responsible for informing the user about the error.
 
-Please note that container can be in multiple "modes" at the same time:
-- It can be both read-only and disconnected at the same time. User likely needs to be notified about both of those conditions - document can't be edited, and remote changes are not being reflected in document
-- When container is closed (for example, due to error), it is disconnected & read-only at the same time. Host likely does not want to expose later two states to user as distinct errors, and instead have one unified message about container error state.
+Overlap of "readonly" and "disconnected" means document can't be edited and remote changes are not being reflected in document.
 
 ## Expectations from container runtime and components implementers
 1. Respect ["readonly" state](#Read-only-states). In this state container runtime (and components) should not allow changes to local state, as these changes will be lost on container being closed.
 2. Respect "["disconnected" and "connected"](#Connectivity-events) states and do not not submit Ops when disconnected.
-3. Respect ["dispose"](#Closure) event and treat it as combination of "`readonly"` and `"disconnected"` states (both these states are true in disposed state). I.e. it should be fully operatable (render content), but not allow edits. This is equivalent to "closed" event on container for hosts, but is broader (includes document's code version upgrades, when old instance of runtime is disconnected form storage and is abandoned).
+3. Respect ["dispose"](#Closure) event and treat it as combination of "`readonly"` and `"disconnected"` states (both these states are true in disposed state). I.e. it should be fully operatable (render content), but not allow edits. This is similar to "closed" event on container for hosts, but is broader (includes document's code version upgrades, when old instance of runtime is disconnected from storage and is abandoned).
 4. Maintain Ops in flight until observed they are acknowledged by server. Resubmit any lost Ops on reconnection. This is done by DDSs in stock implementations of container & component runtimes provided by Fluid Framework
 
 ## Fluid Loader
