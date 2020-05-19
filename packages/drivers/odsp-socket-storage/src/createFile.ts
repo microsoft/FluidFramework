@@ -43,22 +43,18 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
  */
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    newFileInfoPromise: Promise<INewFileInfo> | undefined,
+    newFileInfo: INewFileInfo,
     cache: IOdspCache,
     storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
-    if (!newFileInfoPromise) {
-        throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
-    }
-    const newFileInfo = await newFileInfoPromise;
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameErrorCode, false);
     }
 
     const createFileAndResolveUrl = async () => {
-        const fileResponse: IFileCreateResponse = await createNewFluidFileHelper(
+        const fileResponse: IFileCreateResponse = await sendFileCreateRequest(
             newFileInfo,
             getStorageToken,
             storageFetchWrapper,
@@ -80,7 +76,7 @@ export async function createNewFluidFile(
 /**
  * Creates a new fluid file. '.fluid' is appended to the filename
  */
-async function createNewFluidFileHelper(
+async function sendFileCreateRequest(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     storageFetchWrapper: IFetchWrapper,

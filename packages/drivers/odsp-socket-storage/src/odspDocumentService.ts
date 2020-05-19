@@ -68,7 +68,8 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.createNewOptions) {
+        const options = odspResolvedUrl.createNewOptions;
+        if (options) {
             const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
             const event = PerformanceEvent.start(templogger,
                 {
@@ -78,7 +79,7 @@ export class OdspDocumentService implements IDocumentService {
             try {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
-                    odspResolvedUrl.createNewOptions.newFileInfoPromise,
+                    await options.newFileInfoPromise,
                     cache,
                     storageFetchWrapper);
                 const props = {
@@ -138,7 +139,7 @@ export class OdspDocumentService implements IDocumentService {
         try {
             odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
-                Promise.resolve(newFileParams),
+                newFileParams,
                 cache,
                 storageFetchWrapper,
                 createNewSummary);
