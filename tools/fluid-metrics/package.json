@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run tslint && npm run tsc",
     "start": "node dist/index.js",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {

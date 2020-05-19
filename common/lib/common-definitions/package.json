@@ -14,7 +14,7 @@
     "build:ci": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json --esModuleInterop",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "bump-version": "lerna version minor --no-push --no-git-tag-version",
@@ -27,7 +27,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test:ci": "echo No test for this package",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "tsc:watch": "tsc --watch"
   },
   "devDependencies": {

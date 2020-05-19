@@ -27,7 +27,7 @@
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test:jest-disabled": "jest",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

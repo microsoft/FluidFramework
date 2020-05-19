@@ -23,7 +23,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
   },

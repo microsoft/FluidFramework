@@ -35,7 +35,7 @@
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "tsc --esModuleInterop"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,

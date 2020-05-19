@@ -9,7 +9,7 @@
     "build": "npm run tslint && npm run tsc",
     "start": "node dist/www.js",
     "test": "nyc --all -x dist/test/**/* mocha dist/test",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {

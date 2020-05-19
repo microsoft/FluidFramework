@@ -19,7 +19,7 @@
     "build:ci": "npm run build:genver && npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json --esModuleInterop",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
@@ -37,7 +37,7 @@
     "test:coverage": "nyc npm run test:report",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "test:report": "npm test -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-junit-report.xml",
-    "tsc": "tsc --esModuleInterop"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,

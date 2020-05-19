@@ -29,7 +29,7 @@
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "npm run test:jest",
     "test:jest": "jest",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

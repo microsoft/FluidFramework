@@ -9,13 +9,13 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json --esModuleInterop",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "electron": "electron ./dist/index.html",
     "electron:test": "electron --inspect=5858 ./dist/index.html",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env build"
   },

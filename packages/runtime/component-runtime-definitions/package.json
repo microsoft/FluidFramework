@@ -20,7 +20,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test:types": "tsd",
-    "tsc": "tsc --esModuleInterop"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.17.0",

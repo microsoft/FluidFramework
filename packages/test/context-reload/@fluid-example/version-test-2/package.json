@@ -20,7 +20,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
   },

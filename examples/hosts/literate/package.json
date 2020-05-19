@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc && npm run tslint",
     "start": "webpack-dev-server --config webpack.config.js",
-    "tsc": "tsc --esModuleInterop",
+    "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },
