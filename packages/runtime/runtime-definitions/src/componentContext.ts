@@ -167,7 +167,7 @@ export interface IComponentRuntimeChannel extends
     /**
      * Processes the op.
      */
-    process(message: ISequencedDocumentMessage, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, metadata?: any): void;
 
     /**
      * Processes the signal.
@@ -189,6 +189,8 @@ export interface IComponentRuntimeChannel extends
 
     // Back-compat: supporting <= 0.16 components
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
+
+    reSubmitOp(content: any, metadata?: any);
 }
 
 export interface ISummaryTracker {
@@ -297,7 +299,7 @@ export interface IComponentContext extends EventEmitter {
      * @param type - Type of the message.
      * @param content - Content of the message.
      */
-    submitMessage(type: string, content: any): number;
+    submitMessage(type: string, content: any, metadata?: any): number;
 
     /**
      * Submits the signal to be sent to other clients.

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
@@ -34,7 +35,7 @@ interface IMapMessageHandler {
      * @param local - Whether the message originated from the local client
      * @param message - The full message
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, sequenceNumber?: number): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -156,11 +157,13 @@ export class MapKernel {
      */
     private readonly pendingKeys: Map<string, number> = new Map();
 
+    private pendingSequenceNumber: number = -1;
+
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
      * number of that clear operation.  Otherwise, is -1.
      */
-    private pendingClearClientSequenceNumber: number = -1;
+    private pendingClearSequenceNumber: number = -1;
 
     /**
      * Object to create encapsulations of the values stored in the map.
@@ -178,7 +181,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any) => number,
+        private readonly submitMessage: (op: any, sequenceNumber?: number) => void,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -453,7 +456,7 @@ export class MapKernel {
      * @param op - The operation to attempt to submit
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any): boolean {
+    public trySubmitMessage(op: any, sequenceNumber?: number): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             this.messageHandlers.get(type).submit(op as IMapOperation);
@@ -468,12 +471,12 @@ export class MapKernel {
      * @param local - Whether the message originated from the local client
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, sequenceNumber?: number): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
                 .get(op.type)
-                .process(op, local, message);
+                .process(op, local, message, sequenceNumber);
             return true;
         }
         return false;
@@ -569,8 +572,9 @@ export class MapKernel {
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        sequenceNumber?: number,
     ): boolean {
-        if (this.pendingClearClientSequenceNumber !== -1) {
+        if (this.pendingClearSequenceNumber !== -1) {
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }
@@ -579,8 +583,9 @@ export class MapKernel {
             // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
             // and don't process the op.
             if (local) {
-                const pendingKeyClientSequenceNumber = this.pendingKeys.get(op.key);
-                if (pendingKeyClientSequenceNumber === message.clientSequenceNumber) {
+                assert(sequenceNumber !== undefined);
+                const pendingKeySequenceNumber = this.pendingKeys.get(op.key);
+                if (pendingKeySequenceNumber === sequenceNumber) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -600,10 +605,10 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message) => {
+                process: (op: IMapClearOperation, local, message, sequenceNumber?) => {
                     if (local) {
-                        if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
-                            this.pendingClearClientSequenceNumber = -1;
+                        if (this.pendingClearSequenceNumber === sequenceNumber) {
+                            this.pendingClearSequenceNumber = -1;
                         }
                         return;
                     }
@@ -620,8 +625,8 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message) => {
-                    if (!this.needProcessKeyOperation(op, local, message)) {
+                process: (op: IMapDeleteOperation, local, message, sequenceNumber?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, sequenceNumber)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -633,8 +638,8 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message) => {
-                    if (!this.needProcessKeyOperation(op, local, message)) {
+                process: (op: IMapSetOperation, local, message, sequenceNumber?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, sequenceNumber)) {
                         return;
                     }
 
@@ -654,7 +659,7 @@ export class MapKernel {
         messageHandlers.set(
             "act",
             {
-                process: (op: IMapValueTypeOperation, local, message) => {
+                process: (op: IMapValueTypeOperation, local, message, sequenceNumber) => {
                     // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {
@@ -671,7 +676,9 @@ export class MapKernel {
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
-                submit: this.submitMessage,
+                submit: (op: IMapValueTypeOperation) => {
+                    this.submitMessage(op);
+                },
             });
 
         return messageHandlers;
@@ -682,10 +689,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const clientSequenceNumber = this.submitMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingClearClientSequenceNumber = clientSequenceNumber;
-        }
+        const sequenceNumber = ++this.pendingSequenceNumber;
+        this.submitMessage(op, sequenceNumber);
+        this.pendingClearSequenceNumber = sequenceNumber;
     }
 
     /**
@@ -693,10 +699,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const clientSequenceNumber = this.submitMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingKeys.set(op.key, clientSequenceNumber);
-        }
+        const sequenceNumber = ++this.pendingSequenceNumber;
+        this.submitMessage(op, sequenceNumber);
+        this.pendingKeys.set(op.key, sequenceNumber);
     }
 
     /**

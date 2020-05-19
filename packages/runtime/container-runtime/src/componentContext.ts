@@ -334,14 +334,14 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: any): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local);
+            return this.componentRuntime!.process(message, local, metadata);
         } else {
             assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -409,10 +409,10 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any): number {
+    public submitMessage(type: MessageType, content: any, metadata?: any): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content);
+        return this.submitOp(type, content, metadata);
     }
 
     /**
@@ -551,7 +551,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any): number {
+    private submitOp(type: MessageType, content: any, metadata?: any): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -560,7 +560,12 @@ export abstract class ComponentContext extends EventEmitter implements
                 type,
             },
         };
-        return this._containerRuntime.submitFn(MessageType.Operation, envelope);
+        return this._containerRuntime.submitFn(MessageType.Operation, envelope, metadata);
+    }
+
+    public reSubmitOp(content: any, metadata?: any) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.reSubmitOp(content, metadata);
     }
 
     private verifyNotClosed() {

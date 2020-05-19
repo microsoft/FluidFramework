@@ -58,12 +58,14 @@ export interface IDeltaHandler {
     /**
      * Processes the op.
      */
-    process: (message: ISequencedDocumentMessage, local: boolean) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, metadata?: any) => void;
 
     /**
      * State change events to indicate changes to the delta connection
      */
     setConnectionState(connected: boolean): void;
+
+    reSubmitOp(message: any, metadata?: any): void;
 }
 
 /**
@@ -76,7 +78,7 @@ export interface IDeltaConnection {
      * Send new messages to the server. Returns the client ID for the message. Must be in a connected state
      * to submit a message.
      */
-    submit(messageContent: any): number;
+    submit(messageContent: any, metadata?: any): number;
 
     /**
      * Attaches a message handler to the delta connection

@@ -76,6 +76,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
+import * as Deque from "double-ended-queue";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
@@ -134,6 +135,23 @@ export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedS
 }
 
 export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
+
+export enum PendingStateType {
+    Message = "message",
+    Flush = "flush",
+}
+
+export interface IPendingMessage {
+    clientSequenceNumber: number;
+    type: MessageType;
+    content: any;
+    metadata?: any;
+}
+
+export interface IPendingState {
+    type: PendingStateType;
+    content: FlushMode | IPendingMessage;
+}
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -470,7 +488,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => number {
+    public get submitFn(): (type: MessageType, contents: any, metadata?: any) => number {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
@@ -570,6 +588,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
+
+    private readonly pendingStates = new Deque<IPendingState>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -798,6 +818,33 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
+    private replaypendingStates(states: IPendingState[]) {
+        const savedFlushMode = this.flushMode;
+        for (const state of states) {
+            switch (state.type) {
+                case PendingStateType.Flush:
+                    {
+                        const flushMode = state.content as FlushMode;
+                        this.setFlushMode(flushMode);
+                    }
+                    break;
+                case PendingStateType.Message:
+                    {
+                        const message = state.content as IPendingMessage;
+                        if (message.type === MessageType.Operation) {
+                            this.reSubmitOperation(message.content, message.metadata);
+                        } else {
+                            this.submit(message.type, message.content);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        this.setFlushMode(savedFlushMode);
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -809,10 +856,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
 
-            // Resend all pending attach messages prior to notifying clients
-            for (const [, message] of this.pendingAttach) {
-                this.submit(MessageType.Attach, message);
-            }
+            const pendingstates = this.pendingStates.toArray();
+            this.pendingStates.clear();
+            this.replaypendingStates(pendingstates);
         }
 
         for (const [component, componentContext] of this.contexts) {
@@ -920,6 +966,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         this._flushMode = mode;
+
+        this.pendingStates.push({
+            type: PendingStateType.Flush,
+            content: mode,
+        });
     }
 
     public flush(): void {
@@ -1125,6 +1176,37 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { summaryStats, summaryTree };
     }
 
+    private processPendingMessage(message: ISequencedDocumentMessage): any {
+        const pendingState = this.pendingStates.peekFront();
+        if (pendingState === undefined) {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
+            return;
+        }
+
+        if (pendingState.type === PendingStateType.Flush) {
+            this.pendingStates.shift();
+            return this.processPendingMessage(message);
+        }
+
+        const firstPendingMessage = pendingState.content as IPendingMessage;
+
+        // Disconnected ops should never be processed. They should have been fully sent on connected
+        assert(firstPendingMessage.clientSequenceNumber !== -1,
+            `processing disconnected op ${firstPendingMessage.clientSequenceNumber}`);
+
+        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
+        // in order we only need to check the beginning of the local list.
+        if (firstPendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
+            assert.equal(firstPendingMessage.clientSequenceNumber, message.clientSequenceNumber);
+            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
+            return;
+        }
+
+        this.pendingStates.shift();
+
+        return firstPendingMessage.metadata;
+    }
+
     private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
         let remotedComponentContext: RemotedComponentContext;
 
@@ -1133,6 +1215,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         let message = messageArg;
         if (messageArg.type === MessageType.ChunkedOp) {
             message = this.processRemoteChunkedMessage(messageArg);
+        }
+
+        let localMessageMetadata: any;
+        // Do not process a local chunked op untill all pieces are available.
+        if (local && message.type !== MessageType.ChunkedOp) {
+            localMessageMetadata = this.processPendingMessage(message);
         }
 
         // Old prepare part
@@ -1172,7 +1260,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Process part
         switch (message.type) {
             case MessageType.Operation:
-                this.processOperation(message, local);
+                this.processOperation(message, local, localMessageMetadata);
                 break;
 
             default:
@@ -1223,9 +1311,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
-            if (this.connected) {
-                this.submit(MessageType.Attach, message);
-            }
+            this.submit(MessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1427,50 +1513,56 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any): number {
+    private submit(type: MessageType, content: any, metadata?: any): number {
         this.verifyNotClosed();
 
-        // Can't submit messages in disconnected state!
-        // It's usually a bug that needs to be addressed in the code
-        // (as callers should have logic to retain messages in disconnected state and resubmit on connection)
-        // It's possible to remove this check -  we would need to skip deltaManager.maxMessageSize call below.
-        if (!this.connected) {
-            this.logger.sendErrorEvent({ eventName: "submitInDisconnectedState", type });
-        }
+        let clientSequenceNumber: number = -1;
 
-        const serializedContent = JSON.stringify(content);
-        const maxOpSize = this.context.deltaManager.maxMessageSize;
+        if (this.connected) {
+            const serializedContent = JSON.stringify(content);
+            const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-        let clientSequenceNumber: number;
+            // If in manual flush mode we will trigger a flush at the next turn break
+            let batchBegin = false;
+            if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
+                batchBegin = true;
+                this.needsFlush = true;
 
-        // If in manual flush mode we will trigger a flush at the next turn break
-        let batchBegin = false;
-        if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-            batchBegin = true;
-            this.needsFlush = true;
+                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+                if (!this.flushTrigger) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    Promise.resolve().then(() => {
+                        this.flushTrigger = false;
+                        this.flush();
+                    });
+                }
+            }
 
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            if (!this.flushTrigger) {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                Promise.resolve().then(() => {
-                    this.flushTrigger = false;
-                    this.flush();
-                });
+            // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
+            // there will be a lot of escape characters that can make it up to 2x bigger!
+            // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
+            if (serializedContent.length <= maxOpSize) {
+                clientSequenceNumber = this.context.submitFn(
+                    type,
+                    content,
+                    this._flushMode === FlushMode.Manual,
+                    batchBegin ? { batch: true } : undefined);
+            } else {
+                clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
-        // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
-        // there will be a lot of escape characters that can make it up to 2x bigger!
-        // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-        if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this.context.submitFn(
-                type,
-                content,
-                this._flushMode === FlushMode.Manual,
-                batchBegin ? { batch: true } : undefined);
-        } else {
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-        }
+        const pendingMessage: IPendingMessage = {
+            clientSequenceNumber,
+            type,
+            content,
+            metadata,
+        };
+
+        this.pendingStates.push({
+            type: PendingStateType.Message,
+            content: pendingMessage,
+        });
 
         return clientSequenceNumber;
     }
@@ -1503,7 +1595,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private processOperation(message: ISequencedDocumentMessage, local: boolean) {
+    private reSubmitOperation(content: any, metadata?: any) {
+        const envelope = content as IEnvelope;
+        const componentContext = this.getContext(envelope.address);
+        assert(componentContext, "There should be a component context for the op");
+
+        const innerContents = envelope.contents as { content: any; type: string };
+        componentContext.reSubmitOp(innerContents.content, metadata);
+    }
+
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };
@@ -1523,7 +1624,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             type: innerContents.type,
         };
 
-        componentContext.process(transformed, local);
+        componentContext.process(transformed, local, metadata);
     }
 
     private subscribeToLeadership() {

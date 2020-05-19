@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, metadata?) => this.submitLocalMessage(op, metadata),
             valueTypes,
             this,
         );
@@ -355,22 +355,20 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-   */
-    protected onConnect(pending: any[]) {
-        debug(`Map ${this.id} is now connected`);
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
+     */
+    protected onConnect(pending: any[]) {}
 
-        for (const message of pending) {
-            this.kernel.trySubmitMessage(message);
-        }
+    protected reSubmitOp(content: any, metadata?: any) {
+        this.kernel.trySubmitMessage(content, metadata);
     }
 
     /**
    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local);
+            this.kernel.tryProcessMessage(message, local, metadata);
         }
     }
 

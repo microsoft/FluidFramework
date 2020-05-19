@@ -32,7 +32,7 @@ export class LocalChannelContext implements IChannelContext {
         runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (type: MessageType, content: any) => number,
+        private readonly submitFn: (type: MessageType, content: any, metadata?: any) => number,
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
@@ -63,11 +63,18 @@ export class LocalChannelContext implements IChannelContext {
         this.connection!.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: any): void {
         assert(this.attached);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.connection!.process(message, local);
+        this.connection!.process(message, local, metadata);
+    }
+
+    public reSubmitOp(content: any, metadata?: any) {
+        assert(this.attached);
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.connection!.reSubmitOp(content, metadata);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {

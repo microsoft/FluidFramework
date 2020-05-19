@@ -174,7 +174,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this,
                     componentContext,
                     componentContext.storage,
-                    (type, content) => this.submit(type, content),
+                    (type, content, metadata?) => this.submit(type, content, metadata),
                     (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
@@ -270,7 +270,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content) => this.submit(t, content),
+            (t, content, metadata?) => this.submit(t, content, metadata),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
@@ -415,7 +415,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean) {
+    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
@@ -441,7 +441,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         this,
                         this.componentContext,
                         this.componentContext.storage,
-                        (type, content) => this.submit(type, content),
+                        (type, content, contentMetadata?) => this.submit(type, content, contentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTreeP,
@@ -468,7 +468,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
 
             case MessageType.Operation:
-                this.processOp(message, local);
+                this.processOp(message, local, metadata);
                 break;
             default:
         }
@@ -579,9 +579,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         context.attach();
     }
 
-    private submit(type: MessageType, content: any): number {
+    private submit(type: MessageType, content: any, metadata?: any): number {
         this.verifyNotClosed();
-        return this.componentContext.submitMessage(type, content);
+        return this.componentContext.submitMessage(type, content, metadata);
+    }
+
+    public reSubmitOp(content: any, metadata?: any) {
+        const envelope = content as IEnvelope;
+        const channelContext = this.contexts.get(envelope.address);
+        assert(channelContext, "There should be a channel context for the op");
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        channelContext!.reSubmitOp(envelope.contents, metadata);
     }
 
     private setChannelDirty(address: string): void {
@@ -589,7 +598,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.setChannelDirty(address);
     }
 
-    private processOp(message: ISequencedDocumentMessage, local: boolean) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -611,8 +620,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        channelContext.processOp(transformed, local);
-
+        channelContext.processOp(transformed, local, metadata);
         return channelContext;
     }
 

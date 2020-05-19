@@ -46,6 +46,7 @@ import {
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -158,6 +159,7 @@ class MockDeltaConnection implements IDeltaConnection {
                 this.referenceSequenceNumber = message.sequenceNumber;
             },
             setConnectionState: (connected: boolean) => { },
+            reSubmitOp: (content, metadata?) => { },
         });
     }
 
@@ -308,7 +310,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentHandleContext {
+    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -449,6 +451,10 @@ export class MockRuntime extends EventEmitter
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void { }
+
+    public reSubmitOp(content: any, metadata?: any) {
+        return;
+    }
 }
 
 /**

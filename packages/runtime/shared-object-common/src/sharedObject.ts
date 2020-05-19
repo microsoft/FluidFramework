@@ -7,15 +7,13 @@ import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import Deque from "double-ended-queue";
-import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
@@ -50,11 +48,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Connection state
      */
     private _connected = false;
-
-    /**
-     * Locally applied operations not yet ACK'd by the server
-     */
-    private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     /**
      * Services used by the shared object
@@ -244,7 +237,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param message - The message to process
      * @param local - True if the shared object is local
      */
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: any);
 
     /**
      * Called when the object has disconnected from the delta stream.
@@ -256,24 +249,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - Content of the message
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any): number {
+    protected submitLocalMessage(content: any, metadata?: any): number {
         if (this.isLocal()) {
             return -1;
         }
 
-        let clientSequenceNumber = -1;
-        if (this.connected) {
-            // This assert !isLocal above means services can't be undefined.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientSequenceNumber = this.services!.deltaConnection.submit(content);
-        } else {
-            debug(`${this.id} Not fully connected - adding to pending list`, content);
-            this.runtime.notifyPendingMessages();
-        }
-
-        // Store the message for when it is ACKed
-        this.pendingOps.push({ clientSequenceNumber, content });
-        return clientSequenceNumber;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.services!.deltaConnection.submit(content, metadata);
     }
 
     /**
@@ -294,13 +276,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Default implementation for DDS, override if different behavior is required.
      * @param pending - Messages received while disconnected
      */
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
+    protected onConnect(pending: any[]) {}
 
-        return;
-    }
 
     /**
      * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
@@ -346,11 +323,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services!.deltaConnection.attach({
-            process: (message, local) => {
-                this.process(message, local);
+            process: (message, local, metadata?) => {
+                this.process(message, local, metadata);
             },
             setConnectionState: (connected: boolean) => {
                 this.setConnectionState(connected);
+            },
+            reSubmitOp: (content, metadata?) => {
+                this.reSubmitOp(content, metadata);
             },
         });
 
@@ -381,14 +361,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // - nack could get a new msn - but might as well do it in the join?
             this.onDisconnect();
         } else {
-            // Extract all un-ack'd payload operation
-            const pendingOps = this.pendingOps.toArray().map((value) => value.content);
-            this.pendingOps.clear();
-
-            // And now we are fully connected
-            // - we have a client ID
-            // - we are caught up enough to attempt to send messages
-            this.onConnect(pendingOps);
+            // Call this for now so that DDSes like ConsensesOrderedCollection that maintain their own pending
+            // messages will work.
+            this.onConnect([]);
         }
     }
 
@@ -397,39 +372,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param message - The message to process
      * @param local - Whether the message originated from the local client
      */
-    private process(message: ISequencedDocumentMessage, local: boolean) {
-        if (message.type === MessageType.Operation && local) {
-            this.processPendingOp(message);
-        }
-
+    private process(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
         this.emit("pre-op", message, local, this);
-        this.processCore(message, local);
+        this.processCore(message, local, metadata);
         this.emit("op", message, local, this);
     }
 
-    /**
-     * Process an op that originated from the local client (i.e. is in pending state).
-     * @param message - The op to process
-     */
-    private processPendingOp(message: ISequencedDocumentMessage) {
-        const firstPendingOp = this.pendingOps.peekFront();
-
-        if (firstPendingOp === undefined) {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
-            return;
-        }
-
-        // Disconnected ops should never be processed. They should have been fully sent on connected
-        assert(firstPendingOp.clientSequenceNumber !== -1,
-            `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
-
-        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-        // in order we only need to check the beginning of the local list.
-        if (firstPendingOp.clientSequenceNumber !== message.clientSequenceNumber) {
-            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
-            return;
-        }
-
-        this.pendingOps.shift();
+    protected reSubmitOp(content: any, metadata?: any) {
+        this.submitLocalMessage(content, metadata);
     }
 }
