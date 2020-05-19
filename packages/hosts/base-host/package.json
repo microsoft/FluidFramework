@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.17.0",
-    "@microsoft/fluid-common-utils": "^0.18.1-0",
+    "@microsoft/fluid-common-utils": "^0.18.2-0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.1",
     "@microsoft/fluid-container-definitions": "^0.18.1",
     "@microsoft/fluid-container-loader": "^0.18.1",
