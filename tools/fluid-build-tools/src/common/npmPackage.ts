@@ -62,21 +62,21 @@ interface IPackage {
 export class Package {
     private static packageCount: number = 0;
     private static readonly chalkColor = [
-        chalk.default.red,
-        chalk.default.green,
-        chalk.default.yellow,
-        chalk.default.blue,
-        chalk.default.magenta,
-        chalk.default.cyan,
-        chalk.default.white,
-        chalk.default.grey,
-        chalk.default.redBright,
-        chalk.default.greenBright,
-        chalk.default.yellowBright,
-        chalk.default.blueBright,
-        chalk.default.magentaBright,
-        chalk.default.cyanBright,
-        chalk.default.whiteBright,
+        chalk.red,
+        chalk.green,
+        chalk.yellow,
+        chalk.blue,
+        chalk.magenta,
+        chalk.cyan,
+        chalk.white,
+        chalk.grey,
+        chalk.redBright,
+        chalk.greenBright,
+        chalk.yellowBright,
+        chalk.blueBright,
+        chalk.magentaBright,
+        chalk.cyanBright,
+        chalk.whiteBright,
     ];
 
     public get packageJson(): IPackage {

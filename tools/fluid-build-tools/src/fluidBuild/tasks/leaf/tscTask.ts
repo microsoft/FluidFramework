@@ -9,7 +9,7 @@ import { logVerbose } from "../../../common/logging";
 import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
 import ts from "typescript";
-import TscUtils from "../../tscUtils";
+import * as TscUtils from "../../tscUtils";
 const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
@@ -46,9 +46,9 @@ export class TscTask extends LeafTask {
 
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
-        if (tsBuildInfo === undefined) { 
+        if (tsBuildInfo === undefined) {
             this.logVerboseTrigger("tsBuildInfo not found");
-            return false; 
+            return false;
         }
 
         // Check previous build errors
@@ -119,7 +119,7 @@ export class TscTask extends LeafTask {
         if (this._tsConfig == undefined) {
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
-                
+
             const configFileFullPath = this.configFileFullPath;
             if (!configFileFullPath) { return undefined; }
 
@@ -272,7 +272,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
                 }
             }
             return JSON.stringify(doneFileContent);
-        } catch(e) {
+        } catch (e) {
             this.logVerboseTask(`error generating done file content ${e}`);
             return undefined;
         }
@@ -286,5 +286,5 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
         }
     }
 
-    protected abstract get configFileFullPath() : string;
+    protected abstract get configFileFullPath(): string;
 };

@@ -8,7 +8,7 @@ import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import path from "path";
 import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
-import TscUtils from "./tscUtils";
+import * as TscUtils from "./tscUtils";
 import sortPackageJson from "sort-package-json";
 
 export class FluidPackageCheck {

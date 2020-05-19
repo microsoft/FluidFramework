@@ -24,5 +24,5 @@ export function logStatus(msg: string) {
     if (mins.length === 1) { mins = '0' + mins; }
     let secs = date.getSeconds().toString();
     if (secs.length === 1) { secs = '0' + secs; }
-    console.log(chalk.default.yellow(`[${hours}:${mins}:${secs}] `) + msg);
+    console.log(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }

@@ -19,7 +19,7 @@ export function toPosixPath(s: string) {
 
 export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
     return new Promise((resolve, reject) => {
-        glob.default(pattern, options, (err, matches) => {
+        glob(pattern, options, (err, matches) => {
             if (err) { reject(err); }
             resolve(matches);
         });
