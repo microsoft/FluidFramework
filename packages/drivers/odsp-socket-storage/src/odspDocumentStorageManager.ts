@@ -307,9 +307,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     }
                 };
 
-                // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                // want to use the same getLatest result.
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 //* rename
                 const theThing = await this.cache.snapshotCache.addOrGet(odspCacheKey, fetchOdspSnapshot);

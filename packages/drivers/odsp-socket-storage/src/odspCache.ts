@@ -4,61 +4,7 @@
  */
 
 import { PromiseCache } from "@microsoft/fluid-common-utils";
-import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
-
-//* todo: comments
-//* replace any with IOdspSnapshot
-export interface ISnapshotCache {
-    /**
-     * Get the cache value of the key
-     */
-    get(key: string): Promise<any>;
-
-    /**
-     * Deletes value in storage
-     */
-    remove(key: string);
-
-    /**
-     * puts value into cache
-     */
-    addOrGet(key: string, value: () => Promise<any>): Promise<any>;
-
-    /**
-     * add a value directly to the cache
-     */
-    addValue(key: string, value: any);
-}
-
-export interface ISessionCache {
-    /**
-     * Ensures fetchJoinSession is called exactly once
-     */
-    getOrAddSessionInfo(
-        joinSessionKey: string,
-        fetchJoinSession: () => Promise<ISocketStorageDiscovery>,
-    ): Promise<ISocketStorageDiscovery>
-
-    /**
-     * Removes info for joinSessionKey
-     */
-    removeSessionInfo(joinSessionKey: string): void;
-}
-
-export interface IFileUrlCache {
-    /**
-     * Ensures resolveFileUrl is called exactly once
-     */
-    getOrAddFileUrl(
-        fileKey: string,
-        resolveFileUrl: () => Promise<IOdspResolvedUrl>,
-    ): Promise<IOdspResolvedUrl>
-
-    /**
-     * Removes the url for fileKey
-     */
-    removeFileUrl(fileKey: string): void;
-}
+import { ISocketStorageDiscovery, IOdspResolvedUrl, IOdspSnapshot } from "./contracts";
 
 /**
  * Internal cache interface used within driver only
@@ -67,81 +13,49 @@ export interface IOdspCache {
     /**
      * permanent cache - only serializable content is allowed
      */
-    readonly snapshotCache: ISnapshotCache;
+    readonly snapshotCache: PromiseCache<string, IOdspSnapshot>;
 
     /**
      * cache of joined/joining sessions
      */
-    readonly sessionCache: ISessionCache;
+    readonly sessionCache: PromiseCache<string, ISocketStorageDiscovery>;
 
     /**
      * cache of resolved/resolving file URLs
      */
-    readonly fileUrlCache: IFileUrlCache;
+    readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 }
 
-export class LocalCache implements ISnapshotCache {
-    private readonly cache: PromiseCache<string, ISocketStorageDiscovery> = new PromiseCache({
-        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
-    });
-
-    public async get(key: string) {
-        //* todo: remove async keyword?
-        return this.cache.get(key);
-    }
-
-    public remove(key: string) {
-        this.cache.remove(key);
-    }
-
-    public async addOrGet(key: string, value: () => Promise<any>) {
-        return this.cache.addOrGet(key, value);
-    }
-
-    public addValue(key: string, value: any) {
-        return this.cache.addValue(key, value);
-    }
-}
-
-export class SessionCache implements ISessionCache {
-    private readonly cache: PromiseCache<string, ISocketStorageDiscovery> = new PromiseCache({
-        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
-    });
-
-    public async getOrAddSessionInfo(
-        joinSessionKey: string,
-        fetchJoinSession: () => Promise<ISocketStorageDiscovery>,
-    ): Promise<ISocketStorageDiscovery> {
-        return this.cache.addOrGet(joinSessionKey, fetchJoinSession);
-    }
-
-    public removeSessionInfo(joinSessionKey: string): void {
-        this.cache.remove(joinSessionKey);
-    }
-}
-
-export class FileUrlCache implements IFileUrlCache {
-    private readonly cache: PromiseCache<string, IOdspResolvedUrl> = new PromiseCache();
-
-    public async getOrAddFileUrl(
-        fileKey: string,
-        resolveFileUrl: () => Promise<IOdspResolvedUrl>,
-    ): Promise<IOdspResolvedUrl> {
-        return this.cache.addOrGet(fileKey, resolveFileUrl);
-    }
-
-    public removeFileUrl(fileKey: string): void {
-        this.cache.remove(fileKey);
-    }
-}
-
+//* todo: Write good comments
 export class OdspCache implements IOdspCache {
-    public readonly snapshotCache: ISnapshotCache = new LocalCache();
-    public readonly sessionCache: ISessionCache = new SessionCache();
-    public readonly fileUrlCache: IFileUrlCache = new FileUrlCache();
+    /**
+     * Permanent cache of
+     * We are storing the getLatest response in cache for 10s so that other
+     * containers initializing in the same timeframe can use this
+     * result. We are choosing a small time period as the summarizes
+     * are generated frequently and if that is the case then we don't
+     * want to use the same getLatest result.
+     */
+    public readonly snapshotCache = new PromiseCache<string, IOdspSnapshot>({
+        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
+    });
+
+    /**
+     * Cache of join session call results.
+     * If the result is valid and used within an hour we put the same result again with updated time
+     * to keep using it for consecutive join session calls.
+     */
+    public readonly sessionCache = new PromiseCache<string, ISocketStorageDiscovery>({
+        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
+    });
+
+    /**
+     * 
+     */
+    public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 
     constructor(
-        cachedSnapshots?: Map<string, any>,
+        cachedSnapshots?: Map<string, IOdspSnapshot>,
     ) {
         if (cachedSnapshots !== undefined) {
             for (const [key, value] of cachedSnapshots) {
