@@ -28,7 +28,15 @@ interface IPendingFlushMode {
 
 type IPendingState = IPendingMessage | IPendingFlushMode;
 
-export class PendingStateHandler {
+/**
+ * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
+ * acknowledged by the server. It also maintains the batch information (FlushMode) along with the messages.
+ * When the Container reconnects, it replays the pending state, which includes setting the FlushMode and triggering
+ * resubmission of unacked ops.
+ *
+ * It verifies that all the ops are acked, are received in the right order and batch information is correct.
+ */
+export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
     constructor(
@@ -61,6 +69,7 @@ export class PendingStateHandler {
         const pendingstates = this.pendingStates.toArray();
         this.pendingStates.clear();
 
+        // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
         for (const pendingState of pendingstates) {
             switch (pendingState.type) {
@@ -71,6 +80,9 @@ export class PendingStateHandler {
                     break;
                 case "message":
                     {
+                        // For messages of type Operation, call resubmit which will find the right component and trigger
+                        // resubmission on it.
+                        // For all other messages, just submit it again.
                         if (pendingState.messageType === MessageType.Operation) {
                             this.containerRuntime.reSubmitFn(pendingState.content, pendingState.metadata);
                         } else {
@@ -82,6 +94,7 @@ export class PendingStateHandler {
                     break;
             }
         }
+        // Revert the FlushMode.
         this.containerRuntime.setFlushMode(savedFlushMode);
     }
 
@@ -97,17 +110,17 @@ export class PendingStateHandler {
             return this.processPendingMessage(message);
         }
 
-        // Disconnected ops should never be processed. They should have been fully sent on connected
+        // Disconnected ops should never be processed. They should have been fully sent on connected.
         assert(pendingState.clientSequenceNumber !== -1,
             `processing disconnected op ${pendingState.clientSequenceNumber}`);
 
-        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-        // in order we only need to check the beginning of the local list.
+        // Messages should always be received in the same order in which they are sent.
         if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
             return;
         }
 
+        // Remove the first message from the pending list since it has been acknowledged.
         this.pendingStates.shift();
 
         return pendingState.metadata;

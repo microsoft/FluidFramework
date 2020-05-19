@@ -94,7 +94,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
-import { PendingStateHandler } from "./pendingStateHandler";
+import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 
 interface ISummaryTreeWithStats {
@@ -567,7 +567,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
     private readonly requestHandler = new RuntimeRequestHandlerBuilder();
-    private readonly pendingStateHanlder: PendingStateHandler;
+    private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -646,7 +646,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.deltaSender = this.deltaManager;
 
-        this.pendingStateHanlder = new PendingStateHandler(
+        this.pendingStateManager = new PendingStateManager(
             this,
             ChildLogger.create(this.logger, "PendingStateHandler"),
         );
@@ -821,7 +821,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
 
-            this.pendingStateHanlder.replayPendingStates();
+            // Ask the PendingStateManager to replay all the pending states prior to notifying clients.
+            this.pendingStateManager.replayPendingStates();
         }
 
         for (const [component, componentContext] of this.contexts) {
@@ -930,7 +931,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this._flushMode = mode;
 
-        this.pendingStateHanlder.addFlushMode(mode);
+        // Add the new FlushMode to PendingStateManager so that it can be replayed if needed.
+        this.pendingStateManager.addFlushMode(mode);
     }
 
     public flush(): void {
@@ -1147,9 +1149,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         let localMessageMetadata: unknown;
-        // Do not process a local chunked op until all pieces are available.
+        // Call the PendingStateManager to process local messages.
+        // Do not process local chunked ops until all pieces are available.
         if (local && message.type !== MessageType.ChunkedOp) {
-            localMessageMetadata = this.pendingStateHanlder.processPendingMessage(message);
+            localMessageMetadata = this.pendingStateManager.processPendingMessage(message);
         }
 
         // Old prepare part
@@ -1481,7 +1484,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        this.pendingStateHanlder.addMessage(type, clientSequenceNumber, content, metadata);
+        // Add the message to the PendingStateManager so that it can be replayed if needed.
+        this.pendingStateManager.addMessage(type, clientSequenceNumber, content, metadata);
 
         return clientSequenceNumber;
     }
@@ -1514,6 +1518,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
+    /**
+     * Finds the right component and asks it to resubmit the message. This typically happens when we
+     * reconnect and there are pending messages.
+     * @param content - The content of the original message.
+     * @param metadata - The metadata associated with the original message.
+     */
     private reSubmit(content: any, metadata?: unknown) {
         const envelope = content as IEnvelope;
         const componentContext = this.getContext(envelope.address);

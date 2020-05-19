@@ -620,6 +620,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return channelContext;
     }
 
+    /**
+     * Finds the right channel and asks it to resubmit the message. This typically happens when we
+     * reconnect and there are unacked messages.
+     * @param content - The content of the original message.
+     * @param metadata - The metadata associated with the original message.
+     */
     private reSubmitOp(content: any, metadata: unknown) {
         const envelope = content as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);
