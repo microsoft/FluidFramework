@@ -4,14 +4,12 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { performanceNow } from "@microsoft/fluid-common-utils";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
 
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there

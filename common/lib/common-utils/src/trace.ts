@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
+import { performanceNow } from "./performanceNowNode";
 
 /**
  * Helper class for tracing performance of events
