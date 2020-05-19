@@ -43,7 +43,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
+    "@microsoft/fluid-common-utils": "^0.18.1-0",
     "@microsoft/fluid-server-services": "^0.1005.1",
     "@microsoft/fluid-server-services-core": "^0.1005.1",
     "@microsoft/fluid-server-services-utils": "^0.1005.1",

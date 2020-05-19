@@ -21,14 +21,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
+    "@microsoft/fluid-common-utils": "^0.18.1-0",
     "@microsoft/fluid-driver-definitions": "^0.18.1",
     "@microsoft/fluid-driver-utils": "^0.18.1",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.18.1",
     "@microsoft/fluid-odsp-driver": "^0.18.1",
     "@microsoft/fluid-odsp-urlresolver": "^0.18.1",
     "@microsoft/fluid-odsp-utils": "^0.18.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1-0",
     "@microsoft/fluid-routerlicious-driver": "^0.18.1",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.18.1",
     "@microsoft/fluid-runtime-definitions": "^0.18.1",
