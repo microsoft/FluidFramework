@@ -26,16 +26,56 @@ ${commonOptionString}
 }
 
 type VersionBumpType = "minor" | "patch";
+type VersionChangeType = VersionBumpType | semver.SemVer;
 
-let paramBumpVersionKind: VersionBumpType | undefined;
+
 const paramBumpDepPackages = new Map<string, string | undefined>();
 let paramPush = true;
 let paramPublishCheck = true;
-let paramRelease: string | undefined;
+let paramReleaseName: string | undefined;
+let paramReleaseVersion: VersionBumpType | undefined;
 let paramClean = false;
 let paramCommit = false;
 let paramVersionName: string | undefined;
-let paramVersion: string | undefined;
+let paramVersion: semver.SemVer | undefined;
+let paramBumpName: string | undefined;
+let paramBumpVersion: VersionChangeType | undefined;
+
+function parseNameVersion(arg: string | undefined) {
+    let name = arg;
+    let extra = false;
+
+    if (name === undefined || name.startsWith("--")) {
+        name = MonoRepoKind[MonoRepoKind.Client];
+    } else {
+        extra = true;
+    }
+
+    const split = name.split("=");
+    name = split[0];
+    let v = split[1];
+
+    if (name.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
+        name = MonoRepoKind[MonoRepoKind.Client];
+    } else if (name.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
+        name = MonoRepoKind[MonoRepoKind.Server];
+    }
+
+    let version: VersionChangeType | undefined;
+    if (v !== undefined) {
+        if (v === "minor" || v === "patch") {
+            version = v;
+        } else {
+            const parsedVersion = semver.parse(v);
+            if (!parsedVersion) {
+                fatal(`Invalid version ${v}`);
+
+            }
+            version = parsedVersion;
+        }
+    }
+    return { name, version, extra };
+}
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -77,16 +117,6 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--minor") {
-            paramBumpVersionKind = "minor";
-            continue;
-        }
-
-        if (arg === "--patch") {
-            paramBumpVersionKind = "patch";
-            continue;
-        }
-
         if (arg === "--local") {
             paramPush = false;
             paramPublishCheck = false;
@@ -109,22 +139,23 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--release") {
-            if (paramRelease) {
+        if (arg === "-r" || arg === "--release") {
+            if (paramReleaseName) {
                 fatal("Can't do multiple release at once");
             }
-            paramRelease = process.argv[i + 1];
-            if (paramRelease === undefined || paramRelease.startsWith("--")) {
-                paramRelease = MonoRepoKind[MonoRepoKind.Client];
-            } else {
-                i++;
+            const { name, version, extra } = parseNameVersion(process.argv[i + 1]);
+
+            paramReleaseName = name;
+
+            if (version) {
+                if (typeof version === "string") {
+                    paramReleaseVersion = version;
+                } else {
+                    fatal(`Invalid version ${version} for flag --release`);
+                }
             }
 
-            if (paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
-                paramRelease = MonoRepoKind[MonoRepoKind.Client];
-            } else if (paramRelease.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
-                paramRelease = MonoRepoKind[MonoRepoKind.Server];
-            }
+            if (extra) { i++; }
             continue;
         }
 
@@ -132,25 +163,33 @@ function parseOptions(argv: string[]) {
             if (paramVersionName) {
                 fatal("Can't do multiple release at once");
             }
-            paramVersionName = process.argv[i];
-            if (paramVersionName === undefined || paramVersionName.startsWith("--")) {
-                paramVersionName = MonoRepoKind[MonoRepoKind.Client];
-            } else {
-                i++;
+            const { name, version, extra } = parseNameVersion(process.argv[i + 1]);
+
+            paramVersionName = name;
+            if (version) {
+                if (typeof version !== "string") {
+                    paramVersion = version;
+                } else {
+                    fatal(`Invalid version ${version} for flag --version`);
+                }
             }
 
-            const split = paramVersionName.split("=");
-            paramVersionName = split[0];
-            paramVersion = split[1];
-
-            if (paramVersionName.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
-                paramVersionName = MonoRepoKind[MonoRepoKind.Client];
-            } else if (paramVersionName.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
-                paramVersionName = MonoRepoKind[MonoRepoKind.Server];
-            }
+            if (extra) { i++; }
             continue;
         }
 
+        if (arg === "-b" || arg === "--bump") {
+            if (paramBumpName) {
+                fatal("Can't do multiple bump at once");
+            }
+
+            const { name, version, extra } = parseNameVersion(process.argv[i + 1]);
+
+            paramBumpName = name;
+            paramBumpVersion = version;
+            if (extra) { i++; }
+            continue;
+        }
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -161,8 +200,6 @@ function parseOptions(argv: string[]) {
         process.exit(-1);
     }
 }
-
-parseOptions(process.argv);
 
 class VersionBag {
     private versionData: { [key: string]: string } = {};
@@ -421,8 +458,8 @@ class BumpVersion {
      * Determine either we want to bump minor on master or patch version on release/* based on branch name 
      */
     private async getVersionBumpKind(): Promise<VersionBumpType> {
-        if (paramBumpVersionKind !== undefined) {
-            return paramBumpVersionKind;
+        if (paramReleaseVersion !== undefined) {
+            return paramReleaseVersion;
         }
 
         // Determine the kind of bump
@@ -528,7 +565,7 @@ class BumpVersion {
         return { clientNeedBump, serverNeedBump, packageNeedBump, repoVersions };
     }
 
-    public async showVersions(name: string, publishedVersion?: string) {
+    public async showVersions(name: string, publishedVersion?: semver.SemVer) {
         let versions: VersionBag;
         if (!publishedVersion) {
             const { depVersions } = await this.collectVersionInfo(name);
@@ -538,12 +575,12 @@ class BumpVersion {
             let pkg: Package | undefined;
             if (name === MonoRepoKind[MonoRepoKind.Client]) {
                 await Promise.all(this.repo.clientMonoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion);
+                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
                 }));
-                await depVersions.collectPublishedPackageDependencies(this.generatorPackage, publishedVersion)
+                await depVersions.collectPublishedPackageDependencies(this.generatorPackage, publishedVersion.toString())
             } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
                 await Promise.all(this.repo.serverMonoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion);
+                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
                 }));
             } else {
                 pkg = this.fullPackageMap.get(name);
@@ -568,7 +605,7 @@ class BumpVersion {
      * 
      * @param versionBump the kind of version bump
      */
-    private async bumpRepo(versionBump: VersionBumpType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
+    private async bumpRepo(versionBump: VersionChangeType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
         const bumpMonoRepo = async (monoRepo: MonoRepo) => {
             return exec(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
         }
@@ -596,6 +633,8 @@ class BumpVersion {
 
         // Package json has changed. Reload.
         this.repo.reload();
+
+        return this.collectVersions();
     }
 
     /**
@@ -603,7 +642,7 @@ class BumpVersion {
      * 
      * @param versionBump the kind of version bump
      */
-    private async bumpGeneratorFluid(versionBump: VersionBumpType) {
+    private async bumpGeneratorFluid(versionBump: VersionChangeType) {
         console.log("  Bumping generator version");
 
         const bumpDepMap = new Map(this.repo.packages.packages.map(pkg => [pkg.name, { pkg, version: `${pkg.version}-0` }]));
@@ -618,7 +657,7 @@ class BumpVersion {
         this.templatePackage.reload();
     }
 
-    private async bumpLegacyDependencies(versionBump: VersionBumpType) {
+    private async bumpLegacyDependencies(versionBump: VersionChangeType) {
         if (versionBump !== "patch") {
             // Assumes that we want N/N-1 testing
             const pkg = this.fullPackageMap.get("@fluid-internal/end-to-end-tests");
@@ -639,12 +678,32 @@ class BumpVersion {
                 const packageName = split.join("@");
                 const depPackage = this.fullPackageMap.get(packageName);
                 if (depPackage) {
-                    const dep = dev? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
-                    dep[name] = `npm:${packageName}@^${depPackage.version}`;
+                    const dep = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
+
+                    if (typeof versionBump === "string") {
+                        dep[name] = `npm:${packageName}@^${depPackage.version}`;
+                    } else {
+                        dep[name] = `npm:${packageName}@^${versionBump.major}.${versionBump.minor - 1}.0}`;
+                    }
+
                 }
             }
             pkg.savePackageJson();
         }
+    }
+
+    private static getRepoStateChange(oldVersions: VersionBag, newVersions: VersionBag) {
+
+        let repoState = "";
+        for (const [name, newVersion] of newVersions) {
+            const oldVersion = oldVersions.get(name) ?? "undefined";
+            if (oldVersion !== newVersion) {
+                repoState += `\n${name.padStart(40)}: ${oldVersion.padStart(10)} -> ${newVersion.padEnd(10)}`;
+            } else {
+                repoState += `\n${name.padStart(40)}: ${newVersion.padStart(10)} (unchanged)`;
+            }
+        }
+        return repoState;
     }
 
     /**
@@ -656,21 +715,11 @@ class BumpVersion {
      * @param oldVersions old versions
      */
     private async bumpCurrentBranch(versionBump: VersionBumpType, releaseName: string, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>, oldVersions: VersionBag) {
-        await this.bumpRepo(versionBump, clientNeedBump, serverNeedBump, packageNeedBump);
+        const newVersions = await this.bumpRepo(versionBump, clientNeedBump, serverNeedBump, packageNeedBump);
+        const repoState = BumpVersion.getRepoStateChange(oldVersions, newVersions);
 
-        const currentBranchName = await this.gitRepo.getCurrentBranchName();
-        const newVersions = this.collectVersions();
         const releaseNewVersion = newVersions.get(releaseName);
-
-        let repoState = "";
-        for (const [name, newVersion] of newVersions) {
-            const oldVersion = oldVersions.get(name) ?? "undefined";
-            if (oldVersion !== newVersion) {
-                repoState += `\n${name.padStart(40)}: ${oldVersion.padStart(10)} -> ${newVersion.padEnd(10)}`;
-            } else {
-                repoState += `\n${name.padStart(40)}: ${newVersion.padStart(10)} (unchanged)`;
-            }
-        }
+        const currentBranchName = await this.gitRepo.getCurrentBranchName();
         console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName}`);
         await this.gitRepo.commit(`Bump development version for ${releaseName} to ${releaseNewVersion}\n${repoState}`, "create bumped version commit");
         return `Repo Versions in branch ${currentBranchName}:${repoState}`;
@@ -913,7 +962,7 @@ class BumpVersion {
      * 
      * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
      */
-    public async bumpVersion(releaseName: string) {
+    public async releaseVersion(releaseName: string) {
         const versionBump = await this.getVersionBumpKind();
         if (versionBump !== "patch" && releaseName !== MonoRepoKind[MonoRepoKind.Client]) {
             fatal(`Can't do ${versionBump} release on '${releaseName.toLowerCase()}' packages, only patch release is allowed`);
@@ -1022,6 +1071,39 @@ class BumpVersion {
         console.log(allRepoState);
     }
 
+    public async bumpVersion(name: string, version: VersionChangeType, commit: boolean) {
+        console.log(`Bumping ${name} to ${version}`);
+
+        let clientNeedBump = false;
+        let serverNeedBump = false;
+        let packageNeedBump = new Set<Package>();
+        const repoVersions = this.collectVersions();
+        if (name === MonoRepoKind[MonoRepoKind.Client]) {
+            clientNeedBump = true;
+            await this.repo.clientMonoRepo.install();
+        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
+            serverNeedBump = true;
+            await this.repo.serverMonoRepo.install();
+        } else {
+            const pkg = this.fullPackageMap.get(name);
+            if (!pkg) {
+                fatal(`Package ${name} not found. Unable to bump version`);
+            }
+            if (pkg.monoRepo) {
+                fatal(`Monorepo package can't be bump individually`);
+            }
+            packageNeedBump.add(pkg);
+            await pkg.install();
+        }
+
+        await this.repo.install();
+
+        const oldVersions = this.collectVersions();
+        const newVersions = await this.bumpRepo(version, clientNeedBump, serverNeedBump, packageNeedBump);
+        const bumpRepoState = BumpVersion.getRepoStateChange(oldVersions, newVersions);
+        console.log(bumpRepoState);
+    }
+
     /**
      * Bump cross package/monorepo dependencies
      * 
@@ -1103,6 +1185,7 @@ class BumpVersion {
  * Load the repo and either do version bump or dependencies bump
  */
 async function main() {
+    parseOptions(process.argv);
     const resolvedRoot = await getResolvedFluidRoot();
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();
@@ -1122,23 +1205,34 @@ async function main() {
 
     try {
         if (paramBumpDepPackages.size) {
-            if (paramRelease) {
+            if (paramReleaseName) {
                 fatal("Conflicting switches --release and --dep");
             }
             if (paramVersionName) {
                 fatal("Conflicting switches --version and --dep");
             }
+            if (paramBumpName) {
+                fatal("Conflicting switches --bump and --dep");
+            }
             console.log("Bumping dependencies");
             await bv.bumpDependencies("Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
-        } else if (paramRelease) {
+        } else if (paramReleaseName) {
             if (paramVersionName) {
                 fatal("Conflicting switches --release and --version");
             }
-            await bv.bumpVersion(paramRelease);
+            if (paramBumpName) {
+                fatal("Conflicting switches --release and --bump");
+            }
+            await bv.releaseVersion(paramReleaseName);
         } else if (paramVersionName) {
+            if (paramBumpName) {
+                fatal("Conflicting switches --version and --bump");
+            }
             await bv.showVersions(paramVersionName, paramVersion);
+        } else if (paramBumpName) {
+            await bv.bumpVersion(paramBumpName, paramBumpVersion ?? "patch", paramCommit);
         } else {
-            fatal("Missing flag --release or --dep");
+            fatal("Missing command flags --release/--dep/--bump/--version");
         }
     } catch (e) {
         if (!e.fatal) { throw e; }
