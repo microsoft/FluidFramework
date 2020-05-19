@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-routerlicious-driver",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "description": "Socket.IO + Git implementation of Fluid service API",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,11 +25,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.17.0-0",
+    "@microsoft/fluid-common-definitions": "^0.17.0",
     "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-driver-base": "^0.18.0",
-    "@microsoft/fluid-driver-definitions": "^0.18.0",
-    "@microsoft/fluid-driver-utils": "^0.18.0",
+    "@microsoft/fluid-driver-base": "^0.18.1",
+    "@microsoft/fluid-driver-definitions": "^0.18.1",
+    "@microsoft/fluid-driver-utils": "^0.18.1",
     "@microsoft/fluid-gitresources": "^0.1005.0-0",
     "@microsoft/fluid-protocol-base": "^0.1005.0-0",
     "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
