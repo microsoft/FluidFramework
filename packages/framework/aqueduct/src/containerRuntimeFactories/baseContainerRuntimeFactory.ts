@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
@@ -24,52 +23,30 @@ import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/flu
 import { MountableView } from "@microsoft/fluid-view-adapters";
 
 /**
- * Repackaging responses as MountableView is only required if the view needs to be rendered by a separate React
- * instance.  Since MountableView internalizes the ReactDOM.render() call, it ensures we will be using the same
- * React instance as was used to create the component.  When the view is bundled together with the app this layer
- * isn't necessary.  However, our webpack-component-loader is rendering from a separate bundle.
- * @param response - The view response that should be bundled into an MountableView
+ * A MountableView is only required if the view needs to be rendered by a separate React instance.  Since
+ * MountableView internalizes the ReactDOM.render() call, it ensures we will be using the same React instance
+ * as was used to create the component.  When the view is bundled together with the app this layer isn't necessary.
+ * However, our webpack-component-loader is rendering from a separate bundle.
  */
-const repackAsMountableView = (response: IResponse | undefined) => {
-    // Only repack successful requests
-    if (response?.status !== 200) {
-        return response;
-    }
-    if (!MountableView.canMount(response.value)) {
-        return {
-            status: 404,
-            mimeType: "text/plain",
-            value: `Could not get a mountable view for the requested resource`,
-        };
-    }
+const mountableViewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.headers?.mountableView === true) {
+        // Reissue the request without the mountableView header.  We'll repack whatever the response is if we can.
+        const headers = { ...request.headers };
+        delete headers.mountableView;
+        const newRequest = new RequestParser({
+            url: request.url,
+            headers,
+        });
+        const response = await runtime.request(newRequest);
 
-    return {
-        status: 200,
-        mimeType: "fluid/component",
-        value: new MountableView(response.value),
-    };
-};
-
-const makeMountableViewRequestHandler = (requestHandlers: RuntimeRequestHandler[]) => {
-    const issueRequestNormally = async (request: RequestParser, runtime: IContainerRuntime) => {
-        for (const handler of requestHandlers) {
-            const response = await handler(request, runtime);
-            if (response !== undefined) {
-                return response;
-            }
+        if (response.status === 200 && MountableView.canMount(response.value)) {
+            return {
+                status: 200,
+                mimeType: "fluid/component",
+                value: new MountableView(response.value),
+            };
         }
-    };
-
-    return async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.headers?.mountableView === true) {
-            // Unset the header in case the request is reissued to avoid double repacking.
-            delete request.headers.mountableView;
-            const response = await issueRequestNormally(request, runtime);
-            return repackAsMountableView(response);
-        }
-
-        return issueRequestNormally(request, runtime);
-    };
+    }
 };
 
 /**
@@ -113,11 +90,11 @@ export class BaseContainerRuntimeFactory implements
             context,
             this.registryEntries,
             [
-                // Conditionally adapt any given request handler with a MountableView based on headers.
-                makeMountableViewRequestHandler([
-                    ...this.requestHandlers,
-                    componentRuntimeRequestHandler,
-                ]),
+                // The mountable view request handler must go before any other request handlers that we might
+                // want to return mountable views, so it can correctly handle the header.
+                mountableViewRequestHandler,
+                ...this.requestHandlers,
+                componentRuntimeRequestHandler,
             ],
             undefined,
             dc);
