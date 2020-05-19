@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -144,7 +143,10 @@ export interface IRuntime extends IDisposable {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * @deprecated in 0.14 async stop()
@@ -178,7 +180,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
+export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -188,7 +190,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly parentBranch: string | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
-    readonly connectionState: ConnectionState;
     readonly connected: boolean;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | null;
@@ -215,13 +216,8 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     reloadContext(): Promise<void>;
 
     /**
-     * DEPRECATED
-     * back-compat: 0.14 uploadSummary
-     */
-    refreshBaseSummary(snapshot: ISnapshotTree): void;
-
-    /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
 

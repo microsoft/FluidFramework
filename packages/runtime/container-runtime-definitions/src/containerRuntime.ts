@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -58,7 +57,6 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
@@ -72,11 +70,9 @@ export interface IContainerRuntime extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader",
         listener: () => void): this;
-    on(
-        event: "connected" | "leader" | "noleader",
-        listener: (clientId?: string) => void): this;
+    on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
         event: "componentInstantiated",
@@ -133,6 +129,7 @@ export interface IContainerRuntime extends
     notifyComponentInstantiated(componentContext: IComponentContext): void;
 
     /**
+     * Flag indicating if the given container has been attached to a host service.
      * False if the container is attached to storage.
      */
     isLocal(): boolean;

@@ -52,7 +52,7 @@
     "@microsoft/fluid-common-utils": "^0.18.0-0",
     "@microsoft/fluid-container-loader": "^0.18.0",
     "@microsoft/fluid-container-runtime": "^0.18.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
     "@microsoft/fluid-sequence": "^0.18.0",
     "@microsoft/fluid-test-loader-utils": "^0.18.0",
     "@types/mocha": "^5.2.5",

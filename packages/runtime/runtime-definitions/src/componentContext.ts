@@ -22,8 +22,8 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
+    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -96,6 +96,7 @@ export interface IContainerRuntimeBase extends
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by
@@ -146,7 +147,8 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
-     * Called to attach the runtime to the container
+     * Called to attach the runtime to the container.
+     * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     attach(): void;
 
@@ -176,7 +178,10 @@ export interface IComponentRuntimeChannel extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 }
 
 export interface ISummaryTracker {
@@ -239,7 +244,6 @@ export interface IComponentContext extends EventEmitter {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
@@ -262,6 +266,8 @@ export interface IComponentContext extends EventEmitter {
      */
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
+
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Returns the current quorum.
