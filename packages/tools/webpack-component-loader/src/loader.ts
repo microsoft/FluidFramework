@@ -270,8 +270,11 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
         return;
     }
 
-    // If we don't get a mountable view back, we're likely dealing with a bundle that has a
-    // non-BaseContainerRuntimeFactory.  Hopefully it is something that we can adapt successfully.
+    // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
+    // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
+    // can work.
+    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
+        + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
 }
