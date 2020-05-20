@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { gitHashFileAsync } from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,
