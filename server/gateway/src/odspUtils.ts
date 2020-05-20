@@ -1,6 +1,5 @@
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
  */
 
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
@@ -41,15 +40,16 @@ export async function spoGetResolvedUrl(
     id: string,
     serverTokens: { [server: string]: IOdspTokens } | undefined,
     clientConfig: IClientConfig) {
+
     const server = getSpoServer(tenantId);
     if (server === undefined) {
         return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
     }
-    const tokens = serverTokens ? serverTokens[server] : undefined;
+    const tokens = serverTokens !== undefined ? serverTokens[server] : undefined;
     if (tokens === undefined) {
         return Promise.reject(`Missing tokens for ${server}`);
     }
-    const socketTokens = serverTokens ? serverTokens[pushSrv] : undefined;
+    const socketTokens = serverTokens !== undefined ? serverTokens[pushSrv] : undefined;
     if (socketTokens === undefined) {
         return Promise.reject(`Missing tokens for ${pushSrv}`);
     }

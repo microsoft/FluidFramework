@@ -228,17 +228,6 @@
                     "Server-Shared-Utils"
                 ]
             },
-            "Routerlicious-Host": {
-                "packages": [
-                    "@fluid-example/tiny-web-host",
-                    "@fluid-example/react-web-host"
-                ],
-                "deps": [
-                    "Routerlicious-Driver",
-                    "Other-Utils",
-                    "Hosts"
-                ]
-            },
             "Routerlicious-Server": {
                 "packages": [
                     "@microsoft/fluid-server-routerlicious"

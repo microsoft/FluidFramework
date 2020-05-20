@@ -8,9 +8,9 @@ The Fluid loader is all that is needed to load any Fluid document. This example 
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
 more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host or
-@fluid-example/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
-example will show all the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
+There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host.
+These may be better starting options when integrating the loader into your own code. But this example will show all
+the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
 of code.
 
 ## Build steps
