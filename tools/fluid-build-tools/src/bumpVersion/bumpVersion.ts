@@ -224,8 +224,9 @@ class VersionBag {
             this.versionData[entryName] = version;
         }
     }
-    public get(pkgOrMonoRepoName: string) {
-        return this.versionData[pkgOrMonoRepoName];
+    public get(pkgOrMonoRepoName: Package | string) {
+        let entryName = typeof pkgOrMonoRepoName === "string" ? pkgOrMonoRepoName : VersionBag.getEntryName(pkgOrMonoRepoName);
+        return this.versionData[entryName];
     }
     public [Symbol.iterator]() {
         return Object.entries(this.versionData)[Symbol.iterator]();
@@ -241,11 +242,11 @@ class VersionBag {
  * Provide functionality to collect the dependencies information from published package as well.
  */
 class ReferenceVersionBag extends VersionBag {
-    private referenceData = new Map<string, string>();
-    private publishedPackage = new Set<string>();
-    private publishedPackageRange = new Set<string>();
+    private readonly referenceData = new Map<string, { reference: string, published: boolean }>();
+    private readonly publishedPackage = new Set<string>();
+    private readonly publishedPackageRange = new Set<string>();
 
-    constructor(private repoRoot: string, private fullPackageMap: Map<string, Package>) {
+    constructor(private readonly repoRoot: string, private readonly fullPackageMap: Map<string, Package>, public readonly repoVersions: VersionBag) {
         super();
     }
 
@@ -255,23 +256,23 @@ class ReferenceVersionBag extends VersionBag {
      * 
      * @param pkg 
      * @param version 
-     * @param reference 
+     * @param newReference 
      */
-    public add(pkg: Package, version: string, reference?: string) {
+    public add(pkg: Package, version: string, newReference?: string, published: boolean = false) {
         const existing = this.internalAdd(pkg, version);
         const entryName = VersionBag.getEntryName(pkg);
         if (existing) {
             const existingReference = this.referenceData.get(entryName);
-            const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${reference}\n  ${existing.padStart(10)} in ${existingReference}`;
-            if (existingReference && this.publishedPackage.has(existingReference) && reference && this.publishedPackage.has(reference)) {
+            const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
+            if (existingReference?.reference && this.publishedPackage.has(existingReference.reference) && newReference && this.publishedPackage.has(newReference)) {
                 // only warn if the conflict is between two published references (since we can't change it anyways).
                 console.warn(`WARNING: ${message}`);
             } else {
                 fatal(message);
             }
         }
-        if (reference) {
-            this.referenceData.set(entryName, reference);
+        if (newReference) {
+            this.referenceData.set(entryName, { reference: newReference, published });
         }
     }
 
@@ -350,7 +351,7 @@ class ReferenceVersionBag extends VersionBag {
                 }
             }
             console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
-            this.add(pkg, matchedVersion, reference);
+            this.add(pkg, matchedVersion, reference, true);
 
             // Get the dependencies
             const versionSpec = `${pkg.name}@${matchedVersion}`;
@@ -371,6 +372,36 @@ class ReferenceVersionBag extends VersionBag {
                 }
             }
         }
+    }
+
+    public printRelease() {
+        console.log("Release Versions:");
+        for (const [name] of this.repoVersions) {
+            const depVersion = this.get(name) ?? "undefined";
+            const state = this.needRelease(name) ? "(new)" : this.needBump(name) ? "(current)" : "(old)";
+            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${state}`);
+        }
+        console.log();
+    }
+
+    public printPublished() {
+        console.log(`Current Versions from ${name}:`);
+        for (const [name] of this.repoVersions) {
+            const depVersion = this.get(name) ?? "undefined";
+            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${depVersion === "undefined" ? "" : this.needRelease(name) ? "(local)" : "(published)"}`);
+        }
+        console.log();
+    }
+
+    public needBump(name: string) {
+        return this.repoVersions.get(name) === this.get(name);
+    }
+    public needRelease(name: string) {
+        if (this.needBump(name)) {
+            const data = this.referenceData.get(name)!;
+            return !data || !data.published;
+        }
+        return false;
     }
 }
 
@@ -438,7 +469,6 @@ class BumpVersion {
         return changed;
     }
 
-
     /**
      * Collect the version of the packages in a VersionBag
      */
@@ -473,16 +503,11 @@ class BumpVersion {
     private async collectVersionInfo(releaseName: string) {
         console.log("  Resolving published dependencies");
 
-        const packageNeedBump = new Set<Package>();
-        let clientNeedBump = false;
-        let serverNeedBump = false;
-
-        const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap);
+        const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck = [];
         // TODO: Allow bumping from a different layer then the client
         if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
             pendingDepCheck.push(...this.repo.clientMonoRepo.packages);
-            clientNeedBump = true;
             // Fake these for printing.
             const firstClientPackage = this.repo.clientMonoRepo.packages[0];
             depVersions.add(firstClientPackage, firstClientPackage.version);
@@ -492,14 +517,12 @@ class BumpVersion {
             pendingDepCheck.push(...this.repo.serverMonoRepo.packages);
             const firstServerPackage = this.repo.serverMonoRepo.packages[0];
             depVersions.add(firstServerPackage, firstServerPackage.version);
-            serverNeedBump = true;
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {
                 fatal(`Can't find package ${releaseName} to release`);
             }
             pendingDepCheck.push(pkg);
-            packageNeedBump.add(pkg);
             depVersions.add(pkg, pkg.version);
         }
 
@@ -525,16 +548,12 @@ class BumpVersion {
                     let depVersion = depBuildPackage.version;
                     const reference = `${pkg.name}@local`;
                     if (semver.satisfies(`${depVersion}-0`, version)) {
-                        if (depBuildPackage.monoRepo === undefined) {
-                            if (!packageNeedBump.has(depBuildPackage)) {
-                                packageNeedBump.add(depBuildPackage);
-                                logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
+                        if (!depVersions.get(depBuildPackage)) {
+                            logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
+                            if (depBuildPackage.monoRepo) {
+                                pendingDepCheck.push(...depBuildPackage.monoRepo.packages);
+                            } else {
                                 pendingDepCheck.push(depBuildPackage);
-                            }
-                        } else if (depBuildPackage.monoRepo.kind === MonoRepoKind.Server) {
-                            if (!serverNeedBump) {
-                                serverNeedBump = true;
-                                pendingDepCheck.push(...this.repo.serverMonoRepo.packages);
                             }
                         }
                         depVersions.add(depBuildPackage, depVersion, reference);
@@ -545,7 +564,7 @@ class BumpVersion {
             }
         }
 
-        return { clientNeedBump, serverNeedBump, packageNeedBump, depVersions };
+        return depVersions;
     }
 
     /**
@@ -553,25 +572,17 @@ class BumpVersion {
      * has the same version to the current version in the repo and needs to be bumped as well
      */
     private async collectBumpInfo(releaseName: string) {
-        const { clientNeedBump, serverNeedBump, packageNeedBump, depVersions } = await this.collectVersionInfo(releaseName);
-        const repoVersions = this.collectVersions();
-        console.log("Release Versions:");
-        for (const [name, repoVersion] of repoVersions) {
-            const depVersion = depVersions.get(name) ?? "undefined";
-            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${repoVersion !== depVersion ? "(old)" : "(new)"}`);
-        }
-        console.log();
-
-        return { clientNeedBump, serverNeedBump, packageNeedBump, repoVersions };
+        const depVersions = await this.collectVersionInfo(releaseName);
+        depVersions.printRelease();
+        return depVersions;
     }
 
     public async showVersions(name: string, publishedVersion?: semver.SemVer) {
-        let versions: VersionBag;
+        let versions: ReferenceVersionBag;
         if (!publishedVersion) {
-            const { depVersions } = await this.collectVersionInfo(name);
-            versions = depVersions;
+            versions = await this.collectVersionInfo(name);
         } else {
-            const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap);
+            const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
             let pkg: Package | undefined;
             if (name === MonoRepoKind[MonoRepoKind.Client]) {
                 await Promise.all(this.repo.clientMonoRepo.packages.map(pkg => {
@@ -591,13 +602,7 @@ class BumpVersion {
             versions = depVersions;
         }
 
-        console.log(`Current Versions from ${name}:`);
-        const repoVersions = this.collectVersions();
-        for (const [name, repoVersion] of repoVersions) {
-            const depVersion = versions.get(name) ?? "undefined";
-            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${repoVersion !== depVersion ? (depVersion !== "undefined" ? "(published)" : "") : "(local)"}`);
-        }
-        console.log();
+        versions.printPublished();
     }
 
     /**
@@ -714,9 +719,27 @@ class BumpVersion {
      * @param packageNeedBump the set of packages that needs to be bump
      * @param oldVersions old versions
      */
-    private async bumpCurrentBranch(versionBump: VersionBumpType, releaseName: string, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>, oldVersions: VersionBag) {
+    private async bumpCurrentBranch(versionBump: VersionBumpType, releaseName: string, depVersions: ReferenceVersionBag) {
+        let clientNeedBump = false;
+        let serverNeedBump = false;
+        const packageNeedBump = new Set<Package>();
+        for (const [name] of depVersions) {
+            if (depVersions.needBump(name)) {
+                if (name === MonoRepoKind[MonoRepoKind.Client]) {
+                    clientNeedBump = true;
+                } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
+                    serverNeedBump = true;
+                } else {
+                    const pkg = this.fullPackageMap.get(name);
+                    // the generator packages are not part of the full package map
+                    if (pkg) {
+                        packageNeedBump.add(pkg);
+                    }
+                }
+            }
+        }
         const newVersions = await this.bumpRepo(versionBump, clientNeedBump, serverNeedBump, packageNeedBump);
-        const repoState = BumpVersion.getRepoStateChange(oldVersions, newVersions);
+        const repoState = BumpVersion.getRepoStateChange(depVersions.repoVersions, newVersions);
 
         const releaseNewVersion = newVersions.get(releaseName);
         const currentBranchName = await this.gitRepo.getCurrentBranchName();
@@ -870,14 +893,17 @@ class BumpVersion {
      * @param packageNeedBump all the package that needs to be release in this session
      * @param packages the package that to be released now if needed
      */
-    private async releasePackage(packageNeedBump: Set<Package>, packages: string[]) {
+    private async releasePackage(depVersions: ReferenceVersionBag, packages: string[]) {
         // Filter out the packages that need to be released
         const packageToBump: Package[] = [];
         const packageNeedBumpName = new Map<string, string | undefined>();
-        for (const pkg of packageNeedBump) {
-            if (packages.includes(pkg.name)) {
-                packageToBump.push(pkg);
-                packageNeedBumpName.set(pkg.name, undefined);
+        for (const [name] of depVersions) {
+            if (!depVersions.needRelease(name)) {
+                continue;
+            }
+            if (packages.includes(name)) {
+                packageToBump.push(this.fullPackageMap.get(name)!);
+                packageNeedBumpName.set(name, undefined);
             }
         }
 
@@ -914,7 +940,11 @@ class BumpVersion {
         return this.bumpDependencies(fixPrereleaseCommitMessage, packageNeedBumpName, paramPublishCheck, true, true);
     }
 
-    private async releaseMonoRepo(oldVersions: VersionBag, monoRepo: MonoRepo) {
+    private async releaseMonoRepo(depVersions: ReferenceVersionBag, monoRepo: MonoRepo) {
+        if (!depVersions.needRelease(MonoRepoKind[monoRepo.kind])) {
+            return;
+        }
+        const oldVersions = depVersions.repoVersions;
         const kind = MonoRepoKind[monoRepo.kind];
         console.log(`  Releasing ${kind.toLowerCase()}`);
 
@@ -970,15 +1000,17 @@ class BumpVersion {
 
         console.log(`Bumping ${versionBump} version of ${releaseName.toLowerCase()}`);
 
-        const { clientNeedBump, serverNeedBump, packageNeedBump, repoVersions } = await this.collectBumpInfo(releaseName);
+        const depVersions = await this.collectBumpInfo(releaseName);
 
         // Make sure everything is installed
-        await this.repo.install();
+        if (!await this.repo.install()) {
+            fatal("Install failed");
+        }
 
         // -----------------------------------------------------------------------------------------------------
         // Create the release development branch if it is it not a patch upgrade
         // -----------------------------------------------------------------------------------------------------
-        const releaseVersion = repoVersions.get(releaseName);
+        const releaseVersion = depVersions.repoVersions.get(releaseName);
         if (!releaseVersion) {
             fatal(`Missing ${releaseName} packages`);
         }
@@ -1021,17 +1053,13 @@ class BumpVersion {
         }
 
         // TODO: Don't hard code order
-        await this.releasePackage(packageNeedBump, ["@microsoft/eslint-config-fluid", "@microsoft/fluid-build-common"]);
-        await this.releasePackage(packageNeedBump, ["@microsoft/fluid-common-definitions"]);
-        await this.releasePackage(packageNeedBump, ["@microsoft/fluid-common-utils"]);
-        if (serverNeedBump) {
-            await this.releaseMonoRepo(repoVersions, this.repo.serverMonoRepo);
-        }
+        await this.releasePackage(depVersions, ["@microsoft/eslint-config-fluid", "@microsoft/fluid-build-common"]);
+        await this.releasePackage(depVersions, ["@microsoft/fluid-common-definitions"]);
+        await this.releasePackage(depVersions, ["@microsoft/fluid-common-utils"]);
+        await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
+        await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
+        await this.releaseGeneratorFluid();
 
-        if (clientNeedBump) {
-            await this.releaseMonoRepo(repoVersions, this.repo.clientMonoRepo);
-            await this.releaseGeneratorFluid();
-        }
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1043,7 +1071,7 @@ class BumpVersion {
             console.log(`Bumping ${versionBump} version for development in branch ${unreleased_branch}`)
 
             await this.createBranch(unreleased_branch);
-            const minorRepoState = await this.bumpCurrentBranch(versionBump, releaseName, clientNeedBump, serverNeedBump, packageNeedBump, repoVersions);
+            const minorRepoState = await this.bumpCurrentBranch(versionBump, releaseName, depVersions);
             allRepoState += `\n${minorRepoState}`;
 
             // switch package to pendingReleaseBranch
@@ -1058,7 +1086,7 @@ class BumpVersion {
         // ------------------------------------------------------------------------------------------------------------------
         console.log(`Bumping patch version for development in branch ${pendingReleaseBranch}`)
         // Do the patch version bump
-        const patchRepoState = await this.bumpCurrentBranch("patch", releaseName, clientNeedBump, serverNeedBump, packageNeedBump, repoVersions);
+        const patchRepoState = await this.bumpCurrentBranch("patch", releaseName, depVersions);
         allRepoState += `\n${patchRepoState}`;
 
         console.log("======================================================================================================");
@@ -1080,10 +1108,16 @@ class BumpVersion {
         const repoVersions = this.collectVersions();
         if (name === MonoRepoKind[MonoRepoKind.Client]) {
             clientNeedBump = true;
-            await this.repo.clientMonoRepo.install();
+            const ret = await this.repo.clientMonoRepo.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
             serverNeedBump = true;
-            await this.repo.serverMonoRepo.install();
+            const ret = await this.repo.serverMonoRepo.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         } else {
             const pkg = this.fullPackageMap.get(name);
             if (!pkg) {
@@ -1093,10 +1127,11 @@ class BumpVersion {
                 fatal(`Monorepo package can't be bump individually`);
             }
             packageNeedBump.add(pkg);
-            await pkg.install();
+            const ret = await pkg.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         }
-
-        await this.repo.install();
 
         const oldVersions = this.collectVersions();
         const newVersions = await this.bumpRepo(version, clientNeedBump, serverNeedBump, packageNeedBump);
@@ -1147,7 +1182,9 @@ class BumpVersion {
             if (updateLockPackage.length !== 0) {
                 if (updateLock) {
                     // Fix package lock
-                    await FluidRepoBase.ensureInstalled(updateLockPackage, false);
+                    if (!await FluidRepoBase.ensureInstalled(updateLockPackage, false)) {
+                        fatal("Install Failed");
+                    }
                 } else {
                     console.log("      SKIPPED: updating lock file");
                 }
@@ -1187,6 +1224,7 @@ class BumpVersion {
 async function main() {
     parseOptions(process.argv);
     const resolvedRoot = await getResolvedFluidRoot();
+    console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();
     const url = "https://github.com/microsoft/fluidframework";
