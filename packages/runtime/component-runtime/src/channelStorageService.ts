@@ -29,8 +29,8 @@ export class ChannelStorageService implements IObjectStorageService {
     ) {
         // Create a map from paths to blobs
         if (tree !== undefined) {
-            const flattenedTree: { [path: string]: string } = {};
             this.flattenedTreeP = tree.then((snapshotTree) => {
+                const flattenedTree: { [path: string]: string } = {};
                 ChannelStorageService.flattenTree("", snapshotTree, flattenedTree);
                 return flattenedTree;
             });

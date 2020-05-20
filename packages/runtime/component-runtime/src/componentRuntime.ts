@@ -433,6 +433,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
                     const flatBlobs = new Map<string, string>();
                     const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobsP's validity is contingent on snapshotTreeP's resolution
                     const flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
 
                     const remoteChannelContext = new RemoteChannelContext(
