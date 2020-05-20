@@ -18,77 +18,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 /**
- * Create a flatten view of an array of ITreeEntry
- *
- * @param tree - an array of ITreeEntry to flatten
- * @param blobMap - a map of blob's sha1 to content
- * @returns A flatten with of the ITreeEntry
- */
-async function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): Promise<git.ITree> {
-    const entries = await flattenCore("", tree, blobMap);
-    return {
-        sha: "",
-        tree: entries,
-        url: "",
-    };
-}
-
-async function flattenCore(
-    path: string,
-    treeEntries: ITreeEntry[],
-    blobMap: Map<string, string>,
-): Promise<git.ITreeEntry[]> {
-    const entries: git.ITreeEntry[] = [];
-    for (const treeEntry of treeEntries) {
-        const subPath = `${path}${treeEntry.path}`;
-
-        if (treeEntry.type === TreeEntry[TreeEntry.Blob]) {
-            const blob = treeEntry.value as IBlob;
-            const buffer = Buffer.from(blob.contents, blob.encoding);
-            const sha = await gitHashFileAsync(buffer);
-            blobMap.set(sha, buffer.toString("base64"));
-
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha,
-                size: buffer.length,
-                type: "blob",
-                url: "",
-            };
-            entries.push(entry);
-        } else if (treeEntry.type === TreeEntry[TreeEntry.Commit]) {
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha: treeEntry.value as string,
-                size: -1,
-                type: "commit",
-                url: "",
-            };
-            entries.push(entry);
-        } else {
-            assert(treeEntry.type === TreeEntry[TreeEntry.Tree]);
-            const t = treeEntry.value as ITree;
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha: "",
-                size: -1,
-                type: "tree",
-                url: "",
-            };
-            entries.push(entry);
-
-            const subTreeEntries = await flattenCore(`${subPath}/`, t.entries, blobMap);
-            entries.push(...subTreeEntries);
-        }
-    }
-
-    return entries;
-}
-
-/**
  * Take a summary object and returns its git mode.
  *
  * @param value - summary object
@@ -127,20 +56,6 @@ export function getGitType(value: SummaryObject): string {
         default:
             throw new Error();
     }
-}
-
-/**
- * Build a tree hierarchy base on an array of ITreeEntry
- *
- * @param blobMap - a map of blob's sha1 to content
- * @returns the hierarchical tree
- */
-export async function buildSnapshotTree(
-    entries: ITreeEntry[],
-    blobMap: Map<string, string>,
-): Promise<ISnapshotTree> {
-    const flattened = await flatten(entries, blobMap);
-    return buildHierarchy(flattened);
 }
 
 /**
