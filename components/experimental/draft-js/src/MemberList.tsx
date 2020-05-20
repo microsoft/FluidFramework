@@ -5,7 +5,7 @@
 
 import { IQuorum, ISequencedClient, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import * as React from "react";
+import React from "react";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "./css/MemberList.css";

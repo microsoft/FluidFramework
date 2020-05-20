@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import "react-grid-layout/css/styles.css";
 import { IInternalRegistryEntry } from "./interfaces";
 import { ISpacesProps } from "./spaces";

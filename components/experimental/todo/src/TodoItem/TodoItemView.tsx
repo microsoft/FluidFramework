@@ -5,7 +5,7 @@
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { SharedString } from "@microsoft/fluid-sequence";
-import * as React from "react";
+import React from "react";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
 

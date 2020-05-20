@@ -10,7 +10,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
-import * as uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import { UrlRegistry } from "./urlRegistry";
 
 /**

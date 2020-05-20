@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import registerDebug from "debug";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as url from "url";
@@ -36,9 +37,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
-/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
-const debug = require("debug")("fluid:shared-text");
-/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
+const debug = registerDebug("fluid:shared-text");
 
 /**
  * Helper function to retrieve the handle for the default component route

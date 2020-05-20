@@ -7,8 +7,8 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";

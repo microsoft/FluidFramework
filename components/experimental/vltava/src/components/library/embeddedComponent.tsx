@@ -6,7 +6,7 @@
 import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
-import * as React from "react";
+import React from "react";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;

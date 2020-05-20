@@ -1564,7 +1564,7 @@ export interface IExcludedRectangle extends ui.Rectangle {
 }
 
 function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
-    const r = <IExcludedRectangle> new ui.Rectangle(x, y, w, h);
+    const r = new ui.Rectangle(x, y, w, h) as IExcludedRectangle;
     r.id = id;
     r.left = true;
     r.curY = 0;
@@ -1673,7 +1673,7 @@ export class Viewport {
                         exclu.floatL = true;
                     }
                 }
-                let excluDiv = <IRefDiv> this.viewHasInclusion(irdoc.referenceDocId);
+                let excluDiv = this.viewHasInclusion(irdoc.referenceDocId) as IRefDiv;
 
                 // Move the inclusion
                 if (excluDiv) {
