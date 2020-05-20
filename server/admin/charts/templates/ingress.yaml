@@ -14,13 +14,13 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {{ .Values.service.host }}
-    secretName: {{ .Values.service.sslCert }}
+    - {{ .Values.admin.host }}
+    secretName: {{ .Values.admin.cert }}
   rules:
-  - host: {{ .Values.service.host }}
+  - host: {{ .Values.admin.host }}
     http:
       paths:
       - path: /
         backend:
           serviceName: {{ template "fullname" . }}
-          servicePort: {{ .Values.service.externalPort }}
+          servicePort: 80

@@ -3,7 +3,7 @@
 To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
 
 # Headless Agent
-Loads Fluid components on a headless chromium browser.
+Loads Fluid components on a headless chromium browser, as opposed to the Node.js runtime.
 
 To build
 ```

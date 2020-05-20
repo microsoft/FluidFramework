@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-common-definitions",
+  "name": "@fluidframework/common-definitions",
   "version": "0.18.0",
   "description": "Fluid common definitions",
   "repository": "microsoft/FluidFramework",

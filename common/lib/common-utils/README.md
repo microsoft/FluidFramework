@@ -1,2 +1,3 @@
-This package contains code for common utilities used by Fluid Framework
+# @microsoft/fluid-common-utils
 
+Common utilities used by Fluid Framework

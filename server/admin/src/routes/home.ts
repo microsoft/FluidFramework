@@ -8,8 +8,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
-import { IData } from "../definitions";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IData, IKeyValueWrapper } from "../definitions";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -18,7 +17,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueWrapper): Router {
+    cache: IKeyValueWrapper): Router {
 
     const router: Router = Router();
 
