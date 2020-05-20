@@ -155,11 +155,11 @@ class MockDeltaConnection implements IDeltaConnection {
         private readonly factory: MockDeltaConnectionFactory,
         private readonly runtime: MockRuntime) {
         this.handlers.push({
-            process: (message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) => {
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) => {
                 this.referenceSequenceNumber = message.sequenceNumber;
             },
             setConnectionState: (connected: boolean) => { },
-            reSubmit: (content: any, metadata: unknown) => { },
+            reSubmit: (content: any, localOpMetadata: unknown) => { },
         });
     }
 
@@ -452,7 +452,7 @@ export class MockRuntime extends EventEmitter
 
     public raiseContainerWarning(warning: ContainerWarning): void { }
 
-    public reSubmit(content: any, metadata: unknown) {
+    public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
 }

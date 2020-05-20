@@ -459,8 +459,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         debug(`${this.id} is now disconnected`);
     }
 
-    protected OnReSubmit(content: any, metadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, metadata);
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
     protected async loadCore(

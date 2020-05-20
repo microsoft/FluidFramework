@@ -174,7 +174,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this,
                     componentContext,
                     componentContext.storage,
-                    (type, content, metadata) => this.submit(type, content, metadata),
+                    (type, content, localOpMetadata) => this.submit(type, content, localOpMetadata),
                     (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
@@ -270,7 +270,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content, metadata) => this.submit(t, content, metadata),
+            (t, content, localOpMetadata) => this.submit(t, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
@@ -408,7 +408,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
@@ -434,7 +434,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         this,
                         this.componentContext,
                         this.componentContext.storage,
-                        (type, content, contentMetadata) => this.submit(type, content, contentMetadata),
+                        (type, content, localContentMetadata) => this.submit(type, content, localContentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTreeP,
@@ -461,7 +461,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
 
             case MessageType.Operation:
-                this.processOp(message, local, metadata);
+                this.processOp(message, local, localOpMetadata);
                 break;
             default:
         }
@@ -511,8 +511,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
-    public submitMessage(type: MessageType, content: any, metadata?: unknown) {
-        this.submit(type, content, metadata);
+    public submitMessage(type: MessageType, content: any, localOpMetadata?: unknown) {
+        this.submit(type, content, localOpMetadata);
     }
 
     public submitSignal(type: string, content: any) {
@@ -570,20 +570,35 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         context.attach();
     }
 
-    private submit(type: MessageType, content: any, metadata?: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata?: unknown): number {
         this.verifyNotClosed();
-        return this.componentContext.submitMessage(type, content, metadata);
+        return this.componentContext.submitMessage(type, content, localOpMetadata);
     }
 
-    public reSubmit(type: MessageType, content: any, metadata?: unknown) {
+    /**
+     * For messages of type MessageType.Operation, finds the right channel and asks it to resubmit the message.
+     * For all other messages, just submit it again.
+     * This typically happens when we reconnect and there are unacked messages.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    public reSubmit(type: MessageType, content: any, localOpMetadata?: unknown) {
         this.verifyNotClosed();
 
-        // Send mesages that are ops to the respective channel. For all other messages, just submit it again.
         switch (type) {
             case MessageType.Operation:
-                assert(metadata !== undefined, "No metadata found for the op");
-                this.reSubmitOp(content, metadata);
+            {
+                assert(localOpMetadata !== undefined, "localOpMetadata missing in reSubmit");
+
+                const envelope = content as IEnvelope;
+                const channelContext = this.contexts.get(envelope.address);
+                assert(channelContext, "There should be a channel context for the op");
+
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                channelContext!.reSubmit(envelope.contents, localOpMetadata);
+
                 break;
+            }
             default:
                 this.submit(type, content);
         }
@@ -594,7 +609,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.setChannelDirty(address);
     }
 
-    private processOp(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -616,23 +631,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        channelContext.processOp(transformed, local, metadata);
+        channelContext.processOp(transformed, local, localOpMetadata);
         return channelContext;
-    }
-
-    /**
-     * Finds the right channel and asks it to resubmit the message. This typically happens when we
-     * reconnect and there are unacked messages.
-     * @param content - The content of the original message.
-     * @param metadata - The metadata associated with the original message.
-     */
-    private reSubmitOp(content: any, metadata: unknown) {
-        const envelope = content as IEnvelope;
-        const channelContext = this.contexts.get(envelope.address);
-        assert(channelContext, "There should be a channel context for the op");
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.reSubmit(envelope.contents, metadata);
     }
 
     private attachListener() {

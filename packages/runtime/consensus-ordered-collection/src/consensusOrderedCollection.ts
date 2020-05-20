@@ -294,7 +294,7 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected OnReSubmit(content: any, metadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected async loadCore(
         branchId: string,

@@ -236,8 +236,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Derived classes must override this to do custom processing on a remote message.
      * @param message - The message to process
      * @param local - True if the shared object is local
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: any);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown);
 
     /**
      * Called when the object has disconnected from the delta stream.
@@ -245,17 +247,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract onDisconnect();
 
     /**
-     * Processes a message by the local client.
+     * Submits a message by the local client to the runtime.
      * @param content - Content of the message
+     * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
+     * and not sent to the server. This will be sent back when this message is received back from the server. This is
+     * also sent if we are asked to resubmit the message.
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, metadata?: unknown): number {
+    protected submitLocalMessage(content: any, localOpMetadata?: unknown): number {
         if (this.isLocal()) {
             return -1;
         }
 
+        // TODO (naagar): localOpMetadata is optional here temporarily until all the DDS are updated to send it.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, metadata ?? "");
+        return this.services!.deltaConnection.submit(content, localOpMetadata ?? "");
     }
 
     /**
@@ -282,10 +288,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * unacked messages.
      * Default implementation for DDS, override if different behavior is required.
      * @param content - The content of the original message.
-     * @param metadata - The metadata associated with the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    protected onReSubmit(content: any, metadata: unknown) {
-        this.submitLocalMessage(content, metadata);
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.submitLocalMessage(content, localOpMetadata);
     }
 
     /**
@@ -332,14 +338,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services!.deltaConnection.attach({
-            process: (message, local, metadata?) => {
-                this.process(message, local, metadata);
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) => {
+                this.process(message, local, localOpMetadata);
             },
             setConnectionState: (connected: boolean) => {
                 this.setConnectionState(connected);
             },
-            reSubmit: (content, metadata) => {
-                this.reSubmit(content, metadata);
+            reSubmit: (content: any, localOpMetadata: unknown) => {
+                this.reSubmit(content, localOpMetadata);
             },
         });
 
@@ -351,7 +357,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     /**
      * Set the state of connection to services.
-     * @param state - The new state of the connection
+     * @param connected - true if connected, false otherwise.
      */
     private setConnectionState(connected: boolean) {
         if (this._connected === connected) {
@@ -380,20 +386,22 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Handles a message being received from the remote delta server.
      * @param message - The message to process
      * @param local - Whether the message originated from the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    private process(message: ISequencedDocumentMessage, local: boolean, metadata?: any) {
+    private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
         this.emit("pre-op", message, local, this);
-        this.processCore(message, local, metadata);
+        this.processCore(message, local, localOpMetadata);
         this.emit("op", message, local, this);
     }
 
     /**
-     * Called when a message has to be resubmitted. This typically happens after a reconnection for
-     * unacked messages.
+     * Called when a message has to be resubmitted. This typically happens for unacked messages after a
+     * reconnection.
      * @param content - The content of the original message.
-     * @param metadata - The metadata associated with the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, metadata: unknown) {
-        this.onReSubmit(content, metadata);
+    private reSubmit(content: any, localOpMetadata: unknown) {
+        this.reSubmitCore(content, localOpMetadata);
     }
 }

@@ -168,7 +168,7 @@ export interface IComponentRuntimeChannel extends
     /**
      * Processes the op.
      */
-    process(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
     /**
      * Processes the signal.
@@ -195,9 +195,9 @@ export interface IComponentRuntimeChannel extends
      * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
      * @param type - The type of the original message.
      * @param content - The content of the original message.
-     * @param metadata - The metadata associated with the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    reSubmit(type: MessageType, content: any, metadata?: unknown);
+    reSubmit(type: MessageType, content: any, localOpMetadata?: unknown);
 }
 
 export interface ISummaryTracker {
@@ -305,9 +305,11 @@ export interface IComponentContext extends EventEmitter {
      * Submits the message to be sent to other clients.
      * @param type - Type of the message.
      * @param content - Content of the message.
-     * @param metadata - The metadata associated with the message.
+     * @param localOpMetadata - The local metadata associated with the message. This is kept locally and not sent to
+     * the server. This will be sent back when this message is received back from the server. This is also sent if
+     * we are asked to resubmit the message.
      */
-    submitMessage(type: string, content: any, metadata: unknown): number;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): number;
 
     /**
      * Submits the signal to be sent to other clients.

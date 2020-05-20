@@ -34,8 +34,10 @@ interface IMapMessageHandler {
      * @param op - The map operation to apply
      * @param local - Whether the message originated from the local client
      * @param message - The full message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, metadata?: unknown): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata?: unknown): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -454,9 +456,12 @@ export class MapKernel {
     /**
      * Submit the given op if a handler is registered.
      * @param op - The operation to attempt to submit
+     * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
+     * and not sent to the server. This will be sent back when this message is received back from the server. This is
+     * also sent if we are asked to resubmit the message.
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any, metadata: unknown): boolean {
+    public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             this.messageHandlers.get(type).submit(op as IMapOperation);
@@ -469,14 +474,16 @@ export class MapKernel {
      * Process the given op if a handler is registered.
      * @param message - The message to process
      * @param local - Whether the message originated from the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
                 .get(op.type)
-                .process(op, local, message, metadata);
+                .process(op, local, message, localOpMetadata);
             return true;
         }
         return false;
@@ -566,13 +573,15 @@ export class MapKernel {
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
      */
     private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        metadata?: unknown,
+        localOpMetadata?: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             // If I have a NACK clear, we can ignore all ops.
@@ -583,8 +592,8 @@ export class MapKernel {
             // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
             // and don't process the op.
             if (local) {
-                assert(metadata !== undefined);
-                const messageId = metadata as number;
+                assert(localOpMetadata !== undefined, "localOpMetadata missing from message from local client");
+                const messageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === messageId) {
                     this.pendingKeys.delete(op.key);
@@ -606,9 +615,9 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message, metadata?) => {
+                process: (op: IMapClearOperation, local, message, localOpMetadata?) => {
                     if (local) {
-                        const messageId = metadata as number;
+                        const messageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === messageId) {
                             this.pendingClearMessageId = -1;
                         }
@@ -627,8 +636,8 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message, metadata?) => {
-                    if (!this.needProcessKeyOperation(op, local, message, metadata)) {
+                process: (op: IMapDeleteOperation, local, message, localOpMetadata?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -640,8 +649,8 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message, metadata?) => {
-                    if (!this.needProcessKeyOperation(op, local, message, metadata)) {
+                process: (op: IMapSetOperation, local, message, localOpMetadata?) => {
+                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
 
@@ -661,7 +670,7 @@ export class MapKernel {
         messageHandlers.set(
             "act",
             {
-                process: (op: IMapValueTypeOperation, local, message, metadata?) => {
+                process: (op: IMapValueTypeOperation, local, message, localOpMetadata?) => {
                     // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {

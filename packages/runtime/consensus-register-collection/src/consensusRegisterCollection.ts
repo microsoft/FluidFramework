@@ -251,7 +251,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected OnReSubmit(content: any, metadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {

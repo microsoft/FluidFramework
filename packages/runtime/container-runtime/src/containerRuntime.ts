@@ -471,7 +471,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, metadata?: unknown) => number {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata?: unknown) => number {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
@@ -484,7 +484,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (content: any, metadata?: unknown) => void {
+    public get reSubmitFn(): (content: any, localOpMetadata?: unknown) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -648,7 +648,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.pendingStateManager = new PendingStateManager(
             this,
-            ChildLogger.create(this.logger, "PendingStateHandler"),
+            ChildLogger.create(this.logger, "PendingStateManager"),
         );
 
         this.deltaManager.on("allSentOpsAckd", () => {
@@ -1151,7 +1151,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Call the PendingStateManager to process local messages.
         // Do not process local chunked ops until all pieces are available.
         if (local && message.type !== MessageType.ChunkedOp) {
-            localMessageMetadata = this.pendingStateManager.processPendingMessage(message);
+            localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
         }
 
         // Old prepare part
@@ -1444,7 +1444,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any, metadata?: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata?: unknown): number {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1484,7 +1484,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmit(type, clientSequenceNumber, content, metadata);
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
 
         return clientSequenceNumber;
     }
@@ -1521,18 +1521,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * Finds the right component and asks it to resubmit the message. This typically happens when we
      * reconnect and there are pending messages.
      * @param content - The content of the original message.
-     * @param metadata - The metadata associated with the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, metadata?: unknown) {
+    private reSubmit(content: any, localOpMetadata?: unknown) {
         const envelope = content as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         assert(componentContext, "There should be a component context for the op");
 
         const innerContents = envelope.contents as { content: any; type: MessageType };
-        componentContext.reSubmit(innerContents.type, innerContents.content, metadata);
+        componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
-    private processOperation(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };
@@ -1552,7 +1552,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             type: innerContents.type,
         };
 
-        componentContext.process(transformed, local, metadata);
+        componentContext.process(transformed, local, localOpMetadata);
     }
 
     private subscribeToLeadership() {

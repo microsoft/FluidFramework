@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op, metadata?) => this.submitLocalMessage(op, metadata),
+            (op, localOpMetadata?) => this.submitLocalMessage(op, localOpMetadata),
             valueTypes,
             this,
         );
@@ -354,16 +354,19 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         debug(`Map ${this.id} is now disconnected`);
     }
 
-    protected OnReSubmit(content: any, metadata: unknown) {
-        this.kernel.trySubmitMessage(content, metadata);
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.reSubmitCore}
+     */
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
     /**
    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, metadata?: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local, metadata);
+            this.kernel.tryProcessMessage(message, local, localOpMetadata);
         }
     }
 

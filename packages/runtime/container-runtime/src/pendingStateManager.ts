@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ErrorType, IGeneralError } from "@microsoft/fluid-driver-definitions";
 import {
     MessageType,
     ISequencedDocumentMessage,
@@ -18,7 +19,7 @@ interface IPendingMessage {
     messageType: MessageType;
     clientSequenceNumber: number;
     content: any;
-    metadata: unknown;
+    localOpMetadata: unknown;
 }
 
 interface IPendingFlushMode {
@@ -65,44 +66,69 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlushMode);
     }
 
-    public onSubmit(type: MessageType, clientSequenceNumber: number, content: any, metadata: unknown) {
+    public onSubmitMessage(type: MessageType, clientSequenceNumber: number, content: any, localOpMetadata: unknown) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
             clientSequenceNumber,
             content,
-            metadata,
+            localOpMetadata,
         };
 
         this.pendingStates.push(pendingMessage);
     }
 
-    public processPendingMessage(message: ISequencedDocumentMessage): unknown {
+    public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
         const pendingState = this.pendingStates.peekFront();
+
+        // There should always be a pending message for local messages. If not, there might be data corruption. Log an
+        // error and close the Container.
         if (pendingState === undefined) {
             this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
+            this.closeContainer("Unxpected ack received");
             return;
         }
 
         if (pendingState.type === "flush") {
             this.pendingStates.shift();
-            return this.processPendingMessage(message);
+            return this.processPendingLocalMessage(message);
         }
 
-        // Disconnected ops should never be processed. They should have been fully sent on connected.
-        assert(pendingState.clientSequenceNumber !== -1,
-            `processing disconnected op ${pendingState.clientSequenceNumber}`);
+        const firstPendingMessage = pendingState;
 
-        // Messages should always be received in the same order in which they are sent.
-        if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
-            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
+        // Disconnected ops should never be processed. They should have been fully sent on connected. If not, there
+        // might be data corruption. Log an error and close the Container.
+        if (firstPendingMessage.clientSequenceNumber === -1) {
+            this.logger.sendErrorEvent({ eventName: "ProcessingDisconnectedOp" });
+            this.closeContainer("Processing disconnected op");
+            return;
+        }
+
+        // Messages should always be received in the same order in which they are sent. If not, there might be data
+        // corruption. Log an error and close the Container.
+        if (firstPendingMessage.clientSequenceNumber === message.clientSequenceNumber) {
+            this.logger.sendErrorEvent({
+                eventName: "WrongAckReceived",
+                expectedClientSequenceNumber: firstPendingMessage.clientSequenceNumber,
+                receivedClientSequenceNumber: message.clientSequenceNumber,
+            });
+            this.closeContainer("Ack received with wrong clientSequenceNumber");
             return;
         }
 
         // Remove the first message from the pending list since it has been acknowledged.
         this.pendingStates.shift();
 
-        return pendingState.metadata;
+        return firstPendingMessage.localOpMetadata;
+    }
+
+    private closeContainer(errorMessage: string) {
+        const error: IGeneralError = {
+            errorType: ErrorType.generalError,
+            error: new Error(errorMessage),
+            critical: true,
+        };
+        this.containerRuntime.closeFn(error);
     }
 
     private replayPendingStates() {
@@ -120,11 +146,11 @@ export class PendingStateManager {
                     break;
                 case "message":
                     {
-                        // For messages of type Operation, call resubmit which will find the right component and trigger
+                        // For messages of type Operation, call reSubmit which will find the right component and trigger
                         // resubmission on it.
                         // For all other messages, just submit it again.
                         if (pendingState.messageType === MessageType.Operation) {
-                            this.containerRuntime.reSubmitFn(pendingState.content, pendingState.metadata);
+                            this.containerRuntime.reSubmitFn(pendingState.content, pendingState.localOpMetadata);
                         } else {
                             this.containerRuntime.submitFn(pendingState.messageType, pendingState.content);
                         }

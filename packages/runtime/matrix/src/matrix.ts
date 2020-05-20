@@ -241,7 +241,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         assert(this.cols.resetPendingSegmentsToOp() === undefined);
     }
 
-    protected OnReSubmit(content: any, metadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);
