@@ -130,7 +130,7 @@ npm run test:copyresults
 
 We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
 
-## Run it out locally
+## Run it locally
 
 ### Single browser window, two panes
 
