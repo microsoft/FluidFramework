@@ -7,9 +7,6 @@
         "timestamp": true,
         "label": "winston"
     },
-    "gateway": {
-        "url": "http://localhost:3000"
-    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
@@ -59,15 +56,6 @@
     "client": {
         "type": "browser",
         "permission": []
-    },
-    "login": {
-        "enabled": false,
-        "microsoft": {
-            "clientId": "",
-            "secret": ""
-        },
-        "accounts": [
-        ]
     },
     "deli": {
         "topics": {
@@ -172,21 +160,10 @@
         "endpoint" : ""
     },
     "worker": {
-        "intelligence": {
-            "textAnalytics": {
-                "key": ""
-            },
-            "translation": {
-                "key": ""
-            }
-        },
-        "alfredUrl": "http://alfred:3000",
+        "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
-        "repository": "prague",
-        "npm": "https://pragueauspkn-3873244262.azureedge.net",
-        "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "tenantConfig": [
@@ -231,12 +208,5 @@
                 "url": "http://localhost:3003"
             }
         }
-    ],
-    "minio": {
-        "endpoint": "minio",
-        "port": 9000,
-        "accessKey": "prague",
-        "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
-        "bucket": "agents"
-    }
+    ]
 }

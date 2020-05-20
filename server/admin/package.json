@@ -52,7 +52,6 @@
     "nconf": "^0.10.0",
     "passport": "^0.4.0",
     "passport-openidconnect": "0.0.2",
-    "performance-now": "^2.1.0",
     "react": "^16.2.0",
     "react-burger-menu": "^2.3.0",
     "react-dom": "^16.2.0",

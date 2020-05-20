@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/progress-bars",
-  "version": "0.17.0",
+  "version": "0.19.0",
   "description": "Progress bar collection",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -15,7 +15,6 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
@@ -26,13 +25,14 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-component-runtime": "^0.17.0",
-    "@microsoft/fluid-framework-interfaces": "^0.17.0",
-    "@microsoft/fluid-map": "^0.17.0",
-    "@microsoft/fluid-runtime-definitions": "^0.17.0",
-    "@microsoft/fluid-shared-object-base": "^0.17.0",
-    "@microsoft/fluid-view-interfaces": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-component-runtime": "^0.19.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-framework-interfaces": "^0.19.0",
+    "@microsoft/fluid-map": "^0.19.0",
+    "@microsoft/fluid-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-shared-object-base": "^0.19.0",
+    "@microsoft/fluid-view-interfaces": "^0.19.0",
     "@types/node": "^10.14.6",
     "bootstrap": "^3.3.7"
   },

@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-shared-summary-block";
-export const pkgVersion = "0.17.0";
+export const pkgVersion = "0.19.0";

@@ -7,10 +7,8 @@ import { EventEmitter } from "events";
 
 import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLastEditedTracker } from "@microsoft/fluid-last-edited-experimental";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IQuorum, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerComponentDetails } from ".";
+import { IInternalRegistryEntry } from ".";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -16,8 +16,11 @@ export interface IProvideComponentRegistryTemplates {
     readonly IComponentRegistryTemplates: IComponentRegistryTemplates;
 }
 
+/**
+ * Provides functionality to retrieve subsets of an internal registry based on membership in a template.
+ */
 export interface IComponentRegistryTemplates extends IProvideComponentRegistryTemplates {
-    getFromTemplate(template: Templates): IContainerComponentDetails[];
+    getFromTemplate(template: Templates): IInternalRegistryEntry[];
 }
 
 export enum Templates {

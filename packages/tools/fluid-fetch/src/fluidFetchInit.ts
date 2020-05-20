@@ -5,17 +5,17 @@
 
 import { URL } from "url";
 import * as child_process from "child_process";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { IClientConfig, refreshAccessToken, getOdspScope } from "@microsoft/fluid-odsp-utils";
+import { IClientConfig, IOdspAuthRequestInfo } from "@microsoft/fluid-odsp-utils";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { OdspTokenManager, odspTokensCache, getMicrosoftConfiguration } from "@microsoft/fluid-tool-utils";
+import { getMicrosoftConfiguration } from "@microsoft/fluid-tool-utils";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
+import { resolveWrapper } from "./fluidFetchSharePoint";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
@@ -54,26 +54,23 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-    const odspTokenManager = new OdspTokenManager(odspTokensCache);
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
-        const tokens = await odspTokenManager.getOdspTokens(
+        return resolveWrapper(
+            async (authRequestInfo: IOdspAuthRequestInfo) => {
+                if ((refresh || !authRequestInfo.accessToken) && authRequestInfo.refreshTokenFn) {
+                    return authRequestInfo.refreshTokenFn();
+                }
+                return authRequestInfo.accessToken;
+            },
             server,
             clientConfig,
-            fluidFetchWebNavigator,
         );
-        if (refresh || !tokens.accessToken) {
-            // TODO: might want to handle if refresh failed and we want to reauth here.
-            await refreshAccessToken(getOdspScope(server), server, clientConfig, tokens);
-        }
-        return tokens.accessToken;
     };
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     const getWebsocketTokenStub = () => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
-        clientConfig.clientId,
         getStorageTokenStub,
-        getWebsocketTokenStub,
-        new BaseTelemetryNullLogger());
+        getWebsocketTokenStub);
     return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 

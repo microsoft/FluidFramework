@@ -8,7 +8,7 @@ import "mocha";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { Serializable } from "@microsoft/fluid-runtime-definitions";
+import { Serializable } from "@microsoft/fluid-component-runtime-definitions";
 import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
@@ -286,8 +286,6 @@ describe("Matrix", () => {
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-
-        // TODO: Vet IMatrixConsumers w/multiple clients
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
             await TestHost.sync(host1, host2);

@@ -19,6 +19,7 @@ describe("Loader", () => {
             let deltaManager: DeltaManager;
             let logger: ITelemetryLogger;
             let deltaConnection: MockDocumentDeltaConnection;
+            let clientSeqNumber = 0;
             let emitter: EventEmitter;
             let seq: number;
             let intendedResult: IProcessMessageResult;
@@ -44,6 +45,8 @@ describe("Loader", () => {
 
             async function emitSequentialOp(type: MessageType = MessageType.Operation) {
                 deltaConnection.emitOp(docId, [{
+                    clientId: "Some client ID",
+                    clientSequenceNumber: ++clientSeqNumber,
                     minimumSequenceNumber: 0,
                     sequenceNumber: seq++,
                     type,
@@ -74,6 +77,7 @@ describe("Loader", () => {
                     "test",
                     (messages) => emitter.emit(submitEvent, messages),
                 );
+                clientSeqNumber = 0;
                 const service = new MockDocumentService(
                     undefined,
                     () => deltaConnection,
@@ -86,7 +90,7 @@ describe("Loader", () => {
                     logger,
                     false,
                 );
-                deltaManager.attachOpHandler(0, 0, {
+                deltaManager.attachOpHandler(0, 0, 1, {
                     process: (message) => intendedResult,
                     processSignal() {},
                 });

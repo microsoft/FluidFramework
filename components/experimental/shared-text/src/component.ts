@@ -10,6 +10,7 @@ import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
+import { performanceNow } from "@microsoft/fluid-common-utils";
 import {
     IComponent,
     IComponentHandle,
@@ -24,7 +25,7 @@ import {
     SharedMap,
 } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import {
     IProvideSharedString,
     SharedNumberSequence,
@@ -36,14 +37,13 @@ import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
-const performanceNow = require("performance-now");
 const debug = require("debug")("fluid:shared-text");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 
 /**
  * Helper function to retrieve the handle for the default component route
  */
-async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<IComponentHandle> {
+async function getHandle(runtimeP: Promise<IComponentRuntimeChannel>): Promise<IComponentHandle> {
     const runtime = await runtimeP;
     const request = await runtime.request({ url: "" });
 

@@ -22,17 +22,13 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
+    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
 
     if (seedPackages !== undefined) {
-        for (const pkg of seedPackages) {
-            if (Array.isArray(pkg)) {
-                await codeLoader.seedModule(pkg[0], pkg[1]);
-            } else {
-                await codeLoader.seedModule(pkg);
-            }
+        for (const [codeDetails, maybeModule] of seedPackages) {
+            await codeLoader.seedModule(codeDetails, maybeModule);
         }
     }
 
@@ -59,7 +55,7 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,

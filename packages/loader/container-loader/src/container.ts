@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -17,17 +18,18 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
+    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
+    performanceNow,
+    raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
@@ -37,9 +39,6 @@ import {
     IFluidResolvedUrl,
     IUrlResolver,
     IDocumentServiceFactory,
-    IExperimentalDocumentServiceFactory,
-    IExperimentalDocumentService,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
@@ -56,10 +55,8 @@ import {
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-    raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState,
     FileMode,
     IClient,
     IClientDetails,
@@ -75,7 +72,6 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
-    ITokenClaims,
     ITree,
     ITreeEntry,
     IVersion,
@@ -83,12 +79,11 @@ import {
     TreeEntry,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { IConnectionArgs, DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
@@ -97,8 +92,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const merge = require("lodash/merge");
@@ -112,11 +105,26 @@ export interface IContainerConfig {
     id?: string;
 }
 
-export class Container
-    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
-    public static version = "^0.1.0";
+export enum ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    Disconnected,
 
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    Connecting,
+
+    /**
+     * The document is fully connected
+     */
+    Connected,
+}
+
+export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public readonly isExperimentalContainer = true;
+    public static version = "^0.1.0";
 
     /**
      * Load container.
@@ -148,9 +156,6 @@ export class Container
                 canReconnect: !(request.headers?.[LoaderHeader.reconnect] === false),
             },
             logger);
-
-        container._scopes = container.getScopes(resolvedUrl);
-        container.service = await serviceFactory.createDocumentService(resolvedUrl);
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
@@ -227,14 +232,12 @@ export class Container
 
     private _clientId: string | undefined;
     private _id: string | undefined;
-    private _scopes: string[] | undefined;
     private originalRequest: IRequest | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
-    private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
@@ -261,8 +264,18 @@ export class Container
         return this._loadedFromVersion;
     }
 
-    public get readonly(): boolean | undefined {
+    /**
+     * {@inheritDoc DeltaManager.readonly}
+     */
+    public get readonly() {
         return this._deltaManager.readonly;
+    }
+
+    /**
+     * {@inheritDoc DeltaManager.readonlyPermissions}
+     */
+    public get readonlyPermissions() {
+        return this._deltaManager.readonlyPermissions;
     }
 
     public forceReadonly(readonly: boolean) {
@@ -298,7 +311,7 @@ export class Container
      * configuration details returned as part of the initial connection.
      */
     public get serviceConfiguration(): IServiceConfiguration | undefined {
-        return this._serviceConfiguration;
+        return this._deltaManager.serviceConfiguration;
     }
 
     /**
@@ -314,7 +327,7 @@ export class Container
      * Set once this.connected is true, otherwise undefined
      */
     public get scopes(): string[] | undefined {
-        return this._scopes;
+        return this._deltaManager.scopes;
     }
 
     public get clientDetails(): IClientDetails {
@@ -373,12 +386,13 @@ export class Container
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
-        this.subLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
+        this.subLogger = ChildLogger.create(
             logger,
+            undefined,
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+                containerId: uuid(),
             },
             {
                 docId: () => this.id,
@@ -388,7 +402,11 @@ export class Container
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
-            this.logContainerError(error);
+            // Some "error" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (error?.logged !== true) {
+                this.logContainerError(error);
+            }
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -426,7 +444,7 @@ export class Container
             this.protocolHandler.close();
         }
 
-        this.context?.dispose();
+        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -437,10 +455,6 @@ export class Container
 
     public isLocal(): boolean {
         return !this.attached;
-    }
-
-    public isAttached(): boolean {
-        return this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -468,21 +482,15 @@ export class Container
 
         try {
             // Actually go and create the resolved document
-            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
-            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
-            this.service = await expDocFactory.createContainer(
+            this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
-                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+                this.subLogger,
             );
-            const expDocService = this.service as IExperimentalDocumentService;
-            assert(expDocService?.isExperimentalDocumentService);
-            const resolvedUrl = expDocService.resolvedUrl;
+            const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-            assert(expUrlResolver?.isExperimentalUrlResolver);
-            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
             if (response.status !== 200) {
                 throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
             }
@@ -564,7 +572,7 @@ export class Container
             throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
         }
 
-        this._deltaManager.autoReconnect = reconnect;
+        this._deltaManager.setAutomaticReconnect(reconnect);
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
@@ -609,7 +617,7 @@ export class Container
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => {});
+        this.connectToDeltaStream().catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -652,6 +660,7 @@ export class Container
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: this._deltaManager.referenceTerm,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -730,10 +739,11 @@ export class Container
         });
 
         // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
+        const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: this._deltaManager.referenceTerm,
         };
         entries.push({
             mode: FileMode.File,
@@ -786,6 +796,8 @@ export class Container
      * @param pause - start the container in a paused state
      */
     private async load(specifiedVersion: string | null | undefined, pause: boolean) {
+        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl!, this.subLogger);
+
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -803,7 +815,7 @@ export class Container
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
             startConnectionP = this.connectToDeltaStream(connectionArgs);
-            startConnectionP.catch((error) => {});
+            startConnectionP.catch((error) => { });
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -873,11 +885,12 @@ export class Container
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: 0,
+            term: 1,
             minimumSequenceNumber: 0,
         };
 
         // Seed the base quorum to be an empty list with a code quorum set
-        const commitedCodeProposal: ICommittedProposal = {
+        const committedCodeProposal: ICommittedProposal = {
             key: "code",
             value: source,
             approvalSequenceNumber: 0,
@@ -887,7 +900,7 @@ export class Container
 
         const members: [string, ISequencedClient][] = [];
         const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", commitedCodeProposal]];
+        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
 
         this.attachDeltaManagerOpHandler(attributes);
 
@@ -923,6 +936,7 @@ export class Container
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
+                term: 1,
             };
         }
 
@@ -930,7 +944,14 @@ export class Container
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        return readAndParse<IDocumentAttributes>(storage, attributesHash);
+        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+        // Back-compat for older summaries with no term
+        if (attributes.term === undefined) {
+            attributes.term = 1;
+        }
+
+        return attributes;
     }
 
     private async loadAndInitializeProtocolState(
@@ -970,6 +991,7 @@ export class Container
             attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             members,
             proposals,
             values,
@@ -988,10 +1010,7 @@ export class Container
             if (clientId === this.pendingClientId) {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined @ ${details.sequenceNumber}`,
-                    this.pendingClientId,
-                    details.client.scopes,
-                    this._deltaManager.serviceConfiguration);
+                    `joined @ ${details.sequenceNumber}`);
             }
         });
 
@@ -1052,7 +1071,7 @@ export class Container
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component;
+        let component: IFluidModule;
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
         try {
             component = await this.codeLoader.load(pkg);
@@ -1101,20 +1120,26 @@ export class Container
         );
 
         deltaManager.on("connect", (details: IConnectionDetails) => {
-            this.setConnectionState(
-                ConnectionState.Connecting,
-                "websocket established",
-                details.clientId,
-                details.claims.scopes,
-                details.serviceConfiguration);
+            const oldState = this._connectionState;
+            this._connectionState = ConnectionState.Connecting;
+
+            // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
+            // (have received the join message for the client ID)
+            // This is especially important in the reconnect case. It's possible there could be outstanding
+            // ops sent by this client, so we should keep the old client id until we see our own client's
+            // join message. after we see the join message for out new connection with our new client id,
+            // we know there can no longer be outstanding ops that we sent with the previous client id.
+            this.pendingClientId = details.clientId;
+
+            this.emit("joining");
+
+            // Report telemetry after we set client id!
+            this.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState, "websocket established");
 
             if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
                     ConnectionState.Connected,
-                    `joined as readonly`,
-                    details.clientId,
-                    details.claims.scopes,
-                    deltaManager.serviceConfiguration);
+                    `joined as readonly`);
             }
 
             // Back-compat for new client and old server.
@@ -1161,6 +1186,7 @@ export class Container
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term ?? 1,
             {
                 process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
@@ -1178,9 +1204,9 @@ export class Container
         let durationFromDisconnected: number | undefined;
         let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
-        let autoReconnect: boolean | undefined;
+        let autoReconnect: ReconnectMode | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager.autoReconnect;
+            autoReconnect = this._deltaManager.reconnectMode;
         } else {
             connectionMode = this._deltaManager.connectionMode;
             if (value === ConnectionState.Connected) {
@@ -1218,19 +1244,10 @@ export class Container
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string);
     private setConnectionState(
         value: ConnectionState,
-        reason: string,
-        clientId: string,
-        scopes: string[],
-        configuration: IServiceConfiguration);
-    private setConnectionState(
-        value: ConnectionState,
-        reason: string,
-        clientId?: string,
-        scopes?: string[],
-        configuration?: IServiceConfiguration) {
+        reason: string) {
+        assert(value !== ConnectionState.Connecting);
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
@@ -1239,18 +1256,8 @@ export class Container
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        this._scopes = scopes;
-        this._serviceConfiguration = configuration;
 
-        // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
-        // (have received the join message for the client ID)
-        // This is especially important in the reconnect case. It's possible there could be outstanding
-        // ops sent by this client, so we should keep the old client id until we see our own client's
-        // join message. after we see the join message for out new connection with our new client id,
-        // we know there can no longer be outstanding ops that we sent with the previous client id.
-        if (value === ConnectionState.Connecting) {
-            this.pendingClientId = clientId;
-        } else if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
@@ -1275,9 +1282,12 @@ export class Container
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
-        raiseConnectedEvent(this, this._connectionState, this.clientId);
+
+        const state = this._connectionState === ConnectionState.Connected;
+        this.context!.setConnectionState(state, this.clientId);
+        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
+        raiseConnectedEvent(this.logger, this, state, this.clientId);
+
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
@@ -1329,11 +1339,6 @@ export class Container
             const local = this._clientId === message.clientId;
             this.context!.processSignal(message, local);
         }
-    }
-
-    private getScopes(resolvedUrl: IFluidResolvedUrl | undefined): string[] {
-        return resolvedUrl?.tokens?.jwt ?
-            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**

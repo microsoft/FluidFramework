@@ -9,7 +9,7 @@ import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";
 // eslint-disable-next-line import/no-internal-modules
 import * as queue from "async/queue";

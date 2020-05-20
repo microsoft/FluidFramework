@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { Serializable, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
 import { FileMode, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";

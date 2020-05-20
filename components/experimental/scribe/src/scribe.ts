@@ -22,11 +22,15 @@ import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
+    IComponentRuntime,
+} from "@microsoft/fluid-component-runtime-definitions";
+import {
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
-    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    IContainerRuntime,
+} from "@microsoft/fluid-container-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";

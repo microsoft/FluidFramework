@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-definitions",
-  "version": "0.17.0",
+  "version": "0.19.0",
   "description": "Fluid driver definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,9 +25,9 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1"
+    "@microsoft/fluid-common-definitions": "^0.17.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

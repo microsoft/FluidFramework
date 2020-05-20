@@ -8,7 +8,7 @@ import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "
 import { IFluidCodeDetails, IFluidPackage, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 

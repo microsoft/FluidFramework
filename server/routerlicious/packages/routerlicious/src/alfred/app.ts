@@ -67,8 +67,6 @@ export function create(
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
-    app.use("/agent", routes.agent);
-    app.use("/", (request, response) => response.redirect(config.get("gateway:url")));
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {

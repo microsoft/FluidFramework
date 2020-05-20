@@ -22,10 +22,8 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         new TestDocumentServiceFactory(deltaConn),
         // TODO: web socket token
         new OdspDocumentServiceFactory(
-            "webpack-component-loader",
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
-            { send: () => { return; } },
             undefined,
             undefined,
             undefined,

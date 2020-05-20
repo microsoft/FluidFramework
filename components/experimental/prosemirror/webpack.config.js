@@ -48,7 +48,7 @@ module.exports = env => {
             host: "0.0.0.0",
             publicPath: '/dist',
             stats: "minimal",
-            before: (app, server) => fluidRoute.before(app, server),
+            before: (app, server) => fluidRoute.before(app, server, env),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction
