@@ -1186,7 +1186,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
-            attributes.term,
+            attributes.term ?? 1,
             {
                 process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
