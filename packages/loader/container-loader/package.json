@@ -62,7 +62,6 @@
     "double-ended-queue": "^2.1.0-0",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.11",
-    "performance-now": "^2.1.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
