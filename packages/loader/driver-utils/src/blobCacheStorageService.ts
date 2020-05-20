@@ -10,13 +10,11 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
  * IDocumentStorageService adapter with pre-cached blobs.
  */
 export class BlobCacheStorageService extends DocumentStorageServiceProxy {
-    private readonly blobs: Promise<Map<string, string>>;
     constructor(
         internalStorageService: IDocumentStorageService,
-        blobs: Promise<Map<string, string>> | Map<string, string>,
+        private readonly blobs: Promise<Map<string, string>>,
     ) {
         super(internalStorageService);
-        this.blobs = Promise.resolve(blobs);
     }
 
     public async read(id: string): Promise<string> {

@@ -655,7 +655,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, blobs);
+            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, Promise.resolve(blobs));
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,

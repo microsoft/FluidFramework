@@ -177,7 +177,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );
@@ -209,7 +209,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );
