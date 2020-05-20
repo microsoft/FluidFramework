@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-memory-orderer",
-  "version": "0.1005.0",
+  "version": "0.1006.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,12 +24,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-protocol-base": "^0.1005.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
-    "@microsoft/fluid-server-lambdas": "^0.1005.0",
-    "@microsoft/fluid-server-services-client": "^0.1005.0",
-    "@microsoft/fluid-server-services-core": "^0.1005.0",
+    "@microsoft/fluid-common-utils": "^0.18.2",
+    "@microsoft/fluid-protocol-base": "^0.1006.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1006.0",
+    "@microsoft/fluid-server-lambdas": "^0.1006.0",
+    "@microsoft/fluid-server-services-client": "^0.1006.0",
+    "@microsoft/fluid-server-services-core": "^0.1006.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
@@ -39,7 +39,6 @@
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
-    "performance-now": "^2.1.0",
     "uuid": "^3.3.2",
     "ws": "^6.1.2"
   },

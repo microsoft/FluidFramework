@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-routerlicious-host",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Routerlicious host interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,9 +24,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
-    "@microsoft/fluid-driver-definitions": "^0.18.0",
+    "@microsoft/fluid-common-utils": "^0.18.2",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-driver-definitions": "^0.19.0",
     "@types/debug": "^0.0.31",
     "axios": "^0.18.0",
     "debug": "^4.1.1"

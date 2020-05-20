@@ -1214,6 +1214,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
+        if (context.isAttached) {
+            return;
+        }
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         if (!this.isLocal()) {
             const message = context.generateAttachMessage();

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-debugger",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,11 +24,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-driver-definitions": "^0.18.0",
-    "@microsoft/fluid-driver-utils": "^0.18.0-0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0-0",
-    "@microsoft/fluid-replay-driver": "^0.18.0"
+    "@microsoft/fluid-common-utils": "^0.18.2",
+    "@microsoft/fluid-driver-definitions": "^0.19.0",
+    "@microsoft/fluid-driver-utils": "^0.19.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.1",
+    "@microsoft/fluid-replay-driver": "^0.19.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
