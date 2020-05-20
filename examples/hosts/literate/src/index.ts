@@ -7,20 +7,22 @@ import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-contain
 import { Loader } from "@microsoft/fluid-container-loader";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
-import { InsecureUrlResolver } from "./urlResolver";
+import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
-// Base service configuration.
+// Base service configuration. (Tinylicious)
+const hostUrl = "http://localhost:3000";
 const ordererUrl = "http://localhost:3000";
 const storageUrl = "http://localhost:3000";
-const npm = "https://pragueauspkn-3873244262.azureedge.net";
-const defaultPackage = "@chaincode/smde@0.10.13378";
+const npm = "<replace this>"
+const defaultPackage = "@fluid-example/smde@0.18.1";
 
-// You'll likely want to create your own tenant at https://admin.wu2.prague.office-int.com and then change the
-// tenantId and tenantKey values.
-const tenantId = "determined-bassi";
-const tenantKey = "b5d0ad51e24b0d364503fd48b1f53181";
+// Tinylicious don't care able these values
+const tenantId = "unused";
+const tenantKey = "unused";
+const bearerSecret = "";
+
 // This represents the information for the logged in user. The service never uses it directly but provides it as part
 // of the join message. Your app can then use this to understand who created the op. Note that this object is intended
 // to be derived from. The API only requires a field named 'id' but you can create your own fields on it as well. For
@@ -38,11 +40,13 @@ export async function start(url: string, code: string): Promise<void> {
     // the client access you would then have the client code authenticate via OAuth (or similar) and perform REST
     // calls against your service.
     const insecureResolver = new InsecureUrlResolver(
+        hostUrl,
         ordererUrl,
         storageUrl,
         tenantId,
         tenantKey,
-        user);
+        user,
+        bearerSecret);
 
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
     const documentServicesFactory = new RouterliciousDocumentServiceFactory();
@@ -56,7 +60,7 @@ export async function start(url: string, code: string): Promise<void> {
     // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
     // the browser as well as the name of the entry point module. It then script includes these files on the page and
     // once loaded makes use of the module entry point name to get access to the module.
-    const codeLoader = new WebCodeLoader(new WhiteList());
+    const codeLoader = new WebCodeLoader(new SemVerCdnCodeResolver(), new WhiteList());
 
     // Finally with all the above objects created we can fully construct the loader
     const loader = new Loader(
@@ -80,7 +84,7 @@ export async function start(url: string, code: string): Promise<void> {
     // then this is not necessary. But should you wish to create new ones this step goes and proposes the passed in
     // package name on the code quorum. We only perform this check for new documents.
     if (!fluidDocument.existing) {
-        const parsedPackage = extractDetails(code);
+        const parsedPackage = extractPackageIdentifierDetails(code);
         const details: IFluidCodeDetails = {
             config: {
                 [`@${parsedPackage.scope}:cdn`]: npm,
