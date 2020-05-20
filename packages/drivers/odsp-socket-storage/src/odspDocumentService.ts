@@ -4,13 +4,7 @@
  */
 
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import {
-    ChildLogger,
-    PerformanceEvent,
-    performanceNow,
-    TelemetryLogger,
-    TelemetryNullLogger,
-} from "@microsoft/fluid-common-utils";
+import { ChildLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -37,6 +31,9 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const performanceNow = require("performance-now") as (() => number);
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";

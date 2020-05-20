@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IMergeBlock, MaxNodesInBlock, MergeTree, MergeTreeTextHelper, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";

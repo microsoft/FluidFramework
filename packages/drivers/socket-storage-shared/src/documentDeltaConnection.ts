@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-common-utils";
 import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";

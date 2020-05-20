@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     ISequencedDocumentMessage,
@@ -12,7 +12,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 

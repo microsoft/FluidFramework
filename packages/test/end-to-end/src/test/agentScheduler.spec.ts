@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";

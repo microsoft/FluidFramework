@@ -17,7 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
+import Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-component-runtime-definitions";
 

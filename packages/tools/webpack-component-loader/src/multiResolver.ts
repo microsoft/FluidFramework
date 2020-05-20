@@ -8,7 +8,7 @@ import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces"
 import { TestResolver } from "@microsoft/fluid-local-driver";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import uuid from "uuid/v4";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";

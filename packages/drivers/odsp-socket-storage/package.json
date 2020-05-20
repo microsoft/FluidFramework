@@ -59,6 +59,7 @@
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
+    "performance-now": "^2.1.0",
     "sha.js": "^2.4.11",
     "socket.io-client": "^2.1.1",
     "uuid": "^3.3.2"
@@ -66,7 +67,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.16.0-0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/sha.js": "^2.4.0",

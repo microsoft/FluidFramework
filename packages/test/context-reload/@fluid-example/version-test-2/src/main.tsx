@@ -9,8 +9,8 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");

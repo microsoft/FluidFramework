@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";

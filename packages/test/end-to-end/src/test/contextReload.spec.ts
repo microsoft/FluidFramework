@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
 import { IFluidCodeDetails, IFluidPackage, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";

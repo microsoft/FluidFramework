@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
@@ -14,7 +14,7 @@ import {
     INack,
 } from "@microsoft/fluid-protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";

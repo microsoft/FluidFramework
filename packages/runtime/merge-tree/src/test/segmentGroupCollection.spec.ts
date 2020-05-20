@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISegment } from "../mergeTree";
 import { TextSegment } from "../textSegment";
 

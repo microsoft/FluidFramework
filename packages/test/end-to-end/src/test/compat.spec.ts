@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
@@ -66,7 +66,7 @@ describe("loader/runtime compatibility", () => {
         factory: IRuntimeFactory | IComponentFactory,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<Container> {
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -74,7 +74,7 @@ describe("loader/runtime compatibility", () => {
         factory: IRuntimeFactory | IComponentFactory,
         deltaConnectionServer: ILocalDeltaConnectionServer,
     ): Promise<old.Container> {
-        const loader = old.createLocalLoader([[ codeDetails, factory ]] as any, deltaConnectionServer);
+        const loader = old.createLocalLoader([[codeDetails, factory]] as any, deltaConnectionServer);
         return old.initializeLocalContainer(id, loader, codeDetails);
     }
 

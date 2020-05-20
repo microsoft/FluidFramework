@@ -4,7 +4,7 @@
  */
 
 import { ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 export interface IRouterliciousTokenApi {
     getToken(): Promise<string>;

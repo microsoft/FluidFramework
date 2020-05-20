@@ -4,7 +4,7 @@
  */
 
 import { URL } from "url";
-import * as child_process from "child_process";
+import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";

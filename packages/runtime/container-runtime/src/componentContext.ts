@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as EventEmitter from "events";
+import assert from "assert";
+import EventEmitter from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {

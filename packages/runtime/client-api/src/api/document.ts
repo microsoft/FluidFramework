@@ -16,7 +16,7 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import * as ink from "@microsoft/fluid-ink";
+import ink from "@microsoft/fluid-ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,

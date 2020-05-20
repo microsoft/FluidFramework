@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import * as Comlink from "comlink";
+import Comlink from "comlink";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";

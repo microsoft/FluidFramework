@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Loader } from "@microsoft/fluid-container-loader";

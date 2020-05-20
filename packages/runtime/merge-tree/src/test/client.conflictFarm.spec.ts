@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as random from "random-js";
+import random from "random-js";
 import {
     annotateRange,
     doOverRange,

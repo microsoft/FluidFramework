@@ -5,7 +5,7 @@
 
 /* eslint-disable unicorn/filename-case, max-len */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { Provider } from "nconf";

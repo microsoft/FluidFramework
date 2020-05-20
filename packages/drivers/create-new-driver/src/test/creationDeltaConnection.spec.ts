@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IDocumentDeltaConnection, IDocumentService, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IClient, IDocumentMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";

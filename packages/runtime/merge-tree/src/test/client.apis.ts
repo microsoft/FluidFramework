@@ -5,7 +5,7 @@
 
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as MergeTree from "../";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";

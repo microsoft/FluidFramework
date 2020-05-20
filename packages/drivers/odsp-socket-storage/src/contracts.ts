@@ -4,7 +4,7 @@
  */
 
 import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 

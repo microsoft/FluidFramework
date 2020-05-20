@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as registerDebug from "debug";
+import registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
 export const debug = registerDebug("fluid:replay-socket-storage");

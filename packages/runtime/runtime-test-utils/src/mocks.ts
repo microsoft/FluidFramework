@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -23,7 +23,7 @@ import {
     Deferred,
     fromUtf8ToBase64,
 } from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import git from "@microsoft/fluid-gitresources";
 import {
     IBlob,
     ICommittedProposal,

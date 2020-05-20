@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { DebugLogger } from "@microsoft/fluid-common-utils";

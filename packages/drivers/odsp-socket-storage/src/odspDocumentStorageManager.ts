@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     fromBase64ToUtf8,
@@ -12,7 +12,7 @@ import {
     PerformanceEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
-import * as resources from "@microsoft/fluid-gitresources";
+import resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import {
@@ -640,9 +640,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         parentHandle: summary.parentHandle,
                         tree: summaryObject,
                     } : {
-                        useContext: false,
-                        tree: summaryObject,
-                    };
+                            useContext: false,
+                            tree: summaryObject,
+                        };
 
                     value = await this.convertSummaryToSnapshotTree(
                         subtree,

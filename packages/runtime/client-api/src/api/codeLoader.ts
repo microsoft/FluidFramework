@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@microsoft/fluid-cell";
+import cell from "@microsoft/fluid-cell";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
@@ -16,15 +16,15 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import * as ink from "@microsoft/fluid-ink";
-import * as map from "@microsoft/fluid-map";
+import ink from "@microsoft/fluid-ink";
+import map from "@microsoft/fluid-map";
 import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
 import {
     IComponentContext,
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
+import sequence from "@microsoft/fluid-sequence";
 import { createIError } from "@microsoft/fluid-driver-utils";
 import { Document } from "./document";
 

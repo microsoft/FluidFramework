@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as childProcess from "child_process";
-import * as path from "path";
+import childProcess from "child_process";
+import path from "path";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";

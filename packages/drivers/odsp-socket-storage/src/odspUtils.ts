@@ -11,7 +11,7 @@ import {
     RequestInit as FetchRequestInit,
     Headers as FetchHeaders,
 } from "node-fetch";
-import * as sha from "sha.js";
+import sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 
