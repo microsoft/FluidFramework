@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
-import * as registerDebug from "debug";
+import registerDebug from "debug";
 import { performanceNow } from "./performanceNowNode";
 
 export interface ITelemetryPropertyGetters {
