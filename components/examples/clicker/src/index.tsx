@@ -11,8 +11,6 @@ import {
     FluidReactComponent,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-    ViewToFluidMap,
-    FluidToViewMap,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -66,35 +64,16 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        const viewToFluid: ViewToFluidMap<CounterReactState,CounterFluidState> = new Map();
-        viewToFluid.set("value", {
-            rootKey: "value",
-            rootConverter: (viewState: Partial<CounterReactState>) => {
-                return {
-                    value: viewState.value,
-                };
-            },
-        });
-
-        const fluidToView: FluidToViewMap<CounterReactState,CounterFluidState> = new Map();
-        fluidToView.set("value", {
-            stateKey: "value",
-            viewConverter: (syncedState: Partial<CounterFluidState>, fluidComponentMap) => {
-                return {
-                    value: syncedState.value,
-                };
-            },
-        });
-
         ReactDOM.render(
             <div>
                 <CounterReactView
                     root={this.root}
                     initialViewState={{ value: this.root.get("counterClicks") }}
                     initialFluidState={{ value: this.root.get("counterClicks") }}
-                    viewToFluid={viewToFluid}
-                    fluidToView={fluidToView}
-                    fluidComponentMap={new Map()}
+                    dataProps={{
+                        fluidComponentMap: new Map(),
+                        runtime: this.runtime,
+                    }}
                 />
             </div>,
             div,

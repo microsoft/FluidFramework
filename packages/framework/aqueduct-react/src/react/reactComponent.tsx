@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-floating-promises */
 
 import * as React from "react";
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedDirectory, ISharedMap } from "@microsoft/fluid-map";
 import {
     FluidProps,
     IFluidFunctionalComponentFluidState,
@@ -13,8 +13,15 @@ import {
     IRootConverter,
     IViewConverter,
     FluidComponentMap,
+    IFluidSchema,
+    IFluidSchemaHandles,
 } from "./interface";
-import { rootCallbackListener, syncStateAndRoot } from "./updateStateAndComponentMap";
+import {
+    rootCallbackListener,
+    syncStateAndRoot,
+    generateComponentSchema,
+    updateStateAndComponentMap,
+} from "./algorithms";
 
 /**
  * A react component with a root, initial props, and a root to state mapping
@@ -37,19 +44,38 @@ export abstract class FluidReactComponent<
             root,
             initialViewState,
             initialFluidState,
-            fluidComponentMap,
+            dataProps,
         } = props;
 
         this.state = initialViewState;
         this.viewToFluid = viewToFluid;
         this.fluidToView = fluidToView;
-        this.fluidComponentMap = fluidComponentMap;
+        this.fluidComponentMap = dataProps.fluidComponentMap;
         this._root = root;
-        if (root.get("syncedState") === undefined) {
-            root.set("syncedState", initialFluidState);
+        let componentSchemaHandles = root.get<IFluidSchemaHandles>("componentSchema");
+        if (componentSchemaHandles === undefined) {
+            const componentSchema: IFluidSchema = generateComponentSchema(
+                dataProps.runtime,
+                this.state,
+                initialFluidState,
+                viewToFluid,
+                fluidToView,
+            );
+            componentSchemaHandles = {
+                componentKeyMapHandle: componentSchema.componentKeyMap.handle as IComponentHandle<ISharedMap>,
+                fluidMatchingMapHandle: componentSchema.fluidMatchingMap.handle as IComponentHandle<ISharedMap>,
+                viewMatchingMapHandle: componentSchema.viewMatchingMap.handle as IComponentHandle<ISharedMap>,
+            };
+            root.set("componentSchema", componentSchemaHandles);
         }
+        const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
+            componentSchemaHandles.componentKeyMapHandle,
+            componentSchemaHandles.fluidMatchingMapHandle,
+            componentSchemaHandles.viewMatchingMapHandle,
+        ];
+
         const rootCallback = rootCallbackListener(
-            fluidComponentMap,
+            dataProps.fluidComponentMap,
             true,
             root,
             this.state,
@@ -57,7 +83,24 @@ export abstract class FluidReactComponent<
             viewToFluid,
             fluidToView,
         );
+
+        if (root.get("syncedState") === undefined) {
+            root.set("syncedState", initialFluidState);
+        }
         root.on("valueChanged", rootCallback);
+
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        updateStateAndComponentMap(
+            unlistenedComponentHandles,
+            dataProps.fluidComponentMap,
+            false,
+            root,
+            this.state,
+            this._setStateFromRoot.bind(this),
+            rootCallback,
+            viewToFluid,
+            fluidToView,
+        );
     }
 
     private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean) {

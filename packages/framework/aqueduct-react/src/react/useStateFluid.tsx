@@ -9,17 +9,21 @@
 import * as React from "react";
 import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import {
     IFluidFunctionalComponentViewState,
     FluidProps,
     IFluidComponent,
     IFluidFunctionalComponentFluidState,
+    IFluidSchema,
+    IFluidSchemaHandles,
 } from "./interface";
 import {
     updateStateAndComponentMap,
     syncStateAndRoot,
     rootCallbackListener,
-} from "./updateStateAndComponentMap";
+    generateComponentSchema,
+} from "./algorithms";
 
 export function useStateFluid<
     SV extends IFluidFunctionalComponentViewState,
@@ -32,7 +36,7 @@ export function useStateFluid<
         initialViewState,
         fluidToView,
         viewToFluid,
-        fluidComponentMap,
+        dataProps,
     } = props;
     const [ reactState, reactSetState ] = React.useState<SV>(initialViewState);
 
@@ -44,19 +48,19 @@ export function useStateFluid<
                 root,
                 reactState,
                 reactSetState,
-                fluidComponentMap,
+                dataProps.fluidComponentMap,
                 viewToFluid,
                 fluidToView,
             );
         } else {
             reactSetState(newCombinedState);
         }
-    }, [root, viewToFluid, reactState, reactSetState, fluidComponentMap]);
+    }, [root, viewToFluid, reactState, reactSetState, dataProps]);
 
     const rootCallback = React.useCallback(
         (change: IDirectoryValueChanged, local: boolean) => {
             const callback = rootCallbackListener(
-                fluidComponentMap,
+                dataProps.fluidComponentMap,
                 true,
                 root,
                 reactState,
@@ -65,23 +69,39 @@ export function useStateFluid<
                 fluidToView,
             );
             return callback(change, local);
-        }, [root, fluidToView, viewToFluid, reactState, reactSetState, fluidComponentMap]);
+        }, [root, fluidToView, viewToFluid, reactState, reactSetState, dataProps]);
 
     if (viewToFluid !== undefined && !reactState.isInitialized) {
         if (root.get("syncedState") === undefined) {
             root.set("syncedState", initialFluidState);
         }
+        let componentSchema = root.get<IFluidSchema>("componentSchema");
+        if (componentSchema === undefined) {
+            componentSchema = generateComponentSchema(
+                dataProps.runtime,
+                reactState,
+                initialFluidState,
+                viewToFluid,
+                fluidToView,
+            );
+            const handles: IFluidSchemaHandles = {
+                componentKeyMapHandle: componentSchema.componentKeyMap.handle as IComponentHandle<ISharedMap>,
+                fluidMatchingMapHandle: componentSchema.fluidMatchingMap.handle as IComponentHandle<ISharedMap>,
+                viewMatchingMapHandle: componentSchema.viewMatchingMap.handle as IComponentHandle<ISharedMap>,
+            };
+            root.set("componentSchema", handles);
+        }
         root.on("valueChanged", rootCallback);
         reactState.isInitialized = true;
         const unlistenedComponentHandles: IComponentHandle[] = [];
-        fluidComponentMap.forEach((value: IFluidComponent, key: IComponentHandle) => {
+        dataProps.fluidComponentMap.forEach((value: IFluidComponent, key: IComponentHandle) => {
             if (!value.isListened && value.component.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });
         updateStateAndComponentMap(
             unlistenedComponentHandles,
-            fluidComponentMap,
+            dataProps.fluidComponentMap,
             false,
             root,
             reactState,
