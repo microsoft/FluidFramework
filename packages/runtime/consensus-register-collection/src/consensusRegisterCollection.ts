@@ -69,7 +69,7 @@ interface IRegisterOperation<T> {
     // As such, refSeq needs to reference seq # at the time op was created,
     // not when op was actually sent over wire (ISequencedDocumentMessage.referenceSequenceNumber),
     // as client can ingest ops in between.
-    refSeq: number;
+    refSeq: number | undefined;
 }
 
 const newRegisterOp = <T>(key: string, value: T, serializedValue: string, refSeq: number): IRegisterOperation<T> =>
@@ -257,6 +257,11 @@ export class ConsensusRegisterCollection<T>
             const op: IRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
+                    // back-compat 0.13 refSeq
+                    // when the refSeq property didn't exist
+                    if (op.refSeq === undefined) {
+                        op.refSeq = message.referenceSequenceNumber;
+                    }
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
                     // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;
