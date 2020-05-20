@@ -374,7 +374,7 @@ class ReferenceVersionBag extends VersionBag {
         }
     }
 
-    public print() {
+    public printRelease() {
         console.log("Release Versions:");
         for (const [name] of this.repoVersions) {
             const depVersion = this.get(name) ?? "undefined";
@@ -384,7 +384,7 @@ class ReferenceVersionBag extends VersionBag {
         console.log();
     }
 
-    public print2() {
+    public printPublished() {
         console.log(`Current Versions from ${name}:`);
         for (const [name] of this.repoVersions) {
             const depVersion = this.get(name) ?? "undefined";
@@ -394,14 +394,10 @@ class ReferenceVersionBag extends VersionBag {
     }
 
     public needBump(name: string) {
-        if (this.repoVersions.get(name) === this.get(name)) {
-            const data = this.referenceData.get(name)!;
-            return data && data.published;
-        }
-        return false;
+        return this.repoVersions.get(name) === this.get(name);
     }
     public needRelease(name: string) {
-        if (this.repoVersions.get(name) === this.get(name)) {
+        if (this.needBump(name)) {
             const data = this.referenceData.get(name)!;
             return !data || !data.published;
         }
@@ -577,7 +573,7 @@ class BumpVersion {
      */
     private async collectBumpInfo(releaseName: string) {
         const depVersions = await this.collectVersionInfo(releaseName);
-        depVersions.print();
+        depVersions.printRelease();
         return depVersions;
     }
 
@@ -606,7 +602,7 @@ class BumpVersion {
             versions = depVersions;
         }
 
-        versions.print2();
+        versions.printPublished();
     }
 
     /**
@@ -734,7 +730,11 @@ class BumpVersion {
                 } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
                     serverNeedBump = true;
                 } else {
-                    packageNeedBump.add(this.fullPackageMap.get(name)!);
+                    const pkg = this.fullPackageMap.get(name);
+                    // the generator packages are not part of the full package map
+                    if (pkg) {
+                        packageNeedBump.add(pkg);
+                    }
                 }
             }
         }
@@ -941,7 +941,7 @@ class BumpVersion {
     }
 
     private async releaseMonoRepo(depVersions: ReferenceVersionBag, monoRepo: MonoRepo) {
-        if (!depVersions.needBump(MonoRepoKind[monoRepo.kind])) {
+        if (!depVersions.needRelease(MonoRepoKind[monoRepo.kind])) {
             return;
         }
         const oldVersions = depVersions.repoVersions;
@@ -1003,7 +1003,9 @@ class BumpVersion {
         const depVersions = await this.collectBumpInfo(releaseName);
 
         // Make sure everything is installed
-        await this.repo.install();
+        if (!await this.repo.install()) {
+            fatal("Install failed");
+        }
 
         // -----------------------------------------------------------------------------------------------------
         // Create the release development branch if it is it not a patch upgrade
@@ -1106,10 +1108,16 @@ class BumpVersion {
         const repoVersions = this.collectVersions();
         if (name === MonoRepoKind[MonoRepoKind.Client]) {
             clientNeedBump = true;
-            await this.repo.clientMonoRepo.install();
+            const ret = await this.repo.clientMonoRepo.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
             serverNeedBump = true;
-            await this.repo.serverMonoRepo.install();
+            const ret = await this.repo.serverMonoRepo.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         } else {
             const pkg = this.fullPackageMap.get(name);
             if (!pkg) {
@@ -1119,10 +1127,11 @@ class BumpVersion {
                 fatal(`Monorepo package can't be bump individually`);
             }
             packageNeedBump.add(pkg);
-            await pkg.install();
+            const ret = await pkg.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
         }
-
-        await this.repo.install();
 
         const oldVersions = this.collectVersions();
         const newVersions = await this.bumpRepo(version, clientNeedBump, serverNeedBump, packageNeedBump);
@@ -1173,7 +1182,9 @@ class BumpVersion {
             if (updateLockPackage.length !== 0) {
                 if (updateLock) {
                     // Fix package lock
-                    await FluidRepoBase.ensureInstalled(updateLockPackage, false);
+                    if (!await FluidRepoBase.ensureInstalled(updateLockPackage, false)) {
+                        fatal("Install Failed");
+                    }
                 } else {
                     console.log("      SKIPPED: updating lock file");
                 }
@@ -1213,6 +1224,7 @@ class BumpVersion {
 async function main() {
     parseOptions(process.argv);
     const resolvedRoot = await getResolvedFluidRoot();
+    console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
     const remotes = await gitRepo.getRemotes();
     const url = "https://github.com/microsoft/fluidframework";
