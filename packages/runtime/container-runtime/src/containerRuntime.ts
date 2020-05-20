@@ -820,10 +820,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // If there are any pending ops, DDSs will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
-
-            // Ask the PendingStateManager to replay all the pending states prior to notifying clients.
-            this.pendingStateManager.replayPendingStates();
         }
+
+        this.pendingStateManager.setConnectionState(connected);
 
         for (const [component, componentContext] of this.contexts) {
             try {
@@ -931,8 +930,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this._flushMode = mode;
 
-        // Add the new FlushMode to PendingStateManager so that it can be replayed if needed.
-        this.pendingStateManager.addFlushMode(mode);
+        // Let the PendingStateManager know that FlushMode has been updated.
+        this.pendingStateManager.onFlushModeUpdated(mode);
     }
 
     public flush(): void {
@@ -1484,8 +1483,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        // Add the message to the PendingStateManager so that it can be replayed if needed.
-        this.pendingStateManager.addMessage(type, clientSequenceNumber, content, metadata);
+        // Let the PendingStateManager know that a message was submitted.
+        this.pendingStateManager.onSubmit(type, clientSequenceNumber, content, metadata);
 
         return clientSequenceNumber;
     }

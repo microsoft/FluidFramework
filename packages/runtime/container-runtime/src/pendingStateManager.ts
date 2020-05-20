@@ -39,12 +39,24 @@ type IPendingState = IPendingMessage | IPendingFlushMode;
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
+    private get connected(): boolean {
+        return this.containerRuntime.connected;
+    }
+
+    public setConnectionState(connected: boolean) {
+        assert(this.connected === connected);
+
+        if (connected) {
+            this.replayPendingStates();
+        }
+    }
+
     constructor(
         private readonly containerRuntime: ContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {}
 
-    public addFlushMode(flushMode: FlushMode) {
+    public onFlushModeUpdated(flushMode: FlushMode) {
         const pendingFlushMode: IPendingFlushMode = {
             type: "flush",
             flushMode,
@@ -53,7 +65,7 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlushMode);
     }
 
-    public addMessage(type: MessageType, clientSequenceNumber: number, content: any, metadata: unknown) {
+    public onSubmit(type: MessageType, clientSequenceNumber: number, content: any, metadata: unknown) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
@@ -65,7 +77,35 @@ export class PendingStateManager {
         this.pendingStates.push(pendingMessage);
     }
 
-    public replayPendingStates() {
+    public processPendingMessage(message: ISequencedDocumentMessage): unknown {
+        const pendingState = this.pendingStates.peekFront();
+        if (pendingState === undefined) {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
+            return;
+        }
+
+        if (pendingState.type === "flush") {
+            this.pendingStates.shift();
+            return this.processPendingMessage(message);
+        }
+
+        // Disconnected ops should never be processed. They should have been fully sent on connected.
+        assert(pendingState.clientSequenceNumber !== -1,
+            `processing disconnected op ${pendingState.clientSequenceNumber}`);
+
+        // Messages should always be received in the same order in which they are sent.
+        if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
+            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
+            return;
+        }
+
+        // Remove the first message from the pending list since it has been acknowledged.
+        this.pendingStates.shift();
+
+        return pendingState.metadata;
+    }
+
+    private replayPendingStates() {
         const pendingstates = this.pendingStates.toArray();
         this.pendingStates.clear();
 
@@ -96,33 +136,5 @@ export class PendingStateManager {
         }
         // Revert the FlushMode.
         this.containerRuntime.setFlushMode(savedFlushMode);
-    }
-
-    public processPendingMessage(message: ISequencedDocumentMessage): unknown {
-        const pendingState = this.pendingStates.peekFront();
-        if (pendingState === undefined) {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
-            return;
-        }
-
-        if (pendingState.type === "flush") {
-            this.pendingStates.shift();
-            return this.processPendingMessage(message);
-        }
-
-        // Disconnected ops should never be processed. They should have been fully sent on connected.
-        assert(pendingState.clientSequenceNumber !== -1,
-            `processing disconnected op ${pendingState.clientSequenceNumber}`);
-
-        // Messages should always be received in the same order in which they are sent.
-        if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
-            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
-            return;
-        }
-
-        // Remove the first message from the pending list since it has been acknowledged.
-        this.pendingStates.shift();
-
-        return pendingState.metadata;
     }
 }
