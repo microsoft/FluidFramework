@@ -15,7 +15,7 @@ describe("UpgradeManager", () => {
         let seqNum = 0;
         let clientId = 0;
         const opHandler: ProtocolOpHandler = new ProtocolOpHandler(
-            "", 0, 0, [], [], [],
+            "", 0, 0, 1, [], [], [],
             (key, value) => {
                 const s = ++seqNum;
                 // delay this so we can have multiple proposals before first proposal op

@@ -12,7 +12,7 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent, TelemetryLogger } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent, performanceNow, TelemetryLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -44,9 +44,6 @@ import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
@@ -157,6 +154,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
+    private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
@@ -204,6 +202,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get referenceSequenceNumber(): number {
         return this.baseSequenceNumber;
+    }
+
+    public get referenceTerm(): number {
+        return this.baseTerm;
     }
 
     public get minimumSequenceNumber(): number {
@@ -403,12 +405,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
+        term: number,
         handler: IDeltaHandlerStrategy,
     ) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
         this.baseSequenceNumber = sequenceNumber;
+        this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 
@@ -1209,6 +1213,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1, "non-seq seq#");
         this.baseSequenceNumber = message.sequenceNumber;
+
+        // Back-compat for older server with no term
+        this.baseTerm = message.term === undefined ? 1 : message.term;
 
         this.emit("beforeOpProcessing", message);
 

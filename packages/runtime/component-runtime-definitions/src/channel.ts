@@ -34,7 +34,8 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
     snapshot(): ITree;
 
     /**
-     * True if the data structure is local i.e. one that is not attached, and thus known only to this client.
+     * True if the data structure is local.
+     * It is local if either it is not attached or container is not attached to storage.
      * It will be lost on browser tab closure if not attached.
      */
     isLocal(): boolean;

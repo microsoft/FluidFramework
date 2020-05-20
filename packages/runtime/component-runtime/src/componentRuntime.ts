@@ -346,6 +346,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
@@ -543,6 +547,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+        // If this handle is already attached no need to attach again.
+        if (channel.handle?.isAttached) {
+            return;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
@@ -597,6 +605,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: message.type,
         };

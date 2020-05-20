@@ -28,6 +28,7 @@ import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
+    performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
@@ -56,7 +57,6 @@ import {
     QuorumProxy,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionState as ConnectionStateToBeDeleted, // deprecated, to be removed on next server bump
     FileMode,
     IClient,
     IClientDetails,
@@ -92,8 +92,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const merge = require("lodash/merge");
@@ -662,6 +660,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: this._deltaManager.referenceTerm,
         };
 
         await this.loadContext(attributes, snapshot, previousContextState);
@@ -740,10 +739,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
+        const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            term: this._deltaManager.referenceTerm,
         };
         entries.push({
             mode: FileMode.File,
@@ -885,6 +885,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: 0,
+            term: 1,
             minimumSequenceNumber: 0,
         };
 
@@ -935,6 +936,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
+                term: 1,
             };
         }
 
@@ -942,7 +944,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        return readAndParse<IDocumentAttributes>(storage, attributesHash);
+        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+        // Back-compat for older summaries with no term
+        if (attributes.term === undefined) {
+            attributes.term = 1;
+        }
+
+        return attributes;
     }
 
     private async loadAndInitializeProtocolState(
@@ -982,6 +991,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes.branch,
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term,
             members,
             proposals,
             values,
@@ -1176,6 +1186,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
+            attributes.term ?? 1,
             {
                 process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
@@ -1274,10 +1285,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const state = this._connectionState === ConnectionState.Connected;
         this.context!.setConnectionState(state, this.clientId);
-        this.protocolHandler!.quorum.changeConnectionState(
-            // TODO: Deprecated, to be removed on next server bump
-            state ? ConnectionStateToBeDeleted.Connected : ConnectionStateToBeDeleted.Disconnected,
-            this.clientId);
+        this.protocolHandler!.quorum.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.logger, this, state, this.clientId);
 
         if (logOpsOnReconnect) {

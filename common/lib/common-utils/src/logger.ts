@@ -14,8 +14,7 @@ import {
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
 import * as registerDebug from "debug";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
+import { performanceNow } from "./performanceNowNode";
 
 export interface ITelemetryPropertyGetters {
     [index: string]: () => TelemetryEventPropertyType;

@@ -17,7 +17,7 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
-    "docker-build": "docker-compose build",
+    "docker-build": "docker-compose build --build-arg NPM_TOKEN=$NPM_TOKEN",
     "docker-clean": "docker-compose down --rmi local -v",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
@@ -69,7 +69,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluid-internal/fluid-build-tools": "^0.1.26443",
+    "@fluid-internal/fluid-build-tools": "^0.1.26991",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^4.1.0",
