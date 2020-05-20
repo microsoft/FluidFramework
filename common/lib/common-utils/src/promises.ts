@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 
 /**
  * A deferred creates a promise and the ability to resolve or reject it

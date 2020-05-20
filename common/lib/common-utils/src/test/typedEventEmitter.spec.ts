@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as assert from "assert";
+import assert from "assert";
 import { IErrorEvent } from "@microsoft/fluid-common-definitions";
 import { TypedEventEmitter } from "../typedEventEmitter";
 
