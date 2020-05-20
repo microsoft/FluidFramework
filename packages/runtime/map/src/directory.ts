@@ -601,11 +601,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Submits an operation
      * @param op - Op to submit
-     * @returns The client sequence number
+     * @param pendingMessageId - The unique id that is used to track this op while it has not been ack'd. This
+     * will be sent when we receive this op back from the server.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, messageId: number): number {
-        return this.submitLocalMessage(op, messageId);
+    public submitDirectoryMessage(op: IDirectoryOperation, pendingMessageId: number) {
+        this.submitLocalMessage(op, pendingMessageId);
     }
 
     /**
@@ -630,8 +631,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             };
 
-            // Send the messageId as -1 because we don't care about the ack.
-            this.submitDirectoryMessage(op, -1 /* messageId */);
+            // Send the pendingMessageId as -1 because we don't care about the ack.
+            this.submitDirectoryMessage(op, -1 /* pendingMessageId */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -903,8 +904,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op) => {
-                    // Send the messageId as -1 because we don't care about the ack.
-                    this.submitDirectoryMessage(op, -1 /* messageId */);
+                    // Send the pendingMessageId as -1 because we don't care about the ack.
+                    this.submitDirectoryMessage(op, -1 /* pendingMessageId */);
                 },
             },
         );
@@ -941,11 +942,14 @@ class SubDirectory implements IDirectory {
      */
     private readonly pendingSubDirectories: Map<string, number> = new Map();
 
-    private messageId: number = -1;
+    /**
+     * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
+     */
+    private pendingMessageId: number = -1;
 
     /**
-     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
-     * number of that clear operation.  Otherwise, is -1.
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
+     * of that clear operation. Otherwise, is -1.
      */
     private pendingClearMessageId: number = -1;
 
@@ -1270,9 +1274,10 @@ class SubDirectory implements IDirectory {
         localOpMetadata?: unknown,
     ): void {
         if (local) {
-            assert(localOpMetadata !== undefined, "localOpMetadata missing from message from local client");
-            const messageId = localOpMetadata as number;
-            if (this.pendingClearMessageId === messageId) {
+            assert(localOpMetadata !== undefined,
+                `pendingMessageId is missing from the local client's ${op.type} operation`);
+            const pendingMessageId = localOpMetadata as number;
+            if (this.pendingClearMessageId === pendingMessageId) {
                 this.pendingClearMessageId = -1;
             }
             return;
@@ -1372,9 +1377,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        const messageId = ++this.messageId;
-        this.directory.submitDirectoryMessage(op, messageId);
-        this.pendingClearMessageId = messageId;
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -1383,9 +1388,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        const messageId = ++this.messageId;
-        this.directory.submitDirectoryMessage(op, messageId);
-        this.pendingKeys.set(op.key, messageId);
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -1394,9 +1399,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        const messageId = ++this.messageId;
-        this.directory.submitDirectoryMessage(op, messageId);
-        this.pendingSubDirectories.set(op.subdirName, messageId);
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
     }
 
     /**
@@ -1480,10 +1485,11 @@ class SubDirectory implements IDirectory {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
-                assert(localOpMetadata !== undefined, "localOpMetadata missing from message from local client");
-                const messageId = localOpMetadata as number;
+                assert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
-                if (pendingKeyMessageId === messageId) {
+                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -1512,10 +1518,11 @@ class SubDirectory implements IDirectory {
     ): boolean {
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
-                assert(localOpMetadata !== undefined, "localOpMetadata missing from message from local client");
-                const messageId = localOpMetadata as number;
+                assert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
                 const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
-                if (pendingSubDirectoryMessageId === messageId) {
+                if (pendingSubDirectoryMessageId === pendingMessageId) {
                     this.pendingSubDirectories.delete(op.subdirName);
                 }
             }

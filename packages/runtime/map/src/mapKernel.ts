@@ -159,11 +159,14 @@ export class MapKernel {
      */
     private readonly pendingKeys: Map<string, number> = new Map();
 
-    private messageId: number = -1;
+    /**
+     * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
+     */
+    private pendingMessageId: number = -1;
 
     /**
-     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
-     * number of that clear operation.  Otherwise, is -1.
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
+     * of that clear operation. Otherwise, is -1.
      */
     private pendingClearMessageId: number = -1;
 
@@ -183,7 +186,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any, messageId: number) => void,
+        private readonly submitMessage: (op: any, pendingMessageId: number) => void,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -584,18 +587,19 @@ export class MapKernel {
         localOpMetadata?: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
-            // If I have a NACK clear, we can ignore all ops.
+            // If I have an unack'd clear, we can ignore all ops.
             return false;
         }
 
         if (this.pendingKeys.has(op.key)) {
-            // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
+            // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
-                assert(localOpMetadata !== undefined, "localOpMetadata missing from message from local client");
-                const messageId = localOpMetadata as number;
+                assert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
-                if (pendingKeyMessageId === messageId) {
+                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -617,8 +621,10 @@ export class MapKernel {
             {
                 process: (op: IMapClearOperation, local, message, localOpMetadata?) => {
                     if (local) {
-                        const messageId = localOpMetadata as number;
-                        if (this.pendingClearMessageId === messageId) {
+                        assert(localOpMetadata !== undefined,
+                            "pendingMessageId is missing from the local client's clear operation");
+                        const pendingMessageId = localOpMetadata as number;
+                        if (this.pendingClearMessageId === pendingMessageId) {
                             this.pendingClearMessageId = -1;
                         }
                         return;
@@ -688,8 +694,8 @@ export class MapKernel {
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op: IMapValueTypeOperation) => {
-                    // Send the messageId as -1 because we don't care about the ack.
-                    this.submitMessage(op, -1 /* messageId */);
+                    // Send the pendingMessageId as -1 because we don't care about the ack.
+                    this.submitMessage(op, -1 /* pendingMessageId */);
                 },
             });
 
@@ -701,9 +707,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const messageId = ++this.messageId;
-        this.submitMessage(op, messageId);
-        this.pendingClearMessageId = messageId;
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -711,9 +717,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const messageId = ++this.messageId;
-        this.submitMessage(op, messageId);
-        this.pendingKeys.set(op.key, messageId);
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -738,8 +744,8 @@ export class MapKernel {
                     value: translatedParams,
                 },
             };
-            // Send the messageId as -1 because we don't care about the ack.
-            this.submitMessage(op, -1 /* messageId */);
+            // Send the pendingMessageId as -1 because we don't care about the ack.
+            this.submitMessage(op, -1 /* pendingMessageId */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);
