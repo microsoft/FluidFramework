@@ -11,21 +11,6 @@ metadata:
 data:
   config.json: |
     {
-        "app": {
-            "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
-            "gitUrl": "{{ .Values.endpoints.gitUrl }}",
-            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
-            "historianUrl": "{{ .Values.endpoints.historianUrl }}",
-            "alfredUrl": "{{ .Values.endpoints.alfredUrl }}",
-            "jarvisUrl": "{{ .Values.endpoints.jarvisUrl }}"
-        },
-        "login": {
-            "enabled": true,
-            "microsoft": {
-                "clientId": "{{ .Values.login.microsoft.clientId }}",
-                "secret": "{{ .Values.login.microsoft.secret }}"
-            }
-        },
         "logger": {
             "colorize": false,
             "morganFormat": "short",
@@ -34,12 +19,27 @@ data:
             "timestamp": true,
             "label": "winston"
         },
+        "app": {
+            "riddlerUrl": "{{ .Values.endpoints.riddlerUrl }}",
+            "gitUrl": "{{ .Values.endpoints.gitUrl }}",
+            "cobaltUrl": "{{ .Values.endpoints.cobaltUrl }}",
+            "historianUrl": "{{ .Values.endpoints.historianUrl }}",
+            "alfredUrl": "{{ .Values.endpoints.alfredUrl }}",
+            "jarvisUrl": "{{ .Values.endpoints.jarvisUrl }}"
+        },
         "mongo": {
             "endpoint": "{{ .Values.endpoints.mongodb }}",
             "collectionNames": {
                 "tenants": "tenantCollection",
                 "users": "userCollection",
                 "orgs": "orgCollection"
+            }
+        },
+        "login": {
+            "enabled": true,
+            "microsoft": {
+                "clientId": "{{ .Values.login.microsoft.clientId }}",
+                "secret": "{{ .Values.login.microsoft.secret }}"
             }
         },
         "kafka": {
@@ -54,8 +54,8 @@ data:
             }
         },
         "error": {
-            "track": true,
-            "endpoint" : "{{ .Values.error.endpoint }}"
+            "track": false,
+            "endpoint" : "{{ .Values.endpoints.error.endpoint }}"
         },
         "redis": {
             "host": "{{ .Values.endpoints.redis.url }}",
@@ -65,9 +65,9 @@ data:
         },
         "keyValue": {
             "documentUrl": "{{ .Values.endpoints.keyValueUrl }}",
-            "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+            "jwtKey": "{{ .Values.jwtkey }}",
             "gatewayUrl": "{{ .Values.endpoints.gatewayUrl }}",
-            "load": true
+            "load": false
         },
         "express": {
             "session": {
