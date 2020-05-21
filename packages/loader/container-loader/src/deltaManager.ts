@@ -45,9 +45,6 @@ import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
-
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
 const MissingFetchDelaySeconds = 0.1;
@@ -648,8 +645,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         telemetryEventSuffix: string,
         fromInitial: number,
         to: number | undefined,
-        callback: (messages: ISequencedDocumentMessage[]) => void)
-    {
+        callback: (messages: ISequencedDocumentMessage[]) => void) {
         let retry: number = 0;
         let from: number = fromInitial;
         let deltas: ISequencedDocumentMessage[] = [];

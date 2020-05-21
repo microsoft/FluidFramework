@@ -11,9 +11,6 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
-
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there
  * is more than one op a particular run of the queue. It does not schedule if there is just one
