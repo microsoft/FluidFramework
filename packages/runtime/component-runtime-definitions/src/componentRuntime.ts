@@ -8,6 +8,7 @@ import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitio
 import {
     IComponentHandleContext,
     IComponentSerializer,
+    IComponentRouter,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -26,7 +27,12 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IProvideComponentRegistry> {
+export interface IComponentRuntime extends
+    IComponentRouter,
+    EventEmitter,
+    IDisposable,
+    Partial<IProvideComponentRegistry>
+{
 
     readonly id: string;
 
