@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
@@ -23,14 +23,13 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedString,
     SharedStringSegment,
     SequenceMaintenanceEvent,
     SequenceDeltaEvent,
 } from "@microsoft/fluid-sequence";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { clamp, emptyArray } from "../util";
@@ -130,17 +129,18 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
-export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumentEvents> {
-    private static readonly factory = new SharedComponentFactory<FlowDocument>(
+export class FlowDocument extends PrimedComponent<{}, undefined, IFlowDocumentEvents> {
+    private static readonly factory = new PrimedComponentFactory(
         documentType,
         FlowDocument,
-        /* root: */ SharedDirectory.getFactory(),
-        [SharedString.getFactory()]);
+        [SharedString.getFactory()],
+        {},
+    );
 
-    public static getFactory(): IComponentFactory { return FlowDocument.factory; }
+    public static getFactory() { return FlowDocument.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return FlowDocument.factory.create(parentContext, props);
+    public static async create(parentContext: IComponentContext) {
+        return FlowDocument.factory.createComponent(parentContext);
     }
 
     private get sharedString() { return this.maybeSharedString; }
@@ -159,7 +159,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
     private maybeSharedString?: SharedString;
 
-    public create() {
+    protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
@@ -171,7 +171,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         }
     }
 
-    public async load() {
+    protected async componentInitializingFromExisting() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });

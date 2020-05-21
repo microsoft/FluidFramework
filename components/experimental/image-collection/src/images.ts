@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandleContext,
@@ -14,9 +15,7 @@ import {
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export class ImageComponent implements
@@ -53,23 +52,20 @@ export class ImageComponent implements
     }
 }
 
-export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection
+export class ImageCollection extends PrimedComponent implements IComponentCollection
 {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         "@fluid-example/image-collection",
         ImageCollection,
-        SharedDirectory.getFactory(),
+        [],
+        {},
     );
 
     public static getFactory(): IComponentFactory { return ImageCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return ImageCollection.factory.create(parentContext, props);
+    public static async create(parentContext: IComponentContext) {
+        return ImageCollection.factory.createComponent(parentContext);
     }
-
-    public create() { this.initialize(); }
-    public async load() { this.initialize(); }
 
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
@@ -114,7 +110,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
         return this.images.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    private initialize() {
+    protected async componentInitializingFirstTime() {
         for (const key of this.root.keys()) {
             this.images.set(
                 key,
@@ -138,6 +134,10 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                 this.images.set(changed.key, player);
             }
         });
+    }
+
+    protected async componentInitializingFromExisting() {
+        return this.componentInitializingFirstTime();
     }
 }
 

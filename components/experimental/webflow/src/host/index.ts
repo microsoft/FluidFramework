@@ -3,35 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
-    private static readonly factory = new SharedComponentFactory<WebFlow>(
-        hostType,
+export const WebFlowName = hostType;
+
+export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
+    private static readonly factory = new PrimedComponentFactory(
+        WebFlowName,
         WebFlow,
-        /* root: */ SharedDirectory.getFactory(),
         [],
-        [FlowDocument.getFactory()]);
+        {},
+        [FlowDocument.getFactory().registryEntry],
+    );
 
-    public static getFactory(): IComponentFactory { return WebFlow.factory; }
+    public static getFactory() { return WebFlow.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return WebFlow.factory.create(parentContext, props);
+    public static async create(parentContext: IComponentContext) {
+        return WebFlow.factory.createComponent(parentContext);
     }
 
-    public create() {
-        const doc = FlowDocument.create(this.context);
+    protected async componentInitializingFirstTime() {
+        const doc = await FlowDocument.create(this.context) as FlowDocument;
         this.root.set("doc", doc.handle);
 
         const url = new URL(window.location.href);
@@ -42,8 +44,6 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
         }
     }
 
-    public async load() { }
-
     public get IComponentHTMLVisual() { return this; }
 
     // #region IComponentHTMLVisual
@@ -53,6 +53,4 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
     }
 
     // #endregion IComponentHTMLVisual
-
-    protected async componentInitializingFirstTime() { this.create(); }
 }

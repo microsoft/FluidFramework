@@ -25,12 +25,11 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-base": "^0.19.0",
+    "@microsoft/fluid-aqueduct": "^0.19.0",
     "@microsoft/fluid-component-core-interfaces": "^0.19.0",
     "@microsoft/fluid-component-runtime": "^0.19.0",
     "@microsoft/fluid-framework-experimental": "^0.19.0",
     "@microsoft/fluid-framework-interfaces": "^0.19.0",
-    "@microsoft/fluid-map": "^0.19.0",
     "@microsoft/fluid-runtime-definitions": "^0.19.0",
     "@microsoft/fluid-view-interfaces": "^0.19.0",
     "@types/node": "^10.14.6"

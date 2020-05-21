@@ -7,7 +7,12 @@ export { FlowDocument } from "./document";
 export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 
-import { RuntimeFactory } from "@microsoft/fluid-component-base";
-import { WebFlow } from "./host";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { WebFlow, WebFlowName } from "./host";
 
-export const fluidExport = new RuntimeFactory(WebFlow.getFactory());
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    WebFlowName,
+    new Map([
+        WebFlow.getFactory().registryEntry,
+    ]),
+);

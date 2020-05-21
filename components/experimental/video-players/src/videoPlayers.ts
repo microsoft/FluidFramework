@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandleContext,
@@ -14,9 +15,7 @@ import {
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 declare global {
@@ -147,23 +146,26 @@ export class VideoPlayer implements
     }
 }
 
-export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> implements
+export class VideoPlayerCollection extends PrimedComponent implements
     IComponentCollection
 {
-    private static readonly factory = new SharedComponentFactory<VideoPlayerCollection>(
+    private static readonly factory = new PrimedComponentFactory(
         "@fluid-example/video-players",
         VideoPlayerCollection,
-        SharedDirectory.getFactory(),
+        [],
+        {},
     );
 
     public static getFactory(): IComponentFactory { return VideoPlayerCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return VideoPlayerCollection.factory.create(parentContext, props);
+    public static async create(parentContext: IComponentContext) {
+        return VideoPlayerCollection.factory.createComponent(parentContext);
     }
 
-    public create() { this.initialize().catch((error) => { this.context.error(error); }); }
-    public async load() { await this.initialize(); }
+    protected async componentInitializingFirstTime() {
+        this.initializeCore().catch((error) => { this.context.error(error); });
+    }
+    protected async componentInitializingFromExisting() { await this.initialize(); }
 
     public get IComponentRouter() { return this; }
     public get IComponentLoadable() { return this; }
@@ -211,7 +213,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
         return this.videoPlayers.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    private async initialize() {
+    private async initializeCore() {
         // TODO for simplicity initializing youtube api now but it's probably not always the case we will want to do
         // this - especially since we may just be loading the model data here
         const youTubeApi = await YouTubeAPI.GetOrCreate();

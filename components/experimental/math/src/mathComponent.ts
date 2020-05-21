@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
@@ -25,11 +26,9 @@ import {
 import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
-import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
@@ -501,29 +500,29 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IComponentHTMLOptions { }
 
-export class MathCollection extends SharedComponent<ISharedDirectory> implements IComponentCollection {
-    private static readonly factory = new SharedComponentFactory<MathCollection>(
+export class MathCollection extends PrimedComponent implements IComponentCollection {
+    private static readonly factory = new PrimedComponentFactory(
         "@fluid-example/math",
         MathCollection,
-        /* root: */ SharedDirectory.getFactory(),
         [Sequence.SharedString.getFactory()],
+        {},
     );
 
     public static getFactory(): IComponentFactory { return MathCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return MathCollection.factory.create(parentContext, props);
+    public static async create(parentContext: IComponentContext) {
+        return MathCollection.factory.createComponent(parentContext);
     }
 
-    public create() {
+    protected async componentInitializingFirstTime() {
         this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
         this.root.set("mathText", this.combinedMathText.handle);
-        this.initialize();
+        this.initializeCore();
     }
 
-    public async load() {
+    protected async componentInitializingFromExisting() {
         this.combinedMathText = await (await this.root.wait<IComponentHandle<Sequence.SharedString>>("mathText")).get();
-        this.initialize();
+        this.initializeCore();
     }
 
     public get IComponentLoadable() { return this; }
@@ -644,7 +643,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
         return this.combinedMathText.findTile(startPos, tileType, preceding);
     }
 
-    private initialize() {
+    private initializeCore() {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
         require("katex/dist/katex.min.css");
         // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
