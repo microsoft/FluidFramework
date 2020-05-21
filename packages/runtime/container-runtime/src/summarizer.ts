@@ -556,7 +556,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
-                    description: `Summarizer: ${this.stopReason ?? "runEnded"}`,
+                    canRetry: false,
+                    message: `Summarizer: ${this.stopReason ?? "runEnded"}`,
                 };
                 this.runtime.closeFn(error);
             }
