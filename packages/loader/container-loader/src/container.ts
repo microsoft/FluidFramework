@@ -880,7 +880,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
-        } catch(error) {
+        } catch (error) {
             this.close(createIError(error, true));
             throw error;
         }
