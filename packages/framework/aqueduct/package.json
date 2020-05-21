@@ -67,6 +67,7 @@
     "@microsoft/fluid-shared-object-base": "^0.18.0",
     "@microsoft/fluid-synthesize": "^0.18.0",
     "@microsoft/fluid-view-adapters": "^0.18.0",
+    "@microsoft/fluid-view-interfaces": "^0.18.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+
 export const IComponentMountableView: keyof IProvideComponentMountableView = "IComponentMountableView";
 
 export interface IProvideComponentMountableView {
     readonly IComponentMountableView: IComponentMountableView;
+}
+
+export interface IComponentMountableViewClass {
+    new (viewProvider: IComponent): IComponentMountableView;
+    canMount(viewProvider: IComponent): boolean;
 }
 
 /**

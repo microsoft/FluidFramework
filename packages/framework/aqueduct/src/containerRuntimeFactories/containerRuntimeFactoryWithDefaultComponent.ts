@@ -10,6 +10,7 @@ import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfa
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+import { MountableView } from "@microsoft/fluid-view-adapters";
 import { defaultComponentRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -37,7 +38,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
             [
                 // The mountable view request handler must go before any other request handlers that we might
                 // want to return mountable views, so it can correctly handle the header.
-                mountableViewRequestHandler,
+                mountableViewRequestHandler(MountableView),
                 defaultComponentRuntimeRequestHandler(defaultComponentId),
                 ...requestHandlers,
             ],

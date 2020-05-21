@@ -12,19 +12,19 @@ import * as ReactDOM from "react-dom";
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements, as well as
  * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
  *
- * The MountableView must be applied from within the same bundle that provides the view, and then the MountableView
+ * The MountableView must be applied from within the same bundle that provides the view, and then that MountableView
  * can be used by a separate bundle.  Attempting to apply a MountableView to a view that was retrieved from a separate
  * bundle is not supported.
  */
 export class MountableView implements IComponentMountableView {
     public get IComponentMountableView() { return this; }
 
-    public static canMount(component: IComponent) {
+    public static canMount(viewProvider: IComponent) {
         return (
-            React.isValidElement(component)
-            || component.IComponentReactViewable !== undefined
-            || component.IComponentHTMLView !== undefined
-            || component.IComponentHTMLVisual !== undefined
+            React.isValidElement(viewProvider)
+            || viewProvider.IComponentReactViewable !== undefined
+            || viewProvider.IComponentHTMLView !== undefined
+            || viewProvider.IComponentHTMLVisual !== undefined
         );
     }
 

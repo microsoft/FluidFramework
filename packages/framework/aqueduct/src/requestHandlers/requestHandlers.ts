@@ -9,7 +9,7 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { MountableView } from "@microsoft/fluid-view-adapters";
+import { IComponentMountableViewClass } from "@microsoft/fluid-view-interfaces";
 
 /**
  * A mountable view is only required if the view needs to be mounted across a bundle boundary.  Mounting across
@@ -18,26 +18,30 @@ import { MountableView } from "@microsoft/fluid-view-adapters";
  * be two React instances, breaking the Rules of Hooks.  When cross-bundle mounting isn't required, the mountable
  * view isn't necessary.
  */
-export const mountableViewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    if (request.headers?.mountableView === true) {
-        // Reissue the request without the mountableView header.  We'll repack whatever the response is if we can.
-        const headers = { ...request.headers };
-        delete headers.mountableView;
-        const newRequest = new RequestParser({
-            url: request.url,
-            headers,
-        });
-        const response = await runtime.request(newRequest);
+export const mountableViewRequestHandler =
+    (MountableViewClass: IComponentMountableViewClass) => {
+        return async (request: RequestParser, runtime: IContainerRuntime) => {
+            if (request.headers?.mountableView === true) {
+                // Reissue the request without the mountableView header.
+                // We'll repack whatever the response is if we can.
+                const headers = { ...request.headers };
+                delete headers.mountableView;
+                const newRequest = new RequestParser({
+                    url: request.url,
+                    headers,
+                });
+                const response = await runtime.request(newRequest);
 
-        if (response.status === 200 && MountableView.canMount(response.value)) {
-            return {
-                status: 200,
-                mimeType: "fluid/component",
-                value: new MountableView(response.value),
-            };
-        }
-    }
-};
+                if (response.status === 200 && MountableViewClass.canMount(response.value)) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/component",
+                        value: new MountableViewClass(response.value),
+                    };
+                }
+            }
+        };
+    };
 
 export const defaultComponentRuntimeRequestHandler: (defaultComponentId: string) => RuntimeRequestHandler =
     (defaultComponentId: string) => {
