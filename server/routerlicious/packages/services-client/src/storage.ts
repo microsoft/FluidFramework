@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**

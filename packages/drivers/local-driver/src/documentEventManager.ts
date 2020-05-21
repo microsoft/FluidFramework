@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 /**

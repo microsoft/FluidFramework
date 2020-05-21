@@ -8,13 +8,13 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/aqueduct";
+import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {

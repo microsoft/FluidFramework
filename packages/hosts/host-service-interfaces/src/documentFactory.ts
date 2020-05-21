@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
 
@@ -15,7 +15,7 @@ export interface IDocumentFactory extends IProvideDocumentFactory {
     create(fluidCodeDetails: IFluidCodeDetails): Promise<string>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideDocumentFactory>> { }
 }

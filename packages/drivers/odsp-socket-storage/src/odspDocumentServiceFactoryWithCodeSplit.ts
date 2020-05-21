@@ -8,8 +8,8 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";

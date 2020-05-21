@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,

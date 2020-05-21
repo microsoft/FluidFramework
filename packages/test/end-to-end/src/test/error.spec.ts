@@ -4,25 +4,25 @@
  */
 
 import * as assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
     ErrorType,
     IDocumentServiceFactory,
     IThrottlingError,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     createIError,
     createNetworkError,
     createWriteError,
     ErrorWithProps,
     invalidFileNameErrorCode,
-} from "@microsoft/fluid-driver-utils";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+} from "@fluidframework/driver-utils";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
+import { LocalCodeLoader } from "@fluidframework/test-utils";
 
 describe("Errors Types", () => {
     const id = "fluid-test://localhost/errorTest";

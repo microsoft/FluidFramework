@@ -6,8 +6,8 @@
 import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { Ink } from "@microsoft/fluid-ink";
+} from "@fluidframework/aqueduct";
+import { Ink } from "@fluidframework/ink";
 import { Canvas } from "./canvas";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

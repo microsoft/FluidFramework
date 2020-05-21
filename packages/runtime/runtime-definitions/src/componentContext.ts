@@ -13,14 +13,14 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     ConnectionState,
@@ -29,7 +29,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 

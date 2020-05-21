@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import * as mocks from "@microsoft/fluid-test-runtime-utils";
+import * as mocks from "@fluidframework/test-runtime-utils";
 import { GitManager } from "@fluidframework/server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";

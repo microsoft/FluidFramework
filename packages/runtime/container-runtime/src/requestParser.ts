@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation

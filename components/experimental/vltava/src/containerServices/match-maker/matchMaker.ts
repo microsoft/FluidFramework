@@ -4,16 +4,16 @@
  */
 
 import assert from "assert";
-import { BaseContainerService, serviceRoutePathRoot } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
     IProvideComponentDiscoverInterfaces,
     IComponentDiscoverInterfaces,
     IComponentDiscoverableInterfaces,
-} from "@microsoft/fluid-framework-interfaces";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/framework-interfaces";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
@@ -64,7 +64,7 @@ export const unregisterWithMatchMaker = async (
 
 /**
  * The MatchMaker is a Container Service that provides Components the ability to register based on capabilities.
- * It's an implementation of the Discover interfaces {@link @microsoft/fluid-framework-interfaces}
+ * It's an implementation of the Discover interfaces {@link @fluidframework/framework-interfaces}
  *
  * The MatchMaker is not meant to be used directly but to be used through the two provided
  * registerWithMatchMaker and unregisterWithMatchMaker functions.

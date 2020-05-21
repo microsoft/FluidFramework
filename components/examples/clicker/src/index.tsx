@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { ITask } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { Counter, CounterValueType } from "@fluidframework/map";
+import { ITask } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";

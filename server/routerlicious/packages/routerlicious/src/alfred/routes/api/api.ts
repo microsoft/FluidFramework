@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
 import { Request, Response, Router } from "express";

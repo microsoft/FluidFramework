@@ -4,7 +4,7 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import {
     IClientJoin,
     IDocumentMessage,

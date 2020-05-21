@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     IDocumentAttributes,
     IDocumentSystemMessage,

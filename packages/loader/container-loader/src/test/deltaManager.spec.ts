@@ -7,8 +7,8 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/common-utils";
-import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
+import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@fluidframework/protocol-definitions";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 

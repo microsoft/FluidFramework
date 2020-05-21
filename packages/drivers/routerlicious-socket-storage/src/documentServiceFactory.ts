@@ -9,15 +9,15 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { IErrorTrackingService, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import Axios from "axios";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";

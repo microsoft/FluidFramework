@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-component-runtime-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/component-runtime-definitions";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;

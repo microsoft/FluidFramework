@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
-import { BaseHost } from "@microsoft/fluid-base-host";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { InnerDocumentServiceFactory } from "@fluidframework/iframe-driver";
+import { BaseHost } from "@fluidframework/base-host";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);

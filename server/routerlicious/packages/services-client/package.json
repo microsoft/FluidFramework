@@ -47,9 +47,9 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/gitresources": "^0.1006.0",
     "@fluidframework/protocol-base": "^0.1006.0",
     "@fluidframework/protocol-definitions": "^0.1006.0",
-    "@microsoft/fluid-gitresources": "^0.1006.0",
     "@types/node": "^10.14.6",
     "axios": "^0.18.0",
     "debug": "^4.1.1",

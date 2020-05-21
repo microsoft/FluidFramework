@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
     IComponentContext,
     IComponentFactory,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import { LazyPromise } from "@fluidframework/common-utils";
 
 export class LazyComponentFactory implements IComponentFactory {

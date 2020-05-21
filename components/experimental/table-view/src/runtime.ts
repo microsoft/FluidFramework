@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { tableViewType } from "./tableview";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

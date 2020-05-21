@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTracker } from "@fluidframework/runtime-definitions";
 
 /**
  * SummaryTracker is a tree node which allows for deferred

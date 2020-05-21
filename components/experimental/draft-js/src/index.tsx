@@ -7,10 +7,10 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { SharedMap } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

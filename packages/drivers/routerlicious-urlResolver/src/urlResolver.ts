@@ -6,13 +6,13 @@
 import { parse } from "url";
 import {
     IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 

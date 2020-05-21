@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReference } from "@microsoft/fluid-merge-tree";
+import { LocalReference } from "@fluidframework/merge-tree";
 import { debug } from "../document/debug";
 import { FlowDocument } from "../document/index";
 

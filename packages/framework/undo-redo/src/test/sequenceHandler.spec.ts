@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
 import { UndoRedoStackManager } from "../undoRedoStackManager";
 

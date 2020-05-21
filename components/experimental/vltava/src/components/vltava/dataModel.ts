@@ -5,12 +5,12 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentLastEditedTracker } from "@microsoft/fluid-last-edited-experimental";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IQuorum, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentLastEditedTracker } from "@fluidframework/last-edited-experimental";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedDirectory } from "@fluidframework/map";
+import { IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
 
 export interface IVltavaUserDetails {
     name: string,

@@ -5,8 +5,8 @@
 import {
     ISnapshotTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
-import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/protocol-definitions";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {

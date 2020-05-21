@@ -18,9 +18,9 @@ import {
     IConnect,
     MessageType,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 
 interface IAugmentedDocumentMessage {
     clientId: string,

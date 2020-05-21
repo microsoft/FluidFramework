@@ -4,17 +4,17 @@
  */
 
 import * as assert from "assert";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { SharedString } from "@fluidframework/sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 describe("SharedString", () => {
     const id = "fluid-test://localhost/sharedStringTest";

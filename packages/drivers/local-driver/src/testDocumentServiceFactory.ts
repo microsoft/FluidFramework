@@ -8,16 +8,16 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
+import { TokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
-import { ISummaryTree, NackErrorType } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-utils";
+import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { IExperimentalDocumentStorage } from "@fluidframework/server-services-core";
 import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
 import { createTestDocumentService } from "./testDocumentService";

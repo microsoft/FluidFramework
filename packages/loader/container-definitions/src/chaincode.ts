@@ -9,8 +9,8 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService, IError } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -23,7 +23,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
@@ -263,7 +263,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &

@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IUser } from "@fluidframework/protocol-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {

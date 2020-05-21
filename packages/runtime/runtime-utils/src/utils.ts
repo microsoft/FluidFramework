@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
     value?.type === "__fluid_handle__";

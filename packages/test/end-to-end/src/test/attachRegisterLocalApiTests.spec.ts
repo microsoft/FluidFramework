@@ -4,23 +4,23 @@
  */
 
 import * as assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Loader } from "@microsoft/fluid-container-loader";
-import  { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import  { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
-import { IContainerRuntimeBase } from "@microsoft/fluid-runtime-definitions";
-import { SharedMap } from "@microsoft/fluid-map";
-import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { TestRootComponent } from "@microsoft/fluid-local-test-utils";
+} from "@fluidframework/test-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { TestRootComponent } from "@fluidframework/local-test-utils";
 
 [true, false].forEach((isLocal) => {
     describe(`Attach/Register/Local Api Tests For ${isLocal ? "Local" : "Live"} Container`, () => {

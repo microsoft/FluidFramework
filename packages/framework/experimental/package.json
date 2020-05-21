@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-framework-experimental",
+  "name": "@fluidframework/framework-experimental",
   "version": "0.19.0",
   "description": "Experimental definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
@@ -24,8 +24,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
-    "@microsoft/fluid-runtime-definitions": "^0.19.0"
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/runtime-definitions": "^0.19.0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",

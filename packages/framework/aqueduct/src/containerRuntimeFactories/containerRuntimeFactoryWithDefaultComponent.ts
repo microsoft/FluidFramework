@@ -5,12 +5,12 @@
 
 import {
     RuntimeRequestHandler,
-} from "@microsoft/fluid-container-runtime";
-import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
-import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
-import { MountableView } from "@microsoft/fluid-view-adapters";
+} from "@fluidframework/container-runtime";
+import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
+import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { DependencyContainerRegistry } from "@fluidframework/synthesize";
+import { MountableView } from "@fluidframework/view-adapters";
 import { defaultComponentRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 

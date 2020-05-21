@@ -9,26 +9,26 @@ import {
     PrimedComponentFactory,
     ContainerServiceRegistryEntries,
     generateContainerServicesRequestHandler,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentLoadable,
     IComponentRunnable,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
     NamedComponentRegistryEntries, IComponentContext, IComponentRuntimeChannel,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-driver";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/local-driver";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { TestDataStore } from "./testDataStore";
 import { TestCodeLoader } from "./";
 
