@@ -47,7 +47,6 @@ const getDefaultCheckpooint = (epoch: number): IDeliCheckpoint => {
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
-        lastTicketedTimestamp: 0,
     };
 };
 

@@ -30,7 +30,6 @@ describe("Routerlicious", () => {
                         topic: "topic",
                         value: "",
                     },
-                    lastTicketedTimestamp: 0,
                 };
             }
 
