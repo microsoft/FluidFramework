@@ -7,7 +7,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
-import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ISerializableValue,
     ISerializedValue,

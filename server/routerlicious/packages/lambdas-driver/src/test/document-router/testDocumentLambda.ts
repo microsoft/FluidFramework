@@ -11,7 +11,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {

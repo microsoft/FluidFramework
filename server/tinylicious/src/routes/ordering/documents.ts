@@ -8,7 +8,6 @@ import { Router } from "express";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
-
     const router: Router = Router();
 
     router.get("/:tenantId?/:id", (request, response) => {

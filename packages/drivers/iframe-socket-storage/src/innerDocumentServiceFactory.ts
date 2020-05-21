@@ -12,7 +12,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import * as Comlink from "comlink";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { InnerUrlResolver } from "./innerUrlResolver";

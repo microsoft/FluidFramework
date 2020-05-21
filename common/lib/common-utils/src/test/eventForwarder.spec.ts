@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IErrorEvent } from "@microsoft/fluid-common-definitions";
+import { IErrorEvent } from "@fluidframework/common-definitions";
 import { EventForwarder } from "../eventForwarder";
 
 interface ITestEvents extends IErrorEvent{

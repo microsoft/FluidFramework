@@ -20,7 +20,7 @@ import {
     IVersion,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 

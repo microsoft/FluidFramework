@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -15,7 +15,7 @@ import {
     TreeEntry,
     SummaryType,
     SummaryObject,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Create a flatten view of an array of ITreeEntry

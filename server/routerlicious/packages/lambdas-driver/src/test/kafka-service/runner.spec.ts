@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestConsumer, TestKafka, TestProducer } from "@microsoft/fluid-server-test-utils";
+import { TestConsumer, TestKafka, TestProducer } from "@fluidframework/server-test-utils";
 import * as assert from "assert";
 import { Provider } from "nconf";
 import { KafkaRunner } from "../../kafka-service/runner";

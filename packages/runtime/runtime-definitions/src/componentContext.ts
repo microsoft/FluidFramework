@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentLoadable,
@@ -153,7 +153,8 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
-     * Called to attach the runtime to the container
+     * Called to attach the runtime to the container.
+     * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     attach(): void;
 

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-view-adapters",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "View adapters for rendering components of alternate or unknown UI frameworks",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,14 +24,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
-    "@microsoft/fluid-view-interfaces": "^0.18.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-view-interfaces": "^0.19.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/react": "^16.9.15",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

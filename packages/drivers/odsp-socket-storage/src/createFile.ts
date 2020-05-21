@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { getGitType } from "@microsoft/fluid-protocol-base";
 import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@microsoft/fluid-driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@microsoft/fluid-protocol-definitions";

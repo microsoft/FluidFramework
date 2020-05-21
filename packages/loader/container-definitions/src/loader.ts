@@ -12,7 +12,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IError, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -91,6 +91,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
     /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
 

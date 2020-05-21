@@ -8,8 +8,7 @@ import {
     getSpoServer,
     isSpoPushServer,
     isSpoServer,
-    isSpoTenant,
-} from "@fluid-example/tiny-web-host";
+} from "./odspUtils";
 
 export function saveSpoTokens(req, params, accessToken: string, refreshToken: string) {
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -30,16 +29,16 @@ export function saveSpoTokens(req, params, accessToken: string, refreshToken: st
 export const spoEnsureLoggedIn = () => {
     return (req, res, next) => {
         const tenantId = req.params.tenantId;
-        if (isSpoTenant(tenantId)) {
+        const spoTenant = getSpoServer(tenantId);
+        if (spoTenant !== undefined) {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!req.session
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 || !req.session.tokens
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                || !req.session.tokens[getSpoServer(tenantId)]
+                || !req.session.tokens[spoTenant]
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                || !req.session.tokens[getSpoServer(tenantId)].accessToken) {
-
+                || !req.session.tokens[spoTenant].accessToken) {
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_${req.params.tenantId}`);

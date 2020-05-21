@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -196,7 +196,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
+    readonly closeFn: (error?: IError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -225,6 +225,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
 

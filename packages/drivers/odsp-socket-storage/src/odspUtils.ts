@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { createNetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import {
+    createNetworkError,
+    fetchFailureStatusCode,
+    offlineFetchFailureStatusCode,
+    OnlineStatus,
+} from "@microsoft/fluid-driver-utils";
 import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
@@ -23,7 +28,6 @@ export function throwOdspNetworkError(
     statusCode: number,
     canRetry: boolean,
     response?: Response,
-    online?: string,
 ) {
     let message = errorMessage;
     let sprequestguid;
@@ -36,8 +40,7 @@ export function throwOdspNetworkError(
         message,
         canRetry,
         statusCode,
-        undefined /* retryAfterSeconds */,
-        online);
+        undefined /* retryAfterSeconds */);
     (networkError as any).sprequestguid = sprequestguid;
     throw networkError;
 }
@@ -162,16 +165,15 @@ export async function fetchHelper(
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
-        let online: string | undefined;
+        let online = OnlineStatus.Unknown;
         if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
-            online = OnlineStatus[OnlineStatus.Offline];
+            online = OnlineStatus.Offline;
         }
         throwOdspNetworkError(
             `Fetch error: ${error}`,
-            709,
+            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             true, // canRetry
             undefined, // response
-            online,
         );
     });
 }

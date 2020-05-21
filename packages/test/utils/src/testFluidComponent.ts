@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { SharedMap, ISharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
@@ -16,7 +16,7 @@ import { ITestFluidComponent } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IComponentContext and IComponentRuntime.
  */
-export class TestFluidComponent implements ITestFluidComponent {
+export class TestFluidComponent implements ITestFluidComponent, IComponentLoadable {
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
@@ -31,7 +31,15 @@ export class TestFluidComponent implements ITestFluidComponent {
         return this;
     }
 
+    public get IComponentLoadable() {
+        return this;
+    }
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
+    public url: string;
     private root!: ISharedMap;
+    private readonly innerHandle: IComponentHandle<this>;
 
     /**
      * Creates a new TestFluidComponent.
@@ -44,7 +52,10 @@ export class TestFluidComponent implements ITestFluidComponent {
         public readonly runtime: IComponentRuntime,
         public readonly context: IComponentContext,
         private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>,
-    ) {}
+    ) {
+        this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+    }
 
     /**
      * Retrieves a shared object with the given id.

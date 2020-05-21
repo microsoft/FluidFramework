@@ -8,7 +8,7 @@ import {
     IComponentContext,
     IComponentFactory,
 } from "@microsoft/fluid-runtime-definitions";
-import { LazyPromise } from "@microsoft/fluid-common-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 
 export class LazyComponentFactory implements IComponentFactory {
     private readonly factoryP: Promise<IComponentFactory>;

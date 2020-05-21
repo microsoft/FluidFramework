@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
@@ -26,7 +26,7 @@ import {
     SharedObject,
     ISharedObjectEvents,
 } from "@microsoft/fluid-shared-object-base";
-import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,

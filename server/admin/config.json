@@ -1,19 +1,4 @@
 {
-    "app": {
-        "riddlerUrl": "http://riddler:5000",
-        "gitUrl": "http://gitrest:3000",
-        "cobaltUrl": "http://cobalt",
-        "historianUrl": "http://localhost:3001",
-        "alfredUrl": "http://localhost:3000",
-        "jarvisUrl": "http://localhost:3030"
-    },
-    "login": {
-        "enabled": false,
-        "microsoft": {
-            "clientId": "",
-            "secret": ""
-        }
-    },
     "logger": {
         "colorize": true,
         "morganFormat": "dev",
@@ -22,12 +7,27 @@
         "timestamp": true,
         "label": "winston"
     },
+    "app": {
+        "riddlerUrl": "http://riddler:5000",
+        "gitUrl": "http://gitrest:3000",
+        "cobaltUrl": "http://cobalt",
+        "historianUrl": "http://localhost:3001",
+        "alfredUrl": "http://localhost:3000",
+        "jarvisUrl": "http://localhost:3030"
+    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
             "tenants": "tenantCollection",
             "users": "userCollection",
             "orgs": "orgCollection"
+        }
+    },
+    "login": {
+        "enabled": false,
+        "microsoft": {
+            "clientId": "",
+            "secret": ""
         }
     },
     "kafka": {

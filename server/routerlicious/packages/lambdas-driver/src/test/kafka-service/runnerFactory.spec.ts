@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestKafka } from "@microsoft/fluid-server-test-utils";
+import { TestKafka } from "@fluidframework/server-test-utils";
 import * as assert from "assert";
 import { Provider } from "nconf";
 import { KafkaRunnerFactory } from "../../kafka-service/runnerFactory";

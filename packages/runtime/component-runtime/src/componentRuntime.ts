@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
@@ -23,7 +23,7 @@ import {
     ChildLogger,
     Deferred,
     raiseConnectedEvent,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     buildSnapshotTree,
     TreeTreeEntry,
@@ -346,6 +346,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
@@ -543,6 +547,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+        // If this handle is already attached no need to attach again.
+        if (channel.handle?.isAttached) {
+            return;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();

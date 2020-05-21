@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IRawOperationMessage,
     IRawOperationMessageBatch,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { getParam } from "../../utils";
 
 const sequenceNumber = "sequenceNumber";

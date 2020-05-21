@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";

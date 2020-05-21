@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
+import { MongoManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 // eslint-disable-next-line import/no-internal-modules
 import { getParam } from "../alfred/utils";

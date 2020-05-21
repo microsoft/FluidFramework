@@ -28,6 +28,10 @@ export class ComponentHandleContext implements IComponentHandleContext {
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         throw new Error("Cannot bind to an attached handle");
     }
 

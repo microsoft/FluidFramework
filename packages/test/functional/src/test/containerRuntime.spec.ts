@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { DebugLogger } from "@fluidframework/common-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -117,7 +117,7 @@ describe("Container Runtime", () => {
                 assert.strictEqual(batchBegin, batchEnd, "Received batchEnd without corresponding batchBegin");
             });
 
-            deltaManager.attachOpHandler(0, 0, {
+            deltaManager.attachOpHandler(0, 0, 1, {
                 process(message: ISequencedDocumentMessage) {
                     processOp(message);
                     return {};

@@ -96,7 +96,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         let ordererUrl = "";
         let deltaStorageUrl = "";
 
-        // There is no provider when using debugging tooling and tiny-web-host
+        // There is no provider when using debugging tooling
         if (provider && isInternalRequest) {
             storageUrl = provider.get("worker:internalBlobStorageUrl");
             ordererUrl = provider.get("worker:alfredUrl");

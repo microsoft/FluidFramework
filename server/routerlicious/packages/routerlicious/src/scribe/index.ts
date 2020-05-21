@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ScribeLambdaFactory } from "@microsoft/fluid-server-lambdas";
-import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
-import { createProducer, MongoDbFactory, TenantManager } from "@microsoft/fluid-server-services";
+import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 

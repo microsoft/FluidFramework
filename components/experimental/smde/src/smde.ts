@@ -209,7 +209,7 @@ export class Smde extends EventEmitter implements
 }
 
 class SmdeFactory implements IComponentFactory {
-    public static readonly type = "@chaincode/smde";
+    public static readonly type = "@fluid-example/smde";
     public readonly type = SmdeFactory.type;
 
     public get IComponentFactory() { return this; }

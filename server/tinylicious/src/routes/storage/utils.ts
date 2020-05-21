@@ -16,7 +16,6 @@ export function handleResponse<T>(
     cache = true,
     status: number = 200,
     handler: (value: T) => void = (value) => value) {
-
     resultP.then(handler).then(
         (result) => {
             if (cache) {

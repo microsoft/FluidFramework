@@ -5,6 +5,7 @@
 
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
     IComponentHandle,
@@ -37,8 +38,6 @@ import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const performanceNow = require("performance-now");
 interface IPersistentElement extends HTMLDivElement {
     component: IComponent;
 }

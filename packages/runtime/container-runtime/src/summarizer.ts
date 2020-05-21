@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
+import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@fluidframework/common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -556,7 +556,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
-                    description: `Summarizer: ${this.stopReason ?? "runEnded"}`,
+                    canRetry: false,
+                    message: `Summarizer: ${this.stopReason ?? "runEnded"}`,
                 };
                 this.runtime.closeFn(error);
             }

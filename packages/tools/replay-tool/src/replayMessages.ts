@@ -7,11 +7,11 @@ import * as assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-common-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
