@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {

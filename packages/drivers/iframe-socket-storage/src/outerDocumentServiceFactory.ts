@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -21,7 +21,7 @@ import {
     IVersion,
     ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";

@@ -8,7 +8,7 @@ import {
     IDeltaQueue,
     IDeltaSender,
 } from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { EventForwarder } from "@fluidframework/common-utils";
 import {
     IClientDetails,
     IDocumentMessage,

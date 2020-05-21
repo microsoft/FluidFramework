@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IClient,
     IClientJoin,

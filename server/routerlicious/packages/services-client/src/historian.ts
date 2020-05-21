@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";

@@ -5,14 +5,14 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent, TelemetryLogger } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent, performanceNow, TelemetryLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,

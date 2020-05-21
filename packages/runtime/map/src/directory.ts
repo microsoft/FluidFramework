@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import path from "path";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
     ISequencedDocumentMessage,

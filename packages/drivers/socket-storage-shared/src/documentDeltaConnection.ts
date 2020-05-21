@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { BatchManager } from "@microsoft/fluid-common-utils";
+import { BatchManager } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
 import { createNetworkError } from "@microsoft/fluid-driver-utils";
 import {

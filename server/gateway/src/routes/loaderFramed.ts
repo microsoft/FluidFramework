@@ -25,7 +25,6 @@ export function create(
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any,
     cache: IKeyValueWrapper): Router {
-
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
     const webLoader = new WebCodeLoader(new WhiteList());
@@ -200,7 +199,6 @@ export function create(
                     });
             }
         });
-
     });
 
     return router;

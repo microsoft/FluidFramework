@@ -8,7 +8,7 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { DebugLogger } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";

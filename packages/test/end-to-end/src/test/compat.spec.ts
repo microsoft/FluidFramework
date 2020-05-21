@@ -18,7 +18,7 @@ import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-te
 import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static readonly componentFactory = new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
 
@@ -37,7 +37,7 @@ class TestComponent extends PrimedComponent {
 // between loader and runtime should be backwards-compatible and changing this
 // class should not be necessary.
 class OldTestComponent extends old.PrimedComponent {
-    public static readonly type = "@chaincode/old-test-component";
+    public static readonly type = "@fluid-example/old-test-component";
 
     public static readonly componentFactory = new old.PrimedComponentFactory(
         OldTestComponent.type,

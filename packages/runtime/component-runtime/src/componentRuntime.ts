@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
@@ -23,7 +23,7 @@ import {
     ChildLogger,
     Deferred,
     raiseConnectedEvent,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     buildSnapshotTree,
     TreeTreeEntry,

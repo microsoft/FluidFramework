@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -32,7 +32,7 @@ import {
     LazyPromise,
     ChildLogger,
     raiseConnectedEvent,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {

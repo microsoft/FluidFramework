@@ -5,7 +5,7 @@
 
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
     IComponentHandle,

@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-common-utils";
-import resources from "@microsoft/fluid-gitresources";
+} from "@fluidframework/common-utils";
+import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import {

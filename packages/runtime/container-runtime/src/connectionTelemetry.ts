@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,

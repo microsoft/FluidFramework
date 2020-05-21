@@ -10,7 +10,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import {

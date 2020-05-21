@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,

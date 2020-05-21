@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import querystring from "querystring";
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";

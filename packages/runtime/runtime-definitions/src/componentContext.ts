@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentLoadable,

@@ -11,7 +11,7 @@ import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
     IComponentHandle,

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { globals } from "../jest.config";
 
 describe("context reload", () => {

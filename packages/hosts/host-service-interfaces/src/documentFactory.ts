@@ -12,7 +12,7 @@ export interface IProvideDocumentFactory {
 }
 
 export interface IDocumentFactory extends IProvideDocumentFactory {
-    create(chaincode: IFluidCodeDetails): Promise<string>;
+    create(fluidCodeDetails: IFluidCodeDetails): Promise<string>;
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {

@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
+import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
 import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 export interface IClientSequenceNumber {

@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { ChildLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    ChildLogger,
+    PerformanceEvent,
+    performanceNow,
+    TelemetryLogger,
+    TelemetryNullLogger,
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,

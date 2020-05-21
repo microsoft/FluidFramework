@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { BatchManager } from "@microsoft/fluid-common-utils";
+import { BatchManager } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,

@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,

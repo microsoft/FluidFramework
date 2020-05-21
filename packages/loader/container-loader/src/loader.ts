@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import uuid from "uuid";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IRequest,
@@ -18,7 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, Deferred } from "@microsoft/fluid-common-utils";
+import { DebugLogger, Deferred, performanceNow } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

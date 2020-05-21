@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import EventEmitter from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -14,7 +14,7 @@ import {
     IGenericBlob,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";

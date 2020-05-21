@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
