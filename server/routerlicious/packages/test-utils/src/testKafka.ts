@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { TestContext } from "./testContext";
 
 export class TestConsumer implements core.IConsumer {

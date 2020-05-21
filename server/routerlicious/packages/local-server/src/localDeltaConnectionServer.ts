@@ -12,7 +12,7 @@ import {
     MongoManager,
     ILogger,
     IWebSocket,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     ITestDbFactory,
     TestDbFactory,
@@ -23,8 +23,8 @@ import {
     DebugLogger,
     TestHistorian,
     TestTaskMessageSender,
-} from "@microsoft/fluid-server-test-utils";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+} from "@fluidframework/server-test-utils";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import {
     IClient,
     IConnected,
@@ -32,7 +32,7 @@ import {
     ISequencedDocumentMessage,
     IContentMessage,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**

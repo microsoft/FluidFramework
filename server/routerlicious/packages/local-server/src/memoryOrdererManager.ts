@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
+import { LocalOrderer } from "@fluidframework/server-memory-orderer";
 import {
     GitManager,
     IHistorian,
-} from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-services-client";
 import {
     IOrderer,
     IOrdererManager,
@@ -16,7 +16,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
     ILogger,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 
 export class MemoryOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();

@@ -10,8 +10,8 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
 
 export interface IMapSetOperation {
     op: string;

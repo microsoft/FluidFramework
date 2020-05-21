@@ -13,7 +13,7 @@ import {
     ProtocolOpHandler,
     getQuorumTreeEntries,
     mergeAppAndProtocolTree,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     IDocumentSystemMessage,
@@ -26,8 +26,8 @@ import {
     TreeEntry,
     FileMode,
     ISequencedDocumentAugmentedMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -42,7 +42,7 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";

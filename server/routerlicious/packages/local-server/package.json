@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-server-local-server",
+  "name": "@fluidframework/server-local-server",
   "version": "0.1006.0",
   "description": "Local server implementation",
   "repository": "microsoft/FluidFramework",
@@ -48,12 +48,12 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.0-0",
-    "@microsoft/fluid-protocol-definitions": "^0.1006.0",
-    "@microsoft/fluid-server-lambdas": "^0.1006.0",
-    "@microsoft/fluid-server-memory-orderer": "^0.1006.0",
-    "@microsoft/fluid-server-services-client": "^0.1006.0",
-    "@microsoft/fluid-server-services-core": "^0.1006.0",
-    "@microsoft/fluid-server-test-utils": "^0.1006.0"
+    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/server-lambdas": "^0.1006.0",
+    "@fluidframework/server-memory-orderer": "^0.1006.0",
+    "@fluidframework/server-services-client": "^0.1006.0",
+    "@fluidframework/server-services-core": "^0.1006.0",
+    "@fluidframework/server-test-utils": "^0.1006.0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",

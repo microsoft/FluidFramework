@@ -15,7 +15,7 @@ import {
     TreeEntry,
     SummaryType,
     SummaryObject,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Create a flatten view of an array of ITreeEntry
