@@ -12,7 +12,7 @@ import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,

@@ -17,7 +17,7 @@ import {
     SequenceInterval,
     SharedString,
 } from "@microsoft/fluid-sequence";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     createLocalLoader,

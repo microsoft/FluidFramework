@@ -9,7 +9,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 const PrimedType = "@microsoft/fluid-primedComponent";

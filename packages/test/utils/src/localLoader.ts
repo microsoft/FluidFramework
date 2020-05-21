@@ -14,7 +14,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Loader, Container } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { LocalCodeLoader } from "./localCodeLoader";
 

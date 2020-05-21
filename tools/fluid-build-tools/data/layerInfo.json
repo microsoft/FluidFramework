@@ -96,7 +96,7 @@
         "layers": {
             "Server-Shared-Utils": {
                 "packages": [
-                    "@microsoft/fluid-server-services-client"
+                    "@fluidframework/server-services-client"
                 ],
                 "deps": [
                     "Protocol-Utils"
@@ -231,7 +231,7 @@
             },
             "Routerlicious-Server": {
                 "packages": [
-                    "@microsoft/fluid-server-routerlicious"
+                    "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
                     "Routerlicious-Host",

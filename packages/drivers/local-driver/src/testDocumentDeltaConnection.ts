@@ -20,8 +20,8 @@ import {
     ITokenClaims,
     NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
+import * as core from "@fluidframework/server-services-core";
+import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];

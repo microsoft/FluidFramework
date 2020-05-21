@@ -4,7 +4,7 @@
  */
 
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 import {
     IProxyLoaderFactory,

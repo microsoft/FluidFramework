@@ -7,7 +7,7 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@microsoft/fluid-server-services-client/dist/dockerNames.js"
+    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
@@ -29,16 +29,16 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0-0",
     "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/server-local-server": "^0.1005.1",
+    "@fluidframework/server-services-client": "^0.1005.1",
+    "@fluidframework/server-services-core": "^0.1005.1",
+    "@fluidframework/server-test-utils": "^0.1005.1",
     "@microsoft/fluid-component-core-interfaces": "^0.19.0",
     "@microsoft/fluid-container-definitions": "^0.19.0",
     "@microsoft/fluid-driver-definitions": "^0.19.0",
     "@microsoft/fluid-driver-utils": "^0.19.0",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "@microsoft/fluid-routerlicious-driver": "^0.19.0",
-    "@microsoft/fluid-server-local-server": "^0.1005.1",
-    "@microsoft/fluid-server-services-client": "^0.1005.1",
-    "@microsoft/fluid-server-services-core": "^0.1005.1",
-    "@microsoft/fluid-server-test-utils": "^0.1005.1",
     "debug": "^4.1.1"
   },
   "devDependencies": {

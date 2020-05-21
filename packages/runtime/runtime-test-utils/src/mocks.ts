@@ -45,7 +45,7 @@ import {
     ISharedObjectServices,
 } from "@microsoft/fluid-component-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
+import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 

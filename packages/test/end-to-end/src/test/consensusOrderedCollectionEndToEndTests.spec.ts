@@ -17,7 +17,7 @@ import {
     waitAcquireAndComplete,
 } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,

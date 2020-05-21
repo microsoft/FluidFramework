@@ -12,7 +12,7 @@ import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } f
 import { SharedMap, SharedDirectory } from "@microsoft/fluid-map";
 import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     initializeLocalContainer,

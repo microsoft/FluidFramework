@@ -49,6 +49,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/server-local-server": "^0.1005.1",
+    "@fluidframework/server-services-client": "^0.1005.1",
     "@microsoft/fluid-aqueduct": "^0.19.0",
     "@microsoft/fluid-base-host": "^0.19.0",
     "@microsoft/fluid-component-core-interfaces": "^0.19.0",
@@ -63,8 +65,6 @@
     "@microsoft/fluid-odsp-utils": "^0.19.0",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "@microsoft/fluid-routerlicious-driver": "^0.19.0",
-    "@microsoft/fluid-server-local-server": "^0.1005.1",
-    "@microsoft/fluid-server-services-client": "^0.1005.1",
     "@microsoft/fluid-test-runtime-utils": "^0.19.0",
     "@microsoft/fluid-tool-utils": "^0.19.0",
     "@microsoft/fluid-view-adapters": "^0.19.0",

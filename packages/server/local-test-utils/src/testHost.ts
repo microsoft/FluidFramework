@@ -21,7 +21,7 @@ import {
     NamedComponentRegistryEntries, IComponentContext, IComponentRuntimeChannel,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 import {
     IDocumentDeltaEvent,

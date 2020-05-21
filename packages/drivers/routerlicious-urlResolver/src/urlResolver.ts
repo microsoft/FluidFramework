@@ -13,7 +13,7 @@ import {
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 
 const r11sServers = [

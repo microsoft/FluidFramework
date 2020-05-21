@@ -9,7 +9,7 @@ import { IFluidCodeDetails, IFluidPackage, ILoader } from "@microsoft/fluid-cont
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 abstract class TestComponent extends PrimedComponent {

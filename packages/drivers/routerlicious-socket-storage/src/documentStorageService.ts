@@ -19,7 +19,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+import * as gitStorage from "@fluidframework/server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.

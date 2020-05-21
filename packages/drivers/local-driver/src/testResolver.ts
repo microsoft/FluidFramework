@@ -13,7 +13,7 @@ import {
     CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+import { generateToken } from "@fluidframework/server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other

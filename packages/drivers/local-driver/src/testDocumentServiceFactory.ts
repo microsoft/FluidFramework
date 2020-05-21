@@ -11,14 +11,14 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
 import { ISummaryTree, NackErrorType } from "@microsoft/fluid-protocol-definitions";
-import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { IExperimentalDocumentStorage } from "@fluidframework/server-services-core";
 import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
 import { createTestDocumentService } from "./testDocumentService";
 

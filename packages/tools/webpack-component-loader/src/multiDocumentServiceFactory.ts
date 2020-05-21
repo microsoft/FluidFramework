@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
 import { MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { TestDocumentServiceFactory } from "@microsoft/fluid-local-driver";

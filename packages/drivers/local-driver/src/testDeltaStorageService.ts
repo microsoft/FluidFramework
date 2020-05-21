@@ -5,7 +5,7 @@
 
 import * as api from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
+import { IDatabaseManager } from "@fluidframework/server-services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(

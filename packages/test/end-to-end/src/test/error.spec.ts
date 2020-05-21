@@ -21,7 +21,7 @@ import {
     invalidFileNameErrorCode,
 } from "@microsoft/fluid-driver-utils";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
 
 describe("Errors Types", () => {
