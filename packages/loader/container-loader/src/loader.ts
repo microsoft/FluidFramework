@@ -18,7 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, Deferred } from "@microsoft/fluid-common-utils";
+import { DebugLogger, Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

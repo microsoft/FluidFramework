@@ -10,7 +10,7 @@ import {
     performanceNow,
     TelemetryLogger,
     TelemetryNullLogger,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
