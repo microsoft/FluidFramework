@@ -39,7 +39,6 @@
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
-    "performance-now": "^2.1.0",
     "uuid": "^3.3.2",
     "ws": "^6.1.2"
   },

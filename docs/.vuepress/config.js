@@ -202,8 +202,6 @@ const getApiSidebar = () => {
             title: "Sample Hosts",
             children: [
                 "fluid-base-host",
-                "react-web-host",
-                "tiny-web-host",
             ]
         });
     }
