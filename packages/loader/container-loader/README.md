@@ -91,7 +91,7 @@ Most errors can shows up on both workflows. For example, URI may point to delete
 
 Errors raised by those two paths are typed: errors are of [IError](../driver-definitions/src/error.ts) type, which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
 ```ts
-     readonly errorType: ErrorType.generalError;
+     readonly errorType: ErrorType.genericError;
 ```
 ErrorType enum represents all  error types that can be raised by container.
 For a fill list of error interfaces please see interfaces that are part of [IError](../driver-definitions/src/error.ts) type.

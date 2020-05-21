@@ -196,7 +196,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
+    readonly closeFn: (error?: IError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;

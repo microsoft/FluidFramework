@@ -158,37 +158,33 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             logger);
 
         return new Promise<Container>((res, rej) => {
-            let alreadyRaisedError = false;
-            const onError = (err) => {
-                container.removeListener("error", onError);
-                // Depending where error happens, we can be attempting to connect to web socket
-                // and continuously retrying (consider offline mode)
-                // Host has no container to close, so it's prudent to do it here
-                const error = createIError(err, true);
-                container.close(error);
-                rej(error);
-                alreadyRaisedError = true;
-            };
-            container.on("error", onError);
-
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
             const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
 
+            const onClosed = (err?: IError) => {
+                // Depending where error happens, we can be attempting to connect to web socket
+                // and continuously retrying (consider offline mode)
+                // Host has no container to close, so it's prudent to do it here
+                const error = err ?? createIError("Container closed without an error");
+                container.close(error);
+                rej(error);
+            };
+            container.on("closed", onClosed);
+
             container.load(version, !!pause)
-                .then((props) => {
-                    container.removeListener("error", onError);
-                    res(container);
-                    perfEvent.end(props);
+                .finally(() => {
+                    container.removeListener("closed", onClosed);
                 })
-                .catch((error) => {
+                .then((props) => {
+                    perfEvent.end(props);
+                    res(container);
+                },
+                (error) => {
                     perfEvent.cancel(undefined, error);
-                    const err = createIError(error, true);
-                    if (!alreadyRaisedError) {
-                        container.logContainerError(err);
-                    }
-                    onError(err);
+                    const err = createIError(error);
+                    onClosed(err);
                 });
         });
     }
@@ -438,7 +434,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /* raiseContainerError */);
+        this._deltaManager.close(error);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -447,6 +443,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
+
+        // Supporting existing behavior (temporarily, will be removed in the future) - raise "critical" error
+        // Hosts should instead  listen for "closed" event.
+        // That said, when we remove it, we need to replace it with call to this.logContainerError()
+        // for telemetry to continue to flow.
+        if (error !== undefined) {
+            const criticalError = { ...error };
+            (criticalError as any).critical = true;
+            this.raiseContainerError(criticalError);
+        }
 
         this.emit("closed", error);
 
@@ -520,7 +526,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.propagateConnectionState();
             this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
-            this.close(createIError(error, true));
+            this.close(createIError(error));
             throw error;
         }
     }
@@ -624,13 +630,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.blobsCacheStorageService || this.storageService;
     }
 
+    /**
+     * Raise non-critical error to host. Calling this API will not close container.
+     * For critical errors, please call Container.close(error).
+     * @param error - an error to raise
+     */
     public raiseContainerError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseContainerError(createIError(error, true));
+            this.close(createIError(error));
             throw error;
         });
     }
@@ -1175,8 +1186,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", () => {
-            this.close();
+        this._deltaManager.on("closed", (error?: IError) => {
+            this.close(error);
         });
 
         // If we're the outer frame, do we want to do this?
