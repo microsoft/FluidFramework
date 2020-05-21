@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/flow-util-lib",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "Shared utility code for Flow-* packages.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
