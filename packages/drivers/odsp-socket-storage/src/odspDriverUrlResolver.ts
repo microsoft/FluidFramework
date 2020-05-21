@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
@@ -117,21 +117,16 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         };
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        let url = request.url;
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
-                odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-                odspResolvedUrl.itemId,
-            )}&path=${encodeURIComponent("/")}`,
-            status: 200,
-        };
-        return response;
+        return `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
+            odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
+            odspResolvedUrl.itemId,
+        )}&path=${encodeURIComponent("/")}`;
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

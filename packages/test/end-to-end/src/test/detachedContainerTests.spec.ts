@@ -157,8 +157,8 @@ describe("Detached Container", () => {
         const urlResolver2 = new TestResolver();
         const loader2 = createTestLoader(urlResolver2);
         // Create a new request url from the resolvedUrl of the first container.
-        const requestUrl2 = await urlResolver2.requestUrl(container.resolvedUrl, { url : "" });
-        const container2 = await loader2.resolve({ url: requestUrl2.value });
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });

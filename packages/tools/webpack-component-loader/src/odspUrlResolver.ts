@@ -4,7 +4,7 @@
  */
 
 import { IUrlResolver, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
 import {
     IOdspAuthRequestInfo,
@@ -52,8 +52,8 @@ export class OdspUrlResolver implements IUrlResolver {
         return `/r11s/${encoded}`;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        return this.driverUrlResolver.requestUrl(resolvedUrl, request);
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

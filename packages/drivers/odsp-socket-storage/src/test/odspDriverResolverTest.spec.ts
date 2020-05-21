@@ -46,11 +46,9 @@ describe("Odsp Driver Resolver", () => {
 
     it("Test RequestUrl for a component", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const response = await resolver.requestUrl(resolvedUrl, { url: "/component" });
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/component");
 
-        assert.equal(response.status, "200", "Status code should ve 200");
-        assert.equal(response.mimeType, "text/plain", "Mime type should be text/plain");
-        const [url, queryString] = response.value.split("?");
+        const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
         assert.equal(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
         assert.equal(searchParams.get("driveId"), driveId, "Drive Id should match");

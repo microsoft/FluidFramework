@@ -4,7 +4,7 @@
  */
 
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { TestResolver } from "@microsoft/fluid-local-driver";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -74,17 +74,12 @@ export class MultiUrlResolver implements IUrlResolver {
         this.urlResolver = getUrlResolver(documentId, options);
     }
 
-    async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        let url = request.url;
+    async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${this.rawUrl}/${this.documentId}/${url}`,
-            status: 200,
-        };
-        return response;
+        return `${this.rawUrl}/${this.documentId}/${url}`;
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {

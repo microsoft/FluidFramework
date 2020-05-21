@@ -102,6 +102,13 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
      * that allows attachment to a secondary document.
      */
     attach(request: IRequest): Promise<void>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     *
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 export interface ILoader {

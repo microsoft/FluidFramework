@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import {
-    IRequest, IResponse,
+    IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -135,10 +135,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         return resolved;
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

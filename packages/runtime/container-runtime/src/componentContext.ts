@@ -509,6 +509,10 @@ export abstract class ComponentContext extends EventEmitter implements
         this.containerRuntime.notifyComponentInstantiated(this);
     }
 
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        return this._containerRuntime.getAbsoluteUrl(relativeUrl);
+    }
+
     /**
      * Take a package name and transform it into a path that can be used to find it
      * from this context, such as by looking into subregistries

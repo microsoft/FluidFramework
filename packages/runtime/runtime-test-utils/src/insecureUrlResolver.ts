@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { parse } from "url";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
@@ -110,24 +110,20 @@ export class InsecureUrlResolver implements IUrlResolver {
         return response;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
         assert(documentId);
 
-        let url = request.url;
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${this.hostUrl}/${encodeURIComponent(
-                this.tenantId)}/${encodeURIComponent(documentId)}/${url}`,
-            status: 200,
-        };
-        return response;
+
+        return  `${this.hostUrl}/${encodeURIComponent(
+            this.tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 
     public createCreateNewRequest(fileName: string): IRequest {

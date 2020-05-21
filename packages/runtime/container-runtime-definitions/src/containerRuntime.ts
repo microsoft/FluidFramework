@@ -133,4 +133,10 @@ export interface IContainerRuntime extends
      * False if the container is attached to storage.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }

@@ -131,6 +131,12 @@ export interface IContainerRuntimeBase extends
      * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**
@@ -347,6 +353,12 @@ export interface IComponentContext extends EventEmitter {
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**
