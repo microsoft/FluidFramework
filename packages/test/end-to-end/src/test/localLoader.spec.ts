@@ -24,7 +24,7 @@ import {
  * Implementation of counter component for testing.
  */
 export class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static getFactory() { return TestComponent.factory; }
 
