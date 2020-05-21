@@ -4,7 +4,7 @@
  */
 
 import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
 

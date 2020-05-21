@@ -11,12 +11,12 @@ import {
     IProvideComponentHandle,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IDirectory } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
 import { EventForwarder } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";

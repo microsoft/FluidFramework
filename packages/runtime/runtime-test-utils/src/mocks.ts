@@ -11,13 +11,13 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     DebugLogger,
     Deferred,
@@ -35,7 +35,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
@@ -43,9 +43,9 @@ import {
     IDeltaHandler,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/component-runtime-definitions";
+import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 

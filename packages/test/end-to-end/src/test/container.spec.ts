@@ -4,19 +4,19 @@
  */
 
 import * as assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, ConnectionState, Loader } from "@microsoft/fluid-container-loader";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, ConnectionState, Loader } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
     IGenericError,
     ErrorType,
     IDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
-import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
+} from "@fluidframework/driver-definitions";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
+import { LocalCodeLoader } from "@fluidframework/test-utils";
 
 describe("Container", () => {
     const id = "fluid-test://localhost/containerTest";

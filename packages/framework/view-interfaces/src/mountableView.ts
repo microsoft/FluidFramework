@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 
 export const IComponentMountableView: keyof IProvideComponentMountableView = "IComponentMountableView";
 
@@ -39,7 +39,7 @@ export interface IComponentMountableView extends IProvideComponentMountableView 
     unmount(): void;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentMountableView>> { }
 }

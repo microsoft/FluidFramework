@@ -4,7 +4,7 @@
  */
 
 import { IDocumentAttributes, ITreeEntry, FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
-import { ICreateTreeEntry, ITree } from "@microsoft/fluid-gitresources";
+import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
 import { IQuorumSnapshot } from "./quorum";
 
 export function getQuorumTreeEntries(

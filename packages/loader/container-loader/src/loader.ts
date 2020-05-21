@@ -10,27 +10,27 @@ import {
     IComponent,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import { DebugLogger, Deferred, performanceNow } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
     MultiDocumentServiceFactory,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";

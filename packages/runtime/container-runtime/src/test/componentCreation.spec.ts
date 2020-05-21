@@ -10,11 +10,11 @@ import {
     IComponentRegistry,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { LocalComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 

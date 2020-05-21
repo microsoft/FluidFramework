@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IContentMessage,
@@ -15,7 +15,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IServiceConfiguration = {

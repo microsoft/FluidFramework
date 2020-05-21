@@ -6,7 +6,7 @@ import {
     ComponentRegistryEntry,
     IComponentRegistry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
 export class ComponentRegistry implements IComponentRegistry {
     private readonly map: Map<string, Promise<ComponentRegistryEntry>>;

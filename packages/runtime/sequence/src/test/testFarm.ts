@@ -16,7 +16,7 @@
 import * as fs from "fs";
 import * as path from "path";
 // eslint-disable-next-line import/no-duplicates
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@fluidframework/merge-tree";
 // eslint-disable-next-line no-duplicate-imports
 import {
     TextSegment,
@@ -25,19 +25,19 @@ import {
     IMergeTreeOp,
     MergeTreeTextHelper,
     // eslint-disable-next-line import/no-duplicates
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 import {
     LocalClientId,
     NonCollabClient,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
     // eslint-disable-next-line import/no-internal-modules
-} from "@microsoft/fluid-merge-tree/dist/constants";
+} from "@fluidframework/merge-tree/dist/constants";
 // eslint-disable-next-line import/no-internal-modules
-import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@microsoft/fluid-merge-tree/dist/overlayTree";
+import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@fluidframework/merge-tree/dist/overlayTree";
 // eslint-disable-next-line import/no-internal-modules
-import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge-tree/dist/test/";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { loadTextFromFile, TestClient, TestServer } from "@fluidframework/merge-tree/dist/test/";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import * as JsDiff from "diff";
 import * as random from "random-js";
 import * as Xmldoc from "xmldoc";

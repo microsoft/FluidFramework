@@ -6,11 +6,11 @@
 import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { default as Axios, AxiosInstance } from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {

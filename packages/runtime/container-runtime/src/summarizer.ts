@@ -12,17 +12,17 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
-import { ErrorType, IError, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { createSummarizingError } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/component-core-interfaces";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { ErrorType, IError, ISummarizingError, ISummaryContext } from "@fluidframework/driver-definitions";
+import { createSummarizingError } from "@fluidframework/driver-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -33,7 +33,7 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 
 const minOpsForLastSummary = 50;
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
 }

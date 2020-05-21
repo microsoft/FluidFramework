@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedNumberSequence } from "../sharedNumberSequence";
 import { SharedNumberSequenceFactory } from "../sequenceFactory";
 

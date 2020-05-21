@@ -6,8 +6,8 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

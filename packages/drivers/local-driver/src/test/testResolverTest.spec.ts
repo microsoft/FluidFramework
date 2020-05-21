@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { TestResolver } from "../testResolver";
 
 describe("Local Driver Resolver", () => {

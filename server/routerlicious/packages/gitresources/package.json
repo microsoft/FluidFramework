@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-gitresources",
+  "name": "@fluidframework/gitresources",
   "version": "0.1006.0",
   "description": "Git resource definitions",
   "license": "MIT",

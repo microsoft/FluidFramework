@@ -11,7 +11,7 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import { PerformanceEvent, performanceNow, TelemetryLogger } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
@@ -19,8 +19,8 @@ import {
     IError,
     IThrottlingError,
     ErrorType,
-} from "@microsoft/fluid-driver-definitions";
-import { isSystemType, isSystemMessage } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/driver-definitions";
+import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -36,13 +36,13 @@ import {
     ITrace,
     MessageType,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     createIError,
     createWriteError,
     createNetworkError,
     createGenericNetworkError,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";

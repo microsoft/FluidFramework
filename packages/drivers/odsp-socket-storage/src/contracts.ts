@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrlBase, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
 export interface IOdspResolvedUrl extends IResolvedUrlBase {

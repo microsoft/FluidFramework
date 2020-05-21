@@ -9,7 +9,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as util from "util";
-import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
+import { IOdspTokens } from "@fluidframework/odsp-utils";
 
 export interface IAsyncCache<K, T> {
     get(key: K): Promise<T | undefined>;

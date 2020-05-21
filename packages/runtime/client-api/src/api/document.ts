@@ -4,28 +4,28 @@
  */
 
 import { EventEmitter } from "events";
-import * as cell from "@microsoft/fluid-cell";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import * as cell from "@fluidframework/cell";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
 import {
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
     IProxyLoaderFactory,
-} from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import * as ink from "@microsoft/fluid-ink";
-import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import * as ink from "@fluidframework/ink";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
     IDocumentMessage,
     ISequencedClient,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/protocol-definitions";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import * as sequence from "@fluidframework/sequence";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 

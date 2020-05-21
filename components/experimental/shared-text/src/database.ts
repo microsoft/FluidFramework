@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedMap } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { SharedString } from "@fluidframework/sequence";
 import {
     ExecutionResult,
     graphql,

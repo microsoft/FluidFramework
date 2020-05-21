@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { MockRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "./imports";
 import { strict as assert } from "assert";
 import { insertFragmented } from "../../test/utils";

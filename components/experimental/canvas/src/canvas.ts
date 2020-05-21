@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IColor, IInk, Ink, InkCanvas } from "@microsoft/fluid-ink";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IColor, IInk, Ink, InkCanvas } from "@fluidframework/ink";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 

@@ -6,11 +6,11 @@
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@fluidframework/common-utils";
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ISummarizingError } from "@microsoft/fluid-driver-definitions";
-import { createSummarizingError } from "@microsoft/fluid-driver-utils";
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
+import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
+import { ISummarizingError } from "@fluidframework/driver-definitions";
+import { createSummarizingError } from "@fluidframework/driver-utils";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer } from "./summarizer";
 
 interface ITrackedClient {

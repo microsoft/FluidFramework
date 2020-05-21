@@ -7,13 +7,13 @@ import {
     IFluidPackage,
     isFluidPackage,
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
-} from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 
 /**
  * A component registry that can load component via their url

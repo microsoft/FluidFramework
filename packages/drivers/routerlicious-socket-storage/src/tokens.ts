@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ITokenProvider, ITokenService } from "@microsoft/fluid-protocol-definitions";
+import { ITokenClaims, ITokenProvider, ITokenService } from "@fluidframework/protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 
 /**

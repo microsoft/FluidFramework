@@ -6,7 +6,7 @@ import {
     IComponentSerializer,
     IComponentHandleContext,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IJSONSegment, SnapshotLegacy } from ".";
 

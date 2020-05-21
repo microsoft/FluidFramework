@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-component-base",
+  "name": "@fluidframework/component-base",
   "version": "0.19.0",
   "description": "Component base.",
   "repository": "microsoft/FluidFramework",
@@ -52,13 +52,13 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0-0",
     "@fluidframework/common-utils": "^0.19.0-0",
-    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
-    "@microsoft/fluid-component-runtime": "^0.19.0",
-    "@microsoft/fluid-component-runtime-definitions": "^0.19.0",
-    "@microsoft/fluid-container-definitions": "^0.19.0",
-    "@microsoft/fluid-container-runtime": "^0.19.0",
-    "@microsoft/fluid-runtime-definitions": "^0.19.0",
-    "@microsoft/fluid-shared-object-base": "^0.19.0"
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/component-runtime": "^0.19.0",
+    "@fluidframework/component-runtime-definitions": "^0.19.0",
+    "@fluidframework/container-definitions": "^0.19.0",
+    "@fluidframework/container-runtime": "^0.19.0",
+    "@fluidframework/runtime-definitions": "^0.19.0",
+    "@fluidframework/shared-object-base": "^0.19.0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",

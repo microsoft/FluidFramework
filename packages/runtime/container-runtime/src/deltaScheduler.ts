@@ -5,11 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performanceNow } from "@fluidframework/common-utils";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there

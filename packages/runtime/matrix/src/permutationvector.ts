@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ChildLogger } from "@fluidframework/common-utils";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
@@ -15,10 +15,10 @@ import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/merge-tree";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 

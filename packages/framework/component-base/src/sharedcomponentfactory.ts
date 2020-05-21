@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory, ISharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory, ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
 import { SharedComponent } from "./sharedcomponent";
 

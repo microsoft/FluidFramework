@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UpgradeManager } from "../utils";
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
