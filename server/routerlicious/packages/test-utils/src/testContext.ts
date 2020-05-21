@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
 import { DebugLogger } from "./logger";
 

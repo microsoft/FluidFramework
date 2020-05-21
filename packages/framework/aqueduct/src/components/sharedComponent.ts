@@ -18,8 +18,8 @@ import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definition
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { EventForwarder } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IComponent = object> {

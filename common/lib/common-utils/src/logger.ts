@@ -12,7 +12,7 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
-} from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/common-definitions";
 import { debug as registerDebug, IDebugger } from "debug";
 import { performanceNow } from "./performanceNowNode";
 

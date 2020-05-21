@@ -12,7 +12,7 @@ import {
     ISequencedDocumentSystemMessage,
     IClient,
 } from  "@microsoft/fluid-protocol-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
 describe("LocalDeltaConnectionServer", ()=>{

@@ -13,5 +13,4 @@ export class WebServer implements IWebServer {
     public async close(): Promise<void> {
         await Promise.all([this.httpServer.close(), this.webSocketServer.close()]);
     }
-
 }

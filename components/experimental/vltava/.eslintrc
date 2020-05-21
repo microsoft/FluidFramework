@@ -1,6 +1,6 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid/no-tslint"
+        "@fluidframework/eslint-config-fluid/no-tslint"
     ],
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off", // Doing undefined checks is nice

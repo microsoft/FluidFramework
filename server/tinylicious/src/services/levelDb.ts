@@ -12,7 +12,6 @@ import { Collection, ICollectionProperty } from "./levelDbCollection";
 const MaxFetchSize = 2000;
 
 export class LevelDb extends EventEmitter implements IDb {
-
     private readonly db: any;
 
     constructor(private readonly path: string) {
