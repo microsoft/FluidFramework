@@ -67,7 +67,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({
             startingText: this.newTextInput.value,
-            baseUrl: window.location.href,
         });
         this.newTextInput.value = "";
     }
