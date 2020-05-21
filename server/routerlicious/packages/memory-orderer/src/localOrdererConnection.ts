@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@microsoft/fluid-common-utils";
 import {
     IClient,
     IClientJoin,
@@ -21,9 +22,6 @@ import {
     RawOperationType,
 } from "@microsoft/fluid-server-services-core";
 import { IPubSub, ISubscriber } from "./";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const now = require("performance-now");
 
 export class LocalOrdererConnection implements IOrdererConnection {
     public readonly parentBranch: string;
@@ -130,7 +128,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
                     {
                         action: "start",
                         service: "alfred",
-                        timestamp: now(),
+                        timestamp: performanceNow(),
                     });
             }
         });

@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-server-memory-orderer";
-export const pkgVersion = "0.1005.0";
+export const pkgVersion = "0.1006.0";

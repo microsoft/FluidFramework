@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-local-server",
-  "version": "0.1005.0",
+  "version": "0.1006.0",
   "description": "Local server implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,13 +47,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
-    "@microsoft/fluid-server-lambdas": "^0.1005.0",
-    "@microsoft/fluid-server-memory-orderer": "^0.1005.0",
-    "@microsoft/fluid-server-services-client": "^0.1005.0",
-    "@microsoft/fluid-server-services-core": "^0.1005.0",
-    "@microsoft/fluid-server-test-utils": "^0.1005.0"
+    "@microsoft/fluid-common-utils": "^0.18.2",
+    "@microsoft/fluid-protocol-definitions": "^0.1006.0",
+    "@microsoft/fluid-server-lambdas": "^0.1006.0",
+    "@microsoft/fluid-server-memory-orderer": "^0.1006.0",
+    "@microsoft/fluid-server-services-client": "^0.1006.0",
+    "@microsoft/fluid-server-services-core": "^0.1006.0",
+    "@microsoft/fluid-server-test-utils": "^0.1006.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",

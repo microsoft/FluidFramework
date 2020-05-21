@@ -8,6 +8,8 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Charts](./charts) Kubernetes charts for the micro-services
 
+[Gateway](./gateway) Internal landing page for Fluid, hosts Waterpark
+
 [Gitrest](./gitrest) provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.
 
 [Gitssh](./gitssh) is a git ssh server client container.
@@ -20,7 +22,7 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Routerlicious](./routerlicious) composed reference server implementation
 
-[Service](./service) Experimental routerlicious with faster throughput
+[Tinylicious](./tinylicious) Light-weight monolithic server implementation
 
 ## Build Status
 
