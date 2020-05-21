@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
-import registerDebug from "debug";
+import { debug as registerDebug, IDebugger } from "debug";
 import { performanceNow } from "./performanceNowNode";
 
 export interface ITelemetryPropertyGetters {
@@ -406,8 +406,8 @@ export class DebugLogger extends TelemetryLogger {
     }
 
     constructor(
-        private readonly debug: registerDebug.IDebugger,
-        private readonly debugErr: registerDebug.IDebugger,
+        private readonly debug: IDebugger,
+        private readonly debugErr: IDebugger,
         properties?: object,
         propertyGetters?: ITelemetryPropertyGetters,
     ) {
