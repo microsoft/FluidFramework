@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IError,
     IAuthorizationError,
@@ -180,8 +180,7 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterSeconds?: number,
-    statusCode?: number)
-{
+    statusCode?: number) {
     let error: IError;
     if (retryAfterSeconds !== undefined && canRetry) {
         error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
