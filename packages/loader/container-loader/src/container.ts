@@ -1404,7 +1404,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this.pkg) {
             throw new Error("pkg should be provided in create flow!!");
         }
-        const chaincode = await this.loadRuntimeFactory(this.pkg);
+        const runtimeFactory = await this.loadRuntimeFactory(this.pkg);
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1414,7 +1414,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this,
             this.scope,
             this.codeLoader,
-            chaincode,
+            runtimeFactory,
             { id: null, blobs: {}, commits: {}, trees: {} },    // TODO this will be from the offline store
             attributes,
             this.blobManager,
