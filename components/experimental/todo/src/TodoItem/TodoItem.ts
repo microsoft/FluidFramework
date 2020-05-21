@@ -27,7 +27,8 @@ export interface ITodoItemInitialState {
 const checkedKey = "checked";
 const textKey = "text";
 const baseUrlKey = "baseUrl";
-const innerComponentKey = "innerId";
+const innerComponentHandleKey = "innerComponentHandle";
+const innerComponentTypeKey = "innerComponentType";
 
 /**
  * Todo Item is a singular todo entry consisting of:
@@ -63,12 +64,12 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> {
         // user choose the component they want to embed. We store it in a cell for easier event handling.
         const innerIdCell = SharedCell.create(this.runtime);
         innerIdCell.set(undefined);
-        this.root.set(innerComponentKey, innerIdCell.handle);
+        this.root.set(innerComponentHandleKey, innerIdCell.handle);
     }
 
     protected async componentHasInitialized() {
         const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
-        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
+        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentHandleKey).get();
         this.baseUrl = this.root.get(baseUrlKey);
 
         this.setCheckedState = this.setCheckedState.bind(this);
@@ -137,6 +138,10 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> {
         return !!this.innerIdCell.get();
     }
 
+    public getInnerComponentType() {
+        return this.root.get<TodoItemSupportedComponents>(innerComponentTypeKey);
+    }
+
     public async getInnerComponent() {
         const innerComponentHandle = this.innerIdCell.get();
         if (innerComponentHandle) {
@@ -174,6 +179,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> {
 
         // Update the inner component id
         this.innerIdCell.set(component.handle);
+        this.root.set(innerComponentTypeKey, type);
 
         this.emit("innerComponentChanged");
     }

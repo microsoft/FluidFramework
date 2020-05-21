@@ -8,6 +8,7 @@ import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
+import { TodoItemView } from "./TodoItemView";
 
 interface TodoItemDetailsViewProperties {
     todoItemModel: TodoItem;
@@ -16,6 +17,7 @@ interface TodoItemDetailsViewProperties {
 interface TodoItemDetailsViewState {
     hasInnerComponent: boolean;
     innerComponent: IComponent;
+    innerComponentType: TodoItemSupportedComponents | undefined;
 }
 
 export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProperties, TodoItemDetailsViewState> {
@@ -25,6 +27,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
         this.state = {
             hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
             innerComponent: undefined,
+            innerComponentType: undefined,
         };
 
         this.createInnerComponent = this.createInnerComponent.bind(this);
@@ -39,7 +42,8 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
 
     private async refreshInnerComponentFromModel(): Promise<void> {
         const innerComponent = await this.props.todoItemModel.getInnerComponent();
-        this.setState({ innerComponent });
+        const innerComponentType = this.props.todoItemModel.getInnerComponentType();
+        this.setState({ innerComponent, innerComponentType });
     }
 
     public async componentDidMount() {
@@ -72,10 +76,13 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             );
         } else {
             // Fully loaded
+            if (this.state.innerComponentType === "todo") {
+                return <TodoItemView todoItemModel={this.state.innerComponent as TodoItem} />;
+            }
 
             // createInnerComponent will create the model component for the chosen option.  We then need to get the
             // view component out of it (for now).  Preferably, we would instead take the returned model and feed it
-            // into our own view component of our choosing.
+            // into our own view component of our choosing, as we are now doing with TodoItemView.
             return <ReactViewAdapter component={this.state.innerComponent} />;
         }
     }
