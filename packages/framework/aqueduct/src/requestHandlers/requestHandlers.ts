@@ -17,8 +17,12 @@ import { IComponentMountableViewClass } from "@microsoft/fluid-view-interfaces";
  * the same bundle as the view.  For example, React hooks don't work if mounted across bundles since there will
  * be two React instances, breaking the Rules of Hooks.  When cross-bundle mounting isn't required, the mountable
  * view isn't necessary.
+ *
+ * When a request is received with a mountableView: true header, this request handler will reissue the request
+ * without the header, and respond with a mountable view of the given class using the response.
+ * @param MountableViewClass - The type of mountable view to use when responding
  */
-export const mountableViewRequestHandler =
+export const mountableViewRequestHandler: (MountableViewClass: IComponentMountableViewClass) => RuntimeRequestHandler =
     (MountableViewClass: IComponentMountableViewClass) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.headers?.mountableView === true) {
@@ -43,6 +47,10 @@ export const mountableViewRequestHandler =
         };
     };
 
+/**
+ * Reissue empty requests as requests for the component at the ID provided.
+ * @param defaultComponentId - The ID of the default component
+ */
 export const defaultComponentRuntimeRequestHandler: (defaultComponentId: string) => RuntimeRequestHandler =
     (defaultComponentId: string) => {
         return async (request: RequestParser, runtime: IContainerRuntime) => {
