@@ -66,12 +66,22 @@ export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
 }
 
 /**
+ * Interface definition that represents the data submitted by a local client.
+ * message - The message that is submitted.
+ * localOpMetadata - The metadata associated with the message.
+ */
+interface IMessageData {
+    message: ISequencedDocumentMessage,
+    localOpMetadata: unknown,
+}
+
+/**
  * Factory to create MockDeltaConnection for testing
  */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    private readonly messages: ISequencedDocumentMessage[] = [];
+    private readonly messages: IMessageData[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
 
     public getMinSeq(): number {
@@ -98,11 +108,14 @@ export class MockDeltaConnectionFactory {
         return delta;
     }
 
-    public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+    public pushMessage(msg: Partial<ISequencedDocumentMessage>, localOpMetadata: unknown) {
         if (!this.minSeq.has(msg.clientId)) {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
-        this.messages.push(msg as ISequencedDocumentMessage);
+        this.messages.push({
+            message: msg as ISequencedDocumentMessage,
+            localOpMetadata,
+        });
     }
 
     public clearMessages() {
@@ -111,17 +124,18 @@ export class MockDeltaConnectionFactory {
 
     public processAllMessages() {
         while (this.messages.length > 0) {
-            let msg = this.messages.shift();
+            const messageDetail = this.messages.shift();
 
             // Explicitly JSON clone the value to match the behavior of going thru the wire.
-            msg = JSON.parse(JSON.stringify(msg));
+            const msg = JSON.parse(JSON.stringify(messageDetail.message));
 
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
             for (const dc of this.deltaConnections) {
                 for (const h of dc.handlers) {
-                    h.process(msg, dc.isLocal(msg));
+                    const isLocal = dc.isLocal(msg);
+                    h.process(msg, isLocal, isLocal ? messageDetail.localOpMetadata : undefined);
                 }
             }
         }
@@ -155,7 +169,7 @@ class MockDeltaConnection implements IDeltaConnection {
         private readonly factory: MockDeltaConnectionFactory,
         private readonly runtime: MockRuntime) {
         this.handlers.push({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) => {
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.referenceSequenceNumber = message.sequenceNumber;
             },
             setConnectionState: (connected: boolean) => { },
@@ -163,7 +177,7 @@ class MockDeltaConnection implements IDeltaConnection {
         });
     }
 
-    public submit(messageContent: any): number {
+    public submit(messageContent: any, localOpMetadata: unknown): number {
         this.clientSequenceNumber++;
         const msg: Partial<ISequencedDocumentMessage> = {
             clientId: this.runtime.clientId,
@@ -173,7 +187,7 @@ class MockDeltaConnection implements IDeltaConnection {
             type: MessageType.Operation,
 
         };
-        this.factory.pushMessage(msg);
+        this.factory.pushMessage(msg, localOpMetadata);
 
         return msg.clientSequenceNumber;
     }

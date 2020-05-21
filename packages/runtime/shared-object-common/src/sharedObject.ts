@@ -239,7 +239,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown);
 
     /**
      * Called when the object has disconnected from the delta stream.
@@ -254,14 +254,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * also sent if we are asked to resubmit the message.
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, localOpMetadata?: unknown): number {
+    protected submitLocalMessage(content: any, localOpMetadata: unknown): number {
         if (this.isLocal()) {
             return -1;
         }
 
         // TODO (naagar): localOpMetadata is optional here temporarily until all the DDS are updated to send it.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.services!.deltaConnection.submit(content, localOpMetadata ?? "");
+        return this.services!.deltaConnection.submit(content, localOpMetadata);
     }
 
     /**
@@ -338,7 +338,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services!.deltaConnection.attach({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) => {
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
             },
             setConnectionState: (connected: boolean) => {
@@ -389,7 +389,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.emit("pre-op", message, local, this);
         this.processCore(message, local, localOpMetadata);
         this.emit("op", message, local, this);

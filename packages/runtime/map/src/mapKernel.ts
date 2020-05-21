@@ -37,7 +37,7 @@ interface IMapMessageHandler {
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata?: unknown): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata: unknown): void;
 
     /**
      * Communicate the operation to remote clients.
@@ -481,7 +481,7 @@ export class MapKernel {
      * For messages from a remote client, this will be undefined.
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
@@ -584,7 +584,7 @@ export class MapKernel {
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
-        localOpMetadata?: unknown,
+        localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             // If I have an unack'd clear, we can ignore all ops.
@@ -619,7 +619,7 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message, localOpMetadata?) => {
+                process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
                         assert(localOpMetadata !== undefined,
                             "pendingMessageId is missing from the local client's clear operation");
@@ -642,7 +642,7 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message, localOpMetadata?) => {
+                process: (op: IMapDeleteOperation, local, message, localOpMetadata) => {
                     if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
@@ -655,7 +655,7 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message, localOpMetadata?) => {
+                process: (op: IMapSetOperation, local, message, localOpMetadata) => {
                     if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
@@ -676,7 +676,7 @@ export class MapKernel {
         messageHandlers.set(
             "act",
             {
-                process: (op: IMapValueTypeOperation, local, message, localOpMetadata?) => {
+                process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
                     // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {

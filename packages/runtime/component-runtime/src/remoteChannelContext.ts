@@ -84,7 +84,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
@@ -169,7 +169,7 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
             try {
-                this.services.deltaConnection.process(message, false);
+                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);

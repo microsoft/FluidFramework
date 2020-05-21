@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op, localOpMetadata?) => this.submitLocalMessage(op, localOpMetadata),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             valueTypes,
             this,
         );
@@ -364,7 +364,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
    * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             this.kernel.tryProcessMessage(message, local, localOpMetadata);
         }

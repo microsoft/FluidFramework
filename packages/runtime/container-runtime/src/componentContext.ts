@@ -119,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, localOpMetadata?: unknown) => void {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
         return this._containerRuntime.submitFn;
     }
 
@@ -334,7 +334,7 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
@@ -409,7 +409,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any, localOpMetadata?: unknown): number {
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
         return this.submitOp(type, content, localOpMetadata);
@@ -489,7 +489,7 @@ export abstract class ComponentContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false);
+                componentRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -551,7 +551,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any, localOpMetadata?: unknown): number {
+    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -563,7 +563,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
     }
 
-    public reSubmit(type: MessageType, content: any, localOpMetadata?: unknown) {
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.componentRuntime!.reSubmit(type, content, localOpMetadata);
     }

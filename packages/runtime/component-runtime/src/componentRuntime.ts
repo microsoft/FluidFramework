@@ -382,7 +382,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public save(tag: string) {
         this.verifyNotClosed();
-        this.submit(MessageType.Save, tag);
+        this.submit(MessageType.Save, tag, undefined /* localOpMetadata */);
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -392,7 +392,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         file.id = blob.id;
         file.url = blob.url;
 
-        this.submit(MessageType.BlobUploaded, blob);
+        this.submit(MessageType.BlobUploaded, blob, undefined /* localOpMetadata */);
 
         return file;
     }
@@ -408,7 +408,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
@@ -511,7 +511,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
-    public submitMessage(type: MessageType, content: any, localOpMetadata?: unknown) {
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown) {
         this.submit(type, content, localOpMetadata);
     }
 
@@ -563,14 +563,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            this.submit(MessageType.Attach, message);
+            this.submit(MessageType.Attach, message, undefined /* localOpMetadata */);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata?: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content, localOpMetadata);
     }
@@ -582,7 +582,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    public reSubmit(type: MessageType, content: any, localOpMetadata?: unknown) {
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         switch (type) {
@@ -600,7 +600,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 break;
             }
             default:
-                this.submit(type, content);
+                this.submit(type, content, localOpMetadata);
         }
     }
 
@@ -609,7 +609,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.setChannelDirty(address);
     }
 
-    private processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;

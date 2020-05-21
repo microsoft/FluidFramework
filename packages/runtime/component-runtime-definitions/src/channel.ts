@@ -62,7 +62,7 @@ export interface IDeltaHandler {
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
 
     /**
      * State change events to indicate changes to the delta connection

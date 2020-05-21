@@ -471,7 +471,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, localOpMetadata?: unknown) => number {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => number {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
@@ -484,7 +484,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (content: any, localOpMetadata?: unknown) => void {
+    public get reSubmitFn(): (content: any, localOpMetadata: unknown) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -1242,7 +1242,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
-            this.submit(MessageType.Attach, message);
+            this.submit(MessageType.Attach, message, undefined /* localOpMetadata */);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1387,7 +1387,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 return { ...attemptData, ...generateData, ...uploadData };
             }
 
-            const clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
+            const clientSequenceNumber =
+                this.submit(MessageType.Summarize, summaryMessage, undefined /* localOpMetadata */);
 
             return {
                 ...attemptData,
@@ -1444,7 +1445,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata?: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1523,7 +1524,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, localOpMetadata?: unknown) {
+    private reSubmit(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         assert(componentContext, "There should be a component context for the op");
@@ -1532,7 +1533,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
-    private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };
@@ -1641,7 +1642,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     version: this.version,   // Back-compat
                 };
                 debug(`Requesting remote help for ${helpTasks.robot}`);
-                this.submit(MessageType.RemoteHelp, remoteHelpMessage);
+                this.submit(MessageType.RemoteHelp, remoteHelpMessage, undefined /* localOpMetadata */);
             }
         }
     }

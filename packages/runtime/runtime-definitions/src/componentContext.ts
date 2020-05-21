@@ -168,7 +168,7 @@ export interface IComponentRuntimeChannel extends
     /**
      * Processes the op.
      */
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
     /**
      * Processes the signal.
@@ -197,7 +197,7 @@ export interface IComponentRuntimeChannel extends
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    reSubmit(type: MessageType, content: any, localOpMetadata?: unknown);
+    reSubmit(type: MessageType, content: any, localOpMetadata: unknown);
 }
 
 export interface ISummaryTracker {

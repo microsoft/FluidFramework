@@ -218,8 +218,10 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (this.pendingClientSequenceNumber !== -1) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {
@@ -259,7 +261,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
 
     private submitCellMessage(op: ICellOperation): void {
         // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
-        this.pendingClientSequenceNumber = this.submitLocalMessage(op);
+        this.pendingClientSequenceNumber = this.submitLocalMessage(op, undefined /* localOpMetadata */);
     }
 
     private toSerializable(value: any) {

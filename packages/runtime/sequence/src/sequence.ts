@@ -164,7 +164,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel = new MapKernel(
             this.runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -314,7 +314,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated);
+        this.submitLocalMessage(translated, undefined /* localOpMetadata */);
     }
 
     public addLocalReference(lref) {
@@ -483,10 +483,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            handled = this.intervalMapKernel.tryProcessMessage(message, local);
+            handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
         }
 
         if (!handled) {

@@ -226,6 +226,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                 this.runtime.IComponentHandleContext,
                 this.handle,
             ),
+            undefined /* localOpMetadata */,
         );
     }
 

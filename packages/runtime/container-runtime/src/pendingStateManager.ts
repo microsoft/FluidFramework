@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { ErrorType, IGeneralError } from "@microsoft/fluid-driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ErrorType, IGenericError } from "@microsoft/fluid-driver-definitions";
 import {
     MessageType,
     ISequencedDocumentMessage,
@@ -79,40 +79,32 @@ export class PendingStateManager {
     }
 
     public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
-        const pendingState = this.pendingStates.peekFront();
-
-        // There should always be a pending message for local messages. If not, there might be data corruption. Log an
-        // error and close the Container.
-        if (pendingState === undefined) {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
-            this.closeContainer("Unxpected ack received");
-            return;
-        }
-
-        if (pendingState.type === "flush") {
+        while (this.pendingStates.peekFront()?.type === "flush") {
             this.pendingStates.shift();
-            return this.processPendingLocalMessage(message);
         }
 
-        const firstPendingMessage = pendingState;
+        const firstPendingMessage = this.pendingStates.peekFront() as IPendingMessage;
 
-        // Disconnected ops should never be processed. They should have been fully sent on connected. If not, there
-        // might be data corruption. Log an error and close the Container.
-        if (firstPendingMessage.clientSequenceNumber === -1) {
-            this.logger.sendErrorEvent({ eventName: "ProcessingDisconnectedOp" });
-            this.closeContainer("Processing disconnected op");
-            return;
-        }
-
-        // Messages should always be received in the same order in which they are sent. If not, there might be data
-        // corruption. Log an error and close the Container.
-        if (firstPendingMessage.clientSequenceNumber === message.clientSequenceNumber) {
+        // There should always be a pending message for a message for the local client. The clientSequenceNumber of the
+        // incoming message must match that of the pending message.
+        if (firstPendingMessage?.clientSequenceNumber !== message.clientSequenceNumber) {
             this.logger.sendErrorEvent({
-                eventName: "WrongAckReceived",
-                expectedClientSequenceNumber: firstPendingMessage.clientSequenceNumber,
+                eventName: "UnexpectedAckReceived",
+                clientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                expectedClientSequenceNumber: firstPendingMessage?.clientSequenceNumber,
                 receivedClientSequenceNumber: message.clientSequenceNumber,
             });
-            this.closeContainer("Ack received with wrong clientSequenceNumber");
+
+            // Close the container because this indicates data corruption.
+            const error: IGenericError = {
+                errorType: ErrorType.genericError,
+                error: new Error("Unexpected ack received"),
+                message: "Unexpected ack received",
+                canRetry: false,
+            };
+            this.containerRuntime.closeFn(error);
+
             return;
         }
 
@@ -120,15 +112,6 @@ export class PendingStateManager {
         this.pendingStates.shift();
 
         return firstPendingMessage.localOpMetadata;
-    }
-
-    private closeContainer(errorMessage: string) {
-        const error: IGeneralError = {
-            errorType: ErrorType.generalError,
-            error: new Error(errorMessage),
-            critical: true,
-        };
-        this.containerRuntime.closeFn(error);
     }
 
     private replayPendingStates() {
@@ -152,7 +135,8 @@ export class PendingStateManager {
                         if (pendingState.messageType === MessageType.Operation) {
                             this.containerRuntime.reSubmitFn(pendingState.content, pendingState.localOpMetadata);
                         } else {
-                            this.containerRuntime.submitFn(pendingState.messageType, pendingState.content);
+                            this.containerRuntime.submitFn(
+                                pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
                         }
                     }
                     break;

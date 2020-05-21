@@ -35,7 +35,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this.handler.setConnectionState(connected);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown) {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.handler.process(message, local, localOpMetadata);
     }
 

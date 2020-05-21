@@ -63,7 +63,7 @@ export class LocalChannelContext implements IChannelContext {
         this.connection!.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         assert(this.attached);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
