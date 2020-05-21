@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-iframe-driver";
-export const pkgVersion = "0.17.5";
+export const pkgVersion = "0.17.6";

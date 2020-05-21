@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-driver",
-  "version": "0.17.5",
+  "version": "0.17.6",
   "description": "Socket storage implementation for SPO and ODC",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,10 +50,10 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.16.0",
     "@microsoft/fluid-common-utils": "^0.16.1",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.5",
-    "@microsoft/fluid-driver-base": "^0.17.5",
-    "@microsoft/fluid-driver-definitions": "^0.17.5",
-    "@microsoft/fluid-driver-utils": "^0.17.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.17.6",
+    "@microsoft/fluid-driver-base": "^0.17.6",
+    "@microsoft/fluid-driver-definitions": "^0.17.6",
+    "@microsoft/fluid-driver-utils": "^0.17.6",
     "@microsoft/fluid-gitresources": "^0.1004.3",
     "@microsoft/fluid-protocol-base": "^0.1004.3",
     "@microsoft/fluid-protocol-definitions": "^0.1004.3",
