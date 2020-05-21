@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITaskMessage, ITaskMessageReceiver } from "@microsoft/fluid-server-services-core";
+import { ITaskMessage, ITaskMessageReceiver } from "@fluidframework/server-services-core";
 import * as amqp from "amqplib";
 import * as winston from "winston";
 

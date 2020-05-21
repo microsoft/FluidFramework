@@ -9,10 +9,10 @@ import {
     ITenantOrderer,
     ITenantStorage,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { getRandomName } from "@fluidframework/server-services-client";
 
 /**
  * Tenant details stored to the document database

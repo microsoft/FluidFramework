@@ -10,7 +10,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -19,7 +19,7 @@ import {
     ISequencedOperationMessage,
     RawOperationType,
     SequencedOperationType,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import hash = require("string-hash");

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import {
     ICollection,
     IDatabaseManager,
@@ -11,7 +11,7 @@ import {
     IDocumentDetails,
     IDocumentStorage,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-internal-modules
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";

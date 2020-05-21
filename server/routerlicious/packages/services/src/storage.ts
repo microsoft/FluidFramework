@@ -15,8 +15,8 @@ import {
     SummaryType,
     SummaryObject,
     ISnapshotTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { IGitCache, IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDatabaseManager,
@@ -29,14 +29,14 @@ import {
     ITenantManager,
     RawOperationType,
     IExperimentalDocumentStorage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     getQuorumTreeEntries,
     IQuorumSnapshot,
     getGitType,
     getGitMode,
     mergeAppAndProtocolTree,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import { gitHashFile } from "@fluidframework/common-utils";

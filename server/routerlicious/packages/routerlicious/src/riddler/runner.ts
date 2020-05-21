@@ -5,8 +5,8 @@
 
 import * as http from "http";
 import { Deferred } from "@fluidframework/common-utils";
-import { MongoManager } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import { MongoManager } from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 import * as app from "./app";
 

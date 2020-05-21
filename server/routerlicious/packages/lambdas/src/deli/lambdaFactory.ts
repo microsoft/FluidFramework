@@ -15,10 +15,10 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
-import { generateServiceProtocolEntries } from "@microsoft/fluid-protocol-base";
-import { FileMode } from "@microsoft/fluid-protocol-definitions";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-services-core";
+import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
+import { FileMode } from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { IDeliCheckpoint } from "./checkpointContext";

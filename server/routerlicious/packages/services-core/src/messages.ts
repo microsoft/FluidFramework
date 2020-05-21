@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";

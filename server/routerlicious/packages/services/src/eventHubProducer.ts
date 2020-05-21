@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { EventData, EventHubClient } from "@azure/event-hubs";
 import { Deferred } from "@fluidframework/common-utils";
-import { IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
+import { IPendingBoxcar, IProducer } from "@fluidframework/server-services-core";
 
 // 1MB batch size / (16KB max message size + overhead)
 const MaxBatchSize = 32;

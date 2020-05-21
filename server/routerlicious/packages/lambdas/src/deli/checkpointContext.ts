@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
-import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { ICollection, IContext, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire

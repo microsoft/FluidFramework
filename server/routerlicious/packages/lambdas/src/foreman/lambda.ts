@@ -10,9 +10,9 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
+import { generateToken } from "@fluidframework/server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.

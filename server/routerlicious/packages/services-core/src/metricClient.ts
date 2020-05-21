@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@microsoft/fluid-protocol-definitions";
+import { ITrace } from "@fluidframework/protocol-definitions";
 
 export interface IMetricClient {
     writeLatencyMetric(series: string, traces: ITrace[]): Promise<void>;

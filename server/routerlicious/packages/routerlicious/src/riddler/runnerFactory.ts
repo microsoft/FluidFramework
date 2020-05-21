@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@microsoft/fluid-server-services";
-import { getOrCreateRepository } from "@microsoft/fluid-server-services-client";
-import { MongoManager } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import * as services from "@fluidframework/server-services";
+import { getOrCreateRepository } from "@fluidframework/server-services-client";
+import { MongoManager } from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { RiddlerRunner } from "./runner";

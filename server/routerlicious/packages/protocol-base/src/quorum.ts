@@ -13,7 +13,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
