@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./htmlView";
-export * from "./mountableView";
-export * from "./reactView";
+export * from "./requestHandlers";
