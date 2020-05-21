@@ -5,7 +5,7 @@
             "Base-Definitions": {
                 "dotSameRank": true,
                 "packages": [
-                    "@microsoft/fluid-common-definitions",
+                    "@fluidframework/common-definitions",
                     "@microsoft/fluid-component-core-interfaces",
                     "@microsoft/fluid-gitresources"
                 ]
@@ -15,7 +15,7 @@
                     "@microsoft/fluid-protocol-definitions"
                 ],
                 "deps": [
-                    "@microsoft/fluid-common-definitions"
+                    "@fluidframework/common-definitions"
                 ]
             },
             "Driver-Definitions": {
@@ -42,7 +42,7 @@
         "layers": {
             "Base-Utils": {
                 "packages": [
-                    "@microsoft/fluid-common-utils"
+                    "@fluidframework/common-utils"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -184,7 +184,8 @@
                 "dev": true,
                 "packages": [
                     "@microsoft/fluid-build-common",
-                    "@microsoft/eslint-config-fluid"
+                    "@fluidframework/build-common",
+                    "@fluidframework/eslint-config-fluid"
                 ]
             },
             "Tools": {

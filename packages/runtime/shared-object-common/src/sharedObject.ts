@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,

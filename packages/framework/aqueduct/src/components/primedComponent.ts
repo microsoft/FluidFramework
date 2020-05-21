@@ -12,7 +12,7 @@ import {
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 

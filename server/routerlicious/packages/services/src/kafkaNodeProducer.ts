@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";

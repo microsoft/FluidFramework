@@ -63,7 +63,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",

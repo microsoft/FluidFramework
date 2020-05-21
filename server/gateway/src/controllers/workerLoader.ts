@@ -4,7 +4,7 @@
  */
 
 import { parse } from "url";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IComponentRunnable,
     IRequest,

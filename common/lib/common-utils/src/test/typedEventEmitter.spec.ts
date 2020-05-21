@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import assert from "assert";
-import { IErrorEvent } from "@microsoft/fluid-common-definitions";
+import { IErrorEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "../typedEventEmitter";
 
 describe("TypedEventEmitter", () => {

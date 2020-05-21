@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,

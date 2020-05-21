@@ -8,7 +8,7 @@ import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
-} from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -31,7 +31,7 @@ import {
     performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,

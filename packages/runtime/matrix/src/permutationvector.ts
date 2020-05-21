@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@microsoft/fluid-common-utils";
+import { ChildLogger } from "@fluidframework/common-utils";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
     ISegment,

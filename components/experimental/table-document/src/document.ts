@@ -15,7 +15,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";

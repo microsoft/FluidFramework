@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

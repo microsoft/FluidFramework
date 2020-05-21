@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
