@@ -31,7 +31,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/debug": "^0.0.31",
+    "@types/debug": "^4.1.5",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

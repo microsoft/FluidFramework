@@ -49,7 +49,7 @@
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/amqplib": "^0.5.9",
-    "@types/debug": "^0.0.31",
+    "@types/debug": "^4.1.5",
     "@types/lodash": "^4.14.118",
     "@types/minio": "^7.0.1",
     "@types/mongodb": "3.1.17",

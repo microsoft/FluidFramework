@@ -38,7 +38,7 @@
     "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.16.0-0",
     "@types/async": "^2.0.50",
-    "@types/debug": "^0.0.31",
+    "@types/debug": "^4.1.5",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
