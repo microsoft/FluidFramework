@@ -207,7 +207,7 @@
                     "@microsoft/fluid-local-driver",
                     "@microsoft/fluid-test-runtime-utils",
                     "@microsoft/fluid-local-test-utils",
-                    "@microsoft/fluid-webpack-component-loader"
+                    "@fluidframework/webpack-component-loader"
                 ],
                 "dirs": [
                     "packages/test/",
