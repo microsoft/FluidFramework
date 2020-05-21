@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import {
     ICache,

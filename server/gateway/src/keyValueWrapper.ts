@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ChildProcess, fork } from "child_process";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
@@ -27,7 +27,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
         };
         this.keyValue.once("message", (message: IIncomingChildMessage) => {
             if (message.type === "init") {
-                // eslint-disable-next-line no-unused-expressions
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 message.status ? this.kvDeferred.resolve() : this.kvDeferred.reject(message.value);
             }
         });
@@ -43,7 +43,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
                 };
                 this.keyValue.once("message", (message: IIncomingChildMessage) => {
                     if (message.type === "get") {
-                        // eslint-disable-next-line no-unused-expressions
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         message.status ? resolve(message.value) : reject(message.status);
                     }
                 });
