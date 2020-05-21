@@ -13,7 +13,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@micros
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 abstract class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
     public readonly version: number;
 
     public get _root() {

@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
         "@typescript-eslint/consistent-type-assertions": "off",

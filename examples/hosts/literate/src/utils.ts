@@ -6,6 +6,7 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { parse } from "querystring";
 
 /**
@@ -46,10 +47,10 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     // Check if the component is viewable
     const component = response.value as IComponent;
     // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
+    let renderable: IComponentHTMLView = component.IComponentHTMLView;
     if (!renderable) {
         // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
+        const visual: IComponentHTMLVisual = component.IComponentHTMLVisual;
         if (visual) {
             renderable = visual.addView();
         }

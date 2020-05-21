@@ -1053,9 +1053,9 @@ class BumpVersion {
         }
 
         // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@microsoft/eslint-config-fluid", "@microsoft/fluid-build-common"]);
-        await this.releasePackage(depVersions, ["@microsoft/fluid-common-definitions"]);
-        await this.releasePackage(depVersions, ["@microsoft/fluid-common-utils"]);
+        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/fluid-build-common"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
         await this.releaseGeneratorFluid();

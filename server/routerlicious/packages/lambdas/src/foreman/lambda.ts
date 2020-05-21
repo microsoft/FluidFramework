@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RateLimiter } from "@microsoft/fluid-common-utils";
+import { RateLimiter } from "@fluidframework/common-utils";
 import {
     IHelpMessage,
     IQueueMessage,

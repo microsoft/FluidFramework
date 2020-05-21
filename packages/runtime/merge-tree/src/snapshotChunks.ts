@@ -7,7 +7,7 @@ import {
     IComponentHandleContext,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IJSONSegment, SnapshotLegacy } from ".";
 
 export interface VersionedMergeTreeChunk {

@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import {
     ITelemetryLogger,
-} from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/common-definitions";
 
 export function raiseConnectedEvent(
     logger: ITelemetryLogger,

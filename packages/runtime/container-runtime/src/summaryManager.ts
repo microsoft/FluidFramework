@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@fluidframework/common-utils";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ISummarizingError } from "@microsoft/fluid-driver-definitions";

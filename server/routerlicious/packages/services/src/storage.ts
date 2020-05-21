@@ -39,7 +39,7 @@ import {
 } from "@microsoft/fluid-protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 

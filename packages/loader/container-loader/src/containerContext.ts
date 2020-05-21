@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -47,7 +47,7 @@ export class ContainerContext implements IContainerContext {
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
-        chaincode: IRuntimeFactory,
+        runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
@@ -66,7 +66,7 @@ export class ContainerContext implements IContainerContext {
             container,
             scope,
             codeLoader,
-            chaincode,
+            runtimeFactory,
             baseSnapshot,
             attributes,
             blobManager,
@@ -166,7 +166,7 @@ export class ContainerContext implements IContainerContext {
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
-        public readonly chaincode: IRuntimeFactory,
+        public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
@@ -269,6 +269,6 @@ export class ContainerContext implements IContainerContext {
     }
 
     private async load() {
-        this.runtime = await this.chaincode.instantiateRuntime(this);
+        this.runtime = await this.runtimeFactory.instantiateRuntime(this);
     }
 }

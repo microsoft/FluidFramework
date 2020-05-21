@@ -41,7 +41,7 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type: string = "@chaincode/test-root-component";
+    public static readonly type: string = "@fluid-example/test-root-component";
 
     public static readonly codeProposal: IFluidCodeDetails = {
         package: TestRootComponent.type,

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@microsoft/fluid-common-utils";
+import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
     IPendingProposal,

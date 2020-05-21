@@ -5,7 +5,7 @@
 
 import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
-import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

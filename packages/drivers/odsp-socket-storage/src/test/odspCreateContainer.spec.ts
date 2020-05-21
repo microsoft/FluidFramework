@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { DebugLogger } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType } from "@microsoft/fluid-protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { IFetchWrapper } from "../fetchWrapper";

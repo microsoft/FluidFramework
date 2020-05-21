@@ -18,11 +18,11 @@ class CodeMirrorFactory implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/smde", Promise.resolve(smde)],
+            ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/smde";
+        const defaultComponent = "@fluid-example/smde";
 
         const runtime = await ContainerRuntime.load(
             context,
