@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "alfred.fullname" . }}
@@ -9,6 +9,9 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "routerlicious.name" . }}
   replicas: {{ .Values.alfred.replicas }}
   template:
     metadata:
@@ -25,7 +28,7 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - 'dist/alfred/www.js'
+          - 'packages/routerlicious/dist/alfred/www.js'
         ports:
         - name: ui
           containerPort: 3000
@@ -36,7 +39,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/server/routerlicious/packages/routerlicious/config/config.json
+          mountPath: /usr/src/server/packages/routerlicious/config/config.json
           subPath: config.json
       dnsConfig:
         options:

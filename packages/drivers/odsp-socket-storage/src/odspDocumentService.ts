@@ -4,7 +4,13 @@
  */
 
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import {
+    ChildLogger,
+    PerformanceEvent,
+    performanceNow,
+    TelemetryLogger,
+    TelemetryNullLogger,
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -32,9 +38,6 @@ import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } fr
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
-
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 
@@ -60,7 +63,7 @@ export class OdspDocumentService implements IDocumentService {
         resolvedUrl: IResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
-        logger: ITelemetryBaseLogger,
+        logger: ITelemetryBaseLogger | undefined,
         storageFetchWrapper: IFetchWrapper,
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
@@ -68,11 +71,8 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            logger,
-            { docId: odspResolvedUrl.hashedDocumentId });
         if (odspResolvedUrl.createNewOptions) {
+            const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
             const event = PerformanceEvent.start(templogger,
                 {
                     eventName: "CreateNew",
@@ -85,8 +85,7 @@ export class OdspDocumentService implements IDocumentService {
                     cache,
                     storageFetchWrapper);
                 const props = {
-                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                    itemId: odspResolvedUrl.itemId,
+                    docId: odspResolvedUrl.hashedDocumentId,
                 };
                 event.end(props);
             } catch (error) {
@@ -110,7 +109,7 @@ export class OdspDocumentService implements IDocumentService {
     public static async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger: ITelemetryBaseLogger | undefined,
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
@@ -131,7 +130,10 @@ export class OdspDocumentService implements IDocumentService {
             filePath,
             filename: odspResolvedUrl.fileName,
         };
-        const event = PerformanceEvent.start(logger,
+
+        const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
+
+        const event = PerformanceEvent.start(templogger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
@@ -144,11 +146,10 @@ export class OdspDocumentService implements IDocumentService {
                 storageFetchWrapper,
                 createNewSummary);
             const props = {
-                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                itemId: odspResolvedUrl.itemId,
+                docId: odspResolvedUrl.hashedDocumentId,
             };
 
-            const docService = factory.createDocumentService(odspResolvedUrl);
+            const docService = factory.createDocumentService(odspResolvedUrl, logger);
             event.end(props);
             return docService;
         } catch (error) {
@@ -184,7 +185,7 @@ export class OdspDocumentService implements IDocumentService {
         public readonly odspResolvedUrl: IOdspResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
-        logger: ITelemetryBaseLogger,
+        logger: ITelemetryBaseLogger | undefined,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
@@ -193,11 +194,9 @@ export class OdspDocumentService implements IDocumentService {
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
-        this.logger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            logger,
+        this.logger = ChildLogger.create(logger,
+            "OdspDriver",
             {
-                docId: this.odspResolvedUrl.hashedDocumentId,
                 odc: this.isOdc,
             });
 

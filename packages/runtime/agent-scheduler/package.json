@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-agent-scheduler",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Component in charge of distributing agents across instances of a component",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,10 +21,6 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-patch-local": "npm version patch && npm run publish-local",
-    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
     "tsc": "tsc"
   },
   "nyc": {
@@ -47,14 +43,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
-    "@microsoft/fluid-component-runtime": "^0.18.0",
-    "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
-    "@microsoft/fluid-container-definitions": "^0.18.0",
-    "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-register-collection": "^0.18.0",
-    "@microsoft/fluid-runtime-definitions": "^0.18.0",
-    "@microsoft/fluid-shared-object-base": "^0.18.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
+    "@microsoft/fluid-component-runtime": "^0.19.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-container-definitions": "^0.19.0",
+    "@microsoft/fluid-map": "^0.19.0",
+    "@microsoft/fluid-register-collection": "^0.19.0",
+    "@microsoft/fluid-runtime-definitions": "^0.19.0",
+    "@microsoft/fluid-shared-object-base": "^0.19.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },

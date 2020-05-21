@@ -158,6 +158,9 @@ export interface ISequencedDocumentMessage {
     // The sequenced identifier
     sequenceNumber: number;
 
+    // The term identifier
+    term: number | undefined;
+
     // The minimum sequence number for all connected clients
     minimumSequenceNumber: number;
 

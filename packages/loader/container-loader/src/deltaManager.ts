@@ -12,7 +12,7 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent, performanceNow, TelemetryLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -44,9 +44,6 @@ import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
 
 const MaxReconnectDelaySeconds = 8;
 const InitialReconnectDelaySeconds = 1;
@@ -134,7 +131,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private _reconnectMode: ReconnectMode;
 
     // file ACL - whether user has only read-only access to a file
-    private readonlyPermissions: boolean | undefined;
+    private _readonlyPermissions: boolean | undefined;
 
     // tracks host requiring read-only mode.
     private _forceReadonly = false;
@@ -157,6 +154,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
+    private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
@@ -206,6 +204,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.baseSequenceNumber;
     }
 
+    public get referenceTerm(): number {
+        return this.baseTerm;
+    }
+
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
@@ -220,8 +222,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.version;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
-        return this.connection!.details.serviceConfiguration;
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
+        return this.connection ? this.connection.details.serviceConfiguration : undefined;
+    }
+
+    public get scopes(): string[] | undefined {
+        return this.connection ? this.connection.details.claims.scopes : undefined;
     }
 
     public get active(): boolean {
@@ -229,7 +235,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // user can't have r/w connection when user has only read permissions.
         // That said, connection can be r/w when host called forceReadonly(), as
         // this is view-only change
-        assert(!(this.readonlyPermissions && res));
+        assert(!(this._readonlyPermissions && res));
         return res;
     }
 
@@ -254,10 +260,25 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Tells if container is in read-only mode.
      * Components should listen for "readonly" notifications and disallow user
      * making changes to components.
-     * This is independent from file permissions and type of type of connection
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
      */
-    public get readonly(): boolean | undefined {
-        return this.readonlyPermissions || this._forceReadonly;
+    public get readonly() {
+        if (this._forceReadonly) {
+            return true;
+        }
+        return this._readonlyPermissions;
+    }
+
+    /**
+     * Tells if user has no write permissions for file in storage
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
+     */
+    public get readonlyPermissions() {
+        return this._readonlyPermissions;
     }
 
     /**
@@ -282,7 +303,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Sends signal to runtime (and components) to be read-only.
      * Hosts may have read only views, indicating to components that no edits are allowed.
-     * This is independent from this.readonlyPermissions (permissions) and this.connectionMode
+     * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
      * (server can return "write" mode even when asked for "read")
      * Leveraging same "readonly" event as runtime & components should behave the same in such case
      * as in read-only permissions.
@@ -297,9 +318,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private setReadonlyPermissions(readonly: boolean) {
+    private set_readonlyPermissions(readonly: boolean) {
         const oldValue = this.readonly;
-        this.readonlyPermissions = readonly;
+        this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
             this.emit("readonly", this.readonly);
         }
@@ -384,12 +405,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
+        term: number,
         handler: IDeltaHandlerStrategy,
     ) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
         this.baseSequenceNumber = sequenceNumber;
+        this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 
@@ -513,7 +536,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (connectRepeatCount > 1) {
                 this.logger.sendTelemetryEvent({
                     attempts: connectRepeatCount,
-                    duration: (performanceNow() - connectStartTime).toFixed(0),
+                    duration: TelemetryLogger.formatTick(performanceNow() - connectStartTime),
                     eventName: "MultipleDeltaConnectionFailures",
                 });
             }
@@ -816,7 +839,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Notify everyone we are in read-only state.
         // Useful for components in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
-        this.setReadonlyPermissions(true);
+        this.set_readonlyPermissions(true);
 
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of components / runtime to "hear"
@@ -880,7 +903,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
             "claims/connectionMode mismatch");
         assert(!readonly || this.connectionMode === "read", "readonly perf with write connection");
-        this.setReadonlyPermissions(readonly);
+        this.set_readonlyPermissions(readonly);
 
         this.emitDelayInfo(RetryFor.DeltaStream, -1);
 
@@ -919,7 +942,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (message: INack) => {
             // TODO: we should remove this check when service updates?
-            if (this.readonlyPermissions) {
+            if (this._readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
 
@@ -1190,6 +1213,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1, "non-seq seq#");
         this.baseSequenceNumber = message.sequenceNumber;
+
+        // Back-compat for older server with no term
+        this.baseTerm = message.term === undefined ? 1 : message.term;
 
         this.emit("beforeOpProcessing", message);
 

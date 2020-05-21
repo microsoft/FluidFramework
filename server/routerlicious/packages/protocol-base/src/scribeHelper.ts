@@ -11,12 +11,14 @@ export function getQuorumTreeEntries(
     documentId: string,
     minimumSequenceNumber: number,
     sequenceNumber: number,
+    term: number,
     quorumSnapshot: IQuorumSnapshot,
 ): ITreeEntry[] {
     const documentAttributes: IDocumentAttributes = {
         branch: documentId,
         minimumSequenceNumber,
         sequenceNumber,
+        term,
     };
 
     const entries: ITreeEntry[] = [
@@ -77,4 +79,31 @@ export function mergeAppAndProtocolTree(appSummaryTree: ITree, protocolTree: ITr
         type: "tree",
     });
     return newTreeEntries;
+}
+
+export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[] {
+    const serviceProtocolEntries: ITreeEntry[] = [
+        {
+            mode: FileMode.File,
+            path: "deli",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: deli,
+                encoding: "utf-8",
+            },
+        },
+    ];
+
+    serviceProtocolEntries.push(
+        {
+            mode: FileMode.File,
+            path: "scribe",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: scribe,
+                encoding: "utf-8",
+            },
+        },
+    );
+    return serviceProtocolEntries;
 }
