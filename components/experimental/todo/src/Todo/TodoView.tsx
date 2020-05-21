@@ -4,6 +4,8 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "../TodoItem/TodoItem";
@@ -22,6 +24,12 @@ interface TodoViewState {
 export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     private newTextInput: HTMLInputElement;
     private titleString: SharedString;
+
+    public static async createFromRequest(request: IRequest, runtime: IContainerRuntime) {
+        const todoModel = (await runtime.request(request)).value as Todo;
+        return { status: 200, mimeType: "fluid/view", value: <TodoView todoModel={ todoModel } /> };
+    }
+
     constructor(props: TodoViewProps) {
         super(props);
 

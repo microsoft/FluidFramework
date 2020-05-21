@@ -4,6 +4,8 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "./TodoItem";
@@ -28,6 +30,11 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         width: "35px",
     };
 
+    public static async createFromRequest(request: IRequest, runtime: IContainerRuntime) {
+        const todoItemModel = (await runtime.request(request)).value as TodoItem;
+        return { status: 200, mimeType: "fluid/view", value: <TodoItemView todoItemModel={ todoItemModel } /> };
+    }
+
     constructor(props: TodoItemViewProps) {
         super(props);
 
@@ -35,7 +42,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
         const baseUrl = this.props.todoItemModel.getBaseUrl();
         const url = new URL(baseUrl);
-        this.itemUrl = `${url.origin}${url.pathname}/${this.props.todoItemModel.url}${url.search}`;
+        this.itemUrl = `${url.origin}${url.pathname}/TodoItemView/${this.props.todoItemModel.url}${url.search}`;
 
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),

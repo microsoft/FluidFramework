@@ -11,13 +11,9 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IValueChanged } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
 import { TextListInstantiationFactory } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";
-import { TodoItemView } from "./TodoItemView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -41,16 +37,10 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
-    implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState> {
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private baseUrl: string = "";
-
-    public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
 
     /**
      * Do creation work
@@ -122,33 +112,6 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             ClickerInstantiationFactory.registryEntry,
         ]),
     );
-
-    // start IComponentHTMLView
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            this.createJSXElement(),
-            div,
-        );
-    }
-
-    // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoItemView
-                todoItemModel={this}
-            />
-        );
-    }
-
-    // end IComponentReactViewable
 
     // start public API surface for the TodoItem model, used by the view
 
