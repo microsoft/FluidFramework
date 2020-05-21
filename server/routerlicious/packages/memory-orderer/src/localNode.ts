@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -16,7 +16,7 @@ import {
     ITenantManager,
     IWebSocketServer,
     ILogger,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import { v4 as uuid } from "uuid";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentAttributes, ITreeEntry, FileMode, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentAttributes, ITreeEntry, FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
 import { ICreateTreeEntry, ITree } from "@microsoft/fluid-gitresources";
 import { IQuorumSnapshot } from "./quorum";
 

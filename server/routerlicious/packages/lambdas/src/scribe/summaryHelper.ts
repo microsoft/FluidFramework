@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
-import { IDocumentAttributes, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
-import { IScribe } from "@microsoft/fluid-server-services-core";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
+import { IScribe } from "@fluidframework/server-services-core";
 import { IDeliCheckpoint } from "../deli";
 
 export interface ILatestSummaryState {

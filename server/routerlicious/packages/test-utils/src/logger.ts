@@ -4,7 +4,7 @@
  */
 
 import * as registerDebug from "debug";
-import { ILogger } from "@microsoft/fluid-server-services-core";
+import { ILogger } from "@fluidframework/server-services-core";
 
 /**
  * Implementation of debug logger

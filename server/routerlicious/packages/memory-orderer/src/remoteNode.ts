@@ -6,8 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
-import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@microsoft/fluid-server-services-core";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
+import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@fluidframework/server-services-core";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";

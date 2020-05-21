@@ -8,10 +8,10 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as api from "./api";
 
 export interface IRoutes {

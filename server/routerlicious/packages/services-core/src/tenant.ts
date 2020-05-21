@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+import { IGitManager } from "@fluidframework/server-services-client";
 
 export interface ITenantConfig {
     id: string;
