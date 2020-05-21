@@ -13,7 +13,13 @@ import {
     IDocumentServiceFactory,
     IThrottlingError,
 } from "@microsoft/fluid-driver-definitions";
-import { createIError, createNetworkError, createWriteError } from "@microsoft/fluid-driver-utils";
+import {
+    createIError,
+    createNetworkError,
+    createWriteError,
+    ErrorWithProps,
+    invalidFileNameErrorCode,
+} from "@microsoft/fluid-driver-utils";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
@@ -79,10 +85,12 @@ describe("Errors Types", () => {
     it("GeneralError Logging Test", async () => {
         const err = {
             userData: "My name is Mark",
+            message: "Some message",
         };
-        const iError = createIError(err);
-        assert.equal((iError as any).getCustomProperties, undefined,
-            "We shouldn't expose the properties of the inner/original error");
+        const iError = (createIError(err) as any) as ErrorWithProps;
+        const props = iError.getCustomProperties() as any;
+        assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
+        assert.equal(props.message, err.message, "But name is copied over!");
     });
 
     function assertCustomPropertySupport(err: any) {
@@ -100,6 +108,7 @@ describe("Errors Types", () => {
         assert.equal(networkError.errorType, ErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
+        assert.equal(networkError.canRetry, false, "canRetry should be preserved");
     });
 
     it("GenericNetworkError Test_2", async () => {
@@ -191,11 +200,11 @@ describe("Errors Types", () => {
         assertCustomPropertySupport(networkError);
     });
 
-    it("InvalidFileNameError Test 710", async () => {
+    it("InvalidFileNameError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
             false /* canRetry */,
-            710 /* statusCode */);
+            invalidFileNameErrorCode /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
             "Error should be an InvalidFileNameError");
         assertCustomPropertySupport(networkError);
@@ -219,11 +228,22 @@ describe("Errors Types", () => {
         assert.equal(writeError.canRetry, false, "Error should be critical");
     });
 
+    it("string test", async () => {
+        const text = "Sample text";
+        const writeError = createIError(text);
+        assertCustomPropertySupport(writeError);
+        assert.equal(writeError.errorType, ErrorType.genericError, "Error should be a writeError");
+        assert.equal(writeError.message, text, "Text is preserved");
+        assert.equal(writeError.canRetry, false, "Error should be critical");
+    });
+
     it("Check double conversion of network error", async () => {
         const networkError = createNetworkError("Test Error", true /* canRetry */);
         const error1 = createIError(networkError);
         const error2 = createIError(error1);
-        assert.equal(error1, error2, "Both errors should be same!!");
+        assertCustomPropertySupport(error1);
+        assertCustomPropertySupport(error2);
+        assert.deepEqual(error1, error2, "Both errors should be same!!");
     });
 
     it("Check double conversion of general error", async () => {
@@ -232,19 +252,49 @@ describe("Errors Types", () => {
         };
         const error1 = createIError(err);
         const error2 = createIError(error1);
-        assert.equal(error1, error2, "Both errors should be same!!");
+        assertCustomPropertySupport(error1);
+        assertCustomPropertySupport(error2);
+        assert.deepEqual(error1, error2, "Both errors should be same!!");
+        assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
     });
 
     it("Check frozen error", async () => {
-        const err1 = {
+        const err = {
             message: "Test Error",
         };
-        const err2 = {
-            message: "Test Error",
-        };
-        const error1 = createIError(err1);
-        const error2 = createIError(Object.freeze(err2));
+        const error1 = createIError(err);
+        const error2 = createIError(Object.freeze(err));
         assert.equal(error1.canRetry, false, "Can retry false 1.");
         assert.equal(error2.canRetry, false, "Can retry false 2");
+    });
+
+    it("Preserve existing properties", async () => {
+        const err1 = {
+            errorType: "Something",
+            message: "Test Error",
+            canRetry: true,
+        };
+        const error1 = createIError(err1);
+        const error2 = createIError(Object.freeze(error1));
+        assert.equal(error1.canRetry, true, "Preserve canRetry 1");
+        assert.equal(error2.canRetry, true, "Preserve canRetry 2");
+        assert.equal(error1.errorType, err1.errorType, "Preserve errorType 1");
+        assert.equal(error2.errorType, err1.errorType, "Preserve errorType 2");
+    });
+
+    it("Overwrite canRetry", async () => {
+        const err1 = {
+            message: "Test Error",
+            canRetry: true,
+        };
+        const error1 = createIError(err1, false);
+        assert.equal(error1.canRetry, false, "canRetry 1");
+
+        const err2 = {
+            message: "Test Error",
+            canRetry: false,
+        };
+        const error2 = createIError(err2, true);
+        assert.equal(error2.canRetry, true, "canRetry 2");
     });
 });

@@ -17,18 +17,9 @@ import {
     ErrorType,
     ISummarizingError,
 } from "@microsoft/fluid-driver-definitions";
-
-class ErrorWithProps extends Error {
-    // Return all properties
-    public getCustomProperties(): object {
-        const props = {};
-        // Could not use {...this} because it does not return properties of base class.
-        for (const key of Object.getOwnPropertyNames(this)) {
-            props[key] = this[key];
-        }
-        return props;
-    }
-}
+import {
+    ErrorWithProps,
+} from "./error";
 
 export enum OnlineStatus {
     Offline,
@@ -73,7 +64,7 @@ class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError
  * not have permissions.
  */
 class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
-    readonly errorType: ErrorType.authorizationError = ErrorType.authorizationError;
+    readonly errorType = ErrorType.authorizationError;
 
     constructor(
         errorMessage: string,

@@ -165,41 +165,7 @@ describe("Container", () => {
         deltaConnection.removeAllListeners();
     });
 
-    it("Raise error event", async () => {
-        deltaConnection = new MockDocumentDeltaConnection(
-            "test",
-        );
-        const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
-        // Issue typescript-eslint/typescript-eslint #1256
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        mockFactory.createDocumentService = async (resolvedUrl) => {
-            const service = await serviceFactory.createDocumentService(resolvedUrl);
-            // Issue typescript-eslint/typescript-eslint #1256
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            service.connectToDeltaStream = async () => deltaConnection;
-            return service;
-        };
-
-        const container = await Container.load(
-            "tenantId/documentId",
-            mockFactory,
-            codeLoader,
-            {},
-            {},
-            loader,
-            testRequest,
-            testResolved,
-            testResolver);
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
-            "Container should be in Connecting state");
-        deltaConnection.emitError("Test Error");
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
-            "Container should be in Disconnected state");
-        assert.strictEqual(container.closed, true, "Container should be closed");
-        deltaConnection.removeAllListeners();
-    });
-
-    it("Raise critical error event with checking error raised on container", async () => {
+    it("Raise connection error event", async () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
@@ -236,8 +202,9 @@ describe("Container", () => {
         deltaConnection.emitError(err);
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
             "Container should be in Disconnected state");
-        assert.strictEqual(container.closed, true, "Container should be closed");
-        assert.strictEqual(errorRaised, true, "Error event should be raised.");
+        // All errors on socket are not critical!
+        assert.strictEqual(container.closed, false, "Container should not be closed");
+        assert.strictEqual(errorRaised, false, "Error event should not be raised.");
         deltaConnection.removeAllListeners();
     });
 
