@@ -40,7 +40,7 @@ import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import JsDiff from "diff";
 import random from "random-js";
-import Xmldoc from "xmldoc";
+import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
 const clock = () => process.hrtime();
