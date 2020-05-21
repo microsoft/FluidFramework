@@ -10,6 +10,7 @@ import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
+import { performanceNow } from "@microsoft/fluid-common-utils";
 import {
     IComponent,
     IComponentHandle,
@@ -36,7 +37,6 @@ import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
-const performanceNow = require("performance-now");
 const debug = require("debug")("fluid:shared-text");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 

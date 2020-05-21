@@ -8,15 +8,15 @@ The Fluid loader is all that is needed to load any Fluid document. This example 
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
 more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host or
-@fluid-example/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
-example will show all the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
+There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host.
+These may be better starting options when integrating the loader into your own code. But this example will show all
+the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
 of code.
 
 ## Build steps
 
 The first (and hardest) step to get up and running is to authenticate against the Fluid private npm feed. To do so
-navigate to https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed, click the "Connect to feed" link,
+navigate to <https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed>, click the "Connect to feed" link,
 choose "npm" and then follow the instructions.
 
 Once you've done that getting up and running is simple.
@@ -26,11 +26,11 @@ npm install
 npm start
 ```
 
-Then navigate to http://localhost:8080. This will redirect you to http://localhost:8080/example but you can change
+Then navigate to <http://localhost:8080.> This will redirect you to <http://localhost:8080/example> but you can change
 'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
 will be created but by specifying the chaincode query parameter any of the packages on
-https://packages.wu2.prague.office-int.com can be loaded - i.e.
-http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.
+<https://packages.wu2.prague.office-int.com> can be loaded - i.e.
+<http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.>
 
 ## The Code
 

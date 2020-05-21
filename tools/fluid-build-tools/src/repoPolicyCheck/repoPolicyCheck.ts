@@ -91,7 +91,9 @@ const handlers: Handler[] = [
         name: "html-copyright-file-header",
         match: /(^|\/)[^\/]+\.html$/i,
         handler: file => {
-            if (!/<!--.*Copyright/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/<!--[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(readFile(content)) ||
+                !/<!--[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return "Html file missing copyright header";
             }
         },
@@ -109,7 +111,9 @@ const handlers: Handler[] = [
         name: "dockerfile-copyright-file-header",
         match: /(^|\/)Dockerfile$/i,
         handler: file => {
-            if (!/#.*Copyright/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/#[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(readFile(content)) ||
+                !/#[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return 'Dockerfile missing copyright header';
             }
         },
@@ -128,7 +132,9 @@ const handlers: Handler[] = [
         name: "js-ts-copyright-file-header",
         match: /(^|\/)[^\/]+\.[jt]sx?$/i,
         handler: file => {
-            if (!/(\/\/.*Copyright|\/\*[\s\S]*Copyright[\s\S]*\*\/)/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/(\/\/|[\s\S]*\*)[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content)
+                || !/(\/\/|[\s\S]*\*)[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return 'JavaScript/TypeScript file missing copyright header';
             }
         },

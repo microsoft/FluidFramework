@@ -90,3 +90,17 @@ export class KeyValueWrapper implements IKeyValueWrapper {
         });
     }
 }
+
+export class LocalKeyValueWrapper implements IKeyValueWrapper {
+    public async getKeyValues(): Promise<IKeyValue[]> {
+        return [];
+    }
+
+    public async addKeyValue(keyValue: IKeyValue): Promise<IKeyValue> {
+        return undefined;
+    }
+
+    public async removeKeyValue(key: string): Promise<string> {
+        return undefined;
+    }
+}
