@@ -15,10 +15,10 @@ import { attach, initializeChaincode, parsePackageName } from "./utils";
 const hostUrl = "http://localhost:3000";
 const ordererUrl = "http://localhost:3000";
 const storageUrl = "http://localhost:3000";
-const npm = "<replace this>"
+const npm = "http://localhost:4873";
 const defaultPackage = "@fluid-example/smde@0.18.1";
 
-// Tinylicious don't care able these values
+// Tinylicious doesn't care able these values
 const tenantId = "unused";
 const tenantKey = "unused";
 const bearerSecret = "";
