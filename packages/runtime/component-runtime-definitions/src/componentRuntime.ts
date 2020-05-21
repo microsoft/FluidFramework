@@ -22,8 +22,7 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
-import { IChannel
-} from ".";
+import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
