@@ -540,6 +540,10 @@ export class DeliLambda implements IPartitionLambda {
         sequenceNumber: number,
         systemContent,
     ): ISequencedDocumentMessage {
+        // prefer the server/client provided timestamp, fallback to current time
+        // we fallback to current time to ensure all ops have a timestamp
+        const timestamp = message.operation.timestamp ?? Date.now();
+
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
@@ -551,7 +555,7 @@ export class DeliLambda implements IPartitionLambda {
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
             term: this.term,
-            timestamp: Date.now(),
+            timestamp,
             traces: message.operation.traces,
             type: message.operation.type,
         };
