@@ -13,6 +13,7 @@ import { SharedMap, SharedDirectory } from "@microsoft/fluid-map";
 import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { SharedString } from "@microsoft/fluid-sequence";
 import {
     LocalCodeLoader,
     initializeLocalContainer,
@@ -25,6 +26,7 @@ describe("Ops on Reconnect", () => {
     const map1Id = "map1Key";
     const map2Id = "map2Key";
     const directoryId = "directoryKey";
+    const stringId = "sharedStringKey";
     const codeDetails: IFluidCodeDetails = {
         package: "opsOnReconnectTestPackage",
         config: {},
@@ -39,7 +41,8 @@ describe("Ops on Reconnect", () => {
     let firstContainerComp1Map1: SharedMap;
     let firstContainerComp1Map2: SharedMap;
     let firstContainerComp1Directory: SharedDirectory;
-    let receivedValues: [string, string, boolean | undefined][] = [];
+    let firstContainerComp1String: SharedString;
+    let receivedValues: any[] = [];
 
     /**
      * Waits for the "connected" event from the given container.
@@ -54,6 +57,7 @@ describe("Ops on Reconnect", () => {
                 [ map1Id, SharedMap.getFactory() ],
                 [ map2Id, SharedMap.getFactory() ],
                 [ directoryId, SharedDirectory.getFactory() ],
+                [ stringId, SharedString.getFactory() ],
             ],
         );
 
@@ -99,11 +103,20 @@ describe("Ops on Reconnect", () => {
                     assert.notEqual(
                         message.clientId, firstContainerClientId, "The clientId did not change after disconnect");
 
+                    const address = envelope.contents.content.address;
                     const content = envelope.contents.content.contents;
-                    const key = content.key;
-                    const value = content.value.value;
                     const batch = message.metadata?.batch;
-                    receivedValues.push([ key, value, batch ]);
+                    let value1: string | number;
+                    let value2: string;
+                    // Add special handling for SharedString. SharedMap and SharedDirecory content structure is same.
+                    if (address === stringId) {
+                        value1 = content.pos1;
+                        value2 = content.seg;
+                    } else {
+                        value1 = content.key;
+                        value2 = content.value.value;
+                    }
+                    receivedValues.push([ value1, value2, batch ]);
                 }
             }
         });
@@ -125,6 +138,7 @@ describe("Ops on Reconnect", () => {
         firstContainerComp1Map1 = await firstContainerComp1.getSharedObject<SharedMap>(map1Id);
         firstContainerComp1Map2 = await firstContainerComp1.getSharedObject<SharedMap>(map2Id);
         firstContainerComp1Directory = await firstContainerComp1.getSharedObject<SharedDirectory>(directoryId);
+        firstContainerComp1String = await firstContainerComp1.getSharedObject<SharedString>(stringId);
 
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
         containerDeltaEventManager.registerDocuments(firstContainerComp1.runtime);
@@ -148,6 +162,7 @@ describe("Ops on Reconnect", () => {
             firstContainerComp1Map1.set("key2", "value2");
             firstContainerComp1Map2.set("key3", "value3");
             firstContainerComp1Map2.set("key4", "value4");
+            firstContainerComp1String.insertText(0, "value5");
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(firstContainer);
@@ -155,11 +170,12 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedValues: string[][] = [
+            const expectedValues = [
                 [ "key1", "value1", undefined /* batch */ ],
                 [ "key2", "value2", undefined /* batch */ ],
                 [ "key3", "value3", undefined /* batch */ ],
                 [ "key4", "value4", undefined /* batch */ ],
+                [ 0, "value5", undefined /* batch */ ], // This is for the SharedString
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
@@ -189,7 +205,7 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedValues: string[][] = [
+            const expectedValues = [
                 [ "key1", "value1", undefined /* batch */ ],
                 [ "key2", "value2", undefined /* batch */ ],
                 [ "key3", "value3", undefined /* batch */ ],
@@ -227,7 +243,7 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedValues: string[][] = [
+            const expectedValues = [
                 [ "key1", "value1", undefined /* batch */ ],
                 [ "key2", "value2", undefined /* batch */ ],
                 [ "key3", "value3", undefined /* batch */ ],
@@ -286,7 +302,7 @@ describe("Ops on Reconnect", () => {
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            const expectedValues: string[][] = [
+            const expectedValues = [
                 [ "key1", "value1", undefined /* batch */ ],
                 [ "key2", "value2", undefined /* batch */ ],
                 [ "key3", "value3", undefined /* batch */ ],
