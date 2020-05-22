@@ -15,6 +15,58 @@ export interface IUpgradeRuntime {
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
 }
 
+export interface IUpgradeFnConfig {
+    maxTime?: number, // maximum time before proposing
+    opTime?: number, // time without ops before proposing
+    clients?: number, // propose if and when fewer than this number of interactive clients connected
+}
+
+const defaultUpgradeFnConfig = {
+    maxTime: 30000,
+    opTime: 10000,
+    clients: 1,
+};
+
+async function defaultUpgradeFn(runtime: IUpgradeRuntime, config: IUpgradeFnConfig = defaultUpgradeFnConfig) {
+    const promises: Promise<string>[] = [];
+
+    if (config.maxTime) {
+        promises.push(new PromiseTimer(config.maxTime, () => { }).start().then(() => "max time"));
+    }
+
+    if (config.opTime) {
+        const opTime = config.opTime;
+        promises.push(new Promise<string>((resolve) => {
+            const timer = new Timer(opTime, () => resolve("no ops"));
+            timer.start();
+            runtime.on("op", () => timer.start());
+        }));
+    }
+
+    if (config.clients) {
+        const clients = config.clients;
+        const clientCount = () => Array.from(runtime.getQuorum().getMembers().values())
+            .filter((c) => c.client.details.capabilities.interactive).length;
+        promises.push(new Promise<string>((resolve) => {
+            if (clientCount() <= clients) {
+                resolve("client count");
+            } else {
+                runtime.getQuorum().on("removeMember", () => {
+                    if (clientCount() <= clients) {
+                        resolve("client count");
+                    }
+                });
+            }
+        }));
+    }
+
+    if (promises.length === 0) {
+        return Promise.reject("no upgrade parameters specified");
+    }
+
+    return Promise.race(promises);
+}
+
 export class UpgradeManager extends EventEmitter {
     private readonly logger: ITelemetryLogger;
     private proposedSeqNum: number | undefined;
@@ -27,14 +79,6 @@ export class UpgradeManager extends EventEmitter {
         runtime.getQuorum().on("addProposal", (proposal) => this.onAdd(proposal));
         runtime.getQuorum().on("approveProposal", (seqNum) => this.onApprove(seqNum));
         runtime.getQuorum().on("rejectProposal", (seqNum) => this.onReject(seqNum));
-    }
-
-    /**
-     * Number of human clients connected to a document
-     */
-    private get clients(): number {
-        return Array.from(this.runtime.getQuorum().getMembers().values())
-            .filter((c) => c.client.details.capabilities.interactive).length;
     }
 
     private onAdd(proposal: IPendingProposal) {
@@ -81,8 +125,15 @@ export class UpgradeManager extends EventEmitter {
      * Initiate an upgrade.
      * @param code - code details for upgrade
      * @param highPriority - If true, propose upgrade immediately. If false, wait for an opportune time to upgrade.
+     * @param upgradeFn - returns a promise that will initiate a low priority upgrade on resolve
+     * @param upgradeFnConfig - configure options for default upgradeFn
      */
-    public async upgrade(code: IFluidCodeDetails, highPriority = false): Promise<boolean> {
+    public async upgrade(
+        code: IFluidCodeDetails,
+        highPriority = false,
+        upgradeFn?: (runtime: IUpgradeRuntime) => Promise<string>,
+        upgradeFnConfig?: IUpgradeFnConfig,
+    ): Promise<boolean> {
         // if we get a high priority upgrade we cancel the low priority upgrade if it exists
         if (highPriority) {
             this.delayed?.result.resolve(false);
@@ -96,35 +147,23 @@ export class UpgradeManager extends EventEmitter {
             return this.delayed.result.promise;
         }
 
-        const maxTime = 30000; // maximum time before proposing
-        const opTime = 10000; // time without ops before proposing
-
-        const maxTimeP = new PromiseTimer(maxTime, () => { }).start().then(() => "max time");
-        const onlyOneClientP = new Promise<string>((resolve) => {
-            if (this.clients === 1) {
-                resolve("one client");
-            } else {
-                this.runtime.getQuorum().on("removeMember", () => {
-                    if (this.clients === 1) {
-                        resolve("one client");
-                    }
-                });
-            }
-        });
-        const noOpsP = new Promise<string>((resolve) => {
-            const timer = new Timer(opTime, () => resolve("no ops"));
-            timer.start();
-            this.runtime.on("op", () => timer.start());
-        });
-
         this.delayed = { code, result: new Deferred<boolean>() };
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        Promise.race([maxTimeP, onlyOneClientP, noOpsP]).then(async (reason) => {
+        const upgradeP = upgradeFn ? upgradeFn(this.runtime) : defaultUpgradeFn(this.runtime, upgradeFnConfig);
+        upgradeP.then(async (reason) => {
             if (this.delayed) {
-                this.delayed.result.resolve(this.propose(this.delayed.code, reason));
+                this.propose(this.delayed.code, reason).then(
+                    (x) => this.delayed?.result.resolve(x),
+                    (x) => this.delayed?.result.reject(x),
+                );
+                this.delayed = undefined;
+            }
+        }, (error) => {
+            if (this.delayed) {
+                this.delayed.result.reject(error);
                 this.delayed = undefined;
             }
         });
+
         return this.delayed.result.promise;
     }
 
@@ -138,7 +177,12 @@ export class UpgradeManager extends EventEmitter {
         // don't reject here on proposal rejection since it's expected for all but one client
         return this.runtime.getQuorum().propose("code", code).then(
             () => true,
-            () => false,
+            (error) => {
+                if (typeof error === "string" && error.startsWith("Rejected by ")) {
+                    return false;
+                }
+                return Promise.reject(error);
+            },
         );
     }
 }

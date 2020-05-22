@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { UpgradeManager } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
@@ -14,12 +14,9 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@micros
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static getFactory() { return TestComponent.factory; }
-
-    public runtime: IComponentRuntime;
-
     private static readonly factory = new PrimedComponentFactory(
         TestComponent.type,
         TestComponent,
@@ -27,10 +24,8 @@ class TestComponent extends PrimedComponent {
         {},
     );
 
-    constructor(props: ISharedComponentProps) {
-        super(props);
-        this.runtime = props.runtime;
-    }
+    public get _runtime(): IComponentRuntime { return this.runtime; }
+    public get _root() { return this.root; }
 }
 
 describe("UpgradeManager", () => {
@@ -76,11 +71,11 @@ describe("UpgradeManager", () => {
                 async (container) => getComponent<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
-        containerDeltaEventManager.registerDocuments(...components.map((c) => c.runtime));
+        containerDeltaEventManager.registerDocuments(...components.map((c) => c._runtime));
 
         components.map((c, i) => {
-            c.runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
-            c.runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
+            c._runtime.getQuorum().on("addProposal", () => { ++addCounts[i]; });
+            c._runtime.getQuorum().on("approveProposal", () => { ++approveCounts[i]; });
         });
 
         const upgradeManagers = containers.map((c) => new UpgradeManager((c as any).context.runtime));
@@ -93,16 +88,19 @@ describe("UpgradeManager", () => {
         await Promise.all(succeededP);
 
         const results = await Promise.all(resultsP);
-        assert(addCounts.every((a) => a === clients), "not every client added a proposal");
-        assert(approveCounts.every((a) => a === 1), "more than one approval or zero approvals");
-        assert(results.filter((r) => r).length === 1);
+        // every client sees number of added proposals equal to number of clients
+        addCounts.map((a) => assert.strictEqual(a, clients));
+        // every client sees exactly one approval
+        approveCounts.map((a) => assert.strictEqual(a, 1));
+        // only one upgrade() call resolves true
+        assert.strictEqual(results.filter((r) => r).length, 1);
     });
 
     it("1 client low priority is immediate", async () => {
         const container = await createContainer(TestComponent.getFactory());
         const component = await getComponent<TestComponent>("default", container);
 
-        containerDeltaEventManager.registerDocuments(component.runtime);
+        containerDeltaEventManager.registerDocuments(component._runtime);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
         const result = upgradeManager.upgrade(codeDetails);
@@ -119,7 +117,7 @@ describe("UpgradeManager", () => {
 
         const containers = await Promise.all(containersP);
 
-        containerDeltaEventManager.registerDocuments(...components.map((c) => c.runtime));
+        containerDeltaEventManager.registerDocuments(...components.map((c) => c._runtime));
         await containerDeltaEventManager.process();
 
         const upgradeManager = new UpgradeManager((containers[0] as any).context.runtime);
