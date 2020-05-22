@@ -5,15 +5,15 @@
 
 import assert from "assert";
 import { parse } from "url";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { generateToken } from "@fluidframework/server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other

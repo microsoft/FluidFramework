@@ -4,14 +4,14 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import {
     IComponentHandle, IComponentLoadable,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IValueChanged } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IValueChanged } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";

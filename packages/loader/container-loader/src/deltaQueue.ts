@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
+import { IDeltaQueue } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 

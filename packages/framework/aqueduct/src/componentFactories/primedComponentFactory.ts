@@ -5,18 +5,18 @@
 
 import {
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     DirectoryFactory,
     MapFactory,
     SharedDirectory,
     SharedMap,
-} from "@microsoft/fluid-map";
+} from "@fluidframework/map";
 import {
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ComponentSymbolProvider } from "@microsoft/fluid-synthesize";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { ComponentSymbolProvider } from "@fluidframework/synthesize";
 
 import { PrimedComponent, ISharedComponentProps } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";

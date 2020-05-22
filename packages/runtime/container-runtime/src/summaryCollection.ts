@@ -12,7 +12,7 @@ import {
     ISummaryContent,
     ISummaryNack,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Interface for summary op messages with typed contents.

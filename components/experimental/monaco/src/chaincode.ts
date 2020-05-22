@@ -4,18 +4,18 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
+import { PrimedComponent } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentLayout } from "@fluidframework/framework-experimental";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
     IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
-} from "@microsoft/fluid-merge-tree";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/merge-tree";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 

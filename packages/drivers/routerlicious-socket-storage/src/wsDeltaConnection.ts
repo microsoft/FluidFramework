@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import url from "url";
 import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -19,7 +19,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import ws from "isomorphic-ws";
 
 const protocolVersion = "^0.1.0";

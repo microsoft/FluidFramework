@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import { IBlob } from "@microsoft/fluid-protocol-definitions";
-import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
+import { IBlob } from "@fluidframework/protocol-definitions";
+import { MockRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 

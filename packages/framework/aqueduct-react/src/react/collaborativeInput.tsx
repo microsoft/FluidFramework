@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedString } from "@microsoft/fluid-sequence";
+import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
 interface IProps {

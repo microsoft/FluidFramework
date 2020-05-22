@@ -5,8 +5,8 @@
 
 import assert from "assert";
 import { fromBase64ToUtf8, ChildLogger } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";

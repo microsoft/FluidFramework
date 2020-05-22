@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -16,7 +16,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {

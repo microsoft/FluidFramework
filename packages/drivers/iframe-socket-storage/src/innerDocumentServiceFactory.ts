@@ -9,9 +9,9 @@ import {
     IUrlResolver,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import Comlink from "comlink";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";

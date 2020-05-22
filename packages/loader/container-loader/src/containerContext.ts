@@ -10,7 +10,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -20,8 +20,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService, IError } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -36,7 +36,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";

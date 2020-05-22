@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ILoader, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { ILoader, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { WebWorkerLoader } from "./webWorkerLoader";
 
 /**

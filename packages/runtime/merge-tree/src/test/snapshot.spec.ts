@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { TestClient } from ".";

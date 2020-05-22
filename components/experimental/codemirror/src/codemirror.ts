@@ -11,21 +11,21 @@ import {
     IResponse,
     IComponentHandle,
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
     TextSegment,
     ReferenceType,
     reservedTileLabelsKey,
     Marker,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,

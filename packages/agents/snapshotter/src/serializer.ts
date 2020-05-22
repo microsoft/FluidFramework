@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import assert from "assert";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 /**
  * Wrapper interface holding snapshot details for a given op

@@ -8,12 +8,12 @@ import fs from "fs";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     ISequencedDocumentMessage,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,

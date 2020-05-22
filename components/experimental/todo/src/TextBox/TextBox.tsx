@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent } from "@fluidframework/aqueduct";
+import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 

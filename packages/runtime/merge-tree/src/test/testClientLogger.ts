@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeTreeOp } from "../ops";
 import { TextSegment } from "../textSegment";

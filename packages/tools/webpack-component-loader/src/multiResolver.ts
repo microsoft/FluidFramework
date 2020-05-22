@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { TestResolver } from "@microsoft/fluid-local-driver";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { TestResolver } from "@fluidframework/local-driver";
+import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { getRandomName } from "@fluidframework/server-services-client";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 

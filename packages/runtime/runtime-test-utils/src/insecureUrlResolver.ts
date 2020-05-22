@@ -5,17 +5,17 @@
 
 import assert from "assert";
 import { parse } from "url";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
     IUser,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import Axios from "axios";
 import jwt from "jsonwebtoken";
 

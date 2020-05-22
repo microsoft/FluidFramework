@@ -4,8 +4,8 @@
  */
 
 import assert from "assert";
-import { IDirectory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IDirectory } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed subDirectory.

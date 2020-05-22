@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { Counter } from "@microsoft/fluid-map";
+import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { Counter } from "@fluidframework/map";
 
 // Sample agent to run.
 export class ClickerAgent implements IComponentRouter, IComponentRunnable {

@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-cell",
+  "name": "@fluidframework/cell",
   "version": "0.19.0",
   "description": "Distributed map",
   "repository": "microsoft/FluidFramework",
@@ -49,17 +49,17 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.0-0",
-    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
-    "@microsoft/fluid-component-runtime-definitions": "^0.19.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.1",
-    "@microsoft/fluid-shared-object-base": "^0.19.0",
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/component-runtime-definitions": "^0.19.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0-0",
+    "@fluidframework/shared-object-base": "^0.19.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/test-runtime-utils": "^0.19.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/fluid-build-common": "^0.16.0-0",
-    "@microsoft/fluid-test-runtime-utils": "^0.19.0",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",

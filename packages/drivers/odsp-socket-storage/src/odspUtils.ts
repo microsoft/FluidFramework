@@ -8,8 +8,8 @@ import {
     fetchFailureStatusCode,
     offlineFetchFailureStatusCode,
     OnlineStatus,
-} from "@microsoft/fluid-driver-utils";
-import { IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-utils";
+import { IError } from "@fluidframework/driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -206,7 +206,7 @@ export interface INewFileInfoHeader {
     newFileInfoPromise: Promise<INewFileInfo>,
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
 }

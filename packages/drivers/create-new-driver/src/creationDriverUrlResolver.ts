@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 export class CreationDriverUrlResolver implements IUrlResolver {
     constructor() { }

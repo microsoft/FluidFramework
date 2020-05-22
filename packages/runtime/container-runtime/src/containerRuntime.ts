@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
@@ -13,7 +13,7 @@ import {
     IComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -24,8 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
@@ -33,14 +33,14 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
+import { IDocumentStorageService, IError, ISummaryContext } from "@fluidframework/driver-definitions";
+import { readAndParse, createIError } from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
     isSystemType,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     IChunkedOp,
     IClientDetails,
@@ -56,7 +56,7 @@ import {
     ITree,
     MessageType,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
@@ -67,8 +67,8 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";

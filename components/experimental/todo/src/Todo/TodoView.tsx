@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { CollaborativeInput } from "@fluidframework/aqueduct-react";
+import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";

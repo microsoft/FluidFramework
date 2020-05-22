@@ -5,14 +5,14 @@
 
 import {
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -20,16 +20,16 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IComponentRuntimeChannel,
     IComponentContext,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }

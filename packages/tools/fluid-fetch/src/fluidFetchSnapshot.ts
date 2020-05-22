@@ -10,11 +10,11 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ISnapshotTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { formatNumber } from "./fluidAnalyzeMessages";
 import {
     dumpSnapshotStats,

@@ -4,13 +4,13 @@
  */
 
 // eslint-disable-next-line import/no-unassigned-import
-import { } from "@microsoft/fluid-component-core-interfaces";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-component-runtime-definitions";
+import { } from "@fluidframework/component-core-interfaces";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
 }

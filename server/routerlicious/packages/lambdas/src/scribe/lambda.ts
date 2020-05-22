@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import * as assert from "assert";
-import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
     IQuorumSnapshot,

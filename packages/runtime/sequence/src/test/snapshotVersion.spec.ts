@@ -6,8 +6,8 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import * as mocks from "@microsoft/fluid-test-runtime-utils";
-import { GitManager } from "@microsoft/fluid-server-services-client";
+import * as mocks from "@fluidframework/test-runtime-utils";
+import { GitManager } from "@fluidframework/server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";

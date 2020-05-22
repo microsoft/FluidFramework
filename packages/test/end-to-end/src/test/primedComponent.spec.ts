@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { ISharedDirectory } from "@microsoft/fluid-map";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { ISharedDirectory } from "@fluidframework/map";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
-const PrimedType = "@microsoft/fluid-primedComponent";
+const PrimedType = "@fluidframework/primedComponent";
 
 /**
  * My sample component

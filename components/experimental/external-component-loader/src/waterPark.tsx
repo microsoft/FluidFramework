@@ -3,12 +3,12 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IPackage } from "@fluidframework/container-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
     SpacesStorageView,

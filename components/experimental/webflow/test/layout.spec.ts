@@ -7,7 +7,7 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
-import { TestHost } from "@microsoft/fluid-local-test-utils";
+import { TestHost } from "@fluidframework/local-test-utils";
 import assert from "assert";
 import "mocha";
 import { htmlFormatter } from "../src";

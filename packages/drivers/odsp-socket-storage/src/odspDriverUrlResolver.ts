@@ -4,12 +4,12 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";

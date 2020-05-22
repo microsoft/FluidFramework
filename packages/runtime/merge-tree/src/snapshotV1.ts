@@ -9,7 +9,7 @@ import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -17,8 +17,8 @@ import {
     ITree,
     TreeEntry,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";

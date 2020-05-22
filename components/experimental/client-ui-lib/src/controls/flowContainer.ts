@@ -4,11 +4,11 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IInk } from "@microsoft/fluid-ink";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import * as Sequence from "@microsoft/fluid-sequence";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IInk } from "@fluidframework/ink";
+import { ISharedMap } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";

@@ -4,14 +4,14 @@
  */
 
 import assert from "assert";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IChannel, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";

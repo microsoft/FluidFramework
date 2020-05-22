@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { SharedString } from "@fluidframework/sequence";
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>

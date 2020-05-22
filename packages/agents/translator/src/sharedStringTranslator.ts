@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import Sequence from "@microsoft/fluid-sequence";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISharedMap } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { translate } from "./translator";
 
 export class SharedStringTranslator {

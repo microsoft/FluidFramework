@@ -6,9 +6,9 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { UpgradeManager } from "@microsoft/fluid-base-host"
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { UpgradeManager } from "@fluidframework/base-host"
 
 import React from "react";
 import ReactDOM from "react-dom";

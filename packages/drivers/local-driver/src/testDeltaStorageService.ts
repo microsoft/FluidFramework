@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
+import * as api from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDatabaseManager } from "@fluidframework/server-services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(

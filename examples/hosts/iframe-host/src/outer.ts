@@ -5,13 +5,13 @@
 import {
     DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
-} from "@microsoft/fluid-routerlicious-driver";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+} from "@fluidframework/routerlicious-driver";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { BaseHost } from "@fluidframework/base-host";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
 const createRequest = (): IRequest => ({

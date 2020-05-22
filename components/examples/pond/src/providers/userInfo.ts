@@ -8,11 +8,11 @@ import { EventEmitter } from "events";
 import {
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IQuorum } from "@microsoft/fluid-protocol-definitions";
-import { DependencyContainer } from "@microsoft/fluid-synthesize";
-import { IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IQuorum } from "@fluidframework/protocol-definitions";
+import { DependencyContainer } from "@fluidframework/synthesize";
+import { IComponentRegistry } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
 

@@ -12,22 +12,22 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
     IComponentFactory,
     ITask,
     ITaskManager,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 

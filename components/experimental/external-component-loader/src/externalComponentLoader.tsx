@@ -3,13 +3,13 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentLoadable,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { UrlRegistry } from "./urlRegistry";
 

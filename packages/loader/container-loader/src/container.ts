@@ -9,7 +9,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -23,7 +23,7 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
@@ -41,7 +41,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     createIError,
     readAndParse,
@@ -49,13 +49,13 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     FileMode,
     IClient,
@@ -78,7 +78,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";

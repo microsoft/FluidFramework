@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { DebugLogger } from "@fluidframework/common-utils";
-import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     ISummaryBlob,
     ISummaryHandle,
@@ -17,9 +17,9 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
-import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
+} from "@fluidframework/protocol-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import {
     SummaryTreeConverter,
 } from "../summaryTreeConverter";

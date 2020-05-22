@@ -5,10 +5,10 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import assert from "assert";
-import { Container } from "@microsoft/fluid-container-loader";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { MockQuorum } from "@microsoft/fluid-test-runtime-utils";
-import { IQuorum } from "@microsoft/fluid-protocol-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { MockQuorum } from "@fluidframework/test-runtime-utils";
+import { IQuorum } from "@fluidframework/protocol-definitions";
 import { initializeContainerCode } from "../initializeContainerCode";
 
 const codePkg = {} as IFluidCodeDetails;

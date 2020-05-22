@@ -5,9 +5,9 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import assert from "assert";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { RequestParser } from "@microsoft/fluid-container-runtime";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { RequestParser } from "@fluidframework/container-runtime";
 
 import {
     BaseContainerService,

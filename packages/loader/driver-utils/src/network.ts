@@ -16,7 +16,7 @@ import {
     IWriteError,
     ErrorType,
     ISummarizingError,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ErrorWithProps,
 } from "./error";

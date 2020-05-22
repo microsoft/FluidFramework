@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ISequencedDocumentMessage, IVersion } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
 export interface IDebuggerUI {
     /**

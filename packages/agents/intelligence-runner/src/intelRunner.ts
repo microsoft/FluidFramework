@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
-import Sequence from "@microsoft/fluid-sequence";
+import { ISharedMap } from "@fluidframework/map";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { resumeAnalytics, textAnalytics } from "./analytics";
 import { IntelligentServicesManager } from "./serviceManager";
 

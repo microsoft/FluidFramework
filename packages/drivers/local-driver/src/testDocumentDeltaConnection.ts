@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -19,9 +19,9 @@ import {
     ISignalMessage,
     ITokenClaims,
     NackErrorType,
-} from "@microsoft/fluid-protocol-definitions";
-import core from "@microsoft/fluid-server-services-core";
-import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
+} from "@fluidframework/protocol-definitions";
+import * as core from "@microsoft/fluid-server-services-core";
+import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];

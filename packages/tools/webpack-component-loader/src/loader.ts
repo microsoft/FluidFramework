@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import {
     IFluidModule,
     IFluidPackage,
@@ -12,16 +12,16 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidPackage,
-} from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IUser } from "@fluidframework/protocol-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IComponentMountableView } from "@microsoft/fluid-view-interfaces";
-import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { RequestParser } from "@microsoft/fluid-container-runtime";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { RequestParser } from "@fluidframework/container-runtime";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 

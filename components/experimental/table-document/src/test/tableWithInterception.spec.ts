@@ -4,11 +4,11 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { PropertySet } from "@fluidframework/merge-tree";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";

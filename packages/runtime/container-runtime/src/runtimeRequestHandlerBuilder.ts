@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 

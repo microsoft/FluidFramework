@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-merge-tree",
+  "name": "@fluidframework/merge-tree",
   "version": "0.19.0",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
@@ -12,7 +12,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:docs": "echo \"Skipping @microsoft/fluid-merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
+    "build:docs": "echo \"Skipping @fluidframework/merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -50,14 +50,14 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0-0",
     "@fluidframework/common-utils": "^0.19.0-0",
-    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
-    "@microsoft/fluid-component-runtime-definitions": "^0.19.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.1"
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/component-runtime-definitions": "^0.19.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0-0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/test-runtime-utils": "^0.19.0",
     "@microsoft/fluid-build-common": "^0.16.0-0",
-    "@microsoft/fluid-test-runtime-utils": "^0.19.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",

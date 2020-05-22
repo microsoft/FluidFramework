@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { ISharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as GraphiQL from "graphiql";
 import React from "react";
 import ReactDOM from "react-dom";

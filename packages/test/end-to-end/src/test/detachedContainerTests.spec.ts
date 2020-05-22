@@ -4,18 +4,18 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { ConnectionState, Loader } from "@microsoft/fluid-container-loader";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {

@@ -8,10 +8,10 @@ import { Layout } from "react-grid-layout";
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 /**
  * ISpacesStorage describes the public API surface of SpacesStorage.

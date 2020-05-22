@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum, ISequencedClient, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { IQuorum, ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import React from "react";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import

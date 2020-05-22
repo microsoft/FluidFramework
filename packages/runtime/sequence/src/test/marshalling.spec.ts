@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { Marker, ReferenceType, TextSegment } from "@microsoft/fluid-merge-tree";
+import { Marker, ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { SubSequence } from "../sharedSequence";
 
 const segmentTypes = [

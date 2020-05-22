@@ -8,8 +8,8 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 

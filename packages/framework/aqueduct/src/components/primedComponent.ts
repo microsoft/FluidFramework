@@ -8,9 +8,9 @@ import {
     IComponentHandle,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
-import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
+import { ITaskManager } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,

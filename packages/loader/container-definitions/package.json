@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-container-definitions",
+  "name": "@fluidframework/container-definitions",
   "version": "0.19.0",
   "description": "Fluid container definitions",
   "repository": "microsoft/FluidFramework",
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0-0",
-    "@microsoft/fluid-component-core-interfaces": "^0.19.0",
-    "@microsoft/fluid-driver-definitions": "^0.19.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.1"
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/driver-definitions": "^0.19.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0-0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",

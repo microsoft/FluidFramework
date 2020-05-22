@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IError, ErrorType } from "@microsoft/fluid-driver-definitions";
+import { IError, ErrorType } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 

@@ -5,11 +5,11 @@
 
 import {
     PrimedComponent,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
 import { DdsCollectionComponent } from "./ddsCollection";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

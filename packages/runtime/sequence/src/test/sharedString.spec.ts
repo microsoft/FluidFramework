@@ -4,9 +4,9 @@
  */
 
 import assert from "assert";
-import { ITree } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { ITree } from "@fluidframework/protocol-definitions";
+import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SharedMap } from "@microsoft/fluid-map";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedMap } from "@fluidframework/map";
+import { SharedObjectSequence } from "@fluidframework/sequence";
+import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
 import React from "react";

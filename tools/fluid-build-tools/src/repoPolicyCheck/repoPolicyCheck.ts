@@ -92,7 +92,7 @@ const handlers: Handler[] = [
         match: /(^|\/)[^\/]+\.html$/i,
         handler: file => {
             const content = readFile(file);
-            if (!/<!--[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(readFile(content)) ||
+            if (!/<!--[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
                 !/<!--[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return "Html file missing copyright header";
             }
@@ -112,7 +112,7 @@ const handlers: Handler[] = [
         match: /(^|\/)Dockerfile$/i,
         handler: file => {
             const content = readFile(file);
-            if (!/#[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(readFile(content)) ||
+            if (!/#[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
                 !/#[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return 'Dockerfile missing copyright header';
             }

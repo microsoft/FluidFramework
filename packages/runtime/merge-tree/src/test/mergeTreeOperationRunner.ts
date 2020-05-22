@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import assert from "assert";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
 import { LocalReference } from "../localReference";
