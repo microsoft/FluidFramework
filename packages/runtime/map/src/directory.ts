@@ -601,12 +601,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Submits an operation
      * @param op - Op to submit
-     * @param pendingMessageId - The unique id that is used to track this op while it has not been ack'd. This
-     * will be sent when we receive this op back from the server.
+     * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
+     * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, pendingMessageId: number) {
-        this.submitLocalMessage(op, pendingMessageId);
+    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
+        this.submitLocalMessage(op, localOpMetadata);
     }
 
     /**
@@ -631,8 +631,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             };
 
-            // Send the pendingMessageId as -1 because we don't care about the ack.
-            this.submitDirectoryMessage(op, -1 /* pendingMessageId */);
+            // Send the localOpMetadata as undefined because we don't care about the ack.
+            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -904,8 +904,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op) => {
-                    // Send the pendingMessageId as -1 because we don't care about the ack.
-                    this.submitDirectoryMessage(op, -1 /* pendingMessageId */);
+                    // Send the localOpMetadata as undefined because we don't care about the ack.
+                    this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
                 },
             },
         );

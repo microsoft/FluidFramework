@@ -588,8 +588,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         switch (type) {
             case MessageType.Operation:
             {
-                assert(localOpMetadata !== undefined, "localOpMetadata missing in reSubmit");
-
                 const envelope = content as IEnvelope;
                 const channelContext = this.contexts.get(envelope.address);
                 assert(channelContext, "There should be a channel context for the op");

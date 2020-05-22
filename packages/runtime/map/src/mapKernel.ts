@@ -186,7 +186,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any, pendingMessageId: number) => void,
+        private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -694,8 +694,8 @@ export class MapKernel {
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op: IMapValueTypeOperation) => {
-                    // Send the pendingMessageId as -1 because we don't care about the ack.
-                    this.submitMessage(op, -1 /* pendingMessageId */);
+                    // Send the localOpMetadata as undefined because we don't care about the ack.
+                    this.submitMessage(op, undefined /* localOpMetadata */);
                 },
             });
 
@@ -744,8 +744,8 @@ export class MapKernel {
                     value: translatedParams,
                 },
             };
-            // Send the pendingMessageId as -1 because we don't care about the ack.
-            this.submitMessage(op, -1 /* pendingMessageId */);
+            // Send the localOpMetadata as undefined because we don't care about the ack.
+            this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);

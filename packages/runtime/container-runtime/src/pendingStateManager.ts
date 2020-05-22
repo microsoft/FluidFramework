@@ -40,6 +40,11 @@ type IPendingState = IPendingMessage | IPendingFlushMode;
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
+    // Indicates whether we are processing a batch of messages.
+    private isProcessingBatch: boolean = false;
+    // This is the last message that we processed. This is used to verify that batch end metadata is correct.
+    private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+
     private get connected(): boolean {
         return this.containerRuntime.connected;
     }
@@ -79,9 +84,13 @@ export class PendingStateManager {
     }
 
     public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+        let pendingFlushMode: FlushMode | undefined;
         while (this.pendingStates.peekFront()?.type === "flush") {
-            this.pendingStates.shift();
+            pendingFlushMode = (this.pendingStates.shift() as IPendingFlushMode).flushMode;
         }
+
+        // Verify that the batch metadata, if any, is correct.
+        this.verifyBatchMetadata(message, pendingFlushMode);
 
         const firstPendingMessage = this.pendingStates.peekFront() as IPendingMessage;
 
@@ -103,10 +112,12 @@ export class PendingStateManager {
                 message: "Unexpected ack received",
                 canRetry: false,
             };
-            this.containerRuntime.closeFn(error);
 
+            this.containerRuntime.closeFn(error);
             return;
         }
+
+        this.lastProcessedMessage = message;
 
         // Remove the first message from the pending list since it has been acknowledged.
         this.pendingStates.shift();
@@ -114,13 +125,85 @@ export class PendingStateManager {
         return firstPendingMessage.localOpMetadata;
     }
 
+    /**
+     * Verifies that the batch metadata is received as the per the FlushMode setting. If logs if we do not get batch
+     * metadata as expected or if we get unexpected batch metadata.
+     * @param message - The message we are currently processing.
+     * @param pendingFlushMode - The FlushMode that was set just prior to this message.
+     */
+    private verifyBatchMetadata(message: ISequencedDocumentMessage, pendingFlushMode: FlushMode | undefined) {
+        const batchMetadata = message.metadata?.batch;
+
+        // If FlushMode was set to Manual prior to this message, it must have batch begin metadata: { batch: true }.
+        if (pendingFlushMode === FlushMode.Manual) {
+            if (batchMetadata !== true) {
+                this.logger.sendErrorEvent({
+                    eventName: "BatchBeginNotReceived",
+                    clientId: message.clientId,
+                    sequenceNumber: message.sequenceNumber,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                });
+            }
+            this.isProcessingBatch = true;
+            return;
+        }
+
+        // If FlushMode is set to Automatic, the last processed message must have batch end metadata: { batch: false }.
+        // An expection to this (and the "BatchBeginNotReceived" event above) is if there is only one message in the
+        // batch. We cannot check for that condition here since we do not know when "FlushMode.Manual" was set.
+        // However, this case is easily verifiable by looking the two events. If the sequenceNumber in these two events
+        // are the same, then we have hit this case.
+        if (pendingFlushMode === FlushMode.Automatic) {
+            const lastMessagebatchMetadata = this.lastProcessedMessage?.metadata?.batch;
+            if (lastMessagebatchMetadata !== false) {
+                this.logger.sendErrorEvent({
+                    eventName: "BatchEndNotReceived",
+                    clientId: this.lastProcessedMessage?.clientId,
+                    sequenceNumber: this.lastProcessedMessage?.sequenceNumber,
+                    clientSequenceNumber: this.lastProcessedMessage?.clientSequenceNumber,
+                });
+            }
+            this.isProcessingBatch = false;
+            return;
+        }
+
+        // We should not recieve batch begin metadata if FlushMode was not set prior to this message.
+        if (batchMetadata === true) {
+            this.logger.sendErrorEvent({
+                eventName: "UnexpectedBatchBegin",
+                clientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+            });
+        }
+
+        // We should not receive batch end metadata if we are not in the middle of processing a batch.
+        if (batchMetadata === false && this.isProcessingBatch === false) {
+            this.logger.sendErrorEvent({
+                eventName: "UnexpectedBatchEnd",
+                clientId: message.clientId,
+                sequenceNumber: message.sequenceNumber,
+                clientSequenceNumber: message.clientSequenceNumber,
+            });
+        }
+    }
+
     private replayPendingStates() {
-        const pendingstates = this.pendingStates.toArray();
-        this.pendingStates.clear();
+        const pendingStatesCount = this.pendingStates.length;
+        if (pendingStatesCount === 0) {
+            return;
+        }
 
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
-        for (const pendingState of pendingstates) {
+
+        // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
+        // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
+        // which must not be replayed.
+        let count = 0;
+        while (count < pendingStatesCount) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const pendingState = this.pendingStates.shift()!;
             switch (pendingState.type) {
                 case "flush":
                     {
@@ -143,7 +226,9 @@ export class PendingStateManager {
                 default:
                     break;
             }
+            count++;
         }
+
         // Revert the FlushMode.
         this.containerRuntime.setFlushMode(savedFlushMode);
     }
