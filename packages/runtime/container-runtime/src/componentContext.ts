@@ -12,6 +12,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
@@ -451,8 +452,8 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitSignalFn(envelope);
     }
 
-    public error(err: any): void {
-        this.containerRuntime.error(err);
+    public raiseContainerWarning(err: ContainerWarning): void {
+        this.containerRuntime.raiseContainerWarning(err);
     }
 
     /**

@@ -10,7 +10,9 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -27,6 +29,7 @@ import {
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
+import { CriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 
 /**
@@ -196,7 +199,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: (error?: IError) => void;
+    readonly closeFn: (error?: CriticalContainerError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -211,7 +214,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     readonly scope: IComponent;
 
-    error(err: IError): void;
+    raiseContainerWarning(err: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
 

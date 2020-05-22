@@ -5,12 +5,14 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    IGenericError,
+    ErrorType,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, ConnectionState, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
-    IGenericError,
-    ErrorType,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";

@@ -18,6 +18,7 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
+    ContainerWarning,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
@@ -283,7 +284,7 @@ export interface IComponentContext extends EventEmitter {
      * Report error in that happend in the component runtime layer to the container runtime layer
      * @param err - the error object.
      */
-    error(err: any): void;
+    raiseContainerWarning(err: ContainerWarning): void;
 
     /**
      * Submits the message to be sent to other clients.

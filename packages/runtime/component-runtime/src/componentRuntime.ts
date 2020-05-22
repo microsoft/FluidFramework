@@ -17,6 +17,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -538,8 +539,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.deferredAttached.promise;
     }
 
-    public error(error: any): void {
-        this.componentContext.error(error);
+    public raiseContainerWarning(error: ContainerWarning): void {
+        this.componentContext.raiseContainerWarning(error);
     }
 
     /**

@@ -7,11 +7,9 @@ import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@fluidframework/common-utils";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ISummarizingError } from "@microsoft/fluid-driver-definitions";
-import { createSummarizingError } from "@microsoft/fluid-driver-utils";
+import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@microsoft/fluid-container-definitions";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
-import { ISummarizer, Summarizer } from "./summarizer";
+import { createSummarizingError, ISummarizer, Summarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -77,6 +75,9 @@ enum SummaryManagerState {
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
 
+// Please note that all reasons  in this list are not errors,
+// and thus they are not raised today to parent container as error.
+// If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
 type ShouldSummarizeState = {
     shouldSummarize: true;
@@ -295,6 +296,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
+    private raiseContainerWarning(error: ISummarizingWarning) {
+        // back-compat: <= 0.18 loader:
+        const errorFn = (this.context as any).error;
+        if (errorFn !== undefined) {
+            errorFn(error);
+        } else {
+            this.context.raiseContainerWarning(error);
+        }
+    }
+
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
@@ -314,12 +325,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const delayMs = this.startThrottler.getDelay();
         if (delayMs >= defaultThrottleMaxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
-            this.context.error(createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay"));
+            this.raiseContainerWarning(
+                createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay", false));
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
-            summarizer.on("summarizingError", (error: ISummarizingError) => this.context.error(error));
+            summarizer.on("summarizingError",
+                (error: ISummarizingWarning) => this.raiseContainerWarning(error));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({

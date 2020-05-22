@@ -5,13 +5,13 @@
 
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import { createNetworkError } from "@microsoft/fluid-driver-utils";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Returns specific network error based on error object.
  */
-const errorObjectFromSocketError = (socketError: any, canRetry: boolean): IError => {
+const errorObjectFromSocketError = (socketError: any, canRetry: boolean) => {
     return createNetworkError(
         socketError.message,
         canRetry,

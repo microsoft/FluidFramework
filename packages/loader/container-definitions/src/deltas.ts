@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
-import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClientDetails,
@@ -19,6 +18,8 @@ import {
     ITokenClaims,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { CriticalContainerError } from "./error";
+
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
@@ -126,12 +127,11 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     submitSignal(content: any): void;
 
-    on(event: "error", listener: (error: IError) => void);
     on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
     on(event: "submitOp", listener: (message: IDocumentMessage) => void);
     on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: IError) => void);
+    on(event: "closed", listener: (error?: CriticalContainerError) => void);
     on(event: "pong" | "processTime", listener: (latency: number) => void);
     on(event: "connect", listener: (details: IConnectionDetails) => void);
     on(event: "disconnect", listener: (reason: string) => void);

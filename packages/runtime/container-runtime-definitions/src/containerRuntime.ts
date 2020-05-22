@@ -10,6 +10,7 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
+    ContainerWarning,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
@@ -110,7 +111,7 @@ export interface IContainerRuntime extends
     /**
      * Used to raise an unrecoverable error on the runtime.
      */
-    error(err: any): void;
+    raiseContainerWarning(err: ContainerWarning): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

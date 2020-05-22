@@ -11,10 +11,11 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IError, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
+import { CriticalContainerError, ContainerWarning } from "./error";
 
 /**
  * Code loading interface
@@ -71,8 +72,8 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected" | "contextChanged", listener: (clientId: string) => void);
     (event: "disconnected" | "joining", listener: () => void);
-    (event: "closed", listener: (error?: IError) => void);
-    (event: "error", listener: (error: IError) => void);
+    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: MessageType.BlobUploaded, listener: (contents: any) => void);

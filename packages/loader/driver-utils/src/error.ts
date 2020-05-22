@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-unsafe-any
 import * as assert from "assert";
-import { ErrorType, IError, IGenericError } from "@microsoft/fluid-driver-definitions";
+import { ErrorType, IGenericError } from "@microsoft/fluid-container-definitions";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {
@@ -48,7 +48,7 @@ class GenericError extends ErrorWithProps implements IGenericError {
  * Convert the error into one of the error types.
  * @param error - Error to be converted.
  */
-export function createIError(error: any, canRetryArg?: boolean): IError {
+export function CreateContainerError(error: any, canRetryArg?: boolean): IGenericError {
     assert(error !== undefined);
 
     // default is false
@@ -79,7 +79,7 @@ export function createIError(error: any, canRetryArg?: boolean): IError {
                 canRetry: canRetryArg ?? (error.canRetry ?? false),
                 stack: error.stack,
             },
-        );
+        ) as any as IGenericError;
     } else if (typeof error === "string") {
         return new GenericError(error, canRetry, new Error(error));
     } else {

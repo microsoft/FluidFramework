@@ -5,16 +5,18 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ErrorType,
+    IThrottlingWarning,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
-    ErrorType,
     IDocumentServiceFactory,
-    IThrottlingError,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    createIError,
+    CreateContainerError,
     createNetworkError,
     createWriteError,
     ErrorWithProps,
@@ -87,7 +89,7 @@ describe("Errors Types", () => {
             userData: "My name is Mark",
             message: "Some message",
         };
-        const iError = (createIError(err) as any) as ErrorWithProps;
+        const iError = (CreateContainerError(err) as any) as ErrorWithProps;
         const props = iError.getCustomProperties() as any;
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");
@@ -215,7 +217,7 @@ describe("Errors Types", () => {
             "Test Message",
             true /* canRetry */,
             400 /* statusCode */,
-            100 /* retryAfterSeconds */) as IThrottlingError;
+            100 /* retryAfterSeconds */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, ErrorType.throttlingError, "Error should be a throttlingError");
         assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
@@ -230,7 +232,7 @@ describe("Errors Types", () => {
 
     it("string test", async () => {
         const text = "Sample text";
-        const writeError = createIError(text);
+        const writeError = CreateContainerError(text);
         assertCustomPropertySupport(writeError);
         assert.equal(writeError.errorType, ErrorType.genericError, "Error should be a writeError");
         assert.equal(writeError.message, text, "Text is preserved");
@@ -239,8 +241,8 @@ describe("Errors Types", () => {
 
     it("Check double conversion of network error", async () => {
         const networkError = createNetworkError("Test Error", true /* canRetry */);
-        const error1 = createIError(networkError);
-        const error2 = createIError(error1);
+        const error1 = CreateContainerError(networkError);
+        const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);
         assertCustomPropertySupport(error2);
         assert.deepEqual(error1, error2, "Both errors should be same!!");
@@ -250,8 +252,8 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         };
-        const error1 = createIError(err);
-        const error2 = createIError(error1);
+        const error1 = CreateContainerError(err);
+        const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);
         assertCustomPropertySupport(error2);
         assert.deepEqual(error1, error2, "Both errors should be same!!");
@@ -262,8 +264,8 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         };
-        const error1 = createIError(err);
-        const error2 = createIError(Object.freeze(err));
+        const error1 = CreateContainerError(err);
+        const error2 = CreateContainerError(Object.freeze(err));
         assert.equal(error1.canRetry, false, "Can retry false 1.");
         assert.equal(error2.canRetry, false, "Can retry false 2");
     });
@@ -274,8 +276,8 @@ describe("Errors Types", () => {
             message: "Test Error",
             canRetry: true,
         };
-        const error1 = createIError(err1);
-        const error2 = createIError(Object.freeze(error1));
+        const error1 = CreateContainerError(err1);
+        const error2 = CreateContainerError(Object.freeze(error1));
         assert.equal(error1.canRetry, true, "Preserve canRetry 1");
         assert.equal(error2.canRetry, true, "Preserve canRetry 2");
         assert.equal(error1.errorType, err1.errorType, "Preserve errorType 1");
@@ -287,14 +289,14 @@ describe("Errors Types", () => {
             message: "Test Error",
             canRetry: true,
         };
-        const error1 = createIError(err1, false);
+        const error1 = CreateContainerError(err1, false);
         assert.equal(error1.canRetry, false, "canRetry 1");
 
         const err2 = {
             message: "Test Error",
             canRetry: false,
         };
-        const error2 = createIError(err2, true);
+        const error2 = CreateContainerError(err2, true);
         assert.equal(error2.canRetry, true, "canRetry 2");
     });
 });

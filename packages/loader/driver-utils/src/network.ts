@@ -5,18 +5,17 @@
 
 import * as assert from "assert";
 import {
-    IError,
+    CriticalContainerError,
     IAuthorizationError,
     IFileNotFoundOrAccessDeniedError,
     IGenericNetworkError,
     IOfflineError,
     IOutOfStorageError,
     IInvalidFileNameError,
-    IThrottlingError,
+    IThrottlingWarning,
     IWriteError,
     ErrorType,
-    ISummarizingError,
-} from "@microsoft/fluid-driver-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     ErrorWithProps,
 } from "./error";
@@ -125,7 +124,7 @@ class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameErr
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-class ThrottlingError extends ErrorWithProps implements IThrottlingError {
+class ThrottlingError extends ErrorWithProps implements IThrottlingWarning {
     readonly errorType = ErrorType.throttlingError;
     readonly canRetry = true;
 
@@ -134,15 +133,6 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
         readonly retryAfterSeconds: number,
         readonly statusCode?: number,
     ) {
-        super(errorMessage);
-    }
-}
-
-class SummarizingError extends ErrorWithProps implements ISummarizingError {
-    readonly errorType = ErrorType.summarizingError;
-    readonly canRetry = true;
-
-    constructor(readonly errorMessage: string, readonly logged: boolean = false) {
         super(errorMessage);
     }
 }
@@ -174,7 +164,7 @@ class OfflineError extends ErrorWithProps implements IOfflineError {
 }
 
 export const createWriteError =
-    (errorMessage: string) => new WriteError(errorMessage) as IError;
+    (errorMessage: string) => new WriteError(errorMessage) as CriticalContainerError;
 
 export function createGenericNetworkError(
     errorMessage: string,
@@ -182,7 +172,7 @@ export function createGenericNetworkError(
     retryAfterSeconds?: number,
     statusCode?: number)
 {
-    let error: IError;
+    let error: CriticalContainerError;
     if (retryAfterSeconds !== undefined && canRetry) {
         error = new ThrottlingError(errorMessage, retryAfterSeconds, statusCode);
     }
@@ -192,16 +182,13 @@ export function createGenericNetworkError(
     return error;
 }
 
-export const createSummarizingError =
-    (details: string, logged?: boolean) => (new SummarizingError(details, logged) as IError);
-
 export function createNetworkError(
     errorMessage: string,
     canRetry: boolean,
     statusCode?: number,
     retryAfterSeconds?: number,
-): IError {
-    let error: IError;
+): CriticalContainerError {
+    let error: CriticalContainerError;
 
     switch (statusCode) {
         case 401:

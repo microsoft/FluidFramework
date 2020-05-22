@@ -9,7 +9,6 @@ import {
     offlineFetchFailureStatusCode,
     OnlineStatus,
 } from "@microsoft/fluid-driver-utils";
-import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -48,7 +47,10 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
+export function errorObjectFromSocketError(
+    socketError: IOdspSocketError,
+    retryFilter?: RetryFilter)
+{
     return createNetworkError(
         socketError.message,
         retryFilter?.(socketError.code) ?? true,

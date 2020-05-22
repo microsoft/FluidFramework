@@ -16,6 +16,7 @@ import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -447,7 +448,7 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public error(err: any): void { }
+    public raiseContainerWarning(err: ContainerWarning): void { }
 }
 
 /**

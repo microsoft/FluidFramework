@@ -7,7 +7,8 @@ import * as assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { CriticalContainerError } from "@microsoft/fluid-container-definitions";
 import {
     IClient,
     IConnect,
@@ -201,7 +202,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | IError) {
+        reason: string | CriticalContainerError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected

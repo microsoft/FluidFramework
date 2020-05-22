@@ -55,10 +55,7 @@ class SmdeContainerFactory implements IRuntimeFactory {
                 runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;
