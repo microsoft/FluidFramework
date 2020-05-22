@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@fluidframework/driver-utils";
+import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IOdspResolvedUrl,
@@ -18,7 +18,13 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
+import {
+    getWithRetryForTokenRefresh,
+    throwOdspNetworkError,
+    fetchHelper,
+    INewFileInfo,
+    invalidFileNameErrorCode,
+} from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOrigin } from "./vroom";

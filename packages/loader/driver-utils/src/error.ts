@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-unsafe-any
 import * as assert from "assert";
-import { ErrorType, IGenericError } from "@fluidframework/driver-definitions";
+import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {
@@ -13,6 +13,7 @@ function messageFromError(error: any) {
     return `${error}`;
 }
 
+// TODO: Needs to be removed and replaced with version in logger.ts
 export class ErrorWithProps extends Error {
     constructor(message: string) {
         super(message);

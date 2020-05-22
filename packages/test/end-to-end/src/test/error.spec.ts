@@ -17,11 +17,13 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     CreateContainerError,
-    createNetworkError,
     createWriteError,
     ErrorWithProps,
-    invalidFileNameErrorCode,
 } from "@fluidframework/driver-utils";
+import {
+    createOdspNetworkError,
+    invalidFileNameErrorCode,
+} from "@fluidframework/odsp-driver";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
@@ -106,7 +108,7 @@ describe("Errors Types", () => {
     }
 
     it("GenericNetworkError Test_1", async () => {
-        const networkError = createNetworkError("Test Message", false /* canRetry */);
+        const networkError = createOdspNetworkError("Test Message", false /* canRetry */);
         assert.equal(networkError.errorType, ErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
@@ -114,7 +116,7 @@ describe("Errors Types", () => {
     });
 
     it("GenericNetworkError Test_2", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             true /* canRetry */,
             400 /* statusCode */,
@@ -129,7 +131,7 @@ describe("Errors Types", () => {
     });
 
     it("GenericNetworkError Test", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             500 /* statusCode */);
@@ -143,7 +145,7 @@ describe("Errors Types", () => {
     });
 
     it("AuthorizationError Test 401", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             401 /* statusCode */);
@@ -153,7 +155,7 @@ describe("Errors Types", () => {
     });
 
     it("AuthorizationError Test 403", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             403 /* statusCode */);
@@ -167,7 +169,7 @@ describe("Errors Types", () => {
     });
 
     it("OutOfStorageError Test 507", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             507 /* statusCode */);
@@ -177,7 +179,7 @@ describe("Errors Types", () => {
     });
 
     it("FileNotFoundOrAccessDeniedError Test", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             404 /* statusCode */);
@@ -193,7 +195,7 @@ describe("Errors Types", () => {
     });
 
     it("InvalidFileNameError Test 414", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             414 /* statusCode */);
@@ -203,7 +205,7 @@ describe("Errors Types", () => {
     });
 
     it("InvalidFileNameError Test", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
             invalidFileNameErrorCode /* statusCode */);
@@ -213,7 +215,7 @@ describe("Errors Types", () => {
     });
 
     it("ThrottlingError Test", async () => {
-        const networkError = createNetworkError(
+        const networkError = createOdspNetworkError(
             "Test Message",
             true /* canRetry */,
             400 /* statusCode */,
@@ -240,7 +242,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createNetworkError("Test Error", true /* canRetry */);
+        const networkError = createOdspNetworkError("Test Error", true /* canRetry */);
         const error1 = CreateContainerError(networkError);
         const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);

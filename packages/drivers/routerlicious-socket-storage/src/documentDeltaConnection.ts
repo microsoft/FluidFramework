@@ -3,10 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { CriticalContainerError } from "@fluidframework/container-definitions";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { createNetworkError } from "@fluidframework/driver-utils";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import {
+    AuthorizationError,
+    FileNotFoundOrAccessDeniedError,
+    GenericNetworkError,
+    createGenericNetworkError,
+} from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
+
+function createNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+): CriticalContainerError {
+    let error: CriticalContainerError;
+
+    switch (statusCode) {
+        case 401:
+        case 403:
+            error = new AuthorizationError(errorMessage, canRetry);
+            break;
+        case 404:
+            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry);
+            break;
+        case 500:
+            error = new GenericNetworkError(errorMessage, canRetry);
+            break;
+        default:
+            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+    }
+    return error;
+}
 
 /**
  * Returns specific network error based on error object.

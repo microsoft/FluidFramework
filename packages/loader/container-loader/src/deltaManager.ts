@@ -40,7 +40,6 @@ import {
 import {
     CreateContainerError,
     createWriteError,
-    createNetworkError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { ContentCache } from "./contentCache";
@@ -755,11 +754,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         replayFrom: from,
                         to,
                     });
-                    const closeError = createNetworkError(
+                    const closeError = createGenericNetworkError(
                         "Failed to retrieve ops from storage: giving up after too many retries",
                         false /* canRetry */,
-                        undefined /* statusCode */,
-                        undefined /* retryAfterSeconds */,
                     );
                     this.close(closeError);
                     return;

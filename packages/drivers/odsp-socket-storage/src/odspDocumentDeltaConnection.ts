@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection, IError } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { CriticalContainerError } from "@fluidframework/container-definitions";
 import {
     IClient,
