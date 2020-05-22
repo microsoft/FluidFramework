@@ -5,9 +5,9 @@
  * Licensed under the MIT License.
  */
 import * as React from "react";
-import { ISharedCell } from "@microsoft/fluid-cell";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { ISharedCell } from "@fluidframework/cell";
+import { ISharedMap } from "@fluidframework/map";
+import { SharedObjectSequence } from "@fluidframework/sequence";
 import {
     ActivityItem,
     DefaultButton,
