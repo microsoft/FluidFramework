@@ -11,7 +11,6 @@ import {
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
-    PromiseCache,
 } from "@microsoft/fluid-common-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
@@ -36,7 +35,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, ICacheLock } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -224,6 +223,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return hierarchicalTree;
     }
 
+    private async safeGetFromPersistedCache<T>(key: string, lambda: (lock: ICacheLock) => Promise<T>): Promise<T> {
+        let value = await this.cache.persistedCache.get(key);
+        if (value === undefined) {
+            const lock = await this.cache.persistedCache.lock(key);
+            value = await this.cache.persistedCache.get(key) ?? await lambda(lock);
+            await lock.release();
+        }
+        return value;
+    }
+
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid === this.documentId) {
@@ -265,7 +274,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
-        const pc = new PromiseCache<string, any>();
         const snapshotCacheKey: string = `${this.documentId}/getlatest`;
 
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
@@ -282,8 +290,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 // Note: This lambda shouldn't be run more than once in a 10s window
                 // based on the expected configuration of the PromiseCache snapshotCache (used below)
-                const fetchAndCacheOdspSnapshot = async () => {
-                    assert(await this.cache.persistedCache.get(snapshotCacheKey) === undefined);
+                const fetchAndCacheOdspSnapshot = async (lock: ICacheLock) => {
+                    assert(
+                        lock.key === snapshotCacheKey &&
+                        await this.cache.persistedCache.get(snapshotCacheKey) === undefined);
 
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -308,7 +318,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
-                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot);
+                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot, lock);
                         return snapshot;
                     } catch (error) {
                         event.cancel({}, error);
@@ -316,7 +326,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     }
                 };
 
-                const odspSnapshot: IOdspSnapshot = await pc.addOrGet(snapshotCacheKey, fetchAndCacheOdspSnapshot);
+                const odspSnapshot: IOdspSnapshot =
+                    await this.safeGetFromPersistedCache(snapshotCacheKey, fetchAndCacheOdspSnapshot);
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();

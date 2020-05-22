@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { PromiseCache } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
-export type ICacheLock = {
-    acquired: true;
+export interface ICacheLock {
+    key: string;
     lockId: number;
-} | {
-    acquired: false;
-};
+    release: () => Promise<void>;
+}
 
 /**
  * A cache for data persisted between sessions.  Only serializable content should be put here!
@@ -41,13 +41,43 @@ export interface IPersistedCache {
     put(key: string, value: any, lock: ICacheLock, expiryTime?: number): Promise<void>;
 }
 
-export class LocalCache implements IPersistedCache {
+export class LocalCache extends EventEmitter implements IPersistedCache {
     private readonly cache: PromiseCache<string, any> = new PromiseCache<string, any>({
         expiry: { policy: "absolute", durationMs: 10 * 1000 },
     });
+    private readonly heldLockIds: Map<string, number> = new Map();
+    private nextLockId: number = 0;
+
+    private lockNow(key: string): ICacheLock {
+        const lock: ICacheLock = {
+            key,
+            lockId: ++this.nextLockId,
+            release: async () => {
+                this.heldLockIds.delete(key);
+                this.emit("lockRelease", key);
+            },
+        };
+        this.heldLockIds.set(key, lock.lockId);
+        return lock;
+    }
+
+    private isLockCurrent(lock: ICacheLock, key: string) {
+        return lock.lockId === this.heldLockIds.get(key);
+    }
 
     async lock(key: string): Promise<ICacheLock> {
-        throw new Error("Method not implemented.");
+        if (!this.heldLockIds.has(key)) {
+            return this.lockNow(key);
+        }
+
+        //* todo: add expiration on the lock (where is expiration specificed?)
+        return new Promise((resolve) => {
+            this.on("lockRelease", (releasedKey) => {
+                if (releasedKey === key) {
+                    resolve(this.lockNow(key));
+                }
+            });
+        });
     }
 
     async get(key: string): Promise<any> {
@@ -55,11 +85,16 @@ export class LocalCache implements IPersistedCache {
     }
 
     async remove(key: string, lock: ICacheLock) {
-        this.cache.remove(key);
+        if (this.isLockCurrent(lock, key)) {
+            this.cache.remove(key);
+        }
     }
 
+    //* todo: reimplement expiration
     async put(key: string, value: any, lock: ICacheLock, expiryTime?: number | undefined) {
-        this.cache.addValue(key, value);
+        if (this.isLockCurrent(lock, key)) {
+            this.cache.addValue(key, value);
+        }
     }
 }
 
