@@ -9,29 +9,22 @@ import { SharedCell } from "@fluidframework/cell";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import {
-    IComponentHTMLView,
-    IComponentReactViewable
-} from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IBadgeType } from "./IBadgeType";
-import { BadgeContext } from "./provider";
+import { IColor } from "office-ui-fabric-react";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";
+import { IBadgeType } from "./IBadgeType";
 
-export class Badge extends PrimedComponent
-    implements IComponentHTMLView, IComponentReactViewable {
+export class Badge extends PrimedComponent implements IComponentHTMLView {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
     public get IComponentHTMLView() {
-        return this;
-    }
-    public get IComponentReactViewable() {
         return this;
     }
 
@@ -148,7 +141,7 @@ export class Badge extends PrimedComponent
         };
     }
 
-    public addOption = (text, color) => {
+    public addOption = (text: string, color: IColor): void => {
         if (text !== undefined) {
             const newItem: IBadgeType = {
                 key: text,
@@ -204,11 +197,9 @@ export class Badge extends PrimedComponent
         });
 
         return (
-            <BadgeContext.Provider value={{ queries, mutators }}>
-                <div style={divStyle}>
-                    <BadgeView />
-                </div>
-            </BadgeContext.Provider>
+            <div style={divStyle}>
+                <BadgeView {...queries} {...mutators} />
+            </div>
         );
     };
 }

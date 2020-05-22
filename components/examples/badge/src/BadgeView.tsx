@@ -5,9 +5,6 @@
  * Licensed under the MIT License.
  */
 import * as React from "react";
-import { ISharedCell } from "@fluidframework/cell";
-import { ISharedMap } from "@fluidframework/map";
-import { SharedObjectSequence } from "@fluidframework/sequence";
 import {
     ActivityItem,
     DefaultButton,
@@ -30,37 +27,32 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
 import { IBadgeType } from "./IBadgeType";
-import { IHistory } from "./IHistory";
 import {
     getItemsFromOptionsMap,
     getRelativeDate,
     getButtonStyles
 } from "./helpers";
-import { useBadgeContext } from "./provider";
 
 const { useState } = React;
 
 export interface IBadgeViewProps {
-    currentCell: ISharedCell;
-    optionsMap: ISharedMap;
-    historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
-}
-
-export interface IBadgeViewState {
-    isDialogVisible: boolean;
-    customText: string;
-    customColor: IColor;
-    current: IBadgeType;
-    items: any;
+    options: IBadgeType[];
+    historyItems: any[];
+    selectedOption: string | number;
+    addOption: (text: string, color: IColor) => void;
+    changeSelectedOption: (item: IBadgeType) => void;
 }
 
 initializeIcons();
 
-export const BadgeView: React.FC = () => {
+export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
     const {
-        queries: { options, historyItems, selectedOption },
-        mutators: { addOption, changeSelectedOption }
-    } = useBadgeContext();
+        options,
+        historyItems,
+        selectedOption,
+        addOption,
+        changeSelectedOption
+    } = props;
 
     const currentOption = options.find(option => option.key === selectedOption);
 

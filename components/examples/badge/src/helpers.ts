@@ -1,16 +1,16 @@
 /* eslint-disable comma-dangle */
-import { ISharedMap } from "@microsoft/fluid-map";
 import {
     ContextualMenuItemType,
+    IContextualMenuItem,
     IColor,
     getColorFromHSV,
     getColorFromString,
     IButtonStyles
 } from "office-ui-fabric-react";
 
-export const getItemsFromOptionsMap = (optionsMap: ISharedMap) => {
+export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
     const mapItems = [];
-    optionsMap.forEach(v => mapItems.push(v));
+    options.forEach(v => mapItems.push(v));
 
     mapItems.push({
         key: "divider_1",
