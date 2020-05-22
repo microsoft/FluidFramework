@@ -264,8 +264,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
-        const snapshotCacheKey: string = `${this.documentId}/getlatest`;
-
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
@@ -280,6 +278,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 // Note: There's a race condition here - another caller may come past the undefined check
                 // while the first caller is awaiting later async code in this block.
+                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
                 let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
