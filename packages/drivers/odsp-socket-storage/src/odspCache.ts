@@ -3,19 +3,44 @@
  * Licensed under the MIT License.
  */
 
+/**
+  * A configuration that defines caching behavior.
+  */
+export interface ICachePolicy {
+    /**
+     * Defines how long (in milliseconds) user content should be cached. Making this number larger increases the
+     * probability of a cache hit and also increases the probability that the user will see noticeably stale content.
+     */
+    userContentCacheExpiry: number;
+}
+
+export const defaultCachePolicy: ICachePolicy = {
+    // By default, we only cache user content for 10 seconds
+    userContentCacheExpiry: 10 * 1000,
+};
+
+/**
+  * A generic caching interface that can be used to save values, like network calls, that are expensive to obtain.
+  */
 export interface ICache {
     /**
-     * Get the cache value of the key
+     * Called when a value is being requested from the cache.
+     * @param key - The key of the data that is being requested.
+     * @returns A promise that resolves to cached data or undefined if the item is not in the cache or is expired.
      */
     get(key: string): Promise<any>;
 
     /**
-     * Deletes value in storage
+     * Called when a value should be removed from the cache.
+     * @param key - The key of the item to remove from the cache
      */
     remove(key: string);
 
     /**
-     * puts value into cache
+     * Called when a value should be inserted in the cache.
+     * @param key - A unique key that is associated with this data. Will be used later for fetching.
+     * @param value - The value of the data that should be stored.
+     * @param expiryTime - The number of milliseconds from the current time that this data should be safe to cache.
      */
     put(key: string, value: any, expiryTime?: number);
 }

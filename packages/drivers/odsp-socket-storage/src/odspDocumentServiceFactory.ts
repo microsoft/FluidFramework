@@ -13,7 +13,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { ICache, IOdspCache, OdspCache, ICachePolicy, defaultCachePolicy } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -50,7 +50,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
      * referred to as the "Push" token in SPO.
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-     * @param odspCache - This caches response for joinSession.
+     * @param odspCache - A generic cache that can be used to store network requests to improve performance.
+     * @param cachePolicy - A configuration that defines how the cache should be leveraged by the driver.
      */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
@@ -58,6 +59,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         permanentCache?: ICache,
+        private readonly cachePolicy: ICachePolicy = defaultCachePolicy,
     ) {
         this.cache = new OdspCache(permanentCache);
     }
@@ -88,6 +90,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),
             this.cache,
+            this.cachePolicy,
             isFirstTimeDocumentOpened,
         );
     }

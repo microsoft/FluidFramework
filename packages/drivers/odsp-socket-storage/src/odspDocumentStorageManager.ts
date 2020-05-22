@@ -35,7 +35,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, ICachePolicy } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -87,6 +87,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
+        private readonly cachePolicy: ICachePolicy,
         private readonly isFirstTimeDocumentOpened: boolean,
     ) {
     }
@@ -307,10 +308,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         throw error;
                     }
 
-                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                    // want to use the same getLatest result.
-                    this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
+                    // We let the host app define how long user content is cached
+                    this.cache.localStorage.put(odspCacheKey, odspSnapshot, this.cachePolicy.userContentCacheExpiry);
                 }
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();

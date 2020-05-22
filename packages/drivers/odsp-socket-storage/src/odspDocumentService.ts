@@ -29,7 +29,7 @@ import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, ICachePolicy } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
@@ -68,6 +68,7 @@ export class OdspDocumentService implements IDocumentService {
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
+        cachePolicy: ICachePolicy,
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -102,6 +103,7 @@ export class OdspDocumentService implements IDocumentService {
             deltasFetchWrapper,
             socketIOClientP,
             cache,
+            cachePolicy,
             isFirstTimeDocumentOpened,
         );
     }
@@ -190,6 +192,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
+        private readonly cachePolicy: ICachePolicy,
         private readonly isFirstTimeDocumentOpened = true,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
@@ -258,6 +261,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             true,
             this.cache,
+            this.cachePolicy,
             this.isFirstTimeDocumentOpened,
         );
 

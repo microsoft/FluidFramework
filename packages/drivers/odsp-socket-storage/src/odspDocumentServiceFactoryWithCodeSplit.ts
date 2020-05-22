@@ -12,7 +12,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { ICache, IOdspCache, OdspCache, ICachePolicy, defaultCachePolicy } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -46,15 +46,16 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     }
 
     /**
-   * @param getStorageToken - function that can provide the storage token for a given site. This is
-   * is also referred to as the "VROOM" token in SPO.
-   * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-   * referred to as the "Push" token in SPO.
-   * @param logger - a logger that can capture performance and diagnostic information
-   * @param storageFetchWrapper - if not provided FetchWrapper will be used
-   * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param odspCache - This caches response for joinSession.
-   */
+     * @param getStorageToken - function that can provide the storage token for a given site. This is
+     * is also referred to as the "VROOM" token in SPO.
+     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
+     * referred to as the "Push" token in SPO.
+     * @param logger - a logger that can capture performance and diagnostic information
+     * @param storageFetchWrapper - if not provided FetchWrapper will be used
+     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+     * @param odspCache - A generic cache that can be used to store network requests to improve performance.
+     * @param cachePolicy - A configuration that defines how the cache should be leveraged by the driver.
+     */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
@@ -62,6 +63,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         permanentCache?: ICache,
+        private readonly cachePolicy: ICachePolicy = defaultCachePolicy,
     ) {
         this.cache = new OdspCache(permanentCache);
     }
@@ -86,6 +88,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.deltasFetchWrapper,
             import("./getSocketIo").then((m) => m.getSocketIo()),
             this.cache,
+            this.cachePolicy,
             isFirstTimeDocumentOpened,
         );
     }
