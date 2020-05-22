@@ -50,7 +50,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    * referred to as the "Push" token in SPO.
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param cachedSnapshots - cached Odsp Snapshots to hydrate into the OdspCache.
+   * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
