@@ -96,7 +96,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
 
     const onRenderCard = (): JSX.Element => {
         // Add items to history in reverse order
-        const history = historyItems.reverse().map((x, i) => {
+        const history = historyItems.map((x, i) => {
             return (
                 <ActivityItem
                     key={i}
@@ -107,7 +107,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
             );
         });
 
-        return <div style={{ padding: cardPadding }}>{history}</div>;
+        return <div style={{ padding: cardPadding }}>{history.reverse()}</div>;
     };
 
     const buttonStyles = getButtonStyles(currentOption.iconProps.style.color);
