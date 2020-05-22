@@ -288,7 +288,7 @@ describe("Container", () => {
             testRequest,
             testResolved,
             testResolver);
-        assert.strictEqual(container.id, "documentId", "Container's id should be set");
+        assert.strictEqual(container.id, "containerTest", "Container's id should be set");
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
