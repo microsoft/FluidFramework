@@ -251,8 +251,7 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
-            this.odspResolvedUrl.hashedDocumentId,
-            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+            this.odspResolvedUrl,
             latestSha,
             this.storageFetchWrapper,
             this.getStorageToken,

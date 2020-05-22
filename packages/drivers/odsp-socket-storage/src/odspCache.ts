@@ -6,27 +6,43 @@
 import { PromiseCache } from "@fluidframework/common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
-/**
- * A cache for data persisted between sessions.  Only serializable content should be put here!
- * This interface may be implemented and provided by the Host, and in order to allow a host
- * to include asynchronous operations in its implementation, each function returns Promise.
+export enum CacheKey {
+    Snapshot,
+}
+
+/*
+ * Driver uses this interface to identify file
+ * There is overlapping information here - host can use all of it or parts
+ * to implement storage / identify files.
+ * Driver guarantees that docId is stable ID uniquely identifying document.
  */
+export interface IFileEntry {
+    driveId: string;
+    itemId: string;
+    docId: string;
+}
+
+export interface ICacheEntry {
+    file: IFileEntry;
+    key: CacheKey;
+}
+
 export interface IPersistedCache {
     /**
      * Get the cache value of the key
      */
-    get(key: string): Promise<any>;
+    get(entry: ICacheEntry): Promise<any>;
 
     /**
      * Delete value in the cache
      */
-    remove(key: string): Promise<void>;
+    remove(entry: ICacheEntry): Promise<void>;
 
     /**
      * Put the value into cache
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      */
-    put(key: string, value: any, expiryTime?: number): Promise<void>;
+    put(entry: ICacheEntry, value: any, expiryTime?: number): Promise<void>;
 }
 
 /**
@@ -71,19 +87,19 @@ class GarbageCollector<TKey> {
  * used if no persisted cache is provided by the host
  */
 export class LocalCache implements IPersistedCache {
-    private readonly cache = new Map<string, any>();
-    private readonly gc: GarbageCollector<string> = new GarbageCollector<string>((key) => this.cache.delete(key));
+    private readonly cache = new Map<ICacheEntry, any>();
+    private readonly gc = new GarbageCollector<ICacheEntry>((key) => this.cache.delete(key));
 
-    async get(key: string): Promise<any> {
+    async get(key: ICacheEntry): Promise<any> {
         return this.cache.get(key);
     }
 
-    async remove(key: string) {
+    async remove(key: ICacheEntry) {
         this.cache.delete(key);
         this.gc.cancel(key);
     }
 
-    async put(key: string, value: any, expiryTime?: number) {
+    async put(key: ICacheEntry, value: any, expiryTime?: number) {
         this.cache.set(key, value);
         if (expiryTime) {
             this.gc.schedule(key, expiryTime);

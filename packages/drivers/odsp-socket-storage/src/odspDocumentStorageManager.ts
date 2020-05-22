@@ -21,6 +21,7 @@ import {
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
+    IOdspResolvedUrl,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
     ISnapshotRequest,
@@ -35,7 +36,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, CacheKey, ICacheEntry, IFileEntry } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -69,6 +70,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private firstVersionCall = true;
 
+    private readonly fileEntry: IFileEntry;
+
+    private readonly documentId: string;
+    private readonly snapshotUrl: string | undefined;
+
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
         assert(ops !== undefined);
@@ -80,8 +86,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     constructor(
-        private readonly documentId: string,
-        private readonly snapshotUrl: string | undefined,
+        odspResolvedUrl: IOdspResolvedUrl,
         private latestSha: string | null | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
@@ -90,6 +95,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
     ) {
+        this.documentId = odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+
+        this.fileEntry = {
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+            docId: this.documentId,
+        };
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
@@ -277,10 +290,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
+                const cacheEntry: ICacheEntry = {
+                    file: this.fileEntry,
+                    key: CacheKey.Snapshot,
+                };
+
                 // Note: There's a race condition here - another caller may come past the undefined check
                 // while the first caller is awaiting later async code in this block.
-                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
-                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
+                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(cacheEntry);
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -313,7 +330,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
                     // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
                     // want to use the same getLatest result.
-                    await this.cache.persistedCache.put(snapshotCacheKey, cachedSnapshot, 10 * 1000 /* durationMs */);
+                    await this.cache.persistedCache.put(cacheEntry, cachedSnapshot, 10 * 1000 /* durationMs */);
                 }
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
