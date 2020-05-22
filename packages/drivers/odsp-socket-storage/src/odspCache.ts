@@ -6,12 +6,15 @@
 import { PromiseCache } from "@fluidframework/common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
+/**
+ * Describes what kind of content is stored in cache entry.
+ */
 export enum CacheKey {
     Snapshot,
 }
 
 /*
- * Driver uses this interface to identify file
+ * Driver uses this interface to identify file when talking to IPersistedCache
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
  * Driver guarantees that docId is stable ID uniquely identifying document.
@@ -22,11 +25,19 @@ export interface IFileEntry {
     docId: string;
 }
 
+/**
+ * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ */
 export interface ICacheEntry {
     file: IFileEntry;
     key: CacheKey;
 }
 
+/**
+ * Persistent cache. This interface can be implemented by the host to provide durable caching
+ * across sessions. If not provided, driver will provide in-memory cache that does not survive
+ * across session boundary.
+ */
 export interface IPersistedCache {
     /**
      * Get the cache value of the key
@@ -41,6 +52,8 @@ export interface IPersistedCache {
     /**
      * Put the value into cache
      * Important - only serializable content is allowed since this cache may be persisted between sessions
+     * @param expiryTime - suggested expiration time, in milliseconds.
+     * Implementer of cache is free to overwrite it / implement different policy.
      */
     put(entry: ICacheEntry, value: any, expiryTime?: number): Promise<void>;
 }
