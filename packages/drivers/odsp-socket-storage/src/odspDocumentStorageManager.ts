@@ -223,11 +223,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return hierarchicalTree;
     }
 
-    private async safeGetFromPersistedCache<T>(key: string, lambda: (lock: ICacheLock) => Promise<T>): Promise<T> {
+    private async safePutToPersistedCache<T>(key: string, put: (lock: ICacheLock) => Promise<T>): Promise<T> {
         let value = await this.cache.persistedCache.get(key);
         if (value === undefined) {
             const lock = await this.cache.persistedCache.lock(key);
-            value = await this.cache.persistedCache.get(key) ?? await lambda(lock);
+            value = await this.cache.persistedCache.get(key) ?? await put(lock);
             await lock.release();
         }
         return value;
@@ -288,8 +288,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                // Note: This lambda shouldn't be run more than once in a 10s window
-                // based on the expected configuration of the PromiseCache snapshotCache (used below)
                 const fetchAndCacheOdspSnapshot = async (lock: ICacheLock) => {
                     assert(
                         lock.key === snapshotCacheKey &&
@@ -327,7 +325,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 };
 
                 const odspSnapshot: IOdspSnapshot =
-                    await this.safeGetFromPersistedCache(snapshotCacheKey, fetchAndCacheOdspSnapshot);
+                    await this.safePutToPersistedCache(snapshotCacheKey, fetchAndCacheOdspSnapshot);
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
