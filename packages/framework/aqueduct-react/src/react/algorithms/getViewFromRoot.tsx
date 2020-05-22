@@ -4,23 +4,25 @@
  */
 
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     FluidComponentMap,
     IViewConverter,
 } from "../interface";
+import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 
 export function getViewFromRoot<SV, SF>(
+    syncedStateId: string,
     root: ISharedDirectory,
     rootKey: keyof SF,
     fluidComponentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
     combinedRootState?: Partial<SF>,
 ): Partial<SV> {
-    const syncedState = root.get("syncedState");
+    const syncedState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
     let value = syncedState[rootKey];
     if (combinedRootState) {
-        value = combinedRootState[rootKey] || value;
+        value = (combinedRootState[rootKey] || value) as SF[keyof SF];
     }
     const viewConverter = fluidToView && fluidToView.get(rootKey)?.viewConverter;
     if (viewConverter) {
@@ -29,7 +31,8 @@ export function getViewFromRoot<SV, SF>(
         return viewConverter(partialRootState, fluidComponentMap);
     } else {
         const partialViewState: Partial<SV> = {};
-        const convertedValue = value.IComponentHandle ? fluidComponentMap.get((value as IComponentHandle)) : value;
+        const valueAsIComponentHandle =  (value as IComponent).IComponentHandle;
+        const convertedValue = valueAsIComponentHandle ? fluidComponentMap.get(valueAsIComponentHandle) : value;
         partialViewState[rootKey as string] = convertedValue;
         return partialViewState;
     }

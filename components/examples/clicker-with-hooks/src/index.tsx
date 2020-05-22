@@ -9,14 +9,19 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     FluidProps,
-    FluidReducerProps,
+    IFluidReducerProps,
     IFluidFunctionalComponentViewState,
     useStateFluid,
     useReducerFluid,
     createContextFluid,
     FluidStateUpdateFunction,
     IFluidDataProps,
+    IFluidFunctionalComponentFluidState,
+    IFluidReducer,
+    FluidToViewMap,
+    ViewToFluidMap,
 } from "@microsoft/fluid-aqueduct-react";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -31,13 +36,14 @@ interface CounterState {
     value: number;
 }
 
-// ---- React Functional Component w/ useState ----
+// // ---- React Functional Component w/ useState ----
 
-interface CounterFunctionalState extends IFluidFunctionalComponentViewState, CounterState {}
+interface ICounterFunctionalViewState extends IFluidFunctionalComponentViewState, CounterState {}
+interface ICounterFunctionalFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
 
-function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
+function CounterReactFunctional(props: FluidProps<ICounterFunctionalViewState, ICounterFunctionalFluidState>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, setState] = useStateFluid<{}, CounterFunctionalState>(props);
+    const [state, setState] = useStateFluid<ICounterFunctionalViewState, ICounterFunctionalFluidState>(props);
 
     return (
         <div>
@@ -54,69 +60,86 @@ function CounterReactFunctional(props: FluidProps<{}, CounterFunctionalState>) {
 
 // ---- React Functional Component w/ useReducer ----
 
-interface IActionReducer {
-    increment:  FluidStateUpdateFunction<CounterFunctionalState, IFluidDataProps>,
+interface ICounterReducerViewState extends IFluidFunctionalComponentViewState {
+    value: number;
+}
+
+interface ICounterReducerFluidState extends IFluidFunctionalComponentFluidState {
+    counter: Counter;
+}
+
+interface IActionReducer extends IFluidReducer<ICounterReducerViewState, ICounterReducerFluidState, IFluidDataProps> {
+    increment:  FluidStateUpdateFunction<ICounterReducerViewState,ICounterReducerFluidState,IFluidDataProps>;
 }
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (state: CounterFunctionalState, dataProps, step: number) => {
-            state.value =  step === undefined ? state.value + 1  : state.value + step;
-            return { state };
+        function: (state, step) => {
+            state.fluidState.counter.increment(step);
+            state.viewState.value =  step === undefined
+                ? state.viewState.value + 1
+                : state.viewState.value + step;
+            return { state: state.viewState };
         },
     },
 };
 
 function CounterReactFunctionalReducer(
-    props: FluidReducerProps<CounterFunctionalState, IActionReducer, {}, IFluidDataProps>,
-) {
-    const [state, dispatch] = useReducerFluid<CounterFunctionalState, IActionReducer, {}, IFluidDataProps>(props);
+    props: IFluidReducerProps<
+    ICounterReducerViewState,
+    ICounterReducerFluidState,
+    IActionReducer,
+    {},
+    IFluidDataProps
+    >) {
+    const [state, dispatch] = useReducerFluid(props);
+
     return (
         <div>
             <span
                 className="clickerWithHooks-value-class-reducer"
                 id={`clickerWithHooks-reducer-value-${Date.now().toString()}`}
             >
-                {`Functional Reducer Component: ${state.value}`}
+                {`Functional Reducer Component: ${state.viewState.value}`}
             </span>
-            <button onClick={() => { dispatch("increment"); }}>+</button>
-            <button onClick={() => { dispatch("increment", 2); }}>++</button>
+            <button onClick={() => { dispatch.increment.function(state, 1);}}>+</button>
+            <button onClick={() => { dispatch.increment.function(state, 2);}}>++</button>
         </div>
     );
 }
 
-function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
-    const reactContext = {};
-    const { Provider, Consumer, state, setState } = createContextFluid<{}, CounterFunctionalState, {}>(
-        {
-            reactContext,
-            ...props,
-        },
-    );
-    return (
-        <div>
-            <Provider value={{ state, setState, reactContext }}>
-                <div>
-                    <Consumer>
-                        {(context) =>
-                            <div>
-                                <span
-                                    className="clickerWithHooks-value-class-context"
-                                    id={`clickerWithHooks-context-value-${Date.now().toString()}`}
-                                >
-                                    {`Context Component: ${context.state.value}`}
-                                </span>
-                                <button
-                                    onClick={() => { context.setState({ ...state, value: context.state.value + 1 }); }}
-                                >{"+"}
-                                </button>
-                            </div>}
-                    </Consumer>
-                </div>
-            </Provider>
-        </div>
-    );
-}
+// function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
+//     const reactContext = {};
+//     const { Provider, Consumer, state, setState } = createContextFluid<{}, CounterFunctionalState, {}>(
+//         {
+//             reactContext,
+//             ...props,
+//         },
+//     );
+//     return (
+//         <div>
+//             <Provider value={{ state, setState, reactContext }}>
+//                 <div>
+//                     <Consumer>
+//                         {(context) =>
+//                             <div>
+//                                 <span
+//                                     className="clickerWithHooks-value-class-context"
+//                                     id={`clickerWithHooks-context-value-${Date.now().toString()}`}
+//                                 >
+//                                     {`Context Component: ${context.state.value}`}
+//                                 </span>
+//                                 <button
+//                                     onClick={() => { context.setState({ ...state, value: context.state.value + 1 }); }}
+//                                 >{"+"}
+//                                 </button>
+//                             </div>}
+//                     </Consumer>
+//                 </div>
+//             </Provider>
+//         </div>
+//     );
+// }
 
 /**
  * Basic ClickerWithHooks example using new interfaces and stock component classes.
@@ -129,7 +152,7 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
      */
     protected async componentInitializingFirstTime() {
         this.root.set("counterClicksFunctional", 0);
-        this.root.set("counterClicksReducer", 0);
+        this.root.createValueType("counterClicksReducer", CounterValueType.Name, 0);
         this.root.set("counterClicksContext", 0);
     }
 
@@ -139,38 +162,56 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
      * Will return a new ClickerWithHooks view
      */
     public render(div: HTMLElement) {
-        const stateToRootFunctional = new Map<keyof CounterState, string>();
-        stateToRootFunctional.set("value", "counterClicksFunctional");
+        // const stateToRootContext = new Map<keyof CounterState, string>();
+        // stateToRootContext.set("value", "counterClicksContext");
 
-        const stateToRootReducer = new Map<keyof CounterState, string>();
-        stateToRootReducer.set("value", "counterClicksReducer");
-
-        const stateToRootContext = new Map<keyof CounterState, string>();
-        stateToRootContext.set("value", "counterClicksContext");
-
+        const reducerFluidToViewMap: FluidToViewMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
+        reducerFluidToViewMap.set("counter", {
+            stateKey: "value",
+            viewConverter: (syncedState: Partial<ICounterReducerFluidState>) => {
+                return {
+                    value: syncedState.counter?.value,
+                };
+            },
+            rootKey: "counterClicksReducer",
+            fluidObjectType: CounterValueType.Name,
+        });
+        const reducerViewToFluidMap: ViewToFluidMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
+        reducerViewToFluidMap.set("value", {
+            rootKey: "counter",
+        });
         ReactDOM.render(
             <div>
                 <CounterReactFunctional
+                    syncedStateId={"counter-functional"}
                     root={this.root}
-                    fluidComponentMap={new Map()}
-                    initialState={{ value: this.root.get("counterClicksFunctional") }}
-                    stateToRoot={stateToRootFunctional}
+                    dataProps={{
+                        fluidComponentMap: new Map(),
+                        runtime: this.runtime,
+                    }}
+                    initialViewState={{ value: 0 }}
+                    initialFluidState={{ value: this.root.get("counterClicksFunctional") }}
                 />
                 <CounterReactFunctionalReducer
+                    syncedStateId={"counter-reducer"}
                     root={this.root}
-                    fluidComponentMap={new Map()}
-                    runtime={this.runtime}
-                    initialState={{ value: this.root.get("counterClicksReducer") }}
-                    stateToRoot={stateToRootReducer}
+                    dataProps={{
+                        fluidComponentMap: new Map(),
+                        runtime: this.runtime,
+                    }}
+                    initialViewState={{ value: 0 }}
+                    initialFluidState={{ counter: this.root.get("counterClicksReducer") }}
+                    fluidToView={reducerFluidToViewMap}
+                    viewToFluid={reducerViewToFluidMap}
                     reducer={ActionReducer}
                     selector={{}}
                 />
-                <CounterReactFunctionalContext
+                {/* <CounterReactFunctionalContext
                     root={this.root}
                     fluidComponentMap={new Map()}
                     initialState={{ value: this.root.get("counterClicksContext") }}
                     stateToRoot={stateToRootContext}
-                />
+                /> */}
             </div>,
             div,
         );

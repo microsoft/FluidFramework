@@ -16,13 +16,15 @@ import {
     IFluidComponent,
     IFluidFunctionalComponentFluidState,
     IFluidSchema,
-    IFluidSchemaHandles,
 } from "./interface";
 import {
     updateStateAndComponentMap,
     syncStateAndRoot,
     rootCallbackListener,
     generateComponentSchema,
+    setFluidStateToRoot,
+    setComponentSchemaToRoot,
+    getComponentSchemaFromRoot,
 } from "./algorithms";
 
 export function useStateFluid<
@@ -31,6 +33,7 @@ export function useStateFluid<
 >(props: FluidProps<SV,SF>):
 [SV, ((newState: SV, fromRootUpdate?: boolean) => void)] {
     const {
+        syncedStateId,
         root,
         initialFluidState,
         initialViewState,
@@ -39,14 +42,14 @@ export function useStateFluid<
         dataProps,
     } = props;
     const [ reactState, reactSetState ] = React.useState<SV>(initialViewState);
-
     const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false) => {
         const newCombinedState = { ...reactState, ...newState, isInitialized: true };
         if (!fromRootUpdate) {
             syncStateAndRoot(
                 fromRootUpdate,
+                syncedStateId,
                 root,
-                reactState,
+                newCombinedState,
                 reactSetState,
                 dataProps.fluidComponentMap,
                 viewToFluid,
@@ -62,6 +65,7 @@ export function useStateFluid<
             const callback = rootCallbackListener(
                 dataProps.fluidComponentMap,
                 true,
+                syncedStateId,
                 root,
                 reactState,
                 reactSetState,
@@ -70,31 +74,35 @@ export function useStateFluid<
             );
             return callback(change, local);
         }, [root, fluidToView, viewToFluid, reactState, reactSetState, dataProps]);
-
-    if (viewToFluid !== undefined && !reactState.isInitialized) {
-        if (root.get("syncedState") === undefined) {
-            root.set("syncedState", initialFluidState);
+    if (!reactState.isInitialized) {
+        if (root.get(`syncedState-${syncedStateId}`) === undefined) {
+            setFluidStateToRoot(syncedStateId, root, initialFluidState);
         }
-        let componentSchema = root.get<IFluidSchema>("componentSchema");
-        if (componentSchema === undefined) {
-            componentSchema = generateComponentSchema(
+        let componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
+        if (componentSchemaHandles === undefined) {
+            const componentSchema: IFluidSchema = generateComponentSchema(
                 dataProps.runtime,
                 reactState,
                 initialFluidState,
                 viewToFluid,
                 fluidToView,
             );
-            const handles: IFluidSchemaHandles = {
+            componentSchemaHandles = {
                 componentKeyMapHandle: componentSchema.componentKeyMap.handle as IComponentHandle<ISharedMap>,
                 fluidMatchingMapHandle: componentSchema.fluidMatchingMap.handle as IComponentHandle<ISharedMap>,
                 viewMatchingMapHandle: componentSchema.viewMatchingMap.handle as IComponentHandle<ISharedMap>,
             };
-            root.set("componentSchema", handles);
+            setComponentSchemaToRoot(syncedStateId, root, componentSchemaHandles);
         }
         root.on("valueChanged", rootCallback);
         reactState.isInitialized = true;
-        const unlistenedComponentHandles: IComponentHandle[] = [];
-        dataProps.fluidComponentMap.forEach((value: IFluidComponent, key: IComponentHandle) => {
+        reactState.syncedStateId = syncedStateId;
+        const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
+            componentSchemaHandles.componentKeyMapHandle,
+            componentSchemaHandles.fluidMatchingMapHandle,
+            componentSchemaHandles.viewMatchingMapHandle,
+        ];
+        dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
             if (!value.isListened && value.component.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
             }
@@ -103,6 +111,7 @@ export function useStateFluid<
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,
             false,
+            syncedStateId,
             root,
             reactState,
             reactSetState,

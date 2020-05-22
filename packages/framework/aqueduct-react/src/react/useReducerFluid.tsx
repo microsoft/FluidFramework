@@ -7,7 +7,7 @@ import * as React from "react";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidFunctionalComponentViewState,
-    FluidReducerProps,
+    IFluidReducerProps,
     IFluidDataProps,
     instanceOfStateUpdateFunction,
     instanceOfAsyncStateUpdateFunction,
@@ -19,20 +19,22 @@ import {
     IFluidFunctionalComponentFluidState,
     IFluidReducer,
     IFluidSelector,
+    ICombinedState,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
-import { updateStateAndComponentMap, rootCallbackListener } from "./algorithms";
+import { updateStateAndComponentMap, rootCallbackListener, getFluidStateFromRoot } from "./algorithms";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
-    A extends IFluidReducer<SV,C>,
+    A extends IFluidReducer<SV,SF,C>,
     B extends IFluidSelector<SV,C>,
     C extends IFluidDataProps,
 >(
-    props: FluidReducerProps<SV, SF, A, B, C>,
-): [SV, A, B] {
+    props: IFluidReducerProps<SV, SF, A, B, C>,
+): [ICombinedState<SV,SF,C>, A, B] {
     const {
+        syncedStateId,
         reducer,
         selector,
         root,
@@ -43,6 +45,7 @@ export function useReducerFluid<
         dataProps,
     } = props;
     const [state, setState] = useStateFluid<SV,SF>({
+        syncedStateId,
         root,
         initialViewState,
         initialFluidState,
@@ -51,55 +54,36 @@ export function useReducerFluid<
         viewToFluid,
     });
 
+    const currentFluidState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and
     // state values that were updated. Think of it as prepping the data in the first
     // stage of dynamic programming. The dispatch functions are copies of the user-defined functions
-    // but with the updates to synced state also handle
+    // but with the updates to synced state also handled
     const dispatch = React.useCallback((
-        dispatchState: SV,
+        dispatchState: ICombinedState<SV,SF,C>,
         type: keyof A,
-        dispatchDataProps?: C,
         ...args: any
     ) => {
-        const combinedDispatchState: SV = { ...state, ...dispatchState };
-        const combinedDispatchDataProps: C = { ...dataProps, ...dispatchDataProps };
+        const combinedDispatchFluidState: SF = { ...currentFluidState, ...dispatchState.fluidState };
+        const combinedDispatchViewState: SV = { ...state, ...dispatchState.viewState };
+        const combinedDispatchDataProps: C = { ...dataProps, ...dispatchState.dataProps };
+        const combinedDispatchState: ICombinedState<SV,SF,C> = {
+            fluidState: combinedDispatchFluidState,
+            viewState: combinedDispatchViewState,
+            dataProps: combinedDispatchDataProps,
+        };
         const action =  reducer[(type)];
-        if (action && instanceOfAsyncStateUpdateFunction<SV,C>(action)) {
-            (action.function as any)(combinedDispatchState, combinedDispatchDataProps, ...args)
-                .then((result: IStateUpdateResult<SV>) => {
-                    const callback = rootCallbackListener(
-                        combinedDispatchDataProps.fluidComponentMap,
-                        true,
-                        root,
-                        result.state,
-                        setState,
-                        viewToFluid,
-                        fluidToView,
-                    );
-                    if (result.newComponentHandles) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        updateStateAndComponentMap(
-                            result.newComponentHandles,
-                            combinedDispatchDataProps.fluidComponentMap,
-                            false,
-                            root,
-                            result.state,
-                            setState,
-                            callback,
-                            viewToFluid,
-                            fluidToView,
-                        );
-                    } else {
-                        setState(result.state);
-                    }
-                });
-        } else if (action && instanceOfStateUpdateFunction<SV,C>(action)) {
-            const result = (action.function as any)(combinedDispatchState, combinedDispatchDataProps, ...args);
+        if (action && instanceOfStateUpdateFunction<SV,SF,C>(action)) {
+            const result = (action.function as any)(
+                combinedDispatchState,
+                ...args,
+            );
             if (result.newComponentHandles) {
                 const callback = rootCallbackListener(
                     combinedDispatchDataProps.fluidComponentMap,
                     false,
+                    syncedStateId,
                     root,
                     result.state,
                     setState,
@@ -111,6 +95,7 @@ export function useReducerFluid<
                     result.newComponentHandles,
                     combinedDispatchDataProps.fluidComponentMap,
                     false,
+                    syncedStateId,
                     root,
                     result.state,
                     setState,
@@ -121,18 +106,56 @@ export function useReducerFluid<
             } else {
                 setState(result.state);
             }
-        } else if (action && instanceOfAsyncEffectFunction<SV,C>(action)) {
-            (action.function as any)(combinedDispatchState, combinedDispatchDataProps, ...args)
-                .then(() => setState(combinedDispatchState));
-        } else if (action && instanceOfEffectFunction<SV,C>(action)) {
-            (action.function as any)(combinedDispatchState, combinedDispatchDataProps, ...args);
-            setState(combinedDispatchState);
+        } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
+            (action.function as any)(
+                combinedDispatchState,
+                ...args,
+            ).then((result: IStateUpdateResult<SV>) => {
+                const callback = rootCallbackListener(
+                    combinedDispatchDataProps.fluidComponentMap,
+                    true,
+                    syncedStateId,
+                    root,
+                    result.state,
+                    setState,
+                    viewToFluid,
+                    fluidToView,
+                );
+                if (result.newComponentHandles) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    updateStateAndComponentMap(
+                        result.newComponentHandles,
+                        combinedDispatchDataProps.fluidComponentMap,
+                        false,
+                        syncedStateId,
+                        root,
+                        result.state,
+                        setState,
+                        callback,
+                        viewToFluid,
+                        fluidToView,
+                    );
+                } else {
+                    setState(result.state);
+                }
+            });
+        } else if (action && instanceOfAsyncEffectFunction<SV,SF,C>(action)) {
+            (action.function as any)(
+                combinedDispatchState,
+                ...args,
+            ).then(() => setState(combinedDispatchViewState));
+        } else if (action && instanceOfEffectFunction<SV,SF,C>(action)) {
+            (action.function as any)(
+                combinedDispatchState,
+                ...args,
+            );
+            setState(combinedDispatchViewState);
         } else {
             throw new Error(
                 `Action with key ${action} does not
                  exist in the reducers provided`);
         }
-    }, [reducer, state, setState, dataProps]);
+    }, [reducer, state, setState, dataProps, currentFluidState]);
 
     // The combinedReducer is then created using the dispatch functions we created above.
     // This allows us to preserve the reducer interface while injecting Fluid-specific logic
@@ -143,10 +166,13 @@ export function useReducerFluid<
     Object.entries(reducer).forEach(([functionName, functionItem], i) => {
         combinedReducer[functionName] = {
             function: (
-                viewState: SV,
-                callbackDataProps?: C,
+                dispatchState: ICombinedState<SV,SF,C>,
                 ...args: any
-            ) => dispatch(viewState, functionName, callbackDataProps, ...args),
+            ) => dispatch(
+                dispatchState,
+                functionName,
+                ...args,
+            ),
         };
     });
 
@@ -167,6 +193,7 @@ export function useReducerFluid<
                 const callback = rootCallbackListener(
                     combinedFetchDataProps.fluidComponentMap,
                     true,
+                    syncedStateId,
                     root,
                     combinedFetchState,
                     setState,
@@ -178,6 +205,7 @@ export function useReducerFluid<
                     [handle],
                     combinedFetchDataProps.fluidComponentMap,
                     false,
+                    syncedStateId,
                     root,
                     combinedFetchState,
                     setState,
@@ -207,5 +235,13 @@ export function useReducerFluid<
         };
     });
 
-    return [state, combinedReducer as A, combinedSelector as B];
+    return [
+        {
+            viewState: state,
+            fluidState: currentFluidState,
+            dataProps,
+        },
+        combinedReducer as A,
+        combinedSelector as B,
+    ];
 }

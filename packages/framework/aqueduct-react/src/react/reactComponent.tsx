@@ -14,13 +14,15 @@ import {
     IViewConverter,
     FluidComponentMap,
     IFluidSchema,
-    IFluidSchemaHandles,
 } from "./interface";
 import {
     rootCallbackListener,
     syncStateAndRoot,
     generateComponentSchema,
     updateStateAndComponentMap,
+    setFluidStateToRoot,
+    setComponentSchemaToRoot,
+    getComponentSchemaFromRoot,
 } from "./algorithms";
 
 /**
@@ -30,6 +32,7 @@ export abstract class FluidReactComponent<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 > extends React.Component<FluidProps<SV,SF>, SV> {
+    private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
     private readonly viewToFluid?: Map<keyof SV, IRootConverter<SV,SF>>;
     private readonly fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>;
@@ -39,6 +42,7 @@ export abstract class FluidReactComponent<
     ) {
         super(props);
         const {
+            syncedStateId,
             fluidToView,
             viewToFluid,
             root,
@@ -51,8 +55,9 @@ export abstract class FluidReactComponent<
         this.viewToFluid = viewToFluid;
         this.fluidToView = fluidToView;
         this.fluidComponentMap = dataProps.fluidComponentMap;
+        this._syncedStateId = syncedStateId;
         this._root = root;
-        let componentSchemaHandles = root.get<IFluidSchemaHandles>("componentSchema");
+        let componentSchemaHandles = getComponentSchemaFromRoot(this._syncedStateId, root);
         if (componentSchemaHandles === undefined) {
             const componentSchema: IFluidSchema = generateComponentSchema(
                 dataProps.runtime,
@@ -66,7 +71,7 @@ export abstract class FluidReactComponent<
                 fluidMatchingMapHandle: componentSchema.fluidMatchingMap.handle as IComponentHandle<ISharedMap>,
                 viewMatchingMapHandle: componentSchema.viewMatchingMap.handle as IComponentHandle<ISharedMap>,
             };
-            root.set("componentSchema", componentSchemaHandles);
+            setComponentSchemaToRoot(this._syncedStateId, root, componentSchemaHandles);
         }
         const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
             componentSchemaHandles.componentKeyMapHandle,
@@ -77,6 +82,7 @@ export abstract class FluidReactComponent<
         const rootCallback = rootCallbackListener(
             dataProps.fluidComponentMap,
             true,
+            this._syncedStateId,
             root,
             this.state,
             this._setStateFromRoot.bind(this),
@@ -84,8 +90,8 @@ export abstract class FluidReactComponent<
             fluidToView,
         );
 
-        if (root.get("syncedState") === undefined) {
-            root.set("syncedState", initialFluidState);
+        if (root.get(`syncedState-${this._syncedStateId}`) === undefined) {
+            setFluidStateToRoot(this._syncedStateId, root, initialFluidState);
         }
         root.on("valueChanged", rootCallback);
 
@@ -94,6 +100,7 @@ export abstract class FluidReactComponent<
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,
             false,
+            this._syncedStateId,
             root,
             this.state,
             this._setStateFromRoot.bind(this),
@@ -115,6 +122,7 @@ export abstract class FluidReactComponent<
         if (!fromRootUpdate && this.fluidComponentMap) {
             syncStateAndRoot(
                 fromRootUpdate,
+                this._syncedStateId,
                 this._root,
                 newCombinedState,
                 this._setStateFromRoot.bind(this),
@@ -131,6 +139,7 @@ export abstract class FluidReactComponent<
         if (this.fluidComponentMap) {
             syncStateAndRoot(
                 false,
+                this._syncedStateId,
                 this._root,
                 newState,
                 this._setStateFromRoot.bind(this),

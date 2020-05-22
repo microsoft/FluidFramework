@@ -24,15 +24,15 @@ export const ClickerName = pkg.name as string;
 
 // ---- React Class Component ----
 
-interface CounterReactState extends IFluidFunctionalComponentViewState {
+interface CounterState {
     value: number;
 }
 
-interface CounterFluidState extends IFluidFunctionalComponentFluidState {
-    value: number
-}
+interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
 
-class CounterReactView extends FluidReactComponent<CounterReactState, CounterFluidState> {
+interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
+
+class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     render() {
         return (
             <div>
@@ -67,6 +67,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         ReactDOM.render(
             <div>
                 <CounterReactView
+                    syncedStateId={"clicker"}
                     root={this.root}
                     initialViewState={{ value: this.root.get("counterClicks") }}
                     initialFluidState={{ value: this.root.get("counterClicks") }}

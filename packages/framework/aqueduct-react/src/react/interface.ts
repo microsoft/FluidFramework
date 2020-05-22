@@ -6,6 +6,16 @@ import { ISharedDirectory, ISharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import { IComponentHandle, IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
 
+export interface ICombinedState<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> {
+    viewState: SV,
+    fluidState: SF,
+    dataProps: C,
+}
+
 export interface IFluidSchema {
     // (k,v) => (common fluid and view keys, handles)
     componentKeyMap: ISharedMap,
@@ -24,8 +34,12 @@ export interface IFluidSchemaHandles {
 export type ViewToFluidMap<SV,SF> = Map<keyof SV, IRootConverter<SV,SF>>;
 export type FluidToViewMap<SV,SF> = Map<keyof SF, IViewConverter<SV,SF>>;
 
-export interface IFluidReducer<S,C extends IFluidDataProps> {
-    [key: string]: FluidAsyncStateUpdateFunction<S,C> | FluidStateUpdateFunction<S,C>;
+export interface IFluidReducer<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> {
+    [key: string]: FluidAsyncStateUpdateFunction<SV,SF,C> | FluidStateUpdateFunction<SV,SF,C>;
 }
 
 export interface IFluidSelector<S,C extends IFluidDataProps> {
@@ -36,6 +50,7 @@ export interface FluidProps<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
 > {
+    syncedStateId: string,
     root: ISharedDirectory,
     initialViewState: SV,
     initialFluidState: SF,
@@ -50,6 +65,8 @@ export interface IViewConverter<
 >{
     stateKey: keyof SV,
     viewConverter: (syncedState: Partial<SF>, fluidComponentMap: FluidComponentMap) => Partial<SV>,
+    fluidObjectType?: string;
+    rootKey?: string;
 }
 
 export interface IRootConverter<
@@ -61,6 +78,7 @@ export interface IRootConverter<
 }
 
 export interface IFluidFunctionalComponentFluidState {
+    syncedStateId?: string;
     isInitialized?: boolean;
 }
 
@@ -85,38 +103,67 @@ export interface IFluidDataProps {
     fluidComponentMap: FluidComponentMap,
 }
 
-export interface FluidEffectFunction<S, C extends IFluidDataProps> {
-    function: (oldState: S, dataProps: C, ...args: any) => void;
+export interface FluidEffectFunction<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>{
+    function: (oldState: ICombinedState<SV,SF,C>, ...args: any) => void;
 }
 
-export const instanceOfEffectFunction = <S, C extends IFluidDataProps>(
+export const instanceOfEffectFunction = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>(
     object: any,
-): object is FluidEffectFunction<S, C> =>
+): object is FluidEffectFunction<SV,SF,C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidAsyncEffectFunction<S, C extends IFluidDataProps> {
-    function: (oldState: S, dataProps: C, ...args: any) => Promise<void>;
+export interface FluidAsyncEffectFunction<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>{
+    function: (oldState: ICombinedState<SV,SF,C>, ...args: any) => Promise<void>;
 }
 
-export const instanceOfAsyncEffectFunction = <S, C extends IFluidDataProps>(
+export const instanceOfAsyncEffectFunction = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>(
     object: any,
-): object is FluidAsyncEffectFunction<S, C> =>
+): object is FluidAsyncEffectFunction<SV,SF,C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidStateUpdateFunction<S extends IFluidFunctionalComponentViewState, C extends IFluidDataProps> {
-    function: (oldState: S, dataProps: C, ...args: any) => IStateUpdateResult<S>;
+export interface FluidStateUpdateFunction<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps> {
+    function: (
+        oldState: ICombinedState<SV,SF,C>,
+        ...args: any
+    ) => IStateUpdateResult<SV>;
 }
 
-export const instanceOfStateUpdateFunction = <S extends IFluidFunctionalComponentViewState, C extends IFluidDataProps>(
+export const instanceOfStateUpdateFunction = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps>(
     object: any,
-): object is FluidStateUpdateFunction<S, C> =>
+): object is FluidStateUpdateFunction<SV,SF,C> =>
     object === Object(object) && "function" in object;
 
 export interface FluidAsyncStateUpdateFunction<
-    S extends IFluidFunctionalComponentViewState,
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 >{
-    function: (oldState: S, dataProps: C, ...args: any) => Promise<IStateUpdateResult<S>>;
+    function: (
+        oldState: ICombinedState<SV,SF,C>,
+        ...args: any
+    ) => Promise<IStateUpdateResult<SV>>;
 }
 
 export interface IStateUpdateResult<S extends IFluidFunctionalComponentViewState> {
@@ -125,11 +172,12 @@ export interface IStateUpdateResult<S extends IFluidFunctionalComponentViewState
 }
 
 export const instanceOfAsyncStateUpdateFunction = <
-    S extends IFluidFunctionalComponentViewState,
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 >(
     object: any,
-): object is FluidAsyncStateUpdateFunction<S,C> =>
+): object is FluidAsyncStateUpdateFunction<SF,SV,C> =>
     object === Object(object) && "function" in object;
 
 export interface FluidSelectorFunction<S, C extends IFluidDataProps>{
@@ -148,13 +196,14 @@ export const instanceOfComponentSelectorFunction = <S,C extends IFluidDataProps>
 (object: any): object is FluidComponentSelectorFunction<S,C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidReducerProps<
+export interface IFluidReducerProps<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
-    A,
+    A extends  IFluidReducer<SV,SF,C>,
     B,
     C extends IFluidDataProps,
 > {
+    syncedStateId: string,
     root: ISharedDirectory,
     initialViewState: SV,
     initialFluidState: SF,

@@ -58,6 +58,9 @@ export const addComponent = async <
 });
 
 export function isEquivalent(a, b) {
+    if (a === undefined || b === undefined) {
+        return a === b;
+    }
     const aKeys = Object.getOwnPropertyNames(a);
     const bKeys = Object.getOwnPropertyNames(b);
     if (aKeys.length !== bKeys.length) {

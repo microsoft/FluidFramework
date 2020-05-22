@@ -17,6 +17,7 @@ import { getViewFromRoot } from "./getViewFromRoot";
 export const rootCallbackListener = <SV,SF>(
     fluidComponentMap: FluidComponentMap,
     fromRootUpdate: boolean,
+    syncedStateId,
     root: ISharedDirectory,
     state: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
@@ -28,9 +29,10 @@ export const rootCallbackListener = <SV,SF>(
         const viewToFluidKeys: string[] = viewToFluid
             ? Array.from(viewToFluid.values()).map((item) => item.rootKey as string)
             : [];
-        if (change.key === "syncedState") {
+        if (change.key === `syncedState-${syncedStateId}`) {
             syncStateAndRoot(
                 fromRootUpdate,
+                syncedStateId,
                 root,
                 state,
                 setState,
@@ -45,6 +47,7 @@ export const rootCallbackListener = <SV,SF>(
             const stateKey = getByValue(rootKey, viewToFluid);
             if (stateKey) {
                 const newPartialState = getViewFromRoot(
+                    syncedStateId,
                     root,
                     rootKey as keyof SF,
                     fluidComponentMap,

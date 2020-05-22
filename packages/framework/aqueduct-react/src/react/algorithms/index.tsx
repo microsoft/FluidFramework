@@ -9,3 +9,7 @@ export * from "./rootCallbackListener";
 export * from "./syncStateAndRoot";
 export * from "./updateStateAndComponentMap";
 export * from "./generateComponentSchema";
+export * from "./getFluidStateFromRoot";
+export * from "./setFluidStateToRoot";
+export * from "./getComponentSchemaFromRoot";
+export * from "./setComponentSchemaToRoot";

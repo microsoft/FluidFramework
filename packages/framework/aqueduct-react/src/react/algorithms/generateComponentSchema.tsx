@@ -37,7 +37,7 @@ export function generateComponentSchema<
     Object.entries(viewState).forEach(([viewKey, viewValue]) => {
         if (isEquivalent(viewValue, fluidState[viewKey])) {
             viewMatchingMap.set(viewKey, false);
-        } else if (viewToFluid?.get(viewKey as keyof SV)?.rootConverter !== undefined) {
+        } else if (viewToFluid?.get(viewKey as keyof SV) !== undefined) {
             // It is an object but the types don't match, need a root converter
             viewMatchingMap.set(viewKey, true);
         } else {

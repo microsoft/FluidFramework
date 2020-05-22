@@ -10,17 +10,20 @@ import {
     IFluidFunctionalComponentViewState,
     ViewToFluidMap,
     FluidToViewMap,
-    IFluidSchemaHandles,
 } from "../interface";
 import { getRootFromView } from "./getRootFromView";
 import { getViewFromRoot } from "./getViewFromRoot";
 import { isEquivalent } from "./utils";
+import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
+import { setFluidStateToRoot } from "./setFluidStateToRoot";
+import { getComponentSchemaFromRoot } from "./getComponentSchemaFromRoot";
 
 export function syncStateAndRoot<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
     fromRootUpdate: boolean,
+    syncedStateId,
     root: ISharedDirectory,
     state: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
@@ -28,72 +31,76 @@ export function syncStateAndRoot<
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
 ) {
-    let combinedRootState = root.get<SF>("syncedState");
-    const {
-        componentKeyMapHandle,
-        viewMatchingMapHandle,
-        fluidMatchingMapHandle,
-    } = root.get<IFluidSchemaHandles>("componentSchema");
-    if (
-        componentKeyMapHandle !== undefined
-        && viewMatchingMapHandle !== undefined
-        && fluidMatchingMapHandle !== undefined) {
-        const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle)?.component as SharedMap;
-        const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle)?.component as SharedMap;
-        const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle)?.component as SharedMap;
+    let combinedRootState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
+    const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
+    if (componentSchemaHandles) {
+        const {
+            componentKeyMapHandle,
+            viewMatchingMapHandle,
+            fluidMatchingMapHandle,
+        } = componentSchemaHandles;
         if (
-            componentKeyMap !== undefined
-            && viewMatchingMap !== undefined
-            && fluidMatchingMap !== undefined) {
-            Object.entries(state).forEach(([viewKey, viewValue]) => {
-                const needsConverter = viewMatchingMap.get(viewKey);
-                let partialRootState = {};
-                if (needsConverter) {
-                    partialRootState = getRootFromView(
-                        state,
-                        viewKey as keyof SV,
-                        componentKeyMap,
-                        viewToFluid,
-                    );
-                } else {
-                    partialRootState[viewKey] = state[viewKey];
-                }
+            componentKeyMapHandle !== undefined
+            && viewMatchingMapHandle !== undefined
+            && fluidMatchingMapHandle !== undefined) {
+            const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle)?.component as SharedMap;
+            const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle)?.component as SharedMap;
+            const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle)?.component as SharedMap;
+            if (
+                componentKeyMap !== undefined
+                && viewMatchingMap !== undefined
+                && fluidMatchingMap !== undefined) {
+                Object.entries(state).forEach(([viewKey, viewValue]) => {
+                    const needsConverter = viewMatchingMap.get(viewKey);
+                    let partialRootState = {};
+                    if (needsConverter) {
+                        partialRootState = getRootFromView(
+                            state,
+                            viewKey as keyof SV,
+                            componentKeyMap,
+                            viewToFluid,
+                        );
+                    } else {
+                        partialRootState[viewKey] = state[viewKey];
+                    }
 
-                if (fromRootUpdate) {
-                    combinedRootState = { ...partialRootState, ...combinedRootState };
-                } else {
-                    combinedRootState = { ...combinedRootState, ...partialRootState };
-                }
-            });
+                    if (fromRootUpdate) {
+                        combinedRootState = { ...partialRootState, ...combinedRootState };
+                    } else {
+                        combinedRootState = { ...combinedRootState, ...partialRootState };
+                    }
+                });
 
-            let combinedViewState = { ...state };
-            const currentRootState = root.get("syncedState");
-            Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
-                const needsConverter = fluidMatchingMap.get(fluidKey);
-                let partialViewState = {};
-                if (needsConverter) {
-                    partialViewState = getViewFromRoot(
-                        root,
-                        fluidKey as keyof SF,
-                        fluidComponentMap,
-                        fluidToView,
-                        combinedRootState,
-                    );
-                } else {
-                    partialViewState[fluidKey] = currentRootState[fluidKey];
-                }
-                if (fromRootUpdate) {
-                    combinedViewState = { ...combinedViewState, ...partialViewState  };
-                } else {
-                    combinedViewState = { ...partialViewState, ...combinedViewState };
-                }
-            });
+                let combinedViewState = { ...state };
+                const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
+                Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
+                    const needsConverter = fluidMatchingMap.get(fluidKey);
+                    let partialViewState = {};
+                    if (needsConverter) {
+                        partialViewState = getViewFromRoot(
+                            syncedStateId,
+                            root,
+                            fluidKey as keyof SF,
+                            fluidComponentMap,
+                            fluidToView,
+                            combinedRootState,
+                        );
+                    } else {
+                        partialViewState[fluidKey] = currentRootState[fluidKey];
+                    }
+                    if (fromRootUpdate) {
+                        combinedViewState = { ...combinedViewState, ...partialViewState  };
+                    } else {
+                        combinedViewState = { ...partialViewState, ...combinedViewState };
+                    }
+                });
 
-            if (!isEquivalent(combinedRootState, currentRootState)) {
-                root.set("syncedState", combinedRootState);
-                setState(combinedViewState);
-            } else {
-                setState(combinedViewState);
+                if (!isEquivalent(combinedRootState, currentRootState) && !fromRootUpdate) {
+                    setFluidStateToRoot(syncedStateId, root, combinedRootState);
+                    setState(combinedViewState);
+                } else {
+                    setState(combinedViewState);
+                }
             }
         }
     }

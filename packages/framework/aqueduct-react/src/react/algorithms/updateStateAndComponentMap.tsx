@@ -23,6 +23,7 @@ export const updateStateAndComponentMap = async <
     newHandleList: (IComponentHandle | undefined)[],
     fluidComponentMap: FluidComponentMap,
     fromRootUpdate: boolean,
+    syncedStateId: string,
     root: ISharedDirectory,
     state: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
@@ -36,6 +37,7 @@ export const updateStateAndComponentMap = async <
     rootCallback,
 ).then(() => syncStateAndRoot(
     fromRootUpdate,
+    syncedStateId,
     root,
     state,
     setState,

@@ -18,7 +18,7 @@ export function getRootFromView<SV, SF>(
 ): Partial<SF> {
     const value = state[stateKey];
     const rootConverter = viewToFluid && viewToFluid.get(stateKey)?.rootConverter;
-    const possibleHandle = componentKeyMap.get(stateKey as string) || `stateKeyHandle-${stateKey}`;
+    const possibleHandle = componentKeyMap.get(stateKey as string || `stateKeyHandle-${stateKey}`);
     if (possibleHandle) {
         return possibleHandle;
     } else if (rootConverter) {
