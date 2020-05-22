@@ -30,11 +30,49 @@ export interface IPersistedCache {
 }
 
 /**
+ * Handles garbage collection of expiring cache entries.
+ * Not exported.
+ * (Based off of the same class in promiseCache.ts, could be consolidated)
+ */
+class GarbageCollector<TKey> {
+    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+
+    constructor(
+        private readonly cleanup: (key: TKey) => void,
+    ) {}
+
+    /**
+     * Schedule GC for the given key, as applicable
+     */
+    public schedule(key: TKey, durationMs: number) {
+        this.gcTimeouts.set(
+            key,
+            setTimeout(
+                () => { this.cleanup(key); this.cancel(key); },
+                durationMs,
+            ),
+        );
+    }
+
+    /**
+     * Cancel any pending GC for the given key
+     */
+    public cancel(key: TKey) {
+        const timeout = this.gcTimeouts.get(key);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.gcTimeouts.delete(key);
+        }
+    }
+}
+
+/**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
 export class LocalCache implements IPersistedCache {
     private readonly cache = new Map<string, any>();
+    private readonly gc: GarbageCollector<string> = new GarbageCollector<string>((key) => this.cache.delete(key));
 
     async get(key: string): Promise<any> {
         return this.cache.get(key);
@@ -42,22 +80,14 @@ export class LocalCache implements IPersistedCache {
 
     async remove(key: string) {
         this.cache.delete(key);
+        this.gc.cancel(key);
     }
 
     async put(key: string, value: any, expiryTime?: number) {
         this.cache.set(key, value);
         if (expiryTime) {
-            this.gc(key, expiryTime);
+            this.gc.schedule(key, expiryTime);
         }
-    }
-
-    private gc(key: string, expiryTime: number) {
-        setTimeout(() => {
-            if (this.cache.has(key)) {
-                this.cache.delete(key);
-            }
-        },
-        expiryTime);
     }
 }
 
