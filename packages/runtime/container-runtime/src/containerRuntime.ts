@@ -1036,8 +1036,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.audience!;
     }
 
-    public raiseContainerWarning(error: ContainerWarning) {
-        this.context.raiseContainerWarning(error);
+    public raiseContainerWarning(warning: ContainerWarning) {
+        this.context.raiseContainerWarning(warning);
     }
 
     /**

@@ -452,8 +452,8 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitSignalFn(envelope);
     }
 
-    public raiseContainerWarning(err: ContainerWarning): void {
-        this.containerRuntime.raiseContainerWarning(err);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.containerRuntime.raiseContainerWarning(warning);
     }
 
     /**

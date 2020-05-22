@@ -9,7 +9,7 @@ import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer
 import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ISummarizer, Summarizer, createSummarizingError } from "./summarizer";
+import { ISummarizer, Summarizer, createSummarizingWarning } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -296,13 +296,13 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    private raiseContainerWarning(error: ISummarizingWarning) {
+    private raiseContainerWarning(warning: ISummarizingWarning) {
         // back-compat: <= 0.18 loader:
         const errorFn = (this.context as any).error;
         if (errorFn !== undefined) {
-            errorFn(error);
+            errorFn(warning);
         } else {
-            this.context.raiseContainerWarning(error);
+            this.context.raiseContainerWarning(warning);
         }
     }
 
@@ -326,13 +326,13 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (delayMs >= defaultThrottleMaxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
             this.raiseContainerWarning(
-                createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay", false));
+                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false));
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
             summarizer.on("summarizingError",
-                (error: ISummarizingWarning) => this.raiseContainerWarning(error));
+                (warning: ISummarizingWarning) => this.raiseContainerWarning(warning));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({

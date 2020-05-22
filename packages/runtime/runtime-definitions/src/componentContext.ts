@@ -290,7 +290,7 @@ export interface IComponentContext extends EventEmitter {
      * Report error in that happend in the component runtime layer to the container runtime layer
      * @param err - the error object.
      */
-    raiseContainerWarning(err: ContainerWarning): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Submits the message to be sent to other clients.

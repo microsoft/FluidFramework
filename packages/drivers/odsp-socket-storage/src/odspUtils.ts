@@ -28,7 +28,7 @@ import { debug } from "./debug";
 export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
 // Status code for invalid file name error in odsp driver.
-export const invalidFileNameErrorCode: number = 711;
+export const invalidFileNameStatusCode: number = 711;
 
 export function createOdspNetworkError(
     errorMessage: string,
@@ -53,7 +53,7 @@ export function createOdspNetworkError(
             error = new OutOfStorageError(errorMessage, canRetry);
             break;
         case 414:
-        case invalidFileNameErrorCode:
+        case invalidFileNameStatusCode:
             error = new InvalidFileNameError(errorMessage, canRetry);
             break;
         case offlineFetchFailureStatusCode:

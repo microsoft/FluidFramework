@@ -539,8 +539,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.deferredAttached.promise;
     }
 
-    public raiseContainerWarning(error: ContainerWarning): void {
-        this.componentContext.raiseContainerWarning(error);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.componentContext.raiseContainerWarning(warning);
     }
 
     /**

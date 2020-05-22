@@ -212,7 +212,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     readonly scope: IComponent;
 
-    raiseContainerWarning(err: ContainerWarning): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
 

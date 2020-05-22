@@ -23,7 +23,7 @@ import {
     throwOdspNetworkError,
     fetchHelper,
     INewFileInfo,
-    invalidFileNameErrorCode,
+    invalidFileNameStatusCode,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -69,7 +69,7 @@ export async function createNewFluidFile(
     }
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameErrorCode, false);
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode, false);
     }
     let containerSnapshot: ISnapshotTree | undefined;
     if (createNewSummary) {

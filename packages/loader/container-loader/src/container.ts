@@ -631,13 +631,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * For critical errors, please call Container.close(error).
      * @param error - an error to raise
      */
-    public raiseContainerWarning(error: ContainerWarning) {
-        // Some "error" events come from outside the container and are logged
+    public raiseContainerWarning(warning: ContainerWarning) {
+        // Some "warning" events come from outside the container and are logged
         // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if ((error as any).logged !== true) {
-            this.logContainerError(error);
+        if ((warning as any).logged !== true) {
+            this.logContainerError(warning);
         }
-        this.emit("warning", error);
+        this.emit("warning", warning);
     }
 
     public async reloadContext(): Promise<void> {
@@ -1201,8 +1201,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        deltaManager.on("throttled", (error: IThrottlingWarning) => {
-            this.raiseContainerWarning(error);
+        deltaManager.on("throttled", (warning: IThrottlingWarning) => {
+            this.raiseContainerWarning(warning);
         });
 
         deltaManager.on("pong", (latency) => {
@@ -1429,7 +1429,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: ContainerWarning) => this.raiseContainerWarning(err),
+            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1467,7 +1467,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: ContainerWarning) => this.raiseContainerWarning(err),
+            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1482,7 +1482,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     // Please avoid calling it directly.
     // raiseContainerWarning() is the right flow for most cases
-    private logContainerError(error: ContainerWarning) {
-        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, error);
+    private logContainerError(warning: ContainerWarning) {
+        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 }

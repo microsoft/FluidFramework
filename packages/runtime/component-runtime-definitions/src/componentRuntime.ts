@@ -141,7 +141,7 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
     /**
      * Errors raised by distributed data structures
      */
-    raiseContainerWarning(err: ContainerWarning): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * It is false if the container is attached to storage and the component is attached to container.

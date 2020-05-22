@@ -111,7 +111,7 @@ export interface IContainerRuntime extends
     /**
      * Used to raise an unrecoverable error on the runtime.
      */
-    raiseContainerWarning(err: ContainerWarning): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

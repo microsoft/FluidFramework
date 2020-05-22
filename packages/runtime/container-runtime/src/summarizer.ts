@@ -44,7 +44,7 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export class SummarizingError extends ErrorWithProps implements ISummarizingWarning {
+export class SummarizingWarning extends ErrorWithProps implements ISummarizingWarning {
     readonly errorType = ErrorType.summarizingError;
     readonly canRetry = true;
 
@@ -53,8 +53,8 @@ export class SummarizingError extends ErrorWithProps implements ISummarizingWarn
     }
 }
 
-export const createSummarizingError =
-    (details: string, logged: boolean) => new SummarizingError(details, logged);
+export const createSummarizingWarning =
+    (details: string, logged: boolean) => new SummarizingWarning(details, logged);
 
 export interface ISummarizerEvents extends IEvent {
     /**
@@ -676,7 +676,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             initialAttempt,
             this.immediateSummary,
             (description: string) =>
-                this.emit("summarizingError", createSummarizingError(`Summarizer: ${description}`, true)),
+                this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true)),
         );
         this.runningSummarizer = runningSummarizer;
 
@@ -687,7 +687,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 
             // Raise error to parent container.
-            this.emit("summarizingError", createSummarizingError("Summarizer: handleAckError", true));
+            this.emit("summarizingError", createSummarizingWarning("Summarizer: handleAckError", true));
 
             this.stop("handleAckError");
         });

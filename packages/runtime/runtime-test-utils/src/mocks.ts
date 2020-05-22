@@ -448,7 +448,7 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public raiseContainerWarning(err: ContainerWarning): void { }
+    public raiseContainerWarning(warning: ContainerWarning): void { }
 }
 
 /**

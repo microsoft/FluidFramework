@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     createOdspNetworkError,
-    invalidFileNameErrorCode,
+    invalidFileNameStatusCode,
 } from "@fluidframework/odsp-driver";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -208,7 +208,7 @@ describe("Errors Types", () => {
         const networkError = createOdspNetworkError(
             "Test Message",
             false /* canRetry */,
-            invalidFileNameErrorCode /* statusCode */);
+            invalidFileNameStatusCode /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
             "Error should be an InvalidFileNameError");
         assertCustomPropertySupport(networkError);
