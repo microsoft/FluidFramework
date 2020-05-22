@@ -9,10 +9,8 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
-    IDocumentStorageService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -25,7 +23,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
@@ -219,6 +217,14 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     reloadContext(): Promise<void>;
 
     /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     *
+     * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
+     */
+    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
+
+    /**
      * Flag indicating if the given container has been attached to a host service.
      * False if the container is attached to storage.
      */
@@ -258,7 +264,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &

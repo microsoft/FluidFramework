@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { FluidSudoku, FluidSudokuName } from "./fluidSudoku";
 import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
 

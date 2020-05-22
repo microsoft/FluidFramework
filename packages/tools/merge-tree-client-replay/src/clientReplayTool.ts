@@ -5,16 +5,16 @@
 
 import * as assert from "assert";
 import * as fs from "fs";
-import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
+import { FileDeltaStorageService } from "@fluidframework/file-driver";
 import {
     createGroupOp,
     IJSONSegment,
     IMergeTreeOp,
     ISegment,
     MergeTreeDeltaType,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
+import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
 import {
     IBlob,
     IChunkedOp,
@@ -22,14 +22,14 @@ import {
     ITree,
     ITreeEntry,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IAttachMessage } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IAttachMessage } from "@fluidframework/runtime-definitions";
 import {
     SharedNumberSequenceFactory,
     SharedObjectSequenceFactory,
     SharedStringFactory,
     SparseMatrixFactory,
-} from "@microsoft/fluid-sequence";
+} from "@fluidframework/sequence";
 import { ReplayArgs } from "./replayArgs";
 
 // eslint-disable-next-line max-len

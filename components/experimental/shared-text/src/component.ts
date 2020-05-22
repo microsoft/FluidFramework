@@ -9,7 +9,7 @@ import * as url from "url";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
-import { SharedCell } from "@microsoft/fluid-cell";
+import { SharedCell } from "@fluidframework/cell";
 import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
@@ -17,22 +17,22 @@ import {
     IComponentLoadable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { Ink } from "@microsoft/fluid-ink";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { Ink } from "@fluidframework/ink";
 import {
     ISharedMap,
     SharedMap,
-} from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { IComponentRuntimeChannel, IComponentContext, ITask, ITaskManager } from "@fluidframework/runtime-definitions";
 import {
     IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
-} from "@microsoft/fluid-sequence";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/sequence";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 

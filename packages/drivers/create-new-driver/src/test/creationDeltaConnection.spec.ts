@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { IDocumentDeltaConnection, IDocumentService, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IClient, IDocumentMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDeltaConnection, IDocumentService, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IClient, IDocumentMessage, MessageType, ScopeType } from "@fluidframework/protocol-definitions";
 import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
 import { CreationDriverUrlResolver } from "../creationDriverUrlResolver";
 import { CreationServerMessagesHandler } from "..";

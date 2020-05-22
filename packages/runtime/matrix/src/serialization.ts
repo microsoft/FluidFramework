@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
-import { FileMode, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { Serializable, IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { FileMode, TreeEntry } from "@fluidframework/protocol-definitions";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 
 export function serializeBlob(

@@ -10,7 +10,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -22,10 +22,8 @@ import {
     IRuntimeState,
     CriticalContainerError,
     ContainerWarning,
-} from "@microsoft/fluid-container-definitions";
-import {
-    IDocumentStorageService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -40,7 +38,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
@@ -266,6 +264,10 @@ export class ContainerContext implements IContainerContext {
 
     public hasNullRuntime() {
         return this.runtime! instanceof NullRuntime;
+    }
+
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+        return this.container.getAbsoluteUrl(relativeUrl);
     }
 
     private async load() {

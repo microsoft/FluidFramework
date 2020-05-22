@@ -4,7 +4,7 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 

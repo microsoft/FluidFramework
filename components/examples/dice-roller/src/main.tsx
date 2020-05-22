@@ -8,9 +8,9 @@ import { EventEmitter } from "events";
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IValueChanged } from "@microsoft/fluid-map";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { IValueChanged } from "@fluidframework/map";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

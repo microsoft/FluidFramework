@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     RuntimeRequestHandler,
     ContainerRuntime,
-} from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-runtime";
 import {
     NamedComponentRegistryEntries,
     IComponentFactory,
     FlushMode,
-} from "@microsoft/fluid-runtime-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/runtime-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 
 const defaultComponentId = "" as const;
 

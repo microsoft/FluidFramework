@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeGroupMsg } from "./ops";
 import { PropertySet } from "./properties";
 import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";

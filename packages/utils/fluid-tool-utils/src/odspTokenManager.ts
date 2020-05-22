@@ -11,7 +11,7 @@ import {
     pushScope,
     refreshAccessToken,
     getSharepointTenant,
-} from "@microsoft/fluid-odsp-utils";
+} from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 

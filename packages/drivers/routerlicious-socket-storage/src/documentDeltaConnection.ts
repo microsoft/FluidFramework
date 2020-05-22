@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { createNetworkError } from "@microsoft/fluid-driver-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { createNetworkError } from "@fluidframework/driver-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Returns specific network error based on error object.

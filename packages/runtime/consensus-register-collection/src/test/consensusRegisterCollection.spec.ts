@@ -9,10 +9,10 @@ import {
     IBlob,
     ITree,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { IDeltaConnection } from "@microsoft/fluid-component-runtime-definitions";
-import { strongAssert } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/protocol-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { IDeltaConnection } from "@fluidframework/component-runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection } from "../interfaces";
 

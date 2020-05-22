@@ -17,7 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { CriticalContainerError } from "./error";
 
 export interface IConnectionDetails {
@@ -50,7 +50,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
 }

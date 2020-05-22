@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { ISharedMap } from "@fluidframework/map";
 
 export interface IMapProps {
     name: string;

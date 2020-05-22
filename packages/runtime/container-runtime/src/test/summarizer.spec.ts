@@ -11,7 +11,7 @@ import {
     ISummaryConfiguration,
     ISummaryProposal,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import * as sinon from "sinon";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";

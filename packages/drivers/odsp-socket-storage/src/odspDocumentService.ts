@@ -18,13 +18,13 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/protocol-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";

@@ -8,20 +8,20 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import {
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
     ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IInboundSignalMessage, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage, IProvideComponentRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 /**

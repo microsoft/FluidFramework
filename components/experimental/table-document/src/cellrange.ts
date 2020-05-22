@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { LocalReference } from "@microsoft/fluid-merge-tree";
-import { SequenceInterval } from "@microsoft/fluid-sequence";
+import { LocalReference } from "@fluidframework/merge-tree";
+import { SequenceInterval } from "@fluidframework/sequence";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 

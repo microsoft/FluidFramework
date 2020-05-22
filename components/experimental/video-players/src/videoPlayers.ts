@@ -10,14 +10,14 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IComponentLayout } from "@fluidframework/framework-experimental";
+import { IComponentCollection } from "@fluidframework/framework-interfaces";
+import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 declare global {
     interface Window {

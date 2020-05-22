@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { CollaborativeInput } from "@fluidframework/aqueduct-react";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";
 
 interface ITextListViewProps {

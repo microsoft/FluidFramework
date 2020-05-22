@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { isOnline, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };

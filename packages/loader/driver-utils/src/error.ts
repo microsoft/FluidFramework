@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-unsafe-any
 import * as assert from "assert";
-import { ErrorType, IGenericError } from "@microsoft/fluid-container-definitions";
+import { ErrorType, IGenericError } from "@fluidframework/driver-definitions";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {

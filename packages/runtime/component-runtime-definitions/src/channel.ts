@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
+import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
-declare module "@microsoft/fluid-container-definitions" {
+declare module "@fluidframework/container-definitions" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideChannel>> { }
 }

@@ -9,7 +9,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -26,7 +26,7 @@ import {
     CriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
@@ -43,7 +43,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     CreateContainerError,
     readAndParse,
@@ -51,13 +51,13 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     FileMode,
     IClient,
@@ -80,7 +80,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -493,11 +493,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
-            if (response.status !== 200) {
-                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
-            }
-            this.originalRequest = { url: response.value };
+            const url = await this.getAbsoluteUrl("");
+            this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
@@ -650,6 +647,40 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public hasNullRuntime() {
         return this.context!.hasNullRuntime();
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        if (this.resolvedUrl === undefined) {
+            throw new Error("Container not attached to storage");
+        }
+        // TODO: Remove support for legacy requestUrl in 0.20
+        const legacyResolver = this.urlResolver as {
+            requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
+
+            getAbsoluteUrl?(
+                resolvedUrl: IResolvedUrl,
+                relativeUrl: string,
+            ): Promise<string>;
+        };
+
+        if (legacyResolver.getAbsoluteUrl !== undefined) {
+            return this.urlResolver.getAbsoluteUrl(
+                this.resolvedUrl,
+                relativeUrl);
+        }
+
+        if (legacyResolver.requestUrl !== undefined) {
+            const response = await legacyResolver.requestUrl(
+                this.resolvedUrl,
+                { url: relativeUrl });
+
+            if (response.status === 200) {
+                return response.value as string;
+            }
+            throw new Error(response.value);
+        }
+
+        throw new Error("Url Resolver does not support creating urls");
     }
 
     private async reloadContextCore(): Promise<void> {

@@ -226,7 +226,7 @@ The second property is an entry point into our component.
 ExampleFluidComponent.load;
 ```
 
-Finally we export this as `fluidExport`.  This export is special - the `@microsoft/fluid-webpack-component-loader` we
+Finally we export this as `fluidExport`.  This export is special - the `@fluidframework/webpack-component-loader` we
 are using to load our component knows to look for this particular export to load from.
 
 ```typescript

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 
 /**
  * Returns a new IObjectStorageService that resolves the given `path` as root.

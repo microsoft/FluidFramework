@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { CriticalContainerError, ErrorType } from "@microsoft/fluid-container-definitions";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 

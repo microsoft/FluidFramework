@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import * as assert from "assert";
-import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
     IQuorumSnapshot,
@@ -126,10 +126,11 @@ export class ScribeLambda extends SequencedLambda {
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
                             lastSummary.messages.filter(
                                 (op) => op.sequenceNumber > lastScribe.protocolState.sequenceNumber));
-                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                        if (this.pendingP) {
-                            this.pendingP = undefined;
-                        }
+
+                        this.pendingP = undefined;
+                        this.pendingCheckpointScribe = undefined;
+                        this.pendingCheckpointOffset = undefined;
+
                         await this.deleteCheckpoint(lastScribe.sequenceNumber + 1, false);
                     }
                 }

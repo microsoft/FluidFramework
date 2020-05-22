@@ -15,7 +15,8 @@ import {
     IThrottlingWarning,
     IWriteError,
     ErrorType,
-} from "@microsoft/fluid-container-definitions";
+    ISummarizingError,
+} from "@fluidframework/driver-definitions";
 import {
     ErrorWithProps,
 } from "./error";

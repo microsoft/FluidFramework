@@ -7,8 +7,8 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";

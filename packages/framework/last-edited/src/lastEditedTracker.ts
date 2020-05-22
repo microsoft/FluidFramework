@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**

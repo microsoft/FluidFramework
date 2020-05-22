@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@fluidframework/gitresources";
 import {
     ICollection,
     IContext,

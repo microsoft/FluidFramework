@@ -6,8 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
-import { createNetworkError } from "@microsoft/fluid-driver-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { createNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -20,7 +20,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];

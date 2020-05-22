@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { SharedMap } from "@microsoft/fluid-map";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SharedMap } from "@fluidframework/map";
 import { PrimitivesCollection, PrimitivesName } from "./main";
 
 /**

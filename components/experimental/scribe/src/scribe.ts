@@ -10,30 +10,30 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import {
     IContainerRuntime,
-} from "@microsoft/fluid-container-runtime-definitions";
-import * as scribe from "@microsoft/fluid-server-tools-core";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/container-runtime-definitions";
+import * as scribe from "@fluidframework/server-tools-core";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
 
 // eslint-disable-next-line max-len

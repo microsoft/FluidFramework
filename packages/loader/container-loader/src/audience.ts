@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience } from "@microsoft/fluid-container-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.

@@ -9,7 +9,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import { DebugLogger } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as JsDiff from "diff";
 // eslint-disable-next-line import/no-extraneous-dependencies

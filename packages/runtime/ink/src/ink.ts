@@ -10,13 +10,13 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,
     IChannelAttributes,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {
@@ -128,7 +128,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {
@@ -151,7 +151,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
         branchId: string,
@@ -166,7 +166,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation && !local) {
@@ -182,14 +182,14 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      */
     protected registerCore(): void {
         return;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect(): void {
         return;

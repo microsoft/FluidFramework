@@ -10,10 +10,10 @@ import {
     IClient,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { DeltaManager } from "@microsoft/fluid-container-loader";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
-import { ScheduleManager, DeltaScheduler } from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/protocol-definitions";
+import { DeltaManager } from "@fluidframework/container-loader";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
+import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
 describe("Container Runtime", () => {
     /**
