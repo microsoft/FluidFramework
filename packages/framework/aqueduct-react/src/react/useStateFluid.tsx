@@ -25,7 +25,7 @@ import {
     setFluidStateToRoot,
     setComponentSchemaToRoot,
     getComponentSchemaFromRoot,
-} from "./algorithms";
+} from "./helpers";
 
 export function useStateFluid<
     SV extends IFluidFunctionalComponentViewState,

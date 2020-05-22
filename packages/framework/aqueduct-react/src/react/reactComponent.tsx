@@ -23,7 +23,7 @@ import {
     setFluidStateToRoot,
     setComponentSchemaToRoot,
     getComponentSchemaFromRoot,
-} from "./algorithms";
+} from "./helpers";
 
 /**
  * A react component with a root, initial props, and a root to state mapping

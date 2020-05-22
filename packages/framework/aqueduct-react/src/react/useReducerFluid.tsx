@@ -22,7 +22,7 @@ import {
     ICombinedState,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
-import { updateStateAndComponentMap, rootCallbackListener, getFluidStateFromRoot } from "./algorithms";
+import { updateStateAndComponentMap, rootCallbackListener, getFluidStateFromRoot } from "./helpers";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
