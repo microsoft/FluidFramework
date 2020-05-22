@@ -73,8 +73,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         if (!runtime.existing && this.defaultComponent.type) {
             await runtime
                 .createComponent(defaultComponentId, this.defaultComponent.type)
-                .then((componentRuntime) => { componentRuntime.attach(); })
-                .catch((error) => { context.error(error); });
+                .then((componentRuntime) => { componentRuntime.attach(); });
         }
 
         return runtime;

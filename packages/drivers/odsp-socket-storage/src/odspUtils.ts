@@ -4,12 +4,17 @@
  */
 
 import {
-    createNetworkError,
-    fetchFailureStatusCode,
-    offlineFetchFailureStatusCode,
+    AuthorizationError,
+    FileNotFoundOrAccessDeniedError,
+    GenericNetworkError,
+    InvalidFileNameError,
+    OfflineError,
+    OutOfStorageError,
+    isOnline,
+    createGenericNetworkError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { IError } from "@fluidframework/driver-definitions";
+import { CriticalContainerError } from "@fluidframework/container-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -20,8 +25,49 @@ import sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 
-/** Parse the given url and return the origin (host name) */
-export const getOrigin = (url: string) => new URL(url).origin;
+export const offlineFetchFailureStatusCode: number = 709;
+export const fetchFailureStatusCode: number = 710;
+// Status code for invalid file name error in odsp driver.
+export const invalidFileNameStatusCode: number = 711;
+
+export function createOdspNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+): CriticalContainerError {
+    let error: CriticalContainerError;
+
+    switch (statusCode) {
+        case 401:
+        case 403:
+            error = new AuthorizationError(errorMessage, canRetry);
+            break;
+        case 404:
+            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry);
+            break;
+        case 500:
+            error = new GenericNetworkError(errorMessage, canRetry);
+            break;
+        case 507:
+            error = new OutOfStorageError(errorMessage, canRetry);
+            break;
+        case 414:
+        case invalidFileNameStatusCode:
+            error = new InvalidFileNameError(errorMessage, canRetry);
+            break;
+        case offlineFetchFailureStatusCode:
+            error = new OfflineError(errorMessage, canRetry);
+            break;
+
+        case fetchFailureStatusCode:
+        default:
+            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+    }
+
+    (error as any).online = OnlineStatus[isOnline()];
+    return error;
+}
 
 /**
  * Throws network error - an object with a bunch of network related properties
@@ -39,7 +85,7 @@ export function throwOdspNetworkError(
         sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
     }
 
-    const networkError = createNetworkError(
+    const networkError = createOdspNetworkError(
         message,
         canRetry,
         statusCode,
@@ -51,13 +97,19 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
-    return createNetworkError(
+export function errorObjectFromSocketError(
+    socketError: IOdspSocketError,
+    retryFilter?: RetryFilter)
+{
+    return createOdspNetworkError(
         socketError.message,
         retryFilter?.(socketError.code) ?? true,
         socketError.code,
         socketError.retryAfter);
 }
+
+/** Parse the given url and return the origin (host name) */
+export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
  * Returns true when the request should/can be retried

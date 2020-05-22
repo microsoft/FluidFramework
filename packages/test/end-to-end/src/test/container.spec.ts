@@ -5,12 +5,14 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
-import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import {
+    IGenericError,
+    ErrorType,
+    IProxyLoaderFactory,
+} from "@fluidframework/container-definitions";
 import { Container, ConnectionState, Loader } from "@fluidframework/container-loader";
 import {
     IFluidResolvedUrl,
-    IGenericError,
-    ErrorType,
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";

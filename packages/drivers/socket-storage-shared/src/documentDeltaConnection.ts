@@ -6,8 +6,8 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection, IError } from "@fluidframework/driver-definitions";
-import { createNetworkError } from "@fluidframework/driver-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -31,8 +31,9 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
-    const errorObj: IError = createNetworkError(
+    // - a socketError: add it to the CriticalContainerError object for driver to be able to parse it and reason
+    //   over it.
+    const errorObj = createGenericNetworkError(
         `socket.io error: ${handler}: ${error}`,
         canRetry,
     );

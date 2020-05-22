@@ -24,6 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
+    ContainerWarning,
+    CriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -33,8 +35,8 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, createIError } from "@fluidframework/driver-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { CreateContainerError, readAndParse } from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
@@ -82,7 +84,7 @@ import {
 } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
-import { Summarizer } from "./summarizer";
+import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
@@ -376,7 +378,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
     public get IContainerRuntime() { return this; }
@@ -478,7 +480,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): (error?: IError) => void {
+    public get closeFn(): (error?: CriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -1034,8 +1036,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.audience!;
     }
 
-    public error(error: any) {
-        this.context.error(createIError(error));
+    public raiseContainerWarning(warning: ContainerWarning) {
+        this.context.raiseContainerWarning(warning);
     }
 
     /**
@@ -1539,7 +1541,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     }
                 });
             }).catch((err) => {
-                this.logger.sendErrorEvent({ eventName: "ContainerRuntime_getScheduler" }, err);
+                this.closeFn(CreateContainerError(err));
             });
 
             this.context.quorum.on("removeMember", (clientId: string) => {
