@@ -20,6 +20,7 @@ import {
     IFluidReducer,
     FluidToViewMap,
     ViewToFluidMap,
+    IFluidContextProps,
 } from "@microsoft/fluid-aqueduct-react";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -108,38 +109,36 @@ function CounterReactFunctionalReducer(
     );
 }
 
-// function CounterReactFunctionalContext(props: FluidProps<{},CounterFunctionalState>) {
-//     const reactContext = {};
-//     const { Provider, Consumer, state, setState } = createContextFluid<{}, CounterFunctionalState, {}>(
-//         {
-//             reactContext,
-//             ...props,
-//         },
-//     );
-//     return (
-//         <div>
-//             <Provider value={{ state, setState, reactContext }}>
-//                 <div>
-//                     <Consumer>
-//                         {(context) =>
-//                             <div>
-//                                 <span
-//                                     className="clickerWithHooks-value-class-context"
-//                                     id={`clickerWithHooks-context-value-${Date.now().toString()}`}
-//                                 >
-//                                     {`Context Component: ${context.state.value}`}
-//                                 </span>
-//                                 <button
-//                                     onClick={() => { context.setState({ ...state, value: context.state.value + 1 }); }}
-//                                 >{"+"}
-//                                 </button>
-//                             </div>}
-//                     </Consumer>
-//                 </div>
-//             </Provider>
-//         </div>
-//     );
-// }
+function CounterReactFunctionalContext(props: IFluidContextProps<
+ICounterFunctionalViewState,
+ICounterFunctionalFluidState,
+IFluidDataProps
+>) {
+    const { Provider, Consumer, state, setState } = createContextFluid(props);
+    return (
+        <div>
+            <Provider value={{ state, setState, reactContext: props.reactContext }}>
+                <div>
+                    <Consumer>
+                        {(context) =>
+                            <div>
+                                <span
+                                    className="clickerWithHooks-value-class-context"
+                                    id={`clickerWithHooks-context-value-${Date.now().toString()}`}
+                                >
+                                    {`Context Component: ${context.state.value}`}
+                                </span>
+                                <button
+                                    onClick={() => { context.setState({ ...state, value: context.state.value + 1 }); }}
+                                >{"+"}
+                                </button>
+                            </div>}
+                    </Consumer>
+                </div>
+            </Provider>
+        </div>
+    );
+}
 
 /**
  * Basic ClickerWithHooks example using new interfaces and stock component classes.
@@ -206,12 +205,17 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                     reducer={ActionReducer}
                     selector={{}}
                 />
-                {/* <CounterReactFunctionalContext
+                <CounterReactFunctionalContext
+                    syncedStateId={"counter-context"}
                     root={this.root}
-                    fluidComponentMap={new Map()}
-                    initialState={{ value: this.root.get("counterClicksContext") }}
-                    stateToRoot={stateToRootContext}
-                /> */}
+                    dataProps={{
+                        fluidComponentMap: new Map(),
+                        runtime: this.runtime,
+                    }}
+                    reactContext={{}}
+                    initialViewState={{ value: 0 }}
+                    initialFluidState={{ value: this.root.get("counterClicksContext") }}
+                />
             </div>,
             div,
         );

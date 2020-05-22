@@ -75,7 +75,11 @@ export function useStateFluid<
             return callback(change, local);
         }, [root, fluidToView, viewToFluid, reactState, reactSetState, dataProps]);
     if (!reactState.isInitialized) {
-        if (root.get(`syncedState-${syncedStateId}`) === undefined) {
+        let loadFromRoot = true;
+        let storedFluidState = root.get(`syncedState-${syncedStateId}`);
+        if (storedFluidState === undefined) {
+            loadFromRoot = false;
+            storedFluidState = initialFluidState;
             setFluidStateToRoot(syncedStateId, root, initialFluidState);
         }
         let componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
@@ -83,7 +87,7 @@ export function useStateFluid<
             const componentSchema: IFluidSchema = generateComponentSchema(
                 dataProps.runtime,
                 reactState,
-                initialFluidState,
+                storedFluidState,
                 viewToFluid,
                 fluidToView,
             );
@@ -110,7 +114,7 @@ export function useStateFluid<
         updateStateAndComponentMap(
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,
-            false,
+            loadFromRoot,
             syncedStateId,
             root,
             reactState,

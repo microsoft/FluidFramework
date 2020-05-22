@@ -89,8 +89,10 @@ export abstract class FluidReactComponent<
             viewToFluid,
             fluidToView,
         );
-
+            
+        let loadFromRoot = true;
         if (root.get(`syncedState-${this._syncedStateId}`) === undefined) {
+            loadFromRoot = false;
             setFluidStateToRoot(this._syncedStateId, root, initialFluidState);
         }
         root.on("valueChanged", rootCallback);
@@ -99,7 +101,7 @@ export abstract class FluidReactComponent<
         updateStateAndComponentMap(
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,
-            false,
+            loadFromRoot,
             this._syncedStateId,
             root,
             this.state,

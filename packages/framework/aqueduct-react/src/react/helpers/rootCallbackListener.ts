@@ -25,7 +25,6 @@ export const rootCallbackListener = <SV,SF>(
     fluidToView?: FluidToViewMap<SV,SF>,
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
     if (!local) {
-        console.log(change.key);
         const viewToFluidKeys: string[] = viewToFluid
             ? Array.from(viewToFluid.values()).map((item) => item.rootKey as string)
             : [];

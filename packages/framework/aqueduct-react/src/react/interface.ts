@@ -219,7 +219,7 @@ export interface IFluidReducerProps<
     dataProps: C
 }
 
-export interface FluidContextProps<SV,SF,C> extends FluidProps<SV,SF> {
+export interface IFluidContextProps<SV,SF,C> extends FluidProps<SV,SF> {
     reactContext: Partial<C>
 }
 
