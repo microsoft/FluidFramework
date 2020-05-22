@@ -59,6 +59,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
+    private treesInsteadOfTree: boolean = false;
 
     private lastSummaryHandle: string | undefined;
     // Last proposed handle of the uploaded app summary.
@@ -284,9 +285,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                     // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
                     const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
-                    // This will make sure that we always get "Trees" instead of "Tree" in snapshot response. Although the change to always return "Trees"
-                    // is already in SPDF, adding this make sure that we always get consistent response until the change in response goes to prod.
-                    headers.TreesInsteadOfTree = "1";
+
                     // This event measures only successful cases of getLatest call (no tokens, no retries).
                     const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
@@ -314,17 +313,30 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // want to use the same getLatest result.
                     this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
                 }
-                const { trees, blobs, ops, sha } = odspSnapshot;
+                const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
+                    this.treesInsteadOfTree = true;
+                    let appCommit: string | undefined;
                     this.initTreesCache(trees);
-                    for (const treeVal of this.treesCache.values()) {
+                    for (const [key, treeVal] of this.treesCache.entries()) {
                         for (const entry of treeVal.tree) {
                             if (entry.type === "blob") {
-                                blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
+                                blobsIdToPathMap.set(entry.sha, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
+                            } else if (entry.type === "commit" && entry.path === ".app") {
+                                // This is the unacked handle of the latest summary generated.
+                                appCommit = entry.sha;
                             }
                         }
                     }
+                }
+
+                // Sometimes we get the tree instead of trees. Odsp has maintained this for back-compat reasons. They are in process of removing this
+                // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
+                // instead of "Tree"
+                if (tree) {
+                    this.treesInsteadOfTree = false;
+                    this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
                 }
 
                 if (blobs) {
@@ -427,7 +439,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (context.proposalHandle !== this.blobsShaProposalHandle) {
             this.blobsShaToPathCache.clear();
         }
-        this.lastSummaryHandle = context.ackHandle;
+        if (this.treesInsteadOfTree) {
+            this.lastSummaryHandle = context.ackHandle;
+        } else {
+            this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        }
+
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
@@ -657,7 +674,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             content,
                             encoding,
                         };
-                        completePath = `/.app${path}/${key}`;
+                        if (this.treesInsteadOfTree) {
+                            completePath = `/.app${path}/${key}`;
+                        } else {
+                            completePath = `${path}/${key}`;
+                        }
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
@@ -673,7 +694,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                             handlePath = `/${handlePath}`;
                         }
-                        id = `${summary.parentHandle}/.app${handlePath}`;
+                        if (this.treesInsteadOfTree) {
+                            id = `${summary.parentHandle}/.app${handlePath}`;
+                        } else {
+                            id = `${summary.parentHandle}${handlePath}`;
+                        }
                     } else {
                         // back-compat: 0.14 uploadSummary
                         id = summaryObject.handle;
