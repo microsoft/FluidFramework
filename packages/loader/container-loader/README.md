@@ -90,17 +90,17 @@ There are two ways errors are exposed:
 2. As an `"closed"` event on container, when container is closed due to critical error.
 3. As an `"warning"` event on container.
 
-Most critical errors can shows up in #1 & #2 workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
+Most critical errors can show up in #1 & #2 workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
 Errors and warnings raised by those paths are typed: errors are of [CriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
 ```ts
      readonly errorType: ErrorType.genericError;
 ```
 ErrorType enum represents all error and warning types that can be raised by container.
-For a fill list of error interfaces please see interfaces that are part of these two types above.
+For a full list of error interfaces please see interfaces that are part of these two types above.
 
  Hosts have to listen to `"closed"` event. If error object is present there, container was closed due to error and this information needs to be communicated to user in some way. If there is no error object, it was closed due to host application calling Container.close() (without specifying error).
- When container is closed, it is no longer connected to ordering service, and it is in read-only state
+ When container is closed, it is no longer connected to ordering service. It is also in read-only state, communicating to components not to allow user to make changes to document.
 
 ## Connectivity events
 Container raises 2  events to notify hosting application about connectivity issues and connectivity status.
