@@ -11,6 +11,7 @@ import {
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
+    PromiseCache,
 } from "@microsoft/fluid-common-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
@@ -264,6 +265,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
+        const pc = new PromiseCache<string, any>();
+        const snapshotCacheKey: string = `${this.documentId}/getlatest`;
+
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
@@ -278,7 +282,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 // Note: This lambda shouldn't be run more than once in a 10s window
                 // based on the expected configuration of the PromiseCache snapshotCache (used below)
-                const fetchOdspSnapshot = async () => {
+                const fetchAndCacheOdspSnapshot = async () => {
+                    assert(await this.cache.persistedCache.get(snapshotCacheKey) === undefined);
+
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -302,14 +308,15 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
+                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot);
                         return snapshot;
                     } catch (error) {
                         event.cancel({}, error);
                         throw error;
                     }
                 };
-                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
-                const odspSnapshot = await this.cache.snapshotCache.addOrGet(snapshotCacheKey, fetchOdspSnapshot);
+
+                const odspSnapshot: IOdspSnapshot = await pc.addOrGet(snapshotCacheKey, fetchAndCacheOdspSnapshot);
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();

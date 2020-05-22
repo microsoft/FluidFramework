@@ -4,24 +4,81 @@
  */
 
 import { PromiseCache } from "@microsoft/fluid-common-utils";
-import { ISocketStorageDiscovery, IOdspResolvedUrl, IOdspSnapshot } from "./contracts";
+import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
+
+export type ICacheLock = {
+    acquired: true;
+    lockId: number;
+} | {
+    acquired: false;
+};
+
+/**
+ * A cache for data persisted between sessions.  Only serializable content should be put here!
+ * This interface may be implemented and provided by the Host, and in order to allow a host
+ * to include asynchronous operations in its implementation, each function returns Promise.
+ */
+export interface IPersistedCache {
+    /**
+     * lock the key for writing
+     */
+    lock(key: string): Promise<ICacheLock>;
+
+    /**
+     * Get the cache value of the key
+     */
+    get(key: string): Promise<any>;
+
+    /**
+     * Delete value in the cache
+     */
+    remove(key: string, lock: ICacheLock): Promise<void>;
+
+    /**
+     * Put the value into cache
+     * Important - only serializable content is allowed since this cache may be persisted between sessions
+     */
+    put(key: string, value: any, lock: ICacheLock, expiryTime?: number): Promise<void>;
+}
+
+export class LocalCache implements IPersistedCache {
+    private readonly cache: PromiseCache<string, any> = new PromiseCache<string, any>({
+        expiry: { policy: "absolute", durationMs: 10 * 1000 },
+    });
+
+    async lock(key: string): Promise<ICacheLock> {
+        throw new Error("Method not implemented.");
+    }
+
+    async get(key: string): Promise<any> {
+        return this.cache.get(key);
+    }
+
+    async remove(key: string, lock: ICacheLock) {
+        this.cache.remove(key);
+    }
+
+    async put(key: string, value: any, lock: ICacheLock, expiryTime?: number | undefined) {
+        this.cache.addValue(key, value);
+    }
+}
 
 /**
  * Internal cache interface used within driver only
  */
 export interface IOdspCache {
     /**
-     * permanent cache - only serializable content is allowed
+     * Persisted cache - only serializable content is allowed
      */
-    readonly snapshotCache: PromiseCache<string, IOdspSnapshot>;
+    readonly persistedCache: IPersistedCache;
 
     /**
-     * cache of joined/joining sessions
+     * Cache of joined/joining sessions
      */
     readonly sessionCache: PromiseCache<string, ISocketStorageDiscovery>;
 
     /**
-     * cache of resolved/resolving file URLs
+     * Cache of resolved/resolving file URLs
      */
     readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 }
@@ -37,9 +94,6 @@ export class OdspCache implements IOdspCache {
      * are generated frequently and if that is the case then we don't
      * want to use the same getLatest result.
      */
-    public readonly snapshotCache = new PromiseCache<string, IOdspSnapshot>({
-        expiry: { policy: "absolute", durationMs: 10 * 1000 },
-    });
 
     /**
      * Cache of join session call results.
@@ -55,13 +109,8 @@ export class OdspCache implements IOdspCache {
      */
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 
+    //* todo: comment
     constructor(
-        cachedSnapshots?: Map<string, IOdspSnapshot>,
-    ) {
-        if (cachedSnapshots !== undefined) {
-            for (const [key, value] of cachedSnapshots) {
-                this.snapshotCache.addValue(key, value);
-            }
-        }
-    }
+        public readonly persistedCache: IPersistedCache = new LocalCache(),
+    ) {}
 }

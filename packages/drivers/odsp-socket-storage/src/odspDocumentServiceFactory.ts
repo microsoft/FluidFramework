@@ -10,10 +10,10 @@ import {
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { IOdspResolvedUrl, IOdspSnapshot } from "./contracts";
+import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { IOdspCache, OdspCache } from "./odspCache";
+import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -57,9 +57,9 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        cachedSnapshots?: Map<string, IOdspSnapshot>,
+        persistedCache?: IPersistedCache,
     ) {
-        this.cache = new OdspCache(cachedSnapshots);
+        this.cache = new OdspCache(persistedCache);
     }
 
     /**
