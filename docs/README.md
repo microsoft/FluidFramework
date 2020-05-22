@@ -5,7 +5,7 @@ heroText: "Fluid Framework"
 showHeroSymbol: true
 # tagline: State that flows
 # actionText: Get Started →
-# actionLink: /guide/
+# actionLink: /docs/
 # features:
 # - title: Current version
 #   details: "0.14"
@@ -26,12 +26,11 @@ The URL to this documentation is <https://aka.ms/fluid>
 
 </vue-markdown>
 
-
 Welcome to Fluid!
 
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
-Fluid's [distributed data structures](./guide/dds.md) make it easy to write apps that are collaborative just like you
+Fluid's [distributed data structures](./docs/dds.md) make it easy to write apps that are collaborative just like you
 would build single-user applications and experiences. Fluid handles keeping your data in sync across multiple clients,
 so you can focus on your app's business logic. Fluid's data synchronization is fast, efficient, and requires very little
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
@@ -96,7 +95,7 @@ If you are new to the Fluid Framework, we recommend reading [What is Fluid?](./w
 
 ## Get started now
 
-Get up and running quickly using our [Getting Started guide](./guide/README.md).
+Get up and running quickly using our [Getting Started guide](./docs/README.md).
 
 <vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 

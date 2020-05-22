@@ -24,8 +24,8 @@ Install [Node.js](https://nodejs.org/en/download/).
 **If you do not have Node.js already installed,** we strongly recommend using nvm to simplify installing and managing
 multiple Node.js versions.
 
-* [nvm for Windows](https://github.com/coreybutler/nvm-windows)
-* [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
+- [nvm for Windows](https://github.com/coreybutler/nvm-windows)
+- [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
 
 :::
 
@@ -51,7 +51,7 @@ You can use any code editor or IDE that supports TypeScript to build with Fluid,
 
 #### Install Git
 
-You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples/README.md).
+You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../tutorials/README.md).
 
 #### Install a modern browser
 
@@ -59,5 +59,5 @@ You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples
 
 ## Next steps
 
-Now that your development environment is set up, try [one of the tutorials](../examples/README.md), or read more about
+Now that your development environment is set up, try [one of the tutorials](../tutorials/README.md), or read more about
 [distributed data structures](./dds.md) and the [Fluid component model](./components.md).

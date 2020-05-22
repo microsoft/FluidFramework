@@ -22,7 +22,7 @@ You will need to authenticate with this feed in order to install Fluid package a
 :::: tabs
 ::: tab Windows
 
-On Windows, all of the [Fluid tutorials](../examples/README.md) include npm tasks to help authenticate. Make sure you
+On Windows, all of the [Fluid tutorials](../tutorials/README.md) include npm tasks to help authenticate. Make sure you
 have [installed vsts-npm-auth globally](./README.md#install-vsts-npm-auth-windows-only), then run the following command
 from the tutorial folder: `npm run auth`
 

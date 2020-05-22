@@ -49,7 +49,7 @@ Part.
 
 ::: tip
 
-The [Fluid tutorials](../examples/README.md) include npm script wrappers around the gulp commands above. If you do not
+The [Fluid tutorials](../tutorials/README.md) include npm script wrappers around the gulp commands above. If you do not
 wish to install gulp globally, you can use the npm scripts instead. For example:
 
 | npm Script       | Command                                     |

@@ -50,10 +50,10 @@ provide the key and previous value that was stored at that key.
 
 ## Examples using SharedMap
 
-[Sudoku](../examples/sudoku.md)
+[Sudoku](../tutorials/sudoku.md)
 
 ## Related distributed data structures
 
 - [SharedDirectory][]
 
-[SharedDirectory]: ./SharedDirectory.md
+[shareddirectory]: ./SharedDirectory.md

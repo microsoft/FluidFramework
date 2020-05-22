@@ -1,6 +1,6 @@
 # Uploading components for use in the Fluid Preview App
 
-You can package your components for use in the Fluid Preview App. All of the [Fluid tutorials](../examples/README.md)
+You can package your components for use in the Fluid Preview App. All of the [Fluid tutorials](../tutorials/README.md)
 include npm tasks to package your component.
 
 ## Package your component
@@ -30,9 +30,10 @@ Next, you need to deploy the package that was generated to the app catalog.
    is made available to the Fluid Preview App.
 
    :::
+
 1. Select **Deploy**.
 
-Notice that you can see if there's any exceptions or issues in the package by looking the *App Package Error Message*
+Notice that you can see if there's any exceptions or issues in the package by looking the _App Package Error Message_
 column in the app catalog.
 
 [More
@@ -41,12 +42,12 @@ information.](https://docs.microsoft.com/en-us/sharepoint/dev/spfx/web-parts/get
 # Generating new component IDs
 
 Each component is assigned a unique ID by the SPFx toolchain. This is useful because it allows you to upload new
-versions of your component. However, when using one of [the Fluid tutorials](../examples/README.md) as a base for a
+versions of your component. However, when using one of [the Fluid tutorials](../tutorials/README.md) as a base for a
 component, you will need to generate a new component ID.
 
 To do this, run this command: `npm run setup`
 
-* At the first prompt, select **n**.
-* At the second prompt, select **a**.
+- At the first prompt, select **n**.
+- At the second prompt, select **a**.
 
 Commit any resulting changes to source control.
