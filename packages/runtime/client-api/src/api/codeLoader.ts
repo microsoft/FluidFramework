@@ -24,8 +24,8 @@ import {
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { CreateContainerError } from "@fluidframework/driver-utils";
 import * as sequence from "@fluidframework/sequence";
-import { createIError } from "@fluidframework/driver-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -138,7 +138,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                     componentRuntime.attach();
                 })
                 .catch((error: any) => {
-                    context.closeFn(createIError(error));
+                    context.closeFn(CreateContainerError(error));
                 });
         }
 

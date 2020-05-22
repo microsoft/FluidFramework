@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { IError, ErrorType } from "@fluidframework/driver-definitions";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 
@@ -31,12 +31,12 @@ describe("Odsp Error", () => {
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
-            return error as IError;
+            return error as CriticalContainerError;
         }
     }
 
     it("throwOdspNetworkError first-class properties", async () => {
-        const networkError: IError = createOdspNetworkError(
+        const networkError: CriticalContainerError = createOdspNetworkError(
             "TestMessage",
             400,
             true /* canRetry */,

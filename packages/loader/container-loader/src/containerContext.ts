@@ -20,8 +20,10 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    CriticalContainerError,
+    ContainerWarning,
 } from "@fluidframework/container-definitions";
-import { IDocumentStorageService, IError } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -54,11 +56,11 @@ export class ContainerContext implements IContainerContext {
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        errorFn: (err: IError) => void,
+        raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (error?: IError) => void,
+        closeFn: (error?: CriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -73,7 +75,7 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
-            errorFn,
+            raiseContainerWarning,
             submitFn,
             submitSignalFn,
             snapshotFn,
@@ -173,11 +175,11 @@ export class ContainerContext implements IContainerContext {
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
-        private readonly errorFn: (err: IError) => void,
+        public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: (error?: IError) => void,
+        public readonly closeFn: (error?: CriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
@@ -250,10 +252,6 @@ export class ContainerContext implements IContainerContext {
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
         return this.snapshotFn(tagMessage);
-    }
-
-    public error(err: IError): void {
-        this.errorFn(err);
     }
 
     public registerTasks(tasks: string[]): any {

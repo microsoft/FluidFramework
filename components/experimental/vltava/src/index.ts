@@ -87,7 +87,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
         // We should be able to wait here after the create-new workflow is in place.
         setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
             .catch((error) => {
-                runtime.error(error);
+                console.error(error);
             });
     }
 }

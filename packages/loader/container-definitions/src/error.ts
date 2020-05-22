@@ -59,10 +59,38 @@ export enum ErrorType {
     offlineError,
 }
 
-export type IError = IGenericError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
-IAuthorizationError | IFileNotFoundOrAccessDeniedError |
-ISummarizingError | IWriteError | IGenericNetworkError | IOfflineError;
+/**
+ * List of errors that can be either critical errors or warnings.
+ * This list should be very short.
+ * Throttling error is an example of that - we will fail container load
+ * if throttling error is returned while loading initial snapshot, but in all
+ * other cases it's just a warning.
+ */
+export type ContainerErrorOrWarning = IThrottlingWarning;
 
+/**
+ * List of errors that could be critical and can close container.
+ * Severity is determined by 'canRetry' property, as well as where error is raised.
+ * For example, almost all errors resulting from "disconnect" or "error" handlers on
+ * delta connection are considered to be noncritical, ignoring 'canRetry' property.
+ */
+export type CriticalContainerError =
+    IGenericError | ContainerErrorOrWarning |
+    IOutOfStorageError | IInvalidFileNameError |
+    IAuthorizationError | IFileNotFoundOrAccessDeniedError |
+    IWriteError | IGenericNetworkError | IOfflineError;
+
+/**
+ * List of warnings raised on container that are not critical.
+ * Hosts may want to expose them in some form to users, or may skip.
+ */
+export type ContainerWarning =
+    ContainerErrorOrWarning |
+    ISummarizingWarning;
+
+/**
+ * Base interface for all errors and warnings
+ */
 export interface IErrorBase {
     readonly errorType: ErrorType;
     readonly message: string;
@@ -75,7 +103,7 @@ export interface IGenericError extends IErrorBase {
     error: any;
 }
 
-export interface IThrottlingError extends IErrorBase {
+export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ErrorType.throttlingError;
     readonly retryAfterSeconds: number;
 }
@@ -101,12 +129,12 @@ export interface IInvalidFileNameError extends IErrorBase {
     readonly errorType: ErrorType.invalidFileNameError;
 }
 
-export interface ISummarizingError extends IErrorBase {
+export interface ISummarizingWarning extends IErrorBase {
     readonly errorType: ErrorType.summarizingError;
     /**
      * Whether this error has already been logged. Used to avoid logging errors twice.
      */
-    readonly logged?: boolean;
+    readonly logged: boolean;
 }
 
 export interface IWriteError extends IErrorBase {

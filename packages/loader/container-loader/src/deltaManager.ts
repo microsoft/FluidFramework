@@ -11,14 +11,14 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    CriticalContainerError,
+    IThrottlingWarning,
+    ErrorType,
 } from "@fluidframework/container-definitions";
 import { PerformanceEvent, performanceNow, TelemetryLogger } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
-    IError,
-    IThrottlingError,
-    ErrorType,
 } from "@fluidframework/driver-definitions";
 import { isSystemType, isSystemMessage } from "@fluidframework/protocol-base";
 import {
@@ -38,9 +38,8 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
-    createIError,
+    CreateContainerError,
     createWriteError,
-    createNetworkError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { ContentCache } from "./contentCache";
@@ -66,14 +65,14 @@ const DefaultContentBufferSize = 10;
 const canRetryOnError = (error: any): boolean => error?.canRetry !== false;
 const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds || undefined;
 
-function getNackReconnectInfo(nackContent: INackContent): IError {
+function getNackReconnectInfo(nackContent: INackContent): CriticalContainerError {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = ![403, 429].includes(nackContent.code);
     return createGenericNetworkError(reason, canRetry, nackContent.retryAfter);
 }
 
 function createReconnectError(prefix: string, err: any) {
-    const error = createIError(err, true);
+    const error = CreateContainerError(err, true);
     const error2 = Object.create(error);
     error2.message = `${prefix}: ${error.message}`;
     return error2;
@@ -325,7 +324,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._inbound.on("error", (error) => {
-            this.close(createIError(error));
+            this.close(CreateContainerError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -336,7 +335,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._outbound.on("error", (error) => {
-            this.close(createIError(error));
+            this.close(CreateContainerError(error));
         });
 
         // Inbound signal queue
@@ -348,7 +347,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(createIError(error));
+            this.close(CreateContainerError(error));
         });
 
         // Require the user to start the processing
@@ -360,12 +359,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal.pause();
     }
 
-    on(event: "error", listener: (error: IError) => void);
+    on(event: "throttled", listener: (error: IThrottlingWarning) => void);
     on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
     on(event: "submitOp", listener: (message: IDocumentMessage) => void);
     on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: IError) => void);
+    on(event: "closed", listener: (error?: CriticalContainerError) => void);
     on(event: "pong" | "processTime", listener: (latency: number) => void);
     on(event: "connect", listener: (details: IConnectionDetails) => void);
     on(event: "disconnect", listener: (reason: string) => void);
@@ -484,7 +483,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.client.mode = requestedMode;
                     connection = await DeltaConnection.connect(docService, this.client);
                 } catch (origError) {
-                    const error = createIError(origError);
+                    const error = CreateContainerError(origError);
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
@@ -705,7 +704,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 from = lastFetch;
             } catch (origError) {
                 canRetry = canRetry && canRetryOnError(origError);
-                const error = createIError(origError, canRetry);
+                const error = CreateContainerError(origError, canRetry);
 
                 logNetworkFailure(
                     this.logger,
@@ -755,11 +754,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         replayFrom: from,
                         to,
                     });
-                    const closeError = createNetworkError(
+                    const closeError = createGenericNetworkError(
                         "Failed to retrieve ops from storage: giving up after too many retries",
                         false /* canRetry */,
-                        undefined /* statusCode */,
-                        undefined /* retryAfterSeconds */,
                     );
                     this.close(closeError);
                     return;
@@ -787,13 +784,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: IError): void {
+    public close(error?: CriticalContainerError): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
-
-        this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
 
         this.stopSequenceNumberUpdate();
 
@@ -851,7 +846,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private emitDelayInfo(retryEndpoint: number, delay: number, error: IError) {
+    private emitDelayInfo(retryEndpoint: number, delay: number, error: CriticalContainerError) {
         if (retryEndpoint === RetryFor.DeltaStorage) {
             this.deltaStorageDelay = delay;
         } else if (retryEndpoint === RetryFor.DeltaStream) {
@@ -860,13 +855,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
         if (delayTime > 0) {
-            const throttlingError: IThrottlingError = {
+            const throttlingError: IThrottlingWarning = {
                 errorType: ErrorType.throttlingError,
                 canRetry: true,
                 message: `Service busy/throttled: ${error.message}`,
                 retryAfterSeconds: delayTime / 1000,
             };
-            this.emit("error", throttlingError);
+            this.emit("throttled", throttlingError);
         }
     }
 
@@ -1040,7 +1035,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private async reconnectOnError(
         connection: DeltaConnection,
         requestedMode: ConnectionMode,
-        error: IError,
+        error: CriticalContainerError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
