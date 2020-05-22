@@ -44,7 +44,7 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-class SummarizingError extends ErrorWithProps implements ISummarizingWarning {
+export class SummarizingError extends ErrorWithProps implements ISummarizingWarning {
     readonly errorType = ErrorType.summarizingError;
     readonly canRetry = true;
 
