@@ -1,31 +1,39 @@
+/* eslint-disable comma-dangle */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@fluidframework/aqueduct";
-import { SharedCell } from "@fluidframework/cell";
-import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { SharedMap } from "@fluidframework/map";
-import { SharedObjectSequence } from "@fluidframework/sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { SharedCell } from "@microsoft/fluid-cell";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { SharedMap } from "@microsoft/fluid-map";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import {
+    IComponentHTMLView,
+    IComponentReactViewable
+} from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IBadgeType } from "./IBadgeType";
-import { BadgeView } from "./BadgeView";
+import { BadgeContext } from "./provider";
+import { BadgeView } from "./BadgeViewF";
 import { IHistory } from "./IHistory";
 
-export class Badge extends PrimedComponent implements
-    IComponentHTMLView,
-    IComponentReactViewable {
+export class Badge extends PrimedComponent
+    implements IComponentHTMLView, IComponentReactViewable {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
-    public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
+    public get IComponentHTMLView() {
+        return this;
+    }
+    public get IComponentReactViewable() {
+        return this;
+    }
 
     private readonly currentId: string = "value";
     private readonly historyId: string = "history";
@@ -38,9 +46,9 @@ export class Badge extends PrimedComponent implements
             iconProps: {
                 iconName: "Edit",
                 style: {
-                    color: SharedColors.cyanBlue10,
-                },
-            },
+                    color: SharedColors.cyanBlue10
+                }
+            }
         },
         {
             key: "reviewing",
@@ -48,9 +56,9 @@ export class Badge extends PrimedComponent implements
             iconProps: {
                 iconName: "Chat",
                 style: {
-                    color: SharedColors.orange20,
-                },
-            },
+                    color: SharedColors.orange20
+                }
+            }
         },
         {
             key: "complete",
@@ -58,9 +66,9 @@ export class Badge extends PrimedComponent implements
             iconProps: {
                 iconName: "Completed",
                 style: {
-                    color: SharedColors.green10,
-                },
-            },
+                    color: SharedColors.green10
+                }
+            }
         },
         {
             key: "archived",
@@ -68,10 +76,10 @@ export class Badge extends PrimedComponent implements
             iconProps: {
                 iconName: "Archive",
                 style: {
-                    color: SharedColors.magenta10,
-                },
-            },
-        },
+                    color: SharedColors.magenta10
+                }
+            }
+        }
     ];
 
     /**
@@ -88,15 +96,19 @@ export class Badge extends PrimedComponent implements
 
         // Create a map to represent the options for the Badge
         const options = SharedMap.create(this.runtime);
-        this.defaultOptions.forEach((v) => options.set(v.key, v));
+        this.defaultOptions.forEach(v => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
         // Create a sequence to store the badge's history
-        const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
-        history.insert(0, [{
-            value: current.get(),
-            timestamp: new Date(),
-        }]);
+        const history = SharedObjectSequence.create<IHistory<IBadgeType>>(
+            this.runtime
+        );
+        history.insert(0, [
+            {
+                value: current.get(),
+                timestamp: new Date()
+            }
+        ]);
         this.root.set(this.historyId, history.handle);
     }
 
@@ -107,34 +119,96 @@ export class Badge extends PrimedComponent implements
      * object refs as props to the React component.
      */
     protected async componentHasInitialized() {
-        this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
-        this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
-        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+        this.currentCell = await this.root
+            .get<IComponentHandle<SharedCell>>(this.currentId)
+            .get();
+        this.optionsMap = await this.root
+            .get<IComponentHandle<SharedMap>>(this.optionsId)
+            .get();
+        this.historySequence = await this.root
+            .get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(
+                this.historyId
+            )
+            .get();
     }
 
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            this.createJSXElement(),
-            div,
-        );
+        ReactDOM.render(<this.ReactClient />, div);
     }
 
     public remove() {
         throw new Error("Not Implemented");
     }
 
-    public createJSXElement(): JSX.Element {
-        const divStyle = {
-            display: "inline-block",
+    public get queries() {
+        return {
+            options: [...this.optionsMap.values()],
+            historyItems: this.historySequence.getItems(0),
+            selectedOption: this.currentCell.get().key
+        };
+    }
+
+    public addOption = (text, color) => {
+        if (text !== undefined) {
+            const newItem: IBadgeType = {
+                key: text,
+                text,
+                iconProps: {
+                    iconName: "Contact",
+                    style: {
+                        color: color.str
+                    }
+                }
+            };
+            this.optionsMap.set(text, newItem);
+            this.changeSelectedOption(newItem);
+        }
+    };
+
+    public changeSelectedOption = (newItem: IBadgeType): void => {
+        if (newItem.key !== this.currentCell.get().key) {
+            // Save current value into history
+            const len = this.historySequence.getItemCount();
+            this.historySequence.insert(len, [
+                {
+                    value: newItem,
+                    timestamp: new Date()
+                }
+            ]);
+
+            // Set new value
+            this.currentCell.set(newItem);
+        }
+    };
+
+    public ReactClient = (): JSX.Element => {
+        const mutators = {
+            addOption: this.addOption,
+            changeSelectedOption: this.changeSelectedOption
         };
 
+        const divStyle = {
+            display: "inline-block"
+        };
+
+        const [queries, setQueries] = React.useState(this.queries);
+
+        React.useEffect(() => {
+            this.currentCell.on("valueChanged", () => {
+                setQueries(this.queries);
+            });
+
+            this.optionsMap.on("valueChanged", () => {
+                setQueries(this.queries);
+            });
+        });
+
         return (
-            <div style={divStyle}>
-                <BadgeView
-                    currentCell={this.currentCell}
-                    optionsMap={this.optionsMap}
-                    historySequence={this.historySequence} />
-            </div>
+            <BadgeContext.Provider value={{ queries, mutators }}>
+                <div style={divStyle}>
+                    <BadgeView />
+                </div>
+            </BadgeContext.Provider>
         );
-    }
+    };
 }
