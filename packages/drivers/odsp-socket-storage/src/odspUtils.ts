@@ -108,6 +108,9 @@ export function errorObjectFromSocketError(
         socketError.retryAfter);
 }
 
+/** Parse the given url and return the origin (host name) */
+export const getOrigin = (url: string) => new URL(url).origin;
+
 /**
  * Returns true when the request should/can be retried
  */
