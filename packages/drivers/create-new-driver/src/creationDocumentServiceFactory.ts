@@ -33,6 +33,7 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const [, , documentId] = parsedUrl.pathname!.split("/");
         return new CreationDocumentService(
+            resolvedUrl,
             documentId,
             "createNewFileDocTenant");
     }

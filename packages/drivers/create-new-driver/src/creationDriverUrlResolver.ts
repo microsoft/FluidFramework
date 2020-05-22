@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { parse } from "url";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
@@ -32,6 +34,24 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         request: IRequest,
     ): Promise<IResponse> {
-        throw new Error("Not implmented");
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        if (parsedUrl.pathname === undefined) {
+            throw new Error("Url should contain tenant and docId!!");
+        }
+        const [, , documentId] = parsedUrl.pathname.split("/");
+        assert(documentId, "The resolvedUrl must have a documentId");
+
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `/${url}?uniqueId=${documentId}`,
+            status: 200,
+        };
+        return response;
     }
 }

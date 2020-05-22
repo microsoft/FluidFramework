@@ -16,6 +16,7 @@ import { CreationServerMessagesHandler } from "./creationDriverServer";
 export class CreationDocumentService implements api.IDocumentService {
     private readonly creationServer: CreationServerMessagesHandler;
     constructor(
+        private readonly _resolvedUrl: api.IResolvedUrl,
         private readonly documentId: string,
         private readonly tenantId: string) {
         this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
@@ -23,7 +24,7 @@ export class CreationDocumentService implements api.IDocumentService {
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): api.IResolvedUrl {
-        throw new Error("Not implemented");
+        return this._resolvedUrl;
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
