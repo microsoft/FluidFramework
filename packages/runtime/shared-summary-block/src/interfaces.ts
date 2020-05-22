@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AsJsonable, Jsonable } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { AsJsonable, Jsonable } from "@fluidframework/component-runtime-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**
  * Shared summary block interface. A shared summary block is part of the summary but it does not generate any ops.

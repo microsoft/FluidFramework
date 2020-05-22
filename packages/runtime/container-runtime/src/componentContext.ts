@@ -5,19 +5,19 @@
 
 import * as assert from "assert";
 import * as EventEmitter from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/container-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     IQuorum,
@@ -26,8 +26,8 @@ import {
     ITree,
     MessageType,
     ConnectionState,
-} from "@microsoft/fluid-protocol-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRuntimeChannel,
@@ -38,8 +38,8 @@ import {
     IComponentRegistry,
     IEnvelope,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
@@ -507,6 +507,10 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyComponentInstantiated(this);
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
     /**

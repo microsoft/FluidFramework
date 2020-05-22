@@ -5,15 +5,15 @@
 
 import { parse } from "url";
 import {
-    IRequest, IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+    IRequest,
+} from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 
 const r11sServers = [
@@ -135,10 +135,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         return resolved;
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

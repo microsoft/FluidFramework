@@ -7,7 +7,6 @@ export * from "./dockPanel";
 export * from "./flowContainer";
 export * from "./flowView";
 export * from "./image";
-export * from "./youtubeVideoCanvas";
 export * from "./layerPanel";
 export * from "./status";
 export * from "../text/characterCodes";

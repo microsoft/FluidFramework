@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
     PerformanceEvent,
     performanceNow,
     TelemetryLogger,
     TelemetryNullLogger,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -18,13 +18,13 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/protocol-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";

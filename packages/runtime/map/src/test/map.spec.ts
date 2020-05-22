@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IBlob } from "@microsoft/fluid-protocol-definitions";
-import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IBlob } from "@fluidframework/protocol-definitions";
+import { MockRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 
 import * as map from "../";
 import { SharedMap } from "../map";

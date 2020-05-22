@@ -4,20 +4,20 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-common-utils";
-import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/common-utils";
+import * as resources from "@fluidframework/gitresources";
+import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
+import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
@@ -378,10 +378,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersions returned no response", 400, true);
+                throwOdspNetworkError("getVersions returned no response", 400, false);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersions returned non-array response", 400, true);
+                throwOdspNetworkError("getVersions returned non-array response", 400, false);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message

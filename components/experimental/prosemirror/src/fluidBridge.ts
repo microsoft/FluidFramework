@@ -13,13 +13,13 @@ import {
     reservedRangeLabelsKey,
     TextSegment,
     ISegment,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 import {
     SharedString,
     // ISequenceDeltaRange,
     SequenceDeltaEvent,
     ISequenceDeltaRange,
-} from "@microsoft/fluid-sequence";
+} from "@fluidframework/sequence";
 import {
     Schema, Fragment, Slice,
     // Slice,

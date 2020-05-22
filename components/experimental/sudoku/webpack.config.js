@@ -4,7 +4,7 @@
  */
 
 const CopyPlugin = require("copy-webpack-plugin");
-const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
+const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 

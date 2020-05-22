@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { IOrderer } from "@microsoft/fluid-server-services-core";
+import { IOrderer } from "@fluidframework/server-services-core";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 
 // The LocalOrderManager maintains a set of nodes and their set of ownerships of documents

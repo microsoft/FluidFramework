@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Serializer } from "./serializer";
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.

@@ -4,13 +4,13 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -20,8 +20,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService, IError } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -36,7 +36,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
@@ -47,7 +47,7 @@ export class ContainerContext implements IContainerContext {
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
-        chaincode: IRuntimeFactory,
+        runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
@@ -66,7 +66,7 @@ export class ContainerContext implements IContainerContext {
             container,
             scope,
             codeLoader,
-            chaincode,
+            runtimeFactory,
             baseSnapshot,
             attributes,
             blobManager,
@@ -166,7 +166,7 @@ export class ContainerContext implements IContainerContext {
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
-        public readonly chaincode: IRuntimeFactory,
+        public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
@@ -268,7 +268,11 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+        return this.container.getAbsoluteUrl(relativeUrl);
+    }
+
     private async load() {
-        this.runtime = await this.chaincode.instantiateRuntime(this);
+        this.runtime = await this.runtimeFactory.instantiateRuntime(this);
     }
 }

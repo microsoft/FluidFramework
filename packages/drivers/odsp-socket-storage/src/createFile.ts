@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { getGitType } from "@microsoft/fluid-protocol-base";
-import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@microsoft/fluid-driver-utils";
-import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { getGitType } from "@fluidframework/protocol-base";
+import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@fluidframework/driver-utils";
+import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IOdspResolvedUrl,
     ISnapshotTree,

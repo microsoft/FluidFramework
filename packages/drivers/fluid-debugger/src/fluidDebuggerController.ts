@@ -4,15 +4,15 @@
  */
 
 import * as assert from "assert";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
     ISnapshotTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
@@ -20,7 +20,7 @@ import {
     ReadDocumentStorageServiceBase,
     ReplayController,
     SnapshotStorage,
-} from "@microsoft/fluid-replay-driver";
+} from "@fluidframework/replay-driver";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 
 /**
  * IDocumentStorageService adapter with pre-cached blobs.

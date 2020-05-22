@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
-import { IProtocolState, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
-import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
+import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
+import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
+import { IGitCache } from "@fluidframework/server-services-client";
 
 export interface IDocumentDetails {
     existing: boolean;

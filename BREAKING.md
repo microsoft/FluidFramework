@@ -1,5 +1,11 @@
 # Breaking changes
 
+## 0.19 Breaking Changes
+- [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
+
+### IUrlResolver change from requestUrl to getAbsoluteUrl
+As we continue to refine our API around detached containers, and component urls, we've renamed IUrlResolver from requestUrl to getAbsoluteUrl
+
 ## 0.18 Breaking Changes
 
 - [App Id removed as a parameter to OdspDocumentServiceFactory](#App-Id-removed-as-a-parameter-to-OdspDocumentServiceFactory)

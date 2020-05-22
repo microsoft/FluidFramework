@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@microsoft/fluid-merge-tree";
+import { ISegment } from "@fluidframework/merge-tree";
 
 export class SegmentSpan {
     public get segments(): readonly ISegment[] { return this._segments; }

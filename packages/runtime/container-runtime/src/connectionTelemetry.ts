@@ -4,12 +4,12 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 class ConnectionTelemetry {
     private pongCount: number = 0;

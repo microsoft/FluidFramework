@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentLoadable,
@@ -13,14 +13,14 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     ConnectionState,
@@ -29,7 +29,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 
@@ -131,6 +131,12 @@ export interface IContainerRuntimeBase extends
      * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**
@@ -347,6 +353,12 @@ export interface IComponentContext extends EventEmitter {
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**

@@ -6,14 +6,14 @@
 /* eslint-disable no-null/no-null */
 
 import * as assert from "assert";
-import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
     IQuorumSnapshot,
     ProtocolOpHandler,
     getQuorumTreeEntries,
     mergeAppAndProtocolTree,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     IDocumentSystemMessage,
@@ -26,8 +26,8 @@ import {
     TreeEntry,
     FileMode,
     ISequencedDocumentAugmentedMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -42,7 +42,7 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
@@ -126,10 +126,11 @@ export class ScribeLambda extends SequencedLambda {
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
                             lastSummary.messages.filter(
                                 (op) => op.sequenceNumber > lastScribe.protocolState.sequenceNumber));
-                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                        if (this.pendingP) {
-                            this.pendingP = undefined;
-                        }
+
+                        this.pendingP = undefined;
+                        this.pendingCheckpointScribe = undefined;
+                        this.pendingCheckpointOffset = undefined;
+
                         await this.deleteCheckpoint(lastScribe.sequenceNumber + 1, false);
                     }
                 }

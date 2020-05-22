@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@microsoft/fluid-protocol-definitions";
+import { ITrace } from "@fluidframework/protocol-definitions";
 import * as telegraf from "telegrafjs";
-import { DefaultMetricClient, IMetricClient } from  "@microsoft/fluid-server-services-core";
+import { DefaultMetricClient, IMetricClient } from  "@fluidframework/server-services-core";
 
 class TelegrafClient implements IMetricClient {
     private readonly telegrafClient: any;

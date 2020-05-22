@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent } from "@fluidframework/common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService, IError } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -23,7 +23,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
@@ -196,7 +196,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
+    readonly closeFn: (error?: IError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -214,6 +214,14 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
     error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     *
+     * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
+     */
+    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
@@ -255,7 +263,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &

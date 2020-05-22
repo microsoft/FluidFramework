@@ -8,8 +8,8 @@ import * as uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
-} from "@microsoft/fluid-common-definitions";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/common-definitions";
+import { IComponent, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -23,7 +23,7 @@ import {
     IRuntimeFactory,
     LoaderHeader,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
@@ -31,7 +31,7 @@ import {
     performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -41,7 +41,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     createIError,
     readAndParse,
@@ -49,13 +49,13 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     FileMode,
     IClient,
@@ -78,7 +78,7 @@ import {
     MessageType,
     TreeEntry,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -158,37 +158,33 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             logger);
 
         return new Promise<Container>((res, rej) => {
-            let alreadyRaisedError = false;
-            const onError = (err) => {
-                container.removeListener("error", onError);
-                // Depending where error happens, we can be attempting to connect to web socket
-                // and continuously retrying (consider offline mode)
-                // Host has no container to close, so it's prudent to do it here
-                const error = createIError(err, true);
-                container.close(error);
-                rej(error);
-                alreadyRaisedError = true;
-            };
-            container.on("error", onError);
-
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
             const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
 
+            const onClosed = (err?: IError) => {
+                // Depending where error happens, we can be attempting to connect to web socket
+                // and continuously retrying (consider offline mode)
+                // Host has no container to close, so it's prudent to do it here
+                const error = err ?? createIError("Container closed without an error");
+                container.close(error);
+                rej(error);
+            };
+            container.on("closed", onClosed);
+
             container.load(version, !!pause)
-                .then((props) => {
-                    container.removeListener("error", onError);
-                    res(container);
-                    perfEvent.end(props);
+                .finally(() => {
+                    container.removeListener("closed", onClosed);
                 })
-                .catch((error) => {
+                .then((props) => {
+                    perfEvent.end(props);
+                    res(container);
+                },
+                (error) => {
                     perfEvent.cancel(undefined, error);
-                    const err = createIError(error, true);
-                    if (!alreadyRaisedError) {
-                        container.logContainerError(err);
-                    }
-                    onError(err);
+                    const err = createIError(error);
+                    onClosed(err);
                 });
         });
     }
@@ -438,7 +434,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /* raiseContainerError */);
+        this._deltaManager.close(error);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -447,6 +443,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
+
+        // Supporting existing behavior (temporarily, will be removed in the future) - raise "critical" error
+        // Hosts should instead  listen for "closed" event.
+        // That said, when we remove it, we need to replace it with call to this.logContainerError()
+        // for telemetry to continue to flow.
+        if (error !== undefined) {
+            const criticalError = { ...error };
+            (criticalError as any).critical = true;
+            this.raiseContainerError(criticalError);
+        }
 
         this.emit("closed", error);
 
@@ -490,11 +496,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
-            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
-            if (response.status !== 200) {
-                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
-            }
-            this.originalRequest = { url: response.value };
+            const url = await this.getAbsoluteUrl("");
+            this.originalRequest = { url };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
@@ -520,7 +523,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.propagateConnectionState();
             this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
-            this.close(createIError(error, true));
+            this.close(createIError(error));
             throw error;
         }
     }
@@ -624,19 +627,58 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.blobsCacheStorageService || this.storageService;
     }
 
+    /**
+     * Raise non-critical error to host. Calling this API will not close container.
+     * For critical errors, please call Container.close(error).
+     * @param error - an error to raise
+     */
     public raiseContainerError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseContainerError(createIError(error, true));
+            this.close(createIError(error));
             throw error;
         });
     }
 
     public hasNullRuntime() {
         return this.context!.hasNullRuntime();
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        if (this.resolvedUrl === undefined) {
+            throw new Error("Container not attached to storage");
+        }
+        // TODO: Remove support for legacy requestUrl in 0.20
+        const legacyResolver = this.urlResolver as {
+            requestUrl?(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse>;
+
+            getAbsoluteUrl?(
+                resolvedUrl: IResolvedUrl,
+                relativeUrl: string,
+            ): Promise<string>;
+        };
+
+        if (legacyResolver.getAbsoluteUrl !== undefined) {
+            return this.urlResolver.getAbsoluteUrl(
+                this.resolvedUrl,
+                relativeUrl);
+        }
+
+        if (legacyResolver.requestUrl !== undefined) {
+            const response = await legacyResolver.requestUrl(
+                this.resolvedUrl,
+                { url: relativeUrl });
+
+            if (response.status === 200) {
+                return response.value as string;
+            }
+            throw new Error(response.value);
+        }
+
+        throw new Error("Url Resolver does not support creating urls");
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -1175,8 +1217,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.on("closed", () => {
-            this.close();
+        this._deltaManager.on("closed", (error?: IError) => {
+            this.close(error);
         });
 
         // If we're the outer frame, do we want to do this?
@@ -1404,7 +1446,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!this.pkg) {
             throw new Error("pkg should be provided in create flow!!");
         }
-        const chaincode = await this.loadRuntimeFactory(this.pkg);
+        const runtimeFactory = await this.loadRuntimeFactory(this.pkg);
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1414,7 +1456,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this,
             this.scope,
             this.codeLoader,
-            chaincode,
+            runtimeFactory,
             { id: null, blobs: {}, commits: {}, trees: {} },    // TODO this will be from the offline store
             attributes,
             this.blobManager,

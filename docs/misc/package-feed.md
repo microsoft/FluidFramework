@@ -17,10 +17,11 @@ Prerequisites: [Node.js](https://nodejs.org); !!!include(node-versions.md)!!!
 2. Add registry to our scopes (globally per-user)
 
     ```
-    npm config set @microsoft:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    npm config set @fluid-example:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    npm config set @fluid-internal:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    npm config set @yo-fluid:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @microsoft:registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+    npm config set @fluid-example:registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+    npm config set @fluid-internal:registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+    npm config set @fluidframework:registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+    npm config set @yo-fluid:registry https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
     ```
 
 3. Auth with VSTS using `vsts-npm-auth` (Windows only, Linux/Mac instructions:
@@ -39,10 +40,11 @@ Prerequisites: [Node.js](https://nodejs.org); !!!include(node-versions.md)!!!
   Just add the follow to your `.npmrc` in the root of your npm package:
 
   ```
-  @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-  @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-  @fluid-internal:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-  @yo-fluid:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+  @microsoft:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+  @fluid-example:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+  @fluid-internal:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+  @fluidframework:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+  @yo-fluid:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
   ```
 
   Then run `vsts-npm-auth` in the same directory with no argument.

@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import { fluidExport as smde } from "./smde";
 
-class ProgressBarsFactory implements IRuntimeFactory {
+class SmdeContainerFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/smde", Promise.resolve(smde)],
+            ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/smde";
+        const defaultComponent = "@fluid-example/smde";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -65,7 +65,7 @@ class ProgressBarsFactory implements IRuntimeFactory {
     }
 }
 
-export const fluidExport = new ProgressBarsFactory();
+export const fluidExport = new SmdeContainerFactory();
 
 export const instantiateRuntime =
     // eslint-disable-next-line @typescript-eslint/promise-function-async

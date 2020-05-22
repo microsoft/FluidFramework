@@ -4,7 +4,7 @@
  */
 
 // TODO: Move this in a seperate package.
-// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";

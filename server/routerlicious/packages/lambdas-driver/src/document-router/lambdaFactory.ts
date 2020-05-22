@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 

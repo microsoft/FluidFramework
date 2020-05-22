@@ -7,8 +7,8 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { Ink } from "./ink";
 import { pkgVersion } from "./packageVersion";
 
@@ -18,12 +18,12 @@ import { pkgVersion } from "./packageVersion";
  */
 export class InkFactory implements ISharedObjectFactory {
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
      */
     public static Type = "https://graph.microsoft.com/types/ink";
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: InkFactory.Type,
@@ -32,21 +32,21 @@ export class InkFactory implements ISharedObjectFactory {
     };
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
      */
     public get type() {
         return InkFactory.Type;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
      */
     public get attributes() {
         return InkFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
      */
     public async load(
         runtime: IComponentRuntime,
@@ -61,7 +61,7 @@ export class InkFactory implements ISharedObjectFactory {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
         const ink = new Ink(runtime, id, InkFactory.Attributes);

@@ -56,7 +56,7 @@
     "test:report": "npm run test:mocha:report && npm run test:jest:report",
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
-    "tsc:fast": "node ./tools/fluid-build/dist/fluidBuild.js --root . -s tsc",
+    "tsc:fast": "fluid-build  --root . -s tsc",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -95,7 +95,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluid-internal/fluid-build-tools": "^0.1.27195",
+    "@fluidframework/build-tools": "^0.1.27804",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^4.1.0",

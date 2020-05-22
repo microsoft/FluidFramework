@@ -5,7 +5,7 @@
             "Base-Definitions": {
                 "dotSameRank": true,
                 "packages": [
-                    "@microsoft/fluid-common-definitions",
+                    "@fluidframework/common-definitions",
                     "@microsoft/fluid-component-core-interfaces",
                     "@microsoft/fluid-gitresources"
                 ]
@@ -15,7 +15,7 @@
                     "@microsoft/fluid-protocol-definitions"
                 ],
                 "deps": [
-                    "@microsoft/fluid-common-definitions"
+                    "@fluidframework/common-definitions"
                 ]
             },
             "Driver-Definitions": {
@@ -42,7 +42,7 @@
         "layers": {
             "Base-Utils": {
                 "packages": [
-                    "@microsoft/fluid-common-utils"
+                    "@fluidframework/common-utils"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -96,7 +96,7 @@
         "layers": {
             "Server-Shared-Utils": {
                 "packages": [
-                    "@microsoft/fluid-server-services-client"
+                    "@fluidframework/server-services-client"
                 ],
                 "deps": [
                     "Protocol-Utils"
@@ -184,7 +184,8 @@
                 "dev": true,
                 "packages": [
                     "@microsoft/fluid-build-common",
-                    "@microsoft/eslint-config-fluid"
+                    "@fluidframework/build-common",
+                    "@fluidframework/eslint-config-fluid"
                 ]
             },
             "Tools": {
@@ -206,7 +207,7 @@
                     "@microsoft/fluid-local-driver",
                     "@microsoft/fluid-test-runtime-utils",
                     "@microsoft/fluid-local-test-utils",
-                    "@microsoft/fluid-webpack-component-loader"
+                    "@fluidframework/webpack-component-loader"
                 ],
                 "dirs": [
                     "packages/test/",
@@ -230,7 +231,7 @@
             },
             "Routerlicious-Server": {
                 "packages": [
-                    "@microsoft/fluid-server-routerlicious"
+                    "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
                     "Routerlicious-Host",
