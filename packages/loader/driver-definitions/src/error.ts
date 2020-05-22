@@ -5,81 +5,114 @@
 
 // tslint:disable: no-unsafe-any
 export enum ErrorType {
-    generalError,
+    /**
+     * Some error, most likely an exception caught by runtime and propagated to container as critical error
+     */
+    genericError,
+
+    /**
+     * Some non-categorized (below) networking error
+     * Include errors like  fatal server error (usually 500).
+     */
     genericNetworkError,
+
+    /**
+     * Access denied - user does not have enough privileges to open a file, or continue to operate on a file
+     */
     authorizationError,
+
+    /**
+     * File not found, or file deleted during session
+     */
     fileNotFoundOrAccessDeniedError,
+
+    /**
+     * Storage is out of space
+     */
     outOfStorageError,
+
+    /**
+     * Invalid file name (at creation of the file)
+     */
     invalidFileNameError,
+
+    /**
+     * Throttling error from server. Server is busy and is asking not to reconnect for some time
+     */
     throttlingError,
-    serviceError,
+
+    /**
+     * Summarizing error. Currently raised on summarizing container only.
+     * Work is planned to propagate these errors to main container.
+     */
     summarizingError,
+
+    /**
+     * User does not have write permissions to a file, but is changing content of a file.
+     * That might be indication of some component error - components should not generate ops in readonly mode.
+     */
     writeError,
-    fatalError,
+
+    /**
+     * We can not reach server due to computer being offline.
+     */
+    offlineError,
 }
 
-export type IError = IGeneralError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
-IGenericNetworkError | IAuthorizationError | IFileNotFoundOrAccessDeniedError |
-IServiceError | ISummarizingError | IWriteError | IFatalError;
+export type IError = IGenericError | IThrottlingError | IOutOfStorageError | IInvalidFileNameError |
+IAuthorizationError | IFileNotFoundOrAccessDeniedError |
+ISummarizingError | IWriteError | IGenericNetworkError | IOfflineError;
 
-export interface IGeneralError {
-    readonly errorType: ErrorType.generalError;
+export interface IErrorBase {
+    readonly errorType: ErrorType;
+    readonly message: string;
+    readonly canRetry: boolean;
+    readonly online?: string;
+}
+
+export interface IGenericError extends IErrorBase {
+    readonly errorType: ErrorType.genericError;
     error: any;
-    critical?: boolean;
 }
 
-export interface IThrottlingError {
+export interface IThrottlingError extends IErrorBase {
     readonly errorType: ErrorType.throttlingError;
-    readonly message: string;
     readonly retryAfterSeconds: number;
-    critical?: boolean;
 }
 
-export interface IBaseConnectionError {
-    readonly message: string;
-    readonly canRetry?: boolean;
-    readonly statusCode?: number;
-    readonly online: string;
-    critical?: boolean;
-}
-
-export interface IGenericNetworkError extends IBaseConnectionError {
+export interface IGenericNetworkError extends IErrorBase {
     readonly errorType: ErrorType.genericNetworkError;
+    readonly statusCode?: number;
 }
 
-export interface IAuthorizationError extends IBaseConnectionError {
+export interface IAuthorizationError extends IErrorBase {
     readonly errorType: ErrorType.authorizationError;
 }
 
-export interface IFileNotFoundOrAccessDeniedError extends IBaseConnectionError {
+export interface IFileNotFoundOrAccessDeniedError extends IErrorBase {
     readonly errorType: ErrorType.fileNotFoundOrAccessDeniedError;
 }
 
-export interface IOutOfStorageError extends IBaseConnectionError {
+export interface IOutOfStorageError extends IErrorBase {
     readonly errorType: ErrorType.outOfStorageError;
 }
 
-export interface IInvalidFileNameError extends IBaseConnectionError {
+export interface IInvalidFileNameError extends IErrorBase {
     readonly errorType: ErrorType.invalidFileNameError;
 }
 
-export interface IServiceError {
-    readonly errorType: ErrorType.serviceError;
-    critical?: boolean;
-}
-
-export interface ISummarizingError {
+export interface ISummarizingError extends IErrorBase {
     readonly errorType: ErrorType.summarizingError;
-    readonly description: string;
-    critical?: boolean;
+    /**
+     * Whether this error has already been logged. Used to avoid logging errors twice.
+     */
+    readonly logged?: boolean;
 }
 
-export interface IWriteError {
+export interface IWriteError extends IErrorBase {
     readonly errorType: ErrorType.writeError;
-    readonly critical: boolean;
 }
 
-export interface IFatalError {
-    readonly errorType: ErrorType.fatalError;
-    readonly critical: boolean;
+export interface IOfflineError extends IErrorBase {
+    readonly errorType: ErrorType.offlineError;
 }

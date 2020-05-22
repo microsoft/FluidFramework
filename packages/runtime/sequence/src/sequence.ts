@@ -4,29 +4,29 @@
  */
 
 import * as assert from "assert";
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IValueChanged, MapKernel } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/component-runtime-definitions";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
-} from "@microsoft/fluid-shared-object-base";
-import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/shared-object-base";
+import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -338,14 +338,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * Walk the underlying segments of the sequence.
      * The walked segments may extend beyond the range
      * if the segments cross the ranges start or end boundaries.
-     * Set split range to true to esure only segments within the
+     * Set split range to true to ensure only segments within the
      * range are walked.
      *
      * @param handler - The function to handle each segment
      * @param start - Optional. The start of range walk.
      * @param end - Optional. The end of range walk
      * @param accum - Optional. An object that will be passed to the handler for accumulation
-     * @param splitRange - Optional. Splits boundary segements on the range boundaries
+     * @param splitRange - Optional. Splits boundary segments on the range boundaries
      */
     public walkSegments<TClientData>(
         handler: MergeTree.ISegmentAction<TClientData>,

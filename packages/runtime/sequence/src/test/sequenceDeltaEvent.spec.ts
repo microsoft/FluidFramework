@@ -13,9 +13,9 @@ import {
     IMergeTreeDeltaCallbackArgs,
     PropertySet,
     TextSegment,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/";
+import { TestClient } from "@fluidframework/merge-tree/dist/test/";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 
 interface IExpectedSegmentInfo {

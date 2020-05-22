@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
-} from "@microsoft/fluid-server-test-utils";
+} from "@fluidframework/server-test-utils";
 import * as assert from "assert";
 import * as nconf from "nconf";
 import * as plugin from "../../document-router";

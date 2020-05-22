@@ -10,7 +10,9 @@ import {
     IWebSocketServer,
     MongoDatabaseManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+    ILogger,
+    IWebSocket,
+} from "@fluidframework/server-services-core";
 import {
     ITestDbFactory,
     TestDbFactory,
@@ -21,8 +23,16 @@ import {
     DebugLogger,
     TestHistorian,
     TestTaskMessageSender,
-} from "@microsoft/fluid-server-test-utils";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+} from "@fluidframework/server-test-utils";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import {
+    IClient,
+    IConnected,
+    IConnect,
+    ISequencedDocumentMessage,
+    IContentMessage,
+    ISignalMessage,
+} from "@fluidframework/protocol-definitions";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
@@ -33,6 +43,12 @@ export interface ILocalDeltaConnectionServer {
     databaseManager: IDatabaseManager;
     testDbFactory: ITestDbFactory;
     hasPendingWork(): Promise<boolean>;
+    connectWebSocket(
+        tenantId: string,
+        documentId: string,
+        token: string,
+        client: IClient,
+        protocolVersions: string[]): [IWebSocket, Promise<IConnected>];
 }
 
 /**
@@ -90,20 +106,120 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             databaseManager,
             ordererManager,
             testDbFactory,
-            testStorage);
+            testStorage,
+            logger);
     }
 
     private constructor(
-        public webSocketServer: IWebSocketServer,
+        public webSocketServer: TestWebSocketServer,
         public databaseManager: IDatabaseManager,
         private readonly ordererManager: MemoryOrdererManager,
         public testDbFactory: ITestDbFactory,
-        public documentStorage: IDocumentStorage) { }
+        public documentStorage: IDocumentStorage,
+        private readonly logger: ILogger) { }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.
      */
     public async hasPendingWork(): Promise<boolean> {
         return this.ordererManager.hasPendingWork();
+    }
+
+    public connectWebSocket(
+        tenantId: string,
+        documentId: string,
+        token: string,
+        client: IClient,
+        protocolVersions: string[]): [IWebSocket, Promise<IConnected>] {
+        const socket = this.webSocketServer.createConnection();
+
+        const connectMessage: IConnect = {
+            client,
+            id: documentId,
+            mode: client.mode,
+            tenantId,
+            token,  // Token is going to indicate tenant level information, etc...
+            versions: protocolVersions,
+        };
+
+        const connectedP =  new Promise<IConnected>((resolve, reject) => {
+            // Listen for ops sent before we receive a response to connect_document
+            const queuedMessages: ISequencedDocumentMessage[] = [];
+            const queuedContents: IContentMessage[] = [];
+            const queuedSignals: ISignalMessage[] = [];
+
+            const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
+                this.logger.info(`Queued early ops: ${msgs.length}`);
+                queuedMessages.push(...msgs);
+            };
+            socket.on("op", earlyOpHandler);
+
+            const earlyContentHandler = (msg: IContentMessage) => {
+                this.logger.info("Queued early contents");
+                queuedContents.push(msg);
+            };
+            socket.on("op-content", earlyContentHandler);
+
+            const earlySignalHandler = (msg: ISignalMessage) => {
+                this.logger.info("Queued early signals");
+                queuedSignals.push(msg);
+            };
+            socket.on("signal", earlySignalHandler);
+
+            // Listen for connection issues
+            socket.on("connect_error", (error) => {
+                reject(error);
+            });
+
+            socket.on("connect_document_success", (response: IConnected) => {
+                socket.removeListener("op", earlyOpHandler);
+                socket.removeListener("op-content", earlyContentHandler);
+                socket.removeListener("signal", earlySignalHandler);
+
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
+                if (queuedMessages.length > 0) {
+                    // Some messages were queued.
+                    // add them to the list of initialMessages to be processed
+                    response.initialMessages.push(...queuedMessages);
+                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+                }
+
+                if (queuedContents.length > 0) {
+                    // Some contents were queued.
+                    // add them to the list of initialContents to be processed
+                    response.initialContents.push(...queuedContents);
+
+                    // eslint-disable-next-line max-len, @typescript-eslint/strict-boolean-expressions
+                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
+                }
+
+                if (queuedSignals.length > 0) {
+                    // Some signals were queued.
+                    // add them to the list of initialSignals to be processed
+                    response.initialSignals.push(...queuedSignals);
+                }
+
+                resolve(response);
+            });
+
+            socket.on("connect_document_error", reject);
+
+            socket.emit("connect_document", connectMessage);
+        });
+
+        return [socket, connectedP];
     }
 }

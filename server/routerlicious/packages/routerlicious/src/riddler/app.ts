@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
+import { MongoManager } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as morgan from "morgan";

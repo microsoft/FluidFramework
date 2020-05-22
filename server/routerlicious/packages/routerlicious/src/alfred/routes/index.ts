@@ -8,11 +8,10 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import * as agent from "./agent";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -29,7 +28,6 @@ export function create(
     producer: IProducer,
     appTenants: IAlfredTenant[]) {
     return {
-        agent: agent.create(config),
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
     };
 }

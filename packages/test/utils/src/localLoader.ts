@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { initializeContainerCode } from "@microsoft/fluid-base-host";
+import { initializeContainerCode } from "@fluidframework/base-host";
 import {
     ICodeLoader,
     ILoader,
@@ -11,11 +11,11 @@ import {
     IFluidModule,
     IProxyLoaderFactory,
     IProvideRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { Loader, Container } from "@microsoft/fluid-container-loader";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { Loader, Container } from "@fluidframework/container-loader";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 import { LocalCodeLoader } from "./localCodeLoader";
 
 /**

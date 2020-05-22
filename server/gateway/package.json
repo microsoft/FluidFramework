@@ -56,7 +56,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-example/tiny-web-host": "^0.15.0",
     "@microsoft/fluid-base-host": "^0.15.0",
     "@microsoft/fluid-common-utils": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
@@ -115,7 +114,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "0.15.21676",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/fluid-build-common": "0.15.21674",
     "@types/compression": "0.0.33",
     "@types/connect-redis": "0.0.7",

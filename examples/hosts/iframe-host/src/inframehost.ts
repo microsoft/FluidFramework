@@ -5,8 +5,8 @@
 
 import {
     IFrameDocumentServiceProxyFactory,
-} from "@microsoft/fluid-iframe-driver";
-import { Loader, Container } from "@microsoft/fluid-container-loader";
+} from "@fluidframework/iframe-driver";
+import { Loader, Container } from "@fluidframework/container-loader";
 import {
     IProxyLoaderFactory,
     ICodeLoader ,
@@ -14,11 +14,11 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
-import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage, ITree, ConnectionState, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/container-definitions";
+import { MultiUrlResolver, MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
+import { IRequest, IResponse, IComponent } from "@fluidframework/component-core-interfaces";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
 
 class ProxyRuntime implements IRuntime {
     private _disposed = false;
@@ -34,7 +34,7 @@ class ProxyRuntime implements IRuntime {
     async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
         throw new Error("Method not implemented.");
     }
-    async changeConnectionState(value: ConnectionState, clientId?: string) {
+    async setConnectionState(connected: boolean, clientId?: string) {
     }
     async stop(): Promise<IRuntimeState> {
         throw new Error("Method not implemented.");

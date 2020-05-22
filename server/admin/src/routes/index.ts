@@ -7,7 +7,7 @@ import * as core from "@microsoft/fluid-server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { KeyValueWrapper, LocalKeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";
 import * as api from "./api";
 import * as home from "./home";
@@ -28,7 +28,8 @@ export function create(
         return (req, res, next) => next();
     };
 
-    const keyValueWrapper = new KeyValueWrapper(config);
+    const loadKeyValue = config.get("keyValue:load") as boolean;
+    const keyValueWrapper = loadKeyValue ? new KeyValueWrapper(config) : new LocalKeyValueWrapper();
 
     return {
         api: api.create(config, mongoManager, ensureLoggedIn, tenantManager, keyValueWrapper),

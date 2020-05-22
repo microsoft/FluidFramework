@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { BroadcasterLambda, DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
-import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
-import { LocalKafka, LocalContext, LocalLambdaController } from "@microsoft/fluid-server-memory-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
+import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
+import { create as createDocumentRouter } from "@fluidframework/server-lambdas-driver";
+import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
+import * as services from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as winston from "winston";

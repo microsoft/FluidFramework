@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {

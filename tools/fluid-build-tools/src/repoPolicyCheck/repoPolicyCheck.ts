@@ -6,6 +6,7 @@
 import * as fs from "fs";
 import * as readline from "readline";
 import * as child_process from "child_process";
+import * as path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
 import sortPackageJson from "sort-package-json";
@@ -90,7 +91,9 @@ const handlers: Handler[] = [
         name: "html-copyright-file-header",
         match: /(^|\/)[^\/]+\.html$/i,
         handler: file => {
-            if (!/<!--.*Copyright/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/<!--[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
+                !/<!--[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return "Html file missing copyright header";
             }
         },
@@ -108,7 +111,9 @@ const handlers: Handler[] = [
         name: "dockerfile-copyright-file-header",
         match: /(^|\/)Dockerfile$/i,
         handler: file => {
-            if (!/#.*Copyright/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/#[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
+                !/#[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return 'Dockerfile missing copyright header';
             }
         },
@@ -127,7 +132,9 @@ const handlers: Handler[] = [
         name: "js-ts-copyright-file-header",
         match: /(^|\/)[^\/]+\.[jt]sx?$/i,
         handler: file => {
-            if (!/(\/\/.*Copyright|\/\*[\s\S]*Copyright[\s\S]*\*\/)/i.test(readFile(file))) {
+            const content = readFile(file);
+            if (!/(\/\/|[\s\S]*\*)[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content)
+                || !/(\/\/|[\s\S]*\*)[\s\S]*Licensed under the MIT License./i.test(content)) {
                 return 'JavaScript/TypeScript file missing copyright header';
             }
         },
@@ -273,6 +280,7 @@ function routeToHandlers(file: string) {
 }
 
 let lineReader: readline.Interface;
+let relPath = "";
 if (program.stdin) {
     // prepare to read standard input line by line
     process.stdin.setEncoding('utf8');
@@ -281,7 +289,8 @@ if (program.stdin) {
         terminal: false
     });
 } else {
-    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard"]);
+    relPath = child_process.execSync("git rev-parse --show-cdup", { encoding: "utf8" }).trim();
+    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard", "--full-name"]);
     lineReader = readline.createInterface({
         input: p.stdout,
         terminal: false
@@ -291,10 +300,11 @@ if (program.stdin) {
 let count = 0;
 let processed = 0;
 lineReader.on('line', line => {
-    if (pathRegex.test(line) && fs.existsSync(line)) {
+    const filePath = path.join(relPath, line).trim();
+    if (pathRegex.test(line) && fs.existsSync(filePath)) {
         count++;
         if (exclusions.every(value => !value.test(line))) {
-            routeToHandlers(line.trim());
+            routeToHandlers(filePath);
             processed++;
         } else {
             console.log(`Excluded: ${line}`);

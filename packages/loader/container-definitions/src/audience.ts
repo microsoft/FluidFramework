@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.

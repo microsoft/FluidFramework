@@ -6,8 +6,8 @@
 /* eslint-disable no-null/no-null */
 
 import * as assert from "assert";
-import { RangeTracker } from "@microsoft/fluid-common-utils";
-import { isSystemType } from "@microsoft/fluid-protocol-base";
+import { RangeTracker } from "@fluidframework/common-utils";
+import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
     IBranchOrigin,
@@ -19,8 +19,8 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
-} from "@microsoft/fluid-protocol-definitions";
-import { canSummarize } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { canSummarize } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -39,7 +39,7 @@ import {
     RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { CheckpointContext, ICheckpointParams, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
@@ -540,16 +540,22 @@ export class DeliLambda implements IPartitionLambda {
         sequenceNumber: number,
         systemContent,
     ): ISequencedDocumentMessage {
+        // prefer the server/client provided timestamp, fallback to current time
+        // we fallback to current time to ensure all ops have a timestamp
+        const timestamp = message.operation.timestamp ?? Date.now();
+
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
             metadata: message.operation.metadata,
+            serverMetadata: message.operation.serverMetadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,
             sequenceNumber,
-            timestamp: Date.now(),
+            term: this.term,
+            timestamp,
             traces: message.operation.traces,
             type: message.operation.type,
         };

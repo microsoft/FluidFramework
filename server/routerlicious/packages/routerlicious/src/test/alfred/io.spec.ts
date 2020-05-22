@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientJoin,
     IConnect,
@@ -15,10 +15,10 @@ import {
     ISummaryTree,
     SummaryType,
     ICommittedProposal,
-} from "@microsoft/fluid-protocol-definitions";
-import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/protocol-definitions";
+import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
+import * as services from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
 import {
     MessageFactory,
     TestClientManager,
@@ -29,12 +29,12 @@ import {
     TestWebSocket,
     TestWebSocketServer,
     DebugLogger,
-} from "@microsoft/fluid-server-test-utils";
+} from "@fluidframework/server-test-utils";
 import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { DefaultMetricClient, IScribe } from "@microsoft/fluid-server-services-core";
-import { generateToken } from "@microsoft/fluid-server-services-client";
-import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
+import { DefaultMetricClient, IScribe } from "@fluidframework/server-services-core";
+import { generateToken } from "@fluidframework/server-services-client";
+import { configureWebSocketServices, DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -261,7 +261,7 @@ describe("Routerlicious", () => {
                 commitSequenceNumber: 0,
                 sequenceNumber: 0,
             };
-            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, [["code", proposal]]);
+            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
             assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");

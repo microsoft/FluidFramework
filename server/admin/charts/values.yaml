@@ -1,0 +1,43 @@
+replicaCount: 1
+image: prague.azurecr.io/admin:latest
+
+imagePullPolicy: IfNotPresent
+
+name: admin
+
+admin:
+  host: admin_host
+  cert: admin_cert
+
+ingress:
+  class: ingress_class
+
+endpoints:
+  mongodb: url:port
+  kafka: url:port
+  redis:
+    url: url
+    port: port
+    tls: false
+  error:
+    endpoint: optional_error_reporting_endpoint
+  tenantsUrl: admin_url
+  historianUrl: historian_url
+  riddlerUrl: riddler_url
+  gatewayUrl: gateway_url
+  gitUrl: gitrest_url
+  cobaltUrl: cobalt_url
+  alfredUrl: alfred_url
+  jarvisUrl: optional_jarvis_url
+  keyValueUrl: optional_key_value_url
+
+login:
+  microsoft:
+    clientId: ""
+    secret: ""
+
+express:
+  session:
+    secret: ""
+
+jwtkey: ""

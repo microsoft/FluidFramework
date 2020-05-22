@@ -9,9 +9,9 @@ import * as express from "express";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
-import { IFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
+import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 import { RouteOptions } from "./loader";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
@@ -186,18 +186,17 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
 
     const html =
         `<!DOCTYPE html>
-<html lang="en">
+<html style="height: 100%;" lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${documentId}</title>
 </head>
-<body style="margin: 0;">
-
-    <div id="content">
+<body style="margin: 0; height: 100%;">
+    <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/node_modules/@fluidframework/webpack-component-loader/dist/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};

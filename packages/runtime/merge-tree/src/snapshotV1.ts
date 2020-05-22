@@ -4,21 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/component-core-interfaces";
+import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";

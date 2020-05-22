@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
@@ -35,9 +35,12 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
      * @param resolvedUrl - URL to be used for connecting to endpoints.
      * @returns returns the requested document service
      */
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         return Promise.resolve(ReplayDocumentService.create(
-            await this.documentServiceFactory.createDocumentService(resolvedUrl),
+            await this.documentServiceFactory.createDocumentService(resolvedUrl, logger),
             this.controller));
     }
 
@@ -45,7 +48,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

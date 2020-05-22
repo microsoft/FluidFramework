@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 
 export interface IComponentHTMLOptions {
     display?: "block" | "inline";
@@ -53,7 +53,7 @@ export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
     addView(scope?: IComponent): IComponentHTMLView;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     /* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
     export interface IComponent extends
     Readonly<Partial<

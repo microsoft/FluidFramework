@@ -5,7 +5,7 @@
 
 import {
     ContainerRuntimeFactoryWithDefaultComponent,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 
 import { DiceRoller, DiceRollerInstantiationFactory } from "./main";
 

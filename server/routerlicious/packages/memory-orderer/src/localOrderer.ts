@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
-import { IClient, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
@@ -17,8 +17,8 @@ import {
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
-} from "@microsoft/fluid-server-lambdas";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-lambdas";
+import { IGitManager } from "@fluidframework/server-services-client";
 import {
     IContext,
     IDatabaseManager,
@@ -34,7 +34,7 @@ import {
     ITopic,
     IWebSocket,
     ILogger,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
@@ -384,6 +384,7 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             scribe.minimumSequenceNumber,
             scribe.sequenceNumber,
+            1, // TODO (Change when local orderer also ticks epoch)
             lastState.members,
             lastState.proposals,
             lastState.values,
@@ -400,6 +401,7 @@ export class LocalOrderer implements IOrderer {
             this.gitManager,
             this.rawDeltasKafka,
             protocolHandler,
+            1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
             scribeMessages.map((message) => message.operation),
             false,

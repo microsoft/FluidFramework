@@ -9,12 +9,12 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     MockDocumentDeltaStorageService,
 } from "./mockDeltaStorage";

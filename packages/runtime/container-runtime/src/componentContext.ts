@@ -4,30 +4,30 @@
  */
 
 import * as assert from "assert";
-import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import * as EventEmitter from "events";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/container-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+    ConnectionState,
+} from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRuntimeChannel,
@@ -38,15 +38,15 @@ import {
     IComponentRegistry,
     IEnvelope,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
@@ -69,6 +69,7 @@ export abstract class ComponentContext extends EventEmitter implements
     IDisposable
 {
     public readonly isExperimentalComponentContext = true;
+
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }
@@ -112,8 +113,9 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.leader;
     }
 
+    // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
-        return this._containerRuntime.connectionState;
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => void {
@@ -183,20 +185,6 @@ export abstract class ComponentContext extends EventEmitter implements
             attach(componentRuntime);
             this._isAttached = true;
         };
-        // back-compat: 0.14 uploadSummary
-        this.summaryTracker.addRefreshHandler(async () => {
-            // We do not want to get the snapshot unless we have to.
-            // If the component runtime is listening on refreshBaseSummary
-            // event, then that means it is older version and requires the
-            // component context to emit this event.
-            if (this.listeners("refreshBaseSummary")?.length > 0) {
-                const subtree = await this.summaryTracker.getSnapshotTree();
-                if (subtree) {
-                    // This subtree may not yet exist in acked summary, so only emit if found.
-                    this.emit("refreshBaseSummary", subtree);
-                }
-            }
-        });
     }
 
     public dispose(): void {
@@ -210,7 +198,7 @@ export abstract class ComponentContext extends EventEmitter implements
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.containerRuntime.logger.sendErrorEvent(
+                this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
@@ -322,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -330,10 +318,19 @@ export abstract class ComponentContext extends EventEmitter implements
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.changeConnectionState(value, clientId);
+        assert(this.connected === connected);
 
-        raiseConnectedEvent(this, value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(this.connectionState, clientId);
+        } else {
+            assert(false);
+        }
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean): void {
@@ -364,12 +361,10 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
         return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
         return this._containerRuntime.getAudience();
     }
 
@@ -470,9 +465,9 @@ export abstract class ComponentContext extends EventEmitter implements
             return;
         }
         if (leadership) {
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("notleader", this.clientId);
+            this.emit("notleader");
         }
     }
 
@@ -512,6 +507,10 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyComponentInstantiated(this);
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
     /**
@@ -565,7 +564,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new Error("Context is closed");
         }
     }
 }

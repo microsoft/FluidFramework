@@ -5,15 +5,15 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -24,25 +24,24 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
     LazyPromise,
     ChildLogger,
-} from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
+    raiseConnectedEvent,
+} from "@fluidframework/common-utils";
+import { IDocumentStorageService, IError, ISummaryContext } from "@fluidframework/driver-definitions";
+import { readAndParse, createIError } from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
     isSystemType,
-    raiseConnectedEvent,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IChunkedOp,
     IClientDetails,
     IDocumentMessage,
@@ -57,7 +56,7 @@ import {
     ITree,
     MessageType,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
@@ -68,8 +67,8 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -423,10 +422,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return runtime;
     }
 
-    public get connectionState(): ConnectionState {
-        return this.context.connectionState;
-    }
-
     public get id(): string {
         return this.context.id;
     }
@@ -534,7 +529,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private _leader = false;
 
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.context.connected;
     }
 
     public get leader(): boolean {
@@ -553,7 +548,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
-    private disposedWithError = false;
 
     // Components tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -689,7 +683,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.previousState.nextSummarizerP,
             !!this.previousState.reload);
 
-        if (this.context.connectionState === ConnectionState.Connected) {
+        if (this.context.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(this.context.clientId!);
         }
@@ -697,15 +691,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
-    public dispose(error?: Error): void {
+    public dispose(): void {
         if (this._disposed) {
             return;
         }
         this._disposed = true;
-
-        if (error) {
-            this.disposedWithError = true;
-        }
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
@@ -803,12 +793,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        assert(this.connectionState === value);
+        assert(this.connected === connected);
 
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             // Once we are connected, all acks are accounted.
             // If there are any pending ops, DDSs will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
@@ -822,7 +812,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         for (const [component, componentContext] of this.contexts) {
             try {
-                componentContext.changeConnectionState(value, clientId);
+                componentContext.setConnectionState(connected, clientId);
             } catch (error) {
                 this.logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
@@ -832,13 +822,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
         }
 
-        try {
-            raiseConnectedEvent(this, value, clientId);
-        } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError", clientId }, error);
-        }
+        raiseConnectedEvent(this.logger, this, connected, clientId);
 
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             assert(clientId);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.summaryManager.setConnected(clientId!);
@@ -894,8 +880,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntimeChannel> {
-        this.verifyNotClosed();
-
         // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
         const deferredContext = this.ensureContextDeferred(id);
 
@@ -1224,6 +1208,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
+        if (context.isAttached) {
+            return;
+        }
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         if (!this.isLocal()) {
             const message = context.generateAttachMessage();
@@ -1288,6 +1275,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             };
         }
         return summaryTree;
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        if (this.context.getAbsoluteUrl === undefined) {
+            throw new Error("Driver does not implement getAbsoluteUrl");
+        }
+        return this.context.getAbsoluteUrl(relativeUrl);
     }
 
     private async generateSummary(
@@ -1492,12 +1486,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return clientSequenceNumber;
     }
 
+    /**
+     * Throw an error if the runtime is closed.  Methods that are expected to potentially
+     * be called after dispose due to asynchrony should not call this.
+     */
     private verifyNotClosed() {
-        // Don't throw another error here if the runtime was disposed due to an error,
-        // because the disposer should be responsible for reporting it.  Check this
-        // instead of stopping calls to the runtime because not all runtime consumers
-        // may be aware of the error.
-        if (this._disposed && !this.disposedWithError) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -1517,6 +1511,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: innerContents.type,
         };
@@ -1565,16 +1560,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
+        assert(this.clientId);
         if (this.leader) {
             assert(this.connected && this.deltaManager && this.deltaManager.active);
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("noleader", this.clientId);
+            this.emit("notleader");
         }
 
         for (const [, context] of this.contexts) {
             context.updateLeader(this.leader);
         }
+
         if (this.leader) {
             this.runTaskAnalyzer();
         }
@@ -1619,7 +1616,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         const snapshotTree = new LazyPromise(async () => {
-            // We have to call get version to get the treeId for r11s; this isnt needed
+            // We have to call get version to get the treeId for r11s; this isn't needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("FailedToGetVersion",
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

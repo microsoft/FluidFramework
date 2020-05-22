@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-build-common",
+  "name": "@fluidframework/build-common",
   "version": "0.16.0",
   "description": "Package containing common configs",
   "repository": "microsoft/FluidFramework",

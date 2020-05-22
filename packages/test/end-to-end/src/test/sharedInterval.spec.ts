@@ -4,27 +4,27 @@
  */
 
 import * as assert from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
-import { IBlob } from "@microsoft/fluid-protocol-definitions";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
+import { IBlob } from "@fluidframework/protocol-definitions";
 import {
     IntervalCollectionView,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
-} from "@microsoft/fluid-sequence";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/sequence";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,

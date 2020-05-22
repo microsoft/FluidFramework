@@ -8,10 +8,10 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { CreationDocumentService } from "./creationDocumentService";
 /**
  * Factory for creating the faux document service. Use this if you want to
@@ -22,7 +22,10 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     constructor() {
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
@@ -38,7 +41,7 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

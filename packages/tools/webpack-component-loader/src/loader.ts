@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
 import {
     IFluidModule,
     IFluidPackage,
@@ -12,15 +12,16 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidPackage,
-} from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { RequestParser } from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IUser } from "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IComponentMountableView } from "@fluidframework/view-interfaces";
+import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { RequestParser } from "@fluidframework/container-runtime";
 import { MultiUrlResolver } from "./multiResolver";
 import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
@@ -95,16 +96,14 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
-function makeSideBySideDiv(divId?: string) {
+function makeSideBySideDiv(divId: string) {
     const div = document.createElement("div");
     div.style.flexGrow = "1";
     div.style.width = "50%"; // ensure the divs don't encroach on each other
     div.style.border = "1px solid lightgray";
     div.style.boxSizing = "border-box";
     div.style.position = "relative"; // Make the new <div> a CSS containing block.
-    if (divId) {
-        div.id = divId;
-    }
+    div.id = divId;
     return div;
 }
 
@@ -243,7 +242,12 @@ export async function start(
 }
 
 async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
-    const response = await container.request({ url });
+    const response = await container.request({
+        headers: {
+            mountableView: true,
+        },
+        url,
+    });
 
     if (response.status !== 200 ||
         !(
@@ -258,7 +262,19 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
         return;
     }
 
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
+    // remove it from the DOM if needed.
+    const mountableView: IComponentMountableView = component.IComponentMountableView;
+    if (mountableView !== undefined) {
+        mountableView.mount(div);
+        return;
+    }
+
+    // If we don't get a mountable view back, we can still try to use a view adapter.  This won't always work (e.g.
+    // if the response is a React-based component using hooks) and is not the preferred path, but sometimes it
+    // can work.
+    console.warn(`Container returned a non-IComponentMountableView.  This can cause errors when mounting components `
+        + `with React hooks across bundle boundaries.  URL: ${url}`);
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
 }

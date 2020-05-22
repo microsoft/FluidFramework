@@ -4,11 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@fluidframework/common-utils";
+import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
+import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
+import { ISummarizingError } from "@fluidframework/driver-definitions";
+import { createSummarizingError } from "@fluidframework/driver-utils";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ISummarizer, Summarizer } from "./summarizer";
 
 interface ITrackedClient {
@@ -310,8 +312,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
+        if (delayMs >= defaultThrottleMaxDelayMs) {
+            // we can't create a summarizer for some reason; raise error on container
+            this.context.error(createSummarizingError("SummaryManager: CreateSummarizer Max Throttle Delay"));
+        }
+
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
+            summarizer.on("summarizingError", (error: ISummarizingError) => this.context.error(error));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({

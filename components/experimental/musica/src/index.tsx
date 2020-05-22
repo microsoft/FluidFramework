@@ -8,8 +8,8 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 // React
 import * as React from "react";

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
@@ -32,7 +32,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         return OdspDocumentService.createContainer(
             createNewSummary,
@@ -66,7 +66,10 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         this.cache = new OdspCache(permanentCache);
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         // A hint for driver if document was opened before by this factory
@@ -78,7 +81,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
-            this.logger,
+            logger ?? this.logger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             import("./getSocketIo").then((m) => m.getSocketIo()),

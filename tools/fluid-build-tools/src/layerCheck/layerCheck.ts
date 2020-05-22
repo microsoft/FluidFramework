@@ -86,6 +86,8 @@ async function main() {
         if (!success) {
             process.exit(-1);
         }
+
+        console.log(`Layer check passed (${packages.packages.length} packages)`)
     } catch (e) {
         console.error(e.message);
         process.exit(-2);

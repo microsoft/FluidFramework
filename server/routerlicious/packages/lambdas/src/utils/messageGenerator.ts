@@ -9,7 +9,7 @@ import {
     ISignalMessage,
     MessageType,
     NackErrorType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export const createNackMessage = (code: number, type: NackErrorType, message: string): INack => ({
     operation: undefined,

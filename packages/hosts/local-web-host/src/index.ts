@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 import {
     IProxyLoaderFactory,
@@ -12,13 +12,13 @@ import {
     IProvideRuntimeFactory,
     IFluidModule,
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
-import {  Loader, Container } from "@microsoft/fluid-container-loader";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { initializeContainerCode } from "@microsoft/fluid-base-host";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+} from "@fluidframework/container-definitions";
+import {  Loader, Container } from "@fluidframework/container-loader";
+import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { initializeContainerCode } from "@fluidframework/base-host";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,

@@ -5,9 +5,9 @@
 
 import * as assert from "assert";
 import * as querystring from "querystring";
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
-import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 import Axios from "axios";
 import { TokenProvider } from "./tokens";
 

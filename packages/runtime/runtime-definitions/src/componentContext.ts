@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentLoadable,
@@ -13,23 +13,23 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
+    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
 
@@ -96,6 +96,7 @@ export interface IContainerRuntimeBase extends
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by
@@ -130,6 +131,12 @@ export interface IContainerRuntimeBase extends
      * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntimeChannel>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**
@@ -146,7 +153,8 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
-     * Called to attach the runtime to the container
+     * Called to attach the runtime to the container.
+     * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     attach(): void;
 
@@ -176,7 +184,10 @@ export interface IComponentRuntimeChannel extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 }
 
 export interface ISummaryTracker {
@@ -239,7 +250,6 @@ export interface IComponentContext extends EventEmitter {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
@@ -262,6 +272,8 @@ export interface IComponentContext extends EventEmitter {
      */
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
+
+    on(event: "leader" | "notleader", listener: () => void): this;
 
     /**
      * Returns the current quorum.
@@ -341,6 +353,12 @@ export interface IComponentContext extends EventEmitter {
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url to the containe rbased on the provided relativeUrl.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 /**

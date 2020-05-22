@@ -9,6 +9,7 @@ import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";
+import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as expressSession from "express-session";
@@ -182,7 +183,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
             app.locals.furl,
             app.get("env") === "production");
     };
-    app.use(staticFilesEndpoint, express.static(path.join(__dirname, "../public")));
+    app.use(staticFilesEndpoint, cors(), express.static(path.join(__dirname, "../public")));
 
     // The below is to check to make sure the session is available (redis could have gone down for instance) and if
     // not return an error

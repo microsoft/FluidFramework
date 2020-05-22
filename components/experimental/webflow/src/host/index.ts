@@ -6,11 +6,11 @@
 import {
     IComponent,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
+import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";

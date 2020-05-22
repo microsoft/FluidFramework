@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IIntegerRange } from "../";
 import * as Collections from "../collections";
 import {

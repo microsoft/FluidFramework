@@ -13,7 +13,6 @@ export interface ICollectionProperty {
 }
 
 export class Collection<T> implements ICollection<T> {
-
     constructor(private readonly db: any,
                 private readonly property: ICollectionProperty) {
     }
@@ -161,7 +160,6 @@ export class Collection<T> implements ICollection<T> {
                     reject(error);
                 });
             });
-
         } else {
             return new Promise<T[]>((resolve, reject) => {
                 this.db.get(key, (err, val) => {

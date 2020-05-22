@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
-import { MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
-import { TestDocumentServiceFactory } from "@microsoft/fluid-local-driver";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@microsoft/fluid-routerlicious-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { SessionStorageDbFactory } from "@fluidframework/local-test-utils";
+import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
+import { TestDocumentServiceFactory } from "@fluidframework/local-driver";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { RouteOptions } from "./loader";
 
 const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
@@ -24,7 +24,6 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         new OdspDocumentServiceFactory(
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
-            { send: () => { return; } },
             undefined,
             undefined,
             undefined,
