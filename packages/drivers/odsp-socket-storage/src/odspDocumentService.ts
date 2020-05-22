@@ -322,7 +322,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.cache.sessionCache.remove(this.joinSessionKey);
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 throw error;
             });
         });
@@ -337,8 +337,8 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
-        const executeFetch = async () => {
-            return fetchJoinSession(
+        const executeFetch = async () =>
+            fetchJoinSession(
                 this.odspResolvedUrl.driveId,
                 this.odspResolvedUrl.itemId,
                 this.odspResolvedUrl.siteUrl,
@@ -347,11 +347,10 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger,
                 this.getStorageToken,
             );
-        };
 
         // Note: The sessionCache is configured with a sliding expiry of 1 hour,
         // so if we've fetched the join session within the last hour we won't run executeFetch again now.
-        return this.cache.sessionCache.addOrGet(this.joinSessionKey, executeFetch);
+        return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
     }
 
     /**

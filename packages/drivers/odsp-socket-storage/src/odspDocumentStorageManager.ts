@@ -278,14 +278,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                // Note: This function has a race condition - another caller may come past the undefined check
-                // while the other first caller is awaiting later async code in this block.
-                const fetchOdspSnapshotWithCaching = async () => {
-                    let snapshot: IOdspSnapshot = await this.cache.persistedCache.get(snapshotCacheKey);
-                    if (snapshot !== undefined) {
-                        return snapshot;
-                    }
-
+                // Note: There's a race condition here - another caller may come past the undefined check
+                // while the first caller is awaiting later async code in this block.
+                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
+                if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -297,31 +293,29 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        snapshot = response.content;
+                        cachedSnapshot = response.content;
 
                         const props = {
-                            trees: snapshot.trees ? snapshot.trees.length : 0,
-                            blobs: snapshot.blobs ? snapshot.blobs.length : 0,
-                            ops: snapshot.ops.length,
+                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
+                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
+                            ops: cachedSnapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
                             sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                             contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
-
-                        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                        // want to use the same getLatest result.
-                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot, 10 * 1000 /* durationMs */);
-                        return snapshot;
                     } catch (error) {
                         event.cancel({}, error);
                         throw error;
                     }
-                };
 
-                const odspSnapshot: IOdspSnapshot = await fetchOdspSnapshotWithCaching();
+                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+                    // want to use the same getLatest result.
+                    await this.cache.persistedCache.put(snapshotCacheKey, cachedSnapshot, 10 * 1000 /* durationMs */);
+                }
+                const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();

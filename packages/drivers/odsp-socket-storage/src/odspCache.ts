@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache, PromiseCacheExpiry } from "@microsoft/fluid-common-utils";
+import { PromiseCache } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
 /**
@@ -62,11 +62,8 @@ export class LocalCache implements IPersistedCache {
 }
 
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
-    constructor(
-        expiry: { policy: "sliding", durationMs: 3600000 } & PromiseCacheExpiry,
-        removeOnError?: (e: any) => boolean,
-    ) {
-        super({ expiry, removeOnError });
+    constructor(removeOnError?: (e: any) => boolean) {
+        super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
     }
 }
 
@@ -83,7 +80,7 @@ export interface IOdspCache {
      * Cache of joined/joining session info
      * This cache will use a one hour sliding expiration window.
      */
-    readonly sessionCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>;
+    readonly sessionJoinCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -92,9 +89,7 @@ export interface IOdspCache {
 }
 
 export class OdspCache implements IOdspCache {
-    public readonly sessionCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>({
-        policy: "sliding", durationMs: 3600000,
-    });
+    public readonly sessionJoinCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 
