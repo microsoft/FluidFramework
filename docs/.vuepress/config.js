@@ -9,7 +9,7 @@ const process = require("process");
 
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
-const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || process.env.FLUID_VAR_GROUP || "internal";
+const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "internal";
 const THIS_VERSION = process.env.THIS_VERSION || "0.16";
 const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.16";
 const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.15";
@@ -51,20 +51,12 @@ const listPages = (dirPath, includeIndex = false) => {
 };
 
 const getNav = () => {
-    let nav = [
+    const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Guide", link: "/guide/" },
         { text: "Tutorials", link: "/examples/" },
         internalOnly({ text: "Patterns", link: "/patterns/" }),
         { text: "API", link: "/api/overview" },
-        internalOnly({
-            text: "Versions",
-            items: [
-                { text: `v${RELEASE_VERSION}`, link: BASE_URL },
-                { text: `v${N1_VERSION}`, link: N1_URL },
-                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
-            ]
-        }),
         {
             text: "🤿 Dive Deeper",
             items: [
@@ -94,6 +86,14 @@ const getNav = () => {
                 }),
             ]
         },
+        internalOnly({
+            text: "Versions",
+            items: [
+                { text: `v${RELEASE_VERSION}`, link: BASE_URL },
+                { text: `v${N1_VERSION}`, link: N1_URL },
+                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
+            ]
+        }),
     ];
 
     function filterFalsy(item) {
@@ -202,8 +202,6 @@ const getApiSidebar = () => {
             title: "Sample Hosts",
             children: [
                 "fluid-base-host",
-                "react-web-host",
-                "tiny-web-host",
             ]
         });
     }

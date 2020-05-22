@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
-import { Serializable } from '@microsoft/fluid-runtime-definitions';
+import { Serializable } from '@fluidframework/component-runtime-definitions';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
@@ -25,6 +25,26 @@ export function fill<T extends IArray2D<U>, U>(
         }
     }
     return matrix;
+}
+
+/**
+ * Sets the corners of the given matrix.
+ */
+export function setCorners<T extends IArray2D<U>, U>(matrix: T) {
+    matrix.setCell(0, 0, "TopLeft" as any);
+    matrix.setCell(0, matrix.numCols - 1, "TopRight" as any);
+    matrix.setCell(matrix.numRows - 1, matrix.numCols - 1, "BottomRight" as any);
+    matrix.setCell(matrix.numRows - 1, 0, "BottomLeft" as any);
+}
+
+/**
+ * Checks the corners of the given matrix.
+ */
+export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
+    assert.equal(matrix.read(0, 0), "TopLeft");
+    assert.equal(matrix.read(0, matrix.numCols - 1), "TopRight");
+    assert.equal(matrix.read(matrix.numRows - 1, matrix.numCols - 1), "BottomRight");
+    assert.equal(matrix.read(matrix.numRows - 1, 0), "BottomLeft");
 }
 
 /**

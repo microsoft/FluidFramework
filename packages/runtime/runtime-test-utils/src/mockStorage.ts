@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IBlob, ITree } from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 
 /**
  * Mock implementation of IObjectStorageService based on ITree input.
@@ -16,7 +16,8 @@ export class MockStorage implements IObjectStorageService {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
                     if (entry.type === "Blob") {
-                        assert(paths.length === 1);
+                        // eslint-disable-next-line prefer-rest-params
+                        assert(paths.length === 1, JSON.stringify({ ...arguments }));
                         const blob = entry.value as IBlob;
                         return Buffer.from(blob.contents, blob.encoding)
                             .toString("base64");
@@ -24,10 +25,12 @@ export class MockStorage implements IObjectStorageService {
                     if (entry.type === "Tree") {
                         return MockStorage.readCore(entry.value as ITree, paths.slice(1));
                     }
-                    assert(false);
+                    // eslint-disable-next-line prefer-rest-params
+                    assert.fail(JSON.stringify({ ...arguments }));
                 }
             }
-            assert(false);
+            // eslint-disable-next-line prefer-rest-params
+            assert.fail(JSON.stringify({ ...arguments }));
         }
     }
 

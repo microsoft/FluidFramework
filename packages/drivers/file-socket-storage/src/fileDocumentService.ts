@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 /**
@@ -16,6 +16,11 @@ export class FileDocumentService implements api.IDocumentService {
         private readonly storage: api.IDocumentStorageService,
         private readonly deltaStorage: FileDeltaStorageService,
         private readonly deltaConnection: api.IDocumentDeltaConnection) {
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): api.IResolvedUrl {
+        throw new Error("Not implemented");
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {

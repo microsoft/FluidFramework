@@ -1,0 +1,70 @@
+{
+  "name": "@fluidframework/container-runtime-definitions",
+  "version": "0.19.0",
+  "description": "Fluid Runtime definitions",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test:types": "tsd",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/container-definitions": "^0.19.0",
+    "@fluidframework/driver-definitions": "^0.19.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0-0",
+    "@fluidframework/runtime-definitions": "^0.19.0",
+    "@types/node": "^10.14.6"
+  },
+  "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@microsoft/api-extractor": "^7.7.2",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
+    "rimraf": "^2.6.2",
+    "tsd": "^0.11.0",
+    "typescript": "~3.7.4"
+  },
+  "tsd": {
+    "directory": "test-d",
+    "compilerOptions": {
+      "rootDir": "test-d",
+      "include": [
+        "test-d/*"
+      ],
+      "lib": [
+        "es2015"
+      ],
+      "types": [],
+      "exclude": [
+        "dist",
+        "node_modules"
+      ]
+    }
+  }
+}

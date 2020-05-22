@@ -4,9 +4,8 @@
  */
 
 import * as assert from "assert";
-import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@microsoft/fluid-common-utils";
+import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
@@ -14,7 +13,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
@@ -363,8 +362,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         return immediateNoOp;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
-        if (value === ConnectionState.Disconnected) {
+    public setConnectionState(connected: boolean, clientId?: string) {
+        if (!connected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject("Client got disconnected");
             });

@@ -6,10 +6,8 @@ imagePullPolicy: IfNotPresent
 name: gateway
 
 alfred:
-  externalUrl: https://alfred.we.prague.office-int.com
+  externalUrl: alfred_external_url
   tenants:
-  - id: zen-brar
-    key: 
   - id: fluid
     key: 
   - id: prague
@@ -20,8 +18,8 @@ alfred:
     key:
   - id: local
     key:
-  url: http://fierce-cat-alfred
-  key:
+  url: alfred_internal_url
+  key: jwt_key
 
 login:
   microsoft:
@@ -33,36 +31,36 @@ login:
   linkedAccounts: {}
 
 gateway:
-  externalUrl: https://www.wu2.prague.office-int.com
-  host: www.wu2.prague.office-int.com
-  cert: wu2-tls-certificate
-  keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00018
+  externalUrl: gateway_external_url
+  host: gateway_host
+  cert: gateway_cert
+  keyValueUrl: optional_key_value_url
 
 packageManager:
-  endpoint: https://packages.wu2.prague.office-int.com
-  username: prague
-  password:
+  endpoint: ""
+  username: ""
+  password: ""
 
 historian:
-  externalUrl: https://historian.wu2.prague.office-int.com
-  internalUrl: http://prodding-lightningbug-historian
+  externalUrl: historian_external_url
+  internalUrl: historian_internal_url
 
 mongodb:
-  url: mongodb://quieting-guppy-mongodb:27017
+  url: mongodb_url
 
 redis:
-  url: winsome-wombat-redis
+  url: pesky-cat-redis
   port: 6379
   tls: false
 
 riddler:
-  url: http://pesky-platypus-riddler
+  url: riddler_url
 
 ingress:
-  class: nginx-prod
+  class: ingress_class
 
 error:
-  track: true
+  track: false
   endpoint: ""
 
 worker:

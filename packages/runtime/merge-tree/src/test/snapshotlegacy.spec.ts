@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestClient } from ".";
 

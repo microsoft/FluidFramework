@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
     /**

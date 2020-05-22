@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { IDirectory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IDirectory } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed subDirectory.
@@ -44,7 +44,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
         // infinite recursion.
         assert(executingCallback === false, "set called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             directory = subDirectory.set(key, value);
             executingCallback = true;
             try {

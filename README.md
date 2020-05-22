@@ -2,9 +2,8 @@
 
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
-Fluid enables distributed, collaborative applications by providing developers with eventually consistent [distributed
-data structures](./docs/guide/dds.md), a flexible component and app model, and a reference server implementation called
-[Routerlicious](./docs/architecture/server/README.md).
+Fluid powers distributed, modular, collaborative applications by providing developers with eventually consistent [distributed
+data structures](./docs/guide/dds.md), a flexible component and app model, and a simple, scalable server architecture.
 
 Teams are using Fluid for low latency collaboration, zero setup data persistance, and on-by-default cross app
 compatibility. Among other projects, our partner teams are building components for text editing, gaming, command line
@@ -16,40 +15,146 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-## Get started
+## Getting started using the Fluid Framework
 
-Get up and running quickly using our documentation at <https://aka.ms/fluid>.
+You may be here because you want to...
 
-## Build Status
+- Build a Component
+- Build a Container
+- Host Fluid containers in your application
+- Develop a new DDS
+- Implement a Fluid server
 
-|Project|Status|
-|-------|------|
-|[Packages](./packages)|[![API Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/10/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=10)|
-|[Routerlicious](./server/routerlicious)|[![Routerlicious Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/3/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=3)|
-|[Admin](./server/admin)|[![Admin Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/17/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=17)|
-|[Auspkn](./server/auspkn)|[![Auspkn Build Status](https://offnet.visualstudio.com/officenet/_apis/build/status/server/server%20-%20auspkn?branchName=master)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=25)
-|[Historian](./server/historian)|[![Historian Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/7/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=7)|
-|[Historian Chart](./server/charts/historian)|[![Historian Chart Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/13/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=13)|
-|[Cobalt](https://offnet.visualstudio.com/officenet/_git/cobalt-netcore)|[![Gitresources Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/12/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=12)|
-|[GitSSH](./server/gitssh)|[![GitSSH Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/5/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=5)|
-|[GitRest](./server/gitrest)|[![GitRest Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/8/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=8)|
-|[Headless Chrome](./tools/headless-chrome)|[![Headless Chrome Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/19/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=19)|
-|[Fluid metrics](./tools/fluid-metrics)|[![Metrics Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/20/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=20)|
-|[Fluid metrics chart](./server/charts/fluid-metrics)|[![Fluid Metrics Chart Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/21/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=21)|
+All of these are documented at <https://aka.ms/fluid>.
 
-## Deployment Regions
-To ensure minimal latency and smoother user experience, we deploy our backend in a few different Azure regions. If you are closer to west coast, use the following endpoints located at Washington:
-* https://alfred.wu2.prague.office-int.com
-* https://historian.wu2.prague.office-int.com
+## Contributing
 
-Our code is deployed immediately after check in to:
-* https://www.wu2-ppe.prague.office-int.com
-* https://historian.wu2.prague.office-int.com
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md) to Fluid.
 
-East coast developers are encouraged to use the following endpoints(located at Virginia):
-* https://alfred.eu2.prague.office-int.com
-* https://historian.eu2.prague.office-int.com
+* [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+* Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/master/CONTRIBUTING.md).
 
-Developers in Europe can use the following endpoints (Located at Netherlands):
-* https://alfred.we.prague.office-int.com
-* https://historian.we.prague.office-int.com
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
+the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
+with any additional questions or comments.
+
+### Coming soon...
+
+* Engage with other Fluid users and developers on [StackOverflow](https://stackoverflow.microsoft.com/questions/tagged/fluid) **(currently Msft internal only)**
+* Help each other in the [Fluid Community Discord]() **(community channel not yet created)**
+* Join the discussion on Twitter **(hashtag not established yet)**
+
+## Code Structure
+
+The core code is built into several large chunks ("minirepos", managed using [Lerna](https://lerna.js.org/)) which are versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the minirepos there are plenty of packages which are versioned independently.
+
+Here's the breakdown of the repo:
+
+* Fluid Framework Client Minirepo ([lerna.json](./lerna.json))
+  * [Packages](./packages)
+  * [Example Components](./components/examples)
+  * [Experimental Components](./components/experimental)
+  * [Example host](./examples/hosts/iframe-host)
+* Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
+  * [Packages](./server/routerlicious/packages)
+* Common Packages
+  * [Common Definitions](./common/lib/common-definitions)
+  * [Common Utils](./common/lib/common-utils)
+* Auxiliary Microservices supporting Routerlicious
+  * [Server dir](./server) (excluding [Routerlicious](./server/routerlicious) itself)
+* Internal/Misc Packages
+  * [Build Common](./common/build/build-common)
+  * [ESlint Config](./common/build/eslint-config-fluid)
+  * Other Example Hosts
+    * [Electron Host](./examples/hosts/electron-host)
+    * [Literate](./examples/hosts/literate)
+  * [Docs](./docs)
+  * [Tools](./tools)
+
+## Building
+
+In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/).
+
+> We recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different versions of Node.js side-by-side.
+
+Clone a copy of the repo and change to the repo root directory:
+
+```bash
+git clone https://github.com/microsoft/FluidFramework.git
+cd FluidFramework
+```
+
+Run the following to build the client packages:
+
+```bash
+npm install
+npm run build:fast
+```
+
+## Testing
+
+You can run the tests from root to run all tests (via lerna), or you can run a scoped set of tests by running the command from the directory you're interested in.
+
+> Note: Some of the tests depend on test collateral that lives in a submodule here: <https://github.com/microsoft/FluidFrameworkTestData>.  You may choose to fetch that collateral into your local repository, which is required to run all the tests - otherwise some will be skipped. First install git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
+>
+>  ```bash
+>  git lfs install
+>  git submodule init
+>  git submodule update
+>  ```
+>
+
+### Run the tests
+
+```bash
+npm run test
+```
+
+### Include code coverage
+
+```bash
+npm run test:coverage
+```
+
+### Mimic the official CI build
+
+_Note: The official build uses npm run test:full, which doesn’t work on windows._
+
+```bash
+npm run test:coverage
+npm run test:copyresults
+```
+
+### Run tests from within VS Code
+
+We've checked in [VS Code configuration](https://github.com/microsoft/FluidFramework/blob/master/.vscode/launch.json) enabling F5 from a `spec.ts` file to run those tests, if you set the debug configuration to "Debug Current Test".
+
+## Run it locally
+
+### Single browser window, two panes
+
+_This will use an in-memory implementation of the Fluid server to sync between the two panes in the browser window._
+
+* Choose a component under `/components`
+* Navigate to the component's directory, e.g. `/components/experimental/clicker`
+* `npm run start`
+* Browse to <http://localhost:8080> to interact with two copies of the component side-by-side
+
+### Multiple browser instances on the same device
+
+_This will run the local Fluid server implementation we like to call "tinylicious", so you can sync between multiple browser instances._
+
+First, start Tinylicous by running these commands from `/server/tinylicous`:
+
+```bash
+npm install
+npm run build
+npm run start
+```
+
+Then:
+
+* Navigate to your component of choice (same as above)
+* `npm run start:tinylicious`
+* Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate

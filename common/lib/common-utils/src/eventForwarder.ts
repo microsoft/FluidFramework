@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "./typedEventEmitter";
 
 /**

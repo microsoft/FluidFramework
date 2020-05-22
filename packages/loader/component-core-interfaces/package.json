@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-component-core-interfaces",
-  "version": "0.17.0",
+  "name": "@fluidframework/component-core-interfaces",
+  "version": "0.19.0",
   "description": "Fluid component interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,8 +25,8 @@
     "tsc:watch": "tsc --watch"
   },
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

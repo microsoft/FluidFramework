@@ -5,8 +5,8 @@
 
 /* eslint-disable no-null/no-null */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
-import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
+import { ICollection, IContext, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire
@@ -85,14 +85,19 @@ export class CheckpointContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpointParams) {
-        const deli: string = checkpoint.clear ?
-            "" :
-            JSON.stringify({
+        let deli = "";
+        if (!checkpoint.clear) {
+            const deliCheckpoint: IDeliCheckpoint = {
                 branchMap: checkpoint.branchMap,
                 clients: checkpoint.clients,
+                durableSequenceNumber: checkpoint.durableSequenceNumber,
                 logOffset: checkpoint.logOffset,
                 sequenceNumber: checkpoint.sequenceNumber,
-            });
+                epoch: checkpoint.epoch,
+                term: checkpoint.term,
+            };
+            deli = JSON.stringify(deliCheckpoint);
+        }
         const updateP = this.collection.update(
             {
                 documentId: this.id,

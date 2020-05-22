@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import * as api from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import * as api from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
-import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 
@@ -16,17 +15,13 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
 export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
-    private readonly queryString: string;
-
     constructor(
-        queryParams: { [key: string]: string },
         private readonly deltaFeedUrlProvider: () => Promise<string>,
         private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger?: ITelemetryLogger,
     ) {
-        this.queryString = getQueryString(queryParams);
     }
 
     public async get(
@@ -72,7 +67,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         const toInclusive = to === undefined ? undefined : to - 1;
 
         const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
-        const fullQueryString = `${(this.queryString ? `${this.queryString}&` : "?")}filter=${filter}`;
-        return `${await this.deltaFeedUrlProvider()}${fullQueryString}`;
+        const queryString = `?filter=${filter}`;
+        return `${await this.deltaFeedUrlProvider()}${queryString}`;
     }
 }

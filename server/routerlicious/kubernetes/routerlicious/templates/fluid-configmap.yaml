@@ -19,9 +19,6 @@ data:
             "timestamp": false,
             "label": "winston"
         },
-        "gateway": {
-            "url": "{{ .Values.gateway.externalUrl }}"
-        },
         "mongo": {
             "endpoint": "{{ .Values.mongodb.url }}",
             "collectionNames": {
@@ -69,19 +66,6 @@ data:
         "client": {
             "type": "browser",
             "permission": []
-        },
-        "login": {
-            "enabled": true,
-            "microsoft": {
-                "clientId": "{{ .Values.login.microsoft.clientId }}",
-                "secret": "{{ .Values.login.microsoft.secret }}"
-            },
-            "accounts": [
-                {
-                    "username": "{{ .Values.login.accounts.username }}",
-                    "password": "{{ .Values.login.accounts.password }}"
-                }
-            ]
         },
         "deli": {
             "topics": {
@@ -162,8 +146,7 @@ data:
             "connectionString": "{{ .Values.rabbitmq.connectionString }}"
         },
         "riddler": {
-            "port": 5000,
-            "key": "symmetric_key"
+            "port": 5000
         },
         "redis": {
             "host": "{{ .Values.redis.url }}",
@@ -182,21 +165,10 @@ data:
             "endpoint": "{{ .Values.error.endpoint }}"
         },
         "worker": {
-            "intelligence": {
-                "textAnalytics": {
-                    "key": "{{ .Values.worker.intelligence.textAnalytics.key }}"
-                },
-                "translation": {
-                    "key": "{{ .Values.worker.intelligence.translation.key }}"
-                }
-            },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
-            "repository": "FluidFramework",
-            "clusterNpm": "{{ .Values.worker.clusterNpm }}",
-            "npm": "{{ .Values.worker.npm }}",
             "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "tenantConfig": [
@@ -204,19 +176,5 @@ data:
             {{- range $i, $tenant := .Values.riddler.tenants }}
             {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
             {{- end }}
-        ],
-        "metric": {
-            "client": "telegraf",
-            "telegraf": {
-                "host": "polling-telegraf-service.metric",
-                "port": 8094
-            }
-        },
-        "minio": {
-            "endpoint": "{{ .Values.minio.endpoint }}",
-            "port": 9000,
-            "accessKey": "{{ .Values.minio.accessKey }}",
-            "secretKey": "{{ .Values.minio.secretKey }}",
-            "bucket": "agents"
-        }
+        ]
     }

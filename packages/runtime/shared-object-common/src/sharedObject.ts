@@ -4,17 +4,16 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
-import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-    IExperimentalComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
@@ -50,7 +49,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     /**
      * Connection state
      */
-    private _state = ConnectionState.Disconnected;
+    private _connected = false;
 
     /**
      * Locally applied operations not yet ACK'd by the server
@@ -71,8 +70,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets the connection state
      * @returns The state of the connection
      */
-    public get state(): ConnectionState {
-        return this._state;
+    public get connected(): boolean {
+        return this._connected;
     }
 
     /**
@@ -110,8 +109,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * Creates a JSON object with information about the shared object.
-     * @returns A JSON object containing the ValueType (always Shared) and the id of the shared object
+     * Not supported - use handles instead
      */
     public toJSON() {
         throw new Error("Only the handle can be converted to JSON");
@@ -172,16 +170,31 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
-        return expComponentRuntime?.isExperimentalComponentRuntime ?
-            expComponentRuntime.isLocal() || this.services === undefined : this.services === undefined;
+        return this.services === undefined || this.runtime.isLocal();
     }
 
     /**
      * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
-        return (!this.isLocal() || this.registered);
+        // If the dds is attached to the component then it should be registered irrespective of
+        // whether the container is attached/detached. If it is attached to its component, it will
+        // have its services. This will lead to get the dds summarized. It should also be registered
+        // if somebody called register on dds explicitly without attaching it which will set
+        // this.registered to be true.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const isRegistered = (!!this.services || this.registered);
+        assert(isRegistered ? true : this.isLocal());
+        return isRegistered;
+    }
+
+    /**
+     * {@inheritDoc ISharedObject.isAttached}
+     */
+    public isAttached(): boolean {
+        const isAttached = this.services !== undefined;
+        assert(isAttached ? this.isRegistered() : this.isLocal());
+        return isAttached;
     }
 
     /**
@@ -248,18 +261,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             return -1;
         }
 
-        // Send if we are connected - otherwise just add to the sent list
         let clientSequenceNumber = -1;
-        if (this.state === ConnectionState.Connected) {
+        if (this.connected) {
             // This assert !isLocal above means services can't be undefined.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
             this.runtime.notifyPendingMessages();
-            // Store the message for when it is ACKed and then submit to the server if connected
         }
 
+        // Store the message for when it is ACKed
         this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
     }
@@ -291,6 +303,32 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
+     * Promises that are waiting for an ack from the server before resolving should use this instead of new Promise.
+     * It ensures that if something changes that will interrupt that ack (e.g. the ComponentRuntime disposes),
+     * the Promise will reject.
+     */
+    protected async newAckBasedPromise<T>(
+        executor: (resolve: (value?: T | PromiseLike<T> | undefined) => void, reject: (reason?: any) => void) => void,
+    ): Promise<T> {
+        let rejectBecauseDispose: () => void;
+        return new Promise<T>((resolve, reject) => {
+            rejectBecauseDispose =
+                () => reject(new Error("ComponentRuntime disposed while this ack-based Promise was pending"));
+            this.runtime.on("dispose", rejectBecauseDispose);
+
+            // Even in this case don't return, so the caller's executor can run
+            if (this.runtime.disposed) {
+                reject("Preparing to wait for an op to be acked but ComponentRuntime has been disposed");
+            }
+
+            executor(resolve, reject);
+        }).finally(() => {
+            // Note: rejectBecauseDispose will never be undefined here
+            this.runtime.off("dispose", rejectBecauseDispose);
+        });
+    }
+
+    /**
      * Report ignorable errors in code logic or data integrity to the logger.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.
@@ -311,66 +349,46 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             process: (message, local) => {
                 this.process(message, local);
             },
-            setConnectionState: (state: ConnectionState) => {
-                this.setConnectionState(state);
+            setConnectionState: (connected: boolean) => {
+                this.setConnectionState(connected);
             },
         });
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.setConnectionState(this.services!.deltaConnection.state);
+        this.setConnectionState(this.services!.deltaConnection.connected);
     }
 
     /**
      * Set the state of connection to services.
      * @param state - The new state of the connection
      */
-    private setConnectionState(state: ConnectionState) {
-        if (this._state === state) {
+    private setConnectionState(connected: boolean) {
+        if (this._connected === connected) {
             // Not changing state, nothing the same.
             return;
         }
 
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
-        this._state = state;
+        this._connected = connected;
 
-        switch (state) {
-            case ConnectionState.Disconnected:
-                // Things that are true now...
-                // - if we had a connection we can no longer send messages over it
-                // - if we had outbound messages some may or may not be ACK'd. Won't know until next message
-                //
-                // - nack could get a new msn - but might as well do it in the join?
-                this.onDisconnect();
-                this.emit("disconnected");
-                break;
+        if (!connected) {
+            // Things that are true now...
+            // - if we had a connection we can no longer send messages over it
+            // - if we had outbound messages some may or may not be ACK'd. Won't know until next message
+            //
+            // - nack could get a new msn - but might as well do it in the join?
+            this.onDisconnect();
+        } else {
+            // Extract all un-ack'd payload operation
+            const pendingOps = this.pendingOps.toArray().map((value) => value.content);
+            this.pendingOps.clear();
 
-            case ConnectionState.Connecting:
-                // Things that are now true...
-                // - we will begin to receive inbound messages
-                // - we know what our new client id is.
-                // - still not safe to send messages
-
-                // While connecting we are still ticking off the previous messages
-                debug(`${this.id} is now connecting`);
-                break;
-
-            case ConnectionState.Connected: {
-                // Extract all un-ack'd payload operation
-                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
-                this.pendingOps.clear();
-
-                // And now we are fully connected
-                // - we have a client ID
-                // - we are caught up enough to attempt to send messages
-                this.onConnect(pendingOps);
-                this.emit("connected");
-                break;
-            }
-
-            default:
-                assert.ok(false, `Unknown ConnectionState ${state}`);
+            // And now we are fully connected
+            // - we have a client ID
+            // - we are caught up enough to attempt to send messages
+            this.onConnect(pendingOps);
         }
     }
 
@@ -413,8 +431,5 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         this.pendingOps.shift();
-        if (this.pendingOps.length === 0) {
-            this.emit("processed");
-        }
     }
 }

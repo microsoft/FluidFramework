@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     IDocumentAttributes,
     IDocumentSystemMessage,
@@ -15,8 +15,8 @@ import {
     SummaryType,
     SummaryObject,
     ISnapshotTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { IGitCache, IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDatabaseManager,
@@ -29,17 +29,17 @@ import {
     ITenantManager,
     RawOperationType,
     IExperimentalDocumentStorage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     getQuorumTreeEntries,
     IQuorumSnapshot,
     getGitType,
     getGitMode,
     mergeAppAndProtocolTree,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
+import { gitHashFile } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
@@ -70,6 +70,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         documentId: string,
         summary: ISummaryTree,
         sequenceNumber: number,
+        term: number,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId);
@@ -85,7 +86,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
             values,
         };
         const entries: ITreeEntry[] =
-            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, quorumSnapshot);
+            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             gitManager.createTree({ entries, id: null }),

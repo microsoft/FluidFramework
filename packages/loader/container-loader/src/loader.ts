@@ -4,39 +4,36 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import * as uuid from "uuid";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
-    IExperimentalLoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/container-definitions";
+import { DebugLogger, Deferred, performanceNow } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
     MultiDocumentServiceFactory,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const now = require("performance-now") as () => number;
 
 function canUseCache(request: IRequest): boolean {
     if (!request.headers) {
@@ -100,6 +97,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container");
+    }
+
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -129,12 +130,12 @@ function createCachedResolver(resolver: IUrlResolver) {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
+export class Loader extends EventEmitter implements ILoader {
+    public readonly isExperimentalLoader = true;
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-
-    public readonly isExperimentalLoader = true;
+    private readonly logger?: ITelemetryBaseLogger;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],
@@ -143,9 +144,11 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         private readonly options: any,
         private readonly scope: IComponent,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-        private readonly logger?: ITelemetryBaseLogger,
+        logger?: ITelemetryBaseLogger,
     ) {
         super();
+
+        this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
 
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
@@ -163,7 +166,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${now()} `);
+        debug(`Container creating in detached state: ${performanceNow()} `);
 
         return Container.create(
             this.codeLoader,
@@ -177,14 +180,14 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        debug(`Container resolve: ${now()} `);
+        debug(`Container resolve: ${performanceNow()} `);
 
         const resolved = await this.resolveCore(request);
         return resolved.container;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        debug(`Container loading: ${now()} `);
+        debug(`Container loading: ${performanceNow()} `);
 
         const resolved = await this.resolveCore(request);
         return resolved.container.request({ url: resolved.parsed.path });
@@ -192,7 +195,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
-        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
         const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
 

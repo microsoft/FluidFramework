@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, Deferred, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { DebugLogger, Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 // subset of IHostRuntime used by UpgradeManager
 export interface IUpgradeRuntime {

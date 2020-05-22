@@ -10,11 +10,12 @@ import {
     IOdspDriveItem,
     getOdspRefreshTokenFn,
     IOdspAuthRequestInfo,
-} from "@microsoft/fluid-odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
+} from "@fluidframework/odsp-utils";
+import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
+import { getForceTokenReauth } from "./fluidFetchArgs";
 
-async function resolveWrapper<T>(
+export async function resolveWrapper<T>(
     callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
     server: string,
     clientConfig: IClientConfig,
@@ -28,7 +29,7 @@ async function resolveWrapper<T>(
             fluidFetchWebNavigator,
             undefined,
             undefined,
-            forceTokenReauth,
+            forceTokenReauth || getForceTokenReauth(),
         );
 
         return callback({

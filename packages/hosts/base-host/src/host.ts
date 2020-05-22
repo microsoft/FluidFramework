@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     IFluidModule,
-} from "@microsoft/fluid-container-definitions";
-import { Loader } from "@microsoft/fluid-container-loader";
-import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
@@ -22,17 +22,13 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
+    seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
 
     if (seedPackages !== undefined) {
-        for (const pkg of seedPackages) {
-            if (Array.isArray(pkg)) {
-                await codeLoader.seedModule(pkg[0], pkg[1]);
-            } else {
-                await codeLoader.seedModule(pkg);
-            }
+        for (const [codeDetails, maybeModule] of seedPackages) {
+            await codeLoader.seedModule(codeDetails, maybeModule);
         }
     }
 
@@ -59,7 +55,7 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>,
     ) {
         this.loaderP = createWebLoader(
             hostConfig,

@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedString.
@@ -48,7 +48,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.insertMarkerRelative(relativePos1, refType, propertyInterceptionCallback(props));
@@ -75,7 +75,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 insertOp = sharedString.insertMarker(pos, refType, propertyInterceptionCallback(props));
@@ -102,7 +102,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.insertTextRelative(relativePos1, text, propertyInterceptionCallback(props));
@@ -125,7 +125,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.insertText(pos, text, propertyInterceptionCallback(props));
@@ -153,7 +153,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.replaceText(start, end, text, propertyInterceptionCallback(props));
@@ -179,7 +179,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.annotateMarkerNotifyConsensus(marker, propertyInterceptionCallback(props), callback);
@@ -205,7 +205,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.annotateMarker(marker, propertyInterceptionCallback(props), combiningOp);
@@ -234,7 +234,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 sharedString.annotateRange(start, end, propertyInterceptionCallback(props), combiningOp);
@@ -258,7 +258,7 @@ export function createSharedStringWithInterception(
         assert(executingCallback === false,
             "Interception wrapper methods called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             executingCallback = true;
             try {
                 segment.properties = propertyInterceptionCallback(segment.properties);

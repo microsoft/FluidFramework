@@ -4,16 +4,15 @@
  */
 
 import * as assert from "assert";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { strongAssert } from "@fluidframework/runtime-utils";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
 
-describe("Routerlicious", () => {
+describe("ConsensusOrderedCollection", () => {
     const factory = new ConsensusQueueFactory();
 
-    // tslint:disable:mocha-no-side-effect-code
     function generate(
         input: any[],
         output: any[],
@@ -55,6 +54,20 @@ describe("Routerlicious", () => {
                 assert.strictEqual(await removeItem(), undefined);
                 await addItem("testValue");
                 assert.strictEqual(await removeItem(), "testValue");
+                assert.strictEqual(await removeItem(), undefined);
+            });
+
+            it("Can add and remove a handle", async () => {
+                assert.strictEqual(await removeItem(), undefined);
+                const handle = testCollection.handle;
+                strongAssert(handle, "Need an actual handle to test this case");
+                await addItem(handle);
+
+                const acquiredValue = await removeItem();
+                assert.strictEqual(acquiredValue.path, handle.path);
+                const component = await handle.get();
+                assert.strictEqual(component.url, testCollection.url);
+
                 assert.strictEqual(await removeItem(), undefined);
             });
 
@@ -164,7 +177,7 @@ describe("Routerlicious", () => {
                 counter++;
                 const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
                 testCollection.connect(runtime.services);
-                deltaConnection.state = ConnectionState.Connected;
+                deltaConnection.connected = true;
                 return testCollection;
             },
             () => {
@@ -182,14 +195,14 @@ describe("Routerlicious", () => {
         };
         const testCollection = factory.create(runtime, "consensus-ordered-collection");
         testCollection.connect(runtime.services);
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
 
         const waitP = testCollection.add("sample");
 
         // Drop connection
-        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnection.connected = false;
         deltaConnFactory.clearMessages();
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
         deltaConnFactory.processAllMessages();
 
         await waitP;
@@ -201,9 +214,9 @@ describe("Routerlicious", () => {
         });
 
         // Drop connection one more time
-        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnection.connected = false;
         deltaConnFactory.clearMessages();
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
         deltaConnFactory.processAllMessages();
         setImmediate(() => deltaConnFactory.processAllMessages());
 

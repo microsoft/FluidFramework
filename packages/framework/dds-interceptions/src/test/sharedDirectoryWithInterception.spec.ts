@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { IDirectory, SharedDirectory, DirectoryFactory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { IDirectory, SharedDirectory, DirectoryFactory } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createDirectoryWithInterception } from "../map";
 
 describe("Shared Directory with Interception", () => {
@@ -98,7 +98,7 @@ describe("Shared Directory with Interception", () => {
             runtime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory

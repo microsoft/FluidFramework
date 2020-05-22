@@ -3,6 +3,9 @@
 
 FROM node:10.16.0-slim
 
+# To auth against private VSTS
+ARG NPM_TOKEN
+
 # Add Tini
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -12,7 +15,6 @@ RUN apt-get update && apt-get install -y build-essential libssl-dev python libcu
 
 # Copy over and build the server
 WORKDIR /home/node/server
-ARG NPM_TOKEN
 COPY .npmrc .
 COPY package.json .
 COPY package-lock.json .

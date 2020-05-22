@@ -3,22 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import * as React from "react";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;
-    style?: React.CSSProperties;
 }
 
 /**
  * Abstracts rendering of components as a React component.  Supports React elements, as well as
  * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
  *
- * If the component is none of these, we render an empty <span />
+ * If the component is none of these, we render nothing.
  */
 export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
+    public static canAdapt(component: IComponent) {
+        return (
+            React.isValidElement(component)
+            || component.IComponentReactViewable !== undefined
+            || component.IComponentHTMLView !== undefined
+            || component.IComponentHTMLVisual !== undefined
+        );
+    }
+
     private readonly element: JSX.Element;
 
     constructor(props: IEmbeddedComponentProps) {
@@ -47,7 +55,7 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
             return;
         }
 
-        this.element = <span />;
+        this.element = <></>;
     }
 
     public render() {
@@ -57,19 +65,18 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
 
 interface IHTMLViewProps {
     component: IComponentHTMLView;
-    style?: React.CSSProperties;
 }
 
 /**
  * Embeds a Fluid Component that supports IComponentHTMLView
  */
 class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, { }> {
-    private readonly ref: React.RefObject<HTMLSpanElement>;
+    private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLViewProps) {
         super(props);
 
-        this.ref = React.createRef<HTMLSpanElement>();
+        this.ref = React.createRef<HTMLDivElement>();
     }
 
     public async componentDidMount() {
@@ -80,25 +87,24 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, { }> {
     }
 
     public render() {
-        return <span style={this.props.style} ref={this.ref}></span>;
+        return <div ref={this.ref}></div>;
     }
 }
 
 interface IHTMLVisualProps {
     component: IComponentHTMLVisual;
-    style?: React.CSSProperties;
 }
 
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
 class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }> {
-    private readonly ref: React.RefObject<HTMLSpanElement>;
+    private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLVisualProps) {
         super(props);
 
-        this.ref = React.createRef<HTMLSpanElement>();
+        this.ref = React.createRef<HTMLDivElement>();
     }
 
     public async componentDidMount() {
@@ -110,6 +116,6 @@ class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }>
     }
 
     public render() {
-        return <span style={this.props.style} ref={this.ref}></span>;
+        return <div ref={this.ref}></div>;
     }
 }

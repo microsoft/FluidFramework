@@ -1,17 +1,76 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { EventEmitter } from "events";
+
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-const pkg = require("../package.json");
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+const diceValueKey = "diceValue";
+
 /**
- * Dice roller example using view interfaces and stock component classes.
+ * IDiceRoller describes the public API surface for our dice roller component.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+interface IDiceRoller extends EventEmitter {
+    /**
+     * Get the dice value as a number.
+     */
+    readonly value: number;
+
+    /**
+     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     */
+    roll: () => void;
+
+    /**
+     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     */
+    on(event: "diceRolled", listener: () => void): this;
+}
+
+interface IDiceRollerViewProps {
+    model: IDiceRoller;
+}
+
+const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+    const [diceValue, setDiceValue] = React.useState(props.model.value);
+
+    React.useEffect(() => {
+        const onDiceRolled = () => {
+            setDiceValue(props.model.value);
+        };
+        props.model.on("diceRolled", onDiceRolled);
+        return () => {
+            props.model.off("diceRolled", onDiceRolled);
+        };
+    }, [props.model]);
+
+    // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+    const diceChar = String.fromCodePoint(0x267F + diceValue);
+
+    return (
+        <div>
+            <span style={{ fontSize: 50 }}>{diceChar}</span>
+            <button onClick={props.model.roll}>Roll</button>
+        </div>
+    );
+};
+
+/**
+ * The DiceRoller is our implementation of the IDiceRoller interface.
+ */
+export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
+    public static get ComponentName() { return "@fluid-example/dice-roller"; }
+
     public get IComponentHTMLView() { return this; }
 
     /**
@@ -21,42 +80,35 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("diceValue", 1);
+        this.root.set(diceValueKey, 1);
+    }
+
+    protected async componentHasInitialized() {
+        this.root.on("valueChanged", (changed: IValueChanged) => {
+            if (changed.key === diceValueKey) {
+                this.emit("diceRolled");
+            }
+        });
     }
 
     /**
      * Render the dice.
      */
     public render(div: HTMLElement) {
-        const rerender = () => {
-            // Get our dice value stored in the root.
-            const diceValue = this.root.get<number>("diceValue");
-
-            ReactDOM.render(
-                <div>
-                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
-                    <button onClick={this.rollDice.bind(this)}>Roll</button>
-                </div>,
-                div,
-            );
-        };
-
-        rerender();
-        this.root.on("valueChanged", () => {
-            rerender();
-        });
+        ReactDOM.render(
+            <DiceRollerView model={ this } />,
+            div,
+        );
     }
 
-    private rollDice() {
-        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
+    public get value() {
+        return this.root.get(diceValueKey);
+    }
+
+    public readonly roll = () => {
         const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set("diceValue", rollValue);
-    }
-
-    private getDiceChar(value: number) {
-        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        return String.fromCodePoint(0x267F + value);
-    }
+        this.root.set(diceValueKey, rollValue);
+    };
 }
 
 /**
@@ -64,8 +116,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
-    pkg.name as string,
+    DiceRoller.ComponentName,
     DiceRoller,
     [],
-    {}
+    {},
 );

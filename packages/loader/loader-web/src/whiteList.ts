@@ -5,7 +5,7 @@
 
 import {
     ICodeWhiteList, IFluidPackage, IPackageConfig, IResolvedFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.

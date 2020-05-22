@@ -9,7 +9,7 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
@@ -20,7 +20,7 @@ import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -67,8 +67,6 @@ export function create(
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
-    app.use("/agent", routes.agent);
-    app.use("/", (request, response) => response.redirect(config.get("gateway:url")));
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {

@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentLoadable, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "./requestParser";
 
 /**
@@ -12,10 +12,11 @@ import { RequestParser } from "./requestParser";
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
  */
-export type RuntimeRequestHandler = (request: RequestParser, runtime: IHostRuntime) => Promise<IResponse | undefined>;
+export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
+=> Promise<IResponse | undefined>;
 
 export const componentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;
             if (request.headers && (typeof request.headers.wait) === "boolean") {
@@ -37,7 +38,7 @@ export const createComponentResponse = (component: IComponent) => {
 
 export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
     const pathParts = RequestParser.getPathParts(component.url);
-    return async (request: RequestParser, runtime: IHostRuntime) => {
+    return async (request: RequestParser, runtime: IContainerRuntime) => {
         for (let i = 0; i < pathParts.length; i++) {
             if (pathParts[i] !== request.pathParts[i]) {
                 return undefined;

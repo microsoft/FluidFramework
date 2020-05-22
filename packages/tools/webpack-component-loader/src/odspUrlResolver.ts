@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
+import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
 import {
     IOdspAuthRequestInfo,
     getDriveItemByRootFileName,
-} from "@microsoft/fluid-odsp-utils";
+} from "@fluidframework/odsp-utils";
 
-export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class OdspUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
@@ -52,8 +52,8 @@ export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
         return `/r11s/${encoded}`;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        return this.driverUrlResolver.requestUrl(resolvedUrl, request);
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

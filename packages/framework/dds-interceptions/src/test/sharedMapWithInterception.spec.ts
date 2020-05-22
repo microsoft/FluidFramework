@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { ISharedMap, SharedMap, MapFactory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createSharedMapWithInterception } from "../map";
 
 describe("Shared Map with Interception", () => {
@@ -42,7 +42,7 @@ describe("Shared Map with Interception", () => {
             runtime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         // Verifies that the props are stored correctly in the given map under a key derived from the

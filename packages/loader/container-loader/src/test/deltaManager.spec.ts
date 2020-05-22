@@ -5,10 +5,10 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
-import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { DebugLogger } from "@fluidframework/common-utils";
+import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@fluidframework/protocol-definitions";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 
@@ -19,6 +19,7 @@ describe("Loader", () => {
             let deltaManager: DeltaManager;
             let logger: ITelemetryLogger;
             let deltaConnection: MockDocumentDeltaConnection;
+            let clientSeqNumber = 0;
             let emitter: EventEmitter;
             let seq: number;
             let intendedResult: IProcessMessageResult;
@@ -44,6 +45,8 @@ describe("Loader", () => {
 
             async function emitSequentialOp(type: MessageType = MessageType.Operation) {
                 deltaConnection.emitOp(docId, [{
+                    clientId: "Some client ID",
+                    clientSequenceNumber: ++clientSeqNumber,
                     minimumSequenceNumber: 0,
                     sequenceNumber: seq++,
                     type,
@@ -74,6 +77,7 @@ describe("Loader", () => {
                     "test",
                     (messages) => emitter.emit(submitEvent, messages),
                 );
+                clientSeqNumber = 0;
                 const service = new MockDocumentService(
                     undefined,
                     () => deltaConnection,
@@ -86,7 +90,7 @@ describe("Loader", () => {
                     logger,
                     false,
                 );
-                deltaManager.attachOpHandler(0, 0, {
+                deltaManager.attachOpHandler(0, 0, 1, {
                     process: (message) => intendedResult,
                     processSignal() {},
                 });
@@ -101,7 +105,7 @@ describe("Loader", () => {
             });
 
             describe("Update Minimum Sequence Number", () => {
-                const expectedTimeout = 100;
+                const expectedTimeout = 2000;
 
                 // helper function asserting that there is exactly one well-formed no-op
                 function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {

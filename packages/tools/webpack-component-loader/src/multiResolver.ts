@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IExperimentalUrlResolver, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { TestResolver } from "@microsoft/fluid-local-driver";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { TestResolver } from "@fluidframework/local-driver";
+import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { getRandomName } from "@fluidframework/server-services-client";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -64,9 +64,8 @@ const getUser = (): IDevServerUser => ({
     name: getRandomName(),
 });
 
-export class MultiUrlResolver implements IExperimentalUrlResolver {
+export class MultiUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
-
     private readonly urlResolver: IUrlResolver;
     constructor(
         private readonly rawUrl: string,
@@ -75,17 +74,12 @@ export class MultiUrlResolver implements IExperimentalUrlResolver {
         this.urlResolver = getUrlResolver(documentId, options);
     }
 
-    async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        let url = request.url;
+    async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${this.rawUrl}/${this.documentId}/${url}`,
-            status: 200,
-        };
-        return response;
+        return `${this.rawUrl}/${this.documentId}/${url}`;
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {

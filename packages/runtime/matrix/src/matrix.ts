@@ -9,15 +9,15 @@ import {
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,
     Serializable,
     IChannelAttributes,
-} from "@microsoft/fluid-runtime-definitions";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/component-runtime-definitions";
+import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";

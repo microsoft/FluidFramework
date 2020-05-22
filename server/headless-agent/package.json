@@ -21,13 +21,13 @@
     "@microsoft/fluid-base-host": "^0.13.19190",
     "@microsoft/fluid-container-loader": "^0.13.19190",
     "@microsoft/fluid-driver-definitions": "^0.13.19190",
-    "@microsoft/fluid-protocol-definitions": "^0.1001.19190",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
     "@microsoft/fluid-routerlicious-driver": "^0.13.19190",
     "@microsoft/fluid-routerlicious-host": "^0.13.19190",
     "@microsoft/fluid-runtime-definitions": "^0.13.19190",
-    "@microsoft/fluid-server-services": "^0.1001.19190",
-    "@microsoft/fluid-server-services-core": "^0.1001.19190",
-    "@microsoft/fluid-server-services-utils": "^0.1001.19190",
+    "@microsoft/fluid-server-services": "^0.1004.1",
+    "@microsoft/fluid-server-services-core": "^0.1004.1",
+    "@microsoft/fluid-server-services-utils": "^0.1004.1",
     "@microsoft/fluid-web-code-loader": "^0.13.19190",
     "commander": "^2.15.1",
     "debug": "^4.1.1",
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.13.0",
     "@types/async-lock": "^1.1.1",
-    "@types/debug": "^0.0.31",
+    "@types/debug": "^4.1.5",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/mongodb": "^3.1.22",
     "@types/puppeteer": "^1.12.3",
@@ -48,7 +48,7 @@
     "ts-loader": "^5.3.1",
     "tslint": "^5.10.0",
     "typescript": "~3.7.4",
-    "webpack": "^4.17.1",
+    "webpack": "^4.43.0",
     "webpack-cli": "^3.1.0"
   }
 }

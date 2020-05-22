@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-base-host",
-  "version": "0.17.0",
+  "name": "@fluidframework/base-host",
+  "version": "0.19.0",
   "description": "Loader client app",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,21 +47,21 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.17.0",
-    "@microsoft/fluid-container-definitions": "^0.17.0",
-    "@microsoft/fluid-container-loader": "^0.17.0",
-    "@microsoft/fluid-driver-definitions": "^0.17.0",
-    "@microsoft/fluid-protocol-base": "^0.1004.1",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
-    "@microsoft/fluid-web-code-loader": "^0.17.0"
+    "@fluidframework/common-definitions": "^0.18.0-0",
+    "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/container-definitions": "^0.19.0",
+    "@fluidframework/container-loader": "^0.19.0",
+    "@fluidframework/driver-definitions": "^0.19.0",
+    "@fluidframework/protocol-base": "^0.1006.0-0",
+    "@fluidframework/protocol-definitions": "^0.1006.0-0",
+    "@fluidframework/web-code-loader": "^0.19.0"
   },
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/test-runtime-utils": "^0.19.0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.17.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
-import { ICredentials } from "@microsoft/fluid-server-services-client";
+import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IErrorTrackingService } from "@fluidframework/protocol-definitions";
+import { ICredentials } from "@fluidframework/server-services-client";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";

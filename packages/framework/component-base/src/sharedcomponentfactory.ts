@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory, ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { LazyPromise } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/runtime-definitions";
+import {
+    IComponentRuntime,
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory, ISharedObject } from "@fluidframework/shared-object-base";
+import { LazyPromise } from "@fluidframework/common-utils";
 import { SharedComponent } from "./sharedcomponent";
 
 export class SharedComponentFactory<T extends SharedComponent> implements IComponentFactory {
@@ -64,9 +66,9 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     }
 
     public create(parentContext: IComponentContext, props?: any) {
-        const { hostRuntime, packagePath } = parentContext;
+        const { containerRuntime, packagePath } = parentContext;
 
-        const childContext = hostRuntime.createComponentContext(
+        const childContext = containerRuntime.createComponentContext(
             packagePath.concat(this.type),
             props);
 

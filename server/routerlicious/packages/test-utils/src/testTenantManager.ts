@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager } from "@microsoft/fluid-server-services-client";
-import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage, IDb } from "@microsoft/fluid-server-services-core";
+import { GitManager } from "@fluidframework/server-services-client";
+import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage, IDb } from "@fluidframework/server-services-core";
 import { TestHistorian } from "./testHistorian";
 import { TestDb } from "./testCollection";
 

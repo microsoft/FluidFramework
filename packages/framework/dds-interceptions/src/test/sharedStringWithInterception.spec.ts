@@ -4,10 +4,10 @@
  */
 
 import * as assert from "assert";
-import { PropertySet } from "@microsoft/fluid-merge-tree";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { PropertySet } from "@fluidframework/merge-tree";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
 
 describe("Shared String with Interception", () => {
@@ -54,7 +54,7 @@ describe("Shared String with Interception", () => {
             runtime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {

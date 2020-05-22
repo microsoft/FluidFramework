@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ScriptoriumLambdaFactory } from "@microsoft/fluid-server-lambdas";
-import * as services from "@microsoft/fluid-server-services";
-import { IPartitionLambdaFactory, MongoManager } from "@microsoft/fluid-server-services-core";
+import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
+import * as services from "@fluidframework/server-services";
+import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -19,6 +19,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     await opCollection.createIndex(
         {
             "documentId": 1,
+            "operation.term": 1,
             "operation.sequenceNumber": 1,
             "tenantId": 1,
         },

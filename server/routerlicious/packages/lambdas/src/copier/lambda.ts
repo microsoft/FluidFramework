@@ -11,7 +11,7 @@ import {
     IPartitionLambda,
     IRawOperationMessage,
     IRawOperationMessageBatch,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:

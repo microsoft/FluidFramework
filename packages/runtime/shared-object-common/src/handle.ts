@@ -8,7 +8,7 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ISharedObject } from "./types";
 
 /**
@@ -20,6 +20,7 @@ import { ISharedObject } from "./types";
  * and loads shared object.
  */
 export class SharedObjectComponentHandle implements IComponentHandle {
+    private isHandleAttached: boolean = false;
     /**
      * The set of handles to other shared objects that should be registered before this one.
      */
@@ -33,7 +34,11 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * Whether services have been attached for the associated shared object.
      */
     public get isAttached(): boolean {
-        return !this.value.isLocal();
+        // Attached tells if the shared object is attached to parent component. Parent component should also be
+        // attached. It does not matter if the container is live or local.
+        // If the dds was registered to attached component, it should have get attached and isAttached should
+        // be true in that case.
+        return this.value.isAttached();
     }
 
     /**
@@ -60,6 +65,11 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * When attaching the handle, it registers the associated shared object.
      */
     public attach(): void {
+        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
+        if (this.isHandleAttached) {
+            return;
+        }
+        this.isHandleAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
                 handle.attach();
@@ -67,7 +77,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
 
             this.bound = undefined;
         }
-
+        this.routeContext.attach();
         this.value.register();
     }
 
@@ -76,6 +86,10 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }

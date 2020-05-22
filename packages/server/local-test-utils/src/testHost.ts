@@ -4,28 +4,31 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleContainerRuntimeFactory,
     ContainerServiceRegistryEntries,
-} from "@microsoft/fluid-aqueduct";
+    generateContainerServicesRequestHandler,
+} from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentLoadable,
     IComponentRunnable,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
-    NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+    NamedComponentRegistryEntries, IComponentContext, IComponentRuntimeChannel,
+} from "@fluidframework/runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-driver";
+} from "@fluidframework/local-driver";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { TestDataStore } from "./testDataStore";
 import { TestCodeLoader } from "./";
 
@@ -38,7 +41,7 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type: string = "@chaincode/test-root-component";
+    public static readonly type: string = "@fluid-example/test-root-component";
 
     public static readonly codeProposal: IFluidCodeDetails = {
         package: TestRootComponent.type,
@@ -52,16 +55,26 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
         return;
     }
 
-    // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any,
+        id: string, type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(type, props);
+        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+            this.root.set(id, component.handle);
+            return component;
+        });
     }
 
-    // Make this function public so TestHost can use them
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
-        return super.getComponent_UNSAFE<T>(id);
+    public async createComponentWithRealizationFn(
+        pkg: string[], realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
+        const componentRuntimeChannel = await (this.context.containerRuntime as IContainerRuntime)
+            .createComponentWithRealizationFn(pkg, realizationFn);
+        return componentRuntimeChannel;
+    }
+
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**
@@ -161,29 +174,26 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
+        private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
-        const runtimeFactory = {
-            IRuntimeFactory: undefined,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                context,
-                TestRootComponent.type,
-                [
-                    ...componentRegistry,
-                    [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(
-                            TestRootComponent.type,
-                            TestRootComponent,
-                            sharedObjectFactories,
-                            {}),
-                    )],
-                ],
-                this.containerServiceRegistry),
-        };
-        runtimeFactory.IRuntimeFactory = runtimeFactory;
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
+            TestRootComponent.type,
+            [
+                ...componentRegistry,
+                [TestRootComponent.type, Promise.resolve(
+                    new PrimedComponentFactory(
+                        TestRootComponent.type,
+                        TestRootComponent,
+                        sharedObjectFactories,
+                        {}),
+                )],
+            ],
+            this.providerEntries,
+            [generateContainerServicesRequestHandler(this.containerServiceRegistry)],
+        );
 
         const store = new TestDataStore(
             new TestCodeLoader([
@@ -195,7 +205,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
+        this.root = store.open<TestRootComponent>("testHostContainer", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
@@ -208,6 +218,7 @@ export class TestHost {
             this.sharedObjectFactories,
             this.deltaConnectionServer,
             this.scope,
+            this.providerEntries,
             this.containerServiceRegistry);
     }
 
@@ -215,24 +226,25 @@ export class TestHost {
      * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param services component services for query interface
+     * @param props optional props to be passed to the component on creation
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string,
         type: string,
         props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(type, props);
+        return root.createAndAttachComponent<T>(id, type, props);
     }
 
     /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent_UNSAFE<T>(id);
+        return root.getComponent<T>(id);
     }
 
     /**

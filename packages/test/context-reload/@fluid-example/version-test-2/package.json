@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/version-test-2",
-  "version": "0.17.0",
+  "version": "0.19.0",
   "private": true,
   "description": "Component to test version conversion.",
   "repository": "microsoft/prague",
@@ -21,18 +21,17 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.17.0",
-    "@microsoft/fluid-view-interfaces": "^0.17.0",
+    "@fluidframework/aqueduct": "^0.19.0",
+    "@fluidframework/view-interfaces": "^0.19.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.17.0",
+    "@fluidframework/webpack-component-loader": "^0.19.0",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

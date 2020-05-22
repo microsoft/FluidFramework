@@ -8,9 +8,10 @@ import * as util from "util";
 import {
     IConsumer,
     IPartition,
+    IPartitionWithEpoch,
     IQueuedMessage,
     IZookeeperClient,
-    IPartitionWithEpoch } from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
@@ -170,21 +171,27 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
+        let epochs: number[];
+
         if (this.zookeeperEndpoint) {
             const epochsP = new Array<Promise<number>>();
             for (const partition of partitions) {
                 epochsP.push(this.zookeeper.getPartitionLeaderEpoch(this.topic, partition.partition));
             }
-            const epochs = await Promise.all(epochsP);
-            const partitionsWithEpoch: IPartitionWithEpoch[] = [];
-            for (let i = 0; i < partitions.length; ++i) {
-                const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
-                partitionWithEpoch.leaderEpoch = epochs[i];
-                partitionsWithEpoch.push(partitionWithEpoch);
-            }
-            return partitionsWithEpoch;
+
+            epochs = await Promise.all(epochsP);
         } else {
-            return new Array(partitions.length).fill(0);
+            epochs = new Array(partitions.length).fill(0);
         }
+
+        const partitionsWithEpoch: IPartitionWithEpoch[] = [];
+
+        for (let i = 0; i < partitions.length; ++i) {
+            const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
+            partitionWithEpoch.leaderEpoch = epochs[i];
+            partitionsWithEpoch.push(partitionWithEpoch);
+        }
+
+        return partitionsWithEpoch;
     }
 }

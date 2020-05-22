@@ -8,8 +8,11 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
     IFluidResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+    IResolvedUrl,
+} from "@fluidframework/driver-definitions";
 import * as Comlink from "comlink";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { InnerUrlResolver } from "./innerUrlResolver";
@@ -68,5 +71,14 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const outerDocumentServiceProxy = await this.outerProxy.createDocumentService();
 
         return InnerDocumentService.create(this.outerProxy.clients[outerDocumentServiceProxy]);
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

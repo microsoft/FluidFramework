@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     MapKernel,
-} from "@microsoft/fluid-map";
+} from "@fluidframework/map";
 import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObjectFactory, SharedObject,
-} from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     Interval,

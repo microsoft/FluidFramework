@@ -9,9 +9,9 @@ import * as express from "express";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
-import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
-import { IFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
+import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 import { RouteOptions } from "./loader";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
@@ -20,9 +20,8 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = (app: express.Application, server: WebpackDevServer, env?: RouteOptions) => {
-    app.get("/", (req, res) => env?.openMode === "detached" ?
-        res.redirect(`/create`) : res.redirect(`/${moniker.choose()}`));
+export const before = (app: express.Application) => {
+    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
@@ -175,9 +174,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return;
             }
         }
-        if (req.params.id === "create") {
-            req.params.openMode = "detached";
-        }
+
         fluid(req, res, baseDir, options);
     });
 };
@@ -189,38 +186,28 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
 
     const html =
         `<!DOCTYPE html>
-<html lang="en">
+<html style="height: 100%;" lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${documentId}</title>
 </head>
-<body style="margin: 0; padding: 0">
-    <div>
-        <button id="attach-button" disabled>Attach!</button>
-    </div>
-    <div>
-        <textarea id="text" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
-    </div>
-    <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative">
+<body style="margin: 0; height: 100%;">
+    <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/node_modules/@fluidframework/webpack-component-loader/dist/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;
-        const attached = "${req.params.openMode}" !== "detached";
         FluidLoader.start(
             "${documentId}",
             pkgJson,
             window["${packageJson.fluid.browser.umd.library}"],
             options,
-            document.getElementById("content"),
-            document.getElementById("attach-button"),
-            document.getElementById("text"),
-            attached)
+            document.getElementById("content"))
         .then(() => fluidStarted = true)
         .catch((error) => console.error(error));
     </script>

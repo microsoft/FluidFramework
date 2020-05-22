@@ -29,7 +29,6 @@ export function create(
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any): Router {
-
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
     const webLoader = new WebCodeLoader(new WhiteList());

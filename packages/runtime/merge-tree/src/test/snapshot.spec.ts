@@ -4,11 +4,11 @@
  */
 
 import * as assert from "assert";
-import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { ISequencedDocumentMessage, ITree } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
-import { Snapshot } from "../snapshot";
+import { SnapshotV1 } from "../snapshotV1";
 import { TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a snapshot
@@ -75,7 +75,7 @@ class TestString {
     }
 
     public getSnapshot() {
-        const snapshot = new Snapshot(this.client.mergeTree, this.client.logger);
+        const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
         snapshot.extractSync();
         return snapshot.emit([]);
     }
@@ -185,7 +185,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments below MSN in body", async () => {
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
+        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ true);
         }
 
@@ -193,7 +193,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments above MSN in body", async () => {
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
+        for (let i = 0; i < SnapshotV1.sizeOfChunks + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ false);
         }
 

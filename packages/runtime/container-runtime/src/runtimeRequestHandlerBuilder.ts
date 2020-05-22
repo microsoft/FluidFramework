@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 
 /**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
-  * The provided handlers sequentially applied until one is able to statify the request.
+  * The provided handlers sequentially applied until one is able to satisfy the request.
   */
 export class RuntimeRequestHandlerBuilder {
     private readonly handlers: RuntimeRequestHandler[] = [];
@@ -21,7 +21,7 @@ export class RuntimeRequestHandlerBuilder {
         }
     }
 
-    public async handleRequest(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+    public async handleRequest(request: IRequest, runtime: IContainerRuntime): Promise<IResponse> {
         const parser = new RequestParser(request);
         for (const handler of this.handlers) {
             const response = await handler(parser, runtime);

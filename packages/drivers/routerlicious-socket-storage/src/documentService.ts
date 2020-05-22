@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
-import * as api from "@microsoft/fluid-driver-definitions";
-import { IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
-import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import * as api from "@fluidframework/driver-definitions";
+import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
+import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import * as io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -19,7 +19,7 @@ import { TokenProvider } from "./tokens";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+export class DocumentService implements api.IDocumentService {
     public readonly isExperimentalDocumentService = true;
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,

@@ -16,7 +16,7 @@ import {
     ISummaryTree,
     MessageType,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
@@ -34,6 +34,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
         case MessageType.Propose:
         case MessageType.Reject:
         case MessageType.NoOp:
+        case MessageType.NoClient:
         case MessageType.Summarize:
         case MessageType.SummaryAck:
         case MessageType.SummaryNack:
@@ -48,16 +49,18 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
  */
 export class ProtocolOpHandler {
     public readonly quorum: Quorum;
-
+    public readonly term: number;
     constructor(
         private readonly branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
+        term: number | undefined,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void) {
+        this.term = term ?? 1;
         this.quorum = new Quorum(
             minimumSequenceNumber,
             members,
@@ -145,6 +148,7 @@ export class ProtocolOpHandler {
             branch: this.branchId,
             minimumSequenceNumber: this.minimumSequenceNumber,
             sequenceNumber: this.sequenceNumber,
+            term: this.term,
         };
 
         const summary: ISummaryTree = {

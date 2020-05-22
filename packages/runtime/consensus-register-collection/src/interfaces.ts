@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import {
+    IComponentRuntime,
+    ISharedObjectServices,
+    IChannelAttributes,
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * Consensus Register Collection channel factory interface
@@ -23,7 +27,7 @@ export interface IConsensusRegisterCollectionFactory extends ISharedObjectFactor
     create(document: IComponentRuntime, id: string): IConsensusRegisterCollection;
 }
 
-export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents{
+export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void);
 }
 

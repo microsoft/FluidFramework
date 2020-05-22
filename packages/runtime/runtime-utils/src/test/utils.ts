@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle } from "../componentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -17,7 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     IConnect,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { CreationServerMessagesHandler } from "./creationDriverServer";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -190,7 +190,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
     }
 
     /**
-     * Initialize the details for the connction and send the join op.
+     * Initialize the details for the connection and send the join op.
      * @param client - Client who initiated the connection.
      * @param mode - Mode of the connection.
      */

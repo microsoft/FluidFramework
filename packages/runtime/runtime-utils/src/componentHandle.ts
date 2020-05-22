@@ -9,7 +9,7 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 /**
  * Handle to a dynamically loaded component
@@ -49,6 +49,10 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         throw new Error("Cannot bind to an attached handle");
     }
 

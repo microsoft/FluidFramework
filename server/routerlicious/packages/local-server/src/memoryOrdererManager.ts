@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
+import { LocalOrderer } from "@fluidframework/server-memory-orderer";
 import {
     GitManager,
     IHistorian,
-} from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-services-client";
 import {
     IOrderer,
     IOrdererManager,
@@ -16,7 +16,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
     ILogger,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 
 export class MemoryOrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
@@ -75,11 +75,18 @@ export class MemoryOrdererManager implements IOrdererManager {
             this.logger,
             gitManager);
 
-        // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not
-        // wait on dependant promises in lambda startup. So we give it time to prepare these before actually resolving
-        // the promise.
-        // tslint:disable-next-line:no-string-based-set-timeout
-        await new Promise((resolve) => { setTimeout(resolve, 1000); });
+        const lambdas = [
+            orderer.broadcasterLambda,
+            orderer.deliLambda,
+            orderer.foremanLambda,
+            orderer.scribeLambda,
+            orderer.scriptoriumLambda,
+        ];
+        await Promise.all(lambdas.map(async (l)=>{
+            if (l.state === "created") {
+                return new Promise((resolve) => l.once("started", () => resolve()));
+            }
+        }));
 
         return orderer;
     }

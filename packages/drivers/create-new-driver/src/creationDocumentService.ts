@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import * as api from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { CreationDeltaStorageService } from "./creationDeltaStorageService";
 import { CreationDocumentDeltaConnection } from "./creationDocumentDeltaConnection";
 import { CreationDocumentStorageService } from "./creationDocumentStorageService";
@@ -19,6 +19,11 @@ export class CreationDocumentService implements api.IDocumentService {
         private readonly documentId: string,
         private readonly tenantId: string) {
         this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): api.IResolvedUrl {
+        throw new Error("Not implemented");
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
