@@ -588,6 +588,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         switch (type) {
             case MessageType.Operation:
             {
+                // For Operations, find the right channel and trigger resubmission on it.
                 const envelope = content as IEnvelope;
                 const channelContext = this.contexts.get(envelope.address);
                 assert(channelContext, "There should be a channel context for the op");
@@ -597,8 +598,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
                 break;
             }
-            default:
+            case MessageType.Attach:
+                // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);
+                break;
+            default:
+                // For other types of messages, log an error indicating a resubmit was triggered for it.
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedComponentResubmitMessage",
+                    messageType: type,
+                });
         }
     }
 

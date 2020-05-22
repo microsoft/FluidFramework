@@ -212,14 +212,23 @@ export class PendingStateManager {
                     break;
                 case "message":
                     {
-                        // For messages of type Operation, call reSubmit which will find the right component and trigger
-                        // resubmission on it.
-                        // For all other messages, just submit it again.
-                        if (pendingState.messageType === MessageType.Operation) {
-                            this.containerRuntime.reSubmitFn(pendingState.content, pendingState.localOpMetadata);
-                        } else {
-                            this.containerRuntime.submitFn(
-                                pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
+                        switch (pendingState.messageType) {
+                            case MessageType.Operation:
+                                // For Operations, call reSubmitFn which will find the right component and trigger
+                                // resubmission on it.
+                                this.containerRuntime.reSubmitFn(pendingState.content, pendingState.localOpMetadata);
+                                break;
+                            case MessageType.Attach:
+                                // For Attach messages, call submitFn which will submit the message again.
+                                this.containerRuntime.submitFn(
+                                    pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
+                                break;
+                            default:
+                                // For all other message types, log an event indicating a resubmit was triggered for it.
+                                this.logger.sendErrorEvent({
+                                    eventName: "UnexpectedContainerResubmitMessage",
+                                    messageType: pendingState.messageType,
+                                });
                         }
                     }
                     break;
