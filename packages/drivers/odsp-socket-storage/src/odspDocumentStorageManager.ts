@@ -35,7 +35,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, ICacheLock } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -223,16 +223,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return hierarchicalTree;
     }
 
-    private async safePutToPersistedCache<T>(key: string, put: (lock: ICacheLock) => Promise<T>): Promise<T> {
-        let value = await this.cache.persistedCache.get(key);
-        if (value === undefined) {
-            const lock = await this.cache.persistedCache.lock(key);
-            value = await this.cache.persistedCache.get(key) ?? await put(lock);
-            await lock.release();
-        }
-        return value;
-    }
-
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid === this.documentId) {
@@ -288,10 +278,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                const fetchAndCacheOdspSnapshot = async (lock: ICacheLock) => {
-                    assert(
-                        lock.key === snapshotCacheKey &&
-                        await this.cache.persistedCache.get(snapshotCacheKey) === undefined);
+                // Note: This function has a race condition - another caller may come past the undefined check
+                // while the other first caller is awaiting later async code in this block.
+                const fetchOdspSnapshotWithCaching = async () => {
+                    let snapshot: IOdspSnapshot = await this.cache.persistedCache.get(snapshotCacheKey);
+                    if (snapshot !== undefined) {
+                        return snapshot;
+                    }
 
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -304,7 +297,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        const snapshot: IOdspSnapshot = response.content;
+                        snapshot = response.content;
 
                         const props = {
                             trees: snapshot.trees ? snapshot.trees.length : 0,
@@ -316,7 +309,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
-                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot, lock);
+
+                        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+                        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+                        // want to use the same getLatest result.
+                        await this.cache.persistedCache.put(snapshotCacheKey, snapshot, 10 * 1000 /* durationMs */);
                         return snapshot;
                     } catch (error) {
                         event.cancel({}, error);
@@ -324,8 +321,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     }
                 };
 
-                const odspSnapshot: IOdspSnapshot =
-                    await this.safePutToPersistedCache(snapshotCacheKey, fetchAndCacheOdspSnapshot);
+                const odspSnapshot: IOdspSnapshot = await fetchOdspSnapshotWithCaching();
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();

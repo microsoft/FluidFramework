@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { PromiseCache } from "@microsoft/fluid-common-utils";
+import { PromiseCache, PromiseCacheExpiry } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
-
-export interface ICacheLock {
-    key: string;
-    lockId: number;
-    release: () => Promise<void>;
-}
 
 /**
  * A cache for data persisted between sessions.  Only serializable content should be put here!
@@ -20,11 +13,6 @@ export interface ICacheLock {
  */
 export interface IPersistedCache {
     /**
-     * lock the key for writing
-     */
-    lock(key: string): Promise<ICacheLock>;
-
-    /**
      * Get the cache value of the key
      */
     get(key: string): Promise<any>;
@@ -32,69 +20,53 @@ export interface IPersistedCache {
     /**
      * Delete value in the cache
      */
-    remove(key: string, lock: ICacheLock): Promise<void>;
+    remove(key: string): Promise<void>;
 
     /**
      * Put the value into cache
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      */
-    put(key: string, value: any, lock: ICacheLock, expiryTime?: number): Promise<void>;
+    put(key: string, value: any, expiryTime?: number): Promise<void>;
 }
 
-export class LocalCache extends EventEmitter implements IPersistedCache {
-    private readonly cache: PromiseCache<string, any> = new PromiseCache<string, any>({
-        expiry: { policy: "absolute", durationMs: 10 * 1000 },
-    });
-    private readonly heldLockIds: Map<string, number> = new Map();
-    private nextLockId: number = 0;
-
-    private lockNow(key: string): ICacheLock {
-        const lock: ICacheLock = {
-            key,
-            lockId: ++this.nextLockId,
-            release: async () => {
-                this.heldLockIds.delete(key);
-                this.emit("lockRelease", key);
-            },
-        };
-        this.heldLockIds.set(key, lock.lockId);
-        return lock;
-    }
-
-    private isLockCurrent(lock: ICacheLock, key: string) {
-        return lock.lockId === this.heldLockIds.get(key);
-    }
-
-    async lock(key: string): Promise<ICacheLock> {
-        if (!this.heldLockIds.has(key)) {
-            return this.lockNow(key);
-        }
-
-        //* todo: add expiration on the lock (where is expiration specificed?)
-        return new Promise((resolve) => {
-            this.on("lockRelease", (releasedKey) => {
-                if (releasedKey === key) {
-                    resolve(this.lockNow(key));
-                }
-            });
-        });
-    }
+/**
+ * Default local-only implementation of IPersistedCache,
+ * used if no persisted cache is provided by the host
+ */
+export class LocalCache implements IPersistedCache {
+    private readonly cache = new Map<string, any>();
 
     async get(key: string): Promise<any> {
         return this.cache.get(key);
     }
 
-    async remove(key: string, lock: ICacheLock) {
-        if (this.isLockCurrent(lock, key)) {
-            this.cache.remove(key);
+    async remove(key: string) {
+        this.cache.delete(key);
+    }
+
+    async put(key: string, value: any, expiryTime?: number) {
+        this.cache.set(key, value);
+        if (expiryTime) {
+            this.gc(key, expiryTime);
         }
     }
 
-    //* todo: reimplement expiration
-    async put(key: string, value: any, lock: ICacheLock, expiryTime?: number | undefined) {
-        if (this.isLockCurrent(lock, key)) {
-            this.cache.addValue(key, value);
-        }
+    private gc(key: string, expiryTime: number) {
+        setTimeout(() => {
+            if (this.cache.has(key)) {
+                this.cache.delete(key);
+            }
+        },
+        expiryTime);
+    }
+}
+
+export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
+    constructor(
+        expiry: { policy: "sliding", durationMs: 3600000 } & PromiseCacheExpiry,
+        removeOnError?: (e: any) => boolean,
+    ) {
+        super({ expiry, removeOnError });
     }
 }
 
@@ -108,9 +80,10 @@ export interface IOdspCache {
     readonly persistedCache: IPersistedCache;
 
     /**
-     * Cache of joined/joining sessions
+     * Cache of joined/joining session info
+     * This cache will use a one hour sliding expiration window.
      */
-    readonly sessionCache: PromiseCache<string, ISocketStorageDiscovery>;
+    readonly sessionCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -118,33 +91,17 @@ export interface IOdspCache {
     readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 }
 
-//* todo: Write good comments
-//* todo: double-check expirations
 export class OdspCache implements IOdspCache {
-    /**
-     * Permanent cache of
-     * We are storing the getLatest response in cache for 10s so that other
-     * containers initializing in the same timeframe can use this
-     * result. We are choosing a small time period as the summarizes
-     * are generated frequently and if that is the case then we don't
-     * want to use the same getLatest result.
-     */
-
-    /**
-     * Cache of join session call results.
-     * If the result is valid and used within an hour we put the same result again with updated time
-     * to keep using it for consecutive join session calls.
-     */
-    public readonly sessionCache = new PromiseCache<string, ISocketStorageDiscovery>({
-        expiry: { policy: "sliding", durationMs: 60 * 60 * 1000 },
+    public readonly sessionCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>({
+        policy: "sliding", durationMs: 3600000,
     });
 
-    /**
-     *
-     */
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 
-    //* todo: comment
+    /**
+     * Initialize the OdspCach, with an optional cache to store persisted data in.
+     * If an IPersistedCache is not provided, we'll use a local-only cache for this session.
+     */
     constructor(
         public readonly persistedCache: IPersistedCache = new LocalCache(),
     ) {}

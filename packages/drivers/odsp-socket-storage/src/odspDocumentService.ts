@@ -349,7 +349,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         };
 
-        // Note: The sessionCache should be configured with a sliding expiry of 1 hour,
+        // Note: The sessionCache is configured with a sliding expiry of 1 hour,
         // so if we've fetched the join session within the last hour we won't run executeFetch again now.
         return this.cache.sessionCache.addOrGet(this.joinSessionKey, executeFetch);
     }

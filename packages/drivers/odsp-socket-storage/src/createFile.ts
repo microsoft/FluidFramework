@@ -54,7 +54,7 @@ export async function createNewFluidFile(
     }
 
     const createFileAndResolveUrl = async () => {
-        const fileResponse: IFileCreateResponse = await sendFileCreateRequest(
+        const fileResponse: IFileCreateResponse = await createNewOdspFile(
             newFileInfo,
             getStorageToken,
             storageFetchWrapper,
@@ -76,7 +76,7 @@ export async function createNewFluidFile(
 /**
  * Creates a new fluid file. '.fluid' is appended to the filename
  */
-async function sendFileCreateRequest(
+async function createNewOdspFile(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     storageFetchWrapper: IFetchWrapper,
