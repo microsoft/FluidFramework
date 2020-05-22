@@ -9,6 +9,8 @@ export {
     PrimedComponent,
     PrimedComponentFactory,
 } from "old-aqueduct";
+export { IFluidModule, IRuntimeFactory } from "old-container-definitions";
 export { Container } from "old-container-loader";
+export { IComponentFactory } from "old-runtime-definitions";
 export { createLocalLoader, initializeLocalContainer } from "old-test-utils";
 /* eslint-enable import/no-extraneous-dependencies */

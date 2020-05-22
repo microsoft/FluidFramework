@@ -59,6 +59,24 @@ export class MountableView implements IComponentMountableView {
 
         this.containerElement = container;
 
+        // Try to get an IComponentHTMLView if we don't have one already.
+        if (this.htmlView === undefined) {
+            this.htmlView = this.viewProvider.IComponentHTMLView;
+            if (this.htmlView === undefined) {
+                this.htmlView = this.viewProvider.IComponentHTMLVisual?.addView();
+            }
+        }
+        // Render with IComponentHTMLView if possible.
+        if (this.htmlView !== undefined) {
+            this.htmlView.render(this.containerElement);
+            return;
+        }
+
+        // The ReactDOM.render calls won't work if the adapted component is from a separate bundle.
+        // This is the usage scenario in webpack-component-loader currently in the case where the package we're
+        // loading exports an IComponentFactory (rather than an IRuntimeFactory) because it will wrap the
+        // component in a factory of its own creation.  So, prioritizing these below IComponentHTMLView and
+        // IComponentHTMLVisual temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
         if (this.reactView === undefined) {
             if (React.isValidElement(this.viewProvider)) {
@@ -70,19 +88,6 @@ export class MountableView implements IComponentMountableView {
         // Render with React if possible.
         if (this.reactView !== undefined) {
             ReactDOM.render(this.reactView, this.containerElement);
-            return;
-        }
-
-        // Try to get an IComponentHTMLView if we don't have one already.
-        if (this.htmlView === undefined) {
-            this.htmlView = this.viewProvider.IComponentHTMLView;
-            if (this.htmlView === undefined) {
-                this.htmlView = this.viewProvider.IComponentHTMLVisual?.addView();
-            }
-        }
-        // Render with IComponentHTMLView if possible.
-        if (this.htmlView !== undefined) {
-            this.htmlView.render(this.containerElement);
             return;
         }
 
