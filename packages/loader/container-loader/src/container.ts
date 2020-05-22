@@ -865,25 +865,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Internal context is fully loaded at this point
         this.loaded = true;
-        try {
-            const resolvedUrl = this.service.resolvedUrl;
-            ensureFluidResolvedUrl(resolvedUrl);
-            this._resolvedUrl = resolvedUrl;
-            const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
-            if (response.status !== 200) {
-                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
-            }
-            this.originalRequest = { url: response.value };
-            const parsedUrl = parseUrl(resolvedUrl.url);
-            if (!parsedUrl) {
-                throw new Error("Unable to parse Url");
-            }
-            const [, docId] = parsedUrl.id.split("/");
-            this._id = decodeURI(docId);
-        } catch (error) {
-            this.close(createIError(error, true));
-            throw error;
+
+        const resolvedUrl = this.service.resolvedUrl;
+        ensureFluidResolvedUrl(resolvedUrl);
+        this._resolvedUrl = resolvedUrl;
+        const response = await this.urlResolver.requestUrl(resolvedUrl, { url: "" });
+        if (response.status !== 200) {
+            throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
         }
+        this.originalRequest = { url: response.value };
+        const parsedUrl = parseUrl(resolvedUrl.url);
+        if (!parsedUrl) {
+            throw new Error("Unable to parse Url");
+        }
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         // Propagate current connection state through the system.
         const connected = this.connectionState === ConnectionState.Connected;

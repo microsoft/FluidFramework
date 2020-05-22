@@ -34,10 +34,6 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         request: IRequest,
     ): Promise<IResponse> {
-        let url = request.url;
-        if (url.startsWith("/")) {
-            url = url.substr(1);
-        }
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
@@ -49,7 +45,7 @@ export class CreationDriverUrlResolver implements IUrlResolver {
 
         const response: IResponse = {
             mimeType: "text/plain",
-            value: `/${url}?uniqueId=${documentId}`,
+            value: `/?uniqueId=${documentId}`,
             status: 200,
         };
         return response;
