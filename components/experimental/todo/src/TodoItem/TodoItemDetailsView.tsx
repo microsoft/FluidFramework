@@ -5,7 +5,7 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import * as React from "react";
+import React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
 

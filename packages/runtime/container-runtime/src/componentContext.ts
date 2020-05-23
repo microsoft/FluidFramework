@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as EventEmitter from "events";
+import assert from "assert";
+import EventEmitter from "events";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
@@ -12,6 +12,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
@@ -451,8 +452,8 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitSignalFn(envelope);
     }
 
-    public error(err: any): void {
-        this.containerRuntime.error(err);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.containerRuntime.raiseContainerWarning(warning);
     }
 
     /**

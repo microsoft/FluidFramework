@@ -162,7 +162,8 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
         return VideoPlayerCollection.factory.create(parentContext, props);
     }
 
-    public create() { this.initialize().catch((error) => { this.context.error(error); }); }
+    // TODO: either better error handling is needed here, or create() should be async
+    public create() { this.initialize().catch((error) => { console.error(error); }); }
     public async load() { await this.initialize(); }
 
     public get IComponentRouter() { return this; }

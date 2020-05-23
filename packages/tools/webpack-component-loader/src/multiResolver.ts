@@ -8,7 +8,7 @@ import { IRequest } from "@fluidframework/component-core-interfaces";
 import { TestResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import uuid from "uuid/v4";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";

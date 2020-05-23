@@ -4,7 +4,7 @@
  */
 
 import { ITokenClaims, ITokenService } from "@fluidframework/protocol-definitions";
-import * as jwtDecode from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 export class TokenService implements ITokenService {
     public extractClaims(token: string): ITokenClaims {

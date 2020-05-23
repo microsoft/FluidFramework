@@ -62,13 +62,14 @@
     "double-ended-queue": "^2.1.0-0",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.11",
+    "performance-now": "^2.1.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@fluidframework/test-loader-utils": "^0.19.0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.16.0-0",
     "@types/debug": "^4.1.5",
     "@types/jwt-decode": "^2.2.1",
     "@types/lodash": "^4.14.118",

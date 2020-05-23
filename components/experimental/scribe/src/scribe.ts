@@ -482,10 +482,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;

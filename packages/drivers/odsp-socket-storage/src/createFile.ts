@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { getGitType } from "@fluidframework/protocol-base";
-import { getDocAttributesFromProtocolSummary, invalidFileNameErrorCode } from "@fluidframework/driver-utils";
+import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IOdspResolvedUrl,
@@ -17,7 +17,14 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo, getOrigin } from "./odspUtils";
+import {
+    getWithRetryForTokenRefresh,
+    throwOdspNetworkError,
+    fetchHelper,
+    INewFileInfo,
+    invalidFileNameStatusCode,
+    getOrigin,
+} from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -50,7 +57,7 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameErrorCode, false);
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode, false);
     }
 
     const createFileAndResolveUrl = async () => {

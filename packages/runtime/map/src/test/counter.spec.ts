@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { MockRuntime } from "@fluidframework/test-runtime-utils";
 import * as map from "../";
 

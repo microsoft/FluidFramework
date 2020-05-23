@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Counter } from "@fluidframework/map";
-import * as React from "react";
+import React from "react";
 
 interface IProps {
     counter: Counter;

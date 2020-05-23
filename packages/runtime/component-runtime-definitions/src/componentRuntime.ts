@@ -13,6 +13,7 @@ import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -140,7 +141,7 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
     /**
      * Errors raised by distributed data structures
      */
-    error(err: any): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * It is false if the container is attached to storage and the component is attached to container.

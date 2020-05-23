@@ -27,7 +27,7 @@ import { IComponentRuntime } from "@fluidframework/component-runtime-definitions
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as SimpleMDE from "simplemde";
+import SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import

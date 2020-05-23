@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { UnassignedSequenceNumber } from "./constants";
 import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
@@ -43,7 +43,7 @@ export class SegmentPropertiesManager {
             this.pendingKeyUpdateCount = Properties.createMap<number>();
         }
 
-        const collaborating =  collabWindow && collabWindow.collaborating;
+        const collaborating = collabWindow && collabWindow.collaborating;
 
         // There are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
@@ -69,7 +69,7 @@ export class SegmentPropertiesManager {
             }
             // We are re-writting so delete all the properties
             // not in the new props
-            for (const key of  Object.keys(this.segment.properties)) {
+            for (const key of Object.keys(this.segment.properties)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
                     deltas[key] = this.segment.properties[key];
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -78,7 +78,7 @@ export class SegmentPropertiesManager {
             }
         }
 
-        for (const key of  Object.keys(newProps)) {
+        for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
                     if (this.pendingKeyUpdateCount[key] === undefined) {

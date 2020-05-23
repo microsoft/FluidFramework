@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
@@ -28,7 +28,7 @@ import {
     ITaskManager,
 } from "@fluidframework/runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import * as debug from "debug";
+import debug from "debug";
 import { v4 as uuid } from "uuid";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID

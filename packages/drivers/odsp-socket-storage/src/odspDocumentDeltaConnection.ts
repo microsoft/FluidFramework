@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection, IError } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { CriticalContainerError } from "@fluidframework/container-definitions";
 import {
     IClient,
     IConnect,
     INack,
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
@@ -201,7 +202,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | IError) {
+        reason: string | CriticalContainerError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected

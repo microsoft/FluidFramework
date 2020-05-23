@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Marker, ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { SubSequence } from "../sharedSequence";
 

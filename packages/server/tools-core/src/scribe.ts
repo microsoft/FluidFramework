@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as childProcess from "child_process";
-import * as path from "path";
+import childProcess from "child_process";
+import path from "path";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";

@@ -7,8 +7,8 @@ import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduc
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");

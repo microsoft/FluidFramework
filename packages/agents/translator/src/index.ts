@@ -16,7 +16,7 @@ export class Translator implements IComponentRouter, IComponentRunnable {
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly config: ITokenConfig) {}
+        private readonly config: ITokenConfig) { }
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }

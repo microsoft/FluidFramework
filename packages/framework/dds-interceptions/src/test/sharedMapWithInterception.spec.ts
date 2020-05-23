@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
 import { IComponentContext } from "@fluidframework/runtime-definitions";

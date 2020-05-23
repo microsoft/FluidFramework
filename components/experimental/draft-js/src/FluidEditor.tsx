@@ -7,7 +7,7 @@ import { SharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
-import * as React from "react";
+import React from "react";
 
 import { getCoauthPresenceDecorator, PresenceManager } from "./PresenceManager";
 import {

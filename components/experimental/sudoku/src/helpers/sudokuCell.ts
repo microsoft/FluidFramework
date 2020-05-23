@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as sudoku from "sudokus";
+import sudoku from "sudokus";
 import { CoordinateString } from "./coordinate";
 
 export enum CellState {

@@ -7,8 +7,8 @@ import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduc
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
 import { SudokuView } from "./react/sudokuView";
 
