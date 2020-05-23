@@ -4,7 +4,7 @@
  */
 
 import { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
-import * as Deque from "double-ended-queue";
+import Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
 import { LocalKafkaSubscription } from "./localKafkaSubscription";
 

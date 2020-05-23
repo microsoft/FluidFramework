@@ -20,7 +20,7 @@ import {
     TestKafka,
     TestTenantManager,
 } from "@fluidframework/server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import * as _ from "lodash";
 import * as nconf from "nconf";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";

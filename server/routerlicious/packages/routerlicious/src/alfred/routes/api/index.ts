@@ -9,7 +9,7 @@ import {
     ITenantManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import * as cors from "cors";
+import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";

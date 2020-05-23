@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as ws from "ws";
+import ws from "ws";
 import { debug } from "./debug";
 
 export class Socket<T> extends EventEmitter {

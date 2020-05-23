@@ -30,7 +30,7 @@ import {
     TestWebSocketServer,
     DebugLogger,
 } from "@fluidframework/server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
 import { DefaultMetricClient, IScribe } from "@fluidframework/server-services-core";
 import { generateToken } from "@fluidframework/server-services-client";

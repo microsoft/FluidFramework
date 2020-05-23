@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
