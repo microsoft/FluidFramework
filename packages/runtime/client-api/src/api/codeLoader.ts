@@ -25,7 +25,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { CreateContainerError } from "@fluidframework/driver-utils";
-import * as sequence from "@microsoft/fluid-sequence";
+import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -36,7 +36,7 @@ export class Chaincode implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public constructor(private readonly closeFn: () => void) {}
+    public constructor(private readonly closeFn: () => void) { }
 
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories

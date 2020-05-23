@@ -5,7 +5,7 @@
 
 import { IComponentRouter, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";
-import * as Sequence from "@microsoft/fluid-sequence";
+import * as Sequence from "@fluidframework/sequence";
 import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 

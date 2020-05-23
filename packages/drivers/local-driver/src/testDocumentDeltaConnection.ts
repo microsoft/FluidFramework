@@ -20,7 +20,7 @@ import {
     ITokenClaims,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 

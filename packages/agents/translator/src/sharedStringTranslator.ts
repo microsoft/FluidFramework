@@ -7,7 +7,7 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
+import * as Sequence from "@fluidframework/sequence";
 import { translate } from "./translator";
 
 export class SharedStringTranslator {

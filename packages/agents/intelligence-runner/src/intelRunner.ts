@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@fluidframework/map";
-import * as Sequence from "@microsoft/fluid-sequence";
+import * as Sequence from "@fluidframework/sequence";
 import { resumeAnalytics, textAnalytics } from "./analytics";
 import { IntelligentServicesManager } from "./serviceManager";
 

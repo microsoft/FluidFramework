@@ -5,7 +5,7 @@
 
 import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
-import * as Sequence from "@microsoft/fluid-sequence";
+import * as Sequence from "@fluidframework/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
