@@ -43,8 +43,8 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
-    "@microsoft/fluid-build-common": "^0.14.0",
     "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

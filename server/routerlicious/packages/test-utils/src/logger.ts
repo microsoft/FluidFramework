@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as registerDebug from "debug";
+import registerDebug from "debug";
 import { ILogger } from "@fluidframework/server-services-core";
 
 /**
