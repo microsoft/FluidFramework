@@ -13,7 +13,6 @@ import {
 } from "../interface";
 import { getRootFromView } from "./getRootFromView";
 import { getViewFromRoot } from "./getViewFromRoot";
-import { isEquivalent } from "./utils";
 import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 import { setFluidStateToRoot } from "./setFluidStateToRoot";
 import { getComponentSchemaFromRoot } from "./getComponentSchemaFromRoot";
@@ -95,7 +94,7 @@ export function syncStateAndRoot<
                     }
                 });
 
-                if (!isEquivalent(combinedRootState, currentRootState) && !fromRootUpdate) {
+                if (!fromRootUpdate) {
                     setFluidStateToRoot(syncedStateId, root, combinedRootState);
                     setState(combinedViewState);
                 } else {

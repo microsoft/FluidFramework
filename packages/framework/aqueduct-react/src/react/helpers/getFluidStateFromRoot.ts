@@ -23,8 +23,10 @@ export function getFluidStateFromRoot<SV,SF>(
                 const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
                 if (possibleComponentPath !== undefined) {
                     value = componentMap.get(possibleComponentPath);
+                    syncedState[fluidKey] = value.component;
+                } else {
+                    syncedState[fluidKey] = value;
                 }
-                syncedState[fluidKey] = value.component;
             }
         });
     }

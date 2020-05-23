@@ -75,7 +75,7 @@ interface IActionReducer extends IFluidReducer<ICounterReducerViewState, ICounte
 
 const ActionReducer: IActionReducer = {
     increment: {
-        function: (state, step) => {
+        function: (state, step: number) => {
             state.fluidState.counter.increment(step);
             state.viewState.value =  step === undefined
                 ? state.viewState.value + 1
