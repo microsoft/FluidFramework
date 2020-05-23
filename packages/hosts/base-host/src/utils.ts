@@ -147,13 +147,18 @@ export class UpgradeManager extends EventEmitter {
             return this.delayed.result.promise;
         }
 
+        this.logger.sendTelemetryEvent({
+            eventName: "UpgradeDelayed",
+            trackedSequenceNumber: this.proposedSeqNum,
+        });
+
         this.delayed = { code, result: new Deferred<boolean>() };
         const upgradeP = upgradeFn ? upgradeFn(this.runtime) : defaultUpgradeFn(this.runtime, upgradeFnConfig);
         upgradeP.then(async (reason) => {
             if (this.delayed) {
                 this.propose(this.delayed.code, reason).then(
-                    (x) => this.delayed?.result.resolve(x),
-                    (x) => this.delayed?.result.reject(x),
+                    (result) => this.delayed?.result.resolve(result),
+                    (error) => this.delayed?.result.reject(error),
                 );
                 this.delayed = undefined;
             }
@@ -174,10 +179,10 @@ export class UpgradeManager extends EventEmitter {
             reason,
         });
 
-        // don't reject here on proposal rejection since it's expected for all but one client
         return this.runtime.getQuorum().propose("code", code).then(
             () => true,
             (error) => {
+                // don't reject here on proposal rejection since it's expected, but reject on other promise rejections
                 if (typeof error === "string" && error.startsWith("Rejected by ")) {
                     return false;
                 }

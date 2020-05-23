@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache } from "@microsoft/fluid-common-utils";
+import { PromiseCache } from "@fluidframework/common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
 /**

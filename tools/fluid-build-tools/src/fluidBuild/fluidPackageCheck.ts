@@ -366,7 +366,7 @@ export class FluidPackageCheck {
                 }
 
                 if (!loaded) {
-                    this.logWarn(pkg, `can't found ${commonConfig}`, false);
+                    this.logWarn(pkg, `can't find ${commonConfig}`, false);
                 }
             }
 

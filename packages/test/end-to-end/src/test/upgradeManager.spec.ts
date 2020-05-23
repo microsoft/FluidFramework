@@ -4,14 +4,15 @@
  */
 
 import * as assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { UpgradeManager } from "@microsoft/fluid-base-host";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { UpgradeManager } from "@fluidframework/base-host";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
@@ -103,8 +104,14 @@ describe("UpgradeManager", () => {
         containerDeltaEventManager.registerDocuments(component._runtime);
         const upgradeManager = new UpgradeManager((container as any).context.runtime);
 
-        const result = upgradeManager.upgrade(codeDetails);
-        await result;
+        const upgradeP = new Promise<void>((resolve) => {
+            upgradeManager.on("upgradeInProgress", resolve);
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        upgradeManager.upgrade(codeDetails);
+        await containerDeltaEventManager.process();
+        await upgradeP;
     });
 
     it("2 clients low priority is delayed", async () => {
