@@ -19,9 +19,9 @@ import {
     defaultDates,
 } from "./data";
 import {
-    IDateState,
-    ICommentState,
-    IPersonState,
+    IDateViewState,
+    ICommentViewState,
+    IPersonViewState,
     IPerson,
     ScheduleItProps,
 } from "./interface";
@@ -46,11 +46,11 @@ export const ScheduleItName = pkg.name as string;
 export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private _initialPersonState?: IPersonState;
-    private _initialDateState?: IDateState;
-    private _initialCommentState?: ICommentState;
+    private _initialPersonState?: IPersonViewState;
+    private _initialDateState?: IDateViewState;
+    private _initialCommentState?: ICommentViewState;
 
-    private readonly _fluidComponentMap: FluidComponentMap = new Map<IComponentHandle, IFluidComponent>();
+    private readonly _fluidComponentMap: FluidComponentMap = new Map<string, IFluidComponent>();
 
     /**
      * Do setup work here
@@ -71,23 +71,22 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
                 availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
             personMap.set(key, newPerson);
-            // Optional Step: You can preload the nested components before initial render,
-            // but you can also pass an empty handle map to allow them to be dynamically loaded in on fetch
-            // The only requirement is that a Map (empty or otherwise) be constructed and passed in
             // Do NOT set the isListened optional param on the map items to true,
             // unless you have already explicitly set listeners for this component's changes.
             // Otherwise, any updates to it will NOT trigger state updates in your component
-            this._fluidComponentMap.set(newAvailabilityMap.handle, {
+            this._fluidComponentMap.set(newAvailabilityMap.handle.path, {
                 component: newAvailabilityMap,
             });
         });
         this.root.set(PeopleRootKey, personMap.handle);
+        this._fluidComponentMap.set(personMap.handle.path, { component: personMap });
         this._initialPersonState = { personMap };
 
         const dateMap = SharedMap.create(this.runtime);
         Object.entries(defaultDates).forEach(([key, defaultDate], i) => {
             dateMap.set(key, defaultDate);
         });
+        this._fluidComponentMap.set(dateMap.handle.path, { component: dateMap });
         this.root.set(DatesRootKey, dateMap.handle);
         this._initialDateState = { dateMap };
     }
@@ -97,15 +96,18 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
 
         const personMap = await this.root.get<IComponentHandle<SharedMap>>(PeopleRootKey).get();
         this._initialPersonState = { personMap };
+        this._fluidComponentMap.set(personMap.handle.path, { component: personMap });
         for (const key of personMap.keys()) {
             const person = personMap.get<IPerson>(key);
             const availabilityMap = await person.availabilityMapHandle.get();
-            this._fluidComponentMap.set(person.availabilityMapHandle, {
+            this._fluidComponentMap.set(person.availabilityMapHandle.path, {
                 component: availabilityMap,
             });
         }
 
-        this._initialDateState = { dateMap: await this.root.get<IComponentHandle<SharedMap>>(DatesRootKey).get() };
+        const dateMap = await this.root.get<IComponentHandle<SharedMap>>(DatesRootKey).get();
+        this._initialDateState = { dateMap };
+        this._fluidComponentMap.set(dateMap.handle.path, { component: dateMap });
     }
 
     // #region IComponentHTMLView
@@ -140,21 +142,21 @@ export class ScheduleIt extends PrimedComponent implements IComponentHTMLView {
 }
 
 function ScheduleItApp(props: ScheduleItProps) {
-    const [commentState, commentDispatch] = useCommentReducer(props);
-    const [personState, personDispatch, personFetch] = usePersonReducer(props);
-    const [dateState, dateDispatch] = useDateReducer(props);
+    const [commentState, commentReducer] = useCommentReducer(props);
+    const [personState, personReducer, personSelector] = usePersonReducer(props);
+    const [dateState, dateReducer] = useDateReducer(props);
 
     return (
         <div>
             <PrimedContext.Provider
                 value={{
-                    comments: commentState.comments,
-                    commentDispatch,
-                    personMap: personState.personMap,
-                    personDispatch,
-                    personFetch,
-                    dateMap: dateState.dateMap,
-                    dateDispatch,
+                    commentState,
+                    personState,
+                    dateState,
+                    commentReducer,
+                    personReducer,
+                    personSelector,
+                    dateReducer,
                 }}
             >
                 <ScheduleItView />

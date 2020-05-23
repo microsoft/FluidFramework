@@ -89,7 +89,6 @@ export abstract class FluidReactComponent<
             viewToFluid,
             fluidToView,
         );
-            
         let loadFromRoot = true;
         if (root.get(`syncedState-${this._syncedStateId}`) === undefined) {
             loadFromRoot = false;

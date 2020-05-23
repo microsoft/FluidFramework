@@ -10,5 +10,13 @@ export function setFluidStateToRoot<SF>(
     root: ISharedDirectory,
     fluidState: SF,
 ): void {
-    root.set(`syncedState-${syncedStateId}`, fluidState);
+    const convertedState = {};
+    Object.entries(fluidState).forEach(([fluidKey, fluidValue]) => {
+        if (fluidValue.IComponentLoadable) {
+            convertedState[fluidKey] = fluidValue.IComponentLoadable.handle;
+        } else {
+            convertedState[fluidKey] = fluidValue;
+        }
+    });
+    root.set(`syncedState-${syncedStateId}`, convertedState);
 }

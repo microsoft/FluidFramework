@@ -54,7 +54,7 @@ export const addComponent = async <
     if (component.IComponentPrimed) {
         component.IComponentPrimed.addListenerToRootValueChanged(rootCallback);
     }
-    fluidComponentMap.set(handle, { component, isListened: true });
+    fluidComponentMap.set(handle.path, { component, isListened: true });
 });
 
 export function isEquivalent(a, b) {

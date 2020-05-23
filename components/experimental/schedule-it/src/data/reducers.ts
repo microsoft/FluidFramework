@@ -6,15 +6,11 @@
 import { v4 as uuid } from "uuid";
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidDataProps } from "@microsoft/fluid-aqueduct-react";
 import {
     IDate,
     IPerson,
     IAvailability,
-    IDateState,
-    IPersonState,
     ICommentReducer,
-    ICommentState,
     IDateReducer,
     IPersonReducer,
     AvailabilityType,
@@ -23,46 +19,46 @@ import { defaultDates } from "./defaultData";
 
 export const CommentReducer: ICommentReducer = {
     add: {
-        function: (state: ICommentState, dataProps, newComment: string, name: string) => {
-            state.comments.push({ message: newComment, name });
-            return { state };
+        function: (state, newComment: string, name: string) => {
+            state.viewState.comments.push({ message: newComment, name });
+            return { state: state.viewState };
         },
     },
 };
 
 export const DateReducer: IDateReducer = {
     set: {
-        function: (state: IDateState, dataProps, key: string, time: IDate) => {
-            state.dateMap.set(key, time);
-            return { state };
+        function: (state, key: string, time: IDate) => {
+            state.viewState.dateMap.set(key, time);
+            return { state: state.viewState };
         },
     },
 };
 
 export const PersonReducer: IPersonReducer = {
     updateName: {
-        function: (state: IPersonState, dataProps, key: string, name: string) => {
-            const person = state.personMap.get<IPerson>(key);
+        function: (state, key: string, name: string) => {
+            const person = state.viewState.personMap.get<IPerson>(key);
             person.name = name;
-            state.personMap.set(key, person);
-            return { state };
+            state.viewState.personMap.set(key, person);
+            return { state: state.viewState };
         },
     },
     updateAvailability: {
-        function: (state: IPersonState, dataProps, key: string, availability: IAvailability) => {
+        function: (state, key: string, availability: IAvailability) => {
             const { dateKey, availabilityType } = availability;
-            const person = state.personMap.get<IPerson>(key);
-            const availabilityMap = (dataProps.fluidComponentMap
-                .get(person.availabilityMapHandle)?.component) as SharedMap;
+            const person = state.viewState.personMap.get<IPerson>(key);
+            const availabilityMap = (state.dataProps.fluidComponentMap
+                .get(person.availabilityMapHandle.path)?.component) as SharedMap;
             const availabilityItem = availabilityMap.get<IAvailability>(dateKey);
             availabilityItem.availabilityType = availabilityType;
             availabilityMap.set(dateKey, availabilityItem);
-            return { state };
+            return { state: state.viewState };
         },
     },
     addPerson: {
-        function: (state: IPersonState, dataProps: IFluidDataProps) => {
-            const newAvailabilityMap = SharedMap.create(dataProps.runtime);
+        function: (state) => {
+            const newAvailabilityMap = SharedMap.create(state.dataProps.runtime);
             Object.entries(defaultDates).forEach(([key, date]) => {
                 newAvailabilityMap.set(key, { dateKey: date.key, availabilityType: AvailabilityType.No });
             });
@@ -71,16 +67,16 @@ export const PersonReducer: IPersonReducer = {
                 name: "",
                 availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
-            state.personMap.set(newPerson.key, newPerson);
-            return { state, newComponentHandles: [newAvailabilityMap.handle] };
+            state.viewState.personMap.set(newPerson.key, newPerson);
+            return { state: state.viewState, newComponentHandles: [newAvailabilityMap.handle] };
         },
     },
     removePerson: {
-        function: (state: IPersonState, dataProps, key: string) => {
-            if (state.personMap.get(key) !== undefined) {
-                state.personMap.delete(key);
+        function: (state, key: string) => {
+            if (state.viewState.personMap.get(key) !== undefined) {
+                state.viewState.personMap.delete(key);
             }
-            return { state };
+            return { state: state.viewState };
         },
     },
 };

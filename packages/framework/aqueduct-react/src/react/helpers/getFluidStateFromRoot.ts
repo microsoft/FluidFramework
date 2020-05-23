@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IViewConverter } from "..";
+import { IViewConverter, FluidComponentMap } from "..";
 
 export function getFluidStateFromRoot<SV,SF>(
     syncedStateId: string,
     root: ISharedDirectory,
+    componentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
 ): SF {
     const syncedState = root.get<SF>(`syncedState-${syncedStateId}`);
@@ -17,11 +19,12 @@ export function getFluidStateFromRoot<SV,SF>(
             const fluidType = fluidToView.get(fluidKey as keyof SF)?.fluidObjectType;
             if (fluidType) {
                 const rootKey = fluidToView.get(fluidKey as keyof SF)?.rootKey;
-                if (rootKey) {
-                    syncedState[fluidKey] = root.get(rootKey);
-                } else {
-                    syncedState[fluidKey] = root.get(fluidKey);
+                let value = rootKey ? root.get(rootKey) : root.get(fluidKey);
+                const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
+                if (possibleComponentPath !== undefined) {
+                    value = componentMap.get(possibleComponentPath);
                 }
+                syncedState[fluidKey] = value.component;
             }
         });
     }

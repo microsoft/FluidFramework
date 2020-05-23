@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -25,17 +26,23 @@ import "react-datepicker/dist/react-datepicker.css";
 
 export const ScheduleItView = () => {
     const {
-        comments,
-        commentDispatch,
-        personMap,
-        personDispatch,
-        personFetch,
-        dateMap,
-        dateDispatch,
+        commentState,
+        commentReducer,
+        personState,
+        personReducer,
+        personSelector,
+        dateState,
+        dateReducer,
     } = React.useContext(PrimedContext);
 
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!comments || !commentDispatch || !personMap || !personDispatch || !dateMap || !dateDispatch || !personFetch) {
+    if (!commentState
+        || !commentReducer
+        || !personState
+        || !personReducer
+        || !dateState
+        || !dateReducer
+        || !personSelector
+    ) {
         return <div>{"Context is not providing data correctly"}</div>;
     }
     const [currentComment, setCurrentComment] = React.useState("");
@@ -66,7 +73,11 @@ export const ScheduleItView = () => {
 
     const onRenderRow = (person: IPerson, personKey: string): JSX.Element => {
         const checkmarks: JSX.Element[] = [];
-        const personAvailabilityMap = personFetch("getAvailabilityMap", person.availabilityMapHandle) as SharedMap;
+        const personAvailabilityMap = personSelector.getAvailabilityMap.function(
+            personState.viewState,
+            personState.dataProps,
+            person.availabilityMapHandle,
+        ) as SharedMap;
         if (personAvailabilityMap !== undefined) {
             for (const dateKey of personAvailabilityMap.keys()) {
                 const availabilityItem = personAvailabilityMap.get<IAvailability>(dateKey);
@@ -81,14 +92,13 @@ export const ScheduleItView = () => {
                             selectedKey={availabilityItem.availabilityType}
                             onChange={(e, o) => {
                                 if (o !== undefined) {
-                                    personDispatch(
-                                        "updateAvailability",
+                                    personReducer.updateAvailability.function(
+                                        personState,
                                         personKey,
                                         {
                                             dateKey: availabilityItem.dateKey,
                                             availabilityType: o.key as number,
-                                        },
-                                    );
+                                        });
                                 }
                             }}
                         />
@@ -104,14 +114,18 @@ export const ScheduleItView = () => {
                         value={person.name}
                         onChange={(e, v) => {
                             if (v !== undefined) {
-                                personDispatch("updateName", personKey, v);
+                                personReducer.updateName.function(
+                                    personState,
+                                    personKey,
+                                    v,
+                                );
                             }
                         }}
                     />
                 </div>
                 {checkmarks}
                 <IconButton
-                    onClick={() => personDispatch("removePerson", personKey)}
+                    onClick={() => personReducer.removePerson.function(personState,personKey)}
                     iconProps={{ iconName: "CalculatorSubtract" }}
                 />
             </Stack>
@@ -150,7 +164,7 @@ export const ScheduleItView = () => {
                     <PrimaryButton
                         text="Submit"
                         onClick={() => {
-                            commentDispatch("add", currentComment, "name");
+                            commentReducer.add.function(commentState, currentComment, "name");
                             setCurrentComment("");
                         }}
                     />
@@ -165,14 +179,17 @@ export const ScheduleItView = () => {
             tokens={{ childrenGap: 10 }}
         >
             <FocusZone direction={FocusZoneDirection.bidirectional}>
-                {onRenderHeader(dateMap)}
-                {onRenderRows(personMap)}
+                {onRenderHeader(dateState.viewState.dateMap)}
+                {onRenderRows(personState.viewState.personMap)}
             </FocusZone>
 
             <Stack horizontal tokens={{ childrenGap: 10 }}>
-                <IconButton onClick={() => personDispatch("addPerson")} iconProps={{ iconName: "Add" }} />
+                <IconButton
+                    onClick={() => personReducer.addPerson.function(personState)}
+                    iconProps={{ iconName: "Add" }}
+                />
             </Stack>
-            {onRenderComments(comments)}
+            {onRenderComments(commentState.viewState.comments)}
         </Stack>
     );
 };

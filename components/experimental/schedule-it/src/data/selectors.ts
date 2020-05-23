@@ -6,14 +6,13 @@
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IPersonState,
     IPersonSelector,
 } from "../interface";
 
 export const PersonSelector: IPersonSelector = {
     getAvailabilityMap: {
-        function: (state: IPersonState, dataProps, handle: IComponentHandle<SharedMap>) => {
-            const personAvailabilityMap = dataProps.fluidComponentMap.get(handle)?.component;
+        function: (state, dataProps, handle: IComponentHandle<SharedMap>) => {
+            const personAvailabilityMap = dataProps.fluidComponentMap.get(handle.path)?.component;
             if (personAvailabilityMap !== undefined) {
                 return personAvailabilityMap as SharedMap;
             }

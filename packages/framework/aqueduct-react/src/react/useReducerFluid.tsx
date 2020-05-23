@@ -54,7 +54,7 @@ export function useReducerFluid<
         viewToFluid,
     });
 
-    const currentFluidState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
+    const currentFluidState = getFluidStateFromRoot(syncedStateId, root, dataProps.fluidComponentMap, fluidToView);
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and
     // state values that were updated. Think of it as prepping the data in the first
@@ -189,7 +189,7 @@ export function useReducerFluid<
         const action =  selector[(type)];
         if (action && instanceOfSelectorFunction<SV,C>(action)) {
             if (handle && instanceOfComponentSelectorFunction<SV,C>(action)
-                && combinedFetchDataProps.fluidComponentMap.get(handle) === undefined) {
+                && combinedFetchDataProps.fluidComponentMap.get(handle.path) === undefined) {
                 const callback = rootCallbackListener(
                     combinedFetchDataProps.fluidComponentMap,
                     true,

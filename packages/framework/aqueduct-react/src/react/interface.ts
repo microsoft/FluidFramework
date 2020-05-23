@@ -94,7 +94,7 @@ export interface IFluidComponent {
     isListened?: boolean,
 }
 
-export type FluidComponentMap = Map<IComponentHandle, IFluidComponent>;
+export type FluidComponentMap = Map<string, IFluidComponent>;
 
 export interface IFluidDataProps {
     runtime: IComponentRuntime,

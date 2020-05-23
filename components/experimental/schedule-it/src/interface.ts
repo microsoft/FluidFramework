@@ -9,6 +9,10 @@ import {
     FluidComponentSelectorFunction,
     IFluidDataProps,
     FluidComponentMap,
+    IFluidFunctionalComponentFluidState,
+    IFluidReducer,
+    IFluidSelector,
+    ICombinedState,
 } from "@microsoft/fluid-aqueduct-react";
 import { SharedMap, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
@@ -50,54 +54,63 @@ export interface IDefaultPersonMap {
     [key: string]: IDefaultPerson
 }
 
-export interface IPersonState extends IFluidFunctionalComponentViewState {
+interface IPersonState {
     personMap: SharedMap;
 }
+
+export interface IPersonViewState extends IFluidFunctionalComponentViewState, IPersonState {}
+export interface IPersonFluidState extends IFluidFunctionalComponentFluidState, IPersonState {}
 
 export interface IDefaultDateMap {
     [key: string]: IDate;
 }
 
-export interface IDateState extends IFluidFunctionalComponentViewState {
+interface IDateState {
     dateMap: SharedMap;
 }
+
+export interface IDateViewState extends IFluidFunctionalComponentViewState, IDateState {}
+export interface IDateFluidState extends IFluidFunctionalComponentFluidState, IDateState {}
 
 export interface IComment {
     name: string;
     message: string;
 }
 
-export interface ICommentState extends IFluidFunctionalComponentViewState {
+interface ICommentState extends IFluidFunctionalComponentViewState {
     comments: IComment[]
 }
 
-export interface ICommentReducer {
-    add: FluidStateUpdateFunction<ICommentState,IFluidDataProps>
+export interface ICommentViewState extends IFluidFunctionalComponentViewState, ICommentState {}
+export interface ICommentFluidState extends IFluidFunctionalComponentFluidState, ICommentState {}
+
+export interface ICommentReducer extends IFluidReducer<ICommentViewState, ICommentFluidState, IFluidDataProps> {
+    add: FluidStateUpdateFunction<ICommentViewState,ICommentFluidState,IFluidDataProps>
 }
 
-export interface IDateReducer {
-    set: FluidStateUpdateFunction<IDateState,IFluidDataProps>
+export interface IDateReducer extends IFluidReducer<IDateViewState, IDateFluidState, IFluidDataProps> {
+    set: FluidStateUpdateFunction<IDateViewState,IDateFluidState,IFluidDataProps>
 }
 
-export interface IPersonReducer {
-    updateName: FluidStateUpdateFunction<IPersonState,IFluidDataProps>
-    updateAvailability: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
-    addPerson: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
-    removePerson: FluidStateUpdateFunction<IPersonState,IFluidDataProps>,
+export interface IPersonReducer extends IFluidReducer<IPersonViewState, IPersonFluidState, IFluidDataProps> {
+    updateName: FluidStateUpdateFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>
+    updateAvailability: FluidStateUpdateFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>,
+    addPerson: FluidStateUpdateFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>,
+    removePerson: FluidStateUpdateFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>,
 }
 
-export interface IPersonSelector {
-    getAvailabilityMap: FluidComponentSelectorFunction<IPersonState, IFluidDataProps, SharedMap>;
+export interface IPersonSelector extends IFluidSelector<IPersonViewState,IFluidDataProps> {
+    getAvailabilityMap: FluidComponentSelectorFunction<IPersonViewState,IFluidDataProps>;
 }
 
 export interface IViewProps {
-    comments?: IComment[];
-    dateMap?: SharedMap;
-    personMap?: SharedMap;
-    commentDispatch?: (type: keyof ICommentReducer, ...args: any) => void,
-    personDispatch?: (type: keyof IPersonReducer, ...args: any) => void,
-    dateDispatch?: (type: keyof IDateReducer, ...args: any) => void,
-    personFetch?: (type: keyof IPersonSelector, handle: IComponentHandle) => (any | undefined),
+    commentState?: ICombinedState<ICommentViewState, ICommentFluidState, IFluidDataProps>,
+    personState?: ICombinedState<IPersonViewState, IPersonFluidState, IFluidDataProps>,
+    dateState?: ICombinedState<IDateViewState, IDateFluidState, IFluidDataProps>,
+    commentReducer?: ICommentReducer,
+    personReducer?: IPersonReducer,
+    dateReducer?: IDateReducer,
+    personSelector?: IPersonSelector,
 }
 
 export interface ScheduleItProps {

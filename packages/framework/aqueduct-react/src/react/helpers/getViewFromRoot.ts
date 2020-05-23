@@ -19,7 +19,7 @@ export function getViewFromRoot<SV, SF>(
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
     combinedRootState?: Partial<SF>,
 ): Partial<SV> {
-    const syncedState = getFluidStateFromRoot(syncedStateId, root, fluidToView);
+    const syncedState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
     let value = syncedState[rootKey];
     if (combinedRootState) {
         value = (combinedRootState[rootKey] || value) as SF[keyof SF];
@@ -32,7 +32,7 @@ export function getViewFromRoot<SV, SF>(
     } else {
         const partialViewState: Partial<SV> = {};
         const valueAsIComponentHandle =  (value as IComponent).IComponentHandle;
-        const convertedValue = valueAsIComponentHandle ? fluidComponentMap.get(valueAsIComponentHandle) : value;
+        const convertedValue = valueAsIComponentHandle ? fluidComponentMap.get(valueAsIComponentHandle.path) : value;
         partialViewState[rootKey as string] = convertedValue;
         return partialViewState;
     }
