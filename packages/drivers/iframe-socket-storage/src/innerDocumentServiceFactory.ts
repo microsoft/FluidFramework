@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import * as Comlink from "comlink";
+import Comlink from "comlink";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";

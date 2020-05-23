@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as MergeTree from "../";
 import { UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
@@ -235,7 +235,8 @@ describe("TestClient", () => {
     describe(".annotateMarker", () => {
         it("annotate valid marker", () => {
             const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
-                [MergeTree.reservedMarkerIdKey]: "123" });
+                [MergeTree.reservedMarkerIdKey]: "123",
+            });
             assert(insertOp);
             const markerInfo = client.getContainingSegment(0);
             const marker = markerInfo.segment as MergeTree.Marker;

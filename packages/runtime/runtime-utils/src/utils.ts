@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>

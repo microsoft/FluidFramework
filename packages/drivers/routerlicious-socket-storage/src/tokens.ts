@@ -4,7 +4,7 @@
  */
 
 import { ITokenClaims, ITokenProvider, ITokenService } from "@fluidframework/protocol-definitions";
-import * as jwtDecode from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 /**
  * Extracts the claims contained within a token.

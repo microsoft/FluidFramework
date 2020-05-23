@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
+import assert from "assert";
+import fs from "fs";
 import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 

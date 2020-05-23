@@ -65,13 +65,14 @@
     "@types/node": "^10.14.6",
     "@types/uuid": "^3.4.4",
     "debug": "^4.1.1",
+    "performance-now": "^2.1.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@fluidframework/test-runtime-utils": "^0.19.0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.16.0-0",
     "@types/mocha": "^5.2.5",
     "@types/sinon": "^7.0.13",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

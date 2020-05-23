@@ -5,15 +5,15 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import * as path from "path";
+import assert from "assert";
+import fs from "fs";
+import path from "path";
 import { DebugLogger } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as JsDiff from "diff";
+import JsDiff from "diff";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as random from "random-js";
+import random from "random-js";
 import * as MergeTree from "../";
 import * as Base from "../base";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";

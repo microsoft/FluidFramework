@@ -22,7 +22,7 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import * as Comlink from "comlink";
+import Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import * as util from "util";
+import assert from "assert";
+import fs from "fs";
+import util from "util";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     IDocumentService,

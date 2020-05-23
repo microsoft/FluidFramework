@@ -26,7 +26,7 @@ import { IComponentRuntime } from "@fluidframework/component-runtime-definitions
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
-import * as CodeMirror from "codemirror";
+import CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */
@@ -156,7 +156,8 @@ class CodemirrorView implements IComponentHTMLView {
             // to submit new ops
             this.updatingSequence = true;
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
             const doc = this.codeMirror!.getDoc();
             for (const range of ev.ranges) {
                 const segment = range.segment;

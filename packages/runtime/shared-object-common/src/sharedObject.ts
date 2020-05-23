@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
@@ -14,7 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import * as Deque from "double-ended-queue";
+import Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";

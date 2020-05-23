@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { parse } from "url";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
@@ -17,7 +17,7 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier

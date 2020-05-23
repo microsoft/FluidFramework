@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -626,8 +626,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         telemetryEventSuffix: string,
         fromInitial: number,
         to: number | undefined,
-        callback: (messages: ISequencedDocumentMessage[]) => void)
-    {
+        callback: (messages: ISequencedDocumentMessage[]) => void) {
         let retry: number = 0;
         let from: number = fromInitial;
         let deltas: ISequencedDocumentMessage[] = [];

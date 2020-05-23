@@ -7,8 +7,8 @@ import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

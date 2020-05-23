@@ -108,10 +108,10 @@ export class SnapshotV1 {
         const headerChunk = chunks.shift();
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
-        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index)=>{
+        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
             const id = index.toString();
             this.header.orderedChunkMetadata.push({ id });
-            return  {
+            return {
                 mode: FileMode.File,
                 path: id,
                 type: TreeEntry[TreeEntry.Blob],
@@ -129,7 +129,7 @@ export class SnapshotV1 {
         });
 
         const tree: ITree = {
-            entries:[
+            entries: [
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,

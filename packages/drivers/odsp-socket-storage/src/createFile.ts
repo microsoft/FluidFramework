@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";

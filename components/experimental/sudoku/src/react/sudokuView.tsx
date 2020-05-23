@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@fluidframework/map";
-import * as React from "react";
+import React from "react";
 import { Coordinate, CoordinateString } from "../helpers/coordinate";
 import { loadPuzzle, PUZZLE_INDEXES } from "../helpers/puzzles";
 import { CellState, SudokuCell } from "../helpers/sudokuCell";

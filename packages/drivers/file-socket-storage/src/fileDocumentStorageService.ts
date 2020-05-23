@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
+import assert from "assert";
+import fs from "fs";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/protocol-base";

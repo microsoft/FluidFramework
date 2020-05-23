@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-unsafe-any
-import * as assert from "assert";
+import assert from "assert";
 import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
 
 function messageFromError(error: any) {

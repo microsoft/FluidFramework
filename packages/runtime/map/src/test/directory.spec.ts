@@ -5,7 +5,7 @@
 
 // tslint:disable:no-console
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IBlob,
     TreeEntry,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 

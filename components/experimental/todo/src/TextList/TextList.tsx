@@ -6,8 +6,8 @@ import { PrimedComponent } from "@fluidframework/aqueduct";
 import { IDirectory } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { TextListView } from "./TextListView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

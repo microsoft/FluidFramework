@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";

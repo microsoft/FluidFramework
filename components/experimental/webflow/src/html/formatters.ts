@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";

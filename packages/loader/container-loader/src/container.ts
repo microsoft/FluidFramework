@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as uuid from "uuid";
+import assert from "assert";
+import uuid from "uuid";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,

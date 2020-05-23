@@ -45,7 +45,7 @@
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.16.0-0",
     "@types/debug": "^4.1.5",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
