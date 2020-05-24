@@ -108,7 +108,7 @@
     "@types/mocha": "^5.2.5",
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.0.37",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@types/random-js": "^1.0.31",
     "@types/redis": "^2.8.8",
     "@types/request": "^2.47.1",

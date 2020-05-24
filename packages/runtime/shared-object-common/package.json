@@ -33,7 +33,7 @@
     "@fluidframework/protocol-definitions": "^0.1006.0-0",
     "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0"
   },

@@ -611,8 +611,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.processOp(transformed, local);
+        channelContext.processOp(transformed, local);
 
         return channelContext;
     }

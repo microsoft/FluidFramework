@@ -56,8 +56,7 @@ export class Smde extends EventEmitter implements
 
     private get text() {
         assert(this._text);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._text!;
+        return this._text;
     }
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
