@@ -8,7 +8,12 @@ import { Loader } from "@fluidframework/container-loader";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver, WebCodeLoader, WhiteList } from "@fluidframework/web-code-loader";
+import {
+    extractPackageIdentifierDetails,
+    SemVerCdnCodeResolver,
+    WebCodeLoader,
+    WhiteList,
+} from "@fluidframework/web-code-loader";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
 // Base service configuration. (Tinylicious)
@@ -27,6 +32,7 @@ const bearerSecret = "";
 // of the join message. Your app can then use this to understand who created the op. Note that this object is intended
 // to be derived from. The API only requires a field named 'id' but you can create your own fields on it as well. For
 // example we defined a 'name' field.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const user = {
     id: "test",                     // Required value
     name: "Test User",       // Optional value that we included
@@ -68,7 +74,7 @@ export async function start(url: string, code: string): Promise<void> {
         documentServicesFactory,
         codeLoader,
         { blockUpdateMarkers: true },
-        null,
+        {},
         new Map<string, IProxyLoaderFactory>());
 
     // We start by resolving the URL to its underlying Fluid document. This gives low-level access which will enable
@@ -78,6 +84,7 @@ export async function start(url: string, code: string): Promise<void> {
 
     // The attach helper method performs the actual attachment of the above platform to the component identified
     // by the URL in the browser. Once the attach is complete the component will render to the provided div.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     attach(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
 
     // This step is used when creating a new document. In the case that your host is only loading existing documents
@@ -101,5 +108,6 @@ export async function start(url: string, code: string): Promise<void> {
 if (document.location.pathname === "/") {
     window.location.href = `/example?${defaultPackage}`;
 } else {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     start(document.location.href, parsePackageName(document.location, defaultPackage));
 }

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "querystring";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
-import { parse } from "querystring";
 
 /**
  * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
  * on this package.
  */
-export async function initializeChaincode(document: Container, pkg: IFluidCodeDetails): Promise<void> {
-    if (!pkg) {
+export async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
+    if (pkg !== undefined) {
         return;
     }
 
@@ -47,15 +47,15 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     // Check if the component is viewable
     const component = response.value as IComponent;
     // First try to get it as a view
-    let renderable: IComponentHTMLView = component.IComponentHTMLView;
-    if (!renderable) {
+    let renderable: IComponentHTMLView | undefined = component.IComponentHTMLView;
+    if (renderable === undefined) {
         // Otherwise get the visual, which is a view factory
-        const visual: IComponentHTMLVisual = component.IComponentHTMLVisual;
-        if (visual) {
+        const visual: IComponentHTMLVisual | undefined = component.IComponentHTMLVisual;
+        if (visual !== undefined) {
             renderable = visual.addView();
         }
     }
-    if (renderable) {
+    if (renderable !== undefined) {
         renderable.render(div, { display: "block" });
     }
 }
@@ -66,13 +66,15 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
  * case it simply runs the attach method again.
  */
 export async function attach(loader: Loader, container: Container, url: string, div: HTMLDivElement) {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     attachCore(loader, url, div);
     container.on("contextChanged", () => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         attachCore(loader, url, div);
     });
 }
 
 export function parsePackageName(url: Location, defaultPkg: string): string {
     const parsed = parse(url.search.substr(1));
-    return parsed.chaincode ? parsed.chaincode as string : defaultPkg;
+    return parsed.chaincode !== undefined ? parsed.chaincode as string : defaultPkg;
 }
