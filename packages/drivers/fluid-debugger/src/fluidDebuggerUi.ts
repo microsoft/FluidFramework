@@ -262,7 +262,7 @@ export class DebuggerUI {
 
     public disableNextOpButton(disable: boolean) {
         assert(this.buttonOps);
-        this.buttonOps!.disabled = disable;
+        this.buttonOps.disabled = disable;
     }
 
     public updateNextOpText(ops: ISequencedDocumentMessage[]) {

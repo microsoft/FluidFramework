@@ -828,8 +828,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         if (connected) {
             assert(clientId);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(clientId!);
+            this.summaryManager.setConnected(clientId);
         } else {
             assert(!this._leader);
             this.summaryManager.setDisconnected();

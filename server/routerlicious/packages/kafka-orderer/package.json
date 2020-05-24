@@ -22,7 +22,7 @@
   "dependencies": {
     "@fluidframework/protocol-definitions": "^0.1006.0",
     "@fluidframework/server-services-core": "^0.1006.0",
-    "@types/node": "^10.14.6"
+    "@types/node": "^10.17.24"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0-0",

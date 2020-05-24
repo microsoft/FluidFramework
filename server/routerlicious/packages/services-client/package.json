@@ -50,7 +50,7 @@
     "@fluidframework/gitresources": "^0.1006.0",
     "@fluidframework/protocol-base": "^0.1006.0",
     "@fluidframework/protocol-definitions": "^0.1006.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.4.0",

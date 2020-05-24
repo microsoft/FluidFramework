@@ -51,7 +51,7 @@
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
