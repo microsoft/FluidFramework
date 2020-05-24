@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Loader } from "@microsoft/fluid-container-loader";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { IUser } from "@fluidframework/protocol-definitions";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver, WebCodeLoader, WhiteList } from "@fluidframework/web-code-loader";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
 // Base service configuration. (Tinylicious)

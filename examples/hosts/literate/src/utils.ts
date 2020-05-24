@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import { parse } from "querystring";
 
 /**
