@@ -94,9 +94,9 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@fluidframework/server-test-utils": "^0.1006.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",

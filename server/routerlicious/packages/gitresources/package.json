@@ -19,8 +19,8 @@
     "tsc": "tsc"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
-    "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",

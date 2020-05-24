@@ -63,9 +63,9 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
     "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@fluidframework/server-test-utils": "^0.1006.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
     "@types/async": "^2.0.50",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/lodash": "^4.14.118",

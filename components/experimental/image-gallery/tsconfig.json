@@ -1,5 +1,5 @@
 {
-    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
+    "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"

@@ -11,7 +11,7 @@ import * as minio from "minio";
 import { Provider } from "nconf";
 import * as rimraf from "rimraf";
 import * as unzip from "unzip-stream";
-import * as webpack from "webpack";
+import webpack from "webpack";
 import * as winston from "winston";
 import { getParam } from "../utils";
 

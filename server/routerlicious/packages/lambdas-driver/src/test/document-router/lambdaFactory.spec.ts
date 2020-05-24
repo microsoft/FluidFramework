@@ -5,7 +5,7 @@
 
 import { IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import { TestContext } from "@fluidframework/server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
 import { create, TestLambdaFactory } from "./testDocumentLambda";

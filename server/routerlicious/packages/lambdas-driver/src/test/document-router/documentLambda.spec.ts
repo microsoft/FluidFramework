@@ -9,8 +9,8 @@ import {
     MessageFactory,
     TestContext,
 } from "@fluidframework/server-test-utils";
-import * as assert from "assert";
-import * as nconf from "nconf";
+import assert from "assert";
+import nconf from "nconf";
 import * as plugin from "../../document-router";
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
