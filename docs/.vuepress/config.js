@@ -55,6 +55,7 @@ const getNav = () => {
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Docs", link: "/docs/" },
         { text: "Tutorials", link: "/tutorials/" },
+        { text: "API", link: "/api/overview" },
         {
             text: "🤿 Dive Deeper",
             items: [
@@ -271,10 +272,11 @@ const getDocsSidebar = () => {
                 "consensus",
             ]
         },
-        {
-            title: "API",
-            children: getApiSidebar(),
-        },
+        // {
+        //     title: "API",
+        //     path: "../",
+        //     children: getApiSidebar(),
+        // },
         {
             title: "Component model",
             collapsable: false,
