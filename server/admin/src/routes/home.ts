@@ -18,7 +18,6 @@ export function create(
     ensureLoggedIn: any,
     tenantManager: TenantManager,
     cache: IKeyValueWrapper): Router {
-
     const router: Router = Router();
 
     /**
@@ -26,7 +25,7 @@ export function create(
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
         const oid = request.user ? request.user.oid : "local";
-        const user = request.user ? request.user : {displayName: "local"};
+        const user = request.user ? request.user : { displayName: "local" };
         const tenantsP = tenantManager.getTenantsforUser(oid);
         // Return empty result if the key-value document was not loaded properly.
         const keyValuesP = cache.getKeyValues().then((keyValues) => {
@@ -68,7 +67,7 @@ export function create(
                 "email",
             ],
         },
-    ));
+        ));
 
     router.get(
         "/auth/callback",
@@ -76,7 +75,7 @@ export function create(
             failureRedirect: "/login",
             successReturnToOrRedirect: "/",
         },
-    ));
+        ));
 
     return router;
 }

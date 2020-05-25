@@ -7,7 +7,7 @@ import * as core from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
 import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";
-import { ITenantConfig, RiddlerManager} from "./riddlerManager";
+import { ITenantConfig, RiddlerManager } from "./riddlerManager";
 
 /**
  * User -> Orgs mapping document
@@ -49,20 +49,19 @@ export interface ITenantDetails {
 }
 
 export class TenantManager {
-    private riddlerManager: RiddlerManager;
+    private readonly riddlerManager: RiddlerManager;
 
     constructor(
-        private mongoManager: core.MongoManager,
-        private userOrgCollection: string,
-        private orgTenantCollection: string,
-        private tenantCollection: string,
-        private riddlerEndpoint: string,
-        private gitrestEndpoint: string,
-        private cobaltEndpoint: string,
-        private historianEndpoint: string,
-        private alfredEndpoint: string,
-        private jarvisEndpoint: string) {
-
+        private readonly mongoManager: core.MongoManager,
+        private readonly userOrgCollection: string,
+        private readonly orgTenantCollection: string,
+        private readonly tenantCollection: string,
+        private readonly riddlerEndpoint: string,
+        private readonly gitrestEndpoint: string,
+        private readonly cobaltEndpoint: string,
+        private readonly historianEndpoint: string,
+        private readonly alfredEndpoint: string,
+        private readonly jarvisEndpoint: string) {
         this.riddlerManager = new RiddlerManager(this.riddlerEndpoint);
     }
 
@@ -208,11 +207,11 @@ export class TenantManager {
             return "Unknown";
         }
 
-        if (url.indexOf(this.cobaltEndpoint) !== -1) {
+        if (url.includes(this.cobaltEndpoint)) {
             return "Cobalt";
-        } else if (url.indexOf(this.gitrestEndpoint) !== -1) {
+        } else if (url.includes(this.gitrestEndpoint)) {
             return "Git";
-        } else if (url.indexOf("https://api.github.com") !== -1) {
+        } else if (url.includes("https://api.github.com")) {
             return "GitHub";
         } else {
             return "Unknown";
@@ -242,7 +241,7 @@ export class TenantManager {
     private async addNewTenantForOrg(orgId: string, tenantId: string): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
-        const existingTenants = (await collection.findOne({_id: orgId})).tenantIds;
+        const existingTenants = (await collection.findOne({ _id: orgId })).tenantIds;
         existingTenants.push(tenantId);
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
@@ -280,10 +279,9 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDetails>(this.tenantCollection);
         const found = await collection.find(
-            { $and: [{_id: {$in: tenantIds}}, {deleted: false}]},
+            { $and: [{ _id: { $in: tenantIds } }, { deleted: false }] },
             {},
         );
         return found;
     }
-
 }

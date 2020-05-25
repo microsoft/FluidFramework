@@ -17,7 +17,6 @@ export class AdminResources implements utils.IResources {
         public config: Provider,
         public mongoManager: core.MongoManager,
         public port: any) {
-
         this.webServerFactory = new WebServerFactory();
     }
 
@@ -28,7 +27,6 @@ export class AdminResources implements utils.IResources {
 
 export class AdminResourcesFactory implements utils.IResourcesFactory<AdminResources> {
     public async create(config: Provider): Promise<AdminResources> {
-
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
         const mongoFactory = new services.MongoDbFactory(mongoUrl);

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@fluidframework/server-services-core";
 import { AssertionError } from "assert";
+import * as fs from "fs";
+import * as path from "path";
+import * as core from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -13,12 +15,10 @@ import * as cors from "cors";
 import * as express from "express";
 import { Express } from "express";
 import * as expressSession from "express-session";
-import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as passportOpenIdConnect from "passport-openidconnect";
-import * as path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import split = require("split");
@@ -37,7 +37,6 @@ function translateStaticUrl(
     cache: { [key: string]: string },
     furl: (name: string) => string,
     production: boolean): string {
-
     const local = url.substring(staticFilesEndpoint.length);
     if (!(local in cache)) {
         const parsedPath = path.parse(local);
@@ -79,7 +78,6 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(config: Provider, mongoManager: core.MongoManager) {
-
     // We are loading a Fluid document that might lead to assertion errors.
     // Handling this so that the whole process is not terminated.
     winston.info(`Attaching error handlers`);
@@ -122,18 +120,18 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     const microsoftConfiguration = config.get("login:microsoft");
     passport.use(
         new passportOpenIdConnect.Strategy({
-                authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
-                callbackURL: "/auth/callback",
-                clientID: microsoftConfiguration.clientId,
-                clientSecret: microsoftConfiguration.secret,
-                issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
-                passReqToCallback: true,
-                skipUserProfile: true,
-                tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
-            },
-            (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
-                return done(null, jwtClaims);
-            },
+            authorizationURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
+            callbackURL: "/auth/callback",
+            clientID: microsoftConfiguration.clientId,
+            clientSecret: microsoftConfiguration.secret,
+            issuer: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0",
+            passReqToCallback: true,
+            skipUserProfile: true,
+            tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+        },
+        (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+            return done(null, jwtClaims);
+        },
         ),
     );
 

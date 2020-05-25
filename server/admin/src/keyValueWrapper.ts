@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred } from "@fluidframework/common-utils";
 import { ChildProcess, fork } from "child_process";
+import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
@@ -11,7 +11,7 @@ import { IKeyValue, IKeyValueWrapper } from "./definitions";
 
 export class KeyValueWrapper implements IKeyValueWrapper {
     private readonly kvDeferred = new Deferred<void>();
-    private keyValue: ChildProcess;
+    private readonly keyValue: ChildProcess;
 
     constructor(config: Provider) {
         const keyValueLoaderFile = `${__dirname}/childLoader.js`;

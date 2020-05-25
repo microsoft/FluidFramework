@@ -16,10 +16,10 @@ export class AdminRunner implements utils.IRunner {
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: IWebServerFactory,
-        private config: Provider,
-        private port: string | number,
-        private mongoManager: core.MongoManager) {
+        private readonly serverFactory: IWebServerFactory,
+        private readonly config: Provider,
+        private readonly port: string | number,
+        private readonly mongoManager: core.MongoManager) {
     }
 
     public start(): Promise<void> {
@@ -64,8 +64,8 @@ export class AdminRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? "Pipe " + this.port
-            : "Port " + this.port;
+            ? `Pipe ${  this.port}`
+            : `Port ${  this.port}`;
 
         // handle specific listen errors with friendly messages
         switch (error.code) {
@@ -86,8 +86,8 @@ export class AdminRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        winston.info("Listening on " + bind);
+            ? `pipe ${  addr}`
+            : `port ${  addr.port}`;
+        winston.info(`Listening on ${  bind}`);
     }
 }

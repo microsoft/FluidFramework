@@ -21,12 +21,11 @@ export function create(
     config: Provider,
     mongoManager: core.MongoManager,
     tenantManager: TenantManager): IRoutes {
-
     const ensureLoggedIn = config.get("login:enabled")
-    ? ensureAuth.ensureLoggedIn
-    : () => {
-        return (req, res, next) => next();
-    };
+        ? ensureAuth.ensureLoggedIn
+        : () => {
+            return (req, res, next) => next();
+        };
 
     const loadKeyValue = config.get("keyValue:load") as boolean;
     const keyValueWrapper = loadKeyValue ? new KeyValueWrapper(config) : new LocalKeyValueWrapper();

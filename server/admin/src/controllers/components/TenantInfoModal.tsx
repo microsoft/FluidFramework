@@ -14,7 +14,7 @@ export interface ITenantInfoProps {
     onOk: () => void;
 }
 
-export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
+export class TenantInfoModal extends React.Component<ITenantInfoProps> {
     constructor(props: ITenantInfoProps) {
         super(props);
     }
@@ -28,27 +28,27 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
         const storage = !record ? "" : record.historianUrl;
 
         return (
-          <div>
-            <Modal
-              title={name}
-              visible={visible}
-              onOk={onOk}
-              onCancel={onOk}
-              footer={[
-                <Button href="" key="ok" type="primary" onClick={onOk}>
+            <div>
+                <Modal
+                    title={name}
+                    visible={visible}
+                    onOk={onOk}
+                    onCancel={onOk}
+                    footer={[
+                        <Button href="" key="ok" type="primary" onClick={onOk}>
                   Ok
-                </Button>,
-              ]}
-            >
-              <p><b>Id:</b> {id}</p>
-              <p><b>Key:</b> {key}</p>
-              <p><b>Orderer:</b> {orderer}</p>
-              <p><b>Storage:</b> {storage}</p>
-              <a href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md" target="_blank">
+                        </Button>,
+                    ]}
+                >
+                    <p><b>Id:</b> {id}</p>
+                    <p><b>Key:</b> {key}</p>
+                    <p><b>Orderer:</b> {orderer}</p>
+                    <p><b>Storage:</b> {storage}</p>
+                    <a href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md" target="_blank">
                 Getting started with Fluid API
-              </a>
-            </Modal>
-          </div>
+                    </a>
+                </Modal>
+            </div>
         );
     }
 }

@@ -54,7 +54,7 @@ export function create(
      * Deletes an existing Key-Value
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
-        const key = request.params[0] as string;
+        const key = request.params[0];
         const delP = cache.removeKeyValue(key);
         returnResponse(delP, response);
     });

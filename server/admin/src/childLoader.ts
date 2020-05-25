@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { parse } from "url";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
@@ -18,7 +19,6 @@ import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
-import { parse } from "url";
 import * as winston from "winston";
 import { IKeyValue as IKV } from "./definitions";
 
@@ -169,7 +169,7 @@ process.on("message", async (message: IIncomingMessage) => {
         } else {
             const keyValues: IKV[] = [];
             for (const [key, value] of cache.entries()) {
-                keyValues.push({key, value});
+                keyValues.push({ key, value });
             }
             const getSuccessMessage: IOutgoingMessage = {
                 status: true,
