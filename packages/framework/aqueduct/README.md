@@ -197,7 +197,7 @@ interface ProviderEntry<T extends keyof IComponent> {
 }
 ```
 
-The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthisize`
+The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
 package defines the follow `ComponentProvider` types:
 
 ```typescript
