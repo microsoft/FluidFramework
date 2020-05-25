@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import * as services from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import { AdminRunner } from "./runner";
 import { IWebServerFactory, WebServerFactory } from "./webServer";

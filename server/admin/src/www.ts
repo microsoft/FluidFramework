@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-server-services-utils";
+import * as utils from "@fluidframework/server-services-utils";
 import * as path from "path";
 import { AdminResourcesFactory, AdminRunnerFactory } from "./runnerFactory";
 

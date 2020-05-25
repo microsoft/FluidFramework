@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
 import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
-import { IData, IKeyValueWrapper } from "../definitions";
+import { IData, IKeyValueWrapper, ITenant, IKeyValue } from "../definitions";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -35,7 +35,9 @@ export function create(
             return [];
         });
 
-        Promise.all([tenantsP, keyValuesP]).then(([tenants, keyValues]) => {
+        const tuple: [Promise<ITenant[]>, Promise<any | IKeyValue[]>] = [tenantsP, keyValuesP];
+
+        Promise.all(tuple).then(([tenants, keyValues]) => {
             const data: IData = {
                 keyValues,
                 tenants,

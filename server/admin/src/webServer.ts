@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";

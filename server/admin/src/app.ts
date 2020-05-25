@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { AssertionError } from "assert";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
