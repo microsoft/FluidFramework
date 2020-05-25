@@ -4,10 +4,15 @@
  */
 
 import { Form, Icon, Input, Modal, Radio } from "antd";
+// eslint-disable-next-line import/no-internal-modules
 import { FormComponentProps } from "antd/lib/form";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/form/style/css";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/input/style/css";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/modal/style/css";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/radio/style/css";
 import * as React from "react";
 
@@ -36,6 +41,7 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
     public render() {
         const { confirmLoading, visible, onCancel, onCreate, form } = this.props;
         const { getFieldDecorator } = form;
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         return (
             <Modal
                 visible={visible}
@@ -120,6 +126,7 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
                 </Form>
             </Modal>
         );
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
     }
 
     private onStorageInputChange(e) {

@@ -21,11 +21,13 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps> {
 
     public render() {
         const { visible, record, onOk } = this.props;
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         const name = !record ? "" : record.name;
         const id = !record ? "" : record.id;
         const key = !record ? "" : record.key;
         const orderer = !record ? "" : record.orderer.url;
         const storage = !record ? "" : record.historianUrl;
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
         return (
             <div>
@@ -36,7 +38,7 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps> {
                     onCancel={onOk}
                     footer={[
                         <Button href="" key="ok" type="primary" onClick={onOk}>
-                  Ok
+                            Ok
                         </Button>,
                     ]}
                 >
@@ -44,8 +46,12 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps> {
                     <p><b>Key:</b> {key}</p>
                     <p><b>Orderer:</b> {orderer}</p>
                     <p><b>Storage:</b> {storage}</p>
-                    <a href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md" target="_blank">
-                Getting started with Fluid API
+                    <a
+                        href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                    >
+                        Getting started with Fluid API
                     </a>
                 </Modal>
             </div>

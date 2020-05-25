@@ -9,7 +9,9 @@ import {
     Popconfirm,
     Table,
 } from "antd";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/popconfirm/style/css";
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "antd/lib/table/style/css";
 import * as React from "react";
 import { IKeyValue } from "../../definitions";
@@ -39,8 +41,10 @@ interface ITableColumn<T> {
 }
 
 const FormItem = Form.Item;
+// eslint-disable-next-line no-null/no-null
 const EditableContext = React.createContext(null);
 
+// eslint-disable-next-line react/prop-types
 const EditableRow = ({ form, index, ...props }) => (
     <EditableContext.Provider value={form}>
         <tr {...props} />
@@ -63,7 +67,9 @@ class EditableCell extends React.Component<ICellProps<IKeyValue>, ICellState> {
             dataIndex,
             title,
             record,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             index,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             handleEdit,
             ...restProps
         } = this.props;
@@ -118,6 +124,7 @@ class EditableCell extends React.Component<ICellProps<IKeyValue>, ICellState> {
     private readonly toggle = (e) => {
         const { record, handleEdit } = this.props;
         this.form.validateFields((error, values) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (error && error[e.currentTarget.id]) {
                 return;
             }
@@ -161,10 +168,12 @@ export class KeyValueManager extends React.Component<ITableProps, ITableState> {
             editable: false,
             render: (text: string, record: IKeyValue) => {
                 const needSave = this.edited.has(record.key);
+                // eslint-disable-next-line no-null/no-null
                 const saveButton = needSave ? <a onClick={() => this.handleSave(record)}>Save</a> : null;
                 const seperatorStyle = {
                     display: "inline",
                 };
+                // eslint-disable-next-line no-null/no-null
                 const seperator = needSave ? <div style={seperatorStyle}><span> | </span></div> : null;
                 return (
                     <div>
@@ -259,6 +268,7 @@ export class KeyValueManager extends React.Component<ITableProps, ITableState> {
     private readonly handleAdd = () => {
         const form = this.form;
         form.validateFields((err, newKeyValue: IKeyValue) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (err) {
                 return;
             }

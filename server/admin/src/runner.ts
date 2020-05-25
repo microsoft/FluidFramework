@@ -22,7 +22,7 @@ export class AdminRunner implements utils.IRunner {
         private readonly mongoManager: core.MongoManager) {
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         const admin = app.create(
@@ -42,7 +42,7 @@ export class AdminRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
             () => {

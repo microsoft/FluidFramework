@@ -115,8 +115,10 @@ class KeyValueLoader {
     }
 
     private registerAttach(loader: Loader, container: Container, uri: string) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.attach(loader, uri);
         container.on("contextChanged", (value) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.attach(loader, uri);
         });
     }
@@ -135,12 +137,13 @@ class KeyValueLoader {
 
 let cache: IKeyValue;
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));
-        const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
+        const cacheP = keyValueLoaderP.then(async (keyValueLoader: KeyValueLoader) => {
             return keyValueLoader.cache;
-        }, (err) => {
+        }, async (err) => {
             return Promise.reject(err);
         });
         cacheP.then((resolvedCache) => {

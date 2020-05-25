@@ -12,7 +12,9 @@ import * as compression from "compression";
 import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
+// eslint-disable-next-line import/no-duplicates
 import * as express from "express";
+// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
 import * as expressSession from "express-session";
 import * as morgan from "morgan";
@@ -21,6 +23,7 @@ import * as passport from "passport";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
@@ -98,12 +101,14 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
 
     // Create a redis session store.
     let sessionStore: any;
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (config.get("login:enabled")) {
         const redisStore = connectRedis(expressSession);
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
         const options: redis.ClientOpts  = { auth_pass: redisPass };
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: redisHost,
@@ -130,6 +135,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
             tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
         },
         (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+            // eslint-disable-next-line no-null/no-null
             return done(null, jwtClaims);
         },
         ),
@@ -138,10 +144,12 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     // Right now we simply pass through the entire stored user object to the session storage for that user.
     // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.
     passport.serializeUser((user: any, done) => {
+        // eslint-disable-next-line no-null/no-null
         done(null, user);
     });
 
     passport.deserializeUser((user: any, done) => {
+        // eslint-disable-next-line no-null/no-null
         done(null, user);
     });
 
@@ -186,6 +194,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     // The below is to check to make sure the session is available (redis could have gone down for instance) and if
     // not return an error
     app.use((request, response, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!request.session) {
             return next(new Error("Session not available"));
         } else {
@@ -210,6 +219,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.render("error", {
                 error: err,
@@ -221,6 +231,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.render("error", {
             error: {},

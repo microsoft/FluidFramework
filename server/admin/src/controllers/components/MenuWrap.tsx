@@ -24,6 +24,7 @@ export class MenuWrap extends React.Component<IMenuWrapProps, IMenuWrapState> {
     }
 
     // TODO: Clean up this method later.
+    // eslint-disable-next-line react/no-deprecated
     public componentWillReceiveProps(nextProps) {
         const sideChanged = this.props.children.props.right !== nextProps.children.props.right;
 

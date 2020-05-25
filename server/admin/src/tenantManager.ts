@@ -70,6 +70,7 @@ export class TenantManager {
      */
     public async addTenant(userId: string, inputParams: ITenantInput): Promise<ITenant> {
         let orgId = await this.getOrgIdForUser(userId);
+        // eslint-disable-next-line no-null/no-null
         if (orgId === null) {
             orgId = await this.createOrgIdForUser(userId);
             await this.createEmptyTenantListForOrg(orgId);
@@ -102,11 +103,13 @@ export class TenantManager {
      */
     public async getTenantsforUser(userId: string): Promise<ITenant[]> {
         const orgId = await this.getOrgIdForUser(userId);
+        // eslint-disable-next-line no-null/no-null
         if (orgId === null) {
             return [];
         }
 
         const tenantIds = await this.getTenantIdsForOrg(orgId);
+        // eslint-disable-next-line no-null/no-null
         if (tenantIds === null) {
             return [];
         }
@@ -130,6 +133,7 @@ export class TenantManager {
     public async deleteTenant(tenantId: string): Promise<string> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDetails>(this.tenantCollection);
+        // eslint-disable-next-line no-null/no-null
         await collection.update({ _id: tenantId }, { deleted: true }, null);
         return tenantId;
     }
@@ -161,9 +165,10 @@ export class TenantManager {
      * For github provider, tenants are responsible for creating the repo manually.
      */
     private async createTenantStorage(tenantId: string, params: ITenantInput): Promise<ITenantStorage> {
-        let storageEndpoint = null;
-        let owner = null;
-        let repository = null;
+        let storageEndpoint;
+        let owner;
+        let repository;
+        // eslint-disable-next-line no-null/no-null
         let credentials: { user: string, password: string} = null;
 
         if (params.storageType !== "github") {
@@ -203,6 +208,7 @@ export class TenantManager {
     }
 
     private getProviderForEndpoint(url: string) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!url) {
             return "Unknown";
         }
@@ -243,6 +249,7 @@ export class TenantManager {
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
         const existingTenants = (await collection.findOne({ _id: orgId })).tenantIds;
         existingTenants.push(tenantId);
+        // eslint-disable-next-line no-null/no-null
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
 
@@ -264,6 +271,7 @@ export class TenantManager {
         const collection = db.collection<IUserOrg>(this.userOrgCollection);
 
         const found = await collection.findOne({ _id: userId });
+        // eslint-disable-next-line no-null/no-null
         return (found === null) ? null : found.orgIds[0];
     }
 
@@ -272,6 +280,7 @@ export class TenantManager {
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
 
         const found = await collection.findOne({ _id: orgId });
+        // eslint-disable-next-line no-null/no-null
         return (found === null) ? null : found.tenantIds;
     }
 

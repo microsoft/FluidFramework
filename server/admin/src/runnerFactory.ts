@@ -33,6 +33,7 @@ export class AdminResourcesFactory implements utils.IResourcesFactory<AdminResou
         const mongoManager = new core.MongoManager(mongoFactory);
 
         // This wanst to create stuff
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         return new AdminResources(

@@ -4,7 +4,9 @@
  */
 
 import { Form, Popconfirm, Table } from "antd";
+// eslint-disable-next-line import/no-unassigned-import, import/no-internal-modules
 import "antd/lib/popconfirm/style/css";
+// eslint-disable-next-line import/no-unassigned-import, import/no-internal-modules
 import "antd/lib/table/style/css";
 import * as React from "react";
 import { ITenant } from "../../definitions";
@@ -63,6 +65,7 @@ export class TenantManager extends React.Component<ITableProps, ITableState > {
 
         this.state = {
             count: this.props.data.length,
+            // eslint-disable-next-line no-null/no-null
             currentInfo: null,
             dataSource: this.props.data,
             infoVisible: false,
@@ -103,6 +106,7 @@ export class TenantManager extends React.Component<ITableProps, ITableState > {
         console.log("Begin create");
         const form = this.form;
         form.validateFields((err, tenant) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (err) {
                 return;
             }
