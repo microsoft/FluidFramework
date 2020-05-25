@@ -5,7 +5,7 @@ sidebarDepth: 2
 
 # SparseMatrix
 
-- Package: [@microsoft/fluid-sequence](../api/fluid-sequence.md)
+- Package: [@fluidframework/sequence](../api/fluid-sequence.md)
 - API documentation: [SparseMatrix](../api/fluid-sequence.sparsematrix.md)
 
 !!!include(sequences-usage.md)!!!

@@ -5,7 +5,7 @@ sidebarDepth: 2
 
 # SharedString
 
-- Package: [@microsoft/fluid-sequence](../api/fluid-sequence.md)
+- Package: [@fluidframework/sequence](../api/fluid-sequence.md)
 - API documentation: [SharedString](../api/fluid-sequence.sharedstring.md)
 
 !!!include(sequences-usage.md)!!!
