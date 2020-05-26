@@ -570,7 +570,7 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public async createAlias(alias: string): Promise<void> {
+    public async createAlias(alias: string): Promise<string> {
         return this._containerRuntime.createComponentAlias(this.id, alias);
     }
 }

@@ -587,7 +587,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
     // Mapping from alias to component ID
-    private readonly aliases = new Map<string, {id: string; deferred?: Deferred<void>}>();
+    private readonly aliases = new Map<string, {id: string; deferred?: Deferred<string>}>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1033,7 +1033,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this._createComponentContext(pkg, props);
     }
 
-    public async createComponentAlias(componentId: string, alias: string): Promise<void> {
+    public async createComponentAlias(componentId: string, alias: string): Promise<string> {
         assert(this.contexts.has(componentId), "component ID is not valid");
 
         // Legacy files can run into this assert, when moving from creating named components
@@ -1050,10 +1050,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
             // It's undefined if already resolved
             // Otherwise we have promise that will resolve in some future.
-            return result.deferred?.promise;
+            if (result.deferred === undefined) {
+                return result.id;
+            }
+            return result.deferred.promise;
         }
 
-        const deferred = new Deferred<void>();
+        const deferred = new Deferred<string>();
         result = {
             id: componentId,
             deferred,
@@ -1609,13 +1612,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
                     // Incoming op wins the race (if any)
                     this.aliases.set(runtimeMessage.alias, finalState);
-
-                    if (pendingProposal.id !== runtimeMessage.componentId) {
-                        pendingProposal.deferred.reject(new Error(
-                            `Another component claimed alias (${runtimeMessage.componentId}, ${pendingProposal.id})`));
-                    } else {
-                        pendingProposal.deferred.resolve();
-                    }
+                    pendingProposal.deferred.resolve(runtimeMessage.componentId);
 
                     break;
                 }

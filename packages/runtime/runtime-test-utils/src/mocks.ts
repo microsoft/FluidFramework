@@ -449,6 +449,10 @@ export class MockRuntime extends EventEmitter
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void { }
+
+    public async createAlias(alias: string): Promise<string> {
+        throw new Error("Not implemented");
+    }
 }
 
 /**

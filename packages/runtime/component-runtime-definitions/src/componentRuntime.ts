@@ -153,4 +153,12 @@ export interface IComponentRuntime extends
      * It is false if the container is attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
+
+    /**
+     * Create an alias name for a component. Alias is an alternative ID for a component.
+     * @param alias - alternative name for the component
+     * @returns - An ID of a component that wins the race (if any). This component "owns" this alias name.
+     * If returned ID matches this component ID, then this component won the race.
+     */
+    createAlias(alias: string): Promise<string>;
 }

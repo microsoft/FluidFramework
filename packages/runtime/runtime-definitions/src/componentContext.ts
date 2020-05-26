@@ -362,12 +362,12 @@ export interface IComponentContext extends EventEmitter {
     getAbsoluteUrl(relativeUrl: string): Promise<string>;
 
     /**
-     * Create an alias name for a component.
+     * Create an alias name for a component. Alias is an alternative ID for a component.
      * @param alias - alternative name for the component
-     * @returns - success, if alias is acquired for a component.
-     * Fails, if some other component already have taken the alias name.
+     * @returns - An ID of a component that wins the race (if any). This component "owns" this alias name.
+     * If returned ID matches this component ID, then this component won the race.
      */
-    createAlias(alias: string): Promise<void>;
+    createAlias(alias: string): Promise<string>;
 }
 
 /**
