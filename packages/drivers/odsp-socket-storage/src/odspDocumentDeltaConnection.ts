@@ -13,6 +13,8 @@ import {
     IClient,
     IConnect,
     INack,
+    ISequencedDocumentMessage,
+    ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import uuid from "uuid/v4";
@@ -54,14 +56,12 @@ class SocketReference {
  * Represents a connection to a stream of delta updates
  */
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
-    private readonly nonForwardEvents = ["nack"];
-
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param webSocketId - webSocket ID
+     * @param documentId - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -71,17 +71,23 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     public static async create(
         tenantId: string,
-        webSocketId: string,
+        documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
+        // enable multiplexing when the websocket url does not include the tenant/document id
+        const parsedUrl = new URL(url);
+        const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
+
+        // do not include the specific tenant/doc id in the ref key when multiplexing
+        // this will allow multiple documents to share the same websocket connection
+        const socketReferenceKey = enableMultiplexing ? url : `${url},${tenantId},${documentId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -90,7 +96,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         const connectMessage: IConnect = {
             client,
-            id: webSocketId,
+            id: documentId,
             mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
@@ -98,7 +104,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             nonce: uuid(),
         };
 
-        const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
+        const deltaConnection = new OdspDocumentDeltaConnection(
+            socket,
+            documentId,
+            socketReferenceKey,
+            enableMultiplexing);
 
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
@@ -129,6 +139,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         timeoutMs: number,
         key: string,
         url: string,
+        enableMultiplexing: boolean,
         tenantId: string,
         documentId: string,
         telemetryLogger: ITelemetryLogger): SocketReference {
@@ -157,14 +168,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
         } else {
+            const query = enableMultiplexing ? undefined : { documentId, tenantId };
+
             const socket = io(
                 url,
                 {
                     multiplex: false, // Don't rely on socket.io built-in multiplexing
-                    query: {
-                        documentId,
-                        tenantId,
-                    },
+                    query,
                     reconnection: false,
                     transports: ["websocket"],
                     timeout: timeoutMs,
@@ -187,7 +197,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socketReference = new SocketReference(socket);
 
             OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
-            debug(`Created new socketio reference for ${key}`);
+            debug(`Created new socketio reference for ${key}. multiplexing: ${enableMultiplexing}`);
         }
 
         return socketReference;
@@ -248,30 +258,70 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
      * @param socketReferenceKey - socket reference key
+     * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     constructor(
         socket: SocketIOClient.Socket,
         documentId: string,
-        private socketReferenceKey: string | undefined) {
+        private socketReferenceKey: string | undefined,
+        private readonly enableMultiplexing?: boolean) {
         super(socket, documentId);
+    }
 
-        // when possible emit nacks only when it targets this specific client/document
-        super.addTrackedListener("nack", (clientIdOrDocumentId: string, message: INack[]) => {
-            if (clientIdOrDocumentId.length === 0 ||
-                clientIdOrDocumentId === documentId ||
-                (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
-                this.emit("nack", clientIdOrDocumentId, message);
-            }
-        });
+    protected async initialize(connectMessage: IConnect, timeout: number) {
+        if (this.enableMultiplexing) {
+            // multiplex compatible early handlers
+            this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
+                if (this.documentId === messageDocumentId) {
+                    this.queuedMessages.push(...msgs);
+                }
+            };
+
+            this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
+                if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
+                    this.queuedSignals.push(msg);
+                }
+            };
+        }
+
+        return super.initialize(connectMessage, timeout);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
-        if (!this.nonForwardEvents.includes(event)) {
-            super.addTrackedListener(event, listener);
-        } else {
-            // this is a "nonforward" event
-            // don't directly link up this socket event to the listener
-            // we will handle the event from a listener in the constructor
+        // override some event listeners in order to support multiple documents/clients over the same websocket
+        switch (event) {
+            case "op":
+                // per document op handling
+                super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+                    if (!this.enableMultiplexing || this.documentId === documentId) {
+                        listener(documentId, msgs);
+                    }
+                });
+                break;
+
+            case "signal":
+                // per document signal handling
+                super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
+                    if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
+                        listener(msg, documentId);
+                    }
+                });
+                break;
+
+            case "nack":
+                // per client / document nack handling
+                super.addTrackedListener(event, (clientIdOrDocumentId: string, message: INack[]) => {
+                    if (clientIdOrDocumentId.length === 0 ||
+                        clientIdOrDocumentId === this.documentId ||
+                        (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
+                        this.emit("nack", clientIdOrDocumentId, message);
+                    }
+                });
+                break;
+
+            default:
+                super.addTrackedListener(event, listener);
+                break;
         }
     }
 
@@ -284,6 +334,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             this.socketReferenceKey = undefined;
 
             const reason = "client closing connection";
+
+            if (this.enableMultiplexing && !socketProtocolError && this.hasDetails) {
+                // tell the server we are disconnecting this client from the document
+                this.socket.emit("disconnect_document", this.clientId, this.documentId);
+            }
+
             OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
 
             // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
