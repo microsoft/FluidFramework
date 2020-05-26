@@ -1,18 +1,16 @@
 import { Layout } from "react-grid-layout";
 import {
-    FluidReducerProps,
     useReducerFluid,
+    FluidToViewMap,
+    ViewToFluidMap,
 } from "@microsoft/fluid-aqueduct-react";
 
 import { IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ISpacesStoredComponent,
     ISpacesProps,
     ISpacesViewState,
-    ISpacesReducer,
-    ISpacesDataProps,
-    ISpacesSelector,
-    ComponentMapKey,
+    ISpacesFluidState,
+    ISpacesFluidComponent,
 } from "./interfaces";
 import { SpacesStorage } from "./storage";
 import { SpacesReducer } from "./reducers";
@@ -42,7 +40,7 @@ Promise<IComponent & IComponentLoadable | undefined> {
 export async function setTemplate(storage?: SpacesStorage) {
     const templateString = localStorage.getItem("spacesTemplate");
     if (templateString) {
-        const templateItems = JSON.parse(templateString) as ISpacesStoredComponent[];
+        const templateItems = JSON.parse(templateString) as ISpacesFluidComponent[];
         const promises = templateItems.map(async (templateItem) => {
             return createAndStoreComponent(templateItem.type, templateItem.layout, storage);
         });
@@ -51,27 +49,32 @@ export async function setTemplate(storage?: SpacesStorage) {
 }
 
 export function useReducer(props: ISpacesProps) {
-    const { localComponentMap, fluidComponentMap, root, runtime, componentRegistry, syncedStorage } = props;
-    const stateToRootMap = new Map<keyof ISpacesViewState, string>();
-    stateToRootMap.set("componentMap", ComponentMapKey);
-    const reducerProps: FluidReducerProps<ISpacesViewState, ISpacesReducer, ISpacesSelector, ISpacesDataProps> = {
+    const {
+        initialFluidState,
+        initialViewState,
+        fluidComponentMap,
         root,
         runtime,
-        fluidComponentMap,
-        initialState: { componentMap: localComponentMap },
+        componentRegistry,
+        syncedStorage,
+    } = props;
+    const fluidToView: FluidToViewMap<ISpacesViewState, ISpacesFluidState> = new Map();
+    const viewToFluid: ViewToFluidMap<ISpacesViewState, ISpacesFluidState> = new Map();
+    const reducerProps = {
+        syncedStateId: "spaces-reducer",
+        root,
+        initialViewState,
+        initialFluidState,
         reducer: SpacesReducer,
         selector: SpacesSelector,
-        stateToRoot: stateToRootMap,
-        rootToState: (syncedState: ISpacesViewState) => {
-            syncedState.componentMap = root.get("componentMap");
-            return syncedState;
-        },
+        fluidToView,
+        viewToFluid,
         dataProps: {
             runtime,
             fluidComponentMap,
-            componentRegistry,
+            componentRegistry: componentRegistry as IComponent,
             syncedStorage,
         },
     };
-    return useReducerFluid<ISpacesViewState, ISpacesReducer, ISpacesSelector, ISpacesDataProps>(reducerProps);
+    return useReducerFluid(reducerProps);
 }

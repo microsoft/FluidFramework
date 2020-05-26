@@ -38,14 +38,20 @@ interface ISpacesToolbarProps {
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
         const {
-            dispatch,
-            fetch,
+            reducer,
+            selector,
+            state,
             supportedComponents,
         } = React.useContext(PrimedContext);
-        if (dispatch === undefined || fetch === undefined || supportedComponents === undefined) {
+        if (
+            reducer === undefined
+            || selector === undefined
+            || state === undefined
+            || supportedComponents === undefined
+        ) {
             return <div>{"Context is not providing data correctly"}</div>;
         }
-        const templatesAvailable = fetch("areTemplatesAvailable") ?? false;
+        const templatesAvailable = selector.areTemplatesAvailable.function(state) ?? false;
 
         const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
         const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);
@@ -68,7 +74,8 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
-                            dispatch("addComponent", supportedComponent.type);
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            reducer.addComponent.asyncFunction(state, supportedComponent.type);
                             setComponentListOpen(false);
                         }}
                     >
@@ -98,7 +105,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
-                                    dispatch("applyTemplate", Templates[template]);
+                                    reducer.applyTemplate.asyncFunction(state, Templates[template]);
                                     setTemplateListOpen(false);
                                 }}
                             >

@@ -108,7 +108,7 @@ export function useReducerFluid<
                 setState(result.state.viewState);
             }
         } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
-            (action.function as any)(
+            (action.asyncFunction as any)(
                 combinedDispatchState,
                 ...args,
             ).then((result: IStateUpdateResult<SV,SF,C>) => {
@@ -166,16 +166,29 @@ export function useReducerFluid<
     // subsequently performing it, taking the updated state, and applying it both locally and remotely
     const combinedReducer = {};
     Object.entries(reducer).forEach(([functionName, functionItem], i) => {
-        combinedReducer[functionName] = {
-            function: (
-                dispatchState: ICombinedState<SV,SF,C>,
-                ...args: any
-            ) => dispatch(
-                dispatchState,
-                functionName,
-                ...args,
-            ),
-        };
+        if ((functionItem as any).asyncFunction !== undefined) {
+            combinedReducer[functionName] = {
+                asyncFunction: (
+                    dispatchState: ICombinedState<SV,SF,C>,
+                    ...args: any
+                ) => dispatch(
+                    dispatchState,
+                    functionName,
+                    ...args,
+                ),
+            };
+        } else {
+            combinedReducer[functionName] = {
+                function: (
+                    dispatchState: ICombinedState<SV,SF,C>,
+                    ...args: any
+                ) => dispatch(
+                    dispatchState,
+                    functionName,
+                    ...args,
+                ),
+            };
+        }
     });
 
     // Fetch is an in-memory object similar to dispatch, but now made for selector actions.
@@ -200,23 +213,31 @@ export function useReducerFluid<
         };
         const action =  selector[(type)];
         if (action && instanceOfSelectorFunction<SV,SF,C>(action)) {
+            const callback = rootCallbackListener(
+                combinedFetchDataProps.fluidComponentMap,
+                true,
+                syncedStateId,
+                root,
+                combinedFetchState.viewState,
+                setState,
+                viewToFluid,
+                fluidToView,
+            );
+            let newHandles: IComponentHandle[] = [];
             if (handle && instanceOfComponentSelectorFunction<SV,SF,C>(action)
                 && combinedFetchDataProps.fluidComponentMap.get(handle.path) === undefined) {
-                const callback = rootCallbackListener(
-                    combinedFetchDataProps.fluidComponentMap,
-                    true,
-                    syncedStateId,
-                    root,
-                    combinedFetchState.viewState,
-                    setState,
-                    viewToFluid,
-                    fluidToView,
-                );
+                newHandles.push(handle);
+            }
+            const actionResult = (action.function as any)(combinedFetchState, handle);
+            if (actionResult !== undefined && actionResult.newComponentHandles !== undefined) {
+                newHandles = newHandles.concat(actionResult.newComponentHandles);
+            }
+            if (newHandles.length > 0) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 updateStateAndComponentMap(
-                    [handle],
+                    newHandles,
                     combinedFetchDataProps.fluidComponentMap,
-                    false,
+                    true,
                     syncedStateId,
                     root,
                     combinedFetchState.viewState,
@@ -227,7 +248,7 @@ export function useReducerFluid<
                     combinedFetchState.fluidState,
                 );
             }
-            return (action.function as any)(combinedFetchState, handle);
+            return actionResult;
         } else {
             throw new Error(
                 `Action with key ${action} does not

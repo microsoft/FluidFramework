@@ -19,7 +19,6 @@ import {
     IInternalRegistryEntry,
     ISpacesProps,
     SpacesStorageKey,
-    ISpacesStoredComponent,
 } from "./interfaces";
 import { setTemplate, useReducer } from "./utils";
 import { PrimedContext } from "./context";
@@ -31,6 +30,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
     private supportedComponents: IInternalRegistryEntry[] = [];
     private internalRegistry: IComponent | undefined;
+    private fluidComponentMap: FluidComponentMap | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -52,20 +52,17 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        if (this.storageComponent === undefined) {
+        if (this.storageComponent === undefined || this.fluidComponentMap === undefined) {
             throw new Error("Spaces can't render, storage not found");
         }
-        const fluidComponentMap: FluidComponentMap = new Map();
-        fluidComponentMap.set(this.storageComponent.handle, { component: this.storageComponent });
-
-        const localComponentMap = new Map<string, ISpacesStoredComponent>();
 
         ReactDOM.render(
             <SpacesApp
                 root={this.root}
                 runtime={this.runtime}
-                localComponentMap={localComponentMap}
-                fluidComponentMap={fluidComponentMap}
+                initialFluidState={{}}
+                initialViewState={{}}
+                fluidComponentMap={this.fluidComponentMap}
                 supportedComponents={this.supportedComponents}
                 syncedStorage={this.storageComponent}
                 componentRegistry={this.internalRegistry?.IComponentRegistry}
@@ -82,10 +79,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         if (urlParams.has("template")) {
             await setTemplate(storageComponent);
         }
+        this.fluidComponentMap = new Map();
+        this.fluidComponentMap.set(storageComponent.handle.path, { component: storageComponent });
     }
 
     protected async componentHasInitialized() {
-        this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
+        const storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
         this.internalRegistry = await this.context.containerRuntime.IComponentRegistry.get("") as IComponent;
 
         if (this.internalRegistry) {
@@ -94,17 +93,32 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 this.supportedComponents = internalRegistry.getFromCapability("IComponentHTMLView");
             }
         }
+
+        this.fluidComponentMap = new Map();
+        this.fluidComponentMap.set(storageComponent.handle.path, { component: storageComponent });
+        const fetchInitialComponentP: Promise<void>[] = [];
+        storageComponent.componentList.forEach((value, key) => {
+            const fetchComponentP = value.handle.get().then((component) => {
+                if (component.handle) {
+                    this.fluidComponentMap?.set(component.handle.path, { component });
+                }
+            });
+            fetchInitialComponentP.push(fetchComponentP);
+            return;
+        });
+        await Promise.all(fetchInitialComponentP);
+        this.storageComponent = storageComponent;
     }
 }
 
 function SpacesApp(props: ISpacesProps) {
-    const [state, dispatch, fetch] = useReducer(props);
+    const [state, reducer, selector] = useReducer(props);
     return (
         <div>
             <PrimedContext.Provider
                 value={{
-                    dispatch,
-                    fetch,
+                    reducer,
+                    selector,
                     state,
                     supportedComponents: props.supportedComponents,
                 }}

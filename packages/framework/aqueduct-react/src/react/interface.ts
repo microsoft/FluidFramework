@@ -39,7 +39,10 @@ export interface IFluidReducer<
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 > {
-    [key: string]: FluidAsyncStateUpdateFunction<SV,SF,C> | FluidStateUpdateFunction<SV,SF,C>;
+    [key: string]: FluidAsyncStateUpdateFunction<SV,SF,C>
+    | FluidStateUpdateFunction<SV,SF,C>
+    | FluidEffectFunction<SV,SF,C>
+    | FluidAsyncEffectFunction<SV,SF,C>;
 }
 
 export interface IFluidSelector<
@@ -94,7 +97,7 @@ export const instanceOfIComponentLoadable = (object: any): object is IComponentL
     object === Object(object) && "IComponentLoadable" in object;
 
 export interface IFluidComponent {
-    component: IComponent & IComponentLoadable,
+    component?: IComponent & IComponentLoadable,
     isListened?: boolean,
 }
 
@@ -102,8 +105,6 @@ export type FluidComponentMap = Map<string, IFluidComponent>;
 
 export interface IFluidDataProps {
     runtime: IComponentRuntime,
-    // Required for nested DDS', can be empty or pre-loaded but it needs to be constructed
-    // if nested components will be used
     fluidComponentMap: FluidComponentMap,
 }
 
@@ -164,7 +165,7 @@ export interface FluidAsyncStateUpdateFunction<
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 >{
-    function: (
+    asyncFunction: (
         oldState: ICombinedState<SV,SF,C>,
         ...args: any
     ) => Promise<IStateUpdateResult<SV,SF,C>>;
@@ -186,14 +187,17 @@ export const instanceOfAsyncStateUpdateFunction = <
 >(
     object: any,
 ): object is FluidAsyncStateUpdateFunction<SF,SV,C> =>
-    object === Object(object) && "function" in object;
+    object === Object(object) && "asyncFunction" in object;
 
 export interface FluidSelectorFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 >{
-    function: (state: ICombinedState<SV,SF,C>) => any | undefined;
+    function: (state: ICombinedState<SV,SF,C>) => {
+        result: any | undefined,
+        newComponentHandles?: IComponentHandle[]
+    }
 }
 
 export interface FluidComponentSelectorFunction<
@@ -201,7 +205,10 @@ export interface FluidComponentSelectorFunction<
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
 >{
-    function: (state: ICombinedState<SV,SF,C>, handle: IComponentHandle<any>) => IComponent | undefined;
+    function: (state: ICombinedState<SV,SF,C>, handle: IComponentHandle<any>) => {
+        result: IComponent | undefined,
+        newComponentHandles?: IComponentHandle[]
+    }
 }
 
 export const instanceOfSelectorFunction = <

@@ -58,20 +58,13 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
 interface ISpacesComponentViewProps {
     url: string;
     editable: boolean;
-    getComponent(): Promise<IComponent | undefined>;
+    component: IComponent;
     removeComponent(): void;
 }
 
 const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
     (props: ISpacesComponentViewProps) => {
-        const [component, setComponent] = React.useState<IComponent | undefined>(undefined);
-
-        React.useEffect(() => {
-            props.getComponent()
-                .then(setComponent)
-                .catch((error) => console.error(`Error in getting component`, error));
-        });
-
+        const { component } = props;
         return (
             <div className="spaces-component-view">
                 {
@@ -95,13 +88,14 @@ interface ISpacesStorageViewProps {
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: ISpacesStorageViewProps) => {
         const {
-            dispatch,
+            reducer,
+            selector,
             state,
         } = React.useContext(PrimedContext);
-        if (dispatch === undefined || state === undefined) {
+        if (reducer === undefined || state === undefined || selector === undefined) {
             return <div>{"Context is not providing data correctly"}</div>;
         }
-        const { componentMap } = state;
+        const componentMap = selector?.componentMap.function(state).result;
         // Render nothing if there are no components
         if (componentMap === undefined || componentMap.size === 0) {
             return <></>;
@@ -116,7 +110,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             element: HTMLElement,
         ) => {
             const key = newItem.i.split("_")[0];
-            dispatch("updateLayout", key, newItem);
+            reducer.updateLayout.function(state, key, newItem);
         };
 
         const components: JSX.Element[] = [];
@@ -132,8 +126,8 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                     <SpacesComponentView
                         url={url}
                         editable={props.editable}
-                        getComponent={async () => model.handle.get()}
-                        removeComponent={() => dispatch("removeComponent", url)}
+                        component={model.component}
+                        removeComponent={() => reducer.removeComponent.function(state, url)}
                     />
                 </div>,
             );

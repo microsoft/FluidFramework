@@ -74,7 +74,7 @@ export function syncStateAndRoot<
                     }
                 });
 
-                let combinedViewState = { ...viewState };
+                let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
                 const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
                 Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
                     const needsConverter = fluidMatchingMap.get(fluidKey);

@@ -107,7 +107,7 @@ export function useStateFluid<
             componentSchemaHandles.viewMatchingMapHandle,
         ];
         dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
-            if (!value.isListened && value.component.handle !== undefined) {
+            if (!value.isListened && value.component?.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });

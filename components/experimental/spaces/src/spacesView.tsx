@@ -15,9 +15,11 @@ import { PrimedContext } from "./context";
 export const SpacesView: React.FC = () => {
     const {
         state,
+        selector,
     } = React.useContext(PrimedContext);
     // Editable is a view-only concept; SpacesView is the authority.
-    const [editable, setEditable] = React.useState<boolean>(state !== undefined && state.componentMap.size === 0);
+    const [editable, setEditable] = React.useState<boolean>(state !== undefined
+        && selector?.componentMap.function(state).result.size === 0);
 
     return (
         <div className="spaces-view">

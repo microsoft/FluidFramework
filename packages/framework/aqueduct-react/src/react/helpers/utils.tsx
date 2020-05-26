@@ -50,12 +50,15 @@ export const addComponent = async <
     handle: IComponentHandle,
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
-): Promise<void> => handle.get().then((component) => {
-    if (component.IComponentPrimed) {
-        component.IComponentPrimed.addListenerToRootValueChanged(rootCallback);
-    }
-    fluidComponentMap.set(handle.path, { component, isListened: true });
-});
+): Promise<void> => {
+    fluidComponentMap.set(handle.path, { isListened: false });
+    return handle.get().then((component) => {
+        if (component.IComponentPrimed) {
+            component.IComponentPrimed.addListenerToRootValueChanged(rootCallback);
+        }
+        fluidComponentMap.set(handle.path, { component, isListened: true });
+    });
+};
 
 export function isEquivalent(a, b) {
     if (a === undefined || b === undefined) {

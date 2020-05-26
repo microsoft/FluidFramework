@@ -8,11 +8,10 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import {
     IComponentHandle, IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ISpacesStoredComponent, ComponentMapKey } from "../interfaces";
+import { ISpacesFluidComponent, ComponentMapKey } from "../interfaces";
 
 /**
  * ISpacesStorage describes the public API surface of SpacesStorage.
@@ -21,7 +20,7 @@ export interface ISpacesStorage {
     /**
      * The list of components being stored.
      */
-    readonly componentList: Map<string, ISpacesStoredComponent>;
+    readonly componentList: Map<string, ISpacesFluidComponent>;
     /**
      * Adds the given item to the collector.
      * @param item - The item to add.
@@ -46,7 +45,6 @@ export interface ISpacesStorage {
  */
 export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
-    private _componentDirectory: ISharedDirectory | undefined;
     private static readonly factory = new PrimedComponentFactory(
         SpacesStorage.ComponentName,
         SpacesStorage,
@@ -54,15 +52,6 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
         {},
         [],
     );
-
-    protected async componentInitializingFirstTime() {
-        this._componentDirectory = SharedDirectory.create(this.runtime);
-        this.root.set(ComponentMapKey, this._componentDirectory.handle);
-    }
-
-    protected async componentInitializingFromExisting() {
-        this._componentDirectory = await this.root.get<IComponentHandle<ISharedDirectory>>(ComponentMapKey).get();
-    }
 
     public async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string,
@@ -74,17 +63,17 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
         return SpacesStorage.factory;
     }
 
-    public get componentList(): Map<string, ISpacesStoredComponent> {
-        return this._componentDirectory || this.root.get<SharedDirectory>(ComponentMapKey);
+    public get componentList(): Map<string, ISpacesFluidComponent> {
+        return this.root;
     }
 
     public addItem(handle: IComponentHandle, type: string, layout?: Layout): string {
-        const model: ISpacesStoredComponent = {
+        const model: ISpacesFluidComponent = {
             handle,
             type,
             layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },
         };
-        this._componentDirectory?.set(handle.path, model, ComponentMapKey);
+        this.root.set(handle.path, model, ComponentMapKey);
         return handle.path;
     }
 
@@ -93,7 +82,7 @@ export class SpacesStorage extends PrimedComponent implements ISpacesStorage {
     }
 
     public updateLayout(key: string, newLayout: Layout): void {
-        const currentEntry = this.root.get<ISpacesStoredComponent>(key);
+        const currentEntry = this.root.get<ISpacesFluidComponent>(key);
         const model = {
             handle: currentEntry.handle,
             type: currentEntry.type,
