@@ -89,6 +89,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
+        private readonly snapshotOptions: {[key: string]: number},
     ) {
     }
 
@@ -284,9 +285,23 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
+                    const snapshotOptions = {
+                        deltas: 1,
+                        channels: 1,
+                        blobs: 2,
+                        ...this.snapshotOptions,
+                    };
+
+                    let delimiter = "?";
+                    let options = "";
+                    for (const [key, value] of Object.entries(snapshotOptions)) {
+                        options = `${options}${delimiter}${key}=${value}`;
+                        delimiter = "&";
+                    }
+
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                     // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
 
                     // This event measures only successful cases of getLatest call (no tokens, no retries).
                     const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });

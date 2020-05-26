@@ -3,92 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-    IDocumentService,
-    IDocumentServiceFactory,
-    IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
+import { IPersistedCache } from "./odspCache";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
-import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
-import { OdspDocumentService } from "./odspDocumentService";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    public readonly isExperimentalDocumentServiceFactory = true;
-    public readonly protocolName = "fluid-odsp:";
-
-    private readonly documentsOpened = new Set<string>();
-    private readonly cache: IOdspCache;
-
-    public async createContainer(
-        createNewSummary: ISummaryTree,
-        createNewResolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger,
-    ): Promise<IDocumentService> {
-        return OdspDocumentService.createContainer(
-            createNewSummary,
-            createNewResolvedUrl,
-            logger,
-            this.cache,
-            this.getStorageToken,
-            this,
-            this.storageFetchWrapper,
-        );
-    }
-
-    /**
-   * @param getStorageToken - function that can provide the storage token for a given site. This is
-   * is also referred to as the "VROOM" token in SPO.
-   * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-   * referred to as the "Push" token in SPO.
-   * @param storageFetchWrapper - if not provided FetchWrapper will be used
-   * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param persistedCache - PersistedCache provided by host for use in this session.
-   */
+export class OdspDocumentServiceFactory
+    extends OdspDocumentServiceFactoryCore
+    implements IDocumentServiceFactory
+{
     constructor(
-        private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
-        private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
+        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        getWebsocketToken: (refresh: boolean) => Promise<string | null>,
+        storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
+        deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         persistedCache?: IPersistedCache,
+        snapshotOptions?: {[key: string]: number},
     ) {
-        this.cache = new OdspCache(persistedCache);
-    }
-
-    /**
-     * Create a IDocumentService for a document
-     *
-     * @param resolvedUrl - the URL to the document to create IDocumentService for
-     * @param logger - optional logger to use for the document service that overrides the logger given to the factory
-     */
-    public async createDocumentService(
-        resolvedUrl: IResolvedUrl,
-        logger?: ITelemetryBaseLogger,
-    ): Promise<IDocumentService> {
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-
-        // A hint for driver if document was opened before by this factory
-        const docId = odspResolvedUrl.hashedDocumentId;
-        const isFirstTimeDocumentOpened = !this.documentsOpened.has(docId);
-        this.documentsOpened.add(docId);
-
-        return OdspDocumentService.create(
-            resolvedUrl,
-            this.getStorageToken,
-            this.getWebsocketToken,
-            logger,
-            this.storageFetchWrapper,
-            this.deltasFetchWrapper,
-            Promise.resolve(getSocketIo()),
-            this.cache,
-            isFirstTimeDocumentOpened,
+        super(
+            getStorageToken,
+            getWebsocketToken,
+            storageFetchWrapper,
+            deltasFetchWrapper,
+            async () => getSocketIo(),
+            persistedCache,
+            snapshotOptions,
         );
     }
 }
