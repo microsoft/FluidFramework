@@ -174,6 +174,10 @@ describe("ConsensusOrderedCollection", () => {
                     deltaConnection,
                     objectStorage: new MockStorage(),
                 };
+
+                // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+                runtime.local = false;
+
                 counter++;
                 const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
                 testCollection.connect(runtime.services);
@@ -193,9 +197,12 @@ describe("ConsensusOrderedCollection", () => {
             deltaConnection,
             objectStorage: new MockStorage(),
         };
+
+        // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+        runtime.local = false;
+
         const testCollection = factory.create(runtime, "consensus-ordered-collection");
         testCollection.connect(runtime.services);
-        deltaConnection.connected = true;
 
         const waitP = testCollection.add("sample");
 

@@ -33,6 +33,8 @@ describe("ConsensusRegisterCollection", () => {
             deltaConnection,
             objectStorage: new MockStorage(),
         };
+        // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+        runtime.local = false;
         crc = crcFactory.create(runtime, componentId);
     });
 
@@ -150,7 +152,7 @@ describe("ConsensusRegisterCollection", () => {
 
     describe("reconnect", () => {
         it("message not sent before attach", async () => {
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             const res = await writeP;
             assert(res);
         });
@@ -159,7 +161,7 @@ describe("ConsensusRegisterCollection", () => {
             crc.connect(runtime.services);
 
             deltaConnection.connected = false;
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             deltaConnection.connected = true;
             deltaConnFactory.processAllMessages();
             const res = await writeP;
@@ -181,7 +183,7 @@ describe("ConsensusRegisterCollection", () => {
         it("message not sent before reconnect", async () => {
             crc.connect(runtime.services);
 
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             deltaConnection.connected = false;
             deltaConnFactory.clearMessages();
             deltaConnection.connected = true;

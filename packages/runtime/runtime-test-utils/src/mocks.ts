@@ -346,11 +346,20 @@ export class MockRuntime extends EventEmitter
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
+    private _local = true;
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
     public dispose(): void {
         this._disposed = true;
+    }
+
+    public get local(): boolean {
+        return this._local;
+    }
+
+    public set local(local: boolean) {
+        this._local = local;
     }
 
     public get active(): Promise<void> {
@@ -369,7 +378,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public isLocal(): boolean {
-        return true;
+        return this.local;
     }
 
     public registerChannel(channel: IChannel): void {
