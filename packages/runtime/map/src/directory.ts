@@ -647,7 +647,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.reSubmitCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;

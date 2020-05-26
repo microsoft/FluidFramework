@@ -138,7 +138,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @fluidframework/fluid-shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      */
     protected registerCore() {}
 

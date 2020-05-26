@@ -259,7 +259,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             return -1;
         }
 
-        // TODO (naagar): localOpMetadata is optional here temporarily until all the DDS are updated to send it.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.services!.deltaConnection.submit(content, localOpMetadata);
     }

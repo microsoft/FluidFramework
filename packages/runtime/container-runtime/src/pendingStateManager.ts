@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ErrorType, IGenericError } from "@microsoft/fluid-driver-definitions";
+import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
 import {
     MessageType,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { FlushMode } from "@microsoft/fluid-runtime-definitions";
-import * as Deque from "double-ended-queue";
+} from "@fluidframework/protocol-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import Deque from "double-ended-queue";
 import { ContainerRuntime } from "./containerRuntime";
 
 interface IPendingMessage {

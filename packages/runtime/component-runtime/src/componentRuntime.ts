@@ -593,8 +593,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 const channelContext = this.contexts.get(envelope.address);
                 assert(channelContext, "There should be a channel context for the op");
 
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                channelContext!.reSubmit(envelope.contents, localOpMetadata);
+                channelContext.reSubmit(envelope.contents, localOpMetadata);
 
                 break;
             }
@@ -642,6 +641,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         };
 
         channelContext.processOp(transformed, local, localOpMetadata);
+
         return channelContext;
     }
 
