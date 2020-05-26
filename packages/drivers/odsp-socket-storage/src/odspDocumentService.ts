@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
@@ -23,6 +24,7 @@ import {
     IClient,
     IErrorTrackingService,
     ISummaryTree,
+    ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
@@ -172,6 +174,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly isOdc: boolean;
 
+    private opSeqNumberMin: number | undefined;
+    private opSeqNumberMax: number | undefined;
+
     /**
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
      * to as the "VROOM" token in SPO.
@@ -250,16 +255,18 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
-        this.storageManager = new OdspDocumentStorageManager(
-            this.odspResolvedUrl,
-            latestSha,
-            this.storageFetchWrapper,
-            this.getStorageToken,
-            this.logger,
-            true,
-            this.cache,
-            this.isFirstTimeDocumentOpened,
-        );
+        if (this.storageManager === undefined) {
+            this.storageManager = new OdspDocumentStorageManager(
+                this.odspResolvedUrl,
+                latestSha,
+                this.storageFetchWrapper,
+                this.getStorageToken,
+                this.logger,
+                true,
+                this.cache,
+                this.isFirstTimeDocumentOpened,
+            );
+        }
 
         return new OdspDocumentStorageService(this.storageManager);
     }
@@ -275,13 +282,21 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
-        return new OdspDeltaStorageService(
+        const res = new OdspDeltaStorageService(
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
             this.getStorageToken,
             this.logger,
         );
+
+        return {
+            get: async (from?: number, to?: number) => {
+                const ops = await res.get(from, to);
+                this.opsReceived(ops);
+                return ops;
+            },
+        };
     }
 
     /**
@@ -320,7 +335,12 @@ export class OdspDocumentService implements IDocumentService {
                 client,
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
-            ).catch((error) => {
+            ).then((connection) => {
+                connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+                    this.opsReceived(ops);
+                });
+                return connection;
+            }).catch((error) => {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 throw error;
             });
@@ -541,5 +561,27 @@ export class OdspDocumentService implements IDocumentService {
             }
             throw connectionError;
         });
+    }
+
+    protected opsReceived(ops: ISequencedDocumentMessage[]) {
+        const cacheEntry = this.storageManager?.snapshotCacheEntry;
+        if (ops.length === 0 || cacheEntry === undefined) {
+            return;
+        }
+
+        const minSeq = ops[0].sequenceNumber;
+        if (this.opSeqNumberMin === undefined || this.opSeqNumberMin > minSeq) {
+            this.opSeqNumberMin = minSeq;
+        }
+        const maxSeq = ops[ops.length - 1].sequenceNumber;
+        if (this.opSeqNumberMax === undefined || this.opSeqNumberMax < maxSeq) {
+            this.opSeqNumberMax = maxSeq;
+        }
+        assert(this.opSeqNumberMin < this.opSeqNumberMax);
+
+        const origExpiry = this.storageManager!.snapshotCacheExpiry;
+        const count = this.opSeqNumberMax - this.opSeqNumberMin;
+
+        this.cache.persistedCache.updateExpiry(cacheEntry, origExpiry, origExpiry * (1 - count / 5000));
     }
 }

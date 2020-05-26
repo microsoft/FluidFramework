@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase, ISummaryContext } from "@fluidframework/driver-definitions";
+import { IFluidResolvedUrl, ISummaryContext } from "@fluidframework/driver-definitions";
 import * as resources from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
-export interface IOdspResolvedUrl extends IResolvedUrlBase {
+export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
 
     // URL to send to fluid, contains the documentId and the path

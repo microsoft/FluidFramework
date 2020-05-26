@@ -4,6 +4,7 @@
  */
 
 import { PromiseCache } from "@fluidframework/common-utils";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
 /**
@@ -14,23 +15,49 @@ export enum CacheKey {
 }
 
 /*
- * Driver uses this interface to identify file when talking to IPersistedCache
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
  * Driver guarantees that docId is stable ID uniquely identifying document.
  */
 export interface IFileEntry {
-    driveId: string;
-    itemId: string;
+    /**
+     * Unique and stable ID of the document. This is the key to the cache
+     */
     docId: string;
+    /**
+     * Resolved URI is provided for additional versatility - host can use it to
+     * identify file in storage, and (as example) delete all cached entries for
+     * a file if user requests so.
+     * This is IOdspResolvedUrl in case of ODSP driver.
+     */
+    resolvedUrl: IFluidResolvedUrl;
 }
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
  */
 export interface ICacheEntry {
+    /**
+     * Identifies file in storage this cached entry is for
+     */
     file: IFileEntry;
+    /**
+     * Identifies individual entry for a given file.
+     */
     key: CacheKey;
+}
+
+/**
+ * Versioned cache entry.
+ */
+export interface ICacheVersionedEntry extends ICacheEntry {
+    /**
+     * Version of cached entry.
+     * When putting new entry, new entry always overwrites previous entry no matter what the version is.
+     * When removing entry, entry is removed only if version of previously stored entry matches version
+     * supplied.
+     */
+    version: string;
 }
 
 /**
@@ -41,21 +68,42 @@ export interface ICacheEntry {
 export interface IPersistedCache {
     /**
      * Get the cache value of the key
+     * @param entry - cache entry.
+     * @returns Cached value. undefined if nothing is cached.
      */
     get(entry: ICacheEntry): Promise<any>;
 
     /**
-     * Delete value in the cache
-     */
-    remove(entry: ICacheEntry): Promise<void>;
-
-    /**
      * Put the value into cache
      * Important - only serializable content is allowed since this cache may be persisted between sessions
-     * @param expiryTime - suggested expiration time, in milliseconds.
-     * Implementer of cache is free to overwrite it / implement different policy.
+     * @param entry - cache entry.
+     * @param value - jasonable content. Passing undefined removes entry from cache
      */
-    put(entry: ICacheEntry, value: any, expiryTime?: number): Promise<void>;
+    put(entry: ICacheVersionedEntry, value: any): void;
+
+    /**
+     * Supplies optional expiration for the cache entry.
+     * Driver may periodically call this API for an entry to update host on expiration time,
+     * based on internal heuristics and new information (like how stale is snapshot based on how many ops are
+     * on top of such snapshot). Please note that expiry time is just an educated guess.
+     * The best strategy hosts can implement is not to delete entries right when they expire, but
+     * rather do a combination of
+     * 1) Delete entries on get() if it expired
+     * 2) Implement MRU (most recent used) eviction policy to control cache size
+     * This is more efficient then deleting entries based on timer as there may be no activity in a file,
+     * or tab might be suspended for a long period of time, causing expiration timer to fire. However, the
+     * next time some file activity happens (or tab gets more CPU), driver may come back and update expiry time
+     * and it may happen that it's still not that stale and could be reused, despite earlier calculation suggesting
+     * it expired.
+     * @param entry - cache entry.
+     * @param origExpiryTime - original expiry time, in seconds. This value does not change for an entry and provides
+     * information on default policy driver uses if no other information is available.
+     * @param expiryTime - suggested expiration time, in seconds, based on new information. Can be negative if already
+     * well into expiration! This timer linearly scales down to zero and beyond zero based on new information
+     * (like ops available on top of snapshot).
+     * Implementer of cache is free to overwrite it / implement different policy, or scale expiryTime linearly.
+     */
+    updateExpiry(entry: ICacheVersionedEntry, origExpiryTime: number, expiryTime: number): void;
 }
 
 /**
@@ -103,19 +151,21 @@ export class LocalCache implements IPersistedCache {
     private readonly cache = new Map<ICacheEntry, any>();
     private readonly gc = new GarbageCollector<ICacheEntry>((key) => this.cache.delete(key));
 
-    async get(key: ICacheEntry): Promise<any> {
-        return this.cache.get(key);
+    async get(entry: ICacheEntry): Promise<any> {
+        return this.cache.get(entry);
     }
 
-    async remove(key: ICacheEntry) {
-        this.cache.delete(key);
-        this.gc.cancel(key);
+    put(entry: ICacheEntry, value: any) {
+        this.gc.cancel(entry);
+        this.cache.set(entry, value);
     }
 
-    async put(key: ICacheEntry, value: any, expiryTime?: number) {
-        this.cache.set(key, value);
-        if (expiryTime) {
-            this.gc.schedule(key, expiryTime);
+    updateExpiry(entry: ICacheVersionedEntry, origExpiryTime: number, expiryTime: number): void {
+        if (expiryTime <= 0) {
+            this.cache.delete(entry);
+            this.gc.cancel(entry);
+        } else {
+            this.gc.schedule(entry, expiryTime);
         }
     }
 }

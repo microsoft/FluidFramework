@@ -36,7 +36,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, CacheKey, ICacheEntry, IFileEntry } from "./odspCache";
+import { IOdspCache, CacheKey, ICacheVersionedEntry, IFileEntry } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -52,6 +52,9 @@ type ConditionallyContextedSummary = {
 };
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
+    // 12 hours
+    public snapshotCacheExpiry = 12 * 3600;
+
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
@@ -69,6 +72,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
     private firstVersionCall = true;
+    private _snapshotCacheEntry: ICacheVersionedEntry | undefined;
 
     private readonly fileEntry: IFileEntry;
 
@@ -85,6 +89,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return this._ops;
     }
 
+    public get snapshotCacheEntry() {
+        return this._snapshotCacheEntry;
+    }
+
     constructor(
         odspResolvedUrl: IOdspResolvedUrl,
         private latestSha: string | null | undefined,
@@ -99,8 +107,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
 
         this.fileEntry = {
-            driveId: odspResolvedUrl.driveId,
-            itemId: odspResolvedUrl.itemId,
+            resolvedUrl: odspResolvedUrl,
             docId: this.documentId,
         };
     }
@@ -290,14 +297,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                const cacheEntry: ICacheEntry = {
-                    file: this.fileEntry,
-                    key: CacheKey.Snapshot,
-                };
-
                 // Note: There's a race condition here - another caller may come past the undefined check
                 // while the first caller is awaiting later async code in this block.
-                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(cacheEntry);
+                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get({
+                    file: this.fileEntry,
+                    key: CacheKey.Snapshot,
+                });
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -327,10 +332,18 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         throw error;
                     }
 
+                    assert(this._snapshotCacheEntry === undefined);
+                    this._snapshotCacheEntry = {
+                        file: this.fileEntry,
+                        key: CacheKey.Snapshot,
+                        version: cachedSnapshot.id,
+                    };
+
                     // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
                     // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
                     // want to use the same getLatest result.
-                    await this.cache.persistedCache.put(cacheEntry, cachedSnapshot, 10 * 1000 /* durationMs */);
+                    this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot);
+                    this.cache.persistedCache.updateExpiry(this._snapshotCacheEntry, this.snapshotCacheExpiry, this.snapshotCacheExpiry);
                 }
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
