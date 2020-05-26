@@ -22,7 +22,7 @@ import {
     IClient,
     IErrorTrackingService,
 } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl, HostPolicy, ISocketStorageDiscovery } from "./contracts";
+import { IOdspResolvedUrl, HostStoragePolicy, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -65,7 +65,7 @@ export class OdspDocumentService implements IDocumentService {
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
-        hostPolicy: HostPolicy,
+        hostPolicy: HostStoragePolicy,
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -137,7 +137,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
-        private readonly hostPolicy: HostPolicy,
+        private readonly hostPolicy: HostStoragePolicy,
         private readonly isFirstTimeDocumentOpened = true,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;

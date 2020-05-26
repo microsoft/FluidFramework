@@ -15,7 +15,7 @@ import {
     PerformanceEvent,
 } from "@fluidframework/common-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IOdspResolvedUrl, HostPolicy } from "./contracts";
+import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
@@ -101,7 +101,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         persistedCache?: IPersistedCache,
-        private readonly hostPolicy: HostPolicy = {},
+        private readonly hostPolicy: HostStoragePolicy = {},
     ) {
         this.cache = new OdspCache(persistedCache);
     }

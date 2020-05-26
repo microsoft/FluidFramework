@@ -15,6 +15,7 @@ export * from "./odspUtils";
 export * from "./createOdspUrl";
 export * from "./vroom";
 export * from "./odspDocumentServiceFactoryWithCodeSplit";
+export * from "./odspDocumentServiceFactoryCore";
 export * from "./odspDocumentDeltaConnection";
 export * from "./odspCache";
 export * from "./createFile";

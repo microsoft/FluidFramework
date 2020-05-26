@@ -245,6 +245,6 @@ export interface ISnapshotOptions {
     channels?: number;
 }
 
-export interface HostPolicy {
+export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }

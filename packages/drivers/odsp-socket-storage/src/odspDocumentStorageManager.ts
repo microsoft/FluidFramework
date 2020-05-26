@@ -23,7 +23,7 @@ import {
     IDocumentStorageManager,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
-    HostPolicy,
+    HostStoragePolicy,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -90,7 +90,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
-        private readonly hostPolicy: HostPolicy,
+        private readonly hostPolicy: HostStoragePolicy,
     ) {
     }
 

@@ -4,7 +4,7 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { HostPolicy } from "./contracts";
+import { HostStoragePolicy } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
@@ -24,7 +24,7 @@ export class OdspDocumentServiceFactory
         storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         persistedCache?: IPersistedCache,
-        hostPolicy?: HostPolicy,
+        hostPolicy?: HostStoragePolicy,
     ) {
         super(
             getStorageToken,
