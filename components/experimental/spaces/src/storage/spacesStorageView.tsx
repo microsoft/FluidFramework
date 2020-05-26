@@ -11,7 +11,7 @@ import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 
-import { PrimedContext } from "../context";
+import { SpacesPrimedContext } from "../context";
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
@@ -91,7 +91,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             reducer,
             selector,
             state,
-        } = React.useContext(PrimedContext);
+        } = React.useContext(SpacesPrimedContext);
         if (reducer === undefined || state === undefined || selector === undefined) {
             return <div>{"Context is not providing data correctly"}</div>;
         }

@@ -35,9 +35,12 @@
   "dependencies": {
     "@fluid-example/spaces": "^0.18.0",
     "@microsoft/fluid-aqueduct": "^0.18.0",
+    "@microsoft/fluid-aqueduct-react": "^0.18.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
+    "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-container-definitions": "^0.18.0",
     "@microsoft/fluid-container-runtime-definitions": "^0.18.0",
+    "@microsoft/fluid-map": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-view-interfaces": "^0.18.0",
     "@microsoft/fluid-web-code-loader": "^0.18.0",

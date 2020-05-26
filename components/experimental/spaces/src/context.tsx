@@ -6,5 +6,5 @@
 import * as React from "react";
 import { ISpacesViewContext } from "./interfaces";
 
-export const PrimedContext: React.Context<ISpacesViewContext> = React.createContext({});
-export const usePrimedContext = () => React.useContext(PrimedContext);
+export const SpacesPrimedContext: React.Context<ISpacesViewContext> = React.createContext({});
+export const useSpacesPrimedContext = () => React.useContext(SpacesPrimedContext);

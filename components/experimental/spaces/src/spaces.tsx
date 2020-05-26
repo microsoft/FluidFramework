@@ -21,7 +21,7 @@ import {
     SpacesStorageKey,
 } from "./interfaces";
 import { setTemplate, useReducer } from "./utils";
-import { PrimedContext } from "./context";
+import { SpacesPrimedContext } from "./context";
 
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
@@ -115,7 +115,7 @@ function SpacesApp(props: ISpacesProps) {
     const [state, reducer, selector] = useReducer(props);
     return (
         <div>
-            <PrimedContext.Provider
+            <SpacesPrimedContext.Provider
                 value={{
                     reducer,
                     selector,
@@ -124,7 +124,7 @@ function SpacesApp(props: ISpacesProps) {
                 }}
             >
                 <SpacesView/>
-            </PrimedContext.Provider>
+            </SpacesPrimedContext.Provider>
         </div>
     );
 }

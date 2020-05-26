@@ -1,16 +1,13 @@
 import { Layout } from "react-grid-layout";
 import {
     useReducerFluid,
-    FluidToViewMap,
-    ViewToFluidMap,
 } from "@microsoft/fluid-aqueduct-react";
 
 import { IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     ISpacesProps,
-    ISpacesViewState,
-    ISpacesFluidState,
     ISpacesFluidComponent,
+    ISpacesDataProps,
 } from "./interfaces";
 import { SpacesStorage } from "./storage";
 import { SpacesReducer } from "./reducers";
@@ -58,8 +55,12 @@ export function useReducer(props: ISpacesProps) {
         componentRegistry,
         syncedStorage,
     } = props;
-    const fluidToView: FluidToViewMap<ISpacesViewState, ISpacesFluidState> = new Map();
-    const viewToFluid: ViewToFluidMap<ISpacesViewState, ISpacesFluidState> = new Map();
+    const dataProps: ISpacesDataProps = {
+        runtime,
+        fluidComponentMap,
+        componentRegistry: componentRegistry as IComponent,
+        syncedStorage,
+    };
     const reducerProps = {
         syncedStateId: "spaces-reducer",
         root,
@@ -67,14 +68,9 @@ export function useReducer(props: ISpacesProps) {
         initialFluidState,
         reducer: SpacesReducer,
         selector: SpacesSelector,
-        fluidToView,
-        viewToFluid,
-        dataProps: {
-            runtime,
-            fluidComponentMap,
-            componentRegistry: componentRegistry as IComponent,
-            syncedStorage,
-        },
+        fluidToView: new Map(),
+        viewToFluid: new Map(),
+        dataProps,
     };
     return useReducerFluid(reducerProps);
 }

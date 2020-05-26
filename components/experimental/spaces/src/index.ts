@@ -11,6 +11,9 @@ export * from "./interfaces";
 export * from "./spaces";
 export * from "./spacesView";
 export * from "./storage";
+export * from "./reducers";
+export * from "./selectors";
+export * from "./context";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Spaces.ComponentName,

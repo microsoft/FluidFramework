@@ -7,7 +7,7 @@ import * as React from "react";
 import "react-grid-layout/css/styles.css";
 import { SpacesStorageView } from "./storage";
 import { SpacesToolbar } from "./spacesToolbar";
-import { PrimedContext } from "./context";
+import { SpacesPrimedContext } from "./context";
 
 /**
  * SpacesView is the full view of the Spaces component, including its toolbar and contained components.
@@ -16,7 +16,7 @@ export const SpacesView: React.FC = () => {
     const {
         state,
         selector,
-    } = React.useContext(PrimedContext);
+    } = React.useContext(SpacesPrimedContext);
     // Editable is a view-only concept; SpacesView is the authority.
     const [editable, setEditable] = React.useState<boolean>(state !== undefined
         && selector?.componentMap.function(state).result.size === 0);

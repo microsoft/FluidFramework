@@ -76,7 +76,7 @@ export const ScheduleItView = () => {
         const personAvailabilityMap = personSelector.getAvailabilityMap.function(
             personState,
             person.availabilityMapHandle,
-        ) as SharedMap;
+        ).result as SharedMap;
         if (personAvailabilityMap !== undefined) {
             for (const dateKey of personAvailabilityMap.keys()) {
                 const availabilityItem = personAvailabilityMap.get<IAvailability>(dateKey);

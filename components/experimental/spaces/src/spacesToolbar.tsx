@@ -13,7 +13,7 @@ import {
     IInternalRegistryEntry,
     Templates,
 } from "./interfaces";
-import { PrimedContext } from "./context";
+import { SpacesPrimedContext } from "./context";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
@@ -42,7 +42,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
             selector,
             state,
             supportedComponents,
-        } = React.useContext(PrimedContext);
+        } = React.useContext(SpacesPrimedContext);
         if (
             reducer === undefined
             || selector === undefined
@@ -105,6 +105,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 style={dropDownButtonStyle}
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
+                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                     reducer.applyTemplate.asyncFunction(state, Templates[template]);
                                     setTemplateListOpen(false);
                                 }}

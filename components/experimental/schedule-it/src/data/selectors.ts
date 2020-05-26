@@ -14,8 +14,9 @@ export const PersonSelector: IPersonSelector = {
         function: (state, handle: IComponentHandle<SharedMap>) => {
             const personAvailabilityMap = state.dataProps.fluidComponentMap.get(handle.path)?.component;
             if (personAvailabilityMap !== undefined) {
-                return personAvailabilityMap as SharedMap;
+                return { result: personAvailabilityMap as SharedMap };
             }
+            return { result: undefined };
         },
     },
 };
