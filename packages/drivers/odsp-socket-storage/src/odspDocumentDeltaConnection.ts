@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import assert from "assert";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { CriticalContainerError } from "@fluidframework/container-definitions";
 import {
     IClient,
     IConnect,
     INack,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
@@ -92,6 +95,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            nonce: uuid(),
         };
 
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
@@ -198,7 +202,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | IError) {
+        reason: string | CriticalContainerError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected

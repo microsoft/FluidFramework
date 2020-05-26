@@ -1,6 +1,6 @@
 {
   "name": "@yo-fluid/dice-roller",
-  "version": "0.17.0",
+  "version": "0.19.0",
   "description": "Minimal Fluid example to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "author": "Microsoft",
@@ -9,7 +9,6 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env.production && npm run tsc",
-    "deploy": "npm run build && npm version patch && npm run verdaccio",
     "dev": "webpack --env.development",
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
@@ -17,19 +16,19 @@
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.17.0-0",
-    "@microsoft/fluid-view-interfaces": "^0.17.0-0",
+    "@microsoft/fluid-aqueduct": "^0.18.1-0",
+    "@microsoft/fluid-map": "^0.18.1-0",
+    "@microsoft/fluid-view-interfaces": "^0.18.1-0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.17.0-0",
-    "@types/node": "^10.14.6",
+    "@fluidframework/webpack-component-loader": "^0.18.1-0",
+    "@types/node": "^10.17.24",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",
     "typescript": "~3.7.4",

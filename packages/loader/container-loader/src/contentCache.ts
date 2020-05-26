@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IContentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IContentMessage } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 
 /* eslint-disable no-bitwise */

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
-import { IClientManager } from "@microsoft/fluid-server-services-core";
+import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
+import { IClientManager } from "@fluidframework/server-services-core";
 
 export class TestClientManager implements IClientManager {
     private readonly clients: Map<string, Map<string, Map<string, IClient>>> = new Map();

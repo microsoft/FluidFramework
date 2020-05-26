@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
-import { TestContext } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { TestContext } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
 import { create, TestLambdaFactory } from "./testDocumentLambda";

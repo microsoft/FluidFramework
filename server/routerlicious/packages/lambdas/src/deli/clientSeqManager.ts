@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-common-utils";
-import * as _ from "lodash";
+import { Heap, IComparer, IHeapNode } from "@fluidframework/common-utils";
 import { IClientSequenceNumber } from "./checkpointContext";
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -51,7 +50,8 @@ export class ClientSequenceNumberManager {
     public cloneValues(): IClientSequenceNumber[] {
         const clients: IClientSequenceNumber[] = [];
         for (const [, value] of this.clientNodeMap) {
-            clients.push(_.clone(value.value));
+            const source = value.value;
+            clients.push({ ...source });
         }
         return clients;
     }

@@ -7,16 +7,16 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IContainerRuntime,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
@@ -140,10 +140,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             await Promise.all([
                 runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
                     .then((componentRuntime) => componentRuntime.attach()),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;

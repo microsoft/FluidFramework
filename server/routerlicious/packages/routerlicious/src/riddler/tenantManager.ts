@@ -9,10 +9,10 @@ import {
     ITenantOrderer,
     ITenantStorage,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { getRandomName } from "@fluidframework/server-services-client";
 
 /**
  * Tenant details stored to the document database
@@ -75,13 +75,13 @@ export class TenantManager {
     /**
      * Creates a new tenant
      */
-    public async createTenant(): Promise<ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const key = crypto.randomBytes(16).toString("hex");
         const id = await collection.insertOne({
-            _id: getRandomName("-"),
+            _id: tenantId || getRandomName("-"),
             key,
             orderer: null,
             storage: null,

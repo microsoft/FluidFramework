@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@microsoft/fluid-merge-tree";
+import { ISegment } from "@fluidframework/merge-tree";
 
 export function getSegmentRange(position: number, segment: ISegment, startOffset = 0) {
     const start = position - Math.max(startOffset, 0);

@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@microsoft/fluid-common-utils";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ChildLogger } from "@fluidframework/common-utils";
+import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
     ISegment,
@@ -15,10 +15,10 @@ import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
     MergeTreeDeltaType,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/merge-tree";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle } from "./handletable";
 import { serializeBlob, deserializeBlob } from "./serialization";
 
@@ -182,7 +182,10 @@ export class PermutationVector extends Client {
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
                 for (const { position, length } of ranges) {
-                    this.handles.splice(position, 0, ...new Array(length).fill(Handle.unallocated));
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    this.handles = this.handles.slice(0, position)
+                        .concat(new Array(length).fill(Handle.unallocated))
+                        .concat(this.handles.slice(position));
                 }
 
                 // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
@@ -192,11 +195,13 @@ export class PermutationVector extends Client {
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                const freed: number[] = [];
+                let freed: number[] = [];
 
                 for (const { position, length } of ranges) {
-                    const removed = this.handles.splice(position, length);
-                    freed.splice(freed.length, 0, ...removed.filter((handle) => handle !== Handle.unallocated));
+                    const removed = this.handles.splice(position, /* deleteCount: */ length);
+
+                    // Note: Using the spread operator with `.splice()` can exhaust the stack.
+                    freed = freed.concat(removed.filter((handle) => handle !== Handle.unallocated));
                 }
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing

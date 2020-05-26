@@ -5,17 +5,17 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
     IDirectoryValueChanged,
-} from "@microsoft/fluid-map";
+} from "@fluidframework/map";
 import {
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
-    IComponentRegistryDetails,
+    IComponentInternalRegistry,
 } from "@fluid-example/spaces";
 
 import { v4 as uuid } from "uuid";
@@ -43,7 +43,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     constructor(
         public root: ISharedDirectory,
-        private readonly internalRegistry: IComponentRegistryDetails,
+        private readonly internalRegistry: IComponentInternalRegistry,
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
         (pkg: string, props?: any) => Promise<T>,
         private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(

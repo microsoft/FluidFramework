@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 /**
  * Document delta event which must at least provide access

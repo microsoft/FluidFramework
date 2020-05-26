@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import {
-    IExperimentalDocumentServiceFactory,
-    IExperimentalDocumentService,
-    IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
-import { ISummaryTree, SummaryType } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { DebugLogger } from "@fluidframework/common-utils";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { IFetchWrapper } from "../fetchWrapper";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -28,10 +24,10 @@ describe("Odsp Create Container Test", () => {
 
     const getOdspDocumentServiceFactory = (itemId: string) => {
         const expectedResponse: any = {
-            context:"http://sp.devinstall/_api/v2.1/$metadata#",
+            context: "http://sp.devinstall/_api/v2.1/$metadata#",
             sequenceNumber: 1,
-            sha:"shaxxshaxx",
-            itemUrl:`http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
+            sha: "shaxxshaxx",
+            itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
             driveId,
             itemId,
         };
@@ -48,12 +44,10 @@ describe("Odsp Create Container Test", () => {
         };
 
         const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-            "dummy",
             async (url: string, refresh: boolean) => "token",
             async (refresh: boolean) => "token",
-            DebugLogger.create("fluid:createContainer"),
             fetchWrapperMock);
-        return odspDocumentServiceFactory as IExperimentalDocumentServiceFactory;
+        return odspDocumentServiceFactory;
     };
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
@@ -82,7 +76,7 @@ describe("Odsp Create Container Test", () => {
     };
 
     const createService = async (
-        odspDocumentServiceFactory: IExperimentalDocumentServiceFactory,
+        odspDocumentServiceFactory: IDocumentServiceFactory,
         summary: ISummaryTree,
         resolved: IOdspResolvedUrl,
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
@@ -101,12 +95,11 @@ describe("Odsp Create Container Test", () => {
         const docID = getHashedDocumentId(driveId, itemId);
         const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 0);
-        const expDocService = (await odspDocumentServiceFactory.createContainer(
+        const docService = await odspDocumentServiceFactory.createContainer(
             summary,
             resolved,
-            DebugLogger.create("fluid:createContainer"))) as IExperimentalDocumentService;
-        assert(expDocService?.isExperimentalDocumentService, "Service should be experimental");
-        const finalResolverUrl = expDocService.resolvedUrl as IOdspResolvedUrl;
+            DebugLogger.create("fluid:createContainer"));
+        const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
         assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");

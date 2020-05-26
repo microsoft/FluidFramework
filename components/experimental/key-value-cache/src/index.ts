@@ -9,22 +9,26 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IComponentContext,
     IComponentFactory,
+} from "@fluidframework/runtime-definitions";
+import {
     IComponentRuntime,
+} from "@fluidframework/component-runtime-definitions";
+import {
     IContainerRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/container-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -43,14 +47,14 @@ export interface IKeyValue extends IProvideKeyValue {
     delete(key: string): boolean;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const kevValue = new KeyValue(runtime, context);
+        const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
 
         return kevValue;
@@ -63,11 +67,10 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     public get root() {
         assert(this._root);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._root!;
+        return this._root;
     }
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime) {
     }
 
     public set(key: string, value: any): void {
@@ -100,13 +103,6 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
             this._root.register();
         } else {
             this._root = await this.runtime.getChannel("root") as ISharedMap;
-        }
-        if (this.context.leader) {
-            console.log(`INITIAL LEADER`);
-        } else {
-            this.context.on("leader", () => {
-                console.log(`LEADER NOW`);
-            });
         }
     }
 }

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import React from "react";
+import ReactDOM from "react-dom";
 
 /**
  * Abstracts rendering of components via the IComponentHTMLView interface.  Supports React elements, as well as

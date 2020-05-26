@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as io from "socket.io-client";
+import io from "socket.io-client";
 
 /**
  * This function only exists to create an ESM wrapper around the socket.io client module

@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     Jsonable,
     AsJsonable,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,
-} from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/shared-object-base";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
 import { ISharedSummaryBlock } from "./interfaces";
 
@@ -95,7 +95,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const contentsBlob: ISharedSummaryBlockDataSerializable = {};
@@ -124,7 +124,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
         branchId: string,
@@ -138,22 +138,22 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
      */
     protected onConnect(pending: any[]) {}
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      */
     protected registerCore() {}
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect() {}
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         throw new Error("shared summary block should not generate any ops.");

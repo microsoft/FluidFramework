@@ -9,7 +9,9 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 
@@ -31,7 +33,19 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
      * @param fileURL - Path of directory containing ops/snapshots.
      * @returns file document service.
      */
-    public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        fileURL: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

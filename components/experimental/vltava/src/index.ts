@@ -7,23 +7,23 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
+    IComponentInternalRegistry,
+    IInternalRegistryEntry,
     Spaces,
-    IContainerComponentDetails,
-    IComponentRegistryDetails,
 } from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
     setupLastEditedTrackerForContainer,
-} from "@microsoft/fluid-last-edited-experimental";
+} from "@fluidframework/last-edited-experimental";
 import {
     IComponentRegistry,
-    IContainerRuntime,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
 import {
     Anchor,
@@ -33,12 +33,12 @@ import {
     VltavaName,
 } from "./components";
 
-export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
+export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
     public get IComponentRegistry() { return this; }
-    public get IComponentRegistryDetails() { return this; }
+    public get IComponentInternalRegistry() { return this; }
 
     constructor(
-        private readonly containerComponentArray: IContainerComponentDetails[],
+        private readonly containerComponentArray: IInternalRegistryEntry[],
     ) {
     }
 
@@ -54,7 +54,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         return undefined;
     }
 
-    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+    public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter(
             (componentDetails) =>componentDetails.capabilities.includes(capability));
     }
@@ -87,13 +87,13 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
         // We should be able to wait here after the create-new workflow is in place.
         setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
             .catch((error) => {
-                runtime.error(error);
+                console.error(error);
             });
     }
 }
 
 const generateFactory = () => {
-    const containerComponentsDefinition: IContainerComponentDetails[] = [
+    const containerComponentsDefinition: IInternalRegistryEntry[] = [
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),

@@ -7,16 +7,16 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import React from "react";
+import ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "react-image-gallery/styles/css/image-gallery.css";
 // eslint-disable-next-line import/no-unassigned-import
 import "./Styles.css";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { ISharedMap } from "@fluidframework/map";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 

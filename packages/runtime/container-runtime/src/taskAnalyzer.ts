@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];

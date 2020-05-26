@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@microsoft/fluid-container-definitions";
+import { IPackage } from "@fluidframework/container-definitions";
 
 export interface IPackument {
     _attachments: any;
@@ -86,7 +86,7 @@ export interface IPackageManager extends IProvidePackageManager {
     search(params: ISearchParams): Promise<ISearchResult>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvidePackageManager>> { }
 }

@@ -8,8 +8,10 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { CreationDocumentService } from "./creationDocumentService";
 /**
  * Factory for creating the faux document service. Use this if you want to
@@ -20,7 +22,10 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     constructor() {
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
@@ -30,5 +35,14 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
         return new CreationDocumentService(
             documentId,
             "createNewFileDocTenant");
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

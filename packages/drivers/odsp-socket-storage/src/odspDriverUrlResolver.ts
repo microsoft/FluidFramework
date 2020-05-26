@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import assert from "assert";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IUrlResolver,
-    IExperimentalUrlResolver,
     IResolvedUrl,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -32,7 +31,7 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     constructor() { }
 
@@ -118,21 +117,16 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         };
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        let url = request.url;
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
-                odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-                odspResolvedUrl.itemId,
-            )}&path=${encodeURIComponent("/")}`,
-            status: 200,
-        };
-        return response;
+        return `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
+            odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
+            odspResolvedUrl.itemId,
+        )}&path=${encodeURIComponent("/")}`;
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

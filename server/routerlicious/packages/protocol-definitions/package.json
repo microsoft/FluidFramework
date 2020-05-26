@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-protocol-definitions",
-  "version": "0.1005.0",
+  "name": "@fluidframework/protocol-definitions",
+  "version": "0.1006.0",
   "description": "Fluid protocol definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -25,16 +25,16 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0"
+    "@fluidframework/common-definitions": "^0.18.0-0"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",

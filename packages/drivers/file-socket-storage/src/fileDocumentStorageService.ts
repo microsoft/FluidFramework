@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
-import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
+import assert from "assert";
+import fs from "fs";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { buildSnapshotTree } from "@fluidframework/protocol-base";
+import * as api from "@fluidframework/protocol-definitions";
+import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.

@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IEnvelope } from "@fluidframework/runtime-definitions";
+import { IChannel } from "@fluidframework/component-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
 export interface IChannelContext {
     getChannel(): Promise<IChannel>;
 
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
 
     processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
@@ -30,7 +30,7 @@ export interface IChannelContext {
 
 export function createServiceEndpoints(
     id: string,
-    connectionState: ConnectionState,
+    connected: boolean,
     submitFn: (type: MessageType, content: any) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
@@ -39,7 +39,7 @@ export function createServiceEndpoints(
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,
-        connectionState,
+        connected,
         (message) => {
             const envelope: IEnvelope = { address: id, contents: message };
             return submitFn(MessageType.Operation, envelope);

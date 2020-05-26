@@ -9,7 +9,7 @@ import {
     ISummaryBlob,
     ICommittedProposal,
     IDocumentAttributes,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Combine the app summary and protocol summary in 1 tree.
@@ -39,6 +39,7 @@ export function getDocAttributesFromProtocolSummary(
 ): IDocumentAttributes {
     const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
     const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+    documentAttributes.term = documentAttributes.term ?? 1;
     return documentAttributes;
 }
 

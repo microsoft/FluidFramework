@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 import { BlobCacheStorageService } from "../blobCacheStorageService";
@@ -29,7 +29,7 @@ describe("Component Context Tests", () => {
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: IComponentFactory = {

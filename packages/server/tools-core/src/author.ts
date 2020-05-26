@@ -4,15 +4,15 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ILoader } from "@microsoft/fluid-container-definitions";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ISharedString } from "@microsoft/fluid-sequence";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { ILoader } from "@fluidframework/container-definitions";
+import { ISharedMap } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
-import * as queue from "async/queue";
+import queue from "async/queue";
 
 import Counter = api.RateCounter;
 // eslint-disable-next-line @typescript-eslint/no-require-imports

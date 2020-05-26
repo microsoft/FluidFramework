@@ -5,8 +5,8 @@
 
 import {
     IFluidCodeDetails, IFluidCodeResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
-} from "@microsoft/fluid-container-definitions";
-import * as fetch from "isomorphic-fetch";
+} from "@fluidframework/container-definitions";
+import fetch from "isomorphic-fetch";
 import { extractPackageIdentifierDetails } from "./utils";
 
 class FluidPackage {

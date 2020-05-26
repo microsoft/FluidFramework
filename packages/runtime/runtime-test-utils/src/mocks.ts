@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
-} from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+} from "@fluidframework/common-utils";
+import * as git from "@fluidframework/gitresources";
 import {
-    ConnectionState,
     IBlob,
     ICommittedProposal,
     IDocumentMessage,
@@ -36,7 +36,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
@@ -44,9 +44,9 @@ import {
     IDeltaHandler,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/component-runtime-definitions";
+import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
@@ -131,34 +131,23 @@ export class MockDeltaConnectionFactory {
  * Mock implementation IDeltaConnection for testing that does nothing
  */
 class MockDeltaConnection implements IDeltaConnection {
-    public get state(): ConnectionState {
-        return this.connectionState;
+    public get connected(): boolean {
+        return this._connected;
     }
 
-    public set state(state: ConnectionState) {
-        switch (state) {
-            case ConnectionState.Connected:
-                if (this.pendingClientId) {
-                    this.runtime.clientId = this.pendingClientId;
-                    this.pendingClientId = undefined;
-                }
-            // Intentional fallthrough
-            case ConnectionState.Connecting:
-                this.pendingClientId = uuid();
-                break;
-            case ConnectionState.Disconnected:
-            default:
+    public set connected(connected: boolean) {
+        if (connected) {
+            this.runtime.clientId = uuid();
         }
 
-        this.connectionState = state;
+        this._connected = connected;
         this.handlers.forEach((h) => {
-            h.setConnectionState(this.state);
+            h.setConnectionState(this.connected);
         });
     }
     public readonly handlers: IDeltaHandler[] = [];
-    private connectionState: ConnectionState = ConnectionState.Connected;
+    private _connected = true;
     private clientSequenceNumber: number = 0;
-    private pendingClientId: string;
     private referenceSequenceNumber = 0;
 
     constructor(
@@ -168,7 +157,7 @@ class MockDeltaConnection implements IDeltaConnection {
             process: (message: ISequencedDocumentMessage, local: boolean) => {
                 this.referenceSequenceNumber = message.sequenceNumber;
             },
-            setConnectionState: (state: ConnectionState) => { },
+            setConnectionState: (connected: boolean) => { },
         });
     }
 
@@ -189,13 +178,13 @@ class MockDeltaConnection implements IDeltaConnection {
 
     public attach(handler: IDeltaHandler): void {
         this.handlers.push(handler);
-        handler.setConnectionState(this.state);
+        handler.setConnectionState(this.connected);
     }
 
     public dirty(): void {}
 
     public isLocal(msg: ISequencedDocumentMessage) {
-        return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
+        return msg.clientId === this.runtime.clientId;
     }
 }
 
@@ -352,10 +341,6 @@ export class MockRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get connectionState(): ConnectionState {
-        return ConnectionState.Connected;
-    }
-
     public get isAttached(): boolean {
         return true;
     }
@@ -365,6 +350,10 @@ export class MockRuntime extends EventEmitter
     }
     public createChannel(id: string, type: string): IChannel {
         return null;
+    }
+
+    public isLocal(): boolean {
+        return true;
     }
 
     public registerChannel(channel: IChannel): void {
@@ -435,8 +424,8 @@ export class MockRuntime extends EventEmitter
         return;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
-        return null;
+    public setConnectionState(connected: boolean, clientId?: string) {
+        return;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -459,7 +448,7 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public error(err: any): void { }
+    public raiseContainerWarning(warning: ContainerWarning): void { }
 }
 
 /**
@@ -597,7 +586,7 @@ export class MockHistorian implements IHistorian {
  * Mock implementation of IDeltaConnection
  */
 export class MockEmptyDeltaConnection implements IDeltaConnection {
-    public state = ConnectionState.Disconnected;
+    public connected = false;
 
     public attach(handler) {
     }

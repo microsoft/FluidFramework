@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Manages the list of clients connected to the websocket.

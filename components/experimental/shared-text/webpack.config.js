@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
+const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 const pkg = require("./package.json");
@@ -77,7 +77,7 @@ module.exports = env => {
             devServer: {
                 publicPath: '/dist',
                 stats: "minimal",
-                before: (app, server) => fluidRoute.before(app, server),
+                before: (app, server) => fluidRoute.before(app, server, env),
                 after: (app, server) => fluidRoute.after(app, server, __dirname, env),
             },
             resolveLoader: {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -11,14 +11,16 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/driver-definitions";
+import { buildSnapshotTree } from "@fluidframework/protocol-base";
 import {
     IClient,
     ISnapshotTree,
     ITree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+    ISummaryTree,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -137,6 +139,11 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<IDocumentStorageService> {
         return this.storage;
     }
@@ -165,5 +172,14 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

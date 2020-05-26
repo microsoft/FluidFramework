@@ -4,8 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as CodeMirror from "codemirror";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import CodeMirror from "codemirror";
 
 interface IPresenceInfo {
     userId: string;

@@ -7,13 +7,13 @@ import {
     IFluidPackage,
     isFluidPackage,
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
-} from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 
 /**
  * A component registry that can load component via their url
@@ -36,6 +36,10 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
+    /**
+     * Gets a registry entry, or will try to load based on the passed name if not found.
+     * @param name - the registry name, which may be a URL to retrieve from or a published package name.
+     */
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
         if (!this.urlRegistryMap.has(name)) {
             this.urlRegistryMap.set(name, this.loadEntrypoint(name));

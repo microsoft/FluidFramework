@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as assert from "assert";
+
+import assert from "assert";
+import { EventEmitter } from "events";
 import {
     IConnectionDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentService,
-    IDocumentDeltaConnectionEvents,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     INack,
-} from "@microsoft/fluid-protocol-definitions";
-import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/protocol-definitions";
 
 export class DeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents> {

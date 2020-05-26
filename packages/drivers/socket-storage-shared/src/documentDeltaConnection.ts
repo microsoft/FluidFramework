@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { BatchManager, TypedEventEmitter } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection, IError, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
-import { createNetworkError } from "@microsoft/fluid-driver-utils";
+import assert from "assert";
+import { EventEmitter } from "events";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -19,7 +20,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -30,8 +31,9 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
-    const errorObj: IError = createNetworkError(
+    // - a socketError: add it to the CriticalContainerError object for driver to be able to parse it and reason
+    //   over it.
+    const errorObj = createGenericNetworkError(
         `socket.io error: ${handler}: ${error}`,
         canRetry,
     );
@@ -350,6 +352,13 @@ export class DocumentDeltaConnection
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    error.nonce !== undefined &&
+                    error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -369,6 +378,13 @@ export class DocumentDeltaConnection
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    response.nonce !== undefined &&
+                    response.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 /* Issue #1566: Backward compat */
                 if (response.initialMessages === undefined) {
                     response.initialMessages = [];

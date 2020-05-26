@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { Marker, ReferenceType, TextSegment } from "@microsoft/fluid-merge-tree";
+import assert from "assert";
+import { Marker, ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { SubSequence } from "../sharedSequence";
 
 const segmentTypes = [

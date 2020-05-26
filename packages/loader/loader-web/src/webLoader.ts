@@ -9,11 +9,12 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IFluidCodeResolver,
-} from "@microsoft/fluid-container-definitions";
+    IResolvedFluidCodeDetails,
+} from "@fluidframework/container-definitions";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
-    private readonly loadedModules = new Map<string, IFluidModule>();
+    private readonly loadedModules = new Map<string, Promise<IFluidModule> | IFluidModule>();
     private readonly scriptManager = new ScriptManager();
 
     constructor(
@@ -22,16 +23,24 @@ export class WebCodeLoader implements ICodeLoader {
 
     public async seedModule(
         source: IFluidCodeDetails,
-        maybeFluidModule?: IFluidModule,
+        maybeFluidModule?: Promise<IFluidModule> | IFluidModule,
     ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved.resolvedPackageCacheId !== undefined
             && this.loadedModules.has(resolved.resolvedPackageCacheId)) {
             return;
         }
-        const fluidModule = maybeFluidModule ?? await this.load(source);
+        const fluidModule = maybeFluidModule ?? this.load(source);
         if (resolved.resolvedPackageCacheId !== undefined) {
             this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
+        }
+    }
+
+    public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
+        const resolved = await this.codeResolver.resolveCodeDetails(source);
+        if (resolved?.resolvedPackage?.fluid?.browser?.umd?.files !== undefined) {
+            return this.scriptManager.preCacheFiles(
+                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
         }
     }
 
@@ -48,6 +57,15 @@ export class WebCodeLoader implements ICodeLoader {
                 return maybePkg;
             }
         }
+
+        const fluidModuleP = this.loadModuleFromResolvedCodeDetails(resolved);
+        if (resolved.resolvedPackageCacheId !== undefined) {
+            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
+        }
+        return fluidModuleP;
+    }
+
+    private async loadModuleFromResolvedCodeDetails(resolved: IResolvedFluidCodeDetails) {
         if (this.whiteList !== undefined && !(await this.whiteList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
@@ -68,9 +86,6 @@ export class WebCodeLoader implements ICodeLoader {
 
         if (fluidModule?.fluidExport === undefined) {
             throw new Error("Entry point of loaded code package not a fluid module");
-        }
-        if (resolved.resolvedPackageCacheId !== undefined) {
-            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
         return fluidModule;
     }

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { SharedString } from "@microsoft/fluid-sequence";
-import * as React from "react";
+import { CollaborativeInput } from "@fluidframework/aqueduct-react";
+import { SharedString } from "@fluidframework/sequence";
+import React from "react";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
@@ -20,7 +20,6 @@ interface TodoItemViewState {
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
     private readonly itemText: SharedString;
-    private readonly itemUrl: string;
     private readonly buttonStyle = {
         height: "25px",
         marginLeft: "2px",
@@ -32,10 +31,6 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         super(props);
 
         this.itemText = this.props.todoItemModel.getTodoItemText();
-
-        const baseUrl = this.props.todoItemModel.getBaseUrl();
-        const url = new URL(baseUrl);
-        this.itemUrl = `${url.origin}${url.pathname}/${this.props.todoItemModel.url}${url.search}`;
 
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
@@ -83,9 +78,10 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                     </button>
                     <button
                         name="OpenSubComponent"
-                        id={this.itemUrl}
+                        id={this.props.todoItemModel.absoluteUrl}
                         style={this.buttonStyle}
-                        onClick={() => window.open(this.itemUrl, "_blank")}>↗
+                        onClick={() => window.open(this.props.todoItemModel.absoluteUrl, "_blank")}
+                        hidden={this.props.todoItemModel.absoluteUrl === undefined}>↗
                     </button>
                     <button
                         style={this.buttonStyle}

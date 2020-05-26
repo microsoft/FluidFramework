@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IError, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
+import { CriticalContainerError, ContainerWarning } from "./error";
 
 /**
  * Code loading interface
@@ -43,7 +44,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 
 /**
  * Fluid code resolvers take a fluid code details, and resolve the
- * full fuild package including absolute urls for the browser file entries.
+ * full fluid package including absolute urls for the browser file entries.
  * The fluid code resolver is coupled to a specific cdn and knows how to resolve
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
@@ -71,8 +72,8 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected" | "contextChanged", listener: (clientId: string) => void);
     (event: "disconnected" | "joining", listener: () => void);
-    (event: "closed", listener: (error?: IError) => void);
-    (event: "error", listener: (error: IError) => void);
+    (event: "closed", listener: (error?: CriticalContainerError) => void);
+    (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: MessageType.BlobUploaded, listener: (contents: any) => void);
@@ -83,11 +84,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
-}
-
-export interface IExperimentalContainer extends IContainer {
-
-    isExperimentalContainer: true;
 
     /**
      * Represents the resolved url to the container.
@@ -96,14 +92,9 @@ export interface IExperimentalContainer extends IContainer {
 
     /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * @deprecated - It will be replaced with isLocal.
-     */
-    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.
@@ -112,6 +103,13 @@ export interface IExperimentalContainer extends IContainer {
      * that allows attachment to a secondary document.
      */
     attach(request: IRequest): Promise<void>;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     *
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }
 
 export interface ILoader {
@@ -129,15 +127,10 @@ export interface ILoader {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
-}
-
-export interface IExperimentalLoader extends ILoader {
-
-    isExperimentalLoader: true;
 
     /**
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
-     * updates will only be local until the user explciitly attaches the container to a service provider.
+     * updates will only be local until the user explicitly attaches the container to a service provider.
      */
     createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
@@ -179,7 +172,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined | null;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ILoaderHeader> { }
 }

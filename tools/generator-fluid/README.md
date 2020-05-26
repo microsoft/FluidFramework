@@ -17,7 +17,7 @@ You can now bootstrap a new dice roller component at any time.
 
 Go back to your root directory and try it now.
 ````bash
-yo fluid
+yo @microsoft/fluid
 ````
 ---
 
@@ -30,12 +30,12 @@ https://www.npmjs.com/package/vsts-npm-auth
 
 #### Mac
 
-* Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed
+* Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=fluid
 * Click the "Connect to feed" link
 * Choose "npm"
 * And then follow the steps provided. This involves adding a new line to your project's .npmrc as well as storing credentials to access the private repo on your machine.
 * IMPORTANT NOTE: VSTS will give you a line like this to put into your .npmrc file:
-  `registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/`
+  `registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/`
   
-  You need to prefix that line with @prague in order to not force all package lookups to go to the Prague/Fluid registry. The line you add to your .npmrc file should actually look like this:
-  `@prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/`
+  You need to prefix that line with @fluidframework in order to not force all package lookups to go to the Fluid registry. The line you add to your .npmrc file should actually look like this:
+  `@fluidframework:registry=https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/`

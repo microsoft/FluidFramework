@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
     IFluidCodeDetails,
     IProxyLoaderFactory,
-} from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { debug } from "./debug";
 
 /**
@@ -26,18 +26,18 @@ export class TestDataStore {
     /**
      * Open or create a component instance.
      *
-     * @param componentId - Identity of the component.
+     * @param containerId - Identity of the container.
      * @param chaincodePackage - Identity of the chaincode package to use, if creating the component.
      * @param path - Route to the desired subcomponent (use "" to retrieve the root component).
      * @param services - Services to provided by the caller to the component.
      */
     public async open<T>(
-        componentId: string,
+        containerId: string,
         chaincodePackage: IFluidCodeDetails,
         path: string,
         scope?: IComponent,
     ): Promise<T> {
-        debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
+        debug(`TestDataStore.open("${containerId}", "${chaincodePackage.package}", "${path}")`);
 
         const resolver = this.resolver;
         const loader = new Loader(
@@ -47,7 +47,7 @@ export class TestDataStore {
             { blockUpdateMarkers: true },
             scope || {},
             new Map<string, IProxyLoaderFactory>());
-        const baseUrl = `https://test.com/${encodeURIComponent(componentId)}`;
+        const baseUrl = `https://test.com/${encodeURIComponent(containerId)}`;
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""

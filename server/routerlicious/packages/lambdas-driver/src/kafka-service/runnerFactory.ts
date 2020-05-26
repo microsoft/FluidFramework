@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRunner, IRunnerFactory } from "@microsoft/fluid-server-services-utils";
+import { IRunner, IRunnerFactory } from "@fluidframework/server-services-utils";
 import { IKafkaResources } from "./resourcesFactory";
 import { KafkaRunner } from "./runner";
 

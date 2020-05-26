@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { BatchManager, TypedEventEmitter } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -18,9 +18,10 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
+    NackErrorType,
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
+import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -32,7 +33,7 @@ export class TestDocumentDeltaConnection
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer): Promise<IDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer): Promise<TestDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
@@ -244,5 +245,32 @@ export class TestDocumentDeltaConnection
 
     public disconnect() {
         // Do nothing
+    }
+
+    /**
+     * Send a "disconnect" message on the socket.
+     * @param disconnectReason - The reason of the disconnection.
+     */
+    public disconnectClient(disconnectReason: string) {
+        this.socket.emit("disconnect", disconnectReason);
+    }
+
+    /**
+     * * Sends a "nack" message on the socket.
+     * @param code - An error code number that represents the error. It will be a valid HTTP error code.
+     * @param type - Type of the Nack.
+     * @param message - A message about the nack for debugging/logging/telemetry purposes.
+     */
+    public nackClient(code: number = 400, type: NackErrorType = NackErrorType.ThrottlingError, message: any) {
+        const nackMessage = {
+            operation: undefined,
+            sequenceNumber: -1,
+            content: {
+                code,
+                type,
+                message,
+            },
+        };
+        this.socket.emit("nack", "", [nackMessage]);
     }
 }

@@ -3,13 +3,12 @@
 * Licensed under the MIT License.
 */
 
-import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
-import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
-import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { WaterPark } from "./waterPark";
 
-export const fluidExport = new WaterParkModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    WaterPark.ComponentName,
     new Map([
-        [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
-        [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
+        [WaterPark.ComponentName, Promise.resolve(WaterPark.getFactory())],
     ]),
 );

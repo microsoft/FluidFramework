@@ -22,8 +22,8 @@ import {
     ITokenProvider,
     ITree,
     IVersion,
-    INack,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
 /**
@@ -226,6 +226,9 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
 }
 
 export interface IDocumentService {
+
+    resolvedUrl: IResolvedUrl;
+
     /**
      * Access to storage associated with the document...
      */
@@ -250,12 +253,7 @@ export interface IDocumentService {
      * Returns the error tracking service
      */
     getErrorTrackingService(): IErrorTrackingService | null;
-}
 
-export interface IExperimentalDocumentService extends IDocumentService {
-    readonly isExperimentalDocumentService: true;
-
-    resolvedUrl: IResolvedUrl;
 }
 
 export interface IDocumentServiceFactory {
@@ -267,16 +265,13 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
-}
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
 
-export interface IExperimentalDocumentServiceFactory extends IDocumentServiceFactory {
-    readonly isExperimentalDocumentServiceFactory: true;
     // Creates a new document on the host with the provided options. Returns the document service.
     createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService>;
 }
 

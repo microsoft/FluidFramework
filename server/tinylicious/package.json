@@ -80,13 +80,13 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.7",
-    "@microsoft/eslint-config-fluid": "^0.13.19136",
     "@microsoft/fluid-build-common": "^0.13.19136",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "rimraf": "^2.6.2",
     "ts-node": "^8.6.2",

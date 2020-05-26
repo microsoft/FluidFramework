@@ -5,15 +5,15 @@
 
 // tslint:disable:no-console
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IBlob,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     MockRuntime,
     MockSharedObjectServices,
-} from "@microsoft/fluid-test-runtime-utils";
+} from "@fluidframework/test-runtime-utils";
 
 import * as map from "../";
 import { SharedDirectory } from "../directory";

@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";

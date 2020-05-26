@@ -4,21 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/component-core-interfaces";
+import { ChildLogger, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
     ITreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as Properties from "./properties";
@@ -108,10 +108,10 @@ export class SnapshotV1 {
         const headerChunk = chunks.shift();
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
-        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index)=>{
+        const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
             const id = index.toString();
             this.header.orderedChunkMetadata.push({ id });
-            return  {
+            return {
                 mode: FileMode.File,
                 path: id,
                 type: TreeEntry[TreeEntry.Blob],
@@ -129,7 +129,7 @@ export class SnapshotV1 {
         });
 
         const tree: ITree = {
-            entries:[
+            entries: [
                 {
                     mode: FileMode.File,
                     path: SnapshotLegacy.header,

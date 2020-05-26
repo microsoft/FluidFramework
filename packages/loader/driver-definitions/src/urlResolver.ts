@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -29,15 +29,12 @@ export interface IUrlResolver {
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-}
 
-export interface IExperimentalUrlResolver extends IUrlResolver {
-    readonly isExperimentalUrlResolver: true;
-    // Creates a url for the created container with any component path given in request.
-    requestUrl(
+    // Creates a url for the created container with any component path given in the relative url.
+    getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse>;
+        relativeUrl: string,
+    ): Promise<string>;
 }
 
 export enum CreateNewHeader {
@@ -48,7 +45,7 @@ export interface ICreateNewHeader {
     [CreateNewHeader.createNew]: any;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<ICreateNewHeader> { }
 }

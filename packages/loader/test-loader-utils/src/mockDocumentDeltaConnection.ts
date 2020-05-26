@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
+import { EventEmitter } from "events";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IContentMessage,
@@ -14,8 +15,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/protocol-definitions";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IServiceConfiguration = {

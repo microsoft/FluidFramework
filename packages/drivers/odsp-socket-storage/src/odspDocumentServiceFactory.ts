@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
@@ -31,12 +30,12 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         return OdspDocumentService.createContainer(
             createNewSummary,
             createNewResolvedUrl,
-            logger ?? this.logger,
+            logger,
             this.cache,
             this.getStorageToken,
             this,
@@ -45,29 +44,34 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
     }
 
     /**
-   * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
    * referred to as the "Push" token in SPO.
-   * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param odspCache - This caches response for joinSession.
+   * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
-        private readonly appId: string,
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
-        private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        permanentCache?: ICache,
+        persistedCache?: IPersistedCache,
     ) {
-        this.cache = new OdspCache(permanentCache);
+        this.cache = new OdspCache(persistedCache);
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    /**
+     * Create a IDocumentService for a document
+     *
+     * @param resolvedUrl - the URL to the document to create IDocumentService for
+     * @param logger - optional logger to use for the document service that overrides the logger given to the factory
+     */
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
 
         // A hint for driver if document was opened before by this factory
@@ -76,11 +80,10 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
         this.documentsOpened.add(docId);
 
         return OdspDocumentService.create(
-            this.appId,
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
-            this.logger,
+            logger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),

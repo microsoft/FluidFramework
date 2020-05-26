@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 
 /**

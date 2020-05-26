@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
+import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -17,9 +18,9 @@ import {
     IConnect,
     MessageType,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/protocol-definitions";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 
 interface IAugmentedDocumentMessage {
     clientId: string,
@@ -73,10 +74,6 @@ export class CreationServerMessagesHandler {
             }, Number.MAX_VALUE);
     }
 
-    private createClientId() {
-        return `newFileCreationClient${this.totalClients}`;
-    }
-
     /**
      * Messages to be processed by the server.
      * @param messages - List of messages to be stamped.
@@ -128,7 +125,7 @@ export class CreationServerMessagesHandler {
                 maxAckWaitTime: 600000,
             },
         };
-        const clientId: string = this.createClientId();
+        const clientId: string = uuid();
         const clientDetail: IClientJoin = {
             clientId,
             detail: connectMessage.client,
@@ -201,6 +198,7 @@ export class CreationServerMessagesHandler {
             sequenceNumber: this.sequenceNumber++,
             timestamp: Date.now(),
             traces: message.traces !== undefined ? message.traces : [],
+            term: 1,
             type: message.type,
             metadata: message.metadata,
         };
@@ -216,8 +214,8 @@ export class CreationServerMessagesHandler {
      */
     private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: clientDetail.clientId,
-            clientSequenceNumber: 0,
+            clientId: null as any,
+            clientSequenceNumber: -1,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,
@@ -225,6 +223,7 @@ export class CreationServerMessagesHandler {
             timestamp: Date.now(),
             traces: [],
             data: JSON.stringify(clientDetail),
+            term: 1,
             type: MessageType.ClientJoin,
         };
         return joinMessage;

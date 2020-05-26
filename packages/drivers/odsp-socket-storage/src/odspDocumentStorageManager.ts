@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import assert from "assert";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-common-utils";
-import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/common-utils";
+import * as resources from "@fluidframework/gitresources";
+import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
+import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
@@ -59,10 +59,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
+    private treesInsteadOfTree: boolean = false;
 
-    private readonly queryString: string;
     private lastSummaryHandle: string | undefined;
-    private readonly appId: string;
+    // Last proposed handle of the uploaded app summary.
+    private blobsShaProposalHandle: string | undefined;
 
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
@@ -79,7 +80,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     constructor(
-        queryParams: { [key: string]: string },
         private readonly documentId: string,
         private readonly snapshotUrl: string | undefined,
         private latestSha: string | null | undefined,
@@ -90,8 +90,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
     ) {
-        this.queryString = getQueryString(queryParams);
-        this.appId = queryParams.app_id;
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
@@ -122,7 +120,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const response = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
                 const storageToken = await this.getStorageToken(refresh, "GetBlob");
 
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, storageToken);
+                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
                 return this.fetchWrapper.get<resources.IBlob>(url, blobid, headers);
             });
@@ -279,9 +277,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                const odspCacheKey: string = `${this.documentId}/getlatest`;
-                let odspSnapshot: IOdspSnapshot = await this.cache.localStorage.get(odspCacheKey);
-                if (!odspSnapshot) {
+                // Note: There's a race condition here - another caller may come past the undefined check
+                // while the first caller is awaiting later async code in this block.
+                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
+                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
+                if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -293,12 +293,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        odspSnapshot = response.content;
+                        cachedSnapshot = response.content;
 
                         const props = {
-                            trees: odspSnapshot.trees ? odspSnapshot.trees.length : 0,
-                            blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
-                            ops: odspSnapshot.ops.length,
+                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
+                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
+                            ops: cachedSnapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
                             sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                             contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
@@ -313,19 +313,23 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
                     // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
                     // want to use the same getLatest result.
-                    this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
+                    await this.cache.persistedCache.put(snapshotCacheKey, cachedSnapshot, 10 * 1000 /* durationMs */);
                 }
+                const odspSnapshot: IOdspSnapshot = cachedSnapshot;
+
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
+                    this.treesInsteadOfTree = true;
+                    let appCommit: string | undefined;
                     this.initTreesCache(trees);
-                    for (const treeVal of this.treesCache.values()) {
+                    for (const [key, treeVal] of this.treesCache.entries()) {
                         for (const entry of treeVal.tree) {
                             if (entry.type === "blob") {
-                                blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
+                                blobsIdToPathMap.set(entry.sha, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
                             } else if (entry.type === "commit" && entry.path === ".app") {
                                 // This is the unacked handle of the latest summary generated.
-                                this.lastSummaryHandle = entry.sha;
+                                appCommit = entry.sha;
                             }
                         }
                     }
@@ -335,7 +339,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
                 // instead of "Tree"
                 if (tree) {
-                    this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
+                    this.treesInsteadOfTree = false;
+                    this.treesCache.set(sha, (odspSnapshot as any) as resources.ITree);
                 }
 
                 if (blobs) {
@@ -377,10 +382,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersions returned no response", 400, true);
+                throwOdspNetworkError("getVersions returned no response", 400, false);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersions returned non-array response", 400, true);
+                throwOdspNetworkError("getVersions returned non-array response", 400, false);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -433,7 +438,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        // If the last proposed handle is not the proposed handle of the acked summary, clear the cache as the last summary
+        // could have got nacked.
+        if (context.proposalHandle !== this.blobsShaProposalHandle) {
+            this.blobsShaToPathCache.clear();
+        }
+        if (this.treesInsteadOfTree) {
+            this.lastSummaryHandle = context.ackHandle;
+        } else {
+            this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        }
+
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
@@ -444,6 +459,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
         if (blobsShaToPathCacheLatest) {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
+            this.blobsShaProposalHandle = result.sha;
         }
 
         return result.sha;
@@ -487,7 +503,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
                 const storageToken = await this.getStorageToken(refresh, "ReadTree");
 
-                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.fetchWrapper, id, this.fetchFullSnapshot);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 // OdspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
@@ -599,7 +615,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
             const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
 
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
 
             const postBody = JSON.stringify(snapshot);
@@ -662,7 +678,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             content,
                             encoding,
                         };
-                        completePath = `${path}/${key}`;
+                        if (this.treesInsteadOfTree) {
+                            completePath = `/.app${path}/${key}`;
+                        } else {
+                            completePath = `${path}/${key}`;
+                        }
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
@@ -678,7 +698,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                             handlePath = `/${handlePath}`;
                         }
-                        id = `${summary.parentHandle}${handlePath}`;
+                        if (this.treesInsteadOfTree) {
+                            id = `${summary.parentHandle}/.app${handlePath}`;
+                        } else {
+                            id = `${summary.parentHandle}${handlePath}`;
+                        }
                     } else {
                         // back-compat: 0.14 uploadSummary
                         id = summaryObject.handle;

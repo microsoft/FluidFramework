@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { getGitType } from "@microsoft/fluid-protocol-base";
-import { getDocAttributesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
-import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { getGitType } from "@fluidframework/protocol-base";
+import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
+import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IOdspResolvedUrl,
     ISnapshotTree,
@@ -18,10 +17,16 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper, INewFileInfo } from "./odspUtils";
+import {
+    getWithRetryForTokenRefresh,
+    throwOdspNetworkError,
+    fetchHelper,
+    INewFileInfo,
+    invalidFileNameStatusCode,
+    getOrigin,
+} from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { getOrigin } from "./vroom";
 import { IFetchWrapper } from "./fetchWrapper";
 
 export interface IFileCreateResponse {
@@ -45,65 +50,44 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
  */
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    newFileInfoPromise: Promise<INewFileInfo> | undefined,
+    newFileInfo: INewFileInfo,
     cache: IOdspCache,
     storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
-    if (!newFileInfoPromise) {
-        throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
-    }
-    const newFileInfo = await newFileInfoPromise;
-
-    const key = getKeyFromFileInfo(newFileInfo);
-    const responseP: Promise<IOdspResolvedUrl> = cache.sessionStorage.get(key);
-    let resolvedUrl: IOdspResolvedUrl;
-    if (responseP !== undefined) {
-        return responseP;
-    }
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throw new Error("Invalid filename. Please try again.");
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode, false);
     }
-    let containerSnapshot: ISnapshotTree | undefined;
-    if (createNewSummary) {
-        containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    }
-    // We don't want to create a new file for different instances of a driver. So we cache the
-    // response of previous create request as a deferred promise because this is async and we don't
-    // know the order of execution of this code by driver instances.
-    const odspResolvedUrlDeferred = new Deferred<IOdspResolvedUrl>();
-    cache.sessionStorage.put(key, odspResolvedUrlDeferred.promise);
-    let fileResponse: IFileCreateResponse;
-    try {
-        fileResponse = await createNewFluidFileHelper(
+
+    const createFileAndResolveUrl = async () => {
+        const fileResponse: IFileCreateResponse = await createNewOdspFile(
             newFileInfo,
             getStorageToken,
             storageFetchWrapper,
-            containerSnapshot);
+            createNewSummary);
         const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
         const resolver = new OdspDriverUrlResolver();
-        resolvedUrl = await resolver.resolve({ url: odspUrl });
-    } catch (error) {
-        odspResolvedUrlDeferred.reject(error);
-        cache.sessionStorage.remove(key);
-        throw error;
-    }
-    odspResolvedUrlDeferred.resolve(resolvedUrl);
-    if (newFileInfo.callback) {
-        newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
-    }
-    return resolvedUrl;
+
+        if (newFileInfo.callback) {
+            newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
+        }
+
+        return resolver.resolve({ url: odspUrl });
+    };
+
+    const key = getKeyFromFileInfo(newFileInfo);
+    return cache.fileUrlCache.addOrGet(key, createFileAndResolveUrl);
 }
 
 /**
  * Creates a new fluid file. '.fluid' is appended to the filename
  */
-async function createNewFluidFileHelper(
+async function createNewOdspFile(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     storageFetchWrapper: IFetchWrapper,
-    containerSnapshot?: ISnapshotTree,
+    createNewSummary?: ISummaryTree,
 ): Promise<IFileCreateResponse> {
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
@@ -111,7 +95,8 @@ async function createNewFluidFileHelper(
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
         let fetchResponse;
-        if (containerSnapshot) {
+        if (createNewSummary) {
+            const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
             const initialUrl =
                 `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
                 `${encodeURIComponent(newFileInfo.filePath)}/${encodedFilename}` +

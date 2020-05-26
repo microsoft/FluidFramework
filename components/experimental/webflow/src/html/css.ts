@@ -4,7 +4,7 @@
  */
 
 import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
-import { ISegment } from "@microsoft/fluid-merge-tree";
+import { ISegment } from "@fluidframework/merge-tree";
 import { getCss } from "../document";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.

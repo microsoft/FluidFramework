@@ -7,8 +7,8 @@ import {
     IComponentRuntime,
     ISharedObjectServices,
     IChannelAttributes,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
     Release,
@@ -74,19 +74,23 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
  * Consensus Ordered Collection interface
  *
  * An consensus ordered collection is a distributed data structure, which
- * holds a collection of JSON-able or shared objects, and have a
+ * holds a collection of JSON-able or handles, and has a
  * deterministic add/remove order.
  *
  * @remarks
  * The order the server receive the add/remove operation determines the
  * order those operation are applied to the collection. Different clients
- * issuing `add` or `remove` operations at the same time will be sequenced.
+ * issuing `add` or `acquire` operations at the same time will be sequenced.
  * The order dictates which `add` is done first, thus determining the order
  * in which it appears in the collection.  It also determines which client
  * will get the first removed item, etc. All operations are asynchronous.
- * A function `wait` is provided to wait for and remove an entry in the collection.
+ * A function `waitAndAcquire` is provided to wait for and remove an entry in the collection.
  *
- * All non-shared objects added to the collection will be cloned (via JSON).
+ * As a client acquires an item, it processes it and then returns a value (via callback)
+ * indicating whether it has completed processing the item, or whether the item should be
+ * released back to the collection for another client to process.
+ *
+ * All objects added to the collection will be cloned (via JSON).
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import * as path from "path";
+import assert from "assert";
+import fs from "fs";
+import path from "path";
 
 describe("Check Dependencies", () => {
     it("verify no fluid packages", async () => {
@@ -14,8 +14,8 @@ describe("Check Dependencies", () => {
     });
 });
 
-// search all pulic fluid namespaces dirs, and node_module dirs
-const searchFolders = ["@microsoft", "node_modules"];
+// search all public fluid namespaces dirs, and node_module dirs
+const searchFolders = ["@fluidframework", "node_modules"];
 
 const verifyNoFluidPackages = async (dir: string, visitedPkgDirs: string[] = []) => {
     let entries: string[];
@@ -28,7 +28,7 @@ const verifyNoFluidPackages = async (dir: string, visitedPkgDirs: string[] = [])
     const searches: Promise<void>[] = [];
     for (const entry of entries) {
         const entryDir = path.join(dir, entry);
-        if (entry.includes("@fluid")) {
+        if (entry.includes("@fluid-")) {
             assert.fail(entryDir);
         }
         // exclude files

@@ -5,7 +5,7 @@
 
 /* eslint-disable max-len */
 
-import * as ShapeDetector from "shape-detector";
+import ShapeDetector from "shape-detector";
 import { IPoint } from "../ui";
 
 const defaultShapes = [

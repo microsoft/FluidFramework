@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import { strongAssert } from "@microsoft/fluid-runtime-utils";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import assert from "assert";
+import { strongAssert } from "@fluidframework/runtime-utils";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
@@ -178,7 +177,7 @@ describe("ConsensusOrderedCollection", () => {
                 counter++;
                 const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
                 testCollection.connect(runtime.services);
-                deltaConnection.state = ConnectionState.Connected;
+                deltaConnection.connected = true;
                 return testCollection;
             },
             () => {
@@ -196,14 +195,14 @@ describe("ConsensusOrderedCollection", () => {
         };
         const testCollection = factory.create(runtime, "consensus-ordered-collection");
         testCollection.connect(runtime.services);
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
 
         const waitP = testCollection.add("sample");
 
         // Drop connection
-        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnection.connected = false;
         deltaConnFactory.clearMessages();
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
         deltaConnFactory.processAllMessages();
 
         await waitP;
@@ -215,9 +214,9 @@ describe("ConsensusOrderedCollection", () => {
         });
 
         // Drop connection one more time
-        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnection.connected = false;
         deltaConnFactory.clearMessages();
-        deltaConnection.state = ConnectionState.Connected;
+        deltaConnection.connected = true;
         deltaConnFactory.processAllMessages();
         setImmediate(() => deltaConnFactory.processAllMessages());
 

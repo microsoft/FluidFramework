@@ -11,14 +11,15 @@ import {
     IProvideComponentHandle,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IDirectory } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { EventForwarder } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IComponent = object> {

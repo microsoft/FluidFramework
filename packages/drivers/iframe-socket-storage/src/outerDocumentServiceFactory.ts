@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -13,15 +13,17 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
+    IResolvedUrl,
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
-import { IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
+    ISummaryTree,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import Comlink from "comlink";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -108,6 +110,15 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         this.clients[clientId] = combinedDriver;
 
         return clientId;
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 
     public async connected(): Promise<void> {

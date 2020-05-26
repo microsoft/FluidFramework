@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred, TypedEventEmitter } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -16,8 +16,8 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
+} from "@fluidframework/protocol-definitions";
+import Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
@@ -39,7 +39,7 @@ export class InnerDocumentDeltaConnection
      */
     public static async create(
         connection: IConnected,
-        outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>): Promise<IDocumentDeltaConnection> {
+        outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
         const tempEmitter = new EventEmitter();
 
         const forwardEvent = (event: string, args: any[]) =>{
@@ -51,7 +51,7 @@ export class InnerDocumentDeltaConnection
             forwardEvent,
         };
 
-        await outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
+        outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
 
         const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy, tempEmitter);
 
@@ -169,8 +169,8 @@ export class InnerDocumentDeltaConnection
      */
     private constructor(
         public details: IConnected,
-        public outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>,
-        tempEmitter: EventEmitter) {
+        public outerProxy: IOuterDocumentDeltaConnectionProxy,
+        private readonly tempEmitter: EventEmitter) {
         super();
 
         this.on("newListener",(event, listener)=>{

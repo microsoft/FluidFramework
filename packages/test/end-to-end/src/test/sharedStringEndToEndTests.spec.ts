@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import assert from "assert";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { SharedString } from "@fluidframework/sequence";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 describe("SharedString", () => {
     const id = "fluid-test://localhost/sharedStringTest";
@@ -70,7 +70,7 @@ describe("SharedString", () => {
     });
 
     it("can sync SharedString to a newly loaded container", async () => {
-        const text = "syncToNewConatiner";
+        const text = "syncToNewContainer";
         sharedString1.insertText(0, text);
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 

@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Counter } from "@microsoft/fluid-map";
-import * as React from "react";
+import { Counter } from "@fluidframework/map";
+import React from "react";
 
 interface IProps {
     counter: Counter;

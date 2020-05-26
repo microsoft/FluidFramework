@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { KafkaResourcesFactory } from "@microsoft/fluid-server-lambdas-driver";
+import { KafkaResourcesFactory } from "@fluidframework/server-lambdas-driver";
 import { execute } from "./command";
 
 execute(

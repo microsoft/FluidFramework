@@ -9,7 +9,7 @@
  */
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import * as React from "react";
+import React from "react";
 
 import { EmbeddedComponentWrapper } from "../library";
 import { ITabsDataModel } from "./dataModel";

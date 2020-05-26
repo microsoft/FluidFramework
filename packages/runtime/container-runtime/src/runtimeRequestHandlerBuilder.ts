@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 
 /**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
-  * The provided handlers sequentially applied until one is able to statify the request.
+  * The provided handlers sequentially applied until one is able to satisfy the request.
   */
 export class RuntimeRequestHandlerBuilder {
     private readonly handlers: RuntimeRequestHandler[] = [];

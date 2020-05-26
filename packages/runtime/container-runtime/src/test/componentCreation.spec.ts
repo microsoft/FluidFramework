@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as assert from "assert";
+import assert from "assert";
 import {
+    IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { LocalComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => { };
+        const attachCb = (mR: IComponentRuntimeChannel) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";

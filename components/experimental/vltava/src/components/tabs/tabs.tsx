@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
@@ -42,7 +42,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
     protected async componentHasInitialized() {
         const registry = await this.context.containerRuntime.IComponentRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const registryDetails = (registry as IComponent).IComponentRegistryDetails!;
+        const registryDetails = (registry as IComponent).IComponentInternalRegistry!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,

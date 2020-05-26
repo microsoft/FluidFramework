@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+} from "@fluidframework/component-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
@@ -17,7 +21,7 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     public static readonly Attributes: IChannelAttributes = {
         type: ConsensusQueueFactory.Type,
         snapshotFormatVersion: "0.1",
-        packageVersion : pkgVersion,
+        packageVersion: pkgVersion,
     };
 
     public get type() {

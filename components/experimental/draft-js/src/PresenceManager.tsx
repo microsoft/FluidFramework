@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 
-import { SharedMap } from "@microsoft/fluid-map";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import http from "http";
 import { Socket } from "net";
 
 export interface ITrackedHttpServer {

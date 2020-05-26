@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
     NamedComponentRegistryEntry,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import {
     ComponentSymbolProvider,
     DependencyContainer,
-} from "@microsoft/fluid-synthesize";
+} from "@fluidframework/synthesize";
 
 import {
     ISharedComponentProps,
@@ -30,8 +29,9 @@ import {
  * P - represents a type that will define optional providers that will be injected
  * S - the initial state type that the produced component may take during creation
  */
-export class SharedComponentFactory<P extends IComponent, S = undefined>
-implements IComponentFactory, Partial<IProvideComponentRegistry>
+export class SharedComponentFactory<P extends IComponent, S = undefined> implements
+    IComponentFactory,
+    Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
@@ -110,14 +110,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         initialState?: S,
     ) {
         const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
-
-        // If the Container did not register the IContainerRuntime we can do it here to make sure services that need
-        // it will have it.
-        if (!dependencyContainer.has(IContainerRuntime)) {
-            dependencyContainer.register(IContainerRuntime, context.containerRuntime);
-        }
-
-        const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
+        const providers = dependencyContainer.synthesize<P>(this.optionalProviders, {});
         // Create a new instance of our component
         const instance = new this.ctor({ runtime, context, providers });
         await instance.initialize(initialState);

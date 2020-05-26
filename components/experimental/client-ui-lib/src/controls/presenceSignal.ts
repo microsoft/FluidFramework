@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 const presenceKey = "presence";
 

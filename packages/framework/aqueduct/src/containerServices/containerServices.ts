@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IComponent, IComponentRouter, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-runtime-definitions";
-import { RequestParser, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
+import { IResponse, IComponent, IComponentRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
 
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";

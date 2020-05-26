@@ -3,52 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     Deferred,
-} from "@microsoft/fluid-common-utils";
+    raiseConnectedEvent,
+} from "@fluidframework/common-utils";
 import {
     buildSnapshotTree,
-    raiseConnectedEvent,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
-    IChannel,
     IComponentContext,
     IComponentRegistry,
-    IComponentRuntime,
+    IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
-    IExperimentalComponentRuntime,
-    IExperimentalComponentContext,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -63,8 +61,8 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
-    IExperimentalComponentRuntime, IComponentHandleContext
+export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
+    IComponentRuntime, IComponentHandleContext
 {
     public readonly isExperimentalComponentRuntime = true;
     /**
@@ -102,12 +100,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public get IComponentRouter() { return this; }
 
-    public get connectionState(): ConnectionState {
-        return this.componentContext.connectionState;
-    }
-
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.componentContext.connected;
     }
 
     public get leader(): boolean {
@@ -148,7 +142,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private _isAttached: boolean;
@@ -216,12 +209,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             return;
         }
         this._disposed = true;
-
-        /**
-         * @deprecated in 0.14 async stop()
-         * Converge closed with _disposed when removing async stop()
-         */
-        this.closed = true;
 
         this.emit("dispose");
     }
@@ -323,9 +310,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public isLocal(): boolean {
-        const expComponentContext = this.componentContext as IExperimentalComponentContext;
-        assert(expComponentContext?.isExperimentalComponentContext);
-        return expComponentContext.isLocal();
+        return this.componentContext.isLocal();
     }
 
     /**
@@ -362,6 +347,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
@@ -369,32 +358,28 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
         }
 
         for (const [, object] of this.contexts) {
-            object.changeConnectionState(value, clientId);
+            object.setConnectionState(connected, clientId);
         }
 
-        raiseConnectedEvent(this, value, clientId);
+        raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
-
         return this.quorum;
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
-
         return this.audience;
     }
 
@@ -430,15 +415,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    /**
-     * Stop the runtime.  snapshotInternal() is called separately if needed
-     */
-    public stop(): void {
-        this.verifyNotClosed();
-
-        this.closed = true;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
@@ -563,8 +539,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.deferredAttached.promise;
     }
 
-    public error(error: any): void {
-        this.componentContext.error(error);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.componentContext.raiseContainerWarning(warning);
     }
 
     /**
@@ -572,21 +548,31 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+        // If this handle is already attached no need to attach again.
+        if (channel.handle?.isAttached) {
+            return;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = snapshotChannel(channel);
+        assert(this.isAttached, "Component should be attached to attach the channel.");
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients. If the container is attached and component is not attached we will never reach here.
+        if (!this.isLocal()) {
+            // Get the object snapshot and include it in the initial attach
+            const snapshot = snapshotChannel(channel);
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.attributes.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            const message: IAttachMessage = {
+                id: channel.id,
+                snapshot,
+                type: channel.attributes.type,
+            };
+            this.pendingAttach.set(channel.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
@@ -620,29 +606,27 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: message.type,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.processOp(transformed, local);
+        channelContext.processOp(transformed, local);
 
         return channelContext;
     }
 
-    // Ideally the component runtime should drive this. But the interface change just for this
-    // is probably an overkill.
     private attachListener() {
-        this.componentContext.on("leader", (clientId: string) => {
-            this.emit("leader", clientId);
+        this.componentContext.on("leader", () => {
+            this.emit("leader");
         });
-        this.componentContext.on("notleader", (clientId: string) => {
-            this.emit("notleader", clientId);
+        this.componentContext.on("notleader", () => {
+            this.emit("notleader");
         });
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

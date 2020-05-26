@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInkPoint, IPen } from "@microsoft/fluid-ink";
+import { IInkPoint, IPen } from "@fluidframework/ink";
 import { IPoint, IVector, Point, Vector } from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 // eslint-disable-next-line import/no-internal-modules
