@@ -796,7 +796,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     // Back-compat: <= 0.17
     public changeConnectionState(state: ConnectionState, clientId?: string) {
-        this.setConnectionState(state === ConnectionState.Connected, clientId);
+        if (state !== ConnectionState.Connecting) {
+            this.setConnectionState(state === ConnectionState.Connected, clientId);
+        }
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
