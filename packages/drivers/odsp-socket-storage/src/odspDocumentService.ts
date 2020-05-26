@@ -22,7 +22,7 @@ import {
     IClient,
     IErrorTrackingService,
 } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
+import { IOdspResolvedUrl, HostPolicy, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -65,7 +65,7 @@ export class OdspDocumentService implements IDocumentService {
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
-        snapshotOptions: {[key: string]: number},
+        hostPolicy: HostPolicy,
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -100,7 +100,7 @@ export class OdspDocumentService implements IDocumentService {
             deltasFetchWrapper,
             socketIOClientP,
             cache,
-            snapshotOptions,
+            hostPolicy,
             isFirstTimeDocumentOpened,
         );
     }
@@ -137,7 +137,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
-        private readonly snapshotOptions: {[key: string]: number},
+        private readonly hostPolicy: HostPolicy,
         private readonly isFirstTimeDocumentOpened = true,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
@@ -207,7 +207,7 @@ export class OdspDocumentService implements IDocumentService {
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
-            this.snapshotOptions,
+            this.hostPolicy,
         );
 
         return new OdspDocumentStorageService(this.storageManager);
@@ -319,7 +319,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Test if we deal with NetworkError object and if it has enough information to make a call
+     * Test if we deal with NetworkErrorBasic object and if it has enough information to make a call
      * If in doubt, allow retries
      *
      * @param error - error object

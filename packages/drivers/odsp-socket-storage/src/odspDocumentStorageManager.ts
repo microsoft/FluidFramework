@@ -23,6 +23,7 @@ import {
     IDocumentStorageManager,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
+    HostPolicy,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -89,7 +90,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
-        private readonly snapshotOptions: {[key: string]: number},
+        private readonly hostPolicy: HostPolicy,
     ) {
     }
 
@@ -285,16 +286,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
-                    const snapshotOptions = {
+                    const hostPolicy = {
                         deltas: 1,
                         channels: 1,
                         blobs: 2,
-                        ...this.snapshotOptions,
+                        ...this.hostPolicy.snapshotOptions,
                     };
 
                     let delimiter = "?";
                     let options = "";
-                    for (const [key, value] of Object.entries(snapshotOptions)) {
+                    for (const [key, value] of Object.entries(hostPolicy)) {
                         options = `${options}${delimiter}${key}=${value}`;
                         delimiter = "&";
                     }

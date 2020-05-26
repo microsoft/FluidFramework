@@ -238,3 +238,13 @@ export interface IOdspUrlParts {
     drive: string;
     item: string;
 }
+
+export interface ISnapshotOptions {
+    blobs?: number;
+    deltas?: number;
+    channels?: number;
+}
+
+export interface HostPolicy {
+    snapshotOptions?: ISnapshotOptions;
+}
