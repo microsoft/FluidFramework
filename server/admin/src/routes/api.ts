@@ -6,8 +6,7 @@
 import * as core from "@microsoft/fluid-server-services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
-import { IKeyValue, ITenantInput } from "../definitions";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IKeyValue, IKeyValueWrapper, ITenantInput } from "../definitions";
 import { TenantManager } from "../tenantManager";
 
 export function create(
@@ -15,7 +14,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueWrapper): Router {
+    cache: IKeyValueWrapper): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {

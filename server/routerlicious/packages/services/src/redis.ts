@@ -4,7 +4,7 @@
  */
 
 import * as util from "util";
-import { ICache } from "@microsoft/fluid-server-services-core";
+import { ICache } from "@fluidframework/server-services-core";
 import { RedisClient } from "redis";
 
 /**

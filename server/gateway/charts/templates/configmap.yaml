@@ -98,7 +98,7 @@ data:
         },
         "keyValue": {
             "documentUrl": "{{ .Values.gateway.keyValueUrl }}",
-            "load": true
+            "load": false
         },
         "express": {
             "session": {

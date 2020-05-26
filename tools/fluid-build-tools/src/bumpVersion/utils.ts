@@ -19,7 +19,9 @@ export function fatal(error: string): never {
  * @param error description of command line to print when error happens
  */
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
-    const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
+    // TODO: Remove env once publish to the public feed.
+    const env = process.env["NPM_TOKEN"]? process.env : { ...process.env, "NPM_TOKEN": "" };
+    const result = await execAsync(cmd, { cwd: dir, env }, pipeStdIn);
     if (result.error) {
         fatal(`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`);
     }

@@ -12,21 +12,21 @@ import {
     IRequest,
     IResponse,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
     TextSegment,
     ReferenceType,
     reservedTileLabelsKey,
     Marker,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
@@ -209,7 +209,7 @@ export class Smde extends EventEmitter implements
 }
 
 class SmdeFactory implements IComponentFactory {
-    public static readonly type = "@chaincode/smde";
+    public static readonly type = "@fluid-example/smde";
     public readonly type = SmdeFactory.type;
 
     public get IComponentFactory() { return this; }

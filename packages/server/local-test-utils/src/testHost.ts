@@ -9,25 +9,26 @@ import {
     PrimedComponentFactory,
     ContainerServiceRegistryEntries,
     generateContainerServicesRequestHandler,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentLoadable,
     IComponentRunnable,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
-    NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+    NamedComponentRegistryEntries, IComponentContext, IComponentRuntimeChannel,
+} from "@fluidframework/runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { DependencyContainerRegistry } from "@fluidframework/synthesize";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-driver";
+} from "@fluidframework/local-driver";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { TestDataStore } from "./testDataStore";
 import { TestCodeLoader } from "./";
 
@@ -40,7 +41,7 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type: string = "@chaincode/test-root-component";
+    public static readonly type: string = "@fluid-example/test-root-component";
 
     public static readonly codeProposal: IFluidCodeDetails = {
         package: TestRootComponent.type,
@@ -61,6 +62,14 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
             this.root.set(id, component.handle);
             return component;
         });
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string[], realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
+        const componentRuntimeChannel = await (this.context.containerRuntime as IContainerRuntime)
+            .createComponentWithRealizationFn(pkg, realizationFn);
+        return componentRuntimeChannel;
     }
 
     public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {

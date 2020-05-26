@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { EventEmitter } from "events";
+import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@fluidframework/common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/component-core-interfaces";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { ErrorType, IError, ISummarizingError, ISummaryContext } from "@fluidframework/driver-definitions";
+import { createSummarizingError } from "@fluidframework/driver-utils";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
-    IDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { ErrorType, ISummarizingError, ISummaryContext, IError } from "@microsoft/fluid-driver-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/protocol-definitions";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
-import { RunWhileConnectedCoordinator, IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -31,7 +33,7 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 
 const minOpsForLastSummary = 50;
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
 }
@@ -42,7 +44,14 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComponentLoadable {
+export interface ISummarizerEvents extends IEvent {
+    /**
+     * An event indicating that the Summarizer is having problems summarizing
+     */
+    (event: "summarizingError", listener: (error: ISummarizingError) => void);
+}
+export interface ISummarizer
+    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -168,6 +177,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
+        raiseSummarizingError: (description: string) => void,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -178,7 +188,8 @@ export class RunningSummarizer implements IDisposable {
             generateSummary,
             lastOpSeqNumber,
             firstAck,
-            immediateSummary);
+            immediateSummary,
+            raiseSummarizingError);
 
         await summarizer.waitStart();
 
@@ -211,6 +222,7 @@ export class RunningSummarizer implements IDisposable {
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private immediateSummary: boolean = false,
+        private readonly raiseSummarizingError: (description: string) => void,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -225,6 +237,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             this.configuration.maxAckWaitTime,
             () => {
+                this.raiseSummarizingError("SummaryAckWaitTimeout");
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
@@ -370,6 +383,7 @@ export class RunningSummarizer implements IDisposable {
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
         if (!summaryData || !summaryData.submitted) {
             // Did not send the summary op
+            this.raiseSummarizingError("Error while generating or submitting summary");
             return undefined;
         }
 
@@ -421,6 +435,7 @@ export class RunningSummarizer implements IDisposable {
 
             return true;
         } else {
+            this.raiseSummarizingError("SummaryNack");
             return false;
         }
     }
@@ -488,7 +503,7 @@ export class RunningSummarizer implements IDisposable {
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
-export class Summarizer implements ISummarizer {
+export class Summarizer extends EventEmitter implements ISummarizer {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
@@ -514,6 +529,7 @@ export class Summarizer implements ISummarizer {
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         summaryCollection?: SummaryCollection,
     ) {
+        super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         if (summaryCollection) {
@@ -540,7 +556,8 @@ export class Summarizer implements ISummarizer {
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
-                    description: `Summarizer: ${this.stopReason ?? "runEnded"}`,
+                    canRetry: false,
+                    message: `Summarizer: ${this.stopReason ?? "runEnded"}`,
                 };
                 this.runtime.closeFn(error);
             }
@@ -642,6 +659,8 @@ export class Summarizer implements ISummarizer {
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
             this.immediateSummary,
+            (description: string) =>
+                this.emit("summarizingError", createSummarizingError(`Summarizer: ${description}`, true)),
         );
         this.runningSummarizer = runningSummarizer;
 

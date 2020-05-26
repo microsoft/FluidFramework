@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import * as assert from "assert";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
 import { RequestParser } from "../requestParser";
 

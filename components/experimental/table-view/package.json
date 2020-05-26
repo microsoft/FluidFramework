@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-view",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Chaincode component that provides a view for a table-document.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,6 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
@@ -35,16 +34,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/flow-util-lib": "^0.18.0",
-    "@fluid-example/table-document": "^0.18.0",
-    "@microsoft/fluid-aqueduct": "^0.18.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
-    "@microsoft/fluid-view-interfaces": "^0.18.0"
+    "@fluid-example/flow-util-lib": "^0.19.0",
+    "@fluid-example/table-document": "^0.19.0",
+    "@fluidframework/aqueduct": "^0.19.0",
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/view-interfaces": "^0.19.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/webpack-component-loader": "^0.19.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.18.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

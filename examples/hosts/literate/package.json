@@ -13,11 +13,13 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-container-loader": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-routerlicious-driver": "^0.11.0",
-    "@microsoft/fluid-web-code-loader": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.18.0",
+    "@microsoft/fluid-container-loader": "^0.18.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.18.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.18.0",
+    "@microsoft/fluid-view-interfaces": "^0.18.0",
+    "@microsoft/fluid-web-code-loader": "^0.18.0",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.5.1"
   },

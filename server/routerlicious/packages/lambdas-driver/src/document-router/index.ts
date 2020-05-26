@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory, IPlugin } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambdaFactory, IPlugin } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "./lambdaFactory";
 

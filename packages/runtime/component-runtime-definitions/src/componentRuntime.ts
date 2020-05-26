@@ -4,24 +4,23 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage, IProvideComponentRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 /**
@@ -47,8 +46,6 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
 
     readonly parentBranch: string | null;
 
-    readonly connectionState: ConnectionState;
-
     readonly connected: boolean;
 
     readonly loader: ILoader;
@@ -59,6 +56,11 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
      * Returns if the runtime is attached.
      */
     isAttached: boolean;
+
+    on(event: "disconnected" | "dispose" | "leader" | "notleader", listener: () => void): this;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+    on(event: "connected", listener: (clientId: string) => void): this;
 
     /**
      * Returns the channel with the given id

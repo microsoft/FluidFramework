@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
 
 /**

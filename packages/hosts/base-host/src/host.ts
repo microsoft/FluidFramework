@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
     IFluidModule,
-} from "@microsoft/fluid-container-definitions";
-import { Loader } from "@microsoft/fluid-container-loader";
-import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { WebCodeLoader } from "@fluidframework/web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 

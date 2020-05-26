@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import {
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 function printUsage() {
     console.log("Usage:");

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
+import { ISharedMap } from "@fluidframework/map";
 import * as React from "react";
 import { Coordinate, CoordinateString } from "../helpers/coordinate";
 import { loadPuzzle, PUZZLE_INDEXES } from "../helpers/puzzles";

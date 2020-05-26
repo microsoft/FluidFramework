@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 import { Layout } from "react-grid-layout";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
 }

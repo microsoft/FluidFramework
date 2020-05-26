@@ -9,10 +9,10 @@ import {
     IUrlResolver,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import * as Comlink from "comlink";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { InnerUrlResolver } from "./innerUrlResolver";
@@ -77,7 +77,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

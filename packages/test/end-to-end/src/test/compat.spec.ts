@@ -8,17 +8,17 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+} from "@fluidframework/aqueduct";
+import { IFluidCodeDetails, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import * as old from "./oldVersion";
 
 class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static readonly componentFactory = new PrimedComponentFactory(TestComponent.type, TestComponent, [], {});
 
@@ -37,7 +37,7 @@ class TestComponent extends PrimedComponent {
 // between loader and runtime should be backwards-compatible and changing this
 // class should not be necessary.
 class OldTestComponent extends old.PrimedComponent {
-    public static readonly type = "@chaincode/old-test-component";
+    public static readonly type = "@fluid-example/old-test-component";
 
     public static readonly componentFactory = new old.PrimedComponentFactory(
         OldTestComponent.type,

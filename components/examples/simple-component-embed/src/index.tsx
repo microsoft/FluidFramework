@@ -7,9 +7,9 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
 

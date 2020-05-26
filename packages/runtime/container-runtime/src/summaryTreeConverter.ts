@@ -12,7 +12,7 @@ import {
     SummaryTree,
     SummaryType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export interface ISummaryStats {
     treeNodeCount: number;

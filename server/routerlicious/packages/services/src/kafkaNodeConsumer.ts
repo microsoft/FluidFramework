@@ -11,7 +11,7 @@ import {
     IPartitionWithEpoch,
     IQueuedMessage,
     IZookeeperClient,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as kafka from "kafka-node";
 import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";

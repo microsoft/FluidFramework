@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/server-services-core";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 

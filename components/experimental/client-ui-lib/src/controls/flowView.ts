@@ -5,29 +5,30 @@
 
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IComponent,
     IComponentHandle,
     IComponentLoadable,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IGenericBlob } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IGenericBlob } from "@fluidframework/container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCursor,
     IComponentKeyHandlers,
     IComponentLayout,
-} from "@microsoft/fluid-framework-experimental";
+} from "@fluidframework/framework-experimental";
 import {
     IComponentCollection,
-} from "@microsoft/fluid-framework-interfaces";
-import * as types from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
-import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
-import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/framework-interfaces";
+import * as types from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import * as Sequence from "@fluidframework/sequence";
+import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -37,8 +38,6 @@ import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const performanceNow = require("performance-now");
 interface IPersistentElement extends HTMLDivElement {
     component: IComponent;
 }

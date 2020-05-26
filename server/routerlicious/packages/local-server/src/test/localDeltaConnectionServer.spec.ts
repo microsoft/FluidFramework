@@ -4,15 +4,15 @@
  */
 
 import * as assert from "assert";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+import { generateToken } from "@fluidframework/server-services-client";
 import {
     ScopeType,
     IUser,
     MessageType,
     ISequencedDocumentSystemMessage,
     IClient,
-} from  "@microsoft/fluid-protocol-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+} from  "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/common-utils";
 import { LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
 describe("LocalDeltaConnectionServer", ()=>{

@@ -9,20 +9,19 @@ import {
     IComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
@@ -59,7 +58,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         return;
     }
 

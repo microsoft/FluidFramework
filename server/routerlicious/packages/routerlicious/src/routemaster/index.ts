@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@microsoft/fluid-server-services";
-import { IPartitionLambdaFactory, MongoManager } from "@microsoft/fluid-server-services-core";
+import * as services from "@fluidframework/server-services";
+import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import { RouteMasterLambdaFactory } from "./lambdaFactory";

@@ -4,17 +4,17 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { IDocumentDeltaConnection, IError } from "@fluidframework/driver-definitions";
 import {
     IClient,
     IConnect,
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";

@@ -5,32 +5,31 @@
 
 import {
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IComponentRuntimeChannel,
     IComponentContext,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
@@ -58,7 +57,6 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
-    readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
@@ -72,11 +70,9 @@ export interface IContainerRuntime extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader",
         listener: () => void): this;
-    on(
-        event: "connected" | "leader" | "noleader",
-        listener: (clientId?: string) => void): this;
+    on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
         event: "componentInstantiated",
@@ -133,7 +129,14 @@ export interface IContainerRuntime extends
     notifyComponentInstantiated(componentContext: IComponentContext): void;
 
     /**
+     * Flag indicating if the given container has been attached to a host service.
      * False if the container is attached to storage.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }

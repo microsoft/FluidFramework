@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IDirectory } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent } from "@fluidframework/aqueduct";
+import { IDirectory } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextListView } from "./TextListView";
@@ -42,7 +42,7 @@ export class TextList extends PrimedComponent implements
 
     protected async componentHasInitialized() {
         console.log("componentHasInitialized setting listener");
-        this.context.on("op", (e) => {
+        this.runtime.on("op", (e) => {
             console.log(JSON.stringify(e));
         });
     }

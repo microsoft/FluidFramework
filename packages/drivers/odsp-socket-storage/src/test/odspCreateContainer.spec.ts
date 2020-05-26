@@ -4,10 +4,10 @@
  */
 
 import * as assert from "assert";
-import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
-import { ISummaryTree, SummaryType } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { DebugLogger } from "@fluidframework/common-utils";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { IFetchWrapper } from "../fetchWrapper";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -24,10 +24,10 @@ describe("Odsp Create Container Test", () => {
 
     const getOdspDocumentServiceFactory = (itemId: string) => {
         const expectedResponse: any = {
-            context:"http://sp.devinstall/_api/v2.1/$metadata#",
+            context: "http://sp.devinstall/_api/v2.1/$metadata#",
             sequenceNumber: 1,
-            sha:"shaxxshaxx",
-            itemUrl:`http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
+            sha: "shaxxshaxx",
+            itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
             driveId,
             itemId,
         };
@@ -46,7 +46,6 @@ describe("Odsp Create Container Test", () => {
         const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
             async (url: string, refresh: boolean) => "token",
             async (refresh: boolean) => "token",
-            DebugLogger.create("fluid:createContainer"),
             fetchWrapperMock);
         return odspDocumentServiceFactory;
     };

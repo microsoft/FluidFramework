@@ -5,38 +5,37 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     Deferred,
-} from "@microsoft/fluid-common-utils";
+    raiseConnectedEvent,
+} from "@fluidframework/common-utils";
 import {
     buildSnapshotTree,
-    raiseConnectedEvent,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ITreeEntry,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
     IComponentContext,
@@ -44,9 +43,9 @@ import {
     IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { IChannel, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -100,12 +99,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public get IComponentRouter() { return this; }
 
-    public get connectionState(): ConnectionState {
-        return this.componentContext.connectionState;
-    }
-
     public get connected(): boolean {
-        return this.connectionState === ConnectionState.Connected;
+        return this.componentContext.connected;
     }
 
     public get leader(): boolean {
@@ -351,6 +346,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public bind(handle: IComponentHandle): void {
+        if (this.isAttached) {
+            handle.attach();
+            return;
+        }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
@@ -358,21 +357,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients
-        if (value === ConnectionState.Connected) {
+        if (connected) {
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
         }
 
         for (const [, object] of this.contexts) {
-            object.changeConnectionState(value, clientId);
+            object.setConnectionState(connected, clientId);
         }
 
-        raiseConnectedEvent(this, value, clientId);
+        raiseConnectedEvent(this.logger, this, connected, clientId);
     }
 
     public getQuorum(): IQuorum {
@@ -548,6 +547,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+        // If this handle is already attached no need to attach again.
+        if (channel.handle?.isAttached) {
+            return;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
@@ -602,6 +605,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             referenceSequenceNumber: message.referenceSequenceNumber,
             sequenceNumber: message.sequenceNumber,
             timestamp: message.timestamp,
+            term: message.term ?? 1,
             traces: message.traces,
             type: message.type,
         };
@@ -612,14 +616,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return channelContext;
     }
 
-    // Ideally the component runtime should drive this. But the interface change just for this
-    // is probably an overkill.
     private attachListener() {
-        this.componentContext.on("leader", (clientId: string) => {
-            this.emit("leader", clientId);
+        this.componentContext.on("leader", () => {
+            this.emit("leader");
         });
-        this.componentContext.on("notleader", (clientId: string) => {
-            this.emit("notleader", clientId);
+        this.componentContext.on("notleader", () => {
+            this.emit("notleader");
         });
     }
 

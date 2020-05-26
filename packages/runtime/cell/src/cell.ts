@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";

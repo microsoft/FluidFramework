@@ -4,8 +4,8 @@
  */
 
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { ownsNode } from "../util/event";

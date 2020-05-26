@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

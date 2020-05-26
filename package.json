@@ -35,7 +35,6 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
     "start": "docker-compose up",
     "stop": "docker-compose down",
@@ -57,6 +56,7 @@
     "test:report": "npm run test:mocha:report && npm run test:jest:report",
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
+    "tsc:fast": "fluid-build  --root . -s tsc",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -93,9 +93,10 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@fluid-internal/fluid-build-tools": "^0.1.27195"
+  },
   "devDependencies": {
-    "@fluid-internal/fluid-build-tools": "^0.1.26443",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^4.1.0",

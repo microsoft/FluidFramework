@@ -9,15 +9,15 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IErrorTrackingService, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import Axios from "axios";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
@@ -44,7 +44,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(resolvedUrl.endpoints.ordererUrl);
@@ -68,7 +68,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             });
-        return this.createDocumentService(resolvedUrl);
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**
@@ -77,8 +77,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;

@@ -9,7 +9,7 @@ import {
     IPublisher,
     IPartitionLambda,
     IPartitionLambdaFactory,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";
 

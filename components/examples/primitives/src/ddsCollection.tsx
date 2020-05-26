@@ -4,8 +4,8 @@
  */
 
 import * as React from "react";
-import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap, SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IMapProps, MapComponent } from "./map";
 
 interface IDdsCollectionProps {

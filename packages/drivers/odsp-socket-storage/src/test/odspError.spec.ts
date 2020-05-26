@@ -4,8 +4,7 @@
  */
 
 import * as assert from "assert";
-import { IError, ErrorType } from "@microsoft/fluid-driver-definitions";
-import { OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { IError, ErrorType } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 
@@ -22,7 +21,6 @@ describe("Odsp Error", () => {
         statusCode: number,
         canRetry: boolean,
         includeResponse: boolean,
-        online?: string,
     ) {
         try {
             throwOdspNetworkError(
@@ -30,7 +28,6 @@ describe("Odsp Error", () => {
                 statusCode,
                 canRetry,
                 includeResponse ? testResponse : undefined,
-                online,
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
@@ -44,7 +41,6 @@ describe("Odsp Error", () => {
             400,
             true /* canRetry */,
             true /* includeResponse */,
-            OnlineStatus[OnlineStatus.Offline],
         );
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
@@ -57,7 +53,6 @@ describe("Odsp Error", () => {
             assert.notEqual(-1, networkError.message.indexOf("default"),
                 "message should contain Response.type");
             assert.equal(true, networkError.canRetry, "canRetry should be true");
-            assert.equal(OnlineStatus[OnlineStatus.Offline], networkError.online, "online status should be offline");
         }
     });
 

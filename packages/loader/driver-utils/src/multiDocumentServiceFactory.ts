@@ -8,9 +8,9 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
@@ -43,7 +43,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         });
     }
     public readonly protocolName = "none:";
-    async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const urlObj = parse(resolvedUrl.url);
         if (urlObj.protocol === undefined) {
@@ -54,13 +54,13 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
             throw new Error("Unknown fluid protocol");
         }
 
-        return factory.createDocumentService(resolvedUrl);
+        return factory.createDocumentService(resolvedUrl, logger);
     }
 
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         const urlObj = parse(createNewResolvedUrl.url);

@@ -4,8 +4,8 @@
  */
 
 import * as assert from "assert";
-import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UpgradeManager } from "../utils";
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
@@ -15,7 +15,7 @@ describe("UpgradeManager", () => {
         let seqNum = 0;
         let clientId = 0;
         const opHandler: ProtocolOpHandler = new ProtocolOpHandler(
-            "", 0, 0, [], [], [],
+            "", 0, 0, 1, [], [], [],
             (key, value) => {
                 const s = ++seqNum;
                 // delay this so we can have multiple proposals before first proposal op

@@ -5,15 +5,15 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { DebugLogger } from "@fluidframework/common-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { DeltaManager } from "@microsoft/fluid-container-loader";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
-import { ScheduleManager, DeltaScheduler } from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/protocol-definitions";
+import { DeltaManager } from "@fluidframework/container-loader";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
+import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
 describe("Container Runtime", () => {
     /**
@@ -117,7 +117,7 @@ describe("Container Runtime", () => {
                 assert.strictEqual(batchBegin, batchEnd, "Received batchEnd without corresponding batchBegin");
             });
 
-            deltaManager.attachOpHandler(0, 0, {
+            deltaManager.attachOpHandler(0, 0, 1, {
                 process(message: ISequencedDocumentMessage) {
                     processOp(message);
                     return {};

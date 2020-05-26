@@ -2,15 +2,19 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createLoader, IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
@@ -72,13 +76,6 @@ class KeyValueLoader {
             });
 
         const documentServiceFactories: IDocumentServiceFactory[] = [];
-        // TODO: figure out how to pass clientId and token here
-        documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Fake app-id",
-            (siteUrl: string) => Promise.resolve("fake token"),
-            () => Promise.resolve("fake token"),
-            new BaseTelemetryNullLogger()));
-
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,
             new DefaultErrorTracking(),
@@ -91,14 +88,15 @@ class KeyValueLoader {
             hostToken,
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
-        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
-        const loader = createLoader(
-            result.data,
+        config.tokens = (result.data as IFluidResolvedUrl).tokens;
+
+        const loader = new Loader(
+            resolver,
+            documentServiceFactories,
+            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
-            // TODO fix when updating packages to latest - for now cast to fix compilation error
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS) as any,
-            hostConf,
+            new Map<string, IProxyLoaderFactory>(),
         );
 
         const container = await loader.resolve({ url: documentUrl });

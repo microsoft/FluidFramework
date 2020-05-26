@@ -8,7 +8,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentStorageService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -21,7 +21,7 @@ import {
     ITokenClaims,
     IVersion,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
