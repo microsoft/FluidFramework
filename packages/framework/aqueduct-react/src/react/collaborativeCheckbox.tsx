@@ -8,6 +8,8 @@ import React from "react";
 interface IProps {
     counter: Counter;
     id: string;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 interface IState {
@@ -46,9 +48,11 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
         return (
             <input
                 type="checkbox"
+                className={this.props.className}
+                style={this.props.style}
                 aria-checked={this.state.checked}
-                name= {this.props.id}
-                checked = {this.state.checked}
+                name={this.props.id}
+                checked={this.state.checked}
                 onChange={this.updateCheckbox} />
         );
     }

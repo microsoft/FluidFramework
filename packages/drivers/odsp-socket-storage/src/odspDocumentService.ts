@@ -386,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
      * If url #1 fails to connect, tries url #2 if applicable
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document ID
+     * @param documentId - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -395,7 +395,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
-        websocketId: string,
+        documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -431,7 +431,7 @@ export class OdspDocumentService implements IDocumentService {
 
             return OdspDocumentDeltaConnection.create(
                 tenantId,
-                websocketId,
+                documentId,
                 token,
                 io,
                 client,
@@ -455,7 +455,7 @@ export class OdspDocumentService implements IDocumentService {
 
                     return OdspDocumentDeltaConnection.create(
                         tenantId,
-                        websocketId,
+                        documentId,
                         token,
                         io,
                         client,
@@ -488,7 +488,7 @@ export class OdspDocumentService implements IDocumentService {
         const startNonAfd = performanceNow();
         return OdspDocumentDeltaConnection.create(
             tenantId,
-            websocketId,
+            documentId,
             token,
             io,
             client,
@@ -506,7 +506,7 @@ export class OdspDocumentService implements IDocumentService {
 
                 return OdspDocumentDeltaConnection.create(
                     tenantId,
-                    websocketId,
+                    documentId,
                     token,
                     io,
                     client,
