@@ -6,6 +6,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IData, IUser } from "../definitions";
+// eslint-disable-next-line import/no-internal-modules
 import { Content } from "./components/Content";
 
 export async function load(user: IUser, data: IData) {
