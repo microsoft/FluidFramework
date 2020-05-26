@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { RedisClient } from "redis";
 import * as util from "util";
+import { RedisClient } from "redis";
 import { ICache } from "./definitions";
 
 /**
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    private getAsync;
-    private setAsync;
+    private readonly getAsync;
+    private readonly setAsync;
 
-    constructor(client: RedisClient, private prefix = "git") {
+    constructor(client: RedisClient, private readonly prefix = "git") {
         this.getAsync = util.promisify(client.get.bind(client));
         this.setAsync = util.promisify(client.set.bind(client));
     }

@@ -6,10 +6,13 @@
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cors from "cors";
+// eslint-disable-next-line import/no-duplicates
 import * as express from "express";
+// eslint-disable-next-line no-duplicate-imports, import/no-duplicates
 import { Express } from "express";
 import * as morgan from "morgan";
 import * as nconf from "nconf";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import split = require("split");
 import * as winston from "winston";
 import * as routes from "./routes";
@@ -19,7 +22,7 @@ import { ICache, ITenantService } from "./services";
  * Basic stream logging interface for libraries that require a stream to pipe output to
  */
 const stream = split().on("data", (message) => {
-  winston.info(message);
+    winston.info(message);
 });
 
 export function create(config: nconf.Provider, tenantService: ITenantService, cache: ICache) {
@@ -59,6 +62,7 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -70,6 +74,7 @@ export function create(config: nconf.Provider, tenantService: ITenantService, ca
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.json({
             error: {},

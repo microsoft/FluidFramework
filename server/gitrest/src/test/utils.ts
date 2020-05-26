@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as nconf from "nconf";
-import * as rimrafCallback from "rimraf";
 import * as util from "util";
+import * as nconf from "nconf";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as rimrafCallback from "rimraf";
 
 export const defaultProvider = new nconf.Provider({}).defaults({
     logger: {
@@ -18,10 +19,10 @@ export const defaultProvider = new nconf.Provider({}).defaults({
     storageDir: "/tmp/historian",
 });
 
-const rimraf = util.promisify(rimrafCallback) as (arg: string) => Promise<void>;
+const rimraf = util.promisify(rimrafCallback);
 
 export function initializeBeforeAfterTestHooks(provider: nconf.Provider) {
-    afterEach(() => {
+    afterEach(async () => {
         return rimraf(provider.get("storageDir"));
     });
 }

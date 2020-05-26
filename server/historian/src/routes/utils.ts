@@ -14,8 +14,8 @@ export function handleResponse<T>(
     response: Response,
     cache = true,
     status: number = 200,
-    handler: (value: T) => void = (value) => value) {
-
+    handler: (value: T) => void = (value) => value,
+) {
     resultP.then(handler).then(
         (result) => {
             if (cache) {
@@ -33,17 +33,23 @@ export async function createGitService(
     tenantId: string,
     authorization: string,
     tenantService: ITenantService,
-    cache: ICache): Promise<RestGitService> {
-
+    cache: ICache,
+): Promise<RestGitService> {
+    // eslint-disable-next-line no-null/no-null
     let token: string = null;
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (authorization) {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const base64TokenMatch = authorization.match(/Basic (.+)/);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!base64TokenMatch) {
             return Promise.reject("Malformed authorization token");
         }
-        const encoded = new Buffer(base64TokenMatch[1], "base64").toString();
+        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const tokenMatch = encoded.match(/(.+):(.+)/);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!tokenMatch || tenantId !== tokenMatch[1]) {
             return Promise.reject("Malformed authorization token");
         }
