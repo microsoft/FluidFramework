@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/intelligence-runner-agent",
-  "version": "0.18.4",
+  "version": "0.18.5",
   "description": "Generates insights on distributed data structures",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,10 +21,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.18.4",
-    "@microsoft/fluid-map": "^0.18.4",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.5",
+    "@microsoft/fluid-map": "^0.18.5",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
-    "@microsoft/fluid-sequence": "^0.18.4",
+    "@microsoft/fluid-sequence": "^0.18.5",
     "request": "^2.88.0"
   },
   "devDependencies": {
