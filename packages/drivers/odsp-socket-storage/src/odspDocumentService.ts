@@ -255,18 +255,16 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
-        if (this.storageManager === undefined) {
-            this.storageManager = new OdspDocumentStorageManager(
-                this.odspResolvedUrl,
-                latestSha,
-                this.storageFetchWrapper,
-                this.getStorageToken,
-                this.logger,
-                true,
-                this.cache,
-                this.isFirstTimeDocumentOpened,
-            );
-        }
+        this.storageManager = new OdspDocumentStorageManager(
+            this.odspResolvedUrl,
+            latestSha,
+            this.storageFetchWrapper,
+            this.getStorageToken,
+            this.logger,
+            true,
+            this.cache,
+            this.isFirstTimeDocumentOpened,
+        );
 
         return new OdspDocumentStorageService(this.storageManager);
     }
@@ -285,7 +283,7 @@ export class OdspDocumentService implements IDocumentService {
         const res = new OdspDeltaStorageService(
             urlProvider,
             this.deltasFetchWrapper,
-            this.storageManager ? this.storageManager.ops : undefined,
+            this.storageManager?.ops,
             this.getStorageToken,
             this.logger,
         );
@@ -582,6 +580,13 @@ export class OdspDocumentService implements IDocumentService {
         const origExpiry = this.storageManager!.snapshotCacheExpiry;
         const count = this.opSeqNumberMax - this.opSeqNumberMin;
 
-        this.cache.persistedCache.updateExpiry(cacheEntry, origExpiry, origExpiry * (1 - count / 5000));
+        // 1K ops is close to 500K of uncompressed payload. If use use such stale snapshot, client would
+        // need to download all these ops (though we can store them in cache).
+        // Typical skeleton snapshot is around 12K.
+        // From bandwidth optimization perspective, we would want this number to be lower
+        // From latency (of first rendering) perspective, we would want this number to be higher.
+        const opsTooMany = 1000;
+
+        this.cache.persistedCache.updateExpiry(cacheEntry, origExpiry, origExpiry * (1 - count / opsTooMany));
     }
 }

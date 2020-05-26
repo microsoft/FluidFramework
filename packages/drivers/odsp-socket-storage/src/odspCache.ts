@@ -74,7 +74,7 @@ export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<any>;
 
     /**
-     * Put the value into cache
+     * Put the value into cache. Overwrites any prior version of same entry.
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
      * @param value - jasonable content. Passing undefined removes entry from cache
@@ -83,6 +83,7 @@ export interface IPersistedCache {
 
     /**
      * Supplies optional expiration for the cache entry.
+     * Call should be ignored by implementer if version of entry does not match version stored in cache!
      * Driver may periodically call this API for an entry to update host on expiration time,
      * based on internal heuristics and new information (like how stale is snapshot based on how many ops are
      * on top of such snapshot). Please note that expiry time is just an educated guess.
@@ -95,7 +96,7 @@ export interface IPersistedCache {
      * next time some file activity happens (or tab gets more CPU), driver may come back and update expiry time
      * and it may happen that it's still not that stale and could be reused, despite earlier calculation suggesting
      * it expired.
-     * @param entry - cache entry.
+     * @param entry - cache entry. Call should be ignored if version of entry does not match version stored in cache.
      * @param origExpiryTime - original expiry time, in seconds. This value does not change for an entry and provides
      * information on default policy driver uses if no other information is available.
      * @param expiryTime - suggested expiration time, in seconds, based on new information. Can be negative if already
