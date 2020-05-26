@@ -84,25 +84,32 @@ export class PendingStateManager {
     }
 
     public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
-        let pendingFlushMode: FlushMode | undefined;
-        while (this.pendingStates.peekFront()?.type === "flush") {
-            pendingFlushMode = (this.pendingStates.shift() as IPendingFlushMode).flushMode;
+        let flushMode: FlushMode | undefined;
+        let pendingState = this.pendingStates.peekFront();
+
+        // Remove all the "flush" states from the queue and get the first "message".
+        while (pendingState?.type === "flush") {
+            flushMode = pendingState.flushMode;
+            this.pendingStates.shift();
+            pendingState = this.pendingStates.peekFront();
         }
 
         // Verify that the batch metadata, if any, is correct.
-        this.verifyBatchMetadata(message, pendingFlushMode);
+        this.verifyBatchMetadata(message, flushMode);
 
-        const firstPendingMessage = this.pendingStates.peekFront() as IPendingMessage;
+        const firstPendingMessage = pendingState;
 
         // There should always be a pending message for a message for the local client. The clientSequenceNumber of the
         // incoming message must match that of the pending message.
-        if (firstPendingMessage?.clientSequenceNumber !== message.clientSequenceNumber) {
+        if (firstPendingMessage?.type !== "message" ||
+            firstPendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
             this.logger.sendErrorEvent({
                 eventName: "UnexpectedAckReceived",
                 clientId: message.clientId,
                 sequenceNumber: message.sequenceNumber,
-                expectedClientSequenceNumber: firstPendingMessage?.clientSequenceNumber,
                 receivedClientSequenceNumber: message.clientSequenceNumber,
+                expectedClientSequenceNumber:
+                    firstPendingMessage?.type === "message" ? firstPendingMessage.clientSequenceNumber : undefined,
             });
 
             // Close the container because this indicates data corruption.
@@ -112,8 +119,8 @@ export class PendingStateManager {
                 message: "Unexpected ack received",
                 canRetry: false,
             };
-
             this.containerRuntime.closeFn(error);
+
             return;
         }
 
