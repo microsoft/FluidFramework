@@ -231,7 +231,11 @@ export class PendingStateManager {
                                     pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
                                 break;
                             default:
-                                // For all other message types, log an event indicating a resubmit was triggered for it.
+                                // For other types of messages, submit it again but log an error indicating a resubmit
+                                // was triggered for it. We should look at the telemetry periodically to determine if
+                                // these are valid or not and take necessary steps.
+                                this.containerRuntime.submitFn(
+                                    pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
                                 this.logger.sendErrorEvent({
                                     eventName: "UnexpectedContainerResubmitMessage",
                                     messageType: pendingState.messageType,

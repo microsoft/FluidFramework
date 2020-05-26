@@ -603,7 +603,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                // For other types of messages, log an error indicating a resubmit was triggered for it.
+                // For other types of messages, submit it again but log an error indicating a resubmit was triggered
+                // for it. We should look at the telemetry periodically to determine if these are valid or not and
+                // take necessary steps.
+                this.submit(type, content, localOpMetadata);
                 this.logger.sendErrorEvent({
                     eventName: "UnexpectedComponentResubmitMessage",
                     messageType: type,
