@@ -42,6 +42,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
+import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -170,7 +171,7 @@ export abstract class ComponentContext extends EventEmitter implements
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
-        private readonly _containerRuntime: IContainerRuntime,
+        private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -568,6 +569,10 @@ export abstract class ComponentContext extends EventEmitter implements
             throw new Error("Context is closed");
         }
     }
+
+    public async createAlias(alias: string): Promise<void> {
+        return this._containerRuntime.createComponentAlias(this.id, alias);
+    }
 }
 
 export class RemotedComponentContext extends ComponentContext {
@@ -576,7 +581,7 @@ export class RemotedComponentContext extends ComponentContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | null,
-        runtime: IContainerRuntime,
+        runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
@@ -653,7 +658,7 @@ export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
         pkg: string[],
-        runtime: IContainerRuntime,
+        runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,

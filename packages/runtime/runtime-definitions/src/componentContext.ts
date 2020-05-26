@@ -360,6 +360,14 @@ export interface IComponentContext extends EventEmitter {
      * @param relativeUrl - A relative request within the container
      */
     getAbsoluteUrl(relativeUrl: string): Promise<string>;
+
+    /**
+     * Create an alias name for a component.
+     * @param alias - alternative name for the component
+     * @returns - success, if alias is acquired for a component.
+     * Fails, if some other component already have taken the alias name.
+     */
+    createAlias(alias: string): Promise<void>;
 }
 
 /**

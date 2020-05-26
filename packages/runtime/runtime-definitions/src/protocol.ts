@@ -10,6 +10,7 @@ import { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
  */
 export interface IEnvelope {
     // The target for the envelope
+    // undefined if target is container runtime itself
     address: string;
 
     // The contents of the envelope
@@ -28,9 +29,7 @@ export interface ISignalEnvelop {
  * Represents ISignalMessage with its type.
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-
     type: string;
-
 }
 
 /**
@@ -47,3 +46,15 @@ export interface IAttachMessage {
     // Initial snapshot of the document (contains ownership)
     snapshot: ITree;
 }
+
+export interface IAliasProposalMessage {
+    type: "aliasProposal";
+    componentId: string;
+    alias: string;
+}
+
+/**
+ * Runtime message type - union of message interfaces
+ * IAttachMessage should ideally move into this type.
+ */
+export type IRuntimeMessage = IAliasProposalMessage;

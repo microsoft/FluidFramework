@@ -204,6 +204,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
     }
 
+    public async createAlias(alias: string) {
+        return this.componentContext.createAlias(alias);
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;
