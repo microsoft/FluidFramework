@@ -24,13 +24,17 @@ export function syncStateAndRoot<
     fromRootUpdate: boolean,
     syncedStateId,
     root: ISharedDirectory,
-    state: SV,
+    viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
     fluidComponentMap: FluidComponentMap,
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
+    fluidState?: SF,
 ) {
-    let combinedRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    let combinedRootState = fluidState ? {
+        ...getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView),
+        ...fluidState,
+    } : getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
     const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
     if (componentSchemaHandles) {
         const {
@@ -49,18 +53,18 @@ export function syncStateAndRoot<
                 componentKeyMap !== undefined
                 && viewMatchingMap !== undefined
                 && fluidMatchingMap !== undefined) {
-                Object.entries(state).forEach(([viewKey, viewValue]) => {
+                Object.entries(viewState).forEach(([viewKey, viewValue]) => {
                     const needsConverter = viewMatchingMap.get(viewKey);
                     let partialRootState = {};
                     if (needsConverter) {
                         partialRootState = getRootFromView(
-                            state,
+                            viewState,
                             viewKey as keyof SV,
                             componentKeyMap,
                             viewToFluid,
                         );
                     } else {
-                        partialRootState[viewKey] = state[viewKey];
+                        partialRootState[viewKey] = viewState[viewKey];
                     }
 
                     if (fromRootUpdate) {
@@ -70,7 +74,7 @@ export function syncStateAndRoot<
                     }
                 });
 
-                let combinedViewState = { ...state };
+                let combinedViewState = { ...viewState };
                 const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
                 Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
                     const needsConverter = fluidMatchingMap.get(fluidKey);

@@ -74,8 +74,7 @@ export const ScheduleItView = () => {
     const onRenderRow = (person: IPerson, personKey: string): JSX.Element => {
         const checkmarks: JSX.Element[] = [];
         const personAvailabilityMap = personSelector.getAvailabilityMap.function(
-            personState.viewState,
-            personState.dataProps,
+            personState,
             person.availabilityMapHandle,
         ) as SharedMap;
         if (personAvailabilityMap !== undefined) {

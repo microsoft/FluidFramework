@@ -121,7 +121,7 @@ export abstract class FluidReactComponent<
     private _setRoot(newState: SV, fromRootUpdate = false) {
         const newCombinedState = { ...this.state, ...newState };
         if (!fromRootUpdate && this.fluidComponentMap) {
-            syncStateAndRoot(
+            syncStateAndRoot<SV,SF>(
                 fromRootUpdate,
                 this._syncedStateId,
                 this._root,

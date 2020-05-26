@@ -21,7 +21,7 @@ export const CommentReducer: ICommentReducer = {
     add: {
         function: (state, newComment: string, name: string) => {
             state.viewState.comments.push({ message: newComment, name });
-            return { state: state.viewState };
+            return { state };
         },
     },
 };
@@ -30,7 +30,7 @@ export const DateReducer: IDateReducer = {
     set: {
         function: (state, key: string, time: IDate) => {
             state.viewState.dateMap.set(key, time);
-            return { state: state.viewState };
+            return { state };
         },
     },
 };
@@ -41,7 +41,7 @@ export const PersonReducer: IPersonReducer = {
             const person = state.viewState.personMap.get<IPerson>(key);
             person.name = name;
             state.viewState.personMap.set(key, person);
-            return { state: state.viewState };
+            return { state };
         },
     },
     updateAvailability: {
@@ -53,7 +53,7 @@ export const PersonReducer: IPersonReducer = {
             const availabilityItem = availabilityMap.get<IAvailability>(dateKey);
             availabilityItem.availabilityType = availabilityType;
             availabilityMap.set(dateKey, availabilityItem);
-            return { state: state.viewState };
+            return { state };
         },
     },
     addPerson: {
@@ -68,7 +68,7 @@ export const PersonReducer: IPersonReducer = {
                 availabilityMapHandle: newAvailabilityMap.handle as IComponentHandle<SharedMap>,
             };
             state.viewState.personMap.set(newPerson.key, newPerson);
-            return { state: state.viewState, newComponentHandles: [newAvailabilityMap.handle] };
+            return { state, newComponentHandles: [newAvailabilityMap.handle] };
         },
     },
     removePerson: {
@@ -76,7 +76,7 @@ export const PersonReducer: IPersonReducer = {
             if (state.viewState.personMap.get(key) !== undefined) {
                 state.viewState.personMap.delete(key);
             }
-            return { state: state.viewState };
+            return { state };
         },
     },
 };

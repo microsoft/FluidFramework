@@ -11,8 +11,8 @@ import {
 
 export const PersonSelector: IPersonSelector = {
     getAvailabilityMap: {
-        function: (state, dataProps, handle: IComponentHandle<SharedMap>) => {
-            const personAvailabilityMap = dataProps.fluidComponentMap.get(handle.path)?.component;
+        function: (state, handle: IComponentHandle<SharedMap>) => {
+            const personAvailabilityMap = state.dataProps.fluidComponentMap.get(handle.path)?.component;
             if (personAvailabilityMap !== undefined) {
                 return personAvailabilityMap as SharedMap;
             }

@@ -28,7 +28,7 @@ export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     A extends IFluidReducer<SV,SF,C>,
-    B extends IFluidSelector<SV,C>,
+    B extends IFluidSelector<SV,SF,C>,
     C extends IFluidDataProps,
 >(
     props: IFluidReducerProps<SV, SF, A, B, C>,
@@ -85,7 +85,7 @@ export function useReducerFluid<
                     false,
                     syncedStateId,
                     root,
-                    result.state,
+                    result.state.viewState,
                     setState,
                     viewToFluid,
                     fluidToView,
@@ -97,26 +97,27 @@ export function useReducerFluid<
                     false,
                     syncedStateId,
                     root,
-                    result.state,
+                    result.state.viewState,
                     setState,
                     callback,
                     viewToFluid,
                     fluidToView,
+                    result.state.fluidState,
                 );
             } else {
-                setState(result.state);
+                setState(result.state.viewState);
             }
         } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
             (action.function as any)(
                 combinedDispatchState,
                 ...args,
-            ).then((result: IStateUpdateResult<SV>) => {
+            ).then((result: IStateUpdateResult<SV,SF,C>) => {
                 const callback = rootCallbackListener(
                     combinedDispatchDataProps.fluidComponentMap,
                     true,
                     syncedStateId,
                     root,
-                    result.state,
+                    result.state.viewState,
                     setState,
                     viewToFluid,
                     fluidToView,
@@ -129,14 +130,15 @@ export function useReducerFluid<
                         false,
                         syncedStateId,
                         root,
-                        result.state,
+                        result.state.viewState,
                         setState,
                         callback,
                         viewToFluid,
                         fluidToView,
+                        result.state.fluidState,
                     );
                 } else {
-                    setState(result.state);
+                    setState(result.state.viewState);
                 }
             });
         } else if (action && instanceOfAsyncEffectFunction<SV,SF,C>(action)) {
@@ -183,19 +185,29 @@ export function useReducerFluid<
     // map available for use. Alternatively, if you would like to pre-load components before React is initialized,
     // you can do so and provide them in dataProps.
     // Fetch can also be used to retrieve data from these components as they will also be available as a parameter.
-    const fetch = React.useCallback((fetchState: SV, type: keyof B,  fetchDataProps?: C, handle?: IComponentHandle) => {
-        const combinedFetchState = { ...state, ...fetchState };
-        const combinedFetchDataProps = { ...fetchDataProps, ...dataProps };
+    const fetch = React.useCallback((
+        fetchState: ICombinedState<SV,SF,C>,
+        type: keyof B,
+        handle?: IComponentHandle,
+    ) => {
+        const combinedFetchFluidState: SF = { ...currentFluidState, ...fetchState.fluidState };
+        const combinedFetchViewState: SV = { ...state, ...fetchState.viewState };
+        const combinedFetchDataProps: C = { ...dataProps, ...fetchState.dataProps };
+        const combinedFetchState: ICombinedState<SV,SF,C> = {
+            fluidState: combinedFetchFluidState,
+            viewState: combinedFetchViewState,
+            dataProps: combinedFetchDataProps,
+        };
         const action =  selector[(type)];
-        if (action && instanceOfSelectorFunction<SV,C>(action)) {
-            if (handle && instanceOfComponentSelectorFunction<SV,C>(action)
+        if (action && instanceOfSelectorFunction<SV,SF,C>(action)) {
+            if (handle && instanceOfComponentSelectorFunction<SV,SF,C>(action)
                 && combinedFetchDataProps.fluidComponentMap.get(handle.path) === undefined) {
                 const callback = rootCallbackListener(
                     combinedFetchDataProps.fluidComponentMap,
                     true,
                     syncedStateId,
                     root,
-                    combinedFetchState,
+                    combinedFetchState.viewState,
                     setState,
                     viewToFluid,
                     fluidToView,
@@ -207,14 +219,15 @@ export function useReducerFluid<
                     false,
                     syncedStateId,
                     root,
-                    combinedFetchState,
+                    combinedFetchState.viewState,
                     setState,
                     callback,
                     viewToFluid,
                     fluidToView,
+                    combinedFetchState.fluidState,
                 );
             }
-            return (action.function as any)(combinedFetchState, combinedFetchDataProps, handle);
+            return (action.function as any)(combinedFetchState, handle);
         } else {
             throw new Error(
                 `Action with key ${action} does not
@@ -228,10 +241,9 @@ export function useReducerFluid<
     Object.entries(selector).forEach(([functionName, functionItem], i) => {
         combinedSelector[functionName] = {
             function: (
-                viewState: SV,
-                callbackDataProps?: C,
+                fetchState: ICombinedState<SV,SF,C>,
                 handle?: IComponentHandle,
-            ) => fetch(viewState, functionName, callbackDataProps, handle),
+            ) => fetch(fetchState, functionName, handle),
         };
     });
 

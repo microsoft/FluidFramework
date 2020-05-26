@@ -111,7 +111,7 @@ export function useStateFluid<
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });
-        updateStateAndComponentMap(
+        updateStateAndComponentMap<SV,SF>(
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,
             loadFromRoot,

@@ -10,6 +10,7 @@ import {
     FluidStateUpdateFunction,
     FluidAsyncStateUpdateFunction,
     FluidComponentMap,
+    IFluidFunctionalComponentFluidState,
 } from "@microsoft/fluid-aqueduct-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { SpacesStorage } from "../storage";
@@ -25,43 +26,54 @@ export interface ISpacesDataProps extends IFluidDataProps {
 
 export interface ISpacesViewContext {
     supportedComponents?: IInternalRegistryEntry[],
-    dispatch?: (type: keyof ISpacesReducer, ...args: any) => void,
-    fetch?: (type: keyof ISpacesSelector) => (any | undefined),
+    reducer?: ISpacesReducer,
+    selector?: ISpacesSelector,
     state?: ISpacesViewState,
 }
 
 export interface ISpacesViewState extends IFluidFunctionalComponentViewState {
-    componentMap: Map<string, ISpacesStoredComponent>,
+    componentHandleMap: Map<string, ISpacesViewComponent>,
+}
+
+export interface ISpacesFluidState extends IFluidFunctionalComponentFluidState {
+    componentMap: Map<string, ISpacesFluidComponent>,
 }
 
 /**
  * Spaces collects loadable components paired with a type.  The type is actually not generally needed except for
  * supporting export to template.
  */
-export interface ISpacesStoredComponent {
-    handle: IComponentHandle;
-    type: string;
-    layout: Layout;
+export interface ISpacesFluidComponent {
+    handle: IComponentHandle,
+    type: string,
+    layout: Layout,
+}
+
+export interface ISpacesViewComponent {
+    component: IComponent,
+    type: string,
+    layout: Layout,
 }
 
 export interface ISpacesProps {
     root: ISharedDirectory,
     runtime: IComponentRuntime,
-    localComponentMap: Map<string, ISpacesStoredComponent>,
-    fluidComponentMap: FluidComponentMap;
-    supportedComponents: IInternalRegistryEntry[];
-    syncedStorage: SpacesStorage;
-    componentRegistry?: IComponentRegistry;
+    initialViewState: ISpacesViewState,
+    initialFluidState: ISpacesFluidState,
+    fluidComponentMap: FluidComponentMap,
+    supportedComponents: IInternalRegistryEntry[],
+    syncedStorage: SpacesStorage,
+    componentRegistry?: IComponentRegistry,
 }
 
 export interface ISpacesReducer {
-    applyTemplate: FluidAsyncStateUpdateFunction<ISpacesViewState, ISpacesDataProps>,
-    saveLayout: FluidEffectFunction<ISpacesViewState, ISpacesDataProps>,
-    addComponent: FluidAsyncStateUpdateFunction<ISpacesViewState, ISpacesDataProps>,
-    updateLayout: FluidStateUpdateFunction<ISpacesViewState, ISpacesDataProps>,
-    removeComponent: FluidStateUpdateFunction<ISpacesViewState, ISpacesDataProps>,
+    applyTemplate: FluidAsyncStateUpdateFunction<ISpacesViewState, ISpacesFluidState, ISpacesDataProps>,
+    saveLayout: FluidEffectFunction<ISpacesViewState,  ISpacesFluidState, ISpacesDataProps>,
+    addComponent: FluidAsyncStateUpdateFunction<ISpacesViewState, ISpacesFluidState,  ISpacesDataProps>,
+    updateLayout: FluidStateUpdateFunction<ISpacesViewState,  ISpacesFluidState, ISpacesDataProps>,
+    removeComponent: FluidStateUpdateFunction<ISpacesViewState, ISpacesFluidState,  ISpacesDataProps>,
 }
 
 export interface ISpacesSelector {
-    areTemplatesAvailable: FluidSelectorFunction<ISpacesViewState, ISpacesDataProps, boolean>;
+    areTemplatesAvailable: FluidSelectorFunction<ISpacesViewState, ISpacesDataProps>;
 }

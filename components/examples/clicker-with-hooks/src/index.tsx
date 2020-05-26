@@ -80,7 +80,7 @@ const ActionReducer: IActionReducer = {
             state.viewState.value =  step === undefined
                 ? state.viewState.value + 1
                 : state.viewState.value + step;
-            return { state: state.viewState };
+            return { state };
         },
     },
 };

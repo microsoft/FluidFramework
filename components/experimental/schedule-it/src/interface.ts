@@ -99,8 +99,8 @@ export interface IPersonReducer extends IFluidReducer<IPersonViewState, IPersonF
     removePerson: FluidStateUpdateFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>,
 }
 
-export interface IPersonSelector extends IFluidSelector<IPersonViewState,IFluidDataProps> {
-    getAvailabilityMap: FluidComponentSelectorFunction<IPersonViewState,IFluidDataProps>;
+export interface IPersonSelector extends IFluidSelector<IPersonViewState,IPersonFluidState,IFluidDataProps> {
+    getAvailabilityMap: FluidComponentSelectorFunction<IPersonViewState,IPersonFluidState,IFluidDataProps>;
 }
 
 export interface IViewProps {

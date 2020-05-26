@@ -42,8 +42,12 @@ export interface IFluidReducer<
     [key: string]: FluidAsyncStateUpdateFunction<SV,SF,C> | FluidStateUpdateFunction<SV,SF,C>;
 }
 
-export interface IFluidSelector<S,C extends IFluidDataProps> {
-    [key: string]: FluidSelectorFunction<S,C> | FluidComponentSelectorFunction<S,C>;
+export interface IFluidSelector<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> {
+    [key: string]: FluidSelectorFunction<SV,SF,C> | FluidComponentSelectorFunction<SV,SF,C>;
 }
 
 export interface FluidProps<
@@ -144,7 +148,7 @@ export interface FluidStateUpdateFunction<
     function: (
         oldState: ICombinedState<SV,SF,C>,
         ...args: any
-    ) => IStateUpdateResult<SV>;
+    ) => IStateUpdateResult<SV,SF,C>;
 }
 
 export const instanceOfStateUpdateFunction = <
@@ -163,11 +167,15 @@ export interface FluidAsyncStateUpdateFunction<
     function: (
         oldState: ICombinedState<SV,SF,C>,
         ...args: any
-    ) => Promise<IStateUpdateResult<SV>>;
+    ) => Promise<IStateUpdateResult<SV,SF,C>>;
 }
 
-export interface IStateUpdateResult<S extends IFluidFunctionalComponentViewState> {
-    state: S,
+export interface IStateUpdateResult<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> {
+    state: ICombinedState<SV,SF,C>,
     newComponentHandles?: IComponentHandle[],
 }
 
@@ -180,20 +188,34 @@ export const instanceOfAsyncStateUpdateFunction = <
 ): object is FluidAsyncStateUpdateFunction<SF,SV,C> =>
     object === Object(object) && "function" in object;
 
-export interface FluidSelectorFunction<S, C extends IFluidDataProps>{
-    function: (state: S, dataProps: C) => any | undefined;
+export interface FluidSelectorFunction<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>{
+    function: (state: ICombinedState<SV,SF,C>) => any | undefined;
 }
 
-export interface FluidComponentSelectorFunction<S, C extends IFluidDataProps>{
-    function: (state: S, dataProps: C, handle: IComponentHandle<any>) => IComponent | undefined;
+export interface FluidComponentSelectorFunction<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+>{
+    function: (state: ICombinedState<SV,SF,C>, handle: IComponentHandle<any>) => IComponent | undefined;
 }
 
-export const instanceOfSelectorFunction = <S,C extends IFluidDataProps>
-(object: any): object is FluidSelectorFunction<S,C> =>
+export const instanceOfSelectorFunction = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> (object: any): object is FluidSelectorFunction<SV,SF,C> =>
     object === Object(object) && "function" in object;
 
-export const instanceOfComponentSelectorFunction = <S,C extends IFluidDataProps>
-(object: any): object is FluidComponentSelectorFunction<S,C> =>
+export const instanceOfComponentSelectorFunction = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState,
+    C extends IFluidDataProps
+> (object: any): object is FluidComponentSelectorFunction<SV,SF,C> =>
     object === Object(object) && "function" in object;
 
 export interface IFluidReducerProps<
