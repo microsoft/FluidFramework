@@ -119,6 +119,12 @@ describe("document-router", () => {
             });
 
             it("Should skip future messages after lambda exception (in future will dead letter queue)", async () => {
+                let contextErrored = false;
+
+                context.on("error", () => {
+                    contextErrored = true;
+                });
+
                 const totalMessages = 10;
 
                 for (let i = 0; i < totalMessages; i++) {
@@ -138,6 +144,8 @@ describe("document-router", () => {
                 }
                 await context.waitForOffset(kafkaMessageFactory.getHeadOffset("test"));
                 assert.equal(testModule.factories[0].lambdas[0].handleCalls, totalMessages + 1);
+
+                assert.ok(contextErrored);
             });
 
             it("Should emit an error on lambda creation exception", async () => {
