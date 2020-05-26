@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -170,7 +170,7 @@ export class InnerDocumentDeltaConnection
     private constructor(
         public details: IConnected,
         public outerProxy: IOuterDocumentDeltaConnectionProxy,
-        private readonly tempEmitter: EventEmitter) {
+        tempEmitter: EventEmitter) {
         super();
 
         this.on("newListener",(event, listener)=>{

@@ -8,6 +8,7 @@ import {
     IDeltaManagerEvents,
     IDeltaQueue,
     IDeltaSender,
+    IDeltaQueueEvents,
 } from "@fluidframework/container-definitions";
 import { EventForwarder } from "@fluidframework/common-utils";
 import {

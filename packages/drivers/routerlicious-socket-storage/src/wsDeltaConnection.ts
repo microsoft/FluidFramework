@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import url from "url";
-import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,

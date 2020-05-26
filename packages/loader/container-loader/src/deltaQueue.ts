@@ -4,9 +4,8 @@
  */
 
 import assert from "assert";
-import { EventEmitter } from "events";
-import { IDeltaQueue } from "@fluidframework/container-definitions";
-import { Deferred } from "@fluidframework/common-utils";
+import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {

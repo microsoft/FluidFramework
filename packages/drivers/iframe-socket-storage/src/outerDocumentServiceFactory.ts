@@ -21,7 +21,7 @@ import {
     IVersion,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import Comlink from "comlink";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { debug } from "./debug";

@@ -7,6 +7,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentStorageService,
+    IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -21,6 +22,7 @@ import {
     IVersion,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 

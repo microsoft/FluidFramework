@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClientDetails,
@@ -18,7 +17,7 @@ import {
     ITokenClaims,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { CriticalContainerError } from "./error";
+import { CriticalContainerError, IThrottlingWarning } from "./error";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -76,12 +75,12 @@ export interface IDeltaSender extends IProvideDeltaSender {
 }
 
 export interface IDeltaManagerEvents extends IEvent {
-    (event: "error", listener: (error: IError) => void);
+    (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
     (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     (event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    (event: "closed", listener: (error?: IError) => void);
+    (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: "connect", listener: (details: IConnectionDetails) => void);
     (event: "disconnect", listener: (reason: string) => void);
@@ -141,15 +140,9 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
-    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
-    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: CriticalContainerError) => void);
-    on(event: "pong" | "processTime", listener: (latency: number) => void);
-    on(event: "connect", listener: (details: IConnectionDetails) => void);
-    on(event: "disconnect", listener: (reason: string) => void);
-    on(event: "readonly", listener: (readonly: boolean) => void);
+export interface IDeltaQueueEvents<T> extends IErrorEvent{
+    (event: "push" | "op", listener: (task: T) => void);
+    (event: "idle", listener: () => void);
 }
 
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {

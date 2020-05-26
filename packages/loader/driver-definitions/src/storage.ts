@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -11,6 +11,7 @@ import {
     ICreateBlobResponse,
     IDocumentMessage,
     IErrorTrackingService,
+    INack,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -23,7 +24,6 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
 /**
@@ -207,7 +207,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     disconnect();
 
     /**
-     * Emits and event from this document delta connection
+     * Emits an event from this document delta connection
      * @param event - The event to emit
      * @param args - The arguments for the event
      */
