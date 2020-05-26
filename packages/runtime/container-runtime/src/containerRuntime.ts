@@ -42,6 +42,7 @@ import {
     TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
+    ConnectionState,
     IChunkedOp,
     IClientDetails,
     IDocumentMessage,
@@ -791,6 +792,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.dispose();
 
         return { snapshot, state };
+    }
+
+    // Back-compat: <= 0.17
+    public changeConnectionState(state: ConnectionState, clientId?: string) {
+        if (state !== ConnectionState.Connecting) {
+            this.setConnectionState(state === ConnectionState.Connected, clientId);
+        }
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
