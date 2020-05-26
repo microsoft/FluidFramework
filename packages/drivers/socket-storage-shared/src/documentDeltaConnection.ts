@@ -134,13 +134,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             (submitType, work) => {
                 this.socket.emit(submitType, this.clientId, work);
             });
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op", this.earlyOpHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op-content", this.earlyContentHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("signal", this.earlySignalHandler!);
     }
 
     /**
@@ -357,6 +350,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("op", this.earlyOpHandler!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("op-content", this.earlyContentHandler!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("signal", this.earlySignalHandler!);
+
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {

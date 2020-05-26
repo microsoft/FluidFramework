@@ -265,29 +265,25 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         private socketReferenceKey: string | undefined,
         private readonly enableMultiplexing?: boolean) {
         super(socket, documentId);
+    }
 
-        if (enableMultiplexing) {
-            // remove the default listeners and replace them with multiplex ready ones
-            socket.removeListener("op", this.earlyOpHandler);
-            socket.removeListener("signal", this.earlySignalHandler);
-
+    protected async initialize(connectMessage: IConnect, timeout: number) {
+        if (this.enableMultiplexing) {
+            // multiplex compatible early handlers
             this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
                 if (this.documentId === messageDocumentId) {
-                    debug(`Queued early ops for ${this.documentId}`, msgs.length);
                     this.queuedMessages.push(...msgs);
                 }
             };
 
             this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
-                if (!messageDocumentId || messageDocumentId === this.documentId) {
-                    debug(`Queued early signal for ${this.documentId}`, msg);
+                if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
                     this.queuedSignals.push(msg);
                 }
             };
-
-            socket.addEventListener("op", this.earlyOpHandler);
-            socket.addEventListener("signal", this.earlySignalHandler);
         }
+
+        return super.initialize(connectMessage, timeout);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
