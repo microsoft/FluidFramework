@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-ink",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "description": "Ink DDS",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.18.2",
-    "@microsoft/fluid-component-runtime-definitions": "^0.18.3",
+    "@microsoft/fluid-component-runtime-definitions": "^0.18.4",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
-    "@microsoft/fluid-shared-object-base": "^0.18.3",
+    "@microsoft/fluid-shared-object-base": "^0.18.4",
     "@types/debug": "^0.0.31",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"

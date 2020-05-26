@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/image-collection",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "description": "Collection of images",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,14 +25,14 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-base": "^0.18.3",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.3",
-    "@microsoft/fluid-component-runtime": "^0.18.3",
-    "@microsoft/fluid-framework-experimental": "^0.18.3",
-    "@microsoft/fluid-framework-interfaces": "^0.18.3",
-    "@microsoft/fluid-map": "^0.18.3",
-    "@microsoft/fluid-runtime-definitions": "^0.18.3",
-    "@microsoft/fluid-view-interfaces": "^0.18.3",
+    "@microsoft/fluid-component-base": "^0.18.4",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.4",
+    "@microsoft/fluid-component-runtime": "^0.18.4",
+    "@microsoft/fluid-framework-experimental": "^0.18.4",
+    "@microsoft/fluid-framework-interfaces": "^0.18.4",
+    "@microsoft/fluid-map": "^0.18.4",
+    "@microsoft/fluid-runtime-definitions": "^0.18.4",
+    "@microsoft/fluid-view-interfaces": "^0.18.4",
     "@types/node": "^10.14.6"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/react-web-host",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -24,7 +24,7 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluid-example/tiny-web-host": "^0.18.3",
+    "@fluid-example/tiny-web-host": "^0.18.4",
     "react": "^16.10.2"
   },
   "devDependencies": {
