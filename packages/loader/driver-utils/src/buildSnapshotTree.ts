@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { gitHashFileAsync } from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+import assert from "assert";
+import { gitHashFileAsync } from "@fluidframework/common-utils";
+import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
     IBlob,
@@ -13,8 +13,8 @@ import {
     ITree,
     ITreeEntry,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { buildHierarchy } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-definitions";
+import { buildHierarchy } from "@fluidframework/protocol-base";
 
 async function flattenCore(
     path: string,

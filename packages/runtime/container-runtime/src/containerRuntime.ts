@@ -41,7 +41,6 @@ import {
     CreateContainerError,
     buildSnapshotTree,
     readAndParse,
-    createIError,
 } from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
