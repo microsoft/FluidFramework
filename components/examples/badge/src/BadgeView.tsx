@@ -1,5 +1,3 @@
-/* eslint-disable comma-dangle */
-/* eslint-disable @typescript-eslint/no-use-before-define */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -22,7 +20,7 @@ import {
     IColor,
     Stack,
     TextField,
-    IContextualMenuItem
+    IContextualMenuItem,
 } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
@@ -31,7 +29,7 @@ import { IHistory } from "./IHistory";
 import {
     getItemsFromOptionsMap,
     getRelativeDate,
-    getButtonStyles
+    getButtonStyles,
 } from "./helpers";
 
 const { useState } = React;
@@ -52,7 +50,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         historyItems,
         selectedOption,
         addOption,
-        changeSelectedOption
+        changeSelectedOption,
     } = props;
 
     const currentOption = options.find((option) => option.key === selectedOption);
@@ -63,7 +61,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
     // Set up local state
     const [isDialogVisible, setIsDialogVisible] = useState<boolean>(false);
     const [customColor, setCustomColor] = useState<IColor>(
-        getColorFromString(defaultColor)
+        getColorFromString(defaultColor),
     );
     const [customText, setCustomText] = useState<string>("");
 
@@ -74,6 +72,10 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
             : changeSelectedOption(item as IBadgeType);
     };
 
+    const closeDialog = (): void => {
+        setIsDialogVisible(false);
+    };
+
     const onSave = (): void => {
         if (customText !== "") {
             addOption(customText, customColor);
@@ -81,10 +83,6 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         }
 
         closeDialog();
-    };
-
-    const closeDialog = (): void => {
-        setIsDialogVisible(false);
     };
 
     const updateColor = (_, colorObj: IColor) => {
@@ -118,26 +116,26 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         <div
             style={{
                 animation: MotionAnimations.scaleDownIn,
-                display: "inline-block"
+                display: "inline-block",
             }}
         >
             <HoverCard
                 plainCardProps={{
                     onRenderPlainCard: onRenderCard,
-                    directionalHint: DirectionalHint.rightTopEdge
+                    directionalHint: DirectionalHint.rightTopEdge,
                 }}
                 type={HoverCardType.plain}
             >
                 <DefaultButton
                     text={currentOption.text}
                     iconProps={{
-                        iconName: currentOption.iconProps.iconName
+                        iconName: currentOption.iconProps.iconName,
                     }}
                     menuProps={{
                         isBeakVisible: false,
                         shouldFocusOnMount: true,
                         items: getItemsFromOptionsMap(options),
-                        onItemClick: onClick
+                        onItemClick: onClick,
                     }}
                     styles={buttonStyles}
                 />
@@ -148,11 +146,11 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
                 onDismiss={closeDialog}
                 dialogContentProps={{
                     type: DialogType.normal,
-                    title: "Add a custom status"
+                    title: "Add a custom status",
                 }}
                 modalProps={{
                     isBlocking: false,
-                    styles: { main: { maxWidth: 450 } }
+                    styles: { main: { maxWidth: 450 } },
                 }}
             >
                 <Stack>

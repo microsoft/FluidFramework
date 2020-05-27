@@ -1,4 +1,3 @@
-/* eslint-disable comma-dangle */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -38,9 +37,9 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             iconProps: {
                 iconName: "Edit",
                 style: {
-                    color: SharedColors.cyanBlue10
-                }
-            }
+                    color: SharedColors.cyanBlue10,
+                },
+            },
         },
         {
             key: "reviewing",
@@ -48,9 +47,9 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             iconProps: {
                 iconName: "Chat",
                 style: {
-                    color: SharedColors.orange20
-                }
-            }
+                    color: SharedColors.orange20,
+                },
+            },
         },
         {
             key: "complete",
@@ -58,9 +57,9 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             iconProps: {
                 iconName: "Completed",
                 style: {
-                    color: SharedColors.green10
-                }
-            }
+                    color: SharedColors.green10,
+                },
+            },
         },
         {
             key: "archived",
@@ -68,10 +67,10 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             iconProps: {
                 iconName: "Archive",
                 style: {
-                    color: SharedColors.magenta10
-                }
-            }
-        }
+                    color: SharedColors.magenta10,
+                },
+            },
+        },
     ];
 
     /**
@@ -93,13 +92,13 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
 
         // Create a sequence to store the badge's history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(
-            this.runtime
+            this.runtime,
         );
         history.insert(0, [
             {
                 value: current.get(),
-                timestamp: new Date()
-            }
+                timestamp: new Date(),
+            },
         ]);
         this.root.set(this.historyId, history.handle);
     }
@@ -119,7 +118,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             .get();
         this.historySequence = await this.root
             .get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(
-            this.historyId
+            this.historyId,
         )
             .get();
     }
@@ -140,9 +139,9 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
                 iconProps: {
                     iconName: "Contact",
                     style: {
-                        color: color.str
-                    }
-                }
+                        color: color.str,
+                    },
+                },
             };
             this.optionsMap.set(text, newItem);
             this.changeSelectedOption(newItem);
@@ -156,8 +155,8 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             this.historySequence.insert(len, [
                 {
                     value: newItem,
-                    timestamp: new Date()
-                }
+                    timestamp: new Date(),
+                },
             ]);
 
             // Set new value
@@ -191,7 +190,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
         return {
             options: [...this.optionsMap.values()],
             historyItems: this.historySequence.getItems(0),
-            selectedOption: this.currentCell.get().key
+            selectedOption: this.currentCell.get().key,
         };
     }
 }

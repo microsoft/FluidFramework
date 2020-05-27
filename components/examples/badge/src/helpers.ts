@@ -1,11 +1,14 @@
-/* eslint-disable comma-dangle */
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import {
     ContextualMenuItemType,
     IContextualMenuItem,
     IColor,
     getColorFromHSV,
     getColorFromString,
-    IButtonStyles
+    IButtonStyles,
 } from "office-ui-fabric-react";
 
 export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
@@ -14,14 +17,14 @@ export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
 
     mapItems.push({
         key: "divider_1",
-        itemType: ContextualMenuItemType.Divider
+        itemType: ContextualMenuItemType.Divider,
     });
     mapItems.push({
         key: "new",
         text: "Set custom...",
         iconProps: {
-            iconName: "Add"
-        }
+            iconName: "Add",
+        },
     });
 
     return mapItems;
@@ -39,46 +42,46 @@ export const getButtonStyles = (baseColor: string): IButtonStyles => {
     const colorHover = getColorFromHSV({
         h: color.h,
         s: color.s,
-        v: color.v + 5
+        v: color.v + 5,
     });
     const colorPressed = getColorFromHSV({
         h: color.h,
         s: color.s,
-        v: color.v - 5
+        v: color.v - 5,
     });
     const textColor = getTextColor(color);
     const animation: string = "all 0.15s ease-in";
 
     return {
         label: {
-            color: textColor
+            color: textColor,
         },
         icon: {
-            color: textColor
+            color: textColor,
         },
         menuIcon: {
-            color: textColor
+            color: textColor,
         },
         root: {
             backgroundColor: color.str,
-            transition: animation
+            transition: animation,
         },
         rootHovered: {
-            backgroundColor: colorHover.str
+            backgroundColor: colorHover.str,
         },
         rootPressed: {
-            backgroundColor: colorPressed.str
+            backgroundColor: colorPressed.str,
         },
         rootExpanded: {
-            backgroundColor: colorPressed.str
-        }
+            backgroundColor: colorPressed.str,
+        },
     };
 };
 
 export const getRelativeDate = (timestamp: Date): string => {
     // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
     const delta = Math.round(
-        (new Date().getTime() - new Date(timestamp).getTime()) / 1000
+        (new Date().getTime() - new Date(timestamp).getTime()) / 1000,
     );
 
     const minute = 60;
