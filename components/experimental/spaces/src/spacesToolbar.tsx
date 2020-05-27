@@ -18,7 +18,7 @@ import "./spacesToolbarStyle.css";
 initializeIcons();
 
 interface ISpacesToolbarComponentItemProps {
-    components: IInternalRegistryEntry[];
+    supportedComponents: IInternalRegistryEntry[];
     addComponent(type: string): void;
 }
 
@@ -35,7 +35,7 @@ const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
                 {"Add Components"}
             </Button>
         );
-        const componentButtonList = props.components.map((supportedComponent) => {
+        const componentButtonList = props.supportedComponents.map((supportedComponent) => {
             return (
                 <Button
                     className="spaces-toolbar-option-button"
@@ -57,8 +57,8 @@ const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
             <Collapsible
                 open={open}
                 trigger={componentsButton}
-                className="spaces-toolbar-item"
-                openedClassName="spaces-toolbar-item"
+                className="spaces-toolbar-tool"
+                openedClassName="spaces-toolbar-tool"
             >
                 {componentButtonList}
             </Collapsible>
@@ -103,8 +103,8 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
             <Collapsible
                 open={open}
                 trigger={templateButton}
-                className="spaces-toolbar-item"
-                openedClassName="spaces-toolbar-item"
+                className="spaces-toolbar-tool"
+                openedClassName="spaces-toolbar-tool"
             >
                 {templateButtonList}
             </Collapsible>
@@ -126,7 +126,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
 
         // Add the edit button
         toolbarItems.push(
-            <div key="edit" className="spaces-toolbar-item">
+            <div key="edit" className="spaces-toolbar-tool">
                 <Button
                     id="edit"
                     className="spaces-toolbar-top-level-button"
@@ -145,7 +145,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
             toolbarItems.push(
                 <SpacesToolbarComponentItem
                     key="component"
-                    components={props.components}
+                    supportedComponents={props.components}
                     addComponent={props.addComponent}
                 />,
             );
