@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -96,12 +96,24 @@ export enum ReconnectMode {
 }
 
 /**
+ * Events emitted by the concrete implementation DeltaManager
+ * but not exposed on the public interface IDeltaManager
+ */
+interface IDeltaManagerInternalEvents extends IEvent {
+    (event: "throttled", listener: (error: IThrottlingWarning) => void);
+    (event: "closed", listener: (error?: CriticalContainerError) => void);
+}
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager
-    extends TypedEventEmitter<IDeltaManagerEvents>
-    implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+    extends TypedEventEmitter<IDeltaManagerEvents & IDeltaManagerInternalEvents>
+    implements
+        IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        IEventProvider<IDeltaManagerInternalEvents>
+{
     public get disposed() { return this.isDisposed; }
 
     public readonly clientDetails: IClientDetails;

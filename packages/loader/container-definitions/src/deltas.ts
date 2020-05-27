@@ -17,7 +17,6 @@ import {
     ITokenClaims,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { CriticalContainerError, IThrottlingWarning } from "./error";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -75,12 +74,10 @@ export interface IDeltaSender extends IProvideDeltaSender {
 }
 
 export interface IDeltaManagerEvents extends IEvent {
-    (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
     (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
     (event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
     (event: "connect", listener: (details: IConnectionDetails) => void);
     (event: "disconnect", listener: (reason: string) => void);
