@@ -7,7 +7,7 @@ import { gitHashFile } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
-import * as uuid from "uuid";
+import uuid from "uuid";
 import { TestDb } from "./testCollection";
 
 export class TestHistorian implements IHistorian {

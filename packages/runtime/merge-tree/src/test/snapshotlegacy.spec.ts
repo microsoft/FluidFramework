@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { SnapshotLegacy } from "../snapshotlegacy";

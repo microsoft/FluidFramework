@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -21,12 +21,12 @@ export function create(
     config: Provider,
     mongoManager: core.MongoManager,
     tenantManager: TenantManager): IRoutes {
-
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const ensureLoggedIn = config.get("login:enabled")
-    ? ensureAuth.ensureLoggedIn
-    : () => {
-        return (req, res, next) => next();
-    };
+        ? ensureAuth.ensureLoggedIn
+        : () => {
+            return (req, res, next) => next();
+        };
 
     const loadKeyValue = config.get("keyValue:load") as boolean;
     const keyValueWrapper = loadKeyValue ? new KeyValueWrapper(config) : new LocalKeyValueWrapper();

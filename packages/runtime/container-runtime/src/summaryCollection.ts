@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import {

@@ -531,3 +531,24 @@ export class PerformanceEvent {
         this.logger.sendPerformanceEvent(event, error);
     }
 }
+
+/**
+ * Helper class for error tracking.
+ * Object of this instance will record all of their properties when logged with logger.
+ * Care needs to be taken not to log PII information!
+ */
+export class ErrorWithProps extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+
+    // Return all properties
+    public getCustomProperties(): object {
+        const props = {};
+        // Could not use {...this} because it does not return properties of base class.
+        for (const key of Object.getOwnPropertyNames(this)) {
+            props[key] = this[key];
+        }
+        return props;
+    }
+}

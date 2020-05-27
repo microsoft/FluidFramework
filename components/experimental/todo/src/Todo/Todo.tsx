@@ -8,8 +8,8 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { ITodoItemInitialState, TodoItem } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 

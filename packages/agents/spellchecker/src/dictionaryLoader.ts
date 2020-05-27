@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as url from "url";
+import url from "url";
 import * as MergeTree from "@fluidframework/merge-tree";
-import * as request from "request";
+import request from "request";
 
 export async function loadDictionary(serverUrl: string): Promise<MergeTree.TST<number>> {
     const dict = new MergeTree.TST<number>();

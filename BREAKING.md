@@ -1,7 +1,12 @@
 # Breaking changes
 
 ## 0.19 Breaking Changes
+- [Container's "error" event](#Container-Error-Event)
 - [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
+
+### Container Error Event
+"error" event is gone. All critical errors are raised on "closed" event via optiona error object.
+"warning" event is added to expose warnings. Currently it contains summarizer errors and throttling errors.
 
 ### IUrlResolver change from requestUrl to getAbsoluteUrl
 As we continue to refine our API around detached containers, and component urls, we've renamed IUrlResolver from requestUrl to getAbsoluteUrl

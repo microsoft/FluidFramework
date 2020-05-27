@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";

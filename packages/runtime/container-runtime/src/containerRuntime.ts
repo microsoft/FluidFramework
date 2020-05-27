@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -24,6 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
+    ContainerWarning,
+    CriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -33,11 +35,15 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, createIError } from "@fluidframework/driver-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    BlobCacheStorageService,
+    CreateContainerError,
+    buildSnapshotTree,
+    readAndParse,
+} from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
-    buildSnapshotTree,
     isSystemType,
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -74,7 +80,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -82,7 +87,7 @@ import {
 } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
-import { Summarizer } from "./summarizer";
+import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
@@ -376,7 +381,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
     public get IContainerRuntime() { return this; }
@@ -478,7 +483,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): (error?: IError) => void {
+    public get closeFn(): (error?: CriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -610,7 +615,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
                 key,
-                value,
+                typeof value === "string" ? value : Promise.resolve(value),
                 this,
                 this.storage,
                 this.containerScope,
@@ -826,8 +831,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         if (connected) {
             assert(clientId);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(clientId!);
+            this.summaryManager.setConnected(clientId);
         } else {
             assert(!this._leader);
             this.summaryManager.setDisconnected();
@@ -1034,8 +1038,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.audience!;
     }
 
-    public error(error: any) {
-        this.context.error(createIError(error));
+    public raiseContainerWarning(warning: ContainerWarning) {
+        this.context.raiseContainerWarning(warning);
     }
 
     /**
@@ -1141,18 +1145,21 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null = null;
+                let flatBlobsP = Promise.resolve(flatBlobs);
+                let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
-                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobs' validity is contingent on snapshotTreeP's resolution
+                    flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
-                    snapshotTree,
+                    snapshotTreeP,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
@@ -1539,7 +1546,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     }
                 });
             }).catch((err) => {
-                this.logger.sendErrorEvent({ eventName: "ContainerRuntime_getScheduler" }, err);
+                this.closeFn(CreateContainerError(err));
             });
 
             this.context.quorum.on("removeMember", (clientId: string) => {

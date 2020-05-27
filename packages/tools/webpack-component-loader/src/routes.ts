@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import * as express from "express";
-import * as moniker from "moniker";
-import * as nconf from "nconf";
+import fs from "fs";
+import path from "path";
+import express from "express";
+import moniker from "moniker";
+import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
@@ -164,7 +164,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 let toLog = error;
                 try {
                     toLog = JSON.stringify(error);
-                } catch {}
+                } catch { }
                 console.log(toLog);
             }
             if (!canContinue) {
@@ -197,7 +197,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/node_modules/@fluidframework/webpack-component-loader/dist/fluid-loader.bundle.js"></script>
-    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
+    ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};

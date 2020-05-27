@@ -13,17 +13,17 @@ contributions are acceptably compatible and the code is reasonably clean.
 
 The following overview shows the various levels and their corresponding contracts:
 
-- Common: @microsoft/fluid-common-definitions
+- Common: @fluidframework/common-definitions
   - Common utils/definitions that might be shared at all levels of the stack
-- Protocol: @microsoft/fluid-protocol-definitions
+- Protocol: @fluidframework/protocol-definitions
   - Definition of protocol between the server and the client (ops and summary structure, etc.)
-- Driver: @microsoft/fluid-driver-definitions
+- Driver: @fluidframework/driver-definitions
   - API of driver for access to storage and web socket connections
-- Loader: @microsoft/fluid-container-definitions
+- Loader: @fluidframework/container-definitions
   - The core framework responsible for loading runtime code into a container
-- Runtime: @microsoft/fluid-runtime-definitions
+- Runtime: @fluidframework/runtime-definitions
   - A base set of runtime code that supports the Fluid component model, summarization, and other core Fluid features
-- Framework: @microsoft/fluid-framework-definitions
+- Framework: @fluidframework/framework-definitions
   - A set of base implementations and helper utilities to support developers building on Fluid
 
 This document will focus on a few specific layer boundaries.

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 

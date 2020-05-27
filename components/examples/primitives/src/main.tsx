@@ -7,8 +7,8 @@ import {
     PrimedComponent,
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { SharedMap, IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
 import { DdsCollectionComponent } from "./ddsCollection";
 

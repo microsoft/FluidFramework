@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentContext } from "@fluidframework/runtime-definitions";

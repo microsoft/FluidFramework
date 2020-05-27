@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";
+import * as core from "@fluidframework/server-services-core";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 
@@ -27,7 +27,7 @@ export interface IWebServer {
 }
 
 export class HttpServer implements core.IHttpServer {
-    constructor(private server: http.Server) {
+    constructor(private readonly server: http.Server) {
     }
 
     public async close(): Promise<void> {
@@ -61,7 +61,6 @@ export class WebServer implements IWebServer {
 }
 
 export class WebServerFactory implements IWebServerFactory {
-
     public create(requestListener: RequestListener): IWebServer {
         // Create the base HTTP server and register the provided request listener
         const server = http.createServer(requestListener);

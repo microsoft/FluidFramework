@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
+import assert from "assert";
+import fs from "fs";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { buildSnapshotTree } from "@fluidframework/protocol-base";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
 
@@ -211,7 +211,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
                 // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                this.latestWriterTree = buildSnapshotTree(tree.entries, this.blobsWriter);
+                this.latestWriterTree = await buildSnapshotTree(tree.entries, this.blobsWriter);
 
                 // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
                 // if component did not change in between two snapshots.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -44,9 +44,9 @@ export class RemoteChannelContext implements IChannelContext {
         submitFn: (type: MessageType, content: any) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Map<string, string>,
+        extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
@@ -57,7 +57,7 @@ export class RemoteChannelContext implements IChannelContext {
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            baseSnapshot,
+            Promise.resolve(baseSnapshot),
             extraBlobs);
     }
 
@@ -112,7 +112,7 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded);
 
         let attributes: IChannelAttributes | undefined;
-        if (this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(".attributes")) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
                 ".attributes");

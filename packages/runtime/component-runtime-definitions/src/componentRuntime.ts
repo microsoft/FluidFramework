@@ -8,11 +8,13 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import {
     IComponentHandleContext,
     IComponentSerializer,
+    IComponentRouter,
 } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -26,7 +28,12 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IProvideComponentRegistry> {
+export interface IComponentRuntime extends
+    IComponentRouter,
+    EventEmitter,
+    IDisposable,
+    Partial<IProvideComponentRegistry>
+{
 
     readonly id: string;
 
@@ -140,7 +147,7 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
     /**
      * Errors raised by distributed data structures
      */
-    error(err: any): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * It is false if the container is attached to storage and the component is attached to container.

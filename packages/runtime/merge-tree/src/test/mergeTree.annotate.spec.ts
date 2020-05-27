@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";

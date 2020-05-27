@@ -22,7 +22,7 @@ import {
 import { canSummarize, canWrite } from "@fluidframework/server-services-client";
 
 import * as jwt from "jsonwebtoken";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
 import {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { generateToken } from "@fluidframework/server-services-client";
 import {
     ScopeType,

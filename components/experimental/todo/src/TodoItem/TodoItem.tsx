@@ -12,8 +12,8 @@ import {
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
 import { TextListInstantiationFactory } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";

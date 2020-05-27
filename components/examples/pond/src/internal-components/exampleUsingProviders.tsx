@@ -7,8 +7,8 @@ import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduc
 import { SharedMap } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { IComponentUserInformation } from "../interfaces";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import { URL } from "url";
 
 export let dumpMessages = false;

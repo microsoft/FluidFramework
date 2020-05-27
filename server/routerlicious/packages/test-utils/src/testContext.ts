@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";

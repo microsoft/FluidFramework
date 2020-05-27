@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import * as assert from "assert";
+import assert from "assert";
 import { RangeTracker } from "@fluidframework/common-utils";
 import { isSystemType } from "@fluidframework/protocol-base";
 import {

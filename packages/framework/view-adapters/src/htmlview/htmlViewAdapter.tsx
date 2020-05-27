@@ -5,8 +5,8 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 /**
  * Abstracts rendering of components via the IComponentHTMLView interface.  Supports React elements, as well as

@@ -12,7 +12,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
-import * as queue from "async/queue";
+import queue from "async/queue";
 
 import Counter = api.RateCounter;
 // eslint-disable-next-line @typescript-eslint/no-require-imports

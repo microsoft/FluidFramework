@@ -12,8 +12,8 @@ import {
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 // React
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // Player & Utility
 import { Player, NoteProperties } from "./Player";

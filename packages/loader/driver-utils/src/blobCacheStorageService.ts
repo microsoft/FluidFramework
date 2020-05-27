@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 
 /**
  * IDocumentStorageService adapter with pre-cached blobs.
@@ -12,13 +12,13 @@ import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 export class BlobCacheStorageService extends DocumentStorageServiceProxy {
     constructor(
         internalStorageService: IDocumentStorageService,
-        private readonly blobs: Map<string, string>,
+        private readonly blobs: Promise<Map<string, string>>,
     ) {
         super(internalStorageService);
     }
 
     public async read(id: string): Promise<string> {
-        const blob = this.blobs.get(id);
+        const blob = (await this.blobs).get(id);
         if (blob !== undefined) {
             return blob;
         }

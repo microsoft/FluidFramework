@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";

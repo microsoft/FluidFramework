@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -17,6 +17,7 @@ import {
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -24,10 +25,8 @@ import {
     Deferred,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
-import {
-    buildSnapshotTree,
-    TreeTreeEntry,
-} from "@fluidframework/protocol-base";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -180,7 +179,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
-                    new Map(),
+                    undefined /* extraBlobs */,
                     componentContext.branch,
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
@@ -434,7 +433,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     const origin = message.origin?.id ?? this.documentId;
 
                     const flatBlobs = new Map<string, string>();
-                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    const snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobsP's validity is contingent on snapshotTreeP's resolution
+                    const flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
@@ -443,9 +444,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         (type, content) => this.submit(type, content),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
-                        snapshotTree,
+                        snapshotTreeP,
                         this.sharedObjectRegistry,
-                        flatBlobs,
+                        flatBlobsP,
                         origin,
                         this.componentContext.summaryTracker.createOrGetChild(
                             attachMessage.id,
@@ -538,8 +539,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.deferredAttached.promise;
     }
 
-    public error(error: any): void {
-        this.componentContext.error(error);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.componentContext.raiseContainerWarning(warning);
     }
 
     /**
@@ -610,8 +611,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.processOp(transformed, local);
+        channelContext.processOp(transformed, local);
 
         return channelContext;
     }

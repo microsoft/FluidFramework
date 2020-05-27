@@ -3,7 +3,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { PrimedComponent } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
@@ -12,8 +13,6 @@ import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { IColor } from "office-ui-fabric-react";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";

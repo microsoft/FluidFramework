@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as uuid from "uuid";
+import uuid from "uuid";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
@@ -18,7 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { DebugLogger, Deferred, performanceNow } from "@fluidframework/common-utils";
+import { DebugLogger, Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -34,6 +34,9 @@ import {
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const now = require("performance-now") as () => number;
 
 function canUseCache(request: IRequest): boolean {
     if (!request.headers) {
@@ -166,7 +169,7 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performanceNow()} `);
+        debug(`Container creating in detached state: ${now()} `);
 
         return Container.create(
             this.codeLoader,
@@ -180,14 +183,14 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        debug(`Container resolve: ${performanceNow()} `);
+        debug(`Container resolve: ${now()} `);
 
         const resolved = await this.resolveCore(request);
         return resolved.container;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        debug(`Container loading: ${performanceNow()} `);
+        debug(`Container loading: ${now()} `);
 
         const resolved = await this.resolveCore(request);
         return resolved.container.request({ url: resolved.parsed.path });

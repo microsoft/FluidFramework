@@ -18,7 +18,7 @@ export class IntelligentServicesManager {
     private rateLimiter: RateLimiter | undefined;
     private intelInvoked: boolean = false;
 
-    constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) {}
+    constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) { }
 
     /**
      * Registers a new intelligent service

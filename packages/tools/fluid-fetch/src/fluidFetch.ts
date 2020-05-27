@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as util from "util";
+import fs from "fs";
+import util from "util";
 import { isSharepointURL } from "@fluidframework/odsp-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
