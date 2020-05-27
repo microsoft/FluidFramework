@@ -9,7 +9,6 @@ import {
     IProvideComponentRunnable,
 } from "./componentLoadable";
 import { IProvideComponentRouter } from "./componentRouter";
-import { IProvideComponentPrimed } from "./componentPrimed";
 import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
 import { IProvideComponentSerializer } from "./serializer";
 
@@ -22,7 +21,6 @@ export interface IComponent extends
         & IProvideComponentHandleContext
         & IProvideComponentConfiguration
         & IProvideComponentHandle
-        & IProvideComponentSerializer
-        & IProvideComponentPrimed>> {
+        & IProvideComponentSerializer>> {
 }
 /* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */

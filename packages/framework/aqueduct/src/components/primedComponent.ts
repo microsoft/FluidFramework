@@ -8,7 +8,6 @@ import {
     IComponentHandle,
     IRequest,
     IResponse,
-    IComponentPrimed,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
@@ -32,7 +31,6 @@ import { SharedComponent } from "./sharedComponent";
  */
 export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends SharedComponent<P, S, E>
-    implements IComponentPrimed
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;

@@ -8,6 +8,5 @@
 export { IComponent } from "./components";
 export * from "./componentLoadable";
 export * from "./componentRouter";
-export * from "./componentPrimed";
 export * from "./handles";
 export * from "./serializer";

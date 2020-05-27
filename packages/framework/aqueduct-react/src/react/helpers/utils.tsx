@@ -53,8 +53,8 @@ export const addComponent = async <
 ): Promise<void> => {
     fluidComponentMap.set(handle.path, { isListened: false });
     return handle.get().then((component) => {
-        if (component.IComponentPrimed) {
-            component.IComponentPrimed.addListenerToRootValueChanged(rootCallback);
+        if (component.IComponentListened) {
+            component.IComponentListened.addListenerToRootValueChanged(rootCallback);
         }
         fluidComponentMap.set(handle.path, { component, isListened: true });
     });

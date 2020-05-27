@@ -5,9 +5,12 @@
 
 import { Layout } from "react-grid-layout";
 import {
-    PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import {
+    IComponentListened,
+    ListenedComponent,
+} from "@microsoft/fluid-aqueduct-react";
 import {
     IComponentHandle, IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -16,7 +19,7 @@ import { IStoredComponent, ComponentMapKey } from "./interfaces";
 /**
  * IComponentStorage describes the public API surface of ComponentStorage.
  */
-export interface IComponentStorage {
+export interface IComponentStorage extends IComponentListened {
     /**
      * The list of components being stored.
      */
@@ -43,7 +46,7 @@ export interface IComponentStorage {
 /**
  * ComponentStorage is a component which maintains a collection of other components
  */
-export class ComponentStorage extends PrimedComponent implements IComponentStorage {
+export class ComponentStorage extends ListenedComponent implements IComponentStorage {
     public static get ComponentName() { return "@fluid-example/component-storage"; }
     private static readonly factory = new PrimedComponentFactory(
         ComponentStorage.ComponentName,
