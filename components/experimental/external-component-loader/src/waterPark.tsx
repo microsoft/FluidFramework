@@ -18,13 +18,19 @@ import {
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
 import {
-    SpacesStorage,
     SpacesStorageView,
+} from "@fluid-example/spaces-view";
+import {
     SpacesReducer,
     SpacesSelector,
     SpacesPrimedContext,
+} from "@fluid-example/spaces-data";
+import {
     ISpacesDataProps,
-} from "@fluid-example/spaces";
+} from "@fluid-example/spaces-definitions";
+import {
+    ComponentStorage,
+} from "@fluid-example/component-storage";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
@@ -68,7 +74,7 @@ if (window.location.hostname === "localhost") {
 }
 
 /**
- * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
+ * WaterPark assembles the ComponentStorage with the ExternalComponentLoader to load other components.
  */
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -82,7 +88,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         [],
         {},
         [
-            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
+            [ComponentStorage.ComponentName, Promise.resolve(ComponentStorage.getFactory())],
             [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
         ],
     );
@@ -91,7 +97,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         return WaterPark.factory;
     }
 
-    private storage: SpacesStorage | undefined;
+    private storage: ComponentStorage | undefined;
     private loader: ExternalComponentLoader | undefined;
 
     public render(element: HTMLElement) {
@@ -110,7 +116,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFirstTime() {
-        const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
+        const storage = await this.createAndAttachComponent(ComponentStorage.ComponentName);
         this.root.set(storageKey, storage.handle);
         const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader.handle);
@@ -121,7 +127,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage>>(storageKey)?.get();
+        this.storage = await this.root.get<IComponentHandle<ComponentStorage>>(storageKey)?.get();
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
         this.fluidComponentMap = new Map();
         if (this.storage !== undefined && this.storage.handle !== undefined) {
@@ -165,7 +171,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 interface IWaterParkViewProps {
     runtime: IComponentRuntime,
     root: ISharedDirectory,
-    storage: SpacesStorage;
+    storage: ComponentStorage;
     fluidComponentMap: FluidComponentMap,
     onSelectOption: (componentUrl: string) => Promise<void>;
 }

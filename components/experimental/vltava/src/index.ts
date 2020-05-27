@@ -7,10 +7,12 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
+    Spaces,
+} from "@fluid-example/spaces-view";
+import {
     IComponentInternalRegistry,
     IInternalRegistryEntry,
-    Spaces,
-} from "@fluid-example/spaces";
+} from "@fluid-example/spaces-definitions";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";

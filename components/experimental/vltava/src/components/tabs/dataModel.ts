@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentInternalRegistry,
-} from "@fluid-example/spaces";
+} from "@fluid-example/spaces-definitions";
 
 import { v4 as uuid } from "uuid";
 

@@ -33,7 +33,10 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/spaces": "^0.18.0",
+    "@fluid-example/component-storage": "^0.18.0",
+    "@fluid-example/spaces-view": "^0.18.0",
+    "@fluid-example/spaces-data": "^0.18.0",
+    "@fluid-example/spaces-definitions": "^0.18.0",
     "@microsoft/fluid-aqueduct": "^0.18.0",
     "@microsoft/fluid-aqueduct-react": "^0.18.0",
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
