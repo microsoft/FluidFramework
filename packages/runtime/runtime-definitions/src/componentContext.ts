@@ -66,12 +66,6 @@ export interface IContainerRuntimeBase extends
     readonly clientDetails: IClientDetails;
 
     /**
-     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
-     * pending local changes. All pending changes are automatically flushed by shared objects on connection.
-     */
-    notifyPendingMessages(): void;
-
-    /**
      * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
      * sequentially. Total size of all messages must be less than maxOpSize.
      */

@@ -261,7 +261,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
 
     private submitCellMessage(op: ICellOperation): void {
         // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
-        this.pendingClientSequenceNumber = this.submitLocalMessage(op, undefined /* localOpMetadata */);
+        this.pendingClientSequenceNumber = this.submitLocalMessage(op);
     }
 
     private toSerializable(value: any) {

@@ -164,7 +164,7 @@ export class ConsensusRegisterCollection<T>
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
 
-        const clientSequenceNumber = this.submitLocalMessage(message, undefined /* localOpMetadata */);
+        const clientSequenceNumber = this.submitLocalMessage(message);
         return new Promise((resolve) => {
             // Note that clientSequenceNumber and message are only used for asserts and aren't strictly necessary.
             this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
@@ -247,7 +247,7 @@ export class ConsensusRegisterCollection<T>
     protected onConnect() {
         // resubmit non-acked messages
         for (const record of this.pendingLocalMessages) {
-            record.clientSequenceNumber = this.submitLocalMessage(record.message, undefined /* localOpMetadata */);
+            record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 

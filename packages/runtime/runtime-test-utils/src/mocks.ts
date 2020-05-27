@@ -424,10 +424,6 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public notifyPendingMessages(): void {
-        return;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         return;
     }

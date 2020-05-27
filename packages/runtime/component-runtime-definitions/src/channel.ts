@@ -71,9 +71,10 @@ export interface IDeltaHandler {
     setConnectionState(connected: boolean): void;
 
     /**
-     * Called when the runtime asks the DDS to resubmit an op. This may be because the Container reconnected and
+     * Called when the runtime asks the client to resubmit an op. This may be because the Container reconnected and
      * this op was not acked.
-     * The DDS can choose to resubmit the same content, submit different content or not submit op at all.
+     * The client can choose to resubmit the same message, submit different / multiple messages or not submit anything
+     * at all.
      * @param message - The original message that was submitted.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
@@ -90,8 +91,8 @@ export interface IDeltaConnection {
      * Send new messages to the server.
      * @param messageContent - The content of the message to be sent.
      * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
-     * and not sent to the server. This will be sent back when this message is received back from the server. This is
-     * also sent if we are asked to resubmit the message.
+     * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
+     * also be provided back when asked to resubmit the message.
      * @returns A clientSequenceNumber that uniquely identifies this message for this client.
      */
     submit(messageContent: any, localOpMetadata: unknown): number;

@@ -42,8 +42,9 @@ interface IMapMessageHandler {
     /**
      * Communicate the operation to remote clients.
      * @param op - The map operation to submit
+     * @param localOpMetadata - The metadata to be submitted with the message.
      */
-    submit(op: IMapOperation): void;
+    submit(op: IMapOperation, localOpMetadata: unknown): void;
 }
 
 /**
@@ -467,7 +468,7 @@ export class MapKernel {
     public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            this.messageHandlers.get(type).submit(op as IMapOperation);
+            this.messageHandlers.get(type).submit(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -587,7 +588,7 @@ export class MapKernel {
         localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
-            // If I have an unack'd clear, we can ignore all ops.
+            // If we have an unack'd clear, we can ignore all ops.
             return false;
         }
 
@@ -635,7 +636,8 @@ export class MapKernel {
                     }
                     this.clearCore(local, message);
                 },
-                submit: (op: IMapClearOperation) => {
+                submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
             });
@@ -648,7 +650,8 @@ export class MapKernel {
                     }
                     this.deleteCore(op.key, local, message);
                 },
-                submit: (op: IMapDeleteOperation) => {
+                submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
             });
@@ -664,7 +667,8 @@ export class MapKernel {
 
                     this.setCore(op.key, context, local, message);
                 },
-                submit: (op: IMapSetOperation) => {
+                submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
             });
@@ -693,9 +697,8 @@ export class MapKernel {
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
-                submit: (op: IMapValueTypeOperation) => {
-                    // Send the localOpMetadata as undefined because we don't care about the ack.
-                    this.submitMessage(op, undefined /* localOpMetadata */);
+                submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
+                    this.submitMessage(op, localOpMetadata);
                 },
             });
 

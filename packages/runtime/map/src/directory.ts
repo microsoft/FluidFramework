@@ -69,8 +69,9 @@ interface IDirectoryMessageHandler {
     /**
      * Communicate the operation to remote clients.
      * @param op - The directory operation to submit
+     * @param localOpMetadata - The metadata to be submitted with the message.
      */
-    submit(op: IDirectoryOperation): void;
+    submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
 }
 
 /**
@@ -652,7 +653,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
-        handler.submit(message);
+        handler.submit(message, localOpMetadata);
     }
 
     /**
@@ -795,9 +796,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.processClearMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryClearOperation) => {
+                submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitClearMessage(op);
                     }
                 },
@@ -812,9 +814,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.processDeleteMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryDeleteOperation) => {
+                submit: (op: IDirectoryDeleteOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
                     }
                 },
@@ -830,9 +833,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         subdir.processSetMessage(op, context, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectorySetOperation) => {
+                submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
                     }
                 },
@@ -848,9 +852,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.processCreateSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryCreateSubDirectoryOperation) => {
+                submit: (op: IDirectoryCreateSubDirectoryOperation, localOpMetadata: unknown) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
                 },
@@ -866,9 +871,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.processDeleteSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryDeleteSubDirectoryOperation) => {
+                submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
                 },
@@ -903,9 +909,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
                 },
-                submit: (op) => {
-                    // Send the localOpMetadata as undefined because we don't care about the ack.
-                    this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
+                submit: (op, localOpMetadata: unknown) => {
+                    this.submitDirectoryMessage(op, localOpMetadata);
                 },
             },
         );

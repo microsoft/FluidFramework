@@ -314,7 +314,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated, undefined /* localOpMetadata */);
+        this.submitLocalMessage(translated);
     }
 
     public addLocalReference(lref) {

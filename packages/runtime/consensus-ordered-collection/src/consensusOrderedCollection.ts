@@ -290,7 +290,7 @@ export class ConsensusOrderedCollection<T = any>
     protected onConnect() {
         // resubmit non-acked messages
         for (const record of this.pendingLocalMessages) {
-            record.clientSequenceNumber = this.submitLocalMessage(record.message, undefined /* localOpMetadata */);
+            record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 
@@ -376,7 +376,7 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(!this.isLocal());
 
-        const clientSequenceNumber = this.submitLocalMessage(message, undefined /* localOpMetadata */);
+        const clientSequenceNumber = this.submitLocalMessage(message);
         return this.newAckBasedPromise((resolve) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });

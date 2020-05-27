@@ -254,7 +254,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * also sent if we are asked to resubmit the message.
      * @returns Client sequence number
      */
-    protected submitLocalMessage(content: any, localOpMetadata: unknown): number {
+    protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
         if (this.isLocal()) {
             return -1;
         }
@@ -283,9 +283,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected onConnect() {}
 
     /**
-     * Called when a message has to be resubmitted. This typically happens after a reconnection for
-     * unacked messages.
-     * Default implementation for DDS, override if different behavior is required.
+     * Called when a message has to be resubmitted. This typically happens after a reconnection for unacked messages.
+     * The default implementation here is to resubmit the same message. The client can override if different behavior
+     * is required. It can choose to resubmit the same message, submit different / multiple messages or not submit
+     * anything at all.
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */

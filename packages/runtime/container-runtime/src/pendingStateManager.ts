@@ -6,6 +6,7 @@
 import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
+import { ErrorWithProps } from "@fluidframework/driver-utils";
 import {
     MessageType,
     ISequencedDocumentMessage,
@@ -13,6 +14,22 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
 import { ContainerRuntime } from "./containerRuntime";
+
+export class GenericMessageProcessingError extends ErrorWithProps implements IGenericError {
+    readonly errorType = ErrorType.genericError;
+    readonly canRetry = false;
+
+    constructor(
+        errorMessage: string,
+        readonly clientId: string,
+        readonly sequenceNumber: number,
+        readonly receivedClientSequenceNumber: number,
+        readonly expectedClientSequenceNumber: number | undefined,
+        readonly error: any = new Error(errorMessage),
+    ) {
+        super(errorMessage);
+    }
+}
 
 interface IPendingMessage {
     type: "message";
@@ -57,12 +74,28 @@ export class PendingStateManager {
         }
     }
 
+    public isPendingState(): boolean {
+        return !this.pendingStates.isEmpty();
+    }
+
     constructor(
         private readonly containerRuntime: ContainerRuntime,
         private readonly logger: ITelemetryLogger,
     ) {}
 
     public onFlushModeUpdated(flushMode: FlushMode) {
+        // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
+        // them. Remove them from the pending queue and return.
+        // This is an important step because if this happens and there are no other messages in the queue,
+        // isPendingState() above will return true but we do not really have a real state that needs tracking.
+        if (flushMode === FlushMode.Automatic) {
+            const pendingState = this.pendingStates.peekBack();
+            if (pendingState?.type === "flush" && pendingState.flushMode === FlushMode.Manual) {
+                this.pendingStates.removeBack();
+                return;
+            }
+        }
+
         const pendingFlushMode: IPendingFlushMode = {
             type: "flush",
             flushMode,
@@ -94,42 +127,33 @@ export class PendingStateManager {
             pendingState = this.pendingStates.peekFront();
         }
 
-        // Verify that the batch metadata, if any, is correct.
-        this.verifyBatchMetadata(message, flushMode);
-
-        const firstPendingMessage = pendingState;
-
         // There should always be a pending message for a message for the local client. The clientSequenceNumber of the
         // incoming message must match that of the pending message.
-        if (firstPendingMessage?.type !== "message" ||
-            firstPendingMessage.clientSequenceNumber !== message.clientSequenceNumber) {
-            this.logger.sendErrorEvent({
-                eventName: "UnexpectedAckReceived",
-                clientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                receivedClientSequenceNumber: message.clientSequenceNumber,
-                expectedClientSequenceNumber:
-                    firstPendingMessage?.type === "message" ? firstPendingMessage.clientSequenceNumber : undefined,
-            });
-
+        if (pendingState === undefined ||
+            pendingState.type !== "message" ||
+            pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this indicates data corruption.
-            const error: IGenericError = {
-                errorType: ErrorType.genericError,
-                error: new Error("Unexpected ack received"),
-                message: "Unexpected ack received",
-                canRetry: false,
-            };
-            this.containerRuntime.closeFn(error);
+            const error = new GenericMessageProcessingError(
+                "Unexpected ack received",
+                message.clientId,
+                message.sequenceNumber,
+                message.clientSequenceNumber,
+                pendingState?.type === "message" ? pendingState.clientSequenceNumber : undefined);
 
+            this.containerRuntime.closeFn(error);
             return;
         }
 
-        this.lastProcessedMessage = message;
+        // Verify that the batch metadata, if any, is correct.
+        this.verifyBatchMetadata(message, flushMode);
 
         // Remove the first message from the pending list since it has been acknowledged.
         this.pendingStates.shift();
 
-        return firstPendingMessage.localOpMetadata;
+        // Store this message as the last processed one.
+        this.lastProcessedMessage = message;
+
+        return pendingState.localOpMetadata;
     }
 
     /**
@@ -219,28 +243,10 @@ export class PendingStateManager {
                     break;
                 case "message":
                     {
-                        switch (pendingState.messageType) {
-                            case MessageType.Operation:
-                                // For Operations, call reSubmitFn which will find the right component and trigger
-                                // resubmission on it.
-                                this.containerRuntime.reSubmitFn(pendingState.content, pendingState.localOpMetadata);
-                                break;
-                            case MessageType.Attach:
-                                // For Attach messages, call submitFn which will submit the message again.
-                                this.containerRuntime.submitFn(
-                                    pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
-                                break;
-                            default:
-                                // For other types of messages, submit it again but log an error indicating a resubmit
-                                // was triggered for it. We should look at the telemetry periodically to determine if
-                                // these are valid or not and take necessary steps.
-                                this.containerRuntime.submitFn(
-                                    pendingState.messageType, pendingState.content, pendingState.localOpMetadata);
-                                this.logger.sendErrorEvent({
-                                    eventName: "UnexpectedContainerResubmitMessage",
-                                    messageType: pendingState.messageType,
-                                });
-                        }
+                        this.containerRuntime.reSubmitFn(
+                            pendingState.messageType,
+                            pendingState.content,
+                            pendingState.localOpMetadata);
                     }
                     break;
                 default:

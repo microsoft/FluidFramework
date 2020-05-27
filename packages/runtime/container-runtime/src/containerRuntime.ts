@@ -484,7 +484,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get reSubmitFn(): (content: any, localOpMetadata: unknown) => void {
+    public get reSubmitFn(): (type: MessageType, content: any, localOpMetadata: unknown) => void {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.reSubmit;
     }
@@ -650,23 +650,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             ChildLogger.create(this.logger, "PendingStateManager"),
         );
-
-        this.deltaManager.on("allSentOpsAckd", () => {
-            // If we are not fully connected, then we have no clue if there are any pending ops
-            // to be resubmitted. Wait for "connected" event to get that info.
-            // Not ideal, but it's better to have false negatives then false positives.
-            // We will mark document clean on becoming "connected".
-            if (this.connected) {
-                this.updateDocumentDirtyState(false);
-            }
-        });
-
-        this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
-            if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
-                this.logger.debugAssert(this.connected, { eventName: "submitOp in disconnected state" });
-                this.updateDocumentDirtyState(true);
-            }
-        });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -1073,15 +1056,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     /**
-     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
-     * local changes. All pending changes are automatically flushed by shared objects on connection.
-     */
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.updateDocumentDirtyState(true);
-    }
-
-    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -1227,6 +1201,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
 
             default: // Do nothing
+        }
+
+        // If there are no more pending states after processing a local message, the document is no longer dirty.
+        if (local && !this.pendingStateManager.isPendingState()) {
+            this.updateDocumentDirtyState(false);
         }
     }
 
@@ -1487,6 +1466,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
 
+        // We have a pending op, so the document is now dirty.
+        if (!isSystemType(type)) {
+            this.updateDocumentDirtyState(true);
+        }
+
         return clientSequenceNumber;
     }
 
@@ -1524,13 +1508,27 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, localOpMetadata: unknown) {
-        const envelope = content as IEnvelope;
-        const componentContext = this.getContext(envelope.address);
-        assert(componentContext, "There should be a component context for the op");
-
-        const innerContents = envelope.contents as { content: any; type: MessageType };
-        componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+    private reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        switch (type) {
+            case MessageType.Operation:
+                // For Operations, call reSubmitOperation which will find the right component and trigger
+                // resubmission on it.
+                this.reSubmitOperation(content, localOpMetadata);
+                break;
+            case MessageType.Attach:
+                // For Attach messages, submit the message again.
+                this.submit(MessageType.Attach, content, localOpMetadata);
+                break;
+            default:
+                // For other types of messages, submit it again but log an error indicating a resubmit
+                // was triggered for it. We should look at the telemetry periodically to determine if
+                // these are valid or not and take necessary steps.
+                this.submit(type, content, localOpMetadata);
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedContainerResubmitMessage",
+                    messageType: type,
+                });
+        }
     }
 
     private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
@@ -1554,6 +1552,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         };
 
         componentContext.process(transformed, local, localOpMetadata);
+    }
+
+    private reSubmitOperation(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const componentContext = this.getContext(envelope.address);
+        assert(componentContext, "There should be a component context for the op");
+
+        const innerContents = envelope.contents as { content: any; type: MessageType };
+        componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private subscribeToLeadership() {

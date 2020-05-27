@@ -520,11 +520,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.componentContext.submitSignal(type, content);
     }
 
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.componentContext.containerRuntime.notifyPendingMessages();
-    }
-
     /**
      * Will return when the component is attached.
      */
