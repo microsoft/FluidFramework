@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 
 import {
     IComponentConfiguration,
     IComponentLoadable,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 import { DependencyContainer } from "..";
 

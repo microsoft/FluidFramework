@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaMessageFactory, TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { Provider } from "nconf";
 import { PartitionManager } from "../../kafka-service/partitionManager";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";

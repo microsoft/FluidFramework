@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { IComponentContext } from "./componentContext";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> {
     }

@@ -4,21 +4,21 @@
  */
 
 import * as assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { SharedMap, SharedDirectory } from "@microsoft/fluid-map";
-import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
+import { IEnvelope } from "@fluidframework/runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 describe("Ops on Reconnect", () => {
     const id = `fluid-test://localhost/opsOnReconnectTest`;

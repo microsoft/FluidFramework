@@ -12,8 +12,8 @@ import {
     PropertySet,
     ReferenceType,
     TrackingGroup,
-} from "@microsoft/fluid-merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@microsoft/fluid-sequence";
+} from "@fluidframework/merge-tree";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
 import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**

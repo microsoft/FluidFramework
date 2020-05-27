@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
-import { Serializable } from '@microsoft/fluid-component-runtime-definitions';
+import { Serializable } from '@fluidframework/component-runtime-definitions';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.

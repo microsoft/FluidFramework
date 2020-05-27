@@ -7,7 +7,7 @@ import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ComponentHandle } from "./componentHandle";
 import { isSerializedHandle } from "./utils";
 

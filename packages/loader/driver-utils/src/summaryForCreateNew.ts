@@ -9,7 +9,7 @@ import {
     ISummaryBlob,
     ICommittedProposal,
     IDocumentAttributes,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Combine the app summary and protocol summary in 1 tree.

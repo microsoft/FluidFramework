@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     ICodeLoader,
     IFluidCodeDetails,
     IProxyLoaderFactory,
-} from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+} from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     CreationDocumentServiceFactory,
     CreationDriverUrlResolver,
-} from "@microsoft/fluid-experimental-creation-driver";
+} from "@fluidframework/experimental-creation-driver";
 import {
     ITestFluidComponent,
     initializeLocalContainer,
     LocalCodeLoader,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
+} from "@fluidframework/test-utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { SharedString } from "@fluidframework/sequence";
 
 describe("In Memory Driver", () => {
     const id = "fluid-test://localhost?uniqueId=inMemoryDriverTest";

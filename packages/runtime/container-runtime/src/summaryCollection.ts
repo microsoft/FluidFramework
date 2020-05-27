@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryContent,
     ISummaryNack,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Interface for summary op messages with typed contents.

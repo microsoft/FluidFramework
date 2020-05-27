@@ -11,7 +11,7 @@ import {
     IConsumer,
     IQueuedMessage,
     IPartition,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { debug } from "./debug";
 
 interface IEventHubMessage extends IQueuedMessage {

@@ -4,29 +4,36 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+    IComponentRouter,
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { IInboundSignalMessage, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IInboundSignalMessage, IProvideComponentRegistry } from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IProvideComponentRegistry> {
+export interface IComponentRuntime extends
+    IComponentRouter,
+    EventEmitter,
+    IDisposable,
+    Partial<IProvideComponentRegistry>
+{
 
     readonly id: string;
 
@@ -140,7 +147,7 @@ export interface IComponentRuntime extends EventEmitter, IDisposable, Partial<IP
     /**
      * Errors raised by distributed data structures
      */
-    error(err: any): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * It is false if the container is attached to storage and the component is attached to container.

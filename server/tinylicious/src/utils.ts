@@ -21,7 +21,6 @@ export async function getConfig(
     trackError: boolean,
     client: any,
     direct = false): Promise<string> {
-
     // Make a copy of the config to avoid destructive modifications to the original
     const updatedConfig = _.cloneDeep(config);
     updatedConfig.tenantId = tenantId;

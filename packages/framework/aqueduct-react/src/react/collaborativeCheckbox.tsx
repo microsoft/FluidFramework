@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Counter } from "@microsoft/fluid-map";
-import * as React from "react";
+import { Counter } from "@fluidframework/map";
+import React from "react";
 
 interface IProps {
     counter: Counter;
     id: string;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 interface IState {
@@ -46,9 +48,11 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
         return (
             <input
                 type="checkbox"
+                className={this.props.className}
+                style={this.props.style}
                 aria-checked={this.state.checked}
-                name= {this.props.id}
-                checked = {this.state.checked}
+                name={this.props.id}
+                checked={this.state.checked}
                 onChange={this.updateCheckbox} />
         );
     }

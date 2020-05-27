@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import assert from "assert";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 class ConnectionTelemetry {
     private pongCount: number = 0;
@@ -78,8 +78,7 @@ class ConnectionTelemetry {
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: Date.now() - this.opSendTimeForLatencyStatistics!,
+                value: Date.now() - this.opSendTimeForLatencyStatistics,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

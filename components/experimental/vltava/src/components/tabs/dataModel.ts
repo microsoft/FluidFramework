@@ -5,15 +5,15 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent, IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
     IDirectoryValueChanged,
-} from "@microsoft/fluid-map";
+} from "@fluidframework/map";
 import {
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IComponentInternalRegistry,
 } from "@fluid-example/spaces";

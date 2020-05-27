@@ -10,7 +10,7 @@ import {
     IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {

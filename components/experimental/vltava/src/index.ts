@@ -11,19 +11,19 @@ import {
     IInternalRegistryEntry,
     Spaces,
 } from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
     setupLastEditedTrackerForContainer,
-} from "@microsoft/fluid-last-edited-experimental";
+} from "@fluidframework/last-edited-experimental";
 import {
     IComponentRegistry,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
 import {
     Anchor,
@@ -87,7 +87,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
         // We should be able to wait here after the create-new workflow is in place.
         setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
             .catch((error) => {
-                runtime.error(error);
+                console.error(error);
             });
     }
 }

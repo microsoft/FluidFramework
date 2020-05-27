@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -53,7 +53,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-   * @param odspCache - This caches response for joinSession.
+   * @param persistedCache - PersistedCache provided by host for use in this session.
    */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
@@ -61,9 +61,9 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        permanentCache?: ICache,
+        persistedCache?: IPersistedCache,
     ) {
-        this.cache = new OdspCache(permanentCache);
+        this.cache = new OdspCache(persistedCache);
     }
 
     public async createDocumentService(

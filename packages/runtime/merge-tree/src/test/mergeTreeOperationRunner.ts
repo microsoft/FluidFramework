@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as assert from "assert";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as random from "random-js";
+import random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp } from "../ops";
 import { TextSegment } from "../textSegment";

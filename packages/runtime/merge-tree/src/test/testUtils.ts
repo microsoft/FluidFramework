@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
+import assert from "assert";
+import fs from "fs";
 import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment } from "../";
 import * as ops from "../ops";
 import * as Properties from "../properties";

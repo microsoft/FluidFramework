@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import * as url from "url";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import url from "url";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -19,8 +19,8 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as ws from "isomorphic-ws";
+} from "@fluidframework/protocol-definitions";
+import ws from "isomorphic-ws";
 
 const protocolVersion = "^0.1.0";
 

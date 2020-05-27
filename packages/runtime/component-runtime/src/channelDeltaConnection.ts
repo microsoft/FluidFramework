@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-component-runtime-definitions";
+import assert from "assert";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/component-runtime-definitions";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
         assert(this._handler);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._handler!;
+        return this._handler;
     }
     public get connected(): boolean {
         return this._connected;

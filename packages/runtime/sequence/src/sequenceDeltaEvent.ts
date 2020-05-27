@@ -14,7 +14,7 @@ import {
     MergeTreeMaintenanceType,
     PropertySet,
     SortedSegmentSet,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.

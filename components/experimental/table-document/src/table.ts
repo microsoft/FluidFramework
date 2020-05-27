@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
 import {
     Jsonable,
     JsonablePrimitive,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 
 export type TableDocumentItem = Jsonable<JsonablePrimitive | IComponentHandle>;
 

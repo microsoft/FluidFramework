@@ -10,17 +10,17 @@ import {
     IRequest,
     IResponse,
     IProvideComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IComponentContext,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/component-runtime-definitions";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { ISharedObject } from "@fluidframework/shared-object-base";
+import { EventForwarder } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 
 export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,

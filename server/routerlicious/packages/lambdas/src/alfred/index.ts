@@ -4,7 +4,7 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@microsoft/fluid-protocol-base";
+import { isSystemType } from "@fluidframework/protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -18,13 +18,13 @@ import {
     ITokenClaims,
     MessageType,
     NackErrorType,
-} from "@microsoft/fluid-protocol-definitions";
-import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import { canSummarize, canWrite } from "@fluidframework/server-services-client";
 
 import * as jwt from "jsonwebtoken";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import {
     createRoomJoinMessage,
     createNackMessage,

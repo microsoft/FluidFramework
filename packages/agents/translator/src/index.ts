@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as Sequence from "@microsoft/fluid-sequence";
+import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
+import { ISharedMap } from "@fluidframework/map";
+import * as Sequence from "@fluidframework/sequence";
 import { SharedStringTranslator } from "./sharedStringTranslator";
 
 interface ITokenConfig {
@@ -16,7 +16,7 @@ export class Translator implements IComponentRouter, IComponentRunnable {
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly config: ITokenConfig) {}
+        private readonly config: ITokenConfig) { }
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }

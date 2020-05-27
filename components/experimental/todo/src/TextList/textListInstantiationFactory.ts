@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SharedString } from "@fluidframework/sequence";
 import { TextListName } from "./TextList";
 import { TextList } from "./index";
 

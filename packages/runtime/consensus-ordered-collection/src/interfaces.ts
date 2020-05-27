@@ -7,8 +7,8 @@ import {
     IComponentRuntime,
     ISharedObjectServices,
     IChannelAttributes,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
     Release,

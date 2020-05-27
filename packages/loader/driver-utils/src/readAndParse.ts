@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
  * Read a blob from IDocumentStorageService, decode it (from "base64") and JSON.parse it into object of type T

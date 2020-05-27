@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     componentRuntimeRequestHandler,
     ComponentRegistry,
     ContainerRuntime,
     RuntimeRequestHandler,
-} from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
-} from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions";
 import {
     IComponentRegistry,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+} from "@fluidframework/runtime-definitions";
+import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
@@ -46,7 +46,7 @@ export class BaseContainerRuntimeFactory implements
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-container-definitions#IRuntimeFactory.instantiateRuntime}
+     * {@inheritDoc @fluidframework/container-definitions#IRuntimeFactory.instantiateRuntime}
      */
     public async instantiateRuntime(
         context: IContainerContext,

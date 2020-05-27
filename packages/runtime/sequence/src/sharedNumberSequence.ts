@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-component-runtime-definitions";
+import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 

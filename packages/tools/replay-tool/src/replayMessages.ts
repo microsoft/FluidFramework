@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as child_process from "child_process";
-import * as fs from "fs";
+import assert from "assert";
+import child_process from "child_process";
+import fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-common-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -27,17 +27,17 @@ import {
     ISnapshotWriterStorage,
     Replayer,
     ReplayFileDeltaConnection,
-} from "@microsoft/fluid-file-driver";
+} from "@fluidframework/file-driver";
 import {
     IBlob,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
-} from "@microsoft/fluid-replay-driver";
+} from "@fluidframework/replay-driver";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -150,10 +150,10 @@ class ContainerUrlResolver implements IUrlResolver {
         return this.cache.get(request.url);
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }
@@ -726,8 +726,8 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)) {
+        if (snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)
+            !== content.snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }

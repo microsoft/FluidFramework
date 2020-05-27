@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 
 /**
