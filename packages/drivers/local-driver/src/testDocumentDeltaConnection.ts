@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -25,7 +25,9 @@ import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
-export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class TestDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     public static async create(
         tenantId: string,
         id: string,
@@ -194,23 +196,15 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                     }
                 });
         });
-    }
 
-    /**
-     * Subscribe to events emitted by the document
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        // Register for the event on socket.io
-        this.socket.on(
-            event,
-            (...args: any[]) => {
-                this.emitter.emit(event, ...args);
-            });
-
-        // And then add the listener to our event emitter
-        this.emitter.on(event, listener);
-
-        return this;
+        this.on("newListener",(event, listener)=>{
+            this.socket.on(
+                event,
+                (...args: any[]) => {
+                    this.emitter.emit(event, ...args);
+                });
+            this.emitter.on(event, listener);
+        });
     }
 
     /**

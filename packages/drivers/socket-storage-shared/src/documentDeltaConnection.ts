@@ -4,9 +4,8 @@
  */
 
 import assert from "assert";
-import { EventEmitter } from "events";
-import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -51,7 +50,9 @@ interface IEventListener {
 /**
  * Represents a connection to a stream of delta updates
  */
-export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class DocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -135,6 +136,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             (submitType, work) => {
                 this.socket.emit(submitType, this.clientId, work);
             });
+
+        this.on("newListener",(event,listener)=>{
+            assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
+
+            // Register for the event on socket.io
+            // "error" is special - we already subscribed to it to modify error object on the fly.
+            if (event !== "error") {
+                this.addTrackedListener(
+                    event,
+                    (...args: any[]) => {
+                        this.emit(event, ...args);
+                    });
+            }
+        });
     }
 
     /**
@@ -274,31 +289,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get initialClients(): ISignalClient[] {
         return this.details.initialClients;
-    }
-
-    /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
-
-        // Register for the event on socket.io
-        // "error" is special - we already subscribed to it to modify error object on the fly.
-        if (event !== "error") {
-            this.addTrackedListener(
-                event,
-                (...args: any[]) => {
-                    this.emit(event, ...args);
-                });
-        }
-
-        // And then add the listener to our event emitter
-        super.on(event, listener);
-
-        return this;
     }
 
     /**
