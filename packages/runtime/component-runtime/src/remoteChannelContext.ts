@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -152,7 +152,7 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line max-len
         debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
-        this.channel = await factory.load(
+        const channel = await factory.load(
             this.runtime,
             this.id,
             this.services,
@@ -162,8 +162,18 @@ export class RemoteChannelContext implements IChannelContext {
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            this.services.deltaConnection.process(message, false);
+            try {
+                this.services.deltaConnection.process(message, false);
+            } catch (err) {
+                // record sequence number for easier debugging
+                const error = CreateContainerError(err);
+                (error as any).sequenceNumber = message.sequenceNumber;
+                throw error;
+            }
         }
+
+        // Commit changes.
+        this.channel = channel;
         this.pending = undefined;
         this.isLoaded = true;
 
