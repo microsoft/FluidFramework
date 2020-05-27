@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,

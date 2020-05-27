@@ -575,7 +575,7 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -611,7 +611,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.initSnapshotValue;
+                tree = await this.initSnapshotValue;
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {

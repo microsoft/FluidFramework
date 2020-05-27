@@ -23,6 +23,7 @@ import {
     IDocumentStorageManager,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
+    HostStoragePolicy,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -59,6 +60,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
+    private treesInsteadOfTree: boolean = false;
 
     private lastSummaryHandle: string | undefined;
     // Last proposed handle of the uploaded app summary.
@@ -88,6 +90,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
+        private readonly hostPolicy: HostStoragePolicy,
     ) {
     }
 
@@ -283,9 +286,23 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (cachedSnapshot === undefined) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
+                    const hostPolicy = {
+                        deltas: 1,
+                        channels: 1,
+                        blobs: 2,
+                        ...this.hostPolicy.snapshotOptions,
+                    };
+
+                    let delimiter = "?";
+                    let options = "";
+                    for (const [key, value] of Object.entries(hostPolicy)) {
+                        options = `${options}${delimiter}${key}=${value}`;
+                        delimiter = "&";
+                    }
+
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                     // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
 
                     // This event measures only successful cases of getLatest call (no tokens, no retries).
                     const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
@@ -319,14 +336,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
+                    this.treesInsteadOfTree = true;
+                    let appCommit: string | undefined;
                     this.initTreesCache(trees);
-                    for (const treeVal of this.treesCache.values()) {
+                    for (const [key, treeVal] of this.treesCache.entries()) {
                         for (const entry of treeVal.tree) {
                             if (entry.type === "blob") {
-                                blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
+                                blobsIdToPathMap.set(entry.sha, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
                             } else if (entry.type === "commit" && entry.path === ".app") {
                                 // This is the unacked handle of the latest summary generated.
-                                this.lastSummaryHandle = entry.sha;
+                                appCommit = entry.sha;
                             }
                         }
                     }
@@ -336,6 +355,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
                 // instead of "Tree"
                 if (tree) {
+                    this.treesInsteadOfTree = false;
                     this.treesCache.set(sha, (odspSnapshot as any) as resources.ITree);
                 }
 
@@ -439,8 +459,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (context.proposalHandle !== this.blobsShaProposalHandle) {
             this.blobsShaToPathCache.clear();
         }
+        if (this.treesInsteadOfTree) {
+            this.lastSummaryHandle = context.ackHandle;
+        } else {
+            this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        }
 
-        this.lastSummaryHandle = `${context.ackHandle}/.app`;
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
@@ -670,7 +694,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             content,
                             encoding,
                         };
-                        completePath = `${path}/${key}`;
+                        if (this.treesInsteadOfTree) {
+                            completePath = `/.app${path}/${key}`;
+                        } else {
+                            completePath = `${path}/${key}`;
+                        }
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
@@ -686,7 +714,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                             handlePath = `/${handlePath}`;
                         }
-                        id = `${summary.parentHandle}${handlePath}`;
+                        if (this.treesInsteadOfTree) {
+                            id = `${summary.parentHandle}/.app${handlePath}`;
+                        } else {
+                            id = `${summary.parentHandle}${handlePath}`;
+                        }
                     } else {
                         // back-compat: 0.14 uploadSummary
                         id = summaryObject.handle;

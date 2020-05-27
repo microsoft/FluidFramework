@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@microsoft/fluid-gitresources";
+import * as resources from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
@@ -15,11 +15,10 @@ export async function getCommits(
     repo: string,
     ref: string,
     count: number): Promise<resources.ICommitDetails[]> {
-
     const repository = await repoManager.open(owner, repo);
     const walker = git.Revwalk.create(repository);
 
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     walker.sorting(git.Revwalk.SORT.TOPOLOGICAL | git.Revwalk.SORT.TIME);
 
     // Lookup the commits specified from the given revision
@@ -29,7 +28,8 @@ export async function getCommits(
 
     const detailedCommits = commits.map(async (rawCommit) => {
         const gitCommit = await utils.commitToICommit(rawCommit);
-        return {
+        const result: resources.ICommitDetails =
+        {
             commit: {
                 author: gitCommit.author,
                 committer: gitCommit.committer,
@@ -40,10 +40,12 @@ export async function getCommits(
             parents: gitCommit.parents,
             sha: gitCommit.sha,
             url: "",
-        } as resources.ICommitDetails;
+
+        };
+        return result;
     });
 
-    return await Promise.all(detailedCommits);
+    return Promise.all(detailedCommits);
 }
 
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
@@ -55,6 +57,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     // author
     // since
     // until
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.get("/repos/:owner/:repo/commits", (request, response, next) => {
         const resultP = getCommits(
             repoManager,

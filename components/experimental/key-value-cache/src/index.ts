@@ -67,8 +67,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     public get root() {
         assert(this._root);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._root!;
+        return this._root;
     }
 
     constructor(private readonly runtime: IComponentRuntime) {

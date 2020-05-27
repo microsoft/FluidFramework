@@ -6,13 +6,13 @@
                 "dotSameRank": true,
                 "packages": [
                     "@fluidframework/common-definitions",
-                    "@microsoft/fluid-component-core-interfaces",
-                    "@microsoft/fluid-gitresources"
+                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/gitresources"
                 ]
             },
             "Protocol-Definitions": {
                 "packages": [
-                    "@microsoft/fluid-protocol-definitions"
+                    "@fluidframework/protocol-definitions"
                 ],
                 "deps": [
                     "@fluidframework/common-definitions"
@@ -20,20 +20,20 @@
             },
             "Driver-Definitions": {
                 "packages": [
-                    "@microsoft/fluid-driver-definitions"
+                    "@fluidframework/driver-definitions"
                 ],
                 "deps": [
                     "Protocol-Definitions",
-                    "@microsoft/fluid-component-core-interfaces"
+                    "@fluidframework/component-core-interfaces"
                 ]
             },
             "Container-Definitions": {
                 "packages": [
-                    "@microsoft/fluid-container-definitions"
+                    "@fluidframework/container-definitions"
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "@microsoft/fluid-component-core-interfaces"
+                    "@fluidframework/component-core-interfaces"
                 ]
             }
         }
@@ -50,7 +50,7 @@
             },
             "Protocol-Utils": {
                 "packages": [
-                    "@microsoft/fluid-protocol-base"
+                    "@fluidframework/protocol-base"
                 ],
                 "deps": [
                     "Base-Utils",
@@ -59,7 +59,7 @@
             },
             "Driver-Utils": {
                 "packages": [
-                    "@microsoft/fluid-driver-utils"
+                    "@fluidframework/driver-utils"
                 ],
                 "deps": [
                     "Protocol-Utils",
@@ -68,8 +68,8 @@
             },
             "Framework-Utils": {
                 "packages": [
-                    "@microsoft/fluid-view-adapters",
-                    "@microsoft/fluid-view-interfaces"
+                    "@fluidframework/view-adapters",
+                    "@fluidframework/view-interfaces"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -78,13 +78,13 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@microsoft/fluid-odsp-utils"
+                    "@fluidframework/odsp-utils"
                 ]
             },
             "Tool-Utils": {
                 "dot": false,
                 "packages": [
-                    "@microsoft/fluid-tool-utils"
+                    "@fluidframework/tool-utils"
                 ],
                 "deps": [
                     "Other-Utils"
@@ -122,7 +122,7 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@microsoft/fluid-component-core-interfaces"
+                    "@fluidframework/component-core-interfaces"
                 ]
             },
             "Loader": {
@@ -136,8 +136,8 @@
             },
             "Hosts": {
                 "packages": [
-                    "@microsoft/fluid-base-host",
-                    "@microsoft/fluid-host-service-interfaces"
+                    "@fluidframework/base-host",
+                    "@fluidframework/host-service-interfaces"
                 ],
                 "deps": [
                     "Loader",
@@ -146,7 +146,7 @@
             },
             "Runtime": {
                 "packages": [
-                    "@microsoft/fluid-agent-scheduler"
+                    "@fluidframework/agent-scheduler"
                 ],
                 "dirs": [
                     "packages/runtime/"
@@ -183,7 +183,7 @@
             "Build": {
                 "dev": true,
                 "packages": [
-                    "@microsoft/fluid-build-common",
+                    "@fluidframework/build-common",
                     "@fluidframework/build-common",
                     "@fluidframework/eslint-config-fluid"
                 ]
@@ -203,10 +203,10 @@
             "Test": {
                 "dev": true,
                 "packages": [
-                    "@microsoft/fluid-local-web-host",
-                    "@microsoft/fluid-local-driver",
-                    "@microsoft/fluid-test-runtime-utils",
-                    "@microsoft/fluid-local-test-utils",
+                    "@fluidframework/local-web-host",
+                    "@fluidframework/local-driver",
+                    "@fluidframework/test-runtime-utils",
+                    "@fluidframework/local-test-utils",
                     "@fluidframework/webpack-component-loader"
                 ],
                 "dirs": [
@@ -221,8 +221,8 @@
         "layers": {
             "Routerlicious-Driver": {
                 "packages": [
-                    "@microsoft/fluid-routerlicious-driver",
-                    "@microsoft/fluid-routerlicious-urlresolver"
+                    "@fluidframework/routerlicious-driver",
+                    "@fluidframework/routerlicious-urlresolver"
                 ],
                 "deps": [
                     "Driver",

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import url from "url";
-import { BatchManager } from "@fluidframework/common-utils";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -27,7 +26,9 @@ const protocolVersion = "^0.1.0";
 /**
  * Represents a connection to a stream of delta updates for routerlicious driver.
  */
-export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class WSDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
     /**
      * Represents a connection to a stream of delta updates for routerlicious driver.
      *

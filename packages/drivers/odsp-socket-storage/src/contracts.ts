@@ -238,3 +238,19 @@ export interface IOdspUrlParts {
     drive: string;
     item: string;
 }
+
+export interface ISnapshotOptions {
+    blobs?: number;
+    deltas?: number;
+    channels?: number;
+    /*
+     * Maximum Data size (in bytes)
+     * If specified, SPO will fail snapshot request with 413 error (see ErrorType.snapshotTooBig)
+     * if snapshot is bigger in size than specified limit.
+     */
+    mds?: number;
+}
+
+export interface HostStoragePolicy {
+    snapshotOptions?: ISnapshotOptions;
+}

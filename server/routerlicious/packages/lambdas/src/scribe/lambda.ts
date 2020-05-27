@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
@@ -43,7 +43,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import * as Deque from "double-ended-queue";
+import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
 import { fetchLatestSummaryState, initializeProtocol } from "./summaryHelper";

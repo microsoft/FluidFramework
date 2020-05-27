@@ -25,10 +25,10 @@ export class Tenants extends React.Component<ITenantsProps, ITenantsState> {
 
     public render() {
         return (
-          <div>
-            <h2 className="tenant-list-header">List of Registered Tenants</h2>
-            <TenantManager data={this.state.data} />
-          </div>
+            <div>
+                <h2 className="tenant-list-header">List of Registered Tenants</h2>
+                <TenantManager data={this.state.data} />
+            </div>
         );
     }
 }

@@ -34,8 +34,8 @@ export function createServiceEndpoints(
     submitFn: (type: MessageType, content: any) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    tree?: Promise<ISnapshotTree>,
+    extraBlobs?: Promise<Map<string, string>>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export * from "./blobCacheStorageService";
+export * from "./buildSnapshotTree";
 export * from "./documentStorageServiceProxy";
 export * from "./multiDocumentServiceFactory";
 export * from "./multiUrlResolver";

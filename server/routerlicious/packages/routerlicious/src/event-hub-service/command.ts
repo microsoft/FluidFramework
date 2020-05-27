@@ -5,7 +5,7 @@
 
 import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
 import * as utils from "@fluidframework/server-services-utils";
-import * as commander from "commander";
+import commander from "commander";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => utils.IResourcesFactory<IKafkaResources>,

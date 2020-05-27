@@ -13,7 +13,7 @@ import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import * as requestAPI from "request";
+import requestAPI from "request";
 import { getParam } from "../../utils";
 import {
     craftClientJoinMessage,
