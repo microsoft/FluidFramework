@@ -10,29 +10,11 @@ import {
 import { IPackage } from "@fluidframework/container-definitions";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
-    FluidComponentMap,
-    useReducerFluid,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
-} from "@fluidframework/aqueduct-react";
-import { ISharedDirectory } from "@fluidframework/map";
-import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import {
+    SpacesStorage,
     SpacesStorageView,
-} from "@fluid-example/spaces-view";
-import {
-    SpacesReducer,
-    SpacesSelector,
-    SpacesPrimedContext,
-} from "@fluid-example/spaces-data";
-import {
-    ISpacesDataProps,
-} from "@fluid-example/spaces-definitions";
-import {
-    ComponentStorage,
-} from "@fluid-example/component-storage";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+} from "@fluid-example/spaces";
+import React from "react";
+import ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
@@ -74,11 +56,10 @@ if (window.location.hostname === "localhost") {
 }
 
 /**
- * WaterPark assembles the ComponentStorage with the ExternalComponentLoader to load other components.
+ * WaterPark assembles the SpacesStorage with the ExternalComponentLoader to load other components.
  */
 export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
-    private fluidComponentMap: FluidComponentMap | undefined;
 
     public static get ComponentName() { return "@fluid-example/waterpark"; }
 
@@ -88,7 +69,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         [],
         {},
         [
-            [ComponentStorage.ComponentName, Promise.resolve(ComponentStorage.getFactory())],
+            [SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())],
             [ExternalComponentLoader.ComponentName, Promise.resolve(ExternalComponentLoader.getFactory())],
         ],
     );
@@ -97,53 +78,29 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         return WaterPark.factory;
     }
 
-    private storage: ComponentStorage | undefined;
+    private storage: SpacesStorage | undefined;
     private loader: ExternalComponentLoader | undefined;
 
     public render(element: HTMLElement) {
-        if (this.storage === undefined || this.fluidComponentMap === undefined) {
+        if (this.storage === undefined) {
             throw new Error("Can't render, storage not found");
         }
         ReactDOM.render(
-            <WaterParkView
-                root={this.root}
-                runtime={this.runtime}
-                fluidComponentMap={this.fluidComponentMap}
-                storage={this.storage}
-                onSelectOption={this.addComponent} />,
+            <WaterParkView storage={this.storage} onSelectOption={this.addComponent} />,
             element,
         );
     }
 
     protected async componentInitializingFirstTime() {
-        const storage = await this.createAndAttachComponent(ComponentStorage.ComponentName);
+        const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
         this.root.set(storageKey, storage.handle);
         const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
         this.root.set(loaderKey, loader.handle);
-        this.fluidComponentMap = new Map();
-        if (storage !== undefined && storage.handle !== undefined) {
-            this.fluidComponentMap.set(storage.handle.path, { component: storage });
-        }
     }
 
     protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<ComponentStorage>>(storageKey)?.get();
+        this.storage = await this.root.get<IComponentHandle<SpacesStorage>>(storageKey)?.get();
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
-        this.fluidComponentMap = new Map();
-        if (this.storage !== undefined && this.storage.handle !== undefined) {
-            this.fluidComponentMap.set(this.storage.handle.path, { component: this.storage });
-            const fetchInitialComponentP: Promise<void>[] = [];
-            this.storage.componentList.forEach((value, key) => {
-                const fetchComponentP = value.handle.get().then((component) => {
-                    if (component.handle !== undefined) {
-                        this.fluidComponentMap?.set(component.handle.path, { component });
-                    }
-                });
-                fetchInitialComponentP.push(fetchComponentP);
-                return;
-            });
-            await Promise.all(fetchInitialComponentP);
-        }
     }
 
     /**
@@ -169,49 +126,20 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 }
 
 interface IWaterParkViewProps {
-    runtime: IComponentRuntime,
-    root: ISharedDirectory,
-    storage: ComponentStorage;
-    fluidComponentMap: FluidComponentMap,
+    storage: SpacesStorage;
     onSelectOption: (componentUrl: string) => Promise<void>;
 }
 
 export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsWithChildren<IWaterParkViewProps>) => {
-    const { root, storage, runtime, fluidComponentMap } = props;
-    const [editable, setEditable] = React.useState(storage.componentList.size === 0);
-    const initialViewState: IFluidFunctionalComponentViewState = {};
-    const initialFluidState: IFluidFunctionalComponentFluidState = {};
-    const dataProps: ISpacesDataProps = {
-        runtime,
-        fluidComponentMap,
-        syncedStorage: storage,
-    };
-    const reducerProps = {
-        syncedStateId: "waterpark-reducer",
-        root,
-        initialViewState,
-        initialFluidState,
-        reducer: SpacesReducer,
-        selector: SpacesSelector,
-        fluidToView: new Map(),
-        viewToFluid: new Map(),
-        dataProps,
-    };
-    const [state, reducer, selector] = useReducerFluid(reducerProps);
+    const [editable, setEditable] = React.useState(props.storage.componentList.size === 0);
     return (
-        <SpacesPrimedContext.Provider
-            value={{
-                reducer,
-                selector,
-                state,
-            }}
-        >
+        <>
             <WaterParkToolbar
                 componentUrls={ componentUrls }
                 onSelectOption={ props.onSelectOption }
                 toggleEditable={ () => setEditable(!editable) }
             />
-            <SpacesStorageView editable={editable} />
-        </SpacesPrimedContext.Provider>
+            <SpacesStorageView storage={props.storage} editable={editable} />
+        </>
     );
 };

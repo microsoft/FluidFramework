@@ -32,11 +32,10 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/spaces-view": "^0.19.0",
-    "@fluid-example/spaces-definitions": "^0.19.0",
     "@fluid-example/clicker": "^0.19.0",
     "@fluid-example/codemirror": "^0.19.0",
     "@fluid-example/prosemirror": "^0.19.0",
+    "@fluid-example/spaces": "^0.19.0",
     "@fluidframework/aqueduct": "^0.19.0",
     "@fluidframework/component-core-interfaces": "^0.19.0",
     "@fluidframework/component-runtime-definitions": "^0.19.0",
