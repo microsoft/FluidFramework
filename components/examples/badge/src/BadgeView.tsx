@@ -113,7 +113,12 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
     const buttonStyles = getButtonStyles(currentOption.iconProps.style.color);
 
     return (
-        <div style={{ animation: MotionAnimations.scaleDownIn }}>
+        <div
+            style={{
+                animation: MotionAnimations.scaleDownIn,
+                display: "inline-block"
+            }}
+        >
             <HoverCard
                 plainCardProps={{
                     onRenderPlainCard: onRenderCard,

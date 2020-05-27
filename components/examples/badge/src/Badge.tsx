@@ -125,19 +125,11 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     }
 
     public render(div: HTMLElement) {
-        ReactDOM.render(<this.ReactClient />, div);
+        ReactDOM.render(React.createElement(this.FluidReactClient), div);
     }
 
     public remove() {
         throw new Error("Not Implemented");
-    }
-
-    public get queries() {
-        return {
-            options: [...this.optionsMap.values()],
-            historyItems: this.historySequence.getItems(0),
-            selectedOption: this.currentCell.get().key
-        };
     }
 
     public addOption = (text: string, color: IColor): void => {
@@ -173,16 +165,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
         }
     };
 
-    public ReactClient = (): JSX.Element => {
-        const mutators = {
-            addOption: this.addOption,
-            changeSelectedOption: this.changeSelectedOption
-        };
-
-        const divStyle = {
-            display: "inline-block"
-        };
-
+    public FluidReactClient: React.FC = (): JSX.Element => {
         const [queries, setQueries] = React.useState(this.queries);
 
         React.useEffect(() => {
@@ -196,9 +179,19 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
         });
 
         return (
-            <div style={divStyle}>
-                <BadgeView {...queries} {...mutators} />
-            </div>
+            <BadgeView
+                {...queries}
+                addOption={this.addOption}
+                changeSelectedOption={this.changeSelectedOption}
+            />
         );
     };
+
+    private get queries() {
+        return {
+            options: [...this.optionsMap.values()],
+            historyItems: this.historySequence.getItems(0),
+            selectedOption: this.currentCell.get().key
+        };
+    }
 }
