@@ -88,7 +88,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
 
         // Create a map to represent the options for the Badge
         const options = SharedMap.create(this.runtime);
-        this.defaultOptions.forEach(v => options.set(v.key, v));
+        this.defaultOptions.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
         // Create a sequence to store the badge's history
@@ -119,8 +119,8 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             .get();
         this.historySequence = await this.root
             .get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(
-                this.historyId
-            )
+            this.historyId
+        )
             .get();
     }
 

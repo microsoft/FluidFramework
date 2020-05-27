@@ -10,7 +10,7 @@ import {
 
 export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
     const mapItems = [];
-    options.forEach(v => mapItems.push(v));
+    options.forEach((v) => mapItems.push(v));
 
     mapItems.push({
         key: "divider_1",

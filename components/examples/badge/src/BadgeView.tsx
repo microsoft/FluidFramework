@@ -27,6 +27,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
 import { IBadgeType } from "./IBadgeType";
+import { IHistory } from "./IHistory";
 import {
     getItemsFromOptionsMap,
     getRelativeDate,
@@ -37,7 +38,7 @@ const { useState } = React;
 
 export interface IBadgeViewProps {
     options: IBadgeType[];
-    historyItems: any[];
+    historyItems: IHistory<IBadgeType>[];
     selectedOption: string | number;
     addOption: (text: string, color: IColor) => void;
     changeSelectedOption: (item: IBadgeType) => void;
@@ -54,7 +55,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         changeSelectedOption
     } = props;
 
-    const currentOption = options.find(option => option.key === selectedOption);
+    const currentOption = options.find((option) => option.key === selectedOption);
 
     const defaultColor: string = "#fff";
     const cardPadding: string = "16px 24px";
@@ -96,6 +97,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
 
     const onRenderCard = (): JSX.Element => {
         // Add items to history in reverse order
+        // eslint-disable-next-line react/prop-types
         const history = historyItems.map((x, i) => {
             return (
                 <ActivityItem
