@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryLogger, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -96,10 +96,10 @@ export enum ReconnectMode {
 }
 
 /**
- * Events emitted by the concrete implementation DeltaManager
+ * Includes events emitted by the concrete implementation DeltaManager
  * but not exposed on the public interface IDeltaManager
  */
-interface IDeltaManagerInternalEvents extends IEvent {
+interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
 }
@@ -109,7 +109,7 @@ interface IDeltaManagerInternalEvents extends IEvent {
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager
-    extends TypedEventEmitter<IDeltaManagerEvents & IDeltaManagerInternalEvents>
+    extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
         IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         IEventProvider<IDeltaManagerInternalEvents>
