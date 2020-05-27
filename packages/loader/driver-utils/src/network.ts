@@ -6,15 +6,12 @@
 import assert from "assert";
 import {
     CriticalContainerError,
-    IAuthorizationError,
-    IFileNotFoundOrAccessDeniedError,
     IGenericNetworkError,
-    IOfflineError,
-    IOutOfStorageError,
-    IInvalidFileNameError,
+    NetworkErrorBasicTypes,
+    INetworkErrorBasic,
     IThrottlingWarning,
-    IWriteError,
     ErrorType,
+    IErrorBase,
 } from "@fluidframework/container-definitions";
 import {
     ErrorWithProps,
@@ -52,66 +49,23 @@ export class GenericNetworkError extends ErrorWithProps implements IGenericNetwo
     }
 }
 
-/**
- * AuthorizationError error class - used to communicate Unauthorized/Forbidden error responses
- * (maybe due to expired token) from the server. Almost all of these cases is because user does
- * not have permissions.
- */
-export class AuthorizationError extends ErrorWithProps implements IAuthorizationError {
-    readonly errorType = ErrorType.authorizationError;
-
+export class NetworkErrorBasic extends ErrorWithProps implements INetworkErrorBasic {
     constructor(
         errorMessage: string,
+        readonly errorType: NetworkErrorBasicTypes,
         readonly canRetry: boolean,
     ) {
         super(errorMessage);
     }
 }
 
-/**
- * FileNotFoundOrAccessDeniedError error class -
- * used to communicate File Not Found errors or access denied errors(due to current user not
- * having access to the file) from the server
- */
-export class FileNotFoundOrAccessDeniedError extends ErrorWithProps implements IFileNotFoundOrAccessDeniedError {
-    readonly errorType = ErrorType.fileNotFoundOrAccessDeniedError;
-
+export class NonRetryableError extends NetworkErrorBasic implements IErrorBase {
     constructor(
         errorMessage: string,
+        readonly errorType: NetworkErrorBasicTypes,
         readonly canRetry: boolean,
     ) {
-        super(errorMessage);
-    }
-}
-
-/**
- * OutOfStorageError error class -
- * Used to communicate error that occur when we create a file and there is no storage on server/account.
- */
-export class OutOfStorageError extends ErrorWithProps implements IOutOfStorageError {
-    readonly errorType = ErrorType.outOfStorageError;
-
-    constructor(
-        errorMessage: string,
-        readonly canRetry: boolean,
-    ) {
-        super(errorMessage);
-        assert(!canRetry);
-    }
-}
-
-/**
- * InvalidFileNameError error class -
- * Used to communicate error that occur when we create a file with invalid file name.
- */
-export class InvalidFileNameError extends ErrorWithProps implements IInvalidFileNameError {
-    readonly errorType = ErrorType.invalidFileNameError;
-
-    constructor(
-        errorMessage: string,
-        readonly canRetry: boolean,
-    ) {
-        super(errorMessage);
+        super(errorMessage, errorType, canRetry);
         assert(!canRetry);
     }
 }
@@ -132,34 +86,8 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingWarning {
     }
 }
 
-/**
- * Write error class - When attempting to write, without proper permissions
- */
-class WriteError extends ErrorWithProps implements IWriteError {
-    readonly errorType = ErrorType.writeError;
-    public readonly canRetry = false;
-
-    constructor(errorMessage: string) {
-        super(errorMessage);
-    }
-}
-
-/**
- * Fatal error class - when the server encountered a fatal error
- */
-export class OfflineError extends ErrorWithProps implements IOfflineError {
-    readonly errorType = ErrorType.offlineError;
-
-    constructor(
-        errorMessage: string,
-        readonly canRetry: boolean,
-    ) {
-        super(errorMessage);
-    }
-}
-
-export const createWriteError =
-    (errorMessage: string) => new WriteError(errorMessage) as CriticalContainerError;
+export const createWriteError = (errorMessage: string) =>
+    new NonRetryableError(errorMessage, ErrorType.writeError, false) as INetworkErrorBasic;
 
 export function createGenericNetworkError(
     errorMessage: string,
