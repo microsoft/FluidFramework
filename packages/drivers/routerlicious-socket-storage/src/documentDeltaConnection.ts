@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { CriticalContainerError } from "@fluidframework/container-definitions";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
-    AuthorizationError,
-    FileNotFoundOrAccessDeniedError,
+    NetworkErrorBasic,
     GenericNetworkError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
@@ -25,10 +24,10 @@ function createNetworkError(
     switch (statusCode) {
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
             break;
         case 404:
-            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, canRetry);
