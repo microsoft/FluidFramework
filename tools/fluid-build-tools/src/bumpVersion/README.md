@@ -32,15 +32,15 @@ For each package/monorepo that needs to be release, from the bottom of the depen
 
 Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in master or release/* branches
 
-**Example 1**: bumping dependencies `@microsoft/fluid-common-utils`
+**Example 1**: bumping dependencies `@fluidframework/common-utils`
 
-The version in the current branch off `master` for `@microsoft/fluid-common-utils` is `0.17.0`, and client and server repo is still depending on previous released version 0.15.0. New functionality is added to `@microsoft/fluid-common-utils` that client will need.  To update the version to the latest:
+The version in the current branch off `master` for `@fluidframework/common-utils` is `0.17.0`, and client and server repo is still depending on previous released version 0.15.0. New functionality is added to `@fluidframework/common-utils` that client will need.  To update the version to the latest:
 
 ```sh
-bump-version -d @microsoft/fluid-common-utils
+bump-version -d @fluidframework/common-utils
 ```
 
-All the dependencies to `@microsoft/fluid-common-utils` in the package manage by the repo will be changed to `^0.17.0-0`, package lock files will be update, and the change will be committed.
+All the dependencies to `@fluidframework/common-utils` in the package manage by the repo will be changed to `^0.17.0-0`, package lock files will be update, and the change will be committed.
 
 **Example 2**: bumping dependencies to server
 
@@ -64,13 +64,13 @@ D:\src\FluidFramework>npm run bump-version
 
 Bumping patch version
 Release Versions:
-           @microsoft/fluid-build-common:     0.14.0 (old)
-          @microsoft/eslint-config-fluid:     0.16.0 (old)
-     @microsoft/fluid-common-definitions:     0.16.0 (old)
-           @microsoft/fluid-common-utils:     0.16.0 (old)
+            @fluidframework/build-common:     0.14.0 (old)
+     @fluidframework/eslint-config-fluid:     0.16.0 (old)
+      @fluidframework/common-definitions:     0.16.0 (old)
+            @fluidframework/common-utils:     0.16.0 (old)
                                   Server:   0.1004.1 (old)
                                   Client:     0.16.1 (new)
-              @microsoft/generator-fluid:     0.16.1 (new)
+         @fluidframework/generator-fluid:     0.16.1 (new)
                    @yo-fluid/dice-roller:     0.16.1 (new)
 
 Creating release 0.16.1
@@ -79,11 +79,11 @@ Creating release 0.16.1
     Tagging release client_v0.16.1
 >>> Push tag client_v0.16.1 to remote? [y/n] y
     Waiting for package to publish @fluid-example/badge@0.16.1...720s
-    Waiting for package to publish @microsoft/fluid-blob-manager@0.16.1...83s
+    Waiting for package to publish @fluid-framework/blob-manager@0.16.1...83s
     Waiting for package to publish @fluid-example/canvas@0.16.1...
 ...cut for brevity...
-    Waiting for package to publish @microsoft/fluid-tool-utils@0.16.1...
-    Waiting for package to publish @microsoft/fluid-odsp-utils@0.16.1...
+    Waiting for package to publish @fluidframework/tool-utils@0.16.1...
+    Waiting for package to publish @fluidframework/odsp-utils@0.16.1...
     Fix pre-release dependencies
     No dependencies need to be updated
     Tagging release generator-fluid_v0.16.1
@@ -97,12 +97,12 @@ Please merge merge/0.16.1 to release/0.16.x
 Current repo state:
 
 Repo Versions in branch merge/0.16.1:
-           @microsoft/fluid-build-common:     0.16.0 (unchanged)
-          @microsoft/eslint-config-fluid:     0.16.1 (unchanged)
-     @microsoft/fluid-common-definitions:     0.16.1 (unchanged)
-           @microsoft/fluid-common-utils:     0.16.1 (unchanged)
+            @fluidframework/build-common:     0.16.0 (unchanged)
+     @fluidframework/eslint-config-fluid:     0.16.1 (unchanged)
+      @fluidframework/common-definitions:     0.16.1 (unchanged)
+            @fluidframework/common-utils:     0.16.1 (unchanged)
                                   Server:   0.1004.2 (unchanged)
                                   Client:     0.16.1 -> 0.16.2
-              @microsoft/generator-fluid:     0.16.1 -> 0.16.2
+         @fluidframework/generator-fluid:     0.16.1 -> 0.16.2
                    @yo-fluid/dice-roller:     0.16.1 -> 0.16.2
 ```

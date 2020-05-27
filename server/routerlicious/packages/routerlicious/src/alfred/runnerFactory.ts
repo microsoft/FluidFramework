@@ -4,23 +4,23 @@
  */
 
 import * as os from "os";
-import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
+import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
     LocalNodeFactory,
     LocalOrderManager,
     NodeManager,
     ReservationManager,
-} from "@microsoft/fluid-server-memory-orderer";
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+} from "@fluidframework/server-memory-orderer";
+import * as services from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { DefaultServiceConfiguration } from "@fluidframework/server-lambdas";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {

@@ -9,7 +9,7 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 /**
  * Handle to a dynamically loaded component

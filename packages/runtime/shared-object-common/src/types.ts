@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IChannel, ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
-import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+import { ITree, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IChannel, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import { IErrorEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-declare module "@microsoft/fluid-container-definitions" {
+declare module "@fluidframework/container-definitions" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
 }

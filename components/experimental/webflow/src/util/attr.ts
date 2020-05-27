@@ -4,7 +4,7 @@
  */
 
 import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
-import { ISegment } from "@microsoft/fluid-merge-tree";
+import { ISegment } from "@fluidframework/merge-tree";
 import { emptyObject } from "./";
 
 export interface IHTMLAttributes {

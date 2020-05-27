@@ -10,7 +10,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { CopierLambda } from "./lambda";
 

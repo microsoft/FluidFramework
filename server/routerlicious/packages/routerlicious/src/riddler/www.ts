@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import * as utils from "@fluidframework/server-services-utils";
 import { RiddlerResourcesFactory, RiddlerRunnerFactory } from "./runnerFactory";
 
 utils.runService(

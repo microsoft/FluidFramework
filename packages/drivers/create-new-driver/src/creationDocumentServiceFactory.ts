@@ -8,10 +8,10 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { CreationDocumentService } from "./creationDocumentService";
 /**
  * Factory for creating the faux document service. Use this if you want to

@@ -333,7 +333,7 @@ export class FluidPackageCheck {
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
 
-            const commonConfig = "@microsoft/fluid-build-common/ts-common-config.json";
+            const commonConfig = "@fluidframework/build-common/ts-common-config.json";
             let changed = false;
             if (configJson.extends !== commonConfig) {
                 this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);

@@ -4,7 +4,7 @@
  */
 
 import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
-import { SequenceEvent } from "@microsoft/fluid-sequence";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
+import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
 import { IComponentHTMLViewFactory } from "../editor";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";

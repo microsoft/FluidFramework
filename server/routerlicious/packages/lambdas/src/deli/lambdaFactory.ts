@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry, IRef } from "@fluidframework/gitresources";
 import {
     ICollection,
     IContext,
@@ -15,10 +15,10 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
-import { generateServiceProtocolEntries } from "@microsoft/fluid-protocol-base";
-import { FileMode } from "@microsoft/fluid-protocol-definitions";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-services-core";
+import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
+import { FileMode } from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { IDeliCheckpoint } from "./checkpointContext";

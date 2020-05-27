@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import {
     IConnectionDetails,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     INack,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export class DeltaConnection extends EventEmitter {
     public static async connect(

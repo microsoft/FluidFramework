@@ -4,27 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { Counter, CounterValueType } from "@fluidframework/map";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 /**
  * Implementation of counter component for testing.
  */
 export class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static getFactory() { return TestComponent.factory; }
 

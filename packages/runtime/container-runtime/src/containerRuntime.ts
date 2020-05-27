@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -24,23 +24,25 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+    ContainerWarning,
+    CriticalContainerError,
+} from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     Deferred,
     Trace,
     LazyPromise,
     ChildLogger,
     raiseConnectedEvent,
-} from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/common-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { CreateContainerError, readAndParse } from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
     isSystemType,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     IChunkedOp,
     IClientDetails,
@@ -56,7 +58,7 @@ import {
     ITree,
     MessageType,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
@@ -67,8 +69,8 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -82,7 +84,7 @@ import {
 } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
-import { Summarizer } from "./summarizer";
+import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
@@ -376,7 +378,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
     public get IContainerRuntime() { return this; }
@@ -478,7 +480,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): (error?: IError) => void {
+    public get closeFn(): (error?: CriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -826,8 +828,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         if (connected) {
             assert(clientId);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(clientId!);
+            this.summaryManager.setConnected(clientId);
         } else {
             assert(!this._leader);
             this.summaryManager.setDisconnected();
@@ -1034,8 +1035,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.audience!;
     }
 
-    public error(error: any) {
-        this.context.error(createIError(error));
+    public raiseContainerWarning(warning: ContainerWarning) {
+        this.context.raiseContainerWarning(warning);
     }
 
     /**
@@ -1275,6 +1276,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             };
         }
         return summaryTree;
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        if (this.context.getAbsoluteUrl === undefined) {
+            throw new Error("Driver does not implement getAbsoluteUrl");
+        }
+        return this.context.getAbsoluteUrl(relativeUrl);
     }
 
     private async generateSummary(
@@ -1532,7 +1540,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     }
                 });
             }).catch((err) => {
-                this.logger.sendErrorEvent({ eventName: "ContainerRuntime_getScheduler" }, err);
+                this.closeFn(CreateContainerError(err));
             });
 
             this.context.quorum.on("removeMember", (clientId: string) => {

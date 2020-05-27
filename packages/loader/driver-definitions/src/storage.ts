@@ -22,8 +22,8 @@ import {
     ITokenProvider,
     ITree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
 /**

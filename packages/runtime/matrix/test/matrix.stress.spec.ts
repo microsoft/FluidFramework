@@ -7,7 +7,7 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
+import { TestHost } from "@fluidframework/local-test-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { extract, expectSize } from "./utils";
 

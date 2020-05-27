@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory, IFluidModule } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory, IFluidModule } from "@fluidframework/container-definitions";
 
 /**
  * Implementation of the code loader for the local-test-utils. This expects that

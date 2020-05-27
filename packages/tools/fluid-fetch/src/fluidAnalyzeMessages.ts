@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IBlob,
     ISequencedDocumentMessage,
@@ -11,8 +11,8 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";

@@ -5,9 +5,9 @@
 
 /* eslint-disable no-null/no-null */
 
-import * as assert from "assert";
-import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
+import assert from "assert";
+import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@fluidframework/sequence";
+import { TestHost } from "@fluidframework/local-test-utils";
 
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {

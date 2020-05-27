@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import {
     FileMode,
     IBlob,
@@ -13,7 +13,7 @@ import {
     TreeEntry,
     SummaryType,
     SummaryObject,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Take a summary object and returns its git mode.

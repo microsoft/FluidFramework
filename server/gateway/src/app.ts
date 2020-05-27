@@ -43,7 +43,6 @@ export function translateStaticUrl(
     cache: { [key: string]: string },
     furl: (val: string) => string,
     production: boolean): string {
-
     const local = url.substring(staticFilesEndpoint.length);
     if (!(local in cache)) {
         const parsedPath = path.parse(local);
@@ -91,7 +90,6 @@ function connectAccount(
     expires: number,
     refreshToken: string,
     done: (error: any, user?: any) => void) {
-
     const expiration = accountManager.getTokenExpiration(expires);
     const userP = accountManager
         .linkAccount(provider, providerId, accessToken, expiration, refreshToken, user.sub)

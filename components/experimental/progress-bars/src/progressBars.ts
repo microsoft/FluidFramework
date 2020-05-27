@@ -11,14 +11,14 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { IComponentCollection } from "@fluidframework/framework-interfaces";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");

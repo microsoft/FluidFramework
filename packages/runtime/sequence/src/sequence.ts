@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import assert from "assert";
+import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IValueChanged, MapKernel } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/component-runtime-definitions";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
-} from "@microsoft/fluid-shared-object-base";
-import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/shared-object-base";
+import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,

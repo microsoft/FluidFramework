@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
     PerformanceEvent,
     performanceNow,
     TelemetryLogger,
     TelemetryNullLogger,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -18,13 +18,13 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/protocol-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
@@ -35,7 +35,7 @@ import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable, INewFileInfo } from "./odspUtils";
-import { getSocketStorageDiscovery } from "./vroom";
+import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
@@ -71,7 +71,8 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.createNewOptions) {
+        const options = odspResolvedUrl.createNewOptions;
+        if (options) {
             const templogger: ITelemetryLogger = ChildLogger.create(logger, "OdspDriver");
             const event = PerformanceEvent.start(templogger,
                 {
@@ -81,7 +82,7 @@ export class OdspDocumentService implements IDocumentService {
             try {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
-                    odspResolvedUrl.createNewOptions.newFileInfoPromise,
+                    await options.newFileInfoPromise,
                     cache,
                     storageFetchWrapper);
                 const props = {
@@ -141,7 +142,7 @@ export class OdspDocumentService implements IDocumentService {
         try {
             odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
-                Promise.resolve(newFileParams),
+                newFileParams,
                 cache,
                 storageFetchWrapper,
                 createNewSummary);
@@ -321,7 +322,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.cache.sessionStorage.remove(this.joinSessionKey);
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 throw error;
             });
         });
@@ -336,14 +337,20 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
-        return getSocketStorageDiscovery(
-            this.odspResolvedUrl.driveId,
-            this.odspResolvedUrl.itemId,
-            this.odspResolvedUrl.siteUrl,
-            this.logger,
-            this.getStorageToken,
-            this.cache,
-            this.joinSessionKey);
+        const executeFetch = async () =>
+            fetchJoinSession(
+                this.odspResolvedUrl.driveId,
+                this.odspResolvedUrl.itemId,
+                this.odspResolvedUrl.siteUrl,
+                "opStream/joinSession",
+                "POST",
+                this.logger,
+                this.getStorageToken,
+            );
+
+        // Note: The sessionCache is configured with a sliding expiry of 1 hour,
+        // so if we've fetched the join session within the last hour we won't run executeFetch again now.
+        return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
     }
 
     /**
@@ -379,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
      * If url #1 fails to connect, tries url #2 if applicable
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document ID
+     * @param documentId - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -388,7 +395,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
-        websocketId: string,
+        documentId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -424,7 +431,7 @@ export class OdspDocumentService implements IDocumentService {
 
             return OdspDocumentDeltaConnection.create(
                 tenantId,
-                websocketId,
+                documentId,
                 token,
                 io,
                 client,
@@ -448,7 +455,7 @@ export class OdspDocumentService implements IDocumentService {
 
                     return OdspDocumentDeltaConnection.create(
                         tenantId,
-                        websocketId,
+                        documentId,
                         token,
                         io,
                         client,
@@ -481,7 +488,7 @@ export class OdspDocumentService implements IDocumentService {
         const startNonAfd = performanceNow();
         return OdspDocumentDeltaConnection.create(
             tenantId,
-            websocketId,
+            documentId,
             token,
             io,
             client,
@@ -499,7 +506,7 @@ export class OdspDocumentService implements IDocumentService {
 
                 return OdspDocumentDeltaConnection.create(
                     tenantId,
-                    websocketId,
+                    documentId,
                     token,
                     io,
                     client,

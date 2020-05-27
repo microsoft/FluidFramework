@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
@@ -62,7 +62,7 @@ interface IRegisterOperation {
     // As such, refSeq needs to reference seq # at the time op was created,
     // not when op was actually sent over wire (ISequencedDocumentMessage.referenceSequenceNumber),
     // as client can ingest ops in between.
-    refSeq: number;
+    refSeq: number | undefined;
 }
 
 /**
@@ -257,6 +257,11 @@ export class ConsensusRegisterCollection<T>
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
                 case "write": {
+                    // back-compat 0.13 refSeq
+                    // when the refSeq property didn't exist
+                    if (op.refSeq === undefined) {
+                        op.refSeq = message.referenceSequenceNumber;
+                    }
                     // Message can be delivered with delay - e.g. resubmitted on reconnect.
                     // Use the refSeq from when the op was created, not when it was transmitted
                     const refSeqWhenCreated = op.refSeq;

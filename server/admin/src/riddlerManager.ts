@@ -18,7 +18,7 @@ export interface ITenantConfig {
  * Manages api calls to riddler
  */
 export class RiddlerManager {
-    constructor(private endpoint: string) {
+    constructor(private readonly endpoint: string) {
     }
 
     public async getTenant(tenantId: string): Promise<ITenantConfig> {

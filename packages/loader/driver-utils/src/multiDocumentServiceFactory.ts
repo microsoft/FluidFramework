@@ -8,9 +8,9 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {

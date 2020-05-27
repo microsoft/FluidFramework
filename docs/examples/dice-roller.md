@@ -32,17 +32,17 @@ The `src/fluid-components/index.tsx` file is where the component logic lives.
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from [@microsoft/fluid-aqueduct](../api/fluid-aqueduct.md) provide helper
+`PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/fluid-aqueduct.md) provide helper
 functionality. `IComponentHTMLView` from
-[@microsoft/fluid-component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
+[@fluidframework/component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -226,7 +226,7 @@ The second property is an entry point into our component.
 ExampleFluidComponent.load;
 ```
 
-Finally we export this as `fluidExport`.  This export is special - the `@microsoft/fluid-webpack-component-loader` we
+Finally we export this as `fluidExport`.  This export is special - the `@fluidframework/webpack-component-loader` we
 are using to load our component knows to look for this particular export to load from.
 
 ```typescript

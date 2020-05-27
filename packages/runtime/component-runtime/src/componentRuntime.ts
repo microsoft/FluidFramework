@@ -3,31 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     ChildLogger,
     Deferred,
     raiseConnectedEvent,
-} from "@microsoft/fluid-common-utils";
+} from "@fluidframework/common-utils";
 import {
     buildSnapshotTree,
     TreeTreeEntry,
-} from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/protocol-base";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -35,7 +36,7 @@ import {
     ISequencedDocumentMessage,
     ITreeEntry,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IAttachMessage,
     IComponentContext,
@@ -43,9 +44,9 @@ import {
     IComponentRuntimeChannel,
     IEnvelope,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { IChannel, IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -538,8 +539,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.deferredAttached.promise;
     }
 
-    public error(error: any): void {
-        this.componentContext.error(error);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.componentContext.raiseContainerWarning(warning);
     }
 
     /**
@@ -610,8 +611,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channelContext!.processOp(transformed, local);
+        channelContext.processOp(transformed, local);
 
         return channelContext;
     }

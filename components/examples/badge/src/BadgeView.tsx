@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCell } from "@microsoft/fluid-cell";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { ISharedCell } from "@fluidframework/cell";
+import { ISharedMap } from "@fluidframework/map";
+import { SharedObjectSequence } from "@fluidframework/sequence";
 import {
     ActivityItem,
     DefaultButton,
@@ -29,7 +29,7 @@ import {
 } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
-import * as React from "react";
+import React from "react";
 import { IBadgeType } from "./IBadgeType";
 import { IHistory } from "./IHistory";
 

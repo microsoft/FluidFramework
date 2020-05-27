@@ -9,7 +9,7 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";

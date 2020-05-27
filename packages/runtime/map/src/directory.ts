@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as path from "path";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { addBlobToTree } from "@microsoft/fluid-protocol-base";
+import assert from "assert";
+import path from "path";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -296,12 +296,12 @@ function serializeDirectory(root: SubDirectory): ITree {
  */
 export class DirectoryFactory {
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
      */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
@@ -310,21 +310,21 @@ export class DirectoryFactory {
     };
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
      */
     public get type() {
         return DirectoryFactory.Type;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
      */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
      */
     public async load(
         runtime: IComponentRuntime,
@@ -339,7 +339,7 @@ export class DirectoryFactory {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
+     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
@@ -589,7 +589,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         return serializeDirectory(this.root);
@@ -635,14 +635,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect() {
         debug(`Directory ${this.id} is now disconnected`);
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
      */
     protected onConnect(pending: any[]) {
         debug(`Directory ${this.id} is now connected`);
@@ -655,7 +655,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
         branchId: string,
@@ -716,7 +716,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      */
     protected registerCore(): void {
         const subdirsToRegisterFrom = new Array<SubDirectory>();
@@ -736,7 +736,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation) {

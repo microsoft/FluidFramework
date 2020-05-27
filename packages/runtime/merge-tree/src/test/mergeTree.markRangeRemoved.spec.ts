@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { TextSegment } from "../";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { TestClient } from "./testClient";

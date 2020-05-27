@@ -5,4 +5,3 @@
 
 export * from "./storage";
 export * from "./urlResolver";
-export * from "./error";

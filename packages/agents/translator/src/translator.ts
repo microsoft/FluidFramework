@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as request from "request";
+import request from "request";
 
 interface ITranslatorInput {
     Text: string;

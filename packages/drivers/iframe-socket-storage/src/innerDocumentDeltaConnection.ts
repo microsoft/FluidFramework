@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -16,8 +16,8 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
+} from "@fluidframework/protocol-definitions";
+import Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;

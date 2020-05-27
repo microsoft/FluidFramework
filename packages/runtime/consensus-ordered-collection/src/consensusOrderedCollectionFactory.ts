@@ -7,7 +7,7 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
 import { pkgVersion } from "./packageVersion";

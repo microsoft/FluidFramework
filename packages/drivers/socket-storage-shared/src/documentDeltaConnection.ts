@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
-import { createNetworkError } from "@microsoft/fluid-driver-utils";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -20,7 +20,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -31,8 +31,9 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-    // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
-    const errorObj: IError = createNetworkError(
+    // - a socketError: add it to the CriticalContainerError object for driver to be able to parse it and reason
+    //   over it.
+    const errorObj = createGenericNetworkError(
         `socket.io error: ${handler}: ${error}`,
         canRetry,
     );
@@ -99,9 +100,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     // Listen for ops sent before we receive a response to connect_document
-    private readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     private readonly queuedContents: IContentMessage[] = [];
-    private readonly queuedSignals: ISignalMessage[] = [];
+    protected readonly queuedSignals: ISignalMessage[] = [];
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
@@ -126,7 +127,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param details - details of the websocket connection
      */
     protected constructor(
-        private readonly socket: SocketIOClient.Socket,
+        protected readonly socket: SocketIOClient.Socket,
         public documentId: string) {
         super();
 
@@ -134,13 +135,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             (submitType, work) => {
                 this.socket.emit(submitType, this.clientId, work);
             });
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op", this.earlyOpHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("op-content", this.earlyContentHandler!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.socket.on("signal", this.earlySignalHandler!);
     }
 
     /**
@@ -357,16 +351,16 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("op", this.earlyOpHandler!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("op-content", this.earlyContentHandler!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.socket.on("signal", this.earlySignalHandler!);
+
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                // If we sent a nonce and the server supports nonces, check that the nonces match
-                if (connectMessage.nonce !== undefined &&
-                    error.nonce !== undefined &&
-                    error.nonce !== connectMessage.nonce) {
-                    return;
-                }
-
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
@@ -426,6 +420,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
+                // If we sent a nonce and the server supports nonces, check that the nonces match
+                if (connectMessage.nonce !== undefined &&
+                    error.nonce !== undefined &&
+                    error.nonce !== connectMessage.nonce) {
+                    return;
+                }
+
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
@@ -442,17 +443,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         });
     }
 
-    private earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
-    private earlyContentHandler ?= (msg: IContentMessage) => {
+    protected earlyContentHandler?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     };
 
-    private earlySignalHandler ?= (msg: ISignalMessage) => {
+    protected earlySignalHandler?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     };

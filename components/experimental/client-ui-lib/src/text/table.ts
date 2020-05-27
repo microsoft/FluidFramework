@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import * as Sequence from "@microsoft/fluid-sequence";
+import * as MergeTree from "@fluidframework/merge-tree";
+import * as Sequence from "@fluidframework/sequence";
 import * as Paragraph from "./paragraph";
 
 type SharedString = Sequence.SharedString;

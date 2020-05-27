@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { SharedCell } from "@microsoft/fluid-cell";
-import { SharedMap } from "@microsoft/fluid-map";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
+import { SharedMap } from "@fluidframework/map";
+import { SharedObjectSequence } from "@fluidframework/sequence";
 import { Badge } from "./Badge";
 
 const BadgeName = "@fluid-example/badge";

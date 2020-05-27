@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IComponent, IComponentLoadable, IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@fluidframework/component-runtime";
+import { ComponentRegistry } from "@fluidframework/container-runtime";
 import {
     IComponentContext,
     IComponentFactory,
@@ -13,12 +13,12 @@ import {
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
     NamedComponentRegistryEntry,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import {
     ComponentSymbolProvider,
     DependencyContainer,
-} from "@microsoft/fluid-synthesize";
+} from "@fluidframework/synthesize";
 
 import {
     ISharedComponentProps,

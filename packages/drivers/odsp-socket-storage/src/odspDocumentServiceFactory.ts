@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { ICache, IOdspCache, OdspCache } from "./odspCache";
+import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -44,22 +44,22 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     /**
-     * @param getStorageToken - function that can provide the storage token for a given site. This is
-     * is also referred to as the "VROOM" token in SPO.
-     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-     * referred to as the "Push" token in SPO.
-     * @param storageFetchWrapper - if not provided FetchWrapper will be used
-     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-     * @param odspCache - This caches response for joinSession.
-     */
+   * @param getStorageToken - function that can provide the storage token for a given site. This is
+   * is also referred to as the "VROOM" token in SPO.
+   * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
+   * referred to as the "Push" token in SPO.
+   * @param storageFetchWrapper - if not provided FetchWrapper will be used
+   * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param persistedCache - PersistedCache provided by host for use in this session.
+   */
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        permanentCache?: ICache,
+        persistedCache?: IPersistedCache,
     ) {
-        this.cache = new OdspCache(permanentCache);
+        this.cache = new OdspCache(persistedCache);
     }
 
     /**

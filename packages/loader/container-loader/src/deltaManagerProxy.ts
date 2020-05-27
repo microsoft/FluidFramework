@@ -7,8 +7,8 @@ import {
     IDeltaManager,
     IDeltaQueue,
     IDeltaSender,
-} from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/container-definitions";
+import { EventForwarder } from "@fluidframework/common-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -16,7 +16,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access

@@ -9,7 +9,7 @@ import {
     IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";

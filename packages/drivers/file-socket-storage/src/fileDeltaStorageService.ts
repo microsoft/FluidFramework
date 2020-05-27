@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as fs from "fs";
-import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import fs from "fs";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
