@@ -183,7 +183,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     componentContext.branch,
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
-                        this.deltaManager.referenceSequenceNumber,
+                        this.deltaManager.currentSequenceNumber,
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);

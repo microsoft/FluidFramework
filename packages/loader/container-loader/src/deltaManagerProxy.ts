@@ -96,8 +96,13 @@ export class DeltaManagerProxy
         return this.deltaManager.minimumSequenceNumber;
     }
 
+    public get currentSequenceNumber(): number {
+        return this.deltaManager.currentSequenceNumber;
+    }
+
+    // Back-compat: <= 0.18
     public get referenceSequenceNumber(): number {
-        return this.deltaManager.referenceSequenceNumber;
+        return this.currentSequenceNumber;
     }
 
     public get initialSequenceNumber(): number {

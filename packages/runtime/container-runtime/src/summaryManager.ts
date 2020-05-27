@@ -424,7 +424,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     type: "summarizer",
                 },
                 [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.currentSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",

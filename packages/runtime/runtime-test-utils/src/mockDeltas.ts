@@ -97,7 +97,7 @@ export class MockDeltaManager extends EventEmitter
         return 0;
     }
 
-    public get referenceSequenceNumber(): number {
+    public get currentSequenceNumber(): number {
         return 0;
     }
 

@@ -64,7 +64,7 @@ class ConnectionTelemetry {
                 this.logger.sendTelemetryEvent({
                     eventName: "MsnStatistics",
                     sequenceNumber: message.sequenceNumber,
-                    msnDistance: this.deltaManager.referenceSequenceNumber - this.deltaManager.minimumSequenceNumber,
+                    msnDistance: this.deltaManager.currentSequenceNumber - this.deltaManager.minimumSequenceNumber,
                     timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
