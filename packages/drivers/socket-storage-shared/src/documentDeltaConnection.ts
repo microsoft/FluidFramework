@@ -336,8 +336,8 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
-        this.removeTrackedListeners(false);
         this.socket.disconnect();
+        this.removeTrackedListeners(false);
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -479,7 +479,7 @@ export class DocumentDeltaConnection
         this.trackedListeners.push({ event, connectionListener: false, listener });
     }
 
-    private removeTrackedListeners(connectionListenerOnly) {
+    protected removeTrackedListeners(connectionListenerOnly) {
         const remaining: IEventListener[] = [];
         for (const { event, connectionListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {

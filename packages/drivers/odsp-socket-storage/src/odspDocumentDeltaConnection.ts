@@ -346,5 +346,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             // If it's not critical error, we want to raise event on this object only.
             this.emit("disconnect", reason);
         }
+
+        // Remove all listeners after "disconnect" event was raised.
+        super.removeTrackedListeners(false);
     }
 }
