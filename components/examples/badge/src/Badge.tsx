@@ -22,9 +22,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
-    public get IComponentHTMLView() {
-        return this;
-    }
+    public get IComponentHTMLView() {return this;}
 
     private readonly currentId: string = "value";
     private readonly historyId: string = "history";
@@ -91,15 +89,11 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
         this.root.set(this.optionsId, options.handle);
 
         // Create a sequence to store the badge's history
-        const history = SharedObjectSequence.create<IHistory<IBadgeType>>(
-            this.runtime,
-        );
-        history.insert(0, [
-            {
-                value: current.get(),
-                timestamp: new Date(),
-            },
-        ]);
+        const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
+        history.insert(0, [{
+            value: current.get(),
+            timestamp: new Date(),
+        }]);
         this.root.set(this.historyId, history.handle);
     }
 
@@ -110,17 +104,9 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
      * object refs as props to the React component.
      */
     protected async componentHasInitialized() {
-        this.currentCell = await this.root
-            .get<IComponentHandle<SharedCell>>(this.currentId)
-            .get();
-        this.optionsMap = await this.root
-            .get<IComponentHandle<SharedMap>>(this.optionsId)
-            .get();
-        this.historySequence = await this.root
-            .get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(
-            this.historyId,
-        )
-            .get();
+        this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
+        this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
+        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
     }
 
     public render(div: HTMLElement) {
