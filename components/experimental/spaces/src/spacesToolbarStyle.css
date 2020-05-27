@@ -1,0 +1,18 @@
+.spaces-toolbar {
+    position: relative;
+    margin: 10px;
+    display: flex;
+}
+
+.spaces-toolbar-item {
+    width: 180px;
+}
+
+.spaces-toolbar-top-level-button {
+    width: 100%;
+    height: 45px;
+}
+
+.spaces-toolbar-option-button {
+    width: 100%;
+}

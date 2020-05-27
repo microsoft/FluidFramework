@@ -14,19 +14,7 @@ import {
     ISpacesProps,
     Templates,
 } from ".";
-
-const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
-const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
-const menuButtonStyle: React.CSSProperties = { width: "20vh", height: "5vh" };
-const editableButtonStyle: React.CSSProperties = {
-    width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh",
-};
-const templateButtonStyle: React.CSSProperties = {
-    width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1,
-};
-const componentButtonStyle: React.CSSProperties = {
-    width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
-};
+import "./spacesToolbarStyle.css";
 
 initializeIcons();
 
@@ -47,7 +35,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
         const componentsButton = (
             <Button
                 iconProps={{ iconName: componentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                style={menuButtonStyle}
+                className="spaces-toolbar-top-level-button"
                 onClick={() => setComponentListOpen(!componentListOpen)}
             >
                 {"Add Components"}
@@ -58,7 +46,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
             props.components.forEach(((supportedComponent: IInternalRegistryEntry) => {
                 componentButtonList.push(
                     <Button
-                        style={dropDownButtonStyle}
+                        className="spaces-toolbar-option-button"
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={() => {
@@ -79,7 +67,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
             const templateButton = (
                 <Button
                     iconProps={{ iconName: templateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                    style={menuButtonStyle}
+                    className="spaces-toolbar-top-level-button"
                     onClick={() => setTemplateListOpen(!templateListOpen)}
                 >
                     {"Add Templates"}
@@ -91,7 +79,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                     if (template) {
                         templateButtonList.push(
                             <Button
-                                style={dropDownButtonStyle}
+                                className="spaces-toolbar-option-button"
                                 key={`componentToolbarButton-${template}`}
                                 onClick={() => {
                                     if (props.spacesProps.applyTemplate) {
@@ -101,48 +89,49 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                                 }}
                             >
                                 {Templates[template]}
-                            </Button>
-                            ,
+                            </Button>,
                         );
                     }
                 }
             }
             templateCollapsible = (
-                <div style={templateButtonStyle}>
-                    <Collapsible
-                        open={templateListOpen}
-                        trigger={templateButton}
-                    >
-                        {templateButtonList}
-                    </Collapsible>
-                </div>
+                <Collapsible
+                    open={templateListOpen}
+                    trigger={templateButton}
+                    className="spaces-toolbar-item"
+                    openedClassName="spaces-toolbar-item"
+                >
+                    {templateButtonList}
+                </Collapsible>
             );
         }
         return (
-            <div style={componentToolbarStyle}>
-                <Button
-                    id="edit"
-                    style={editableButtonStyle}
-                    iconProps={{ iconName: "BullseyeTargetEdit" }}
-                    onClick={() => {
-                        const newEditableState = !props.editable;
-                        props.setEditable(newEditableState);
-                    }}
-                >
-                    {`Edit: ${props.editable}`}
-                </Button>
+            <div className="spaces-toolbar">
+                <div className="spaces-toolbar-item">
+                    <Button
+                        id="edit"
+                        className="spaces-toolbar-top-level-button"
+                        iconProps={{ iconName: "BullseyeTargetEdit" }}
+                        onClick={() => {
+                            const newEditableState = !props.editable;
+                            props.setEditable(newEditableState);
+                        }}
+                    >
+                        {`Edit: ${props.editable}`}
+                    </Button>
+                </div>
                 {props.editable ?
-                    <div>
-                        <div style={componentButtonStyle}>
-                            <Collapsible
-                                open={componentListOpen}
-                                trigger={componentsButton}
-                            >
-                                {componentButtonList}
-                            </Collapsible>
-                        </div>
+                    <>
+                        <Collapsible
+                            open={componentListOpen}
+                            trigger={componentsButton}
+                            className="spaces-toolbar-item"
+                            openedClassName="spaces-toolbar-item"
+                        >
+                            {componentButtonList}
+                        </Collapsible>
                         {templateCollapsible}
-                    </div>
+                    </>
                     : undefined}
             </div>
         );
