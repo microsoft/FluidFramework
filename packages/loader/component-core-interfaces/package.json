@@ -24,9 +24,6 @@
     "tsc": "tsc",
     "tsc:watch": "tsc --watch"
   },
-  "dependencies": {
-    "@microsoft/fluid-map-component-definitions": "^0.18.0"
-  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.16.0",

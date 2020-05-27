@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

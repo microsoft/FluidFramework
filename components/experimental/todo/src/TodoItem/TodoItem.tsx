@@ -9,7 +9,7 @@ import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";

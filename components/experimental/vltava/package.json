@@ -44,7 +44,6 @@
     "@microsoft/fluid-framework-interfaces": "^0.18.0",
     "@microsoft/fluid-last-edited-experimental": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-view-adapters": "^0.18.0",

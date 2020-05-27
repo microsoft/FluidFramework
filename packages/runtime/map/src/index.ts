@@ -17,8 +17,7 @@
  */
 
 export * from "./counter";
+export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
 export * from "./mapKernel";
-// eslint-disable-next-line import/export
-export * from "./interface";

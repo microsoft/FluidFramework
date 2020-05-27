@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,

@@ -10,7 +10,6 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@microsoft/fluid-common-definitions";
@@ -50,19 +49,6 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         } else {
             return super.request(request);
         }
-    }
-
-    public get IComponentPrimed() {
-        return this;
-    }
-
-    public addListenerToRootValueChanged(
-        listener: (
-            changed: IDirectoryValueChanged,
-            local: boolean,
-        ) => void,
-    ): void {
-        this.root.on("valueChanged", listener);
     }
 
     /**

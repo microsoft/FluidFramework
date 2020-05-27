@@ -11,14 +11,12 @@ import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     ISerializableValue,
     ISerializedValue,
+    IValueChanged,
     IValueOpEmitter,
     IValueType,
     IValueTypeOperationValue,
     ISharedMapEvents,
-} from "@microsoft/fluid-map-definitions";
-import {
-    IValueChanged,
-} from "@microsoft/fluid-map-component-definitions";
+} from "./interfaces";
 import {
     ILocalValue,
     LocalValueMaker,
@@ -55,14 +53,14 @@ interface IMapValueTypeOperation {
     type: "act";
 
     /**
-     * Value of the operation, specific to the value type.
-     */
-    value: IValueTypeOperationValue;
-
-    /**
      * Map key being modified.
      */
     key: string;
+
+    /**
+     * Value of the operation, specific to the value type.
+     */
+    value: IValueTypeOperationValue;
 }
 
 /**
@@ -75,14 +73,14 @@ interface IMapSetOperation {
     type: "set";
 
     /**
-     * Value to be set on the key.
-     */
-    value: ISerializableValue;
-
-    /**
      * Map key being modified.
      */
     key: string;
+
+    /**
+     * Value to be set on the key.
+     */
+    value: ISerializableValue;
 }
 
 /**
@@ -328,6 +326,7 @@ export class MapKernel {
             localValue,
             true,
             null,
+            keyPrefix,
         );
 
         const op: IMapSetOperation = {
@@ -487,6 +486,7 @@ export class MapKernel {
      * @param value - The value being set
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
+     * @param keyPrefix - Added to event emitted to allow listeners to batch changes
      */
     private setCore(
         key: string,

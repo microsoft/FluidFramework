@@ -55,7 +55,6 @@
     "@microsoft/fluid-component-core-interfaces": "^0.18.0",
     "@microsoft/fluid-component-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-merge-tree": "^0.18.0",
     "@microsoft/fluid-protocol-definitions": "^0.1004.3",
     "@microsoft/fluid-runtime-utils": "^0.18.0",

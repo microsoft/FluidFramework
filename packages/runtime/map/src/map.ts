@@ -17,16 +17,14 @@ import {
     ISharedObjectServices,
 } from "@microsoft/fluid-component-runtime-definitions";
 import {
+    ISharedObjectFactory,
     SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import {
-    ISharedObjectFactory,
-} from "@microsoft/fluid-shared-object-base-definitions";
+import { debug } from "./debug";
 import {
     ISharedMap,
     ISharedMapEvents,
-} from "@microsoft/fluid-map-definitions";
-import { debug } from "./debug";
+} from "./interfaces";
 import {
     valueTypes,
 } from "./localValues";
@@ -220,11 +218,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    * {@inheritDoc ISharedMap.set}
    */
     public set(key: string, value: any, keyPrefix?: string): this {
-        if (keyPrefix) {
-            this.kernel.set(`${keyPrefix}-${key}`, value);
-        } else {
-            this.kernel.set(key, value);
-        }
+        this.kernel.set(key, value, keyPrefix);
         return this;
     }
 

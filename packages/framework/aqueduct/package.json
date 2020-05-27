@@ -63,7 +63,6 @@
     "@microsoft/fluid-container-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-framework-interfaces": "^0.18.0",
     "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-runtime-definitions": "^0.18.0",
     "@microsoft/fluid-shared-object-base": "^0.18.0",
     "@microsoft/fluid-synthesize": "^0.18.0",

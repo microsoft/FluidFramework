@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
-import { IValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { ISharedMap, IValueChanged } from "@microsoft/fluid-map";
 import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**

@@ -15,7 +15,7 @@ import {
     IFluidSelector,
     ICombinedState,
 } from "@microsoft/fluid-aqueduct-react";
-import { ISharedDirectory } from "@microsoft/fluid-map-definitions";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 import { ComponentStorage } from "@fluid-example/component-storage";
 import { IInternalRegistryEntry } from "./componentInternalRegistry";
 

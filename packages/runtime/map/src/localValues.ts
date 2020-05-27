@@ -17,14 +17,14 @@ import {
     SharedObject,
     ValueType,
 } from "@microsoft/fluid-shared-object-base";
+import { CounterValueType } from "./counter";
 import {
     ISerializableValue,
     ISerializedValue,
     IValueOpEmitter,
     IValueOperation,
     IValueType,
-} from "@microsoft/fluid-map-definitions";
-import { CounterValueType } from "./counter";
+} from "./interfaces";
 
 /**
  * A local value to be stored in a container type DDS.

@@ -9,7 +9,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";

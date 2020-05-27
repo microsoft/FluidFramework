@@ -9,14 +9,10 @@ import { IComponent, IComponentHandle, IComponentLoadable } from "@microsoft/flu
 import {
     ISharedDirectory,
     IDirectory,
+    IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
-import {
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import {
-    IComponentInternalRegistry,
-} from "@fluid-example/spaces-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IComponentInternalRegistry } from "@fluid-example/spaces-definitions";
 
 import { v4 as uuid } from "uuid";
 

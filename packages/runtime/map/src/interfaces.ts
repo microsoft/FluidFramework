@@ -4,9 +4,28 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base-definitions";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
 import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
+
+/**
+ * Type of "valueChanged" event parameter.
+ */
+export interface IValueChanged {
+    /**
+     * The key storing the value that changed.
+     */
+    key: string;
+
+    /**
+     * The value that was stored at the key prior to the change.
+     */
+    previousValue: any;
+
+    /**
+     * An additional element to allow changes to multiple keys be batched together by their prefix
+     */
+    keyPrefix?: string;
+}
 
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
@@ -131,6 +150,7 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at
      * @param value - Value to set
+     * @param keyPrefix - Added to event emitted to allow listeners to batch changes
      * @returns The IDirectory itself
      */
     set<T = any>(key: string, value: T, keyPrefix?: string): this;
@@ -182,9 +202,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents{
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage,
-        target: IEventThisPlaceHolder,
-        keyPrefix?: string,
-    ) => void);
+        target: IEventThisPlaceHolder) => void);
 }
 
 /**
@@ -192,6 +210,16 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents{
  */
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectory {
 
+}
+
+/**
+ * Type of "valueChanged" event parameter for SharedDirectory
+ */
+export interface IDirectoryValueChanged extends IValueChanged {
+    /**
+     * The absolute path to the IDirectory storing the key which changed.
+     */
+    path: string;
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents{
@@ -234,7 +262,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
  * ISerializableValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
  * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
- * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
+ * the _in-memory representatation_ of the value instead).  An ISerializableValue is what gets passed to
  * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
  * and ops (set).
  * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will

@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "@microsoft/fluid-map": "^0.18.0",
-    "@microsoft/fluid-map-component-definitions": "^0.18.0",
     "@microsoft/fluid-merge-tree": "^0.18.0",
     "@microsoft/fluid-sequence": "^0.18.0"
   },

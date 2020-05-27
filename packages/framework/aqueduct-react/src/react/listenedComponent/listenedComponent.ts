@@ -6,7 +6,7 @@
 import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map-component-definitions";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import {
     PrimedComponent,
