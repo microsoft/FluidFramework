@@ -6,14 +6,14 @@
 import { Layout } from "react-grid-layout";
 import {
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import {
     IComponentListened,
     ListenedComponent,
-} from "@microsoft/fluid-aqueduct-react";
+} from "@fluidframework/aqueduct-react";
 import {
     IComponentHandle, IComponent, IComponentLoadable,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { IStoredComponent, ComponentMapKey } from "./interfaces";
 
 /**

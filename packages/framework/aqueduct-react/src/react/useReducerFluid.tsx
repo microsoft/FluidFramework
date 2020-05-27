@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     IFluidFunctionalComponentViewState,
     IFluidReducerProps,

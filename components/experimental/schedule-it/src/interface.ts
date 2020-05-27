@@ -13,10 +13,10 @@ import {
     IFluidReducer,
     IFluidSelector,
     ICombinedState,
-} from "@microsoft/fluid-aqueduct-react";
-import { SharedMap, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/aqueduct-react";
+import { SharedMap, ISharedDirectory } from "@fluidframework/map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 
 export interface IDate {
     key: string;

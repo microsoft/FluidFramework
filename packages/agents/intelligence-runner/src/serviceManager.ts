@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISharedMap } from "@fluidframework/map";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import * as Sequence from "@fluidframework/sequence";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 
@@ -18,7 +18,7 @@ export class IntelligentServicesManager {
     private rateLimiter: RateLimiter | undefined;
     private intelInvoked: boolean = false;
 
-    constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) {}
+    constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) { }
 
     /**
      * Registers a new intelligent service

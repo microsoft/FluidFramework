@@ -3,20 +3,20 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IPackage } from "@fluidframework/container-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
     FluidComponentMap,
     useReducerFluid,
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
-} from "@microsoft/fluid-aqueduct-react";
-import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/aqueduct-react";
+import { ISharedDirectory } from "@fluidframework/map";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     SpacesStorageView,
 } from "@fluid-example/spaces-view";

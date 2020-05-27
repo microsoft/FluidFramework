@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as webpack from "webpack";
+import webpack from "webpack";
 
 const path = require('path');
 

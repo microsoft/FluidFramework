@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 
 export interface IPackageIdentifierDetails {
     readonly fullId: string;

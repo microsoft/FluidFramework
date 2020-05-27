@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as api from "@fluid-internal/client-api";
-import * as ink from "@microsoft/fluid-ink";
+import * as ink from "@fluidframework/ink";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import * as recognizer from "./shapeRecognizer";

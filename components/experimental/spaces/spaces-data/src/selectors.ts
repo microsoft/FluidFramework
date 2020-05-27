@@ -1,4 +1,4 @@
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     ISpacesSelector, ISpacesViewComponent,
 } from "@fluid-example/spaces-definitions";

@@ -13,33 +13,23 @@ development environment to build Fluid Framework solutions. You can use a Window
 
 ### Install developer tools
 
-#### Install NodeJS
+#### Install Node.js
 
-Install NodeJS **version 10**.
+Install [Node.js](https://nodejs.org/en/download/).
 
-::: important
-
-You **must** use [NodeJS LTS version 10](https://nodejs.org/dist/latest-v10.x/). The toolchain has a known issue with
-later Node versions.
-
-:::
-
-- If you are using Windows, you can use the msi installers
-  ([x86](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x86.msi) or
-  [x64](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x64.msi)) for the easiest way to set up NodeJS
-  (notice that these direct links evolve over time, so check the latest v10 from the above directory).
-- If you have NodeJS already installed, check that you have the correct version by running `node -v`. It should return
-  version 10.19.0.
+!!!include(node-versions.md)!!!
 
 ::: tip
 
-If you do not have NodeJS already installed, we strongly recommend using nvm to simplify installing and managing
-multiple NodeJS versions.
+**If you do not have Node.js already installed,** we strongly recommend using nvm to simplify installing and managing
+multiple Node.js versions.
 
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)
 * [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
 
 :::
+
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 #### Install vsts-npm-auth (Windows only)
 
@@ -48,6 +38,8 @@ If you are using Windows, install vsts-npm-auth globally using the following com
 `npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false`
 
 This tool is used to simplify the use of [authenticated npm feeds](./package-feed.md).
+
+</vue-markdown>
 
 #### Install a code editor
 

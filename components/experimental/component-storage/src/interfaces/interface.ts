@@ -1,5 +1,5 @@
 import { Layout } from "react-grid-layout";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 
 export const ComponentMapKey = "component-map";
 

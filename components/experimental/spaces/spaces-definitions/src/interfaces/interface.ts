@@ -1,7 +1,7 @@
 import { Layout } from "react-grid-layout";
-import { IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentHandle, IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentRegistry } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentHandle, IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IFluidDataProps,
     FluidSelectorFunction,
@@ -14,8 +14,8 @@ import {
     IFluidReducer,
     IFluidSelector,
     ICombinedState,
-} from "@microsoft/fluid-aqueduct-react";
-import { ISharedDirectory } from "@microsoft/fluid-map";
+} from "@fluidframework/aqueduct-react";
+import { ISharedDirectory } from "@fluidframework/map";
 import { ComponentStorage } from "@fluid-example/component-storage";
 import { IInternalRegistryEntry } from "./componentInternalRegistry";
 

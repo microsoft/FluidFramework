@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedDirectory, ISharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { IComponentHandle, IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentHandle, IComponentLoadable, IComponent } from "@fluidframework/component-core-interfaces";
 
 export interface ICombinedState<
     SV extends IFluidFunctionalComponentViewState,

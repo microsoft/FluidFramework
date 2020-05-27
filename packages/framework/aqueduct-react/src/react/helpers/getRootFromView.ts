@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { ISharedMap } from "@fluidframework/map";
 import {
     IRootConverter,
     instanceOfIComponentLoadable,

@@ -4,16 +4,16 @@
  */
 
 import assert from "assert";
-import { BaseContainerService, serviceRoutePathRoot } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { BaseContainerService, serviceRoutePathRoot } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
     IProvideComponentDiscoverableInterfaces,
     IProvideComponentDiscoverInterfaces,
     IComponentDiscoverInterfaces,
     IComponentDiscoverableInterfaces,
-} from "@microsoft/fluid-framework-interfaces";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/framework-interfaces";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 export const MatchMakerContainerServiceId = "matchMaker";
 
@@ -64,7 +64,7 @@ export const unregisterWithMatchMaker = async (
 
 /**
  * The MatchMaker is a Container Service that provides Components the ability to register based on capabilities.
- * It's an implementation of the Discover interfaces {@link @microsoft/fluid-framework-interfaces}
+ * It's an implementation of the Discover interfaces {@link @fluidframework/framework-interfaces}
  *
  * The MatchMaker is not meant to be used directly but to be used through the two provided
  * registerWithMatchMaker and unregisterWithMatchMaker functions.
@@ -138,8 +138,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             // Add the component the interface map
             const existingInterfaces = this.discoverInterfacesMap.get(interfaceName);
             assert(existingInterfaces);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            existingInterfaces!.push(discover);
+            existingInterfaces.push(discover);
 
             // Since we are adding a new discover component we need to notify that component if there are existing
             // discoverable components that match it's interface key.
@@ -161,8 +160,7 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             // Add the component the interface map
             const existingInterfaces = this.discoverableInterfacesMap.get(interfaceName);
             assert(existingInterfaces);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            existingInterfaces!.push(discoverableComponent);
+            existingInterfaces.push(discoverableComponent);
 
             // Since we are adding a new discoverable component we need to notify existing discover components
             // that there is a new discoverable component.

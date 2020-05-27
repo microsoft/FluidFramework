@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { SharedString } from "@microsoft/fluid-sequence";
-import * as React from "react";
+import { CollaborativeInput } from "@fluidframework/aqueduct-react";
+import { SharedString } from "@fluidframework/sequence";
+import React from "react";
 import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
@@ -67,7 +67,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({
             startingText: this.newTextInput.value,
-            baseUrl: window.location.href,
         });
         this.newTextInput.value = "";
     }

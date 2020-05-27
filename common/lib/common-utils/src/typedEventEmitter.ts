@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fluidframework/common-definitions";
 
 // the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number

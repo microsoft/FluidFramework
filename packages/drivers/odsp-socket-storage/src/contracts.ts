@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import { IResolvedUrlBase, ISummaryContext } from "@fluidframework/driver-definitions";
+import * as resources from "@fluidframework/gitresources";
+import * as api from "@fluidframework/protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
@@ -237,4 +237,20 @@ export interface IOdspUrlParts {
     site: string;
     drive: string;
     item: string;
+}
+
+export interface ISnapshotOptions {
+    blobs?: number;
+    deltas?: number;
+    channels?: number;
+    /*
+     * Maximum Data size (in bytes)
+     * If specified, SPO will fail snapshot request with 413 error (see ErrorType.snapshotTooBig)
+     * if snapshot is bigger in size than specified limit.
+     */
+    mds?: number;
+}
+
+export interface HostStoragePolicy {
+    snapshotOptions?: ISnapshotOptions;
 }

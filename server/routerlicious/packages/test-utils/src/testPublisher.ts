@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 
 export interface IEvent {
     event: string;

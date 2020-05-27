@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@microsoft/fluid-protocol-definitions";
+import { ITrace } from "@fluidframework/protocol-definitions";
 
 export interface ILatencyMessage {
     // Latency traces.

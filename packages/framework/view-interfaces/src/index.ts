@@ -4,4 +4,5 @@
  */
 
 export * from "./htmlView";
+export * from "./mountableView";
 export * from "./reactView";

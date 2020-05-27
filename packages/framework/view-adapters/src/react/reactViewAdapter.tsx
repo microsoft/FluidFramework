@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import React from "react";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;

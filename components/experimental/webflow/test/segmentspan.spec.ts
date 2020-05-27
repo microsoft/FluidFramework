@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TextSegment } from "@microsoft/fluid-merge-tree";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
-import * as assert from "assert";
+import { TextSegment } from "@fluidframework/merge-tree";
+import { TestHost } from "@fluidframework/local-test-utils";
+import assert from "assert";
 import "mocha";
 import { FlowDocument } from "../src/document";
 import { SegmentSpan } from "../src/document/segmentspan";

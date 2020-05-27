@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import { globals } from "../jest.config";
 
 describe("external-component-loader", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
-        await page.goto(globals.PATH, { waitUntil: "load" });
+        await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
     }, 45000);
 
     beforeEach(async () => {
@@ -44,7 +44,7 @@ describe("external-component-loader", () => {
         // Validate both users have 0 as their value
         const preValue = await getValue();
         expect(preValue).toEqual(2);
-        
+
         // internal component button check
         const addComponentButton = await page.evaluate(async () => {
             const clickerElements = document.getElementsByClassName("spaces-component-view");

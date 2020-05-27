@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedMap } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
 import {
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,

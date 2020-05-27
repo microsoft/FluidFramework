@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { IDirectoryValueChanged } from "@fluidframework/map";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentListened>> { }
 }

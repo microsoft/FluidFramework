@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IDirectoryValueChanged } from "@fluidframework/map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,

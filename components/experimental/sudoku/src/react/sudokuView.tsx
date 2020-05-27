@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as React from "react";
+import { ISharedMap } from "@fluidframework/map";
+import React from "react";
 import { Coordinate, CoordinateString } from "../helpers/coordinate";
 import { loadPuzzle, PUZZLE_INDEXES } from "../helpers/puzzles";
 import { CellState, SudokuCell } from "../helpers/sudokuCell";

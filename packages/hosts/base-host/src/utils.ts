@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IPendingProposal, IQuorum } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { DebugLogger } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IPendingProposal, IQuorum } from "@fluidframework/protocol-definitions";
 
 export class UpgradeManager extends EventEmitter {
     private proposedSeqNum: number | undefined;

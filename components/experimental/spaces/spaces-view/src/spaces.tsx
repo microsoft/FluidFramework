@@ -8,10 +8,10 @@ import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { FluidComponentMap } from "@microsoft/fluid-aqueduct-react";
+} from "@fluidframework/aqueduct";
+import { IComponentHandle, IComponent } from "@fluidframework/component-core-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { FluidComponentMap } from "@fluidframework/aqueduct-react";
 import { ComponentStorage } from "@fluid-example/component-storage";
 import { SpacesPrimedContext } from "@fluid-example/spaces-data";
 import {

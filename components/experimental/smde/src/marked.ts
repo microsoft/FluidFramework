@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@microsoft/fluid-sequence";
+import { SharedString } from "@fluidframework/sequence";
 import * as marked from "marked";
 
 export class Viewer {

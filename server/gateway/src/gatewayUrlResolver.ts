@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredUser, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
@@ -15,6 +15,7 @@ import { Request } from "express";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { IAlfred } from "./interfaces";
+import { isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
 
 interface FullTree {
     cache: IGitCache,
@@ -61,7 +62,7 @@ export function resolveUrl(
         };
 
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
-        const resolvedP = resolveFluidUrl(request, resolverList);
+        const resolvedP = configurableUrlResolver(resolverList, request);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
         return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateRefParams, IPatchRefParams, IRef } from "@microsoft/fluid-gitresources";
+import { ICreateRefParams, IPatchRefParams, IRef } from "@fluidframework/gitresources";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
@@ -24,7 +24,7 @@ function refToIRef(ref: git.Reference): IRef {
 async function getRefs(repoManager: utils.RepositoryManager, owner: string, repo: string): Promise<IRef[]> {
     const repository = await repoManager.open(owner, repo);
     const refIds = await git.Reference.list(repository);
-    const refsP = await Promise.all(refIds.map((refId) => git.Reference.lookup(repository, refId, undefined)));
+    const refsP = await Promise.all(refIds.map(async (refId) => git.Reference.lookup(repository, refId, undefined)));
     return refsP.map((ref) => refToIRef(ref));
 }
 
@@ -39,7 +39,6 @@ async function createRef(
     owner: string,
     repo: string,
     createParams: ICreateRefParams): Promise<IRef> {
-
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
         repository,
@@ -55,7 +54,6 @@ async function deleteRef(
     owner: string,
     repo: string,
     refId: string): Promise<void> {
-
     const repository = await repoManager.open(owner, repo);
     const code = git.Reference.remove(repository, refId);
     return code === 0 ? Promise.resolve() : Promise.reject(code);
@@ -67,7 +65,6 @@ async function patchRef(
     repo: string,
     refId: string,
     patchParams: IPatchRefParams): Promise<IRef> {
-
     const repository = await repoManager.open(owner, repo);
     const ref = await git.Reference.create(
         repository,
@@ -79,7 +76,7 @@ async function patchRef(
 }
 
 function handleResponse(resultP: Promise<any>, response: Response, successCode: number = 200) {
-    return resultP.then(
+    resultP.then(
         (blob) => {
             response.status(successCode).json(blob);
         },

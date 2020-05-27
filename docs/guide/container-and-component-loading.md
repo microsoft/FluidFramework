@@ -94,7 +94,7 @@ the Loader Package does not know anything about the `ContainerRuntime`, or Compo
 where that code lives. This is the responsibility of the `CodeLoader`. The `CodeLoader` can dynamically pull this code
 from some source (CDN) or in some cases the code already exists on the page. Either way the `CodeLoader` needs to
 include the code on the page and return a pointer to that code to the `Container`. In the Browser, this pointer
-is an entry point to a webpacked bundle that is usually on the `window` object. In NodeJS, it's a pointer to a package.
+is an entry point to a webpacked bundle that is usually on the `window` object. In Node.js, it's a pointer to a package.
 
 ![Image 4](./container-and-component-loading-4.jpg)
 

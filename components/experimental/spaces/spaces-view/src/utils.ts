@@ -1,8 +1,8 @@
 import {
     useReducerFluid,
-} from "@microsoft/fluid-aqueduct-react";
+} from "@fluidframework/aqueduct-react";
 import { ComponentStorage } from "@fluid-example/component-storage";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     ISpacesProps,
     ISpacesFluidComponent,

@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-local-web-host",
-  "version": "0.18.0",
+  "name": "@fluidframework/local-web-host",
+  "version": "0.19.0",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -23,25 +23,25 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.18.0",
-    "@microsoft/fluid-base-host": "^0.18.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.0",
-    "@microsoft/fluid-container-definitions": "^0.18.0",
-    "@microsoft/fluid-container-loader": "^0.18.0",
-    "@microsoft/fluid-local-driver": "^0.18.0",
-    "@microsoft/fluid-runtime-definitions": "^0.18.0",
-    "@microsoft/fluid-server-local-server": "^0.1004.3",
-    "@microsoft/fluid-view-adapters": "^0.18.0",
+    "@fluidframework/aqueduct": "^0.19.0",
+    "@fluidframework/base-host": "^0.19.0",
+    "@fluidframework/component-core-interfaces": "^0.19.0",
+    "@fluidframework/container-definitions": "^0.19.0",
+    "@fluidframework/container-loader": "^0.19.0",
+    "@fluidframework/local-driver": "^0.19.0",
+    "@fluidframework/runtime-definitions": "^0.19.0",
+    "@fluidframework/server-local-server": "^0.1006.0-0",
+    "@fluidframework/view-adapters": "^0.19.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -54,6 +54,6 @@
     "source-map-loader": "^0.2.4",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
-    "webpack": "^4.16.5"
+    "webpack": "^4.43.0"
   }
 }

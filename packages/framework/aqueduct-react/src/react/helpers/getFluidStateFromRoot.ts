@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { ISharedDirectory } from "@fluidframework/map";
 import { IViewConverter, FluidComponentMap } from "..";
 
 export function getFluidStateFromRoot<SV,SF>(

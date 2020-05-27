@@ -1,6 +1,6 @@
 import { Layout } from "react-grid-layout";
 import { ComponentStorage } from "@fluid-example/component-storage";
-import { IComponentLoadable, IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentLoadable, IComponent } from "@fluidframework/component-core-interfaces";
 
 export async function createAndStoreComponent(type: string, layout: Layout, storage?: ComponentStorage):
 Promise<IComponent & IComponentLoadable | undefined> {

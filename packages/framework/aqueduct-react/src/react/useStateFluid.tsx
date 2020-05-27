@@ -7,8 +7,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
 import * as React from "react";
-import { IDirectoryValueChanged, ISharedMap } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IDirectoryValueChanged, ISharedMap } from "@fluidframework/map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     IFluidFunctionalComponentViewState,
     FluidProps,

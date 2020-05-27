@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import assert from "assert";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
-} from "@microsoft/fluid-register-collection";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+} from "@fluidframework/register-collection";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;

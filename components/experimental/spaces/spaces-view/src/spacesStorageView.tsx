@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import { SpacesPrimedContext } from "@fluid-example/spaces-data";
 import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";

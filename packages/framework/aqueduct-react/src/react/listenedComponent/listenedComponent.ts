@@ -5,12 +5,12 @@
 
 import {
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IDirectoryValueChanged } from "@microsoft/fluid-map";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IDirectoryValueChanged } from "@fluidframework/map";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
     PrimedComponent,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 
 /**
  * PrimedComponent is a base component that is primed with a root directory and task manager. It

@@ -6,13 +6,13 @@
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import {
     FluidReactComponent,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-} from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct-react";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -18,19 +18,22 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
+    NackErrorType,
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
+import { TestWebSocketServer } from "@fluidframework/server-test-utils";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
-export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class TestDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     public static async create(
         tenantId: string,
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer): Promise<IDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer): Promise<TestDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
@@ -193,23 +196,15 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                     }
                 });
         });
-    }
 
-    /**
-     * Subscribe to events emitted by the document
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        // Register for the event on socket.io
-        this.socket.on(
-            event,
-            (...args: any[]) => {
-                this.emitter.emit(event, ...args);
-            });
-
-        // And then add the listener to our event emitter
-        this.emitter.on(event, listener);
-
-        return this;
+        this.on("newListener",(event, listener)=>{
+            this.socket.on(
+                event,
+                (...args: any[]) => {
+                    this.emitter.emit(event, ...args);
+                });
+            this.emitter.on(event, listener);
+        });
     }
 
     /**
@@ -250,5 +245,32 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public disconnect() {
         // Do nothing
+    }
+
+    /**
+     * Send a "disconnect" message on the socket.
+     * @param disconnectReason - The reason of the disconnection.
+     */
+    public disconnectClient(disconnectReason: string) {
+        this.socket.emit("disconnect", disconnectReason);
+    }
+
+    /**
+     * * Sends a "nack" message on the socket.
+     * @param code - An error code number that represents the error. It will be a valid HTTP error code.
+     * @param type - Type of the Nack.
+     * @param message - A message about the nack for debugging/logging/telemetry purposes.
+     */
+    public nackClient(code: number = 400, type: NackErrorType = NackErrorType.ThrottlingError, message: any) {
+        const nackMessage = {
+            operation: undefined,
+            sequenceNumber: -1,
+            content: {
+                code,
+                type,
+                message,
+            },
+        };
+        this.socket.emit("nack", "", [nackMessage]);
     }
 }

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentStorageService,
-} from "@microsoft/fluid-driver-definitions";
+    IDocumentDeltaConnectionEvents,
+} from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -21,7 +21,8 @@ import {
     ITokenClaims,
     IVersion,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
@@ -121,7 +122,7 @@ export class ReplayControllerStatic extends ReplayController {
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const replayNextOps = () => {
                 // Emit the ops from replay to the end every "deltainterval" milliseconds
                 // to simulate the socket stream
@@ -185,7 +186,9 @@ export class ReplayControllerStatic extends ReplayController {
     }
 }
 
-export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class ReplayDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     /**
      * Creates a new delta connection and mimics the delta connection to replay ops on it.
      * @param documentService - The document service to be used to get underlying endpoints.

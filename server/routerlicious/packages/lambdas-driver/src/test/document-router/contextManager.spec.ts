@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
-import { TestKafka, DebugLogger } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
 
 class TestContext implements IContext {

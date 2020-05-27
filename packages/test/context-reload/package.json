@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/version-test-1",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "description": "Component to test version conversion.",
   "repository": "microsoft/prague",
@@ -28,18 +28,18 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.18.0",
-    "@microsoft/fluid-base-host": "^0.18.0",
-    "@microsoft/fluid-view-interfaces": "^0.18.0",
+    "@fluidframework/aqueduct": "^0.19.0",
+    "@fluidframework/base-host": "^0.19.0",
+    "@fluidframework/view-interfaces": "^0.19.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-webpack-component-loader": "^0.18.0",
+    "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/webpack-component-loader": "^0.19.0",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "jest": "^24.9.0",
@@ -50,8 +50,8 @@
     "ts-jest": "24.1.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
-    "webpack": "^4.16.5",
-    "webpack-cli": "^3.1.2",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.4"
   },

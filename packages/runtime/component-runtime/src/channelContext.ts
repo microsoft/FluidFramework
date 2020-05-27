@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IEnvelope } from "@microsoft/fluid-runtime-definitions";
-import { IChannel } from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IEnvelope } from "@fluidframework/runtime-definitions";
+import { IChannel } from "@fluidframework/component-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
@@ -34,8 +34,8 @@ export function createServiceEndpoints(
     submitFn: (type: MessageType, content: any) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    tree?: Promise<ISnapshotTree>,
+    extraBlobs?: Promise<Map<string, string>>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,

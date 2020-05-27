@@ -1,5 +1,5 @@
 import { Layout } from "react-grid-layout";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { Templates, ISpacesReducer } from "@fluid-example/spaces-definitions";
 import { createAndStoreComponent } from "./utils";
 

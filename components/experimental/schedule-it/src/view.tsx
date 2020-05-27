@@ -17,7 +17,7 @@ import {
     IconButton,
     PrimaryButton,
 } from "office-ui-fabric-react";
-import { SharedMap } from "@microsoft/fluid-map";
+import { SharedMap } from "@fluidframework/map";
 import { PrimedContext } from "./context";
 import { IPerson, AvailabilityType, IComment, IAvailability, IDate } from "./interface";
 initializeIcons();

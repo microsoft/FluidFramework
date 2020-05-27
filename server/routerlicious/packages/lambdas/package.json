@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-server-lambdas",
-  "version": "0.1005.0",
+  "name": "@fluidframework/server-lambdas",
+  "version": "0.1006.0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -46,12 +46,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.18.0-0",
-    "@microsoft/fluid-gitresources": "^0.1005.0",
-    "@microsoft/fluid-protocol-base": "^0.1005.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1005.0",
-    "@microsoft/fluid-server-services-client": "^0.1005.0",
-    "@microsoft/fluid-server-services-core": "^0.1005.0",
+    "@fluidframework/common-utils": "^0.19.0-0",
+    "@fluidframework/gitresources": "^0.1006.0",
+    "@fluidframework/protocol-base": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/server-services-client": "^0.1006.0",
+    "@fluidframework/server-services-core": "^0.1006.0",
     "@types/semver": "^6.0.1",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
@@ -63,19 +63,19 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-server-test-utils": "^0.1005.0",
+    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/server-test-utils": "^0.1006.0",
     "@types/async": "^2.0.50",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
     "@types/nconf": "^0.0.37",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@types/webpack": "^4.41.2",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -89,6 +89,6 @@
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
-    "webpack": "^4.16.5"
+    "webpack": "^4.43.0"
   }
 }

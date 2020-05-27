@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory } from "@fluidframework/map";
 
 export function setFluidStateToRoot<SF>(
     syncedStateId: string,

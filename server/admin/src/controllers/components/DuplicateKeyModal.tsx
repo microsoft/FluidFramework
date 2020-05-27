@@ -11,7 +11,7 @@ export interface IDuplicateKeyProps {
     onOk: () => void;
 }
 
-export class DuplicateKeyModal extends React.Component<IDuplicateKeyProps, {}> {
+export class DuplicateKeyModal extends React.Component<IDuplicateKeyProps> {
     constructor(props: IDuplicateKeyProps) {
         super(props);
     }
@@ -20,21 +20,21 @@ export class DuplicateKeyModal extends React.Component<IDuplicateKeyProps, {}> {
         const { visible, onOk } = this.props;
 
         return (
-          <div>
-            <Modal
-              title={name}
-              visible={visible}
-              onOk={onOk}
-              onCancel={onOk}
-              footer={[
-                <Button href="" key="ok" type="primary" onClick={onOk}>
+            <div>
+                <Modal
+                    title={name}
+                    visible={visible}
+                    onOk={onOk}
+                    onCancel={onOk}
+                    footer={[
+                        <Button href="" key="ok" type="primary" onClick={onOk}>
                   Ok
-                </Button>,
-              ]}
-            >
-            <p>Key already exists! Click on Value to edit.</p>
-            </Modal>
-          </div>
+                        </Button>,
+                    ]}
+                >
+                    <p>Key already exists! Click on Value to edit.</p>
+                </Modal>
+            </div>
         );
     }
 }

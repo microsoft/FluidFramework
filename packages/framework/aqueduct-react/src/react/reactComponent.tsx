@@ -4,8 +4,8 @@
  */
 
 import * as React from "react";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory, ISharedMap } from "@microsoft/fluid-map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
 import {
     FluidProps,
     IFluidFunctionalComponentFluidState,

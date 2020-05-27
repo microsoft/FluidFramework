@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory, SharedMap } from "@microsoft/fluid-map";
+import { ISharedDirectory, SharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,

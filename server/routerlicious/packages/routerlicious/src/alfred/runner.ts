@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IClientManager,
     ICollection,
@@ -14,13 +14,13 @@ import {
     IWebServer,
     IWebServerFactory,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+} from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient } from "@microsoft/fluid-server-services";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+import { createMetricClient } from "@fluidframework/server-services";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
 
 export class AlfredRunner implements utils.IRunner {

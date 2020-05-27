@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache } from "@microsoft/fluid-common-utils";
+import { PromiseCache } from "@fluidframework/common-utils";
 import {
-    IRequest, IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+    IRequest,
+} from "@fluidframework/component-core-interfaces";
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { default as Axios, AxiosInstance } from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
@@ -49,10 +49,10 @@ export class ContainerUrlResolver implements IUrlResolver {
         return this.cache.addOrGet(request.url, fetchResolvedUrl);
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

@@ -8,11 +8,11 @@ import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { SharedMap } from "@microsoft/fluid-map";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { FluidComponentMap, IFluidComponent } from "@microsoft/fluid-aqueduct-react";
+} from "@fluidframework/aqueduct";
+import { SharedMap } from "@fluidframework/map";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { FluidComponentMap, IFluidComponent } from "@fluidframework/aqueduct-react";
 import {
     defaultComments,
     defaultPeople,

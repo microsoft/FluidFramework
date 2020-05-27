@@ -4,7 +4,7 @@
  */
 
 export * from "./sharedObject";
+export * from "./sharedObjectFactory";
+export * from "./types";
 export * from "./utils";
 export * from "./valueType";
-// eslint-disable-next-line import/export
-export * from "./types";

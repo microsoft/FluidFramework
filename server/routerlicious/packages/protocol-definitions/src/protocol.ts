@@ -122,6 +122,9 @@ export interface IDocumentMessage {
     // Server provided metadata about the operation
     serverMetadata?: any;
 
+    // Optional server/client provided timestamp for when the op was submitted
+    timestamp?: number;
+
     // Traces related to the packet.
     traces?: ITrace[];
 }
@@ -159,7 +162,7 @@ export interface ISequencedDocumentMessage {
     sequenceNumber: number;
 
     // The term identifier
-    term: number;
+    term: number | undefined;
 
     // The minimum sequence number for all connected clients
     minimumSequenceNumber: number;

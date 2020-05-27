@@ -4,7 +4,7 @@
  */
 
 import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent, hasTagName, TagName } from "@fluid-example/flow-util-lib";
-import { LocalReference } from "@microsoft/fluid-merge-tree";
+import { LocalReference } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
 import { ownsNode } from "../util/event";

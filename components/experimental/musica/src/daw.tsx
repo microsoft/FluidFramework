@@ -7,7 +7,7 @@
 
 // See https://github.com/danigb/soundfont-player
 // for more documentation on prop options.
-import * as React from "react";
+import React from "react";
 
 // Piano
 import { KeyboardShortcuts, Piano } from "react-piano";
@@ -25,7 +25,7 @@ import "react-widgets/dist/css/react-widgets.css";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "rc-slider/assets/index.css";
 
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory } from "@fluidframework/map";
 import { Instrument, NoteProperties, WaveProperties } from "./Player";
 import { Recorder } from "./Recorder";
 import { songLibrary, SongSelection } from "./SongLibrary";

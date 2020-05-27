@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as mocks from "@microsoft/fluid-test-runtime-utils";
+import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 export const LocationBase: string = "src/test/snapshots/";
 
 export const supportedVersions = new Map<string, any>([
-    ["legacy",{}],
-    ["v1",{ newMergeTreeSnapshotFormat: true }]]);
+    ["legacy", {}],
+    ["v1", { newMergeTreeSnapshotFormat: true }]]);
 
 export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {

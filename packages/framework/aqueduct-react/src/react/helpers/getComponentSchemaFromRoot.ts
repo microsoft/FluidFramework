@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory } from "@fluidframework/map";
 import { IFluidSchemaHandles } from "../interface";
 
 export const getComponentSchemaFromRoot = (

@@ -5,7 +5,7 @@ uid: dds
 # Distributed Data Structures
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
-as such as [SharedMap](./SharedMap.md) and the various types in the @microsoft/fluid-sequence package, are eventually
+as such as [SharedMap](./SharedMap.md) and the various types in the @fluidframework/sequence package, are eventually
 consistent. The Fluid runtime manages these data structures; as changes are made locally and remotely, they are merged
 in seamlessly by the runtime.
 

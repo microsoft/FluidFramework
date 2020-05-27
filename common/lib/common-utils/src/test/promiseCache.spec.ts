@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseCache } from "../promiseCache";
 

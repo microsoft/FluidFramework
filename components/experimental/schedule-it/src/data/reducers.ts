@@ -4,8 +4,8 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { SharedMap } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { SharedMap } from "@fluidframework/map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     IDate,
     IPerson,

@@ -9,8 +9,8 @@ import {
     IFluidDataProps,
     FluidToViewMap,
     ViewToFluidMap,
-} from "@microsoft/fluid-aqueduct-react";
-import { SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/aqueduct-react";
+import { SharedMap } from "@fluidframework/map";
 import {
     CommentReducer,
     PersonReducer,
