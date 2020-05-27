@@ -441,11 +441,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
+            // Log current sequence number - useful if we have access to a file to understand better
+            // what op caused trouble (if it's related to op processing).
+            // Runtime may provide sequence number as part of error object - this may not match DeltaManager
+            // knowledge as old ops are processed when components / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    // record sequence number for easier debugging
-                    sequenceNumber: this._deltaManager.currentSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.currentSequenceNumber,
                 },
                 error,
             );
