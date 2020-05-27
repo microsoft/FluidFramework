@@ -36,10 +36,14 @@ import {
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { CreateContainerError, readAndParse } from "@fluidframework/driver-utils";
+import {
+    BlobCacheStorageService,
+    CreateContainerError,
+    buildSnapshotTree,
+    readAndParse,
+} from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
-    buildSnapshotTree,
     isSystemType,
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -76,7 +80,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -612,7 +615,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
                 key,
-                value,
+                typeof value === "string" ? value : Promise.resolve(value),
                 this,
                 this.storage,
                 this.containerScope,
@@ -1142,18 +1145,21 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null = null;
+                let flatBlobsP = Promise.resolve(flatBlobs);
+                let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
-                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobs' validity is contingent on snapshotTreeP's resolution
+                    flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
-                    snapshotTree,
+                    snapshotTreeP,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
