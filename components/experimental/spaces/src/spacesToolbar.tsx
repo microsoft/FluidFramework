@@ -18,6 +18,100 @@ import "./spacesToolbarStyle.css";
 
 initializeIcons();
 
+interface ISpacesToolbarComponentItemProps {
+    components: IInternalRegistryEntry[];
+    addComponent(type: string): void;
+}
+
+const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
+    (props: React.PropsWithChildren<ISpacesToolbarComponentItemProps>) => {
+        const [open, setOpen] = React.useState<boolean>(false);
+
+        const componentsButton = (
+            <Button
+                iconProps={{ iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                className="spaces-toolbar-top-level-button"
+                onClick={() => setOpen(!open)}
+            >
+                {"Add Components"}
+            </Button>
+        );
+        const componentButtonList = props.components.map((supportedComponent) => {
+            return (
+                <Button
+                    className="spaces-toolbar-option-button"
+                    key={`componentToolbarButton-${supportedComponent.type}`}
+                    iconProps={{ iconName: supportedComponent.fabricIconName }}
+                    onClick={() => {
+                        if (props.addComponent) {
+                            props.addComponent(supportedComponent.type);
+                        }
+                        setOpen(false);
+                    }}
+                >
+                    {supportedComponent.friendlyName}
+                </Button>
+            );
+        });
+
+        return (
+            <Collapsible
+                open={open}
+                trigger={componentsButton}
+                className="spaces-toolbar-item"
+                openedClassName="spaces-toolbar-item"
+            >
+                {componentButtonList}
+            </Collapsible>
+        );
+    };
+
+interface ISpacesToolbarTemplateItemProps {
+    applyTemplate?(template: Templates): void;
+}
+
+const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
+    (props: React.PropsWithChildren<ISpacesToolbarTemplateItemProps>) => {
+        const [open, setOpen] = React.useState<boolean>(false);
+        const templateButton = (
+            <Button
+                iconProps={{ iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                className="spaces-toolbar-top-level-button"
+                onClick={() => setOpen(!open)}
+            >
+                {"Add Templates"}
+            </Button>
+        );
+        const templateButtonList: JSX.Element[] = [];
+        for (const template of Object.keys(Templates)) {
+            templateButtonList.push(
+                <Button
+                    className="spaces-toolbar-option-button"
+                    key={`componentToolbarButton-${template}`}
+                    onClick={() => {
+                        if (props.applyTemplate) {
+                            props.applyTemplate(Templates[template]);
+                        }
+                        setOpen(false);
+                    }}
+                >
+                    {Templates[template]}
+                </Button>,
+            );
+        }
+
+        return (
+            <Collapsible
+                open={open}
+                trigger={templateButton}
+                className="spaces-toolbar-item"
+                openedClassName="spaces-toolbar-item"
+            >
+                {templateButtonList}
+            </Collapsible>
+        );
+    };
+
 interface ISpacesToolbarProps {
     spacesProps: ISpacesProps;
     components: IInternalRegistryEntry[];
@@ -27,112 +121,47 @@ interface ISpacesToolbarProps {
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
     (props: React.PropsWithChildren<ISpacesToolbarProps>) => {
-        const templatesAvailable = props.spacesProps.templatesAvailable ?? false;
+        const toolbarItems: JSX.Element[] = [];
 
-        const [componentListOpen, setComponentListOpen] = React.useState<boolean>(false);
-        const [templateListOpen, setTemplateListOpen] = React.useState<boolean>(false);
-
-        const componentsButton = (
-            <Button
-                iconProps={{ iconName: componentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                className="spaces-toolbar-top-level-button"
-                onClick={() => setComponentListOpen(!componentListOpen)}
-            >
-                {"Add Components"}
-            </Button>
-        );
-        const componentButtonList: JSX.Element[] = [];
-        if (componentListOpen) {
-            props.components.forEach(((supportedComponent: IInternalRegistryEntry) => {
-                componentButtonList.push(
-                    <Button
-                        className="spaces-toolbar-option-button"
-                        key={`componentToolbarButton-${supportedComponent.type}`}
-                        iconProps={{ iconName: supportedComponent.fabricIconName }}
-                        onClick={() => {
-                            if (props.spacesProps.addComponent) {
-                                props.spacesProps.addComponent(supportedComponent.type);
-                            }
-                            setComponentListOpen(false);
-                        }}
-                    >
-                        {supportedComponent.friendlyName}
-                    </Button>,
-                );
-            }));
-        }
-        let templateCollapsible: JSX.Element | undefined;
-        if (templatesAvailable) {
-            const templateButtonList: JSX.Element[] = [];
-            const templateButton = (
+        // Add the edit button
+        toolbarItems.push(
+            <div key="edit" className="spaces-toolbar-item">
                 <Button
-                    iconProps={{ iconName: templateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                    id="edit"
                     className="spaces-toolbar-top-level-button"
-                    onClick={() => setTemplateListOpen(!templateListOpen)}
+                    iconProps={{ iconName: "BullseyeTargetEdit" }}
+                    onClick={() => {
+                        const newEditableState = !props.editable;
+                        props.setEditable(newEditableState);
+                    }}
                 >
-                    {"Add Templates"}
+                    {`Edit: ${props.editable}`}
                 </Button>
+            </div>,
+        );
+
+        if (props.editable) {
+            toolbarItems.push(
+                <SpacesToolbarComponentItem
+                    key="component"
+                    components={props.components}
+                    addComponent={props.spacesProps.addComponent}
+                />,
             );
-            if (templateListOpen) {
-                // eslint-disable-next-line no-restricted-syntax
-                for (const template in Templates) {
-                    if (template) {
-                        templateButtonList.push(
-                            <Button
-                                className="spaces-toolbar-option-button"
-                                key={`componentToolbarButton-${template}`}
-                                onClick={() => {
-                                    if (props.spacesProps.applyTemplate) {
-                                        props.spacesProps.applyTemplate(Templates[template]);
-                                    }
-                                    setTemplateListOpen(false);
-                                }}
-                            >
-                                {Templates[template]}
-                            </Button>,
-                        );
-                    }
-                }
+
+            if (props.spacesProps.templatesAvailable) {
+                toolbarItems.push(
+                    <SpacesToolbarTemplateItem
+                        key="template"
+                        applyTemplate={props.spacesProps.applyTemplate}
+                    />,
+                );
             }
-            templateCollapsible = (
-                <Collapsible
-                    open={templateListOpen}
-                    trigger={templateButton}
-                    className="spaces-toolbar-item"
-                    openedClassName="spaces-toolbar-item"
-                >
-                    {templateButtonList}
-                </Collapsible>
-            );
         }
+
         return (
             <div className="spaces-toolbar">
-                <div className="spaces-toolbar-item">
-                    <Button
-                        id="edit"
-                        className="spaces-toolbar-top-level-button"
-                        iconProps={{ iconName: "BullseyeTargetEdit" }}
-                        onClick={() => {
-                            const newEditableState = !props.editable;
-                            props.setEditable(newEditableState);
-                        }}
-                    >
-                        {`Edit: ${props.editable}`}
-                    </Button>
-                </div>
-                {props.editable ?
-                    <>
-                        <Collapsible
-                            open={componentListOpen}
-                            trigger={componentsButton}
-                            className="spaces-toolbar-item"
-                            openedClassName="spaces-toolbar-item"
-                        >
-                            {componentButtonList}
-                        </Collapsible>
-                        {templateCollapsible}
-                    </>
-                    : undefined}
+                {toolbarItems}
             </div>
         );
     };
