@@ -299,68 +299,44 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                // Note: There's a race condition here - another caller may come past the undefined check
-                // while the first caller is awaiting later async code in this block.
-                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get({
-                    file: this.fileEntry,
-                    key: CacheKey.Snapshot,
-                });
-                if (cachedSnapshot === undefined) {
-                    const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+                const hostPolicy = {
+                    deltas: 1,
+                    channels: 1,
+                    blobs: 2,
+                    ...this.hostPolicy.snapshotOptions,
+                };
 
-                    const hostPolicy = {
-                        deltas: 1,
-                        channels: 1,
-                        blobs: 2,
-                        ...this.hostPolicy.snapshotOptions,
-                    };
+                let delimiter = "?";
+                let options = "";
+                for (const [key, value] of Object.entries(hostPolicy)) {
+                    options = `${options}${delimiter}${key}=${value}`;
+                    delimiter = "&";
+                }
 
-                    let delimiter = "?";
-                    let options = "";
-                    for (const [key, value] of Object.entries(hostPolicy)) {
-                        options = `${options}${delimiter}${key}=${value}`;
-                        delimiter = "&";
-                    }
+                let cachedSnapshot: IOdspSnapshot | undefined;
 
-                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
-
-                    // This event measures only successful cases of getLatest call (no tokens, no retries).
-                    const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
-
-                    try {
-                        const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        cachedSnapshot = response.content;
-
-                        const props = {
-                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
-                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
-                            ops: cachedSnapshot.ops.length,
-                            sprequestguid: response.headers.get("sprequestguid"),
-                            sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                            contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
-                            bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
-                        };
-                        event.end(props);
-                    } catch (error) {
-                        event.cancel({}, error);
-                        throw error;
-                    }
-
-                    assert(this._snapshotCacheEntry === undefined);
-                    this._snapshotCacheEntry = {
+                // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
+                if (refresh) {
+                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                } else {
+                    const cachedSnapshotP = this.cache.persistedCache.get({
                         file: this.fileEntry,
                         key: CacheKey.Snapshot,
-                        version: cachedSnapshot.id,
-                    };
+                    }) as Promise<IOdspSnapshot>;
 
-                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                    // want to use the same getLatest result.
-                    this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot);
-                    this.cache.persistedCache.updateExpiry(this._snapshotCacheEntry, this.snapshotCacheExpiry, this.snapshotCacheExpiry);
+                    if (this.hostPolicy.concurrentSnapshotFetch) {
+                        const snapshotP = this.fetchSnapshot(options, refresh);
+                        cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
+                        cachedSnapshot = await cachedSnapshotP;
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                        }
+                    }
                 }
+
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
@@ -450,6 +426,49 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 };
             });
         });
+    }
+
+    private async fetchSnapshot(options: string, refresh: boolean) {
+        const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+
+        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
+
+        // This event measures only successful cases of getLatest call (no tokens, no retries).
+        const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+
+        let cachedSnapshot: IOdspSnapshot;
+        try {
+            const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+            cachedSnapshot = response.content;
+            const props = {
+                trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
+                blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
+                ops: cachedSnapshot.ops.length,
+                sprequestguid: response.headers.get("sprequestguid"),
+                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
+                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+            };
+            event.end(props);
+        }
+        catch (error) {
+            event.cancel({}, error);
+            throw error;
+        }
+        assert(this._snapshotCacheEntry === undefined);
+        this._snapshotCacheEntry = {
+            file: this.fileEntry,
+            key: CacheKey.Snapshot,
+            version: cachedSnapshot.id,
+        };
+        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+        // want to use the same getLatest result.
+        this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot);
+        this.cache.persistedCache.updateExpiry(this._snapshotCacheEntry, this.snapshotCacheExpiry, this.snapshotCacheExpiry);
+        return cachedSnapshot;
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {

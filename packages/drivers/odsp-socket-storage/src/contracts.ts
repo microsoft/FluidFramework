@@ -253,4 +253,11 @@ export interface ISnapshotOptions {
 
 export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
+
+    /**
+     * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
+     * Whatever comes first wins and container is loaded from it
+     * If storage comes last, newly fetch snapshot is pushed into cache for future usage.
+     */
+    concurrentSnapshotFetch?: boolean;
 }
