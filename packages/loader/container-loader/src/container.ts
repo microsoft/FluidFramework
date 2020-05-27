@@ -448,7 +448,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    sequenceNumber: (error as any)?.sequenceNumber ?? this._deltaManager.referenceSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.referenceSequenceNumber,
                 },
                 error,
             );

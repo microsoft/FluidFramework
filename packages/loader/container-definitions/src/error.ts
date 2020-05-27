@@ -96,6 +96,8 @@ export interface IErrorBase {
     readonly message: string;
     readonly canRetry: boolean;
     readonly online?: string;
+    /** Sequence number when error happened */
+    sequenceNumber?: number;
 }
 
 export interface IGenericError extends IErrorBase {

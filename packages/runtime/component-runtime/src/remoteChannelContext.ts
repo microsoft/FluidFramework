@@ -167,7 +167,7 @@ export class RemoteChannelContext implements IChannelContext {
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);
-                (error as any).sequenceNumber = message.sequenceNumber;
+                error.sequenceNumber = message.sequenceNumber;
                 throw error;
             }
         }
