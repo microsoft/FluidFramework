@@ -9,19 +9,28 @@ import { DebugLogger, Deferred, PromiseTimer, Timer } from "@fluidframework/comm
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-// subset of IHostRuntime used by UpgradeManager
+// subset of IContainerRuntime used by UpgradeManager
 export interface IUpgradeRuntime {
     getQuorum(): IQuorum;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
 }
 
 export interface IUpgradeFnConfig {
-    maxTime?: number, // maximum time before proposing
-    opTime?: number, // time without ops before proposing
-    clients?: number, // propose if and when fewer than this number of interactive clients connected
+    /**
+     * Maximum time in ms before proposing, regardless of other factors
+     */
+    maxTime?: number,
+    /**
+     * Time in ms without ops before proposing
+     */
+    opTime?: number,
+    /**
+     * Delay proposing until this number of interactive clients or fewer are connected
+     */
+    clients?: number,
 }
 
-const defaultUpgradeFnConfig = {
+const defaultUpgradeFnConfig: IUpgradeFnConfig = {
     maxTime: 30000,
     opTime: 10000,
     clients: 1,
@@ -123,10 +132,13 @@ export class UpgradeManager extends EventEmitter {
 
     /**
      * Initiate an upgrade.
-     * @param code - code details for upgrade
+     * @param code - Code details for upgrade
      * @param highPriority - If true, propose upgrade immediately. If false, wait for an opportune time to upgrade.
-     * @param upgradeFn - returns a promise that will initiate a low priority upgrade on resolve
-     * @param upgradeFnConfig - configure options for default upgradeFn
+     * @param upgradeFn - Returns a promise that will initiate a low priority upgrade on resolve. Ignored if
+     * highPriority is true.
+     * @param upgradeFnConfig - Configuration options for default upgradeFn. Ignored if highPriority is true or
+     * upgradeFn is provided.
+     * @returns A promise that will resolve once the proposal has been accepted or rejected.
      */
     public async upgrade(
         code: IFluidCodeDetails,
