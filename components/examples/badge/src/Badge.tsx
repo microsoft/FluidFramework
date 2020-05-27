@@ -22,7 +22,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
-    public get IComponentHTMLView() {return this;}
+    public get IComponentHTMLView() { return this; }
 
     private readonly currentId: string = "value";
     private readonly historyId: string = "history";
@@ -100,7 +100,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     /**
      * In order to retrieve values from the SharedDirectory/Map, we must use await, so we need an async function.
      * This function stashes local references to the Shared objects that we want to pass into the React component
-     * in render (see createJSXElement). That way our render method, which cannot be async, can pass in the Shared
+     * in render (see FluidReactClient). That way our render method, which cannot be async, can pass in the Shared
      * object refs as props to the React component.
      */
     protected async componentHasInitialized() {
@@ -110,7 +110,10 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     }
 
     public render(div: HTMLElement) {
-        ReactDOM.render(React.createElement(this.FluidReactClient), div);
+        ReactDOM.render(
+            React.createElement(this.FluidReactClient),
+            div,
+        );
     }
 
     public remove() {
@@ -149,6 +152,12 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
             this.currentCell.set(newItem);
         }
     };
+
+    /**
+    * The FluidReactClient is a stateful functional component that stores Fluid queries in state
+    * and passes those queries to the BadgeView. The queries state is updated each time that the Fluid DDS's
+    * are modified by supplied event handlers.
+    */
 
     public FluidReactClient: React.FC = (): JSX.Element => {
         const [queries, setQueries] = React.useState(this.queries);
