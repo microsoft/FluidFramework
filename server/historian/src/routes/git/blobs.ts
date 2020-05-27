@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../../services";
@@ -62,7 +62,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
             if (useCache) {
                 response.setHeader("Cache-Control", "public, max-age=31536000");
             }
-            response.status(200).write(new Buffer(blob.content, "base64"), () => response.end());
+            response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
         },
         (error) => {
             response.status(400).json(error);
