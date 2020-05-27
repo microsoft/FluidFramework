@@ -11,7 +11,6 @@ import {
 } from "office-ui-fabric-react";
 import {
     IInternalRegistryEntry,
-    ISpacesProps,
     Templates,
 } from ".";
 import "./spacesToolbarStyle.css";
@@ -113,10 +112,12 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
     };
 
 interface ISpacesToolbarProps {
-    spacesProps: ISpacesProps;
     components: IInternalRegistryEntry[];
     editable: boolean;
     setEditable: (editable: boolean) => void;
+    addComponent(type: string): void;
+    templatesAvailable: boolean;
+    applyTemplate(template: Templates): void;
 }
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
@@ -145,15 +146,15 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 <SpacesToolbarComponentItem
                     key="component"
                     components={props.components}
-                    addComponent={props.spacesProps.addComponent}
+                    addComponent={props.addComponent}
                 />,
             );
 
-            if (props.spacesProps.templatesAvailable) {
+            if (props.templatesAvailable) {
                 toolbarItems.push(
                     <SpacesToolbarTemplateItem
                         key="template"
-                        applyTemplate={props.spacesProps.applyTemplate}
+                        applyTemplate={props.applyTemplate}
                     />,
                 );
             }
