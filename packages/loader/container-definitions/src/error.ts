@@ -57,6 +57,13 @@ export enum ErrorType {
      * We can not reach server due to computer being offline.
      */
     offlineError,
+
+    /**
+     * Snapshot is too big. Host application specified limit for snapshot size, and snapshot was bigger
+     * that that limit, thus request failed. Hosting application is expected to have fall-back behavior for
+     * such case.
+     */
+    snapshotTooBig,
 }
 
 /**
@@ -75,10 +82,9 @@ export type ContainerErrorOrWarning = IThrottlingWarning;
  * delta connection are considered to be noncritical, ignoring 'canRetry' property.
  */
 export type CriticalContainerError =
-    IGenericError | ContainerErrorOrWarning |
-    IOutOfStorageError | IInvalidFileNameError |
-    IAuthorizationError | IFileNotFoundOrAccessDeniedError |
-    IWriteError | IGenericNetworkError | IOfflineError;
+    ContainerErrorOrWarning |
+    INetworkErrorBasic |
+    IGenericError | IGenericNetworkError;
 
 /**
  * List of warnings raised on container that are not critical.
@@ -113,20 +119,19 @@ export interface IGenericNetworkError extends IErrorBase {
     readonly statusCode?: number;
 }
 
-export interface IAuthorizationError extends IErrorBase {
-    readonly errorType: ErrorType.authorizationError;
-}
+/** Types of errors that do not contain any extra information other then error type */
+export type NetworkErrorBasicTypes =
+    ErrorType.authorizationError |
+    ErrorType.fileNotFoundOrAccessDeniedError |
+    ErrorType.outOfStorageError |
+    ErrorType.invalidFileNameError |
+    ErrorType.writeError |
+    ErrorType.offlineError |
+    ErrorType.snapshotTooBig;
 
-export interface IFileNotFoundOrAccessDeniedError extends IErrorBase {
-    readonly errorType: ErrorType.fileNotFoundOrAccessDeniedError;
-}
-
-export interface IOutOfStorageError extends IErrorBase {
-    readonly errorType: ErrorType.outOfStorageError;
-}
-
-export interface IInvalidFileNameError extends IErrorBase {
-    readonly errorType: ErrorType.invalidFileNameError;
+/** Types of errors that do not contain any extra information other then error type */
+export interface INetworkErrorBasic extends IErrorBase {
+    readonly errorType: NetworkErrorBasicTypes;
 }
 
 export interface ISummarizingWarning extends IErrorBase {
@@ -135,12 +140,4 @@ export interface ISummarizingWarning extends IErrorBase {
      * Whether this error has already been logged. Used to avoid logging errors twice.
      */
     readonly logged: boolean;
-}
-
-export interface IWriteError extends IErrorBase {
-    readonly errorType: ErrorType.writeError;
-}
-
-export interface IOfflineError extends IErrorBase {
-    readonly errorType: ErrorType.offlineError;
 }
