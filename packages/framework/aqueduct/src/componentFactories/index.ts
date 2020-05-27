@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./indirectComponentFactory";
 export * from "./primedComponentFactory";
 export * from "./sharedComponentFactory";
