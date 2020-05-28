@@ -1218,7 +1218,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
-            this.submit(MessageType.Attach, message, undefined /* localOpMetadata */);
+            this.submit(MessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1364,7 +1364,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             }
 
             const clientSequenceNumber =
-                this.submit(MessageType.Summarize, summaryMessage, undefined /* localOpMetadata */);
+                this.submit(MessageType.Summarize, summaryMessage);
 
             return {
                 ...attemptData,
@@ -1421,7 +1421,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1654,7 +1654,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     version: this.version,   // Back-compat
                 };
                 debug(`Requesting remote help for ${helpTasks.robot}`);
-                this.submit(MessageType.RemoteHelp, remoteHelpMessage, undefined /* localOpMetadata */);
+                this.submit(MessageType.RemoteHelp, remoteHelpMessage);
             }
         }
     }

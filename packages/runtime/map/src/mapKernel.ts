@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -589,7 +589,7 @@ export class MapKernel {
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
-                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
                     "Received out of order op when there is an unackd clear message");
             }
             // If we have an unack'd clear, we can ignore all ops.
@@ -600,7 +600,7 @@ export class MapKernel {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
-                assert(localOpMetadata !== undefined,
+                strongAssert(localOpMetadata !== undefined,
                     `pendingMessageId is missing from the local client's ${op.type} operation`);
                 const pendingMessageId = localOpMetadata as number;
                 const pendingKeyMessageId = this.pendingKeys.get(op.key);
@@ -626,7 +626,7 @@ export class MapKernel {
             {
                 process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
-                        assert(localOpMetadata !== undefined,
+                        strongAssert(localOpMetadata !== undefined,
                             "pendingMessageId is missing from the local client's clear operation");
                         const pendingMessageId = localOpMetadata as number;
                         if (this.pendingClearMessageId === pendingMessageId) {

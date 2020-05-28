@@ -43,6 +43,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -382,7 +383,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public save(tag: string) {
         this.verifyNotClosed();
-        this.submit(MessageType.Save, tag, undefined /* localOpMetadata */);
+        this.submit(MessageType.Save, tag);
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -392,7 +393,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         file.id = blob.id;
         file.url = blob.url;
 
-        this.submit(MessageType.BlobUploaded, blob, undefined /* localOpMetadata */);
+        this.submit(MessageType.BlobUploaded, blob);
 
         return file;
     }
@@ -558,14 +559,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            this.submit(MessageType.Attach, message, undefined /* localOpMetadata */);
+            this.submit(MessageType.Attach, message);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata: unknown): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content, localOpMetadata);
     }
@@ -586,7 +587,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 // For Operations, find the right channel and trigger resubmission on it.
                 const envelope = content as IEnvelope;
                 const channelContext = this.contexts.get(envelope.address);
-                assert(channelContext, "There should be a channel context for the op");
+                strongAssert(channelContext, "There should be a channel context for the op");
 
                 channelContext.reSubmit(envelope.contents, localOpMetadata);
 

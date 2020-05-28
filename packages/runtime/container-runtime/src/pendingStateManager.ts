@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
 import { ErrorWithProps } from "@fluidframework/driver-utils";
 import {
@@ -67,7 +66,7 @@ export class PendingStateManager {
     }
 
     public setConnectionState(connected: boolean) {
-        assert(this.connected === connected);
+        strongAssert(this.connected === connected, "The connection state is not consistent with the runtime");
 
         if (connected) {
             this.replayPendingStates();
@@ -174,7 +173,7 @@ export class PendingStateManager {
         // for this batch.
         if (pendingFlushMode === FlushMode.Automatic) {
             // We should have been processing a batch.
-            assert(this.isProcessingBatch, "Did not receive batch messages as expected");
+            strongAssert(this.isProcessingBatch, "Did not receive batch messages as expected");
 
             const batchCount = this.pendingBatchMessages.length;
             const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
@@ -182,12 +181,13 @@ export class PendingStateManager {
 
             // If there is a single message in the batch, it should not have any batch metadata.
             if (batchCount === 1) {
-                assert(batchBeginMetadata === undefined, "Batch with single message should not have batch metadata");
+                strongAssert(batchBeginMetadata === undefined,
+                    "Batch with single message should not have batch metadata");
             }
 
             // Assert that we got batch begin and end metadata.
-            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
-            assert(batchEndMetadata === false, "Did not receive batch end metadata");
+            strongAssert(batchBeginMetadata === true, "Did not receive batch begin metadata");
+            strongAssert(batchEndMetadata === false, "Did not receive batch end metadata");
 
             this.pendingBatchMessages = [];
             this.isProcessingBatch = false;
