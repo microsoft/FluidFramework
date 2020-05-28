@@ -4,28 +4,27 @@
  */
 
 import assert from "assert";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
+import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
 import { ErrorWithProps } from "@fluidframework/driver-utils";
 import {
     MessageType,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import Deque from "double-ended-queue";
 import { ContainerRuntime } from "./containerRuntime";
 
-export class GenericMessageProcessingError extends ErrorWithProps implements IGenericError {
-    readonly errorType = ErrorType.genericError;
+export class DataCorruptionError extends ErrorWithProps implements IDataCorruptionError {
+    readonly errorType = ErrorType.dataCorruptionError;
     readonly canRetry = false;
 
     constructor(
         errorMessage: string,
         readonly clientId: string,
         readonly sequenceNumber: number,
-        readonly receivedClientSequenceNumber: number,
-        readonly expectedClientSequenceNumber: number | undefined,
-        readonly error: any = new Error(errorMessage),
+        readonly clientSequenceNumber: number,
+        readonly expectedClientSequenceNumber?: number,
     ) {
         super(errorMessage);
     }
@@ -57,10 +56,10 @@ type IPendingState = IPendingMessage | IPendingFlushMode;
 export class PendingStateManager {
     private readonly pendingStates = new Deque<IPendingState>();
 
-    // Indicates whether we are processing a batch of messages.
+    // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
     // This is the last message that we processed. This is used to verify that batch end metadata is correct.
-    private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+    private pendingBatchMessages: ISequencedDocumentMessage[] = [];
 
     private get connected(): boolean {
         return this.containerRuntime.connected;
@@ -78,10 +77,7 @@ export class PendingStateManager {
         return !this.pendingStates.isEmpty();
     }
 
-    constructor(
-        private readonly containerRuntime: ContainerRuntime,
-        private readonly logger: ITelemetryLogger,
-    ) {}
+    constructor(private readonly containerRuntime: ContainerRuntime) {}
 
     public onFlushModeUpdated(flushMode: FlushMode) {
         // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
@@ -117,105 +113,83 @@ export class PendingStateManager {
     }
 
     public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
-        let flushMode: FlushMode | undefined;
         let pendingState = this.pendingStates.peekFront();
+        strongAssert(pendingState, "No pending message found for this remote message");
 
-        // Remove all the "flush" states from the queue and get the first "message".
-        while (pendingState?.type === "flush") {
-            flushMode = pendingState.flushMode;
+        // Process "flush" type messages first, if any.
+        while (pendingState.type !== "message") {
+            // Process the pending "flush" state and verify that we get correct batch metadata.
+            this.processFlushState(message, pendingState);
+
+            // Get the next message from the pending queue.
             this.pendingStates.shift();
             pendingState = this.pendingStates.peekFront();
+            strongAssert(pendingState, "No pending message found for this remote message");
         }
 
-        // There should always be a pending message for a message for the local client. The clientSequenceNumber of the
-        // incoming message must match that of the pending message.
-        if (pendingState === undefined ||
-            pendingState.type !== "message" ||
-            pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
+        // The clientSequenceNumber of the incoming message must match that of the pending message.
+        if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this indicates data corruption.
-            const error = new GenericMessageProcessingError(
+            const error = new DataCorruptionError(
                 "Unexpected ack received",
                 message.clientId,
                 message.sequenceNumber,
                 message.clientSequenceNumber,
-                pendingState?.type === "message" ? pendingState.clientSequenceNumber : undefined);
+                pendingState.clientSequenceNumber);
 
             this.containerRuntime.closeFn(error);
             return;
         }
 
-        // Verify that the batch metadata, if any, is correct.
-        this.verifyBatchMetadata(message, flushMode);
+        // If we are processing a batch, add this message to the pending batch queue.
+        if (this.isProcessingBatch) {
+            this.pendingBatchMessages.push(message);
+        }
 
         // Remove the first message from the pending list since it has been acknowledged.
         this.pendingStates.shift();
-
-        // Store this message as the last processed one.
-        this.lastProcessedMessage = message;
 
         return pendingState.localOpMetadata;
     }
 
     /**
-     * Verifies that the batch metadata is received as the per the FlushMode setting. If logs if we do not get batch
-     * metadata as expected or if we get unexpected batch metadata.
+     * Verifies that the batch metadata is received as the per the "flush" state.
      * @param message - The message we are currently processing.
-     * @param pendingFlushMode - The FlushMode that was set just prior to this message.
+     * @param pendingState - The "flush" state to process.
      */
-    private verifyBatchMetadata(message: ISequencedDocumentMessage, pendingFlushMode: FlushMode | undefined) {
-        const batchMetadata = message.metadata?.batch;
+    private processFlushState(message: ISequencedDocumentMessage, pendingState: IPendingState) {
+        strongAssert(pendingState.type === "flush", "Invalid pending state type");
 
-        // If FlushMode was set to Manual prior to this message, it must have batch begin metadata: { batch: true }.
+        const pendingFlushMode = pendingState.flushMode;
+
+        // If FlushMode was set to Manual prior to this message, this is the beginning of a batch.
         if (pendingFlushMode === FlushMode.Manual) {
-            if (batchMetadata !== true) {
-                this.logger.sendErrorEvent({
-                    eventName: "BatchBeginNotReceived",
-                    clientId: message.clientId,
-                    sequenceNumber: message.sequenceNumber,
-                    clientSequenceNumber: message.clientSequenceNumber,
-                });
-            }
+            this.pendingBatchMessages = [];
             this.isProcessingBatch = true;
             return;
         }
 
-        // If FlushMode is set to Automatic, the last processed message must have batch end metadata: { batch: false }.
-        // An expection to this (and the "BatchBeginNotReceived" event above) is if there is only one message in the
-        // batch. We cannot check for that condition here since we do not know when "FlushMode.Manual" was set.
-        // However, this case is easily verifiable by looking the two events. If the sequenceNumber in these two events
-        // are the same, then we have hit this case.
+        // If FlushMode was set to Automatic, a batch just ended. Verify that we received the correct batch metadata
+        // for this batch.
         if (pendingFlushMode === FlushMode.Automatic) {
-            const lastMessagebatchMetadata = this.lastProcessedMessage?.metadata?.batch;
-            if (lastMessagebatchMetadata !== false) {
-                this.logger.sendErrorEvent({
-                    eventName: "BatchEndNotReceived",
-                    clientId: this.lastProcessedMessage?.clientId,
-                    sequenceNumber: this.lastProcessedMessage?.sequenceNumber,
-                    clientSequenceNumber: this.lastProcessedMessage?.clientSequenceNumber,
-                });
+            // We should have been processing a batch.
+            assert(this.isProcessingBatch, "Did not receive batch messages as expected");
+
+            const batchCount = this.pendingBatchMessages.length;
+            const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
+            const batchEndMetadata = this.pendingBatchMessages[batchCount - 1].metadata?.batch;
+
+            // If there is a single message in the batch, it should not have any batch metadata.
+            if (batchCount === 1) {
+                assert(batchBeginMetadata === undefined, "Batch with single message should not have batch metadata");
             }
+
+            // Assert that we got batch begin and end metadata.
+            assert(batchBeginMetadata === true, "Did not receive batch begin metadata");
+            assert(batchEndMetadata === false, "Did not receive batch end metadata");
+
+            this.pendingBatchMessages = [];
             this.isProcessingBatch = false;
-            return;
-        }
-
-        // We should not recieve batch begin metadata if FlushMode was not set prior to this message.
-        if (batchMetadata === true) {
-            this.logger.sendErrorEvent({
-                eventName: "UnexpectedBatchBegin",
-                clientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-            });
-        }
-
-        // We should not receive batch end metadata if we are not in the middle of processing a batch.
-        if (batchMetadata === false && this.isProcessingBatch === false) {
-            this.logger.sendErrorEvent({
-                eventName: "UnexpectedBatchEnd",
-                clientId: message.clientId,
-                sequenceNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-            });
         }
     }
 

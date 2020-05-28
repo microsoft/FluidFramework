@@ -1482,6 +1482,10 @@ class SubDirectory implements IDirectory {
         localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
+            if (local) {
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                    "Received out of order storage op when there is an unackd clear message");
+            }
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }

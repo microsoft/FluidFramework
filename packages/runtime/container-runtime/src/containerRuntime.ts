@@ -646,10 +646,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.deltaSender = this.deltaManager;
 
-        this.pendingStateManager = new PendingStateManager(
-            this,
-            ChildLogger.create(this.logger, "PendingStateManager"),
-        );
+        this.pendingStateManager = new PendingStateManager(this);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);

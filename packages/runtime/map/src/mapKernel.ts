@@ -588,6 +588,10 @@ export class MapKernel {
         localOpMetadata: unknown,
     ): boolean {
         if (this.pendingClearMessageId !== -1) {
+            if (local) {
+                assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                    "Received out of order op when there is an unackd clear message");
+            }
             // If we have an unack'd clear, we can ignore all ops.
             return false;
         }
