@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { Container } from "@microsoft/fluid-container-loader";
-import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
+import { Container } from "@fluidframework/container-loader";
+import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
 interface IWindow extends Window {
     startLoading(): Promise<void>;
