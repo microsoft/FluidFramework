@@ -14,6 +14,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
+import { v4 as uuid } from "uuid";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject, ISharedObjectEvents } from "./types";
 
@@ -94,7 +95,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
             // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, this.attributes.type, { SharedObjectId: id });
+            runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
 
         this.on("error", (error: any) => {
             runtime.emit("error", error);
