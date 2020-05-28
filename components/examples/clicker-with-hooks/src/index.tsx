@@ -179,7 +179,7 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
         });
         const reducerViewToFluidMap: ViewToFluidMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
         reducerViewToFluidMap.set("value", {
-            rootKey: "counter",
+            fluidKey: "counter",
         });
         ReactDOM.render(
             <div>

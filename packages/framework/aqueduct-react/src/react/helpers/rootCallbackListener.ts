@@ -37,7 +37,7 @@ export const rootCallbackListener = <SV,SF>(
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
     if (!local) {
         const viewToFluidKeys: string[] = viewToFluid
-            ? Array.from(viewToFluid.values()).map((item) => item.rootKey as string)
+            ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
             : [];
         if (change.key === `syncedState-${syncedStateId}`) {
             // If the update is to the synced Fluid state, update both the Fluid and view states

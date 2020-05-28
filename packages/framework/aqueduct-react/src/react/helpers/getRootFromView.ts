@@ -6,7 +6,7 @@
 import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
 import {
-    IRootConverter,
+    IFluidConverter,
     instanceOfIComponentLoadable,
 } from "../interface";
 
@@ -23,17 +23,17 @@ export function getRootFromView<SV, SF>(
     state: SV,
     stateKey: keyof SV,
     componentKeyMap: ISharedMap,
-    viewToFluid?: Map<keyof SV, IRootConverter<SV,SF>>,
+    viewToFluid?: Map<keyof SV, IFluidConverter<SV,SF>>,
 ): Partial<SF> {
     const value = state[stateKey];
-    const rootConverter = viewToFluid && viewToFluid.get(stateKey)?.rootConverter;
+    const fluidConverter = viewToFluid && viewToFluid.get(stateKey)?.fluidConverter;
     const possibleHandle = componentKeyMap.get(stateKey as string || `stateKeyHandle-${stateKey}`);
     if (possibleHandle) {
         return possibleHandle;
-    } else if (rootConverter) {
+    } else if (fluidConverter) {
         const partialViewState: Partial<SV> = {};
         partialViewState[stateKey] = value;
-        return rootConverter(partialViewState);
+        return fluidConverter(partialViewState);
     } else {
         const partialRootState: Partial<SF> = {};
         let convertedValue: any = value;

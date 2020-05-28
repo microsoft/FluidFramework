@@ -9,16 +9,16 @@ import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-    IRootConverter,
+    IFluidConverter,
 } from "../interface";
 
 export function getByValue<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
->(searchValue: string, map?: Map<keyof SV, IRootConverter<SV,SF>>) {
+>(searchValue: string, map?: Map<keyof SV, IFluidConverter<SV,SF>>) {
     if (map !== undefined) {
         for (const [key, value] of map.entries()) {
-            if (value.rootKey === searchValue)
+            if (value.fluidKey === searchValue)
             {return key;}
         }
     }

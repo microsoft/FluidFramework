@@ -10,7 +10,7 @@ import {
     IFluidProps,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
-    IRootConverter,
+    IFluidConverter,
     IViewConverter,
     FluidComponentMap,
     IFluidSchema,
@@ -35,7 +35,7 @@ export abstract class FluidReactComponent<
 > extends React.Component<IFluidProps<SV,SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
-    private readonly viewToFluid?: Map<keyof SV, IRootConverter<SV,SF>>;
+    private readonly viewToFluid?: Map<keyof SV, IFluidConverter<SV,SF>>;
     private readonly fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>;
     private readonly fluidComponentMap?: FluidComponentMap;
     constructor(

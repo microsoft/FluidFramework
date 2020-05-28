@@ -26,9 +26,9 @@ export interface ICombinedState<
 
 /**
  * The fluid schema that is generated on load and will be stored in the root
- * @param componentKeyMap - (k,v) => (common fluid and view state component keys, respective handles)
- * @param viewMatchingMap - (k,v) => (viewKeys, needsRootConverter)
- * @param fluidMatchingMap - (k,v) => (fluidKeys, needsViewConverter)
+ * @param componentKeyMap - (k,v) = (common fluid and view state component keys, respective handles)
+ * @param viewMatchingMap - (k,v) = (viewKeys, needsFluidConverter)
+ * @param fluidMatchingMap - (k,v) = (fluidKeys, needsViewConverter)
  * and the fluid component map
  */
 export interface IFluidSchema {
@@ -50,7 +50,7 @@ export interface IFluidSchemaHandles {
  * A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
-export type ViewToFluidMap<SV,SF> = Map<keyof SV, IRootConverter<SV,SF>>;
+export type ViewToFluidMap<SV,SF> = Map<keyof SV, IFluidConverter<SV,SF>>;
 
 /**
  * A map of the Fluid state values that need conversion to their view state counterparts and the
@@ -141,16 +141,16 @@ export interface IViewConverter<
 /**
  * Root converters to take the view state value that they are keyed against in the ViewToFluid map
  * and convert them into their synced Fluid state counterparts
- * @param rootKey - The corresponding value within the Fluid state
- * @param rootConverter - A callback that takes in the partial Fluid state containing the value that
+ * @param fluidKey - The corresponding value within the Fluid state
+ * @param fluidConverter - A callback that takes in the partial Fluid state containing the value that
  * this converter maps to, and returns the corresponding partial view state
  */
-export interface IRootConverter<
+export interface IFluidConverter<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
 > {
-    rootKey: keyof SF,
-    rootConverter?: (viewState: Partial<SV>) => Partial<SF>,
+    fluidKey: keyof SF,
+    fluidConverter?: (viewState: Partial<SV>) => Partial<SF>,
 }
 
 /**
