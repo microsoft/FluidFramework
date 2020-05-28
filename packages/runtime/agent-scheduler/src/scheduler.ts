@@ -12,8 +12,9 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
+    IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -34,7 +35,7 @@ import { v4 as uuid } from "uuid";
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponentLoadable, IComponentRouter {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -55,7 +56,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
 
@@ -90,6 +96,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly context: IComponentContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -384,7 +391,11 @@ export class TaskManager implements ITaskManager {
         return new TaskManager(agentScheduler, runtime, context);
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
     public get IAgentScheduler() { return this.scheduler; }
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get ITaskManager() { return this; }
@@ -396,7 +407,9 @@ export class TaskManager implements ITaskManager {
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
         private readonly context: IComponentContext)
-    { }
+    {
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+    }
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {

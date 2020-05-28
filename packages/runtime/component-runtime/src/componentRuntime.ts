@@ -297,8 +297,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.attachChannel(channel);
             return;
         } else {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.bind(channel.handle!);
+            this.bind(channel.handle);
 
             // If our Component is local then add the channel to the queue
             if (!this.attachChannelQueue.has(channel.id)) {
@@ -549,12 +548,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
         // If this handle is already attached no need to attach again.
-        if (channel.handle?.isAttached) {
+        if (channel.handle.isAttached) {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channel.handle!.attach();
+        channel.handle.attach();
 
         assert(this.isAttached, "Component should be attached to attach the channel.");
         // If the container is detached, we don't need to send OP or add to pending attach because

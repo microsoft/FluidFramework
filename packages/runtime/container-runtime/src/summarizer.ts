@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@fluidframework/common-utils";
 import {
-    IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -26,6 +25,7 @@ import {
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
+import { IComponentSummarizer } from "./componentSummarizer";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -63,7 +63,7 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
+    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentSummarizer {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -516,9 +516,9 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
+    public get IComponentSummarizer() {return this;}
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
-    public get IComponentLoadable() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
