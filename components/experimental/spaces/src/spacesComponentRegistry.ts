@@ -57,29 +57,22 @@ const prosemirrorRegistryEntry: IInternalRegistryEntry = {
     fabricIconName: "FabricTextHighlight",
 };
 
-const generateRegistryEntries = () => {
-    const containerComponentsDefinition: IInternalRegistryEntry[] = [
-        clickerRegistryEntry,
-        codemirrorRegistryEntry,
-        textboxRegistryEntry,
-        prosemirrorRegistryEntry,
-    ];
-
-    // Register all of our component options
-    const componentRegistryEntries: NamedComponentRegistryEntry[] =
-        containerComponentsDefinition.map((definition) => [definition.type, definition.factory]);
-
-    return componentRegistryEntries;
-};
-
-export const spacesRegistryEntries = generateRegistryEntries();
-
 export const spacesComponentMap = new Map<string, IInternalRegistryEntry>([
     ["clicker", clickerRegistryEntry],
     ["codemirror", codemirrorRegistryEntry],
     ["textbox", textboxRegistryEntry],
     ["prosemirror", prosemirrorRegistryEntry],
 ]);
+
+const generateRegistryEntries = () => {
+    const componentRegistryEntries: NamedComponentRegistryEntry[] = [];
+    for (const [type, entry] of spacesComponentMap.entries()) {
+        componentRegistryEntries.push([type, entry.factory]);
+    }
+    return componentRegistryEntries;
+};
+
+export const spacesRegistryEntries = generateRegistryEntries();
 
 interface ITemplate {
     [widgetType: string]: Layout[];
