@@ -20,6 +20,7 @@ import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
+    templateDefinitions,
     Templates,
 } from "./spacesComponentRegistry";
 
@@ -97,6 +98,17 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             }
         }
     }
+
+    private readonly applyTemplate = async (template: Templates) => {
+        const componentPromises: Promise<string>[] = [];
+        const templateDefinition = templateDefinitions[template];
+        for (const [componentType, layouts] of Object.entries(templateDefinition)) {
+            for (const layout of layouts) {
+                componentPromises.push(this.createAndStoreComponent(componentType, layout));
+            }
+        }
+        await Promise.all(componentPromises);
+    };
 
     private async applyTemplateFromRegistry(template: Templates) {
         if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {

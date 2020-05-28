@@ -171,3 +171,22 @@ const generateRegistryEntries = () => {
 };
 
 export const spacesInternalRegistryEntries = generateRegistryEntries();
+
+interface ITemplate {
+    [widgetType: string]: Layout[];
+}
+
+interface ITemplateDictionary {
+    [templateName: string]: ITemplate;
+}
+
+export const templateDefinitions: ITemplateDictionary = {
+    [Templates.CollaborativeCoding]: {
+        ["codemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
+        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
+    },
+    [Templates.Classroom]: {
+        ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
+        ["prosemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
+    },
+};
