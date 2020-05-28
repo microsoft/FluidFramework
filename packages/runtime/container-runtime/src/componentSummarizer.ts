@@ -14,9 +14,9 @@ export interface IProvideComponentSummarizer {
     readonly IComponentSummarizer: IProvideComponentSummarizer
 }
 /**
- * A shared component has a URL from which it can be referenced
+ * A summarizer component has a URL from which it can be referenced
  */
 export interface IComponentSummarizer extends IProvideComponentSummarizer {
-    // Absolute URL to the component within the document
+    // Absolute URL to the component
     readonly url: string;
 }
