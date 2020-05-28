@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
+import { LocalOrderer } from "@fluidframework/server-memory-orderer";
 import {
     GitManager,
     IHistorian,
-} from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/server-services-client";
 import {
     IOrderer,
     IOrdererManager,
@@ -15,7 +15,7 @@ import {
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as winston from "winston";
 
 export class OrdererManager implements IOrdererManager {
