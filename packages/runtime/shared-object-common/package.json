@@ -32,10 +32,8 @@
     "@fluidframework/container-definitions": "^0.19.0",
     "@fluidframework/protocol-definitions": "^0.1006.0-0",
     "@types/debug": "^4.1.5",
-    "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.17.24",
-    "debug": "^4.1.1",
-    "double-ended-queue": "^2.1.0-0"
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0-0",

@@ -244,15 +244,16 @@ export class ConsensusRegisterCollection<T>
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
-        assert(pending.length === this.pendingLocalMessages.length);
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {
