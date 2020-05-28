@@ -11,7 +11,6 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    IComponent,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -19,20 +18,18 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
-    IInternalRegistryEntry,
+    spacesComponentMap,
     templateDefinitions,
-    Templates,
 } from "./spacesComponentRegistry";
 
 const SpacesStorageKey = "spaces-storage";
+const supportedComponents = [...spacesComponentMap.values()];
 
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage | undefined;
-    private supportedComponents: IInternalRegistryEntry[] = [];
-    private internalRegistry: IComponent | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -67,11 +64,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
         ReactDOM.render(
             <SpacesView
-                supportedComponents={this.supportedComponents}
+                supportedComponents={supportedComponents}
                 storage={ this.storageComponent }
                 addComponent={ addComponent }
-                templatesAvailable={ this.internalRegistry?.IComponentRegistryTemplates !== undefined }
-                applyTemplate={ this.applyTemplateFromRegistry.bind(this) }
+                templates={ [...Object.keys(templateDefinitions)] }
+                applyTemplate={ this.applyTemplate }
             />,
             div,
         );
@@ -89,17 +86,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.storageComponent = await this.root.get<IComponentHandle<SpacesStorage>>(SpacesStorageKey)?.get();
-        this.internalRegistry = await this.context.containerRuntime.IComponentRegistry.get("");
-
-        if (this.internalRegistry) {
-            const internalRegistry = this.internalRegistry.IComponentInternalRegistry;
-            if (internalRegistry) {
-                this.supportedComponents = internalRegistry.getFromCapability("IComponentHTMLView");
-            }
-        }
     }
 
-    private readonly applyTemplate = async (template: Templates) => {
+    private readonly applyTemplate = async (template: string) => {
         const componentPromises: Promise<string>[] = [];
         const templateDefinition = templateDefinitions[template];
         for (const [componentType, layouts] of Object.entries(templateDefinition)) {
@@ -109,25 +98,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
         await Promise.all(componentPromises);
     };
-
-    private async applyTemplateFromRegistry(template: Templates) {
-        if (this.internalRegistry?.IComponentRegistryTemplates !== undefined) {
-            const componentPromises: Promise<string>[] = [];
-            // getFromTemplate filters down to just components that are present in this template
-            const componentRegistryEntries = this.internalRegistry.IComponentRegistryTemplates
-                .getFromTemplate(template);
-            componentRegistryEntries.forEach((componentRegistryEntry) => {
-                // Each component may occur multiple times in the template, get all the layouts.
-                const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
-                templateLayouts.forEach((layout: Layout) => {
-                    componentPromises.push(
-                        this.createAndStoreComponent(componentRegistryEntry.type, layout),
-                    );
-                });
-            });
-            await Promise.all(componentPromises);
-        }
-    }
 
     public saveLayout(): void {
         if (this.storageComponent === undefined) {

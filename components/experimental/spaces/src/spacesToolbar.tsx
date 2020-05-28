@@ -11,7 +11,6 @@ import {
 } from "office-ui-fabric-react";
 import {
     IInternalRegistryEntry,
-    Templates,
 } from "./spacesComponentRegistry";
 import "./spacesToolbarStyle.css";
 
@@ -66,7 +65,8 @@ const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
     };
 
 interface ISpacesToolbarTemplateItemProps {
-    applyTemplate?(template: Templates): void;
+    templates: string[];
+    applyTemplate(template: string): void;
 }
 
 const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
@@ -82,19 +82,17 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
             </Button>
         );
         const templateButtonList: JSX.Element[] = [];
-        for (const template of Object.keys(Templates)) {
+        for (const template of props.templates) {
             templateButtonList.push(
                 <Button
                     className="spaces-toolbar-option-button"
                     key={`componentToolbarButton-${template}`}
                     onClick={() => {
-                        if (props.applyTemplate) {
-                            props.applyTemplate(Templates[template]);
-                        }
+                        props.applyTemplate(template);
                         setOpen(false);
                     }}
                 >
-                    {Templates[template]}
+                    {template}
                 </Button>,
             );
         }
@@ -116,8 +114,8 @@ interface ISpacesToolbarProps {
     editable: boolean;
     setEditable: (editable: boolean) => void;
     addComponent(type: string): void;
-    templatesAvailable: boolean;
-    applyTemplate(template: Templates): void;
+    templates: string[];
+    applyTemplate(template: string): void;
 }
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
@@ -150,10 +148,11 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 />,
             );
 
-            if (props.templatesAvailable) {
+            if (props.templates.length > 0) {
                 toolbarItems.push(
                     <SpacesToolbarTemplateItem
                         key="template"
+                        templates={props.templates}
                         applyTemplate={props.applyTemplate}
                     />,
                 );

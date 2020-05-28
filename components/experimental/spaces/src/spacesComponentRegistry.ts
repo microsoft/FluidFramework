@@ -43,36 +43,11 @@ export interface IInternalRegistryEntry {
     capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
-    templates: {[key: string]: Layout[]};
 }
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistryTemplates>> { }
-}
-
-export const IComponentRegistryTemplates: keyof IProvideComponentRegistryTemplates = "IComponentRegistryTemplates";
-
-export interface IProvideComponentRegistryTemplates {
-    readonly IComponentRegistryTemplates: IComponentRegistryTemplates;
-}
-
-/**
- * Provides functionality to retrieve subsets of an internal registry based on membership in a template.
- */
-export interface IComponentRegistryTemplates extends IProvideComponentRegistryTemplates {
-    getFromTemplate(template: Templates): IInternalRegistryEntry[];
-}
-
-export enum Templates {
-    CollaborativeCoding = "Collaborative Coding",
-    Classroom = "Classroom",
-}
-
-export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry, IComponentRegistryTemplates {
+export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
     public get IComponentRegistry() { return this; }
     public get IComponentInternalRegistry() { return this; }
-    public get IComponentRegistryTemplates() {return this; }
 
     constructor(
         private readonly containerComponentArray: IInternalRegistryEntry[],
@@ -102,11 +77,6 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
         );
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
-
-    public getFromTemplate(template: Templates): IInternalRegistryEntry[] {
-        return this.containerComponentArray.filter((componentDetails) =>
-            componentDetails.templates[template] !== undefined);
-    }
 }
 
 const clickerRegistryEntry: IInternalRegistryEntry = {
@@ -115,7 +85,6 @@ const clickerRegistryEntry: IInternalRegistryEntry = {
     friendlyName: "Clicker",
     fabricIconName: "Touch",
     capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-    templates: {},
 };
 
 const codemirrorRegistryEntry: IInternalRegistryEntry = {
@@ -124,21 +93,14 @@ const codemirrorRegistryEntry: IInternalRegistryEntry = {
     capabilities: ["IComponentHTMLView", "IComponentLoadable"],
     friendlyName: "Code",
     fabricIconName: "Code",
-    templates: {
-        [Templates.CollaborativeCoding]: [{ x: 0, y: 12, w: 26, h: 6 }],
-    },
 };
 
 const textboxRegistryEntry: IInternalRegistryEntry = {
-    type: CollaborativeText.ComponentName,
+    type: "textbox",
     factory: Promise.resolve(CollaborativeText.getFactory()),
     friendlyName: "Text Box",
     fabricIconName: "Edit",
     capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-    templates: {
-        [Templates.CollaborativeCoding]: [{ x: 26, y: 12, w: 10, h: 6 }],
-        [Templates.Classroom]: [{ x: 26, y: 12, w: 10, h: 6 }],
-    },
 };
 
 const prosemirrorRegistryEntry: IInternalRegistryEntry = {
@@ -147,9 +109,6 @@ const prosemirrorRegistryEntry: IInternalRegistryEntry = {
     capabilities: ["IComponentHTMLView", "IComponentLoadable"],
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
-    templates: {
-        [Templates.Classroom]: [{ x: 0, y: 12, w: 26, h: 6 }],
-    },
 };
 
 const generateRegistryEntries = () => {
@@ -172,6 +131,13 @@ const generateRegistryEntries = () => {
 
 export const spacesInternalRegistryEntries = generateRegistryEntries();
 
+export const spacesComponentMap = new Map<string, IInternalRegistryEntry>([
+    ["clicker", clickerRegistryEntry],
+    ["codemirror", codemirrorRegistryEntry],
+    ["textbox", textboxRegistryEntry],
+    ["prosemirror", prosemirrorRegistryEntry],
+]);
+
 interface ITemplate {
     [widgetType: string]: Layout[];
 }
@@ -181,11 +147,11 @@ interface ITemplateDictionary {
 }
 
 export const templateDefinitions: ITemplateDictionary = {
-    [Templates.CollaborativeCoding]: {
+    ["Collaborative Coding"]: {
         ["codemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
         ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
     },
-    [Templates.Classroom]: {
+    ["Classroom"]: {
         ["textbox"]: [{ x: 26, y: 0, w: 10, h: 6 }],
         ["prosemirror"]: [{ x: 0, y: 0, w: 26, h: 6 }],
     },
