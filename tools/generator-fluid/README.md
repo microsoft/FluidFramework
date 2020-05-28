@@ -17,7 +17,7 @@ yo @fluid-framework/fluid-generator
 
 # Congratulations! You've started building your own Fluid Component.
 # Let us help you get set up. Once we're done, you can start coding!
-# ? What the name of your component? helloworld
+# ? What the name of your new component? helloworld
 # ? Which view framework would you like to start with? (Use arrow keys)
 # > react
 #   vanillaJS

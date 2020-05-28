@@ -32,6 +32,12 @@ module.exports = class extends Generator {
         description: "Sets VanillaJS as Default View",
         alias: "v"
       });
+    this.option(
+      "noinstall",
+      {
+        description: "Sets VanillaJS as Default View",
+        alias: "ni"
+      });
 
     this.argument(
       "componentName",
@@ -51,13 +57,8 @@ module.exports = class extends Generator {
     } else {
       questions.push({
         type: "input",
-        name: "name",
-        message: "Component Name",
-        default: this.options.componentName,
-        filter: input => {
-          input = input.replace(" ", "_").toLowerCase();
-          return input.replace(/\W/g, "");
-        },
+        name: "componentName",
+        message: "What the name of your new component?",
       });
     }
 
@@ -189,6 +190,11 @@ module.exports = class extends Generator {
   }
 
   install() {
+    if (this.options.noinstall) {
+      this.log("skipping install because of --noinstall flag");
+      return;
+    }
+
     this.log("Installing dependencies. This may take a minute.");
     this.npmInstall();
   }
@@ -234,6 +240,9 @@ module.exports = class extends Generator {
 
   _componentPkgName() {
     const name = this.options.componentName ? this.options.componentName : this.answers.componentName;
+    this.log("NAME " + name);
+    this.log("NAME - options " + this.options.componentName);
+    this.log("NAME - answers " + this.answers.componentName);
     return name.replace(" ", "-").toLowerCase();
   }
 
