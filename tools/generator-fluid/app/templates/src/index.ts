@@ -1,4 +1,4 @@
-import { DiceRoller } from "./component"
+import { DiceRoller } from "./component";
 
 export { DiceRoller };
 

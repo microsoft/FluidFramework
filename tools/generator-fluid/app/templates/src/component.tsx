@@ -14,10 +14,10 @@ import { DiceRollerView } from "./view";
 const diceValueKey = "diceValue";
 
 /**
- * The <component-class-name> is our Fluid component
+ * Fluid component
  */
 export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
-    public static get ComponentName() { return "<component-pgk-name>"; }
+    public static get ComponentName() { return "dice-roller"; }
 
     public get IComponentHTMLView() { return this; }
 

@@ -95,10 +95,12 @@ module.exports = class extends Generator {
       this.destinationPath("./src/model.ts"), // TO
     );
 
-    this.fs.copy(
-      this.templatePath("src/index.ts"), // FROM
-      this.destinationPath("./src/index.ts"), // TO
-    );
+    // this.fs.copy(
+    //   this.templatePath("src/index.ts"), // FROM
+    //   this.destinationPath("./src/index.ts"), // TO
+    // );
+
+    this._copyAndModifyIndexFile();
 
     this.fs.copy(
       this.templatePath(`src/view${this._getFileExtension()}`), // FROM
@@ -149,26 +151,52 @@ module.exports = class extends Generator {
   }
 
   _copyAndModifyComponentFile() {
-    const componentFilePath = `src/component${this._getFileExtension()}`;
-    const fileString = this.fs.read(this.templatePath(componentFilePath));
+    const filePath = `src/component${this._getFileExtension()}`;
+    const fileString = this.fs.read(this.templatePath(filePath));
 
     const project = new Project({});
 
     const file = project.createSourceFile(
-      this.destinationPath(componentFilePath),
+      this.destinationPath(filePath),
       fileString,
     );
 
+    const classObj = file.getClass("DiceRoller");
     // Replace the class name with the component name provided
-    file.getClass("DiceRoller").rename(this._componentClassName());
+    classObj.rename(this._componentClassName());
 
-    // Replace the ComponentName return value with the pkg name
-    file.replace("<component-pkg-name>", this._componentPkgName())
+    const accessor = classObj.getGetAccessor("ComponentName");
+    accessor.setBodyText(`return "${this._componentPkgName()}";`);
 
-    // Replace class name in comments
-    file.replace("<component-class-name>", this._componentClassName())
+    // TODO: Move this save so that it saves when the rest of the fs does a commit
+    // Or write to a string and use fs to write.
+    file.save();
+  }
 
-    file.getClass("").getLeadingCommentRanges()
+  _copyAndModifyIndexFile() {
+    const filePath = "src/index.ts";
+    const fileString = this.fs.read(this.templatePath(filePath));
+
+    const project = new Project({});
+
+    const file = project.createSourceFile(
+      this.destinationPath(filePath),
+      fileString,
+    );
+
+    const imports = file.getImportDeclarations()[0];
+    const componentImport = imports.getNamedImports()[0];
+    componentImport.setName(this._componentClassName());
+
+    const exportDeclaration = file.getExportDeclaration(d => d.hasNamedExports());
+    const namedExport = exportDeclaration.getNamedExports()[0];
+    namedExport.setName(this._componentClassName());
+
+    const variableStatement = file.getVariableStatement("fluidExport");
+    const varDec = variableStatement.getDeclarations()[0];
+    varDec.set({
+      initializer: `${this._componentClassName()}.factory`,
+    });
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
@@ -255,9 +283,6 @@ module.exports = class extends Generator {
 
   _componentPkgName() {
     const name = this.options.componentName ? this.options.componentName : this.answers.componentName;
-    this.log("NAME " + name);
-    this.log("NAME - options " + this.options.componentName);
-    this.log("NAME - answers " + this.answers.componentName);
     return name.replace(" ", "-").toLowerCase();
   }
 
