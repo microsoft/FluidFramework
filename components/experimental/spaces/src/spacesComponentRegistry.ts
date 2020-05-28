@@ -60,47 +60,55 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
     }
 }
 
+const clickerRegistryEntry: IInternalRegistryEntry = {
+    type: "clicker",
+    factory: Promise.resolve(ClickerInstantiationFactory),
+    friendlyName: "Clicker",
+    fabricIconName: "Touch",
+    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+    templates: {},
+};
+
+const codemirrorRegistryEntry: IInternalRegistryEntry = {
+    type: "codemirror",
+    factory: Promise.resolve(cmfe),
+    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+    friendlyName: "Code",
+    fabricIconName: "Code",
+    templates: {
+        [Templates.CollaborativeCoding]: [{ x: 0, y: 12, w: 26, h: 6 }],
+    },
+};
+
+const textboxRegistryEntry: IInternalRegistryEntry = {
+    type: CollaborativeText.ComponentName,
+    factory: Promise.resolve(CollaborativeText.getFactory()),
+    friendlyName: "Text Box",
+    fabricIconName: "Edit",
+    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+    templates: {
+        [Templates.CollaborativeCoding]: [{ x: 26, y: 12, w: 10, h: 6 }],
+        [Templates.Classroom]: [{ x: 26, y: 12, w: 10, h: 6 }],
+    },
+};
+
+const prosemirrorRegistryEntry: IInternalRegistryEntry = {
+    type: "prosemirror",
+    factory: Promise.resolve(pmfe),
+    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+    friendlyName: "Rich Text",
+    fabricIconName: "FabricTextHighlight",
+    templates: {
+        [Templates.Classroom]: [{ x: 0, y: 12, w: 26, h: 6 }],
+    },
+};
+
 const generateRegistryEntries = () => {
     const containerComponentsDefinition: IInternalRegistryEntry[] = [
-        {
-            type: "clicker",
-            factory: Promise.resolve(ClickerInstantiationFactory),
-            friendlyName: "Clicker",
-            fabricIconName: "Touch",
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-            templates: {},
-        },
-        {
-            type: "codemirror",
-            factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-            friendlyName: "Code",
-            fabricIconName: "Code",
-            templates: {
-                [Templates.CollaborativeCoding]: [{ x: 0, y: 12, w: 26, h: 6 }],
-            },
-        },
-        {
-            type: CollaborativeText.ComponentName,
-            factory: Promise.resolve(CollaborativeText.getFactory()),
-            friendlyName: "Text Box",
-            fabricIconName: "Edit",
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-            templates: {
-                [Templates.CollaborativeCoding]: [{ x: 26, y: 12, w: 10, h: 6 }],
-                [Templates.Classroom]: [{ x: 26, y: 12, w: 10, h: 6 }],
-            },
-        },
-        {
-            type: "prosemirror",
-            factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
-            friendlyName: "Rich Text",
-            fabricIconName: "FabricTextHighlight",
-            templates: {
-                [Templates.Classroom]: [{ x: 0, y: 12, w: 26, h: 6 }],
-            },
-        },
+        clickerRegistryEntry,
+        codemirrorRegistryEntry,
+        textboxRegistryEntry,
+        prosemirrorRegistryEntry,
     ];
 
     // Register all of our component options
