@@ -73,7 +73,7 @@ module.exports = class extends Generator {
       this.log(chalk.yellow("Both --react and --vanilla have been selected. Defaulting to react"));
       delete this.options["vanillaJS"];
     }
-    
+
     if (this.options.react || this.options.vanilla) {
       this.log(`${chalk.green("?")} ${questions.template.message} ${chalk.blue(this._isReact() ? react : vanillaJS)}`)
     } else {
@@ -91,11 +91,7 @@ module.exports = class extends Generator {
     this._copyAndModifyPackageJsonFile();
     this._copyAndModifyComponentFile();
     this._copyAndModifyIndexFile();
-
-    this.fs.copy(
-      this.templatePath("src/model.ts"), // FROM
-      this.destinationPath("./src/model.ts"), // TO
-    );
+    this._copyAndModifyModelFile();
 
     this.fs.copy(
       this.templatePath(`src/view${this._getFileExtension()}`), // FROM
@@ -157,11 +153,20 @@ module.exports = class extends Generator {
     );
 
     const classObj = file.getClass("DiceRoller");
-    // Replace the class name with the component name provided
+    // Rename the class name with the component name provided
     classObj.rename(this._componentClassName());
 
+    // Replace ComponentName response with package name
     const accessor = classObj.getGetAccessor("ComponentName");
     accessor.setBodyText(`return "${this._componentPkgName()}";`);
+
+    // Rename model interface name to match new component name
+    const imports = file.getImportDeclaration("./model");
+    const interfaceImport = imports.getNamedImports()[0];
+    interfaceImport.setName(this._componentInterfaceModelName());
+
+    classObj.removeImplements(0);
+    classObj.insertImplements(0, this._componentInterfaceModelName());
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
@@ -179,7 +184,7 @@ module.exports = class extends Generator {
       fileString,
     );
 
-    const imports = file.getImportDeclarations()[0];
+    const imports = file.getImportDeclaration("./component");
     const componentImport = imports.getNamedImports()[0];
     componentImport.setName(this._componentClassName());
 
@@ -192,6 +197,25 @@ module.exports = class extends Generator {
     varDec.set({
       initializer: `${this._componentClassName()}.factory`,
     });
+
+    // TODO: Move this save so that it saves when the rest of the fs does a commit
+    // Or write to a string and use fs to write.
+    file.save();
+  }
+
+  _copyAndModifyModelFile() {
+    const filePath = "src/model.ts";
+    const fileString = this.fs.read(this.templatePath(filePath));
+
+    const project = new Project({});
+
+    const file = project.createSourceFile(
+      this.destinationPath(filePath),
+      fileString,
+    );
+
+    const modelInterface = file.getInterface("IDiceRoller");
+    modelInterface.rename(this._componentInterfaceModelName())
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
@@ -272,6 +296,10 @@ module.exports = class extends Generator {
   _componentPkgName() {
     const name = this.options.componentName ? this.options.componentName : this.answers.componentName;
     return name.replace(" ", "-").toLowerCase();
+  }
+
+  _componentInterfaceModelName() {
+    return `I${this._componentClassName()}`;
   }
 
   _componentClassName() {
