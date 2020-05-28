@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntry,
@@ -20,7 +19,6 @@ import { Layout } from "react-grid-layout";
 export interface IInternalRegistryEntry {
     type: string;
     factory: Promise<IProvideComponentFactory>;
-    capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
 }
@@ -30,13 +28,11 @@ const clickerRegistryEntry: IInternalRegistryEntry = {
     factory: Promise.resolve(ClickerInstantiationFactory),
     friendlyName: "Clicker",
     fabricIconName: "Touch",
-    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
 };
 
 const codemirrorRegistryEntry: IInternalRegistryEntry = {
     type: "codemirror",
     factory: Promise.resolve(cmfe),
-    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
     friendlyName: "Code",
     fabricIconName: "Code",
 };
@@ -46,13 +42,11 @@ const textboxRegistryEntry: IInternalRegistryEntry = {
     factory: Promise.resolve(CollaborativeText.getFactory()),
     friendlyName: "Text Box",
     fabricIconName: "Edit",
-    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
 };
 
 const prosemirrorRegistryEntry: IInternalRegistryEntry = {
     type: "prosemirror",
     factory: Promise.resolve(pmfe),
-    capabilities: ["IComponentHTMLView", "IComponentLoadable"],
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
