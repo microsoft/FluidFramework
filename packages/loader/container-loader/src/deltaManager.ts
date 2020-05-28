@@ -99,7 +99,7 @@ export enum ReconnectMode {
  * Includes events emitted by the concrete implementation DeltaManager
  * but not exposed on the public interface IDeltaManager
  */
-interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
+export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
 }
