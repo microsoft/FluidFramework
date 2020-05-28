@@ -92,11 +92,7 @@ module.exports = class extends Generator {
     this._copyAndModifyComponentFile();
     this._copyAndModifyIndexFile();
     this._copyAndModifyModelFile();
-
-    this.fs.copy(
-      this.templatePath(`src/view${this._getFileExtension()}`), // FROM
-      this.destinationPath(`./src/view${this._getFileExtension()}`), // TO
-    );
+    this._copyAndModifyViewFile();
 
     this.fs.copyTpl(
       this.templatePath("README.md"), // FROM
@@ -192,6 +188,29 @@ module.exports = class extends Generator {
     file.save();
   }
 
+  _copyAndModifyViewFile() {
+    const file = this._generateNewProjectFile(`src/view${this._getFileExtension()}`);
+
+    // Rename model interface name to match new component name
+    const imports = file.getImportDeclaration("./model");
+    const interfaceImport = imports.getNamedImports()[0];
+    interfaceImport.setName(this._componentInterfaceModelName());
+
+    if (this._isReact()) {
+      // For react we need to update our interface name on the model
+      const propsInterface = file.getInterface("IDiceRollerViewProps");
+      const modelProp = propsInterface.getProperty("model");
+      modelProp.setType(this._componentInterfaceModelName());
+    } else {
+      // For vanillaJS we need to update the constructor param type
+      const ctor = file.getClass("DiceRollerView").getConstructors()[0];
+      const param = ctor.getParameter("model");
+      param.setType(this._componentInterfaceModelName());
+    }
+
+    file.save();
+  }
+
   _copyContainer() {
     const fileString = this.fs.read(this.templatePath("src/index.ts"));
 
@@ -252,7 +271,7 @@ module.exports = class extends Generator {
    */
 
   _isReact() {
-    return this.options.react || this.answers.template === react;
+    return this.options.react || (this.answers && this.answers.template === react);
   }
 
   _componentName() {
