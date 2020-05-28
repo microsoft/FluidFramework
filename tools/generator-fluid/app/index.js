@@ -89,18 +89,12 @@ module.exports = class extends Generator {
   moveAndModifyTemplateFiles() {
     this._copyAndModifyPackageJsonFile();
     this._copyAndModifyComponentFile();
+    this._copyAndModifyIndexFile();
 
     this.fs.copy(
       this.templatePath("src/model.ts"), // FROM
       this.destinationPath("./src/model.ts"), // TO
     );
-
-    // this.fs.copy(
-    //   this.templatePath("src/index.ts"), // FROM
-    //   this.destinationPath("./src/index.ts"), // TO
-    // );
-
-    this._copyAndModifyIndexFile();
 
     this.fs.copy(
       this.templatePath(`src/view${this._getFileExtension()}`), // FROM
