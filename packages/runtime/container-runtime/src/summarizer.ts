@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
+import { CustomErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -44,7 +44,7 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export class SummarizingWarning extends ErrorWithProps implements ISummarizingWarning {
+export class SummarizingWarning extends CustomErrorWithProps implements ISummarizingWarning {
     readonly errorType = ErrorType.summarizingError;
     readonly canRetry = true;
 

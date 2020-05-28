@@ -536,10 +536,17 @@ export class PerformanceEvent {
  * Helper class for error tracking.
  * Object of this instance will record all of their properties when logged with logger.
  * Care needs to be taken not to log PII information!
+ * Logger ignores all properties from any  other error objects (not being instance of CustomErrorWithProps),
+ * with exception of 'message' & 'stack' properties if they exists on error object.
+ * In other words, logger logs only what it knows about and has good confidence it does not container PII information.
  */
-export class ErrorWithProps extends Error {
-    constructor(message: string) {
+export class CustomErrorWithProps extends Error {
+    constructor(
+        message: string,
+        props?: {[key: string]: string | number})
+    {
         super(message);
+        Object.assign(this, props);
     }
 
     // Return all properties

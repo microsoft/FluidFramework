@@ -18,7 +18,7 @@ import {
 import {
     CreateContainerError,
     createWriteError,
-    ErrorWithProps,
+    CustomErrorWithProps,
 } from "@fluidframework/driver-utils";
 import {
     createOdspNetworkError,
@@ -91,7 +91,7 @@ describe("Errors Types", () => {
             userData: "My name is Mark",
             message: "Some message",
         };
-        const iError = (CreateContainerError(err) as any) as ErrorWithProps;
+        const iError = (CreateContainerError(err) as any) as CustomErrorWithProps;
         const props = iError.getCustomProperties() as any;
         assert.equal(props.userData, undefined, "We shouldn't expose the properties of the inner/original error");
         assert.equal(props.message, err.message, "But name is copied over!");

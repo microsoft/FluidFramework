@@ -13,10 +13,24 @@ function messageFromError(error: any) {
     return `${error}`;
 }
 
-// TODO: Needs to be removed and replaced with version in logger.ts
-export class ErrorWithProps extends Error {
-    constructor(message: string) {
+/**
+ * TODO: Needs to be removed and replaced with version in logger.ts
+ * Please use version in @fluidframework/common-util package!
+ *
+ * Helper class for error tracking.
+ * Object of this instance will record all of their properties when logged with logger.
+ * Care needs to be taken not to log PII information!
+ * Logger ignores all properties from any  other error objects (not being instance of CustomErrorWithProps),
+ * with exception of 'message' & 'stack' properties if they exists on error object.
+ * In other words, logger logs only what it knows about and has good confidence it does not container PII information.
+ */
+export class CustomErrorWithProps extends Error {
+    constructor(
+        message: string,
+        props?: {[key: string]: string | number})
+    {
         super(message);
+        Object.assign(this, props);
     }
 
     // Return all properties
@@ -33,7 +47,7 @@ export class ErrorWithProps extends Error {
 /**
  * Generic error
  */
-class GenericError extends ErrorWithProps implements IGenericError {
+class GenericError extends CustomErrorWithProps implements IGenericError {
     readonly errorType = ErrorType.genericError;
 
     constructor(
@@ -58,7 +72,7 @@ export function CreateContainerError(error: any, canRetryArg?: boolean): IGeneri
     // eslint-disable-next-line no-null/no-null
     if (typeof error === "object" && error !== null) {
         const err = error;
-        if (error.errorType !== undefined && error instanceof ErrorWithProps) {
+        if (error.errorType !== undefined && error instanceof CustomErrorWithProps) {
             if (canRetryArg === undefined || err.canRetry === canRetryArg) {
                 return err;
             }
@@ -73,8 +87,8 @@ export function CreateContainerError(error: any, canRetryArg?: boolean): IGeneri
 
         // Only get properties we know about.
         // Grabbing all properties will expose PII in telemetry!
-        return Object.assign(
-            new ErrorWithProps(messageFromError(error)),
+        return new CustomErrorWithProps(
+            messageFromError(error),
             {
                 errorType: error.errorType ?? ErrorType.genericError,
                 canRetry: canRetryArg ?? (error.canRetry ?? false),

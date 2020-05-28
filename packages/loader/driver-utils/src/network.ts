@@ -14,7 +14,7 @@ import {
     IErrorBase,
 } from "@fluidframework/container-definitions";
 import {
-    ErrorWithProps,
+    CustomErrorWithProps,
 } from "./error";
 
 export enum OnlineStatus {
@@ -37,7 +37,7 @@ export function isOnline(): OnlineStatus {
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError {
+export class GenericNetworkError extends CustomErrorWithProps implements IGenericNetworkError {
     readonly errorType = ErrorType.genericNetworkError;
 
     constructor(
@@ -49,7 +49,7 @@ export class GenericNetworkError extends ErrorWithProps implements IGenericNetwo
     }
 }
 
-export class NetworkErrorBasic extends ErrorWithProps implements INetworkErrorBasic {
+export class NetworkErrorBasic extends CustomErrorWithProps implements INetworkErrorBasic {
     constructor(
         errorMessage: string,
         readonly errorType: NetworkErrorBasicTypes,
@@ -73,7 +73,7 @@ export class NonRetryableError extends NetworkErrorBasic implements IErrorBase {
 /**
  * Throttling error class - used to communicate all throttling errors
  */
-class ThrottlingError extends ErrorWithProps implements IThrottlingWarning {
+class ThrottlingError extends CustomErrorWithProps implements IThrottlingWarning {
     readonly errorType = ErrorType.throttlingError;
     readonly canRetry = true;
 
