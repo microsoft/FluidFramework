@@ -11,7 +11,7 @@ import { IDirectoryValueChanged, ISharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     IFluidFunctionalComponentViewState,
-    FluidProps,
+    IFluidProps,
     IFluidComponent,
     IFluidFunctionalComponentFluidState,
     IFluidSchema,
@@ -26,10 +26,13 @@ import {
     getComponentSchemaFromRoot,
 } from "./helpers";
 
+/**
+ * A wrapper around the useState React hook that combines local and Fluid state updates
+ */
 export function useStateFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
->(props: FluidProps<SV,SF>):
+>(props: IFluidProps<SV,SF>):
 [SV, ((newState: SV, fromRootUpdate?: boolean) => void)] {
     const {
         syncedStateId,
@@ -40,7 +43,12 @@ export function useStateFluid<
         viewToFluid,
         dataProps,
     } = props;
+    // Establish the react state and setState functions using the initialViewState passed in
     const [ reactState, reactSetState ] = React.useState<SV>(initialViewState);
+
+    // Create the fluidSetState function as a callback that in turn calls either our combined state
+    // update to both the local and Fluid state or just the local state respectively based off of
+    // if the state update is coming locally, i.e. not from the root
     const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false) => {
         const newCombinedState = { ...reactState, ...newState, isInitialized: true };
         if (!fromRootUpdate) {
@@ -59,6 +67,7 @@ export function useStateFluid<
         }
     }, [root, viewToFluid, reactState, reactSetState, dataProps]);
 
+    // Define the root callback listener that will be responsible for triggering state updates on root value changes
     const rootCallback = React.useCallback(
         (change: IDirectoryValueChanged, local: boolean) => {
             const callback = rootCallbackListener(
@@ -73,7 +82,10 @@ export function useStateFluid<
             );
             return callback(change, local);
         }, [root, fluidToView, viewToFluid, reactState, reactSetState, dataProps]);
+
+    // If this is the first time this function is being called in this session
     if (!reactState.isInitialized) {
+        // Check if there is a synced state value already stored, i.e. if the component has been loaded before
         let loadFromRoot = true;
         let storedFluidState = root.get(`syncedState-${syncedStateId}`);
         if (storedFluidState === undefined) {
@@ -81,6 +93,9 @@ export function useStateFluid<
             storedFluidState = initialFluidState;
             setFluidStateToRoot(syncedStateId, root, initialFluidState);
         }
+
+        // If the stored schema is undefined on this root, i.e. it is the first time this
+        // component is being loaded, generate it and store it
         let componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
         if (componentSchemaHandles === undefined) {
             const componentSchema: IFluidSchema = generateComponentSchema(
@@ -97,9 +112,14 @@ export function useStateFluid<
             };
             setComponentSchemaToRoot(syncedStateId, root, componentSchemaHandles);
         }
+
+        // Add the callback to the component's own root
         root.on("valueChanged", rootCallback);
         reactState.isInitialized = true;
         reactState.syncedStateId = syncedStateId;
+
+        // Add the list of SharedMap handles for the schema and any unlistened handles passed in through the component
+        // map to the list of handles we will fetch and start listening to
         const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
             componentSchemaHandles.componentKeyMapHandle,
             componentSchemaHandles.fluidMatchingMapHandle,
@@ -110,6 +130,8 @@ export function useStateFluid<
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });
+
+        // Add the callback to all the unlistened components and then update the state afterwards
         updateStateAndComponentMap<SV,SF>(
             unlistenedComponentHandles,
             dataProps.fluidComponentMap,

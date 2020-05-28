@@ -22,7 +22,7 @@ import {
     ICombinedState,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
-import { updateStateAndComponentMap, rootCallbackListener, getFluidStateFromRoot } from "./helpers";
+import { updateStateAndComponentMap, rootCallbackListener, getFluidStateFromRoot, syncStateAndRoot } from "./helpers";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
@@ -44,6 +44,7 @@ export function useReducerFluid<
         initialFluidState,
         dataProps,
     } = props;
+    // Get our combined synced state and setState callbacks from the useStateFluid function
     const [state, setState] = useStateFluid<SV,SF>({
         syncedStateId,
         root,
@@ -54,7 +55,9 @@ export function useReducerFluid<
         viewToFluid,
     });
 
+    // Retrieve the current state that is stored on the root for this component ID
     const currentFluidState = getFluidStateFromRoot(syncedStateId, root, dataProps.fluidComponentMap, fluidToView);
+
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and
     // state values that were updated. Think of it as prepping the data in the first
@@ -75,11 +78,13 @@ export function useReducerFluid<
         };
         const action =  reducer[(type)];
         if (action && instanceOfStateUpdateFunction<SV,SF,C>(action)) {
+            // If its a synchronous state update function, call it and inspect the result for new component handles
             const result = (action.function as any)(
                 combinedDispatchState,
                 ...args,
             );
             if (result.newComponentHandles) {
+                // Fetch any new components and the listener to their root. Then update the state.
                 const callback = rootCallbackListener(
                     combinedDispatchDataProps.fluidComponentMap,
                     false,
@@ -105,9 +110,22 @@ export function useReducerFluid<
                     result.state.fluidState,
                 );
             } else {
-                setState(result.state.viewState);
+                // Update the state directly
+                syncStateAndRoot(
+                    false,
+                    syncedStateId,
+                    root,
+                    result.state.viewState,
+                    setState,
+                    combinedDispatchDataProps.fluidComponentMap,
+                    viewToFluid,
+                    fluidToView,
+                    result.state.fluidState,
+                );
             }
         } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
+            // In the case of an async function, the function promise is treated as a Thenable
+            // and the returned result is inspected after the function has completed
             (action.asyncFunction as any)(
                 combinedDispatchState,
                 ...args,
@@ -138,20 +156,50 @@ export function useReducerFluid<
                         result.state.fluidState,
                     );
                 } else {
-                    setState(result.state.viewState);
+                    syncStateAndRoot(
+                        false,
+                        syncedStateId,
+                        root,
+                        result.state.viewState,
+                        setState,
+                        combinedDispatchDataProps.fluidComponentMap,
+                        viewToFluid,
+                        fluidToView,
+                        result.state.fluidState,
+                    );
                 }
             });
         } else if (action && instanceOfAsyncEffectFunction<SV,SF,C>(action)) {
             (action.function as any)(
                 combinedDispatchState,
                 ...args,
-            ).then(() => setState(combinedDispatchViewState));
+            ).then(() => syncStateAndRoot(
+                false,
+                syncedStateId,
+                root,
+                combinedDispatchState.viewState,
+                setState,
+                combinedDispatchDataProps.fluidComponentMap,
+                viewToFluid,
+                fluidToView,
+                combinedDispatchState.fluidState,
+            ));
         } else if (action && instanceOfEffectFunction<SV,SF,C>(action)) {
             (action.function as any)(
                 combinedDispatchState,
                 ...args,
             );
-            setState(combinedDispatchViewState);
+            syncStateAndRoot(
+                false,
+                syncedStateId,
+                root,
+                combinedDispatchState.viewState,
+                setState,
+                combinedDispatchDataProps.fluidComponentMap,
+                viewToFluid,
+                fluidToView,
+                combinedDispatchState.fluidState,
+            );
         } else {
             throw new Error(
                 `Action with key ${action} does not
@@ -213,16 +261,8 @@ export function useReducerFluid<
         };
         const action =  selector[(type)];
         if (action && instanceOfSelectorFunction<SV,SF,C>(action)) {
-            const callback = rootCallbackListener(
-                combinedFetchDataProps.fluidComponentMap,
-                true,
-                syncedStateId,
-                root,
-                combinedFetchState.viewState,
-                setState,
-                viewToFluid,
-                fluidToView,
-            );
+            // Add any new handles that were returned by the selector to our list
+            // to be loaded to the fluid component map
             let newHandles: IComponentHandle[] = [];
             if (handle && instanceOfComponentSelectorFunction<SV,SF,C>(action)
                 && combinedFetchDataProps.fluidComponentMap.get(handle.path) === undefined) {
@@ -232,7 +272,19 @@ export function useReducerFluid<
             if (actionResult !== undefined && actionResult.newComponentHandles !== undefined) {
                 newHandles = newHandles.concat(actionResult.newComponentHandles);
             }
+            // If there are handles, start a thread to update the component map and then call the set state
+            // callback when it has finished
             if (newHandles.length > 0) {
+                const callback = rootCallbackListener(
+                    combinedFetchDataProps.fluidComponentMap,
+                    true,
+                    syncedStateId,
+                    root,
+                    combinedFetchState.viewState,
+                    setState,
+                    viewToFluid,
+                    fluidToView,
+                );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 updateStateAndComponentMap(
                     newHandles,
@@ -248,6 +300,7 @@ export function useReducerFluid<
                     combinedFetchState.fluidState,
                 );
             }
+            // Always return the result immediately
             return actionResult;
         } else {
             throw new Error(

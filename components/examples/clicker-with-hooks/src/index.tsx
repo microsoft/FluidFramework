@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidProps,
+    IFluidProps,
     IFluidReducerProps,
     IFluidFunctionalComponentViewState,
     useStateFluid,
@@ -42,7 +42,7 @@ interface CounterState {
 interface ICounterFunctionalViewState extends IFluidFunctionalComponentViewState, CounterState {}
 interface ICounterFunctionalFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
 
-function CounterReactFunctional(props: FluidProps<ICounterFunctionalViewState, ICounterFunctionalFluidState>) {
+function CounterReactFunctional(props: IFluidProps<ICounterFunctionalViewState, ICounterFunctionalFluidState>) {
     // Declare a new state variable, which we'll call "count"
     const [state, setState] = useStateFluid<ICounterFunctionalViewState, ICounterFunctionalFluidState>(props);
 

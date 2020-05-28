@@ -7,13 +7,14 @@ import * as React from "react";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
 import {
-    FluidProps,
+    IFluidProps,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
     IRootConverter,
     IViewConverter,
     FluidComponentMap,
     IFluidSchema,
+    IFluidComponent,
 } from "./interface";
 import {
     rootCallbackListener,
@@ -31,14 +32,14 @@ import {
 export abstract class FluidReactComponent<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> extends React.Component<FluidProps<SV,SF>, SV> {
+> extends React.Component<IFluidProps<SV,SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
     private readonly viewToFluid?: Map<keyof SV, IRootConverter<SV,SF>>;
     private readonly fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>;
     private readonly fluidComponentMap?: FluidComponentMap;
     constructor(
-        props: FluidProps<SV,SF>,
+        props: IFluidProps<SV,SF>,
     ) {
         super(props);
         const {
@@ -58,6 +59,8 @@ export abstract class FluidReactComponent<
         this._syncedStateId = syncedStateId;
         this._root = root;
         let componentSchemaHandles = getComponentSchemaFromRoot(this._syncedStateId, root);
+        // If the stored schema is undefined on this root, i.e. it is the first time this
+        // component is being loaded, generate it and store it
         if (componentSchemaHandles === undefined) {
             const componentSchema: IFluidSchema = generateComponentSchema(
                 dataProps.runtime,
@@ -73,12 +76,21 @@ export abstract class FluidReactComponent<
             };
             setComponentSchemaToRoot(this._syncedStateId, root, componentSchemaHandles);
         }
+
+        // Add the list of SharedMap handles for the schema and any unlistened handles passed in through the component
+        // map to the list of handles we will fetch and start listening to
         const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
             componentSchemaHandles.componentKeyMapHandle,
             componentSchemaHandles.fluidMatchingMapHandle,
             componentSchemaHandles.viewMatchingMapHandle,
         ];
+        dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
+            if (!value.isListened && value.component?.handle !== undefined) {
+                unlistenedComponentHandles.push(value.component.handle);
+            }
+        });
 
+        // Define the root callback listener that will be responsible for triggering state updates on root value changes
         const rootCallback = rootCallbackListener(
             dataProps.fluidComponentMap,
             true,
@@ -89,13 +101,18 @@ export abstract class FluidReactComponent<
             viewToFluid,
             fluidToView,
         );
+
+        // Check if there is a synced state value already stored, i.e. if the component has been loaded before
         let loadFromRoot = true;
         if (root.get(`syncedState-${this._syncedStateId}`) === undefined) {
             loadFromRoot = false;
             setFluidStateToRoot(this._syncedStateId, root, initialFluidState);
         }
+
+        // Add the callback to the component's own root
         root.on("valueChanged", rootCallback);
 
+        // Add the callback to all the unlistened components and then update the state afterwards
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         updateStateAndComponentMap(
             unlistenedComponentHandles,
@@ -111,6 +128,12 @@ export abstract class FluidReactComponent<
         );
     }
 
+    /**
+     * Function to update the state from both root updates or local ones. Only updates the root
+     * on local updates
+     * @param newState - the new state to be set
+     * @param fromRootUpdate - is this update coming locally or from a synced root value change
+     */
     private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean) {
         super.setState(newState);
         if (fromRootUpdate) {
@@ -118,6 +141,11 @@ export abstract class FluidReactComponent<
         }
     }
 
+    /**
+     * Function to set the current state value to the root
+     * @param newState - the new state to be set
+     * @param fromRootUpdate - is this update coming locally or from a synced root value change
+     */
     private _setRoot(newState: SV, fromRootUpdate = false) {
         const newCombinedState = { ...this.state, ...newState };
         if (!fromRootUpdate && this.fluidComponentMap) {
@@ -136,6 +164,10 @@ export abstract class FluidReactComponent<
         }
     }
 
+    /**
+     * Function to update the current state. It overloads the React component setState function
+     * @param newState - New state to be set both locally and on the synced root
+     */
     public setState(newState: SV) {
         if (this.fluidComponentMap) {
             syncStateAndRoot(
