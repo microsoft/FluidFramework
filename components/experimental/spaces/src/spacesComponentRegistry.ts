@@ -6,7 +6,6 @@
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     IProvideComponentFactory,
-    IComponentRegistry,
     NamedComponentRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
@@ -14,25 +13,6 @@ import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
-
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
-}
-
-export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
-
-export interface IProvideComponentInternalRegistry {
-    readonly IComponentInternalRegistry: IComponentInternalRegistry;
-}
-
-/**
- * Provides functionality to retrieve subsets of an internal registry.
- */
-export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
-    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
-    hasCapability(type: string, capability: keyof IComponent): boolean;
-}
 
 /**
  * A registry entry, with extra metadata.
@@ -43,40 +23,6 @@ export interface IInternalRegistryEntry {
     capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
-}
-
-export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
-    public get IComponentRegistry() { return this; }
-    public get IComponentInternalRegistry() { return this; }
-
-    constructor(
-        private readonly containerComponentArray: IInternalRegistryEntry[],
-    ) {
-    }
-
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory> | undefined>
-    {
-        const index = this.containerComponentArray.findIndex(
-            (containerComponent) => name === containerComponent.type,
-        );
-        if (index >= 0) {
-            return this.containerComponentArray[index].factory;
-        }
-
-        return undefined;
-    }
-
-    public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
-        return this.containerComponentArray.filter((componentDetails) =>
-            componentDetails.capabilities.includes(capability));
-    }
-
-    public hasCapability(type: string, capability: keyof IComponent) {
-        const index = this.containerComponentArray.findIndex(
-            (containerComponent) => type === containerComponent.type,
-        );
-        return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
-    }
 }
 
 const clickerRegistryEntry: IInternalRegistryEntry = {
