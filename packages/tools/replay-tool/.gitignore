@@ -53,3 +53,5 @@ temp_modules/
 
 # Generated Snapshot diffs
 **/snapshot*_extended.json
+
+output
