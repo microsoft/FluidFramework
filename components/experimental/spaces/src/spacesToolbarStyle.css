@@ -3,6 +3,7 @@
     height: 45px;
     margin: 10px;
     display: flex;
+    z-index: 1000;
 }
 
 .spaces-toolbar-tool {
