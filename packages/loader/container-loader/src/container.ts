@@ -18,7 +18,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -1120,15 +1119,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component: IFluidModule;
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
-        try {
-            component = await this.codeLoader.load(pkg);
-        } catch (error) {
-            perfEvent.cancel({}, error);
-            throw error;
-        }
-        perfEvent.end();
+        const component = await PerformanceEvent.timedAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(pkg),
+        );
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {

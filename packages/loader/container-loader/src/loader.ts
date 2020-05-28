@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import uuid from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IRequest,
@@ -18,7 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { DebugLogger, Deferred } from "@fluidframework/common-utils";
+import { DebugLogger, Deferred, PerformanceEvent } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -138,7 +138,7 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-    private readonly logger?: ITelemetryBaseLogger;
+    private readonly logger: ITelemetryLogger;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],
@@ -183,17 +183,17 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        debug(`Container resolve: ${now()} `);
-
-        const resolved = await this.resolveCore(request);
-        return resolved.container;
+        return PerformanceEvent.timedAsync(this.logger, { eventName: "LoaderResolve" }, async () => {
+            const resolved = await this.resolveCore(request);
+            return resolved.container;
+        });
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        debug(`Container loading: ${now()} `);
-
-        const resolved = await this.resolveCore(request);
-        return resolved.container.request({ url: resolved.parsed.path });
+        return PerformanceEvent.timedAsync(this.logger, { eventName: "LoaderRequest" }, async () => {
+            const resolved = await this.resolveCore(request);
+            return resolved.container.request({ url: resolved.parsed.path });
+        });
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
@@ -255,8 +255,7 @@ export class Loader extends EventEmitter implements ILoader {
                     this.loadContainer(
                         parsed.id,
                         request,
-                        resolvedAsFluid,
-                        this.logger);
+                        resolvedAsFluid);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
             }
@@ -265,8 +264,7 @@ export class Loader extends EventEmitter implements ILoader {
                 await this.loadContainer(
                     parsed.id,
                     request,
-                    resolvedAsFluid,
-                    this.logger);
+                    resolvedAsFluid);
         }
 
         if (container.deltaManager.referenceSequenceNumber <= fromSequenceNumber) {
@@ -325,9 +323,8 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
-        const container = Container.load(
+        return Container.load(
             id,
             this.documentServiceFactory,
             this.codeLoader,
@@ -337,8 +334,6 @@ export class Loader extends EventEmitter implements ILoader {
             request,
             resolved,
             this.resolver,
-            logger);
-
-        return container;
+            this.logger);
     }
 }
