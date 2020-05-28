@@ -51,12 +51,17 @@ When running the generator a new folder will be generated with the following con
 
 ```text
 Usage:
-    @fluid-framework/fluid-generator [<component name>] <options>
-
-Arguments:
-    [<component name>]     Name of the New Component
+  yo @microsoft/fluid [<componentName>] [options]
 
 Options:
-    -r --react             Choose react as default view
-    -v --vanilla           Choose vanillaJS as default view
+  -h,    --help           # Print the generator's options and usage
+         --skip-cache     # Do not remember prompt answers               Default: false
+         --skip-install   # Do not automatically install dependencies    Default: false
+         --force-install  # Fail on install dependencies error           Default: false
+         --ask-answered   # Show prompts for already configured options  Default: false
+  -r,    --react          # Sets React as Default View
+  -v,    --vanilla        # Sets VanillaJS as Default View
+
+Arguments:
+  componentName  # Defines the Component Name  Type: String  Required: false
 ```

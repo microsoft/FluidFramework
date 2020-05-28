@@ -10,6 +10,21 @@ var chalk = require("chalk");
 const vanillaJS = "vanillaJS";
 const react = "react";
 
+const questions = {
+    componentName: {
+        type: "input",
+        name: "componentName",
+        message: "What is the name of your new component?",
+    },
+    template : {
+        type: "list",
+        name: "template",
+        message: "Which view framework would you like to start with?",
+        default: react,
+        choices: [react, vanillaJS],
+      }
+};
+
 /**
  * Go to the Yeoman Website to find out more about their generators in general.
  *
@@ -32,12 +47,6 @@ module.exports = class extends Generator {
         description: "Sets VanillaJS as Default View",
         alias: "v"
       });
-    this.option(
-      "noinstall",
-      {
-        description: "Sets VanillaJS as Default View",
-        alias: "ni"
-      });
 
     this.argument(
       "componentName",
@@ -51,36 +60,24 @@ module.exports = class extends Generator {
   async prompting() {
     this.log("Congratulations! You've started building your own Fluid Component.");
     this.log("Let us help you get set up. Once we're done, you can start coding!");
-    const questions = [];
+    const questionsCollection = [];
     if (this.options.componentName) {
-      this.log(`Component Name: ${this.options.componentName}`)
+      this.log(`${chalk.green("?")} ${questions.componentName.message} ${this.options.componentName}`)
     } else {
-      questions.push({
-        type: "input",
-        name: "componentName",
-        message: "What the name of your new component?",
-      });
+      questionsCollection.push(questions.componentName);
     }
 
     if (this.options.react && this.options.vanillaJS) {
       this.log(chalk.yellow("Both --react and --vanilla have been selected. Using react"));
       delete this.options["vanillaJS"];
-    } else if (this.options.react) {
-      this.log("--react flag set. Using React")
-    } else if (this.options.vanillaJS) {
-      this.log("--vanilla flag set. Using vanillaJS")
+    } else if (this.options.react || this.options.vanillaJS) {
+      this.log(`${chalk.green("?")} ${questions.template.message} ${chalk.blue(this.options.react ? react : vanillaJS)}`)
     } else {
-      questions.push({
-        type: "list",
-        name: "template",
-        message: "Which view framework would you like to start with?",
-        default: react,
-        choices: [react, vanillaJS],
-      });
+      questionsCollection.push(questions.template);
     }
 
-    if (questions) {
-      this.answers = await this.prompt(questions);
+    if (questionsCollection) {
+      this.answers = await this.prompt(questionsCollection);
     }
 
     this.destinationRoot(this._componentPkgName());
