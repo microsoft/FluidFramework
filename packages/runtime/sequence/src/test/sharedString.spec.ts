@@ -97,10 +97,14 @@ describe("SharedString", () => {
     });
 
     describe("reconnect", () => {
-        const documentId = "fakeId";
+        let deltaConnection1: IDeltaConnection;
+        let deltaConnection2: IDeltaConnection;
+        let sharedString1: SharedString;
+        let sharedString2: SharedString;
         let deltaConnectionFactory: MockDeltaConnectionFactory;
 
         async function createSharedString(
+            id: string,
             runtime: MockRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<SharedString> {
@@ -112,31 +116,31 @@ describe("SharedString", () => {
             // Make the runtime non-local so that ops are submitted to the DeltaConnection.
             runtime.local = false;
 
-            const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+            const sharedString = new SharedString(runtime, id, SharedStringFactory.Attributes);
             sharedString.connect(runtime.services);
             return sharedString;
         }
 
-        beforeEach(() => {
+        beforeEach(async () => {
             deltaConnectionFactory = new MockDeltaConnectionFactory();
-        });
 
-        it("can resend unacked ops on reconnection", async () => {
             // Create first SharedString
             const runtime1 = new MockRuntime();
-            const deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
-            const sharedString1 = await createSharedString(runtime1, deltaConnection1);
+            deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
+            sharedString1 = await createSharedString("sharedString1", runtime1, deltaConnection1);
 
             // Create second SharedString
             const runtime2 = new MockRuntime();
-            const deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
-            const sharedString2 = await createSharedString(runtime2, deltaConnection2);
+            deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
+            sharedString2 = await createSharedString("sharedString2", runtime2, deltaConnection2);
+        });
 
+        it("can resend unacked ops on reconnection", async () => {
             // Make couple of changes to the first SharedString.
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
-            // Drop the connection and reconnect the first SharedString.
+            // Disconnect and reconnect the connection for the first SharedString.
             deltaConnection1.connected = false;
             deltaConnectionFactory.clearMessages();
             deltaConnection1.connected = true;
@@ -149,17 +153,7 @@ describe("SharedString", () => {
         });
 
         it("can store ops in disconnected state and resend them on reconnection", async () => {
-            // Create first SharedString
-            const runtime1 = new MockRuntime();
-            const deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
-            const sharedString1 = await createSharedString(runtime1, deltaConnection1);
-
-            // Create second SharedString
-            const runtime2 = new MockRuntime();
-            const deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
-            const sharedString2 = await createSharedString(runtime2, deltaConnection2);
-
-            // Drop the connection for the first SharedString.
+            // Disconnect the connection for the first SharedString.
             deltaConnection1.connected = false;
 
             // Make couple of changes to it.

@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { IDeltaConnection } from "@fluidframework/component-runtime-definitions";
 import { strongAssert } from "@fluidframework/runtime-utils";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
@@ -189,45 +190,150 @@ describe("ConsensusOrderedCollection", () => {
             });
     });
 
-    it("Disconnection flow", async () => {
-        const runtime = new MockRuntime();
-        const deltaConnFactory = new MockDeltaConnectionFactory();
-        const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-        runtime.services = {
-            deltaConnection,
-            objectStorage: new MockStorage(),
-        };
+    describe("Reconnection flow", () => {
+        let deltaConnectionFactory: MockDeltaConnectionFactory;
+        let runtime1: MockRuntime;
+        let runtime2: MockRuntime;
+        let deltaConnection1: IDeltaConnection;
+        let deltaConnection2: IDeltaConnection;
+        let testCollection1: IConsensusOrderedCollection;
+        let testCollection2: IConsensusOrderedCollection;
 
-        // Make the runtime non-local so that ops are submitted to the DeltaConnection.
-        runtime.local = false;
+        async function createConsensusOrderedCollection(
+            id: string,
+            runtime: MockRuntime,
+            deltaConnection: IDeltaConnection,
+        ): Promise<IConsensusOrderedCollection> {
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            runtime.attach();
+            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+            runtime.local = false;
 
-        const testCollection = factory.create(runtime, "consensus-ordered-collection");
-        testCollection.connect(runtime.services);
+            const consensusOrderedCollection = factory.create(runtime, id);
+            consensusOrderedCollection.connect(runtime.services);
+            return consensusOrderedCollection;
+        }
 
-        const waitP = testCollection.add("sample");
+        beforeEach(async () => {
+            deltaConnectionFactory = new MockDeltaConnectionFactory();
 
-        // Drop connection
-        deltaConnection.connected = false;
-        deltaConnFactory.clearMessages();
-        deltaConnection.connected = true;
-        deltaConnFactory.processAllMessages();
+            // Create first ConsensusOrderedCollection
+            runtime1 = new MockRuntime();
+            deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
+            testCollection1 =
+                await createConsensusOrderedCollection("consenses-ordered-collection1", runtime1, deltaConnection1);
 
-        await waitP;
-
-        let res: any;
-        const resultP = testCollection.acquire(async (value) => {
-            res = value;
-            return ConsensusResult.Complete;
+            // Create second ConsensusOrderedCollection
+            runtime2 = new MockRuntime();
+            deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
+            testCollection2 =
+                await createConsensusOrderedCollection("consenses-ordered-collection2", runtime2, deltaConnection2);
         });
 
-        // Drop connection one more time
-        deltaConnection.connected = false;
-        deltaConnFactory.clearMessages();
-        deltaConnection.connected = true;
-        deltaConnFactory.processAllMessages();
-        setImmediate(() => deltaConnFactory.processAllMessages());
+        it("can resend unacked ops on reconnection", async () => {
+            /**
+             * First, we will add a value to the first collection and verify the op is resent.
+             */
+            const testValue = "testValue";
 
-        await resultP;
-        assert.equal(res, "sample");
+            // Add a listener to the second collection. This is used to verify that the added value reaches the remote
+            // client.
+            let addedValue: string = "";
+            let newlyAdded: boolean = false;
+            testCollection2.on("add", (value: any, added: boolean) => {
+                addedValue = value;
+                newlyAdded = added;
+            });
+
+            // Add a value to the first ConsensusOrderedCollection
+            const waitP = testCollection1.add(testValue);
+
+            // Disconnect and reconnect the connection for the first collection.
+            deltaConnection1.connected = false;
+            deltaConnectionFactory.clearMessages();
+            deltaConnection1.connected = true;
+
+            // Process the messages.
+            deltaConnectionFactory.processAllMessages();
+
+            await waitP;
+
+            // Verify that the remote collection received the added value.
+            assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+            assert.equal(newlyAdded, true, "The remote client's value was not newly added");
+
+            /**
+             * Now, we will acquire the added value in the first collection and verify the op is resent.
+             */
+
+            // Add a listener to the second collection. This is used to verify that the acquired op reaches the remote
+            // client.
+            let acquiredValue: string = "";
+            let acquiredClientId: string | undefined = "";
+            testCollection2.on("acquire", (value: any, clientId?: string) => {
+                acquiredValue = value;
+                acquiredClientId = clientId;
+            });
+
+            // Acquire the previously added value.
+            let res: any;
+            const resultP = testCollection1.acquire(async (value) => {
+                res = value;
+                return ConsensusResult.Complete;
+            });
+
+            // Disconnect and reconnect the connection for the first collection again.
+            deltaConnection1.connected = false;
+            deltaConnectionFactory.clearMessages();
+            deltaConnection1.connected = true;
+
+            // Process the messages.
+            deltaConnectionFactory.processAllMessages();
+            setImmediate(() => deltaConnectionFactory.processAllMessages());
+
+            await resultP;
+
+            // Verify that the value acquired is the one that was added earlier.
+            assert.equal(res, testValue, "The acquired value does not match the added value");
+
+            // Verify that the remote collection received the acquired op.
+            assert.equal(acquiredValue, testValue, "The remote client did not receive the acquired value");
+            assert.equal(acquiredClientId, runtime1.clientId,
+                "The remote client did not get the correct id of client that acquired the value");
+        });
+
+        it("can store ops in disconnected state and resend them on reconnection", async () => {
+            const testValue = "testValue";
+
+            // Add a listener to the second collection. This is used to verify that the added value reaches the remote
+            // client.
+            let addedValue: string = "";
+            let newlyAdded: boolean = false;
+            testCollection2.on("add", (value: any, added: boolean) => {
+                addedValue = value;
+                newlyAdded = added;
+            });
+
+            // Drop the connection for the first collection.
+            deltaConnection1.connected = false;
+
+            // Add a value to the first ConsensusOrderedCollection.
+            const waitP = testCollection1.add(testValue);
+
+            // Reconnect the first collection.
+            deltaConnection1.connected = true;
+
+            // Process the messages.
+            deltaConnectionFactory.processAllMessages();
+
+            await waitP;
+
+            // Verify that the remote collection received the added value.
+            assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+            assert.equal(newlyAdded, true, "The remote client's value was not newly added");
+        });
     });
 });

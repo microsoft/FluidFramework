@@ -17,28 +17,27 @@ import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollecti
 import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
-    const snapshotFileName = "header";
-    const componentId = "consensus-register-collection";
     const crcFactory = new ConsensusRegisterCollectionFactory();
-    let crc: IConsensusRegisterCollection;
-    let runtime: MockRuntime;
-    let deltaConnFactory: MockDeltaConnectionFactory;
-    let deltaConnection: IDeltaConnection;
-
-    beforeEach(() => {
-        runtime = new MockRuntime();
-        deltaConnFactory = new MockDeltaConnectionFactory();
-        deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-        runtime.services = {
-            deltaConnection,
-            objectStorage: new MockStorage(),
-        };
-        // Make the runtime non-local so that ops are submitted to the DeltaConnection.
-        runtime.local = false;
-        crc = crcFactory.create(runtime, componentId);
-    });
-
     describe("Api", () => {
+        const componentId = "consensus-register-collection";
+        let crc: IConsensusRegisterCollection;
+        let runtime: MockRuntime;
+        let deltaConnFactory: MockDeltaConnectionFactory;
+        let deltaConnection: IDeltaConnection;
+
+        beforeEach(() => {
+            runtime = new MockRuntime();
+            deltaConnFactory = new MockDeltaConnectionFactory();
+            deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+            runtime.local = false;
+            crc = crcFactory.create(runtime, componentId);
+        });
+
         describe("Attached, connected", () => {
             async function writeAndProcessMsg(k, v) {
                 const waitP = crc.write(k, v);
@@ -87,6 +86,13 @@ describe("ConsensusRegisterCollection", () => {
     });
 
     describe("Summary", () => {
+        const snapshotFileName = "header";
+        const componentId = "consensus-register-collection";
+        let crc: IConsensusRegisterCollection;
+        let runtime: MockRuntime;
+        let deltaConnFactory: MockDeltaConnectionFactory;
+        let deltaConnection: IDeltaConnection;
+
         const expectedSerialization = JSON.stringify({
             key1:{
                 atomic:{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } },
@@ -113,6 +119,19 @@ describe("ConsensusRegisterCollection", () => {
             ],
             // eslint-disable-next-line no-null/no-null
             id: null,
+        });
+
+        beforeEach(() => {
+            runtime = new MockRuntime();
+            deltaConnFactory = new MockDeltaConnectionFactory();
+            deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+            runtime.local = false;
+            crc = crcFactory.create(runtime, componentId);
         });
 
         it("snapshot", async () => {
@@ -150,46 +169,145 @@ describe("ConsensusRegisterCollection", () => {
         });
     });
 
-    describe("reconnect", () => {
-        it("message not sent before attach", async () => {
-            const writeP = crc.write("test", "test");
-            const res = await writeP;
-            assert(res);
+    describe("Multiple Clients", () => {
+        let deltaConnectionFactory: MockDeltaConnectionFactory;
+        let runtime1: MockRuntime;
+        let runtime2: MockRuntime;
+        let deltaConnection1: IDeltaConnection;
+        let deltaConnection2: IDeltaConnection;
+        let testCollection1: IConsensusRegisterCollection;
+        let testCollection2: IConsensusRegisterCollection;
+
+        // Creates a ConsensusRegisterCollection but does not connect it.
+        async function createConsensusRegisterCollection(
+            id: string,
+            runtime: MockRuntime,
+            deltaConnection: IDeltaConnection,
+        ): Promise<IConsensusRegisterCollection> {
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            runtime.attach();
+            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
+            runtime.local = false;
+
+            const consensusRegisterCollection = crcFactory.create(runtime, id);
+            return consensusRegisterCollection;
+        }
+
+        beforeEach(async () => {
+            deltaConnectionFactory = new MockDeltaConnectionFactory();
+
+            // Create first ConsensusOrderedCollection
+            runtime1 = new MockRuntime();
+            deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
+            testCollection1 =
+                await createConsensusRegisterCollection("consenses-register-collection1", runtime1, deltaConnection1);
+
+            // Create second ConsensusOrderedCollection
+            runtime2 = new MockRuntime();
+            deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
+            testCollection2 =
+                await createConsensusRegisterCollection("consenses-register-collection2", runtime2, deltaConnection2);
         });
 
-        it("message not sent before connect", async () => {
-            crc.connect(runtime.services);
+        describe("Object not connected", () => {
+            it("should not send ops when DDS is not connected", async () => {
+                // Add a listener to the second collection. This is used to verify that the written value reaches
+                // the remote client.
+                let receivedValue: string = "";
+                testCollection2.on("atomicChanged", (key: string, value: string) => {
+                    receivedValue = value;
+                });
 
-            deltaConnection.connected = false;
-            const writeP = crc.write("test", "test");
-            deltaConnection.connected = true;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
+                // Write to the first register collection.
+                const testValue = "testValue";
+                const writeP = testCollection1.write("key", testValue);
+
+                // Process the messages.
+                deltaConnectionFactory.processAllMessages();
+
+                // Verify that the first collection successfully writes and is the winner.
+                const winner = await writeP;
+                assert.equal(winner, true, "Write was not successful");
+
+                // Verify that the remote client does not get this write because the DDS is not connected.
+                assert.equal(receivedValue, "", "The remote client should not have received the write");
+            });
         });
 
-        it("message sent before reconnect", async () => {
-            crc.connect(runtime.services);
+        describe("reconnect", () => {
+            const testKey: string = "testKey";
+            const testValue: string = "testValue";
+            let receivedKey: string = "";
+            let receivedValue: string = "";
+            let receivedLocalStatus: boolean = true;
 
-            const writeP = crc.write("test", "test");
-            deltaConnection.connected = false;
-            deltaConnFactory.processAllMessages();
-            deltaConnection.connected = true;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
-        });
+            beforeEach(() => {
+                // Connect the collections.
+                testCollection1.connect(runtime1.services);
+                testCollection2.connect(runtime2.services);
 
-        it("message not sent before reconnect", async () => {
-            crc.connect(runtime.services);
+                // Add a listener to the second collection. This is used to verify that the written value reaches
+                // the remote client.
+                testCollection2.on("atomicChanged", (key: string, value: string, local: boolean) => {
+                    receivedKey = key;
+                    receivedValue = value;
+                    receivedLocalStatus = local;
+                });
+            });
 
-            const writeP = crc.write("test", "test");
-            deltaConnection.connected = false;
-            deltaConnFactory.clearMessages();
-            deltaConnection.connected = true;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
+            it("can resend unacked ops on reconnection", async () => {
+                // Write to the first register collection.
+                const writeP = testCollection1.write(testKey, testValue);
+
+                // Disconnect and reconnect the connection for the first register collection.
+                deltaConnection1.connected = false;
+                deltaConnectionFactory.clearMessages();
+                deltaConnection1.connected = true;
+
+                // Process the messages.
+                deltaConnectionFactory.processAllMessages();
+
+                // Verify that the first collection successfully writes and is the winner.
+                const winner = await writeP;
+                assert.equal(winner, true, "Write was not successful");
+
+                // Verify that the remote regsiter collection recieved the write.
+                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+            });
+
+            it("can store ops in disconnected state and resend them on reconnection", async () => {
+                // Disconnect the connection for the first register collection.
+                deltaConnection1.connected = false;
+
+                // Write to the first register collection.
+                const writeP = testCollection1.write(testKey, testValue);
+
+                // Reconnect the first register collection.
+                deltaConnection1.connected = true;
+
+                // Process the messages.
+                deltaConnectionFactory.processAllMessages();
+
+                // Verify that the first collection successfully writes and is the winner.
+                const winner = await writeP;
+                assert.equal(winner, true, "Write was not successful");
+
+                // Verify that the remote regsiter collection recieved the write.
+                assert.equal(receivedKey, testKey, "The remote client did not receive the key");
+                assert.equal(receivedValue, testValue, "The remote client did not receive the value");
+                assert.equal(receivedLocalStatus, false, "The remote client's value should not be local");
+            });
+
+            afterEach(() => {
+                receivedKey = "";
+                receivedValue = "";
+                receivedLocalStatus = true;
+            });
         });
     });
 });
