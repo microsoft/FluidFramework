@@ -142,16 +142,7 @@ module.exports = class extends Generator {
   }
 
   _copyAndModifyComponentFile() {
-    const filePath = `src/component${this._getFileExtension()}`;
-    const fileString = this.fs.read(this.templatePath(filePath));
-
-    const project = new Project({});
-
-    const file = project.createSourceFile(
-      this.destinationPath(filePath),
-      fileString,
-    );
-
+    const file = this._generateNewProjectFile(`src/component${this._getFileExtension()}`);
     const classObj = file.getClass("DiceRoller");
     // Rename the class name with the component name provided
     classObj.rename(this._componentClassName());
@@ -168,57 +159,36 @@ module.exports = class extends Generator {
     classObj.removeImplements(0);
     classObj.insertImplements(0, this._componentInterfaceModelName());
 
-    // TODO: Move this save so that it saves when the rest of the fs does a commit
-    // Or write to a string and use fs to write.
     file.save();
   }
 
   _copyAndModifyIndexFile() {
-    const filePath = "src/index.ts";
-    const fileString = this.fs.read(this.templatePath(filePath));
-
-    const project = new Project({});
-
-    const file = project.createSourceFile(
-      this.destinationPath(filePath),
-      fileString,
-    );
-
+    const file = this._generateNewProjectFile("src/index.ts");
+    // Update the component name on import
     const imports = file.getImportDeclaration("./component");
     const componentImport = imports.getNamedImports()[0];
     componentImport.setName(this._componentClassName());
 
+    // Update the component name on export
     const exportDeclaration = file.getExportDeclaration(d => d.hasNamedExports());
     const namedExport = exportDeclaration.getNamedExports()[0];
     namedExport.setName(this._componentClassName());
 
+    // Update the usage of the component name
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
     varDec.set({
       initializer: `${this._componentClassName()}.factory`,
     });
 
-    // TODO: Move this save so that it saves when the rest of the fs does a commit
-    // Or write to a string and use fs to write.
     file.save();
   }
 
   _copyAndModifyModelFile() {
-    const filePath = "src/model.ts";
-    const fileString = this.fs.read(this.templatePath(filePath));
-
-    const project = new Project({});
-
-    const file = project.createSourceFile(
-      this.destinationPath(filePath),
-      fileString,
-    );
-
+    const file = this._generateNewProjectFile("src/model.ts");
     const modelInterface = file.getInterface("IDiceRoller");
     modelInterface.rename(this._componentInterfaceModelName())
 
-    // TODO: Move this save so that it saves when the rest of the fs does a commit
-    // Or write to a string and use fs to write.
     file.save();
   }
 
@@ -278,7 +248,7 @@ module.exports = class extends Generator {
   }
 
   /**
-   * Below here are helper files.
+   * Below here are helper functions.
    */
 
   _isReact() {
@@ -309,5 +279,16 @@ module.exports = class extends Generator {
 
   _componentFactoryClassName() {
     return `${this._componentClassName()}InstantiationFactory`;
+  }
+
+  _generateNewProjectFile(currentFilePath) {
+    const fileString = this.fs.read(this.templatePath(currentFilePath));
+
+    const project = new Project({});
+
+    return project.createSourceFile(
+      this.destinationPath(currentFilePath),
+      fileString,
+    );
   }
 };
