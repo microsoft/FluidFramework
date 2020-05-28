@@ -12,3 +12,4 @@ export * from "./componentRegistry";
 export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
 export * from "./summaryCollection";
+export * from "./componentSummarizer";
