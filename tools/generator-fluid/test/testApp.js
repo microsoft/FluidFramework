@@ -12,182 +12,84 @@ describe("Yo fluid", function () {
     this.timeout(10000);
 
     describe("React", () => {
-        describe("With container", () => {
-            let runContext;
-            let oldCwd;
-            before(() => {
-                oldCwd = process.cwd();
-                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "react",
-                        container: "yes",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
-                return runContext;
-            });
-
-            it("Produces the expected files", () => {
-                const expectedFiles = [
-                    "src/main.tsx",
-                    "src/index.ts",
-                    ".gitignore",
-                    ".npmignore",
-                    ".npmrc",
-                    "package.json",
-                    "README.md",
-                    "tsconfig.json",
-                    "webpack.config.js",
-                    "webpack.dev.js",
-                    "webpack.prod.js",
-                ]
-                assert.file(expectedFiles);
-
-                const unexpectedFiles = [
-                    "src/main.ts",
-                ]
-                assert.noFile(unexpectedFiles);
-            });
-
-            after(() => {
-                process.chdir(oldCwd);
-                runContext.cleanTestDirectory();
-            });
+        let runContext;
+        let oldCwd;
+        before(() => {
+            oldCwd = process.cwd();
+            runContext = helpers.run(path.join(__dirname, "../app/index.js"))
+                .withPrompts({
+                    componentName: "foobar",
+                    template: "react"
+                });
+            return runContext;
         });
 
-        describe("Without container", () => {
-            let runContext;
-            let oldCwd;
-            before(() => {
-                oldCwd = process.cwd();
-                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "react",
-                        container: "no",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
-                return runContext;
-            });
+        it("Produces the expected files", () => {
+            const expectedFiles = [
+                "src/component.tsx",
+                "src/index.ts",
+                "src/model.ts",
+                "src/view.tsx",
+                ".gitignore",
+                ".npmrc",
+                "package.json",
+                "README.md",
+                "tsconfig.json",
+                "webpack.config.js",
+            ]
+            assert.file(expectedFiles);
 
-            it("Produces the expected files", () => {
-                const expectedFiles = [
-                    "src/main.tsx",
-                    ".gitignore",
-                    ".npmignore",
-                    ".npmrc",
-                    "package.json",
-                    "README.md",
-                    "tsconfig.json",
-                    "webpack.config.js",
-                    "webpack.dev.js",
-                    "webpack.prod.js",
-                ]
-                assert.file(expectedFiles);
+            const unexpectedFiles = [
+                "src/component.ts",
+                "src/view.ts",
+            ]
+            assert.noFile(unexpectedFiles);
+        });
 
-                const unexpectedFiles = [
-                    "src/main.ts",
-                    "src/index.ts",
-                ]
-                assert.noFile(unexpectedFiles);
-            });
-
-            after(() => {
-                process.chdir(oldCwd);
-                runContext.cleanTestDirectory();
-            });
+        after(() => {
+            process.chdir(oldCwd);
+            runContext.cleanTestDirectory();
         });
     });
 
     describe("Vanilla", () => {
-        describe("With container", () => {
-            let runContext;
-            let oldCwd;
-            before(() => {
-                oldCwd = process.cwd();
-                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "vanillaJS",
-                        container: "yes",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
-                return runContext;
-            });
-
-            it("Produces the expected files", async () => {
-                const expectedFiles = [
-                    "src/main.ts",
-                    "src/index.ts",
-                    ".gitignore",
-                    ".npmignore",
-                    ".npmrc",
-                    "package.json",
-                    "README.md",
-                    "tsconfig.json",
-                    "webpack.config.js",
-                    "webpack.dev.js",
-                    "webpack.prod.js",
-                ]
-                assert.file(expectedFiles);
-
-                const unexpectedFiles = [
-                    "src/main.tsx",
-                ]
-                assert.noFile(unexpectedFiles);
-            });
-
-            after(() => {
-                process.chdir(oldCwd);
-                runContext.cleanTestDirectory();
-            });
+        let runContext;
+        let oldCwd;
+        before(() => {
+            oldCwd = process.cwd();
+            runContext = helpers.run(path.join(__dirname, "../app/index.js"))
+                .withPrompts({
+                    componentName: "foobar",
+                    template: "vanillaJS"
+                });
+            return runContext;
         });
 
-        describe("Without container", () => {
-            let runContext;
-            let oldCwd;
-            before(() => {
-                oldCwd = process.cwd();
-                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "vanillaJS",
-                        container: "no",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
-                return runContext;
-            });
+        it("Produces the expected files", () => {
+            const expectedFiles = [
+                "src/component.ts",
+                "src/index.ts",
+                "src/model.ts",
+                "src/view.ts",
+                ".gitignore",
+                ".npmrc",
+                "package.json",
+                "README.md",
+                "tsconfig.json",
+                "webpack.config.js",
+            ]
+            assert.file(expectedFiles);
 
-            it("Produces the expected files", async () => {
-                const expectedFiles = [
-                    "src/main.ts",
-                    ".gitignore",
-                    ".npmignore",
-                    ".npmrc",
-                    "package.json",
-                    "README.md",
-                    "tsconfig.json",
-                    "webpack.config.js",
-                    "webpack.dev.js",
-                    "webpack.prod.js",
-                ]
-                assert.file(expectedFiles);
+            const unexpectedFiles = [
+                "src/component.tsx",
+                "src/view.tsx",
+            ]
+            assert.noFile(unexpectedFiles);
+        });
 
-                const unexpectedFiles = [
-                    "src/main.tsx",
-                    "src/index.ts",
-                ]
-                assert.noFile(unexpectedFiles);
-            });
-
-            after(() => {
-                process.chdir(oldCwd);
-                runContext.cleanTestDirectory();
-            });
+        after(() => {
+            process.chdir(oldCwd);
+            runContext.cleanTestDirectory();
         });
     });
 });
