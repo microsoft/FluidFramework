@@ -115,6 +115,8 @@ ICounterFunctionalFluidState,
 IFluidDataProps
 >) {
     const { Provider, Consumer, state, setState } = createContextFluid(props);
+    // The following is wrapped in some extra divs to show how the context is being passed from
+    // a parent to a child layer without prop drilling being required.
     return (
         <div>
             <Provider value={{ state, setState, reactContext: props.reactContext }}>
