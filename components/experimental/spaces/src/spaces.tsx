@@ -19,6 +19,7 @@ import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
     spacesComponentMap,
+    spacesRegistryEntries,
     templateDefinitions,
 } from "./spacesComponentRegistry";
 
@@ -38,7 +39,10 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         Spaces,
         [],
         {},
-        [[ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ]],
+        [
+            [ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ],
+            ...spacesRegistryEntries,
+        ],
     );
 
     public static getFactory() {

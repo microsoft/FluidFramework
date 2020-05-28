@@ -123,13 +123,10 @@ const generateRegistryEntries = () => {
     const componentRegistryEntries: NamedComponentRegistryEntry[] =
         containerComponentsDefinition.map((definition) => [definition.type, definition.factory]);
 
-    // Register a special entry with empty string which provides the list
-    componentRegistryEntries.push(["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))]);
-
     return componentRegistryEntries;
 };
 
-export const spacesInternalRegistryEntries = generateRegistryEntries();
+export const spacesRegistryEntries = generateRegistryEntries();
 
 export const spacesComponentMap = new Map<string, IInternalRegistryEntry>([
     ["clicker", clickerRegistryEntry],
