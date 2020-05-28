@@ -596,10 +596,20 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);
                 break;
+            case MessageType.Save:
+            case MessageType.BlobUploaded:
+                // For Save and BlobUploaded messages, but log an error but do not resubmit them. We should look at the
+                // telemetry to determine how often this happens and revisit this as per #2312.
+                this.submit(type, content, localOpMetadata);
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedComponentResubmitMessage",
+                    messageType: type,
+                });
+                break;
             default:
                 // For other types of messages, submit it again but log an error indicating a resubmit was triggered
                 // for it. We should look at the telemetry periodically to determine if these are valid or not and
-                // take necessary steps.
+                // revisit this as per #2312.
                 this.submit(type, content, localOpMetadata);
                 this.logger.sendErrorEvent({
                     eventName: "UnexpectedComponentResubmitMessage",

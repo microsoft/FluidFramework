@@ -1516,10 +1516,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 // For Attach messages, submit the message again.
                 this.submit(MessageType.Attach, content, localOpMetadata);
                 break;
+            case MessageType.RemoteHelp:
+                // For RemoteHelp messages, log an error but do not resubmit them. We should look at the
+                // telemetry to determine how often this happens and revisit this as per #2312.
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedContainerResubmitMessage",
+                    messageType: type,
+                });
+                break;
             default:
                 // For other types of messages, submit it again but log an error indicating a resubmit
                 // was triggered for it. We should look at the telemetry periodically to determine if
-                // these are valid or not and take necessary steps.
+                // these are valid or not and revisit this as per #2312.
                 this.submit(type, content, localOpMetadata);
                 this.logger.sendErrorEvent({
                     eventName: "UnexpectedContainerResubmitMessage",
