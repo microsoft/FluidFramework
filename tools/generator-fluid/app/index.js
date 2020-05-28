@@ -159,7 +159,16 @@ module.exports = class extends Generator {
       fileString,
     );
 
+    // Replace the class name with the component name provided
     file.getClass("DiceRoller").rename(this._componentClassName());
+
+    // Replace the ComponentName return value with the pkg name
+    file.replace("<component-pkg-name>", this._componentPkgName())
+
+    // Replace class name in comments
+    file.replace("<component-class-name>", this._componentClassName())
+
+    file.getClass("").getLeadingCommentRanges()
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
@@ -225,6 +234,12 @@ module.exports = class extends Generator {
     }
     this.log(chalk.cyan("    npm start"));
   }
+
+  /**
+   * Below here are helper files.
+   * 
+   * Ideally there should be no direct references to this.answers or this.options above.
+   */
 
   _isReact() {
     return this.options.react || this.answers.template === react;

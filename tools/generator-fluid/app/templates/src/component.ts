@@ -11,10 +11,10 @@ import { DiceRollerView } from "./view";
 const diceValueKey = "diceValue";
 
 /**
- * The DiceRoller is our implementation of the IDiceRoller interface.
+ * The <component-class-name> is our Fluid component
  */
 export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
-    public static get ComponentName() { return "dice-roller"; }
+    public static get ComponentName() { return "<component-pgk-name>"; }
 
     public get IComponentHTMLView() { return this; }
 
@@ -30,7 +30,7 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
     );
 
     /**
-     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
+     * componentInitializingFirstTime is called only once, it is executed only by the first client to open the
      * component and all work will resolve before the view is presented to any user.
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
