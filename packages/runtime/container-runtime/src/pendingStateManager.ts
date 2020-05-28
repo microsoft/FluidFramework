@@ -58,7 +58,8 @@ export class PendingStateManager {
 
     // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
-    // This is the last message that we processed. This is used to verify that batch end metadata is correct.
+    // This stores all the messages in the batch that we are processing. This is used to verify that we get the
+    // correct batch metadata.
     private pendingBatchMessages: ISequencedDocumentMessage[] = [];
 
     private get connected(): boolean {
