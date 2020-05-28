@@ -37,7 +37,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, CacheKey, ICacheVersionedEntry, IFileEntry } from "./odspCache";
+import { IOdspCache, ICacheVersionedEntry, IFileEntry } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -54,7 +54,7 @@ type ConditionallyContextedSummary = {
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // 12 hours
-    public snapshotCacheExpiry = 12 * 3600;
+    public snapshotCacheExpiry = 12 * 3600 * 1000;
 
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -321,7 +321,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 } else {
                     const cachedSnapshotP = this.cache.persistedCache.get({
                         file: this.fileEntry,
-                        key: CacheKey.Snapshot,
+                        key: "Snapshot",
                     }) as Promise<IOdspSnapshot>;
 
                     if (this.hostPolicy.concurrentSnapshotFetch) {
@@ -460,12 +460,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         assert(this._snapshotCacheEntry === undefined);
         this._snapshotCacheEntry = {
             file: this.fileEntry,
-            key: CacheKey.Snapshot,
+            key: "Snapshot",
             version: cachedSnapshot.id,
         };
-        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-        // want to use the same getLatest result.
+
         this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot);
         this.cache.persistedCache.updateExpiry(this._snapshotCacheEntry, this.snapshotCacheExpiry, this.snapshotCacheExpiry);
         return cachedSnapshot;

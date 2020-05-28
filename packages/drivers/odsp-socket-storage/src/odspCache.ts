@@ -10,9 +10,7 @@ import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 /**
  * Describes what kind of content is stored in cache entry.
  */
-export enum CacheKey {
-    Snapshot,
-}
+export type CacheKey = "Snapshot";
 
 /*
  * There is overlapping information here - host can use all of it or parts
@@ -64,6 +62,11 @@ export interface ICacheVersionedEntry extends ICacheEntry {
  * Persistent cache. This interface can be implemented by the host to provide durable caching
  * across sessions. If not provided, driver will provide in-memory cache that does not survive
  * across session boundary.
+ *
+ * Note that entries stored in cache are versioned, but request for data are not (version-less).
+ * Host is expected to store only latest version provided by driver.
+ * Updates on usage contain version info. If newer version of entry is already stored in cache,
+ * host should ignore such updates.
  */
 export interface IPersistedCache {
     /**
@@ -77,7 +80,7 @@ export interface IPersistedCache {
      * Put the value into cache. Overwrites any prior version of same entry.
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
-     * @param value - jasonable content. Passing undefined removes entry from cache
+     * @param value - jasonable content.
      */
     put(entry: ICacheVersionedEntry, value: any): void;
 
@@ -97,10 +100,10 @@ export interface IPersistedCache {
      * and it may happen that it's still not that stale and could be reused, despite earlier calculation suggesting
      * it expired.
      * @param entry - cache entry. Call should be ignored if version of entry does not match version stored in cache.
-     * @param origExpiryTime - original expiry time, in seconds. This value does not change for an entry and provides
-     * information on default policy driver uses if no other information is available.
-     * @param expiryTime - suggested expiration time, in seconds, based on new information. Can be negative if already
-     * well into expiration! This timer linearly scales down to zero and beyond zero based on new information
+     * @param origExpiryTime - original expiry time, in milliseconds. This value does not change for an entry and
+     * provides information on default policy driver uses if no other information is available.
+     * @param expiryTime - suggested expiration time, in milliseconds, based on new information. Can be negative if
+     * already well into expiration! This timer linearly scales down to zero and beyond zero based on new information
      * (like ops available on top of snapshot).
      * Implementer of cache is free to overwrite it / implement different policy, or scale expiryTime linearly.
      */
