@@ -59,7 +59,7 @@ export const spacesRegistryEntries: NamedComponentRegistryEntry[] = Array.from(
 );
 
 interface ITemplate {
-    [widgetType: string]: Layout[];
+    [type: string]: Layout[];
 }
 
 interface ITemplateDictionary {

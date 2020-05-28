@@ -114,8 +114,8 @@ interface ISpacesToolbarProps {
     editable: boolean;
     setEditable: (editable: boolean) => void;
     addComponent(type: string): void;
-    templates: string[];
-    applyTemplate(template: string): void;
+    templates?: string[];
+    applyTemplate?(template: string): void;
 }
 
 export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
@@ -148,7 +148,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 />,
             );
 
-            if (props.templates.length > 0) {
+            if (props.templates !== undefined && props.templates.length > 0 && props.applyTemplate !== undefined) {
                 toolbarItems.push(
                     <SpacesToolbarTemplateItem
                         key="template"

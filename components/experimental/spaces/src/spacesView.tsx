@@ -13,8 +13,8 @@ interface ISpacesViewProps {
     componentMap: Map<string, ISpacesComponentEntry>;
     storage: ISpacesStorage;
     addComponent(type: string): void;
-    templates: string[];
-    applyTemplate(template: string): void;
+    templates?: string[];
+    applyTemplate?(template: string): void;
 }
 
 /**
