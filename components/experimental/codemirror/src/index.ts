@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IComponentFactory, FlushMode } from "@fluidframework/runtime-definitions";
 import { fluidExport as smde } from "./codemirror";
 
 class CodeMirrorFactory implements IRuntimeFactory {
@@ -18,11 +18,11 @@ class CodeMirrorFactory implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/smde", Promise.resolve(smde)],
+            ["@fluid-example/smde", Promise.resolve(smde)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/smde";
+        const defaultComponent = "@fluid-example/smde";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -55,10 +55,7 @@ class CodeMirrorFactory implements IRuntimeFactory {
                 runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;

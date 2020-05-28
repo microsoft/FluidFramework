@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import assert from "assert";
+import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { TestResolver } from "../testResolver";
 
 describe("Local Driver Resolver", () => {
@@ -36,13 +36,9 @@ describe("Local Driver Resolver", () => {
         it("should successfully create requestUrl for a component from resolvedUrl", async () => {
             const resolvedUrl = await resolver.resolve(request);
             const componentId = "component";
-            const response = await resolver.requestUrl(resolvedUrl, { url: componentId });
-
-            assert.equal(response.status, "200", "Status code should be 200");
-            assert.equal(response.mimeType, "text/plain", "Mime type should be text/plain");
-
+            const response = await resolver.getAbsoluteUrl(resolvedUrl, componentId);
             const expectedUrl = `http://localhost:3000/${documentId}/${componentId}`;
-            assert.equal(response.value, expectedUrl, "The requestUrl should match");
+            assert.equal(response, expectedUrl, "The requestUrl should match");
         });
     });
 

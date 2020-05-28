@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
-import { TestKafka } from "@microsoft/fluid-server-test-utils";
+import { TestKafka } from "@fluidframework/server-test-utils";
 
 function validateException(fn: () => void) {
     try {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IClient,
     IClientJoin,
@@ -11,7 +11,7 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -20,7 +20,7 @@ import {
     IProducer,
     IRawOperationMessage,
     RawOperationType,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { IPubSub, ISubscriber } from "./";
 
 export class LocalOrdererConnection implements IOrdererConnection {

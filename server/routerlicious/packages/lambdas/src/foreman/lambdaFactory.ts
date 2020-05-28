@@ -10,7 +10,7 @@ import {
     IPartitionLambdaFactory,
     ITaskMessageSender,
     ITenantManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { ForemanLambda } from "./lambda";
 

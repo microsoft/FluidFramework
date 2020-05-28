@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IError, ErrorType } from "@microsoft/fluid-driver-definitions";
-import { OnlineStatus } from "@microsoft/fluid-driver-utils";
+import assert from "assert";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 
@@ -22,7 +21,6 @@ describe("Odsp Error", () => {
         statusCode: number,
         canRetry: boolean,
         includeResponse: boolean,
-        online?: string,
     ) {
         try {
             throwOdspNetworkError(
@@ -30,21 +28,19 @@ describe("Odsp Error", () => {
                 statusCode,
                 canRetry,
                 includeResponse ? testResponse : undefined,
-                online,
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
-            return error as IError;
+            return error as CriticalContainerError;
         }
     }
 
     it("throwOdspNetworkError first-class properties", async () => {
-        const networkError: IError = createOdspNetworkError(
+        const networkError: CriticalContainerError = createOdspNetworkError(
             "TestMessage",
             400,
             true /* canRetry */,
             true /* includeResponse */,
-            OnlineStatus[OnlineStatus.Offline],
         );
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
@@ -57,7 +53,6 @@ describe("Odsp Error", () => {
             assert.notEqual(-1, networkError.message.indexOf("default"),
                 "message should contain Response.type");
             assert.equal(true, networkError.canRetry, "canRetry should be true");
-            assert.equal(OnlineStatus[OnlineStatus.Offline], networkError.online, "online status should be offline");
         }
     });
 

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
 import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";
-import { ITenantConfig, RiddlerManager} from "./riddlerManager";
+import { ITenantConfig, RiddlerManager } from "./riddlerManager";
 
 /**
  * User -> Orgs mapping document
@@ -49,20 +49,19 @@ export interface ITenantDetails {
 }
 
 export class TenantManager {
-    private riddlerManager: RiddlerManager;
+    private readonly riddlerManager: RiddlerManager;
 
     constructor(
-        private mongoManager: core.MongoManager,
-        private userOrgCollection: string,
-        private orgTenantCollection: string,
-        private tenantCollection: string,
-        private riddlerEndpoint: string,
-        private gitrestEndpoint: string,
-        private cobaltEndpoint: string,
-        private historianEndpoint: string,
-        private alfredEndpoint: string,
-        private jarvisEndpoint: string) {
-
+        private readonly mongoManager: core.MongoManager,
+        private readonly userOrgCollection: string,
+        private readonly orgTenantCollection: string,
+        private readonly tenantCollection: string,
+        private readonly riddlerEndpoint: string,
+        private readonly gitrestEndpoint: string,
+        private readonly cobaltEndpoint: string,
+        private readonly historianEndpoint: string,
+        private readonly alfredEndpoint: string,
+        private readonly jarvisEndpoint: string) {
         this.riddlerManager = new RiddlerManager(this.riddlerEndpoint);
     }
 
@@ -71,6 +70,7 @@ export class TenantManager {
      */
     public async addTenant(userId: string, inputParams: ITenantInput): Promise<ITenant> {
         let orgId = await this.getOrgIdForUser(userId);
+        // eslint-disable-next-line no-null/no-null
         if (orgId === null) {
             orgId = await this.createOrgIdForUser(userId);
             await this.createEmptyTenantListForOrg(orgId);
@@ -103,11 +103,13 @@ export class TenantManager {
      */
     public async getTenantsforUser(userId: string): Promise<ITenant[]> {
         const orgId = await this.getOrgIdForUser(userId);
+        // eslint-disable-next-line no-null/no-null
         if (orgId === null) {
             return [];
         }
 
         const tenantIds = await this.getTenantIdsForOrg(orgId);
+        // eslint-disable-next-line no-null/no-null
         if (tenantIds === null) {
             return [];
         }
@@ -131,6 +133,7 @@ export class TenantManager {
     public async deleteTenant(tenantId: string): Promise<string> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDetails>(this.tenantCollection);
+        // eslint-disable-next-line no-null/no-null
         await collection.update({ _id: tenantId }, { deleted: true }, null);
         return tenantId;
     }
@@ -162,9 +165,10 @@ export class TenantManager {
      * For github provider, tenants are responsible for creating the repo manually.
      */
     private async createTenantStorage(tenantId: string, params: ITenantInput): Promise<ITenantStorage> {
-        let storageEndpoint = null;
-        let owner = null;
-        let repository = null;
+        let storageEndpoint;
+        let owner;
+        let repository;
+        // eslint-disable-next-line no-null/no-null
         let credentials: { user: string, password: string} = null;
 
         if (params.storageType !== "github") {
@@ -204,15 +208,16 @@ export class TenantManager {
     }
 
     private getProviderForEndpoint(url: string) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!url) {
             return "Unknown";
         }
 
-        if (url.indexOf(this.cobaltEndpoint) !== -1) {
+        if (url.includes(this.cobaltEndpoint)) {
             return "Cobalt";
-        } else if (url.indexOf(this.gitrestEndpoint) !== -1) {
+        } else if (url.includes(this.gitrestEndpoint)) {
             return "Git";
-        } else if (url.indexOf("https://api.github.com") !== -1) {
+        } else if (url.includes("https://api.github.com")) {
             return "GitHub";
         } else {
             return "Unknown";
@@ -242,8 +247,9 @@ export class TenantManager {
     private async addNewTenantForOrg(orgId: string, tenantId: string): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
-        const existingTenants = (await collection.findOne({_id: orgId})).tenantIds;
+        const existingTenants = (await collection.findOne({ _id: orgId })).tenantIds;
         existingTenants.push(tenantId);
+        // eslint-disable-next-line no-null/no-null
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
 
@@ -265,6 +271,7 @@ export class TenantManager {
         const collection = db.collection<IUserOrg>(this.userOrgCollection);
 
         const found = await collection.findOne({ _id: userId });
+        // eslint-disable-next-line no-null/no-null
         return (found === null) ? null : found.orgIds[0];
     }
 
@@ -273,6 +280,7 @@ export class TenantManager {
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
 
         const found = await collection.findOne({ _id: orgId });
+        // eslint-disable-next-line no-null/no-null
         return (found === null) ? null : found.tenantIds;
     }
 
@@ -280,10 +288,9 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDetails>(this.tenantCollection);
         const found = await collection.find(
-            { $and: [{_id: {$in: tenantIds}}, {deleted: false}]},
+            { $and: [{ _id: { $in: tenantIds } }, { deleted: false }] },
             {},
         );
         return found;
     }
-
 }

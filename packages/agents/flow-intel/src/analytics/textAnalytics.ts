@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as request from "request";
+import request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 
 const sentimentUrl = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment";

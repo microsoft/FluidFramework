@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
     SequenceDeltaEvent,
-} from "@microsoft/fluid-sequence";
+} from "@fluidframework/sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";

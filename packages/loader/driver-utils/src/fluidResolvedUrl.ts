@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrl, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 export const isFluidResolvedUrl =
     (resolved: IResolvedUrl | undefined): resolved is IFluidResolvedUrl => resolved?.type === "fluid";

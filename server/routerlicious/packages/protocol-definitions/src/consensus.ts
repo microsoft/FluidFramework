@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IErrorEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ISequencedClient } from "./clients";
 
 /**

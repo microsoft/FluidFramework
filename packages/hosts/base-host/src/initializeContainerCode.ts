@@ -5,8 +5,8 @@
 
 import {
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
+} from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 
 const currentCodeProposalKey = "code";
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
-import { TestContext } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
-import * as nconf from "nconf";
+import { IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+import { TestContext } from "@fluidframework/server-test-utils";
+import assert from "assert";
+import nconf from "nconf";
 import * as path from "path";
 import * as plugin from "../../document-router";
 

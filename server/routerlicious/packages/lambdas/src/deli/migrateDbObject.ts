@@ -8,7 +8,7 @@
 import {
     ICollection,
     IDocument,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { IDeliCheckpoint } from "./checkpointContext";
 
 // One time migration script per document for updating to latest schema.

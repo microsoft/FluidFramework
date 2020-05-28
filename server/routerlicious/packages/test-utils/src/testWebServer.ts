@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as moniker from "moniker";
 
 export class TestWebSocket implements core.IWebSocket {
@@ -63,6 +63,7 @@ export class TestWebSocket implements core.IWebSocket {
         for (const room of this.rooms) {
             this.server.rooms.get(room).delete(this);
         }
+        this.emit("disconnect");
     }
 }
 

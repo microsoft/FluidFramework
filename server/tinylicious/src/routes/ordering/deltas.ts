@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { MongoManager } from "@fluidframework/server-services-core";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam } from "../../utils";
@@ -18,7 +18,6 @@ export async function getDeltaContents(
     documentId: string,
     from?: number,
     to?: number): Promise<any[]> {
-
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {
@@ -48,7 +47,6 @@ export async function getDeltas(
     documentId: string,
     from?: number,
     to?: number): Promise<ISequencedDocumentMessage[]> {
-
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
     if (from !== undefined || to !== undefined) {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
-import { ITestDbFactory } from "@microsoft/fluid-server-test-utils";
-import * as uuid from "uuid";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
+import { ITestDbFactory } from "@fluidframework/server-test-utils";
+import uuid from "uuid";
 
 /**
  * A database factory for testing that store data in the browsers session storage

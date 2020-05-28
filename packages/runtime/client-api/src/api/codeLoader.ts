@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@microsoft/fluid-cell";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import * as cell from "@fluidframework/cell";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
 import {
     ICodeLoader,
     IContainerContext,
@@ -13,19 +13,19 @@ import {
     IRuntime,
     IRuntimeFactory,
     IFluidModule,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import * as ink from "@microsoft/fluid-ink";
-import * as map from "@microsoft/fluid-map";
-import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import * as ink from "@fluidframework/ink";
+import * as map from "@fluidframework/map";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IComponentContext,
     IComponentFactory,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
-import { createIError } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/runtime-definitions";
+import { CreateContainerError } from "@fluidframework/driver-utils";
+import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -36,7 +36,7 @@ export class Chaincode implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public constructor(private readonly closeFn: () => void) {}
+    public constructor(private readonly closeFn: () => void) { }
 
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories
@@ -138,7 +138,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                     componentRuntime.attach();
                 })
                 .catch((error: any) => {
-                    context.error(createIError(error));
+                    context.closeFn(CreateContainerError(error));
                 });
         }
 

@@ -15,22 +15,22 @@ import {
     IRequest,
     IResponse,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
 import {
     IComponentLayout,
     ComponentCursorDirection,
     IComponentCursor,
-} from "@microsoft/fluid-framework-experimental";
+} from "@fluidframework/framework-experimental";
 import {
     IComponentCollection,
-} from "@microsoft/fluid-framework-interfaces";
-import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
-import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/framework-interfaces";
+import { SharedDirectory, ISharedDirectory } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import * as Sequence from "@fluidframework/sequence";
+import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 

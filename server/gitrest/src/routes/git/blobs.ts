@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-gitresources";
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as utils from "../../utils";
@@ -16,14 +16,15 @@ function validateEncoding(encoding: string) {
 }
 
 function validateBlob(blob: string): boolean {
+    // eslint-disable-next-line no-null/no-null
     return blob !== undefined && blob !== null;
 }
 
 export async function getBlob(
-        repoManager: utils.RepositoryManager,
-        owner: string,
-        repo: string,
-        sha: string): Promise<IBlob> {
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    sha: string): Promise<IBlob> {
     const repository = await repoManager.open(owner, repo);
     const blob = await repository.getBlob(sha);
 
@@ -31,17 +32,18 @@ export async function getBlob(
 }
 
 export async function createBlob(
-        repoManager: utils.RepositoryManager,
-        owner: string,
-        repo: string,
-        blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
-
+    repoManager: utils.RepositoryManager,
+    owner: string,
+    repo: string,
+    blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
         return Promise.reject("Invalid blob");
     }
 
     const repository = await repoManager.open(owner, repo);
-    const id = await repository.createBlobFromBuffer(new Buffer(blob.content, blob.encoding));
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const id = await repository.createBlobFromBuffer(Buffer.from(blob.content, blob.encoding));
     const sha = id.tostrS();
 
     return {
@@ -53,6 +55,7 @@ export async function createBlob(
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.post("/repos/:owner/:repo/git/blobs", (request, response, next) => {
         const blobP = createBlob(
             repoManager,
@@ -71,6 +74,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     /**
      * Retrieves the given blob from the repository
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.get("/repos/:owner/:repo/git/blobs/:sha", (request, response, next) => {
         const blobP = getBlob(
             repoManager,

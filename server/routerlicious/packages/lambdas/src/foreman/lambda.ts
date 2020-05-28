@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { RateLimiter } from "@microsoft/fluid-common-utils";
+import { RateLimiter } from "@fluidframework/common-utils";
 import {
     IHelpMessage,
     IQueueMessage,
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
+import { generateToken } from "@fluidframework/server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.

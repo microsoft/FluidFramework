@@ -12,13 +12,13 @@ import {
     IWebServerFactory,
     MongoManager,
     DefaultMetricClient,
-} from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@microsoft/fluid-core-utils";
+} from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
-import { TestClientManager } from "@microsoft/fluid-server-test-utils";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { TestClientManager } from "@fluidframework/server-test-utils";
 import * as app from "./app";
 
 export class TinyliciousRunner implements utils.IRunner {

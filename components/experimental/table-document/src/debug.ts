@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as registerDebug from "debug";
+import registerDebug from "debug";
 
 export const debug = registerDebug("table:document");

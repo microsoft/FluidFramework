@@ -17,7 +17,7 @@ import {
     ISequencedOperationMessage,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { ScribeLambda } from "./lambda";

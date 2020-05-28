@@ -10,7 +10,7 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 export class ComponentHandle implements IComponentHandle {
     private isHandleAttached: boolean = false;

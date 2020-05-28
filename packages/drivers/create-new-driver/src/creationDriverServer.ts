@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { v4 as uuid } from "uuid";
 import {
     IDocumentMessage,
@@ -18,9 +18,9 @@ import {
     IConnect,
     MessageType,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/protocol-definitions";
+import { BatchManager } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 
 interface IAugmentedDocumentMessage {
     clientId: string,

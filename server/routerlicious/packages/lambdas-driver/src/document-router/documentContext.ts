@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 
 export class DocumentContext extends EventEmitter implements IContext {

@@ -9,8 +9,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { ISharedDirectory } from "@fluidframework/map";
 
 /**
  * This class represents blob (long string)

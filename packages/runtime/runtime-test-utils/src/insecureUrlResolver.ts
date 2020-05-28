@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { parse } from "url";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ITokenClaims,
     IUser,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -110,24 +110,20 @@ export class InsecureUrlResolver implements IUrlResolver {
         return response;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
         assert(documentId);
 
-        let url = request.url;
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `${this.hostUrl}/${encodeURIComponent(
-                this.tenantId)}/${encodeURIComponent(documentId)}/${url}`,
-            status: 200,
-        };
-        return response;
+
+        return  `${this.hostUrl}/${encodeURIComponent(
+            this.tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 
     public createCreateNewRequest(fileName: string): IRequest {

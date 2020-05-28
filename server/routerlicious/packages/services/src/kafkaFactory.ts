@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IProducer } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IProducer } from "@fluidframework/server-services-core";
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 import { KafkaNodeProducer } from "./kafkaNodeProducer";
 

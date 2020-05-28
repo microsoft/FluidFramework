@@ -8,7 +8,7 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ISharedObject } from "./types";
 
 /**

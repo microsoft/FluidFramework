@@ -39,7 +39,6 @@ export const spoEnsureLoggedIn = () => {
                 || !req.session.tokens[spoTenant]
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 || !req.session.tokens[spoTenant].accessToken) {
-
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_${req.params.tenantId}`);

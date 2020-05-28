@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 
-import * as React from "react";
+import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);

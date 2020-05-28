@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedString } from "@microsoft/fluid-sequence";
-import * as React from "react";
+import { SharedString } from "@fluidframework/sequence";
+import React from "react";
 
 interface IProps {
     sharedString: SharedString;
-    style?: React.CSSProperties;
     spellCheck?: boolean;
     className?: string;
+    style?: React.CSSProperties;
 }
 
 interface IState {
@@ -72,7 +72,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
                 onKeyDown={this.updateSelection}
                 onClick={this.updateSelection}
                 onContextMenu={this.updateSelection}
-                onInput={this.handleInput}/>
+                onInput={this.handleInput} />
         );
     }
 

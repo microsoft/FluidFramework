@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { IDocumentStorage } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
-
     const router: Router = Router();
 
     router.get("/:tenantId?/:id", (request, response) => {

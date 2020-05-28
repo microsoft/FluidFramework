@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as EventEmitter from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import assert from "assert";
+import EventEmitter from "events";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/container-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     IQuorum,
@@ -26,8 +27,8 @@ import {
     ITree,
     MessageType,
     ConnectionState,
-} from "@microsoft/fluid-protocol-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+} from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRuntimeChannel,
@@ -38,8 +39,8 @@ import {
     IComponentRegistry,
     IEnvelope,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
@@ -118,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
         return this._containerRuntime.submitFn;
     }
 
@@ -333,14 +334,14 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local);
+            return this.componentRuntime!.process(message, local, localOpMetadata);
         } else {
             assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -408,10 +409,10 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any): number {
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content);
+        return this.submitOp(type, content, localOpMetadata);
     }
 
     /**
@@ -451,8 +452,8 @@ export abstract class ComponentContext extends EventEmitter implements
         return this._containerRuntime.submitSignalFn(envelope);
     }
 
-    public error(err: any): void {
-        this.containerRuntime.error(err);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.containerRuntime.raiseContainerWarning(warning);
     }
 
     /**
@@ -488,7 +489,7 @@ export abstract class ComponentContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false);
+                componentRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -507,6 +508,10 @@ export abstract class ComponentContext extends EventEmitter implements
 
         // notify the runtime if they want to propagate up. Used for logging.
         this.containerRuntime.notifyComponentInstantiated(this);
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
     /**
@@ -546,7 +551,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any): number {
+    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -555,7 +560,12 @@ export abstract class ComponentContext extends EventEmitter implements
                 type,
             },
         };
-        return this._containerRuntime.submitFn(MessageType.Operation, envelope);
+        return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
+    }
+
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.reSubmit(type, content, localOpMetadata);
     }
 
     private verifyNotClosed() {
@@ -570,7 +580,7 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -606,7 +616,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.initSnapshotValue;
+                tree = await this.initSnapshotValue;
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {

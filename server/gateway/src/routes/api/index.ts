@@ -12,7 +12,6 @@ import * as api from "./api";
 export function create(
     config: Provider,
     appTenants: IAlfredTenant[]): Router {
-
     const router: Router = Router();
     const apiRoute = api.create(config, appTenants);
 

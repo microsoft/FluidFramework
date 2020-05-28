@@ -4,21 +4,90 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IPendingProposal, IQuorum } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { DebugLogger, Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+// subset of IContainerRuntime used by UpgradeManager
+export interface IUpgradeRuntime {
+    getQuorum(): IQuorum;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+}
+
+export interface IUpgradeFnConfig {
+    /**
+     * Maximum time in ms before proposing, regardless of other factors
+     */
+    maxTime?: number,
+    /**
+     * Time in ms without ops before proposing
+     */
+    opTime?: number,
+    /**
+     * Delay proposing until this number of interactive clients or fewer are connected
+     */
+    clients?: number,
+}
+
+const defaultUpgradeFnConfig: IUpgradeFnConfig = {
+    maxTime: 30000,
+    opTime: 10000,
+    clients: 1,
+};
+
+async function defaultUpgradeFn(runtime: IUpgradeRuntime, config: IUpgradeFnConfig = defaultUpgradeFnConfig) {
+    const promises: Promise<string>[] = [];
+
+    if (config.maxTime) {
+        promises.push(new PromiseTimer(config.maxTime, () => { }).start().then(() => "max time"));
+    }
+
+    if (config.opTime) {
+        const opTime = config.opTime;
+        promises.push(new Promise<string>((resolve) => {
+            const timer = new Timer(opTime, () => resolve("no ops"));
+            timer.start();
+            runtime.on("op", () => timer.start());
+        }));
+    }
+
+    if (config.clients) {
+        const clients = config.clients;
+        const clientCount = () => Array.from(runtime.getQuorum().getMembers().values())
+            .filter((c) => c.client.details.capabilities.interactive).length;
+        promises.push(new Promise<string>((resolve) => {
+            if (clientCount() <= clients) {
+                resolve("client count");
+            } else {
+                runtime.getQuorum().on("removeMember", () => {
+                    if (clientCount() <= clients) {
+                        resolve("client count");
+                    }
+                });
+            }
+        }));
+    }
+
+    if (promises.length === 0) {
+        return Promise.reject("no upgrade parameters specified");
+    }
+
+    return Promise.race(promises);
+}
 
 export class UpgradeManager extends EventEmitter {
-    private proposedSeqNum: number | undefined;
     private readonly logger: ITelemetryLogger;
+    private proposedSeqNum: number | undefined;
+    // details of a delayed low priority upgrade
+    private delayed: { code: IFluidCodeDetails, result: Deferred<boolean> } | undefined;
 
-    constructor(private readonly quorum: IQuorum, logger?: ITelemetryBaseLogger) {
+    constructor(private readonly runtime: IUpgradeRuntime, logger?: ITelemetryBaseLogger) {
         super();
         this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry:UpgradeManager", logger);
-        quorum.on("addProposal", (proposal) => this.onAdd(proposal));
-        quorum.on("approveProposal", (seqNum) => this.onApprove(seqNum));
-        quorum.on("rejectProposal", (seqNum) => this.onReject(seqNum));
+        runtime.getQuorum().on("addProposal", (proposal) => this.onAdd(proposal));
+        runtime.getQuorum().on("approveProposal", (seqNum) => this.onApprove(seqNum));
+        runtime.getQuorum().on("rejectProposal", (seqNum) => this.onReject(seqNum));
     }
 
     private onAdd(proposal: IPendingProposal) {
@@ -27,7 +96,7 @@ export class UpgradeManager extends EventEmitter {
         }
         if (!this.proposedSeqNum) {
             this.proposedSeqNum = proposal.sequenceNumber;
-            this.emit("upgradeInProgress");
+            this.emit("upgradeInProgress", this.proposedSeqNum);
         } else if (this.proposedSeqNum < proposal.sequenceNumber) {
             proposal.reject();
         } else {
@@ -47,7 +116,7 @@ export class UpgradeManager extends EventEmitter {
                 eventName: "UpgradeSucceeded",
                 trackedSequenceNumber: this.proposedSeqNum,
             });
-            this.emit("upgradeSucceeded");
+            this.emit("upgradeSucceeded", this.proposedSeqNum);
             this.proposedSeqNum = undefined;
         }
     }
@@ -56,24 +125,81 @@ export class UpgradeManager extends EventEmitter {
         if (seqNum === this.proposedSeqNum) {
             // the proposal we're tracking was rejected, which probably means the upgrade failed
             this.logger.sendTelemetryEvent({ eventName: "UpgradeFailed", trackedSequenceNumber: this.proposedSeqNum });
-            this.emit("upgradeFailed");
+            this.emit("upgradeFailed", this.proposedSeqNum);
             this.proposedSeqNum = undefined;
         }
     }
 
-    public async upgrade(code: IFluidCodeDetails) {
-        if (this.proposedSeqNum) {
-            // don't propose if we know there's already one pending
-            this.logger.sendTelemetryEvent({
-                eventName: "SkippedProposal",
-                trackedSequenceNumber: this.proposedSeqNum,
-            });
-            return;
+    /**
+     * Initiate an upgrade.
+     * @param code - Code details for upgrade
+     * @param highPriority - If true, propose upgrade immediately. If false, wait for an opportune time to upgrade.
+     * @param upgradeFn - Returns a promise that will initiate a low priority upgrade on resolve. Ignored if
+     * highPriority is true.
+     * @param upgradeFnConfig - Configuration options for default upgradeFn. Ignored if highPriority is true or
+     * upgradeFn is provided.
+     * @returns A promise that will resolve once the proposal has been accepted or rejected.
+     */
+    public async upgrade(
+        code: IFluidCodeDetails,
+        highPriority = false,
+        upgradeFn?: (runtime: IUpgradeRuntime) => Promise<string>,
+        upgradeFnConfig?: IUpgradeFnConfig,
+    ): Promise<boolean> {
+        // if we get a high priority upgrade we cancel the low priority upgrade if it exists
+        if (highPriority) {
+            this.delayed?.result.resolve(false);
+            this.delayed = undefined;
+            return this.propose(code, "high priority");
         }
 
-        return this.quorum.propose("code", code).then(
+        // if we get a second low priority upgrade() call just update the code
+        if (this.delayed) {
+            this.delayed.code = code;
+            return this.delayed.result.promise;
+        }
+
+        this.logger.sendTelemetryEvent({
+            eventName: "UpgradeDelayed",
+            trackedSequenceNumber: this.proposedSeqNum,
+        });
+
+        this.delayed = { code, result: new Deferred<boolean>() };
+        const upgradeP = upgradeFn ? upgradeFn(this.runtime) : defaultUpgradeFn(this.runtime, upgradeFnConfig);
+        upgradeP.then(async (reason) => {
+            if (this.delayed) {
+                this.propose(this.delayed.code, reason).then(
+                    (result) => this.delayed?.result.resolve(result),
+                    (error) => this.delayed?.result.reject(error),
+                );
+                this.delayed = undefined;
+            }
+        }, (error) => {
+            if (this.delayed) {
+                this.delayed.result.reject(error);
+                this.delayed = undefined;
+            }
+        });
+
+        return this.delayed.result.promise;
+    }
+
+    private async propose(code: IFluidCodeDetails, reason: string): Promise<boolean> {
+        this.logger.sendTelemetryEvent({
+            eventName: "UpgradeStarted",
+            trackedSequenceNumber: this.proposedSeqNum,
+            reason,
+        });
+
+        return this.runtime.getQuorum().propose("code", code).then(
             () => true,
-            () => false,
+            (error) => {
+                // don't reject here on proposal rejection since it's expected, but reject on other promise rejections
+                if (typeof error === "string" && error.startsWith("Rejected by ")) {
+                    return false;
+                }
+                return Promise.reject(error);
+            },
         );
     }
 }

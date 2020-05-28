@@ -3,39 +3,98 @@
  * Licensed under the MIT License.
  */
 
-export interface ICache {
+import { PromiseCache } from "@fluidframework/common-utils";
+import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
+
+/**
+ * A cache for data persisted between sessions.  Only serializable content should be put here!
+ * This interface may be implemented and provided by the Host, and in order to allow a host
+ * to include asynchronous operations in its implementation, each function returns Promise.
+ */
+export interface IPersistedCache {
     /**
      * Get the cache value of the key
      */
     get(key: string): Promise<any>;
 
     /**
-     * Deletes value in storage
+     * Delete value in the cache
      */
-    remove(key: string);
+    remove(key: string): Promise<void>;
 
     /**
-     * puts value into cache
+     * Put the value into cache
+     * Important - only serializable content is allowed since this cache may be persisted between sessions
      */
-    put(key: string, value: any, expiryTime?: number);
+    put(key: string, value: any, expiryTime?: number): Promise<void>;
 }
 
-export interface ISessionCache {
-    /**
-     * Get the cache value of the key
-     * This is syncronous API
-     */
-    get(key: string): any;
+/**
+ * Handles garbage collection of expiring cache entries.
+ * Not exported.
+ * (Based off of the same class in promiseCache.ts, could be consolidated)
+ */
+class GarbageCollector<TKey> {
+    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+
+    constructor(
+        private readonly cleanup: (key: TKey) => void,
+    ) {}
 
     /**
-     * Deletes value in storage
+     * Schedule GC for the given key, as applicable
      */
-    remove(key: string);
+    public schedule(key: TKey, durationMs: number) {
+        this.gcTimeouts.set(
+            key,
+            setTimeout(
+                () => { this.cleanup(key); this.cancel(key); },
+                durationMs,
+            ),
+        );
+    }
 
     /**
-     * puts value into cache
+     * Cancel any pending GC for the given key
      */
-    put(key: string, value: any, expiryTime?: number);
+    public cancel(key: TKey) {
+        const timeout = this.gcTimeouts.get(key);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.gcTimeouts.delete(key);
+        }
+    }
+}
+
+/**
+ * Default local-only implementation of IPersistedCache,
+ * used if no persisted cache is provided by the host
+ */
+export class LocalCache implements IPersistedCache {
+    private readonly cache = new Map<string, any>();
+    private readonly gc: GarbageCollector<string> = new GarbageCollector<string>((key) => this.cache.delete(key));
+
+    async get(key: string): Promise<any> {
+        return this.cache.get(key);
+    }
+
+    async remove(key: string) {
+        this.cache.delete(key);
+        this.gc.cancel(key);
+    }
+
+    async put(key: string, value: any, expiryTime?: number) {
+        this.cache.set(key, value);
+        if (expiryTime) {
+            this.gc.schedule(key, expiryTime);
+        }
+    }
+}
+
+export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
+    constructor(removeOnError?: (e: any) => boolean) {
+        super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
+    }
 }
 
 /**
@@ -43,62 +102,32 @@ export interface ISessionCache {
  */
 export interface IOdspCache {
     /**
-     * permanent cache - only serializable content is allowed
+     * Persisted cache - only serializable content is allowed
      */
-    readonly localStorage: ICache;
+    readonly persistedCache: IPersistedCache;
 
     /**
-     * session cache - non-serializable content is allowed
+     * Cache of joined/joining session info
+     * This cache will use a one hour sliding expiration window.
      */
-    readonly sessionStorage: ISessionCache;
-}
+    readonly sessionJoinCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>;
 
-export class CacheBase {
-    protected readonly cache = new Map<string, any>();
-
-    public remove(key: string) {
-        this.cache.delete(key);
-    }
-
-    public put(key: string, value: any, expiryTime?: number) {
-        this.cache.set(key, value);
-        if (value instanceof Promise) {
-            value.catch(() => {
-                this.remove(key);
-            });
-        }
-        if (expiryTime) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.gc(key, expiryTime);
-        }
-    }
-
-    private async gc(key: string, expiryTime: number) {
-        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
-        await delay(expiryTime);
-        if (this.cache.has(key)) {
-            this.cache.delete(key);
-        }
-    }
-}
-
-export class LocalCache extends CacheBase implements ICache {
-    public async get(key: string) {
-        return this.cache.get(key);
-    }
-}
-
-export class SessionCache extends CacheBase implements ISessionCache {
-    public get(key: string) {
-        return this.cache.get(key);
-    }
+    /**
+     * Cache of resolved/resolving file URLs
+     */
+    readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 }
 
 export class OdspCache implements IOdspCache {
-    public readonly localStorage: ICache;
-    public readonly sessionStorage: ICache = new SessionCache();
+    public readonly sessionJoinCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>();
 
-    constructor(permanentCache?: ICache) {
-        this.localStorage = permanentCache !== undefined ? permanentCache : new LocalCache();
-    }
+    public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
+
+    /**
+     * Initialize the OdspCach, with an optional cache to store persisted data in.
+     * If an IPersistedCache is not provided, we'll use a local-only cache for this session.
+     */
+    constructor(
+        public readonly persistedCache: IPersistedCache = new LocalCache(),
+    ) {}
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
+import { IErrorTrackingService } from "@fluidframework/protocol-definitions";
 
 /**
  * The default error tracking service implementation. It does not track any errors.

@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IError } from "@microsoft/fluid-driver-definitions";
+import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClientDetails,
@@ -18,7 +16,8 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
@@ -49,7 +48,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
 }
@@ -74,7 +73,18 @@ export interface IDeltaSender extends IProvideDeltaSender {
     flush(): void;
 }
 
-export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDisposable {
+export interface IDeltaManagerEvents extends IEvent {
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void);
+    (event: "submitOp", listener: (message: IDocumentMessage) => void);
+    (event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "allSentOpsAckd" | "caughtUp", listener: () => void);
+    (event: "pong" | "processTime", listener: (latency: number) => void);
+    (event: "connect", listener: (details: IConnectionDetails) => void);
+    (event: "disconnect", listener: (reason: string) => void);
+    (event: "readonly", listener: (readonly: boolean) => void);
+}
+
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
     // The queue of inbound delta messages
     inbound: IDeltaQueue<T>;
 
@@ -125,20 +135,14 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     close(): void;
 
     submitSignal(content: any): void;
-
-    on(event: "error", listener: (error: IError) => void);
-    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
-    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
-    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: IError) => void);
-    on(event: "pong" | "processTime", listener: (latency: number) => void);
-    on(event: "connect", listener: (details: IConnectionDetails) => void);
-    on(event: "disconnect", listener: (reason: string) => void);
-    on(event: "readonly", listener: (readonly: boolean) => void);
 }
 
-export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
+export interface IDeltaQueueEvents<T> extends IErrorEvent{
+    (event: "push" | "op", listener: (task: T) => void);
+    (event: "idle", listener: () => void);
+}
+
+export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     /**
      * Flag indicating whether or not the queue was paused
      */

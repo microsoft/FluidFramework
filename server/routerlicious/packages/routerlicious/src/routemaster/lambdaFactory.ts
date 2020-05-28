@@ -11,7 +11,7 @@ import {
     IPartitionLambdaFactory,
     IProducer,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { DocumentManager } from "./documentManager";
 import { RouteMasterLambda } from "./lambda";

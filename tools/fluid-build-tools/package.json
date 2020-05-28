@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/fluid-build-tools",
+  "name": "@fluidframework/build-tools",
   "version": "0.1.0",
   "description": "Fluid Build tool",
   "license": "MIT",

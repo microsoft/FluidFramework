@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { globals } from "../jest.config";
 
 describe("context reload", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
-        await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+        await page.goto(globals.PATH, { waitUntil: "load" });
     }, 45000);
 
     beforeEach(async () => {

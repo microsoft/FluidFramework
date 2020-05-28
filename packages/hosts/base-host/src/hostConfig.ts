@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@microsoft/fluid-container-definitions";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
  * Host config that contains a url resolver to resolve the url and then provides a

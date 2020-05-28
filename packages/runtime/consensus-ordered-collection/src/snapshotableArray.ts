@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 
 export class SnapshotableArray<T> extends Array {
     protected data: T[] = [];
