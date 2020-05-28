@@ -16,57 +16,47 @@ import { Layout } from "react-grid-layout";
 /**
  * A registry entry, with extra metadata.
  */
-export interface IInternalRegistryEntry {
-    type: string;
+export interface ISpacesComponentEntry {
     factory: Promise<IProvideComponentFactory>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerRegistryEntry: IInternalRegistryEntry = {
-    type: "clicker",
+const clickerComponentEntry: ISpacesComponentEntry = {
     factory: Promise.resolve(ClickerInstantiationFactory),
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorRegistryEntry: IInternalRegistryEntry = {
-    type: "codemirror",
+const codemirrorComponentEntry: ISpacesComponentEntry = {
     factory: Promise.resolve(cmfe),
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxRegistryEntry: IInternalRegistryEntry = {
-    type: "textbox",
+const textboxComponentEntry: ISpacesComponentEntry = {
     factory: Promise.resolve(CollaborativeText.getFactory()),
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorRegistryEntry: IInternalRegistryEntry = {
-    type: "prosemirror",
+const prosemirrorComponentEntry: ISpacesComponentEntry = {
     factory: Promise.resolve(pmfe),
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-export const spacesComponentMap = new Map<string, IInternalRegistryEntry>([
-    ["clicker", clickerRegistryEntry],
-    ["codemirror", codemirrorRegistryEntry],
-    ["textbox", textboxRegistryEntry],
-    ["prosemirror", prosemirrorRegistryEntry],
+export const spacesComponentMap = new Map<string, ISpacesComponentEntry>([
+    ["clicker", clickerComponentEntry],
+    ["codemirror", codemirrorComponentEntry],
+    ["textbox", textboxComponentEntry],
+    ["prosemirror", prosemirrorComponentEntry],
 ]);
 
-const generateRegistryEntries = () => {
-    const componentRegistryEntries: NamedComponentRegistryEntry[] = [];
-    for (const [type, entry] of spacesComponentMap.entries()) {
-        componentRegistryEntries.push([type, entry.factory]);
-    }
-    return componentRegistryEntries;
-};
-
-export const spacesRegistryEntries = generateRegistryEntries();
+export const spacesRegistryEntries: NamedComponentRegistryEntry[] = Array.from(
+    spacesComponentMap.entries(),
+    ([type, componentEntry]) => [type, componentEntry.factory],
+);
 
 interface ITemplate {
     [widgetType: string]: Layout[];

@@ -21,10 +21,9 @@ import {
     spacesComponentMap,
     spacesRegistryEntries,
     templateDefinitions,
-} from "./spacesComponentRegistry";
+} from "./spacesComponentMap";
 
 const SpacesStorageKey = "spaces-storage";
-const supportedComponents = [...spacesComponentMap.values()];
 
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
@@ -68,7 +67,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
         ReactDOM.render(
             <SpacesView
-                supportedComponents={supportedComponents}
+                componentMap={spacesComponentMap}
                 storage={ this.storageComponent }
                 addComponent={ addComponent }
                 templates={ [...Object.keys(templateDefinitions)] }

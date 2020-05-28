@@ -5,12 +5,12 @@
 
 import React from "react";
 import "react-grid-layout/css/styles.css";
-import { IInternalRegistryEntry } from "./spacesComponentRegistry";
+import { ISpacesComponentEntry } from "./spacesComponentMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    supportedComponents: IInternalRegistryEntry[];
+    componentMap: Map<string, ISpacesComponentEntry>;
     storage: ISpacesStorage;
     addComponent(type: string): void;
     templates: string[];
@@ -30,7 +30,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                 <SpacesToolbar
                     editable={editable}
                     setEditable={setEditable}
-                    components={props.supportedComponents}
+                    componentMap={props.componentMap}
                     addComponent={props.addComponent}
                     templates={props.templates}
                     applyTemplate={props.applyTemplate}
