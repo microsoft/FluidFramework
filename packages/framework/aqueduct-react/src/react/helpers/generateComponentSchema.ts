@@ -15,6 +15,17 @@ import {
 } from "../interface";
 import { isEquivalent } from "./utils";
 
+/**
+ * Identifies which values within the Fluid and view states match
+ * The component key map identifies Fluid components within the Fluid state
+ * The view and Fluid matching map identify if the value in the respective states
+ * needs a converter or not
+ * @param runtime - The component runtime used to create the SharedMap objects
+ * @param viewState - A representative view state object
+ * @param fluidState - A representative Fluid state object
+ * @param viewToFluid - The view to fluid conversion state mapping
+ * @param fluidToView - The fluid to view state conversion mapping
+ */
 export function generateComponentSchema<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,

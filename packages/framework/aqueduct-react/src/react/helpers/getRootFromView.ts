@@ -10,6 +10,15 @@ import {
     instanceOfIComponentLoadable,
 } from "../interface";
 
+/**
+ * Return a partial Fluid state containing the view state key identified converted into its
+ * corresponding Fluid state value in the partial Fluid state returned
+ * @param state - The current view state
+ * @param stateKey - The view state key that needs to converted to its Fluid state
+ * @param componentKeyMap - The components in the Fluid state as returned by the schema
+ * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
+ * respective converters
+ */
 export function getRootFromView<SV, SF>(
     state: SV,
     stateKey: keyof SV,

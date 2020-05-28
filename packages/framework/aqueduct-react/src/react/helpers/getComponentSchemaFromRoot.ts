@@ -6,6 +6,11 @@
 import { ISharedDirectory } from "@fluidframework/map";
 import { IFluidSchemaHandles } from "../interface";
 
+/**
+ * Returns the component schema stored on the root for this component
+ * @param syncedStateId - Unique ID for this synced component's state
+ * @param root - The shared directory this component shared state is stored on
+ */
 export const getComponentSchemaFromRoot = (
     syncedStateId: string,
     root: ISharedDirectory,

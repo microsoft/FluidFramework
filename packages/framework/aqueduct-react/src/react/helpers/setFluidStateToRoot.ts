@@ -5,6 +5,12 @@
 
 import { ISharedDirectory } from "@fluidframework/map";
 
+/**
+ * Store the Fluid state onto the shared root
+ * @param syncedStateId - Unique ID to use for storing the component's synced state in the root
+ * @param root - The root shared directory that will be used to store the synced state
+ * @param fluidState - The Fluid state to store on to the root, after converting components to their handles
+ */
 export function setFluidStateToRoot<SF>(
     syncedStateId: string,
     root: ISharedDirectory,

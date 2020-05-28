@@ -7,6 +7,14 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 import { ISharedDirectory } from "@fluidframework/map";
 import { IViewConverter, FluidComponentMap } from "..";
 
+/**
+ * Return the Fluid state from the root with all handles converted into components
+ * @param syncedStateId - Unique ID for the synced state of this component
+ * @param root - Shared directory the component's synced state is stored on
+ * @param componentMap - Map of component handle paths to their respective components
+ * @param fluidToView - Map of the Fluid state keys contains the optional root key parameter,
+ * in case the fluid value is stored in the root under a different key
+ */
 export function getFluidStateFromRoot<SV,SF>(
     syncedStateId: string,
     root: ISharedDirectory,

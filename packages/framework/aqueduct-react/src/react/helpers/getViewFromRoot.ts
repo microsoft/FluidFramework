@@ -11,6 +11,18 @@ import {
 } from "../interface";
 import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 
+/**
+ * Return a partial view state containing the fluid state key identified converted into its
+ * corresponding view state value in the partial view state returned
+ * @param syncedStateId - Unique ID for this synced component's state
+ * @param root - The shared directory this component shared state is stored on
+ * @param rootKey - The key of the value within the Fluid state that we want converted
+ * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ * @param combinedRootState - Optional param containing the combined root state so far to fetch from, instead of getting
+ * the current value on the root
+ */
 export function getViewFromRoot<SV, SF>(
     syncedStateId: string,
     root: ISharedDirectory,

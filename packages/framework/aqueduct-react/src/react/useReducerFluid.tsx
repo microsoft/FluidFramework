@@ -87,7 +87,6 @@ export function useReducerFluid<
                 // Fetch any new components and the listener to their root. Then update the state.
                 const callback = rootCallbackListener(
                     combinedDispatchDataProps.fluidComponentMap,
-                    false,
                     syncedStateId,
                     root,
                     result.state.viewState,
@@ -132,7 +131,6 @@ export function useReducerFluid<
             ).then((result: IStateUpdateResult<SV,SF,C>) => {
                 const callback = rootCallbackListener(
                     combinedDispatchDataProps.fluidComponentMap,
-                    true,
                     syncedStateId,
                     root,
                     result.state.viewState,
@@ -277,7 +275,6 @@ export function useReducerFluid<
             if (newHandles.length > 0) {
                 const callback = rootCallbackListener(
                     combinedFetchDataProps.fluidComponentMap,
-                    true,
                     syncedStateId,
                     root,
                     combinedFetchState.viewState,

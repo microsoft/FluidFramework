@@ -17,6 +17,24 @@ import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 import { setFluidStateToRoot } from "./setFluidStateToRoot";
 import { getComponentSchemaFromRoot } from "./getComponentSchemaFromRoot";
 
+/**
+ * Function to combine both the view and Fluid states so that they are in sync. If the update
+ * is from a local update, the new Fluid state created from converting the new local view state
+ * is used to update the synced Fluid state, which in turn will update the local state on other clients.
+ * If it is an update triggered from a remote change on the root, the new Fluid state from the root
+ * is used to overwrite the local synced state and the new local view is created accordingly.
+ * @param fromRootUpdate - Is the update from a local state update or from one triggered by the root
+ * @param syncedStateId - Unique ID for this synced component's state
+ * @param root - The shared directory this component shared state is stored on
+ * @param viewState - The current view state
+ * @param setState - Callback to update the react view state
+ * @param fluidComponentMap - A map of component handle paths to their respective components
+ * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
+ * respective converters
+ * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ * @param fluidState - The Fluid state to store on to the root, after converting components to their handles
+ */
 export function syncStateAndRoot<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
@@ -31,10 +49,10 @@ export function syncStateAndRoot<
     fluidToView?: FluidToViewMap<SV,SF>,
     fluidState?: SF,
 ) {
-    let combinedRootState = fluidState ? {
-        ...getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView),
-        ...fluidState,
-    } : getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    // Use the provided fluid state if it is available, or use the one fetched from the root
+    const currentRootState = fluidState || getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+
+    // Fetch the component schema
     const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
     if (componentSchemaHandles) {
         const {
@@ -53,6 +71,9 @@ export function syncStateAndRoot<
                 componentKeyMap !== undefined
                 && viewMatchingMap !== undefined
                 && fluidMatchingMap !== undefined) {
+                // Create the combined root state by combining the current root state and the new
+                // view state after it has been converted
+                let combinedRootState = { ...currentRootState };
                 Object.entries(viewState).forEach(([viewKey, viewValue]) => {
                     const needsConverter = viewMatchingMap.get(viewKey);
                     let partialRootState = {};
@@ -66,7 +87,8 @@ export function syncStateAndRoot<
                     } else {
                         partialRootState[viewKey] = viewState[viewKey];
                     }
-
+                    // If it is from a root update, the values fetched from the root at the beginning overwrite those
+                    // created here. Otherwise, the new values overwrite those in the root
                     if (fromRootUpdate) {
                         combinedRootState = { ...partialRootState, ...combinedRootState };
                     } else {
@@ -74,8 +96,9 @@ export function syncStateAndRoot<
                     }
                 });
 
+                // Create the combined view state by combining the current view with the new Fluid state
+                // after it has been converted
                 let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
-                const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
                 Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
                     const needsConverter = fluidMatchingMap.get(fluidKey);
                     let partialViewState = {};
@@ -91,6 +114,8 @@ export function syncStateAndRoot<
                     } else {
                         partialViewState[fluidKey] = currentRootState[fluidKey];
                     }
+                    // If it is from a root update, the values converted from the root overwrite those
+                    // created here. Otherwise, the new view values overwrite those from the root.
                     if (fromRootUpdate) {
                         combinedViewState = { ...combinedViewState, ...partialViewState  };
                     } else {
@@ -98,6 +123,8 @@ export function syncStateAndRoot<
                     }
                 });
 
+                // If it is a local update, broadcast it by setting it on the root and updating locally
+                // Otherwise, only update locally as the root update has already been broadcasted
                 if (!fromRootUpdate) {
                     setFluidStateToRoot(syncedStateId, root, combinedRootState);
                     setState(combinedViewState);

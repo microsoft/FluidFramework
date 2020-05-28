@@ -93,7 +93,6 @@ export abstract class FluidReactComponent<
         // Define the root callback listener that will be responsible for triggering state updates on root value changes
         const rootCallback = rootCallbackListener(
             dataProps.fluidComponentMap,
-            true,
             this._syncedStateId,
             root,
             this.state,

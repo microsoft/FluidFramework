@@ -72,7 +72,6 @@ export function useStateFluid<
         (change: IDirectoryValueChanged, local: boolean) => {
             const callback = rootCallbackListener(
                 dataProps.fluidComponentMap,
-                true,
                 syncedStateId,
                 root,
                 reactState,
