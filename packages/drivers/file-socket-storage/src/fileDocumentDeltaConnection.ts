@@ -15,6 +15,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
@@ -30,7 +31,7 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [],
+    scopes: [ScopeType.DocWrite],
     tenantId: "",
     user: {
         id: "",

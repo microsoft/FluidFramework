@@ -294,6 +294,11 @@ class Document {
                 ["@ms/undo-stack", Promise.resolve(chaincode)],
                 ["@ms/commanding-surface", Promise.resolve(chaincode)],
                 ["@ms/dias", Promise.resolve(chaincode)],
+                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
+                ["@fluidx/tasks", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
+                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
