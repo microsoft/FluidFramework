@@ -156,13 +156,13 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
 
-            return PerformanceEvent.timedAsync(this.logger,
+            return PerformanceEvent.timedExecAsync(this.logger,
                 { eventName: `${name || "OdspDocumentService"}_GetToken` },
                 async () => getStorageToken(this.odspResolvedUrl.siteUrl, refresh));
         };
 
         this.getWebsocketToken = async (refresh) => {
-            return PerformanceEvent.timedAsync(this.logger, { eventName: "GetWebsocketToken" },
+            return PerformanceEvent.timedExecAsync(this.logger, { eventName: "GetWebsocketToken" },
                 async () => getWebsocketToken(refresh));
         };
 

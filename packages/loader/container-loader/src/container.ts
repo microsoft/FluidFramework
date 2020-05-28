@@ -530,11 +530,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!path) {
-            return { mimeType: "fluid/container", status: 200, value: this };
-        }
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+            if (!path) {
+                return { mimeType: "fluid/container", status: 200, value: this };
+            }
 
-        return this.context!.request(path);
+            return this.context!.request(path);
+        });
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -1119,7 +1121,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await PerformanceEvent.timedAsync(this.logger, { eventName: "CodeLoad" },
+        const component = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
             async () => this.codeLoader.load(pkg),
         );
 
