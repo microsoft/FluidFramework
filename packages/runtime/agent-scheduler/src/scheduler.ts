@@ -443,7 +443,7 @@ export class TaskManager implements ITaskManager {
                     type: "agent",
                 },
                 [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.currentSequenceNumber,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: worker ? "worker" : undefined,
             },
             url,

@@ -77,7 +77,8 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             new BaseTelemetryNullLogger());
         this.container = container;
 
-        if (this.container.deltaManager.currentSequenceNumber <= this.fromSequenceNumber) {
+        // TODO: referenceSequenceNumber -> lastSequenceNumber (when latest loader is picked up)
+        if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {

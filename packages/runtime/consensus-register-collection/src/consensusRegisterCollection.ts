@@ -161,7 +161,7 @@ export class ConsensusRegisterCollection<T>
             key,
             type: "write",
             serializedValue,
-            refSeq: this.runtime.deltaManager.currentSequenceNumber,
+            refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
 
         const clientSequenceNumber = this.submitLocalMessage(message);

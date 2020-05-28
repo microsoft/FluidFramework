@@ -672,7 +672,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
-            this.runtime.deltaManager.currentSequenceNumber,
+            this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
             (description: string) =>

@@ -209,7 +209,7 @@ class Document {
             this.containerDescription,
             errorHandler);
 
-        this.from = this.container.deltaManager.currentSequenceNumber;
+        this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
 
         this.replayer.currentReplayedOp = this.from;

@@ -448,7 +448,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.currentSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
                 },
                 error,
             );
@@ -708,7 +708,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.currentSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
 
@@ -732,7 +732,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Generate base snapshot message
         const deltaDetails =
-            `${this._deltaManager.currentSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+            `${this._deltaManager.lastSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
@@ -791,7 +791,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.currentSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
         entries.push({
