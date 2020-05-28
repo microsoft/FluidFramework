@@ -35,6 +35,7 @@ module.exports = class extends Generator {
   constructor(args, opts) {
     super(args, opts);
 
+    // Adding two options to specify the view inline
     this.option(
       "react",
       {
@@ -48,6 +49,7 @@ module.exports = class extends Generator {
         alias: "v"
       });
 
+    // Adding argument to specify the component name inline
     this.argument(
       "componentName",
       {
@@ -62,16 +64,18 @@ module.exports = class extends Generator {
     this.log("Let us help you get set up. Once we're done, you can start coding!");
     const questionsCollection = [];
     if (this.options.componentName) {
-      this.log(`${chalk.green("?")} ${questions.componentName.message} ${this.options.componentName}`)
+      this.log(`${chalk.green("?")} ${questions.componentName.message} ${this._componentName()}`)
     } else {
       questionsCollection.push(questions.componentName);
     }
 
-    if (this.options.react && this.options.vanillaJS) {
-      this.log(chalk.yellow("Both --react and --vanilla have been selected. Using react"));
+    if (this.options.react && this.options.vanilla) {
+      this.log(chalk.yellow("Both --react and --vanilla have been selected. Defaulting to react"));
       delete this.options["vanillaJS"];
-    } else if (this.options.react || this.options.vanillaJS) {
-      this.log(`${chalk.green("?")} ${questions.template.message} ${chalk.blue(this.options.react ? react : vanillaJS)}`)
+    }
+    
+    if (this.options.react || this.options.vanilla) {
+      this.log(`${chalk.green("?")} ${questions.template.message} ${chalk.blue(this._isReact() ? react : vanillaJS)}`)
     } else {
       questionsCollection.push(questions.template);
     }
@@ -218,11 +222,6 @@ module.exports = class extends Generator {
   }
 
   install() {
-    if (this.options.noinstall) {
-      this.log("skipping install because of --noinstall flag");
-      return;
-    }
-
     this.log("Installing dependencies. This may take a minute.");
     this.npmInstall();
   }
@@ -256,8 +255,6 @@ module.exports = class extends Generator {
 
   /**
    * Below here are helper files.
-   * 
-   * Ideally there should be no direct references to this.answers or this.options above.
    */
 
   _isReact() {
