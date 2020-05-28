@@ -69,7 +69,6 @@ export enum Templates {
     Classroom = "Classroom",
 }
 
-
 export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }
     public get IComponentInternalRegistry() { return this; }

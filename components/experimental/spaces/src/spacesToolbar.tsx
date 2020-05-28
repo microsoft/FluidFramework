@@ -12,7 +12,7 @@ import {
 import {
     IInternalRegistryEntry,
     Templates,
-} from ".";
+} from "./spacesComponentRegistry";
 import "./spacesToolbarStyle.css";
 
 initializeIcons();

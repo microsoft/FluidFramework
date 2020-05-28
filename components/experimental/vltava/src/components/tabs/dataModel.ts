@@ -14,39 +14,10 @@ import {
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 
 import { v4 as uuid } from "uuid";
 
-declare module "@fluidframework/component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
-}
-
-export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
-
-export interface IProvideComponentInternalRegistry {
-    readonly IComponentInternalRegistry: IComponentInternalRegistry;
-}
-
-/**
- * Provides functionality to retrieve subsets of an internal registry.
- */
-export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
-    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
-    hasCapability(type: string, capability: keyof IComponent): boolean;
-}
-
-/**
- * A registry entry, with extra metadata.
- */
-export interface IInternalRegistryEntry {
-    type: string;
-    factory: Promise<IProvideComponentFactory>;
-    capabilities: (keyof IComponent)[];
-    friendlyName: string;
-    fabricIconName: string;
-}
+import { IComponentInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
     type: string;
