@@ -7,7 +7,6 @@ import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqu
 import { Spaces } from "./spaces";
 import { spacesInternalRegistryEntries } from "./spacesComponentRegistry";
 
-export * from "./interfaces";
 export * from "./spaces";
 export * from "./spacesView";
 export * from "./storage";

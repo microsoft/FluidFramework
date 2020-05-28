@@ -13,12 +13,62 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import {
-    IInternalRegistryEntry,
-    Templates,
-    IComponentInternalRegistry,
-    IComponentRegistryTemplates,
-} from "./interfaces";
+import { Layout } from "react-grid-layout";
+
+declare module "@fluidframework/component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentInternalRegistry>> { }
+}
+
+export const IComponentInternalRegistry: keyof IProvideComponentInternalRegistry = "IComponentInternalRegistry";
+
+export interface IProvideComponentInternalRegistry {
+    readonly IComponentInternalRegistry: IComponentInternalRegistry;
+}
+
+/**
+ * Provides functionality to retrieve subsets of an internal registry.
+ */
+export interface IComponentInternalRegistry extends IProvideComponentInternalRegistry {
+    getFromCapability(type: keyof IComponent): IInternalRegistryEntry[];
+    hasCapability(type: string, capability: keyof IComponent): boolean;
+}
+
+/**
+ * A registry entry, with extra metadata.
+ */
+export interface IInternalRegistryEntry {
+    type: string;
+    factory: Promise<IProvideComponentFactory>;
+    capabilities: (keyof IComponent)[];
+    friendlyName: string;
+    fabricIconName: string;
+    templates: {[key: string]: Layout[]};
+}
+
+declare module "@fluidframework/component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentRegistryTemplates>> { }
+}
+
+export const IComponentRegistryTemplates: keyof IProvideComponentRegistryTemplates = "IComponentRegistryTemplates";
+
+export interface IProvideComponentRegistryTemplates {
+    readonly IComponentRegistryTemplates: IComponentRegistryTemplates;
+}
+
+/**
+ * Provides functionality to retrieve subsets of an internal registry based on membership in a template.
+ */
+export interface IComponentRegistryTemplates extends IProvideComponentRegistryTemplates {
+    getFromTemplate(template: Templates): IInternalRegistryEntry[];
+}
+
+export enum Templates {
+    CollaborativeCoding = "Collaborative Coding",
+    Classroom = "Classroom",
+}
+
 
 export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }

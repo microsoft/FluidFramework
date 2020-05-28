@@ -20,8 +20,8 @@ import { ISpacesStoredComponent, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
     IInternalRegistryEntry,
-} from "./interfaces";
-import { Templates } from ".";
+    Templates,
+} from "./spacesComponentRegistry";
 
 const SpacesStorageKey = "spaces-storage";
 
