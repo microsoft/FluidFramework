@@ -474,6 +474,22 @@ export class PerformanceEvent {
         return new PerformanceEvent(logger, event);
     }
 
+    public static async timedAsync<T>(
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+        callback: () => Promise<T>,
+    ) {
+        const perfEvent = PerformanceEvent.start(logger, event);
+        try {
+            const ret = await callback();
+            perfEvent.end();
+            return ret;
+        } catch (error) {
+            perfEvent.cancel(undefined, error);
+            throw error;
+        }
+    }
+
     private event?: ITelemetryGenericEvent;
     private readonly startTime = performanceNow();
     private startMark?: string;
