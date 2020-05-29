@@ -18,7 +18,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -446,7 +445,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.referenceSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
                 },
                 error,
             );
@@ -529,11 +528,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!path) {
-            return { mimeType: "fluid/container", status: 200, value: this };
-        }
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+            if (!path) {
+                return { mimeType: "fluid/container", status: 200, value: this };
+            }
 
-        return this.context!.request(path);
+            return this.context!.request(path);
+        });
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -706,7 +707,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
 
@@ -730,7 +731,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Generate base snapshot message
         const deltaDetails =
-            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+            `${this._deltaManager.lastSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
@@ -789,7 +790,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
         entries.push({
@@ -1118,15 +1119,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component: IFluidModule;
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
-        try {
-            component = await this.codeLoader.load(pkg);
-        } catch (error) {
-            perfEvent.cancel({}, error);
-            throw error;
-        }
-        perfEvent.end();
+        const component = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(pkg),
+        );
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {

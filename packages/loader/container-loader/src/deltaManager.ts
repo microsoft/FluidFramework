@@ -148,7 +148,7 @@ export class DeltaManager
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
-    private baseSequenceNumber: number = 0;
+    private _lastSequenceNumber: number = 0;
     private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
@@ -195,8 +195,8 @@ export class DeltaManager
         return this.initSequenceNumber;
     }
 
-    public get referenceSequenceNumber(): number {
-        return this.baseSequenceNumber;
+    public get lastSequenceNumber(): number {
+        return this._lastSequenceNumber;
     }
 
     public get referenceTerm(): number {
@@ -391,7 +391,7 @@ export class DeltaManager
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
-        this.baseSequenceNumber = sequenceNumber;
+        this._lastSequenceNumber = sequenceNumber;
         this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
@@ -594,7 +594,7 @@ export class DeltaManager
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: JSON.stringify(contents),
             metadata,
-            referenceSequenceNumber: this.baseSequenceNumber,
+            referenceSequenceNumber: this._lastSequenceNumber,
             traces,
             type,
         };
@@ -1101,7 +1101,7 @@ export class DeltaManager
             // We did not setup handler yet.
             // This happens when we connect to web socket faster than we get attributes for container
             // and thus faster than attachOpHandler() is called
-            // this.baseSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
+            // this._lastSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
             // to do the right thing.
             this.pending = this.pending.concat(messages);
             return;
@@ -1182,8 +1182,8 @@ export class DeltaManager
         assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1, "non-seq seq#");
-        this.baseSequenceNumber = message.sequenceNumber;
+        assert.equal(message.sequenceNumber, this._lastSequenceNumber + 1, "non-seq seq#");
+        this._lastSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
         this.baseTerm = message.term === undefined ? 1 : message.term;

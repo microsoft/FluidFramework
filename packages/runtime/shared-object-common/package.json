@@ -34,7 +34,8 @@
     "@fluidframework/protocol-definitions": "^0.1006.0-0",
     "@types/debug": "^4.1.5",
     "@types/node": "^10.17.24",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0-0",
