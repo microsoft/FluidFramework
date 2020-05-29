@@ -4,18 +4,20 @@
   "description": "Fluid Build tool",
   "license": "MIT",
   "author": "Microsoft",
-  "main": "dist/fluidBuild.js",
+  "main": "dist/fluidBuild/fluidBuild.js",
   "bin": {
     "fluid-build": "bin/fluid-build",
     "fluid-build-version": "bin/fluid-build-version",
     "fluid-bump-version": "bin/fluid-bump-version",
     "fluid-layer-check": "bin/fluid-layer-check",
+    "fluid-package-audit": "bin/fluid-package-audit",
     "fluid-repo-policy-check": "bin/fluid-repo-policy-check"
   },
   "scripts": {
     "build": "tsc -b",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
+    "package-audit": "node dist/packageAudit/packageAudit.js --root ../..",
     "policy-check": "cd ../.. && git ls-files -co --exclude-standard --full-name | node tools/fluid-build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
     "policy-check:fix": "npm run policy-check -- -r",
     "test": "echo \"Error: no test specified\" && exit 1"
