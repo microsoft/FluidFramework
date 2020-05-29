@@ -21,28 +21,30 @@ export interface IChannelContext {
 
     setConnectionState(connected: boolean, clientId?: string);
 
-    processOp(message: ISequencedDocumentMessage, local: boolean): void;
+    processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
     snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
+
+    reSubmit(content: any, localOpMetadata: unknown): void;
 }
 
 export function createServiceEndpoints(
     id: string,
     connected: boolean,
-    submitFn: (type: MessageType, content: any) => number,
+    submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
-    tree?: ISnapshotTree,
-    extraBlobs?: Map<string, string>,
+    tree?: Promise<ISnapshotTree>,
+    extraBlobs?: Promise<Map<string, string>>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
         id,
         connected,
-        (message) => {
+        (message, localOpMetadata) => {
             const envelope: IEnvelope = { address: id, contents: message };
-            return submitFn(MessageType.Operation, envelope);
+            return submitFn(MessageType.Operation, envelope, localOpMetadata);
         },
         dirtyFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);

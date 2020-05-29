@@ -21,7 +21,6 @@
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts*'",
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {

@@ -6,14 +6,14 @@
 import {
     IDocumentStorage,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
-import * as compression from "compression";
-import * as cookieParser from "cookie-parser";
-import * as cors from "cors";
-import * as express from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as morgan from "morgan";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import safeStringify from "json-stringify-safe";
+import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { create as createRoutes } from "./routes";

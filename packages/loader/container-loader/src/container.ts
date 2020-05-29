@@ -45,6 +45,8 @@ import {
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
 import {
+    BlobCacheStorageService,
+    buildSnapshotTree,
     CreateContainerError,
     readAndParse,
     OnlineStatus,
@@ -53,7 +55,6 @@ import {
     combineAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
-    buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
@@ -92,7 +93,6 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 
 export { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
 
@@ -441,11 +441,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
+            // Log current sequence number - useful if we have access to a file to understand better
+            // what op caused trouble (if it's related to op processing).
+            // Runtime may provide sequence number as part of error object - this may not match DeltaManager
+            // knowledge as old ops are processed when components / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    // record sequence number for easier debugging
-                    sequenceNumber: this._deltaManager.referenceSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.referenceSequenceNumber,
                 },
                 error,
             );
@@ -696,11 +699,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot) {
-            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, blobs);
+            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, Promise.resolve(blobs));
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-gitresources";
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import * as nconf from "nconf";

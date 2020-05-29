@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IContentMessage,
@@ -16,6 +15,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IServiceConfiguration = {
@@ -32,7 +32,9 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
 /**
  * Mock Document Delta Connection for testing
  */
-export class MockDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class MockDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection  {
     public claims: ITokenClaims = {
         documentId: "documentId",
         scopes: ["doc:read", "doc:write", "summary:write"],

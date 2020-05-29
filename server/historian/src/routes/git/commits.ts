@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICreateCommitParams } from "@microsoft/fluid-gitresources";
+import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../../services";
