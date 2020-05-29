@@ -94,10 +94,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return this.submitRawOperation([message]);
     }
 
-    public once(event: "error", listener: (...args: any[]) => void) {
-        this.producer.once(event, listener);
-    }
-
     public async order(messages: IDocumentMessage[]): Promise<void> {
         const rawMessages = messages.map((message) => {
             const rawMessage: core.IRawOperationMessage = {
@@ -134,6 +130,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         };
 
         return this.submitRawOperation([message]);
+    }
+
+    public once(event: "error", listener: (...args: any[]) => void) {
+        this.producer.once(event, listener);
     }
 
     private async submitRawOperation(messages: core.IRawOperationMessage[]): Promise<void> {
