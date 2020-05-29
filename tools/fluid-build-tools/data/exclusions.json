@@ -1,4 +1,4 @@
 [
     "server/routerlicious/packages/services-client/src/dockerNames.ts",
-    "tools/generator-fluid/app/"
+    "tools/generator-fluid/app/templates/"
 ]
