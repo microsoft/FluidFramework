@@ -64,6 +64,11 @@ export enum ErrorType {
      * such case.
      */
     snapshotTooBig,
+
+    /*
+     * The data is corrupted. This indicates a critical error caused by storage.
+     */
+    dataCorruptionError,
 }
 
 /**
@@ -84,7 +89,7 @@ export type ContainerErrorOrWarning = IThrottlingWarning;
 export type CriticalContainerError =
     ContainerErrorOrWarning |
     INetworkErrorBasic |
-    IGenericError | IGenericNetworkError;
+    IGenericError | IGenericNetworkError | IDataCorruptionError;
 
 /**
  * List of warnings raised on container that are not critical.
@@ -108,7 +113,7 @@ export interface IErrorBase {
 
 export interface IGenericError extends IErrorBase {
     readonly errorType: ErrorType.genericError;
-    error: any;
+    error?: any;
 }
 
 export interface IThrottlingWarning extends IErrorBase {
@@ -142,4 +147,8 @@ export interface ISummarizingWarning extends IErrorBase {
      * Whether this error has already been logged. Used to avoid logging errors twice.
      */
     readonly logged: boolean;
+}
+
+export interface IDataCorruptionError extends IErrorBase {
+    readonly errorType: ErrorType.dataCorruptionError;
 }

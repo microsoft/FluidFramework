@@ -892,7 +892,7 @@ export class Client {
         // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
         // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (deltaManager) {
-            this.updateSeqNumbers(minSeq, deltaManager.referenceSequenceNumber);
+            this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
             // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
             // Not sure why - need to catch it sooner

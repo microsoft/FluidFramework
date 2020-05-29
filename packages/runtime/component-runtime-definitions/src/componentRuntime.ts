@@ -134,12 +134,6 @@ export interface IComponentRuntime extends
     getAudience(): IAudience;
 
     /**
-     * Called by distributed data structures in disconnected state to notify about pending local changes.
-     * All pending changes are automatically flushed by shared objects on connection.
-     */
-    notifyPendingMessages(): void;
-
-    /**
      * Resolves when a local component is attached.
      */
     waitAttached(): Promise<void>;
