@@ -34,6 +34,7 @@ import {
 import {
     IDocumentService,
     IDocumentStorageService,
+    ErrorType,
     IError,
     IFluidResolvedUrl,
     IUrlResolver,
@@ -626,7 +627,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public raiseContainerError(error: IError) {
-        this.emit("error", error);
+        // 0.18.x: Temporarily disable snapshotting errors
+        if (error.errorType !== ErrorType.summarizingError) {
+            this.emit("error", error);
+        }
     }
 
     public async reloadContext(): Promise<void> {
