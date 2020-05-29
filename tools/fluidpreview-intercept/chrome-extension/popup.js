@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 let toggleSwitch = document.getElementById('toggle-switch');
 toggleSwitch.onclick = function(element) {
     if (element.target.className === "off") {
