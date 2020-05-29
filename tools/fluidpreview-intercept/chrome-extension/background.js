@@ -49,11 +49,7 @@ function removeListeners() {
 
 setListeners();
 
-chrome.runtime.onInstalled.addListener(function() { <<
-    <<
-    <<
-    <
-    HEAD
+chrome.runtime.onInstalled.addListener(function() {
     chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
         chrome.declarativeContent.onPageChanged.addRules([{
             conditions: [new chrome.declarativeContent.PageStateMatcher({
@@ -62,18 +58,4 @@ chrome.runtime.onInstalled.addListener(function() { <<
             actions: [new chrome.declarativeContent.ShowPageAction()]
         }]);
     });
-}); ===
-===
-=
-chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-chrome.declarativeContent.onPageChanged.addRules([{
-    conditions: [new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: { hostEquals: 'fluidpreview.office.net' },
-    })],
-    actions: [new chrome.declarativeContent.ShowPageAction()]
-}]);
 });
-}); >>>
->>>
->
-43 a0cbb2a42dfea6ec1a42f509813953b3f99e3f
