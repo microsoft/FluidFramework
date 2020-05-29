@@ -46,7 +46,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-import { ISummaryAckMessage } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -219,9 +218,8 @@ class Document  {
         this.replayer = deltaConnection.getReplayer();
         this.originalSummarySeqs = [];
         this.replayer.ops.forEach((op)=>{
-            if (op?.type === MessageType.SummaryAck) {
-                const ack = op as ISummaryAckMessage;
-                const seq = ack?.contents?.summaryProposal?.summarySequenceNumber;
+            if (op?.type === MessageType.Summarize) {
+                const seq = op.referenceSequenceNumber;
                 if (seq !== undefined) {
                     this.originalSummarySeqs.push(seq);
                 }
@@ -504,11 +502,11 @@ export class ReplayTool {
     }
 
     private async mainCycle() {
-        let nextSnapPoint = this.args.from;
-        const originalSummaries = [...this.mainDocument?.originalSummarySequenceNumbers ?? []].sort();
-        while (originalSummaries[0] < this.args.from) {
-            originalSummaries.shift();
-        }
+        const originalSummaries = [...(this.mainDocument?.originalSummarySequenceNumbers ?? [this.args.to])];
+        let nextSnapPoint;
+        do  {
+            nextSnapPoint = originalSummaries.shift();
+        } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
