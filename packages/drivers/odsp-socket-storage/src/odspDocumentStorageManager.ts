@@ -42,7 +42,7 @@ import {
     IOdspCache,
     ICacheVersionedEntry,
     IFileEntry,
-    snapshotExpiryDefaultPolicy,
+    snapshotExpirySummarizerOps,
 } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
@@ -329,9 +329,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const cachedSnapshotP = this.cache.persistedCache.get(
                         {
                             file: this.fileEntry,
-                            key: "Snapshot",
+                            key: "snapshot",
                         },
-                        this.hostPolicy.summarizerClient ? snapshotExpiryDefaultPolicy : undefined,
+                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
                     ) as Promise<IOdspSnapshot | undefined>;
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
@@ -473,7 +473,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         assert(this._snapshotCacheEntry === undefined);
         this._snapshotCacheEntry = {
             file: this.fileEntry,
-            key: "Snapshot",
+            key: "snapshot",
             version: cachedSnapshot.id,
         };
 

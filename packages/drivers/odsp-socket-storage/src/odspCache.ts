@@ -11,7 +11,7 @@ import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 /**
  * Describes what kind of content is stored in cache entry.
  */
-export type CacheKey = "Snapshot";
+export type CacheKey = "snapshot";
 
 /*
  * There is overlapping information here - host can use all of it or parts
@@ -66,6 +66,7 @@ export interface ICacheVersionedEntry extends ICacheEntry {
  *
  * Note that entries stored in cache are versioned, but request for data are not (version-less).
  * Host is expected to store only latest version provided by driver.
+ * Latest is defined by the time of put() call, there is no way to compare versions other than for equality.
  * Updates on usage contain version info. If newer version of entry is already stored in cache,
  * host should ignore such updates.
  */
@@ -73,21 +74,23 @@ export interface IPersistedCache {
     /**
      * Get the cache value of the key
      * @param entry - cache entry.
-     * @param expiry - If provided, indicates driver-specific policy on expiry
-     * If entry is older then time specific, it should not be returned back.
-     * This does not mean entry should be deleted, just particular usage pattern can't use such an old entry
+     * @param maxOpCount - If provided, indicates driver-specific policy on expiry
+     * If snapshot has more than that amount of ops (based on earlier updateUsage() calls), host should not
+     * return such entry (and return undefined).
+     * This does not mean entry should be deleted, just particular usage pattern in runtime / driver can't use
+     * such an old entry
      * An example of such usage would be booting summarizer client. Latency is less important in such scenario,
      * but fetching more recent snapshot is advantageous in reducing bandwidth requirements (less ops to download).
-    * Time is in milliseconds.
-    * @returns Cached value. undefined if nothing is cached.
+     * Logic around when to expire / evict entries should not account for calls where cache entry is not returned.
+     * @returns Cached value. undefined if nothing is cached.
     */
-    get(entry: ICacheEntry, expiry?: number): Promise<any>;
+    get(entry: ICacheEntry, maxOpCount?: number): Promise<any>;
 
     /**
      * Put the value into cache. Overwrites any prior version of same entry.
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
-     * @param value - jasonable content.
+     * @param value - JSON-serializable content.
      */
     put(entry: ICacheVersionedEntry, value: any): void;
 
@@ -169,6 +172,9 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
 }
 
 export const snapshotExpiryDefaultPolicy = 10000;
+
+/** Describes how many ops behind snapshot can be for summarizer client to still use it */
+export const snapshotExpirySummarizerOps = 1000;
 
 /**
  * Default local-only implementation of IPersistedCache,
