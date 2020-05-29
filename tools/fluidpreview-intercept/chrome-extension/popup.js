@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Callback for moving the toggle switch
 const toggleSwitch = document.getElementById("toggle-switch");
 toggleSwitch.onclick = function(element) {
     if (element.target.className === "off") {
@@ -14,6 +15,7 @@ toggleSwitch.onclick = function(element) {
     }
 };
 
+// Set initial state of the toggle switch based on storage data
 chrome.storage.sync.get("interceptDisabled", function(data) {
     if (data.interceptDisabled === true) {
         toggleSwitch.checked = true;
@@ -27,10 +29,12 @@ chrome.storage.sync.get("interceptDisabled", function(data) {
 const dropdownButton = document.getElementById("dropdown-button");
 const dropdownContent = document.getElementById("dropdown-content");
 
+// Show the dropdown list
 dropdownButton.onclick = function(element) {
     dropdownContent.classList.toggle("show");
 }
 
+// Close the dropdown list if the user clicks outside the element
 window.onclick = function(event) {
     if (!event.target.matches(".dropbtn")) {
         var dropdowns = document.getElementsByClassName("dropdown-content");
@@ -47,6 +51,7 @@ window.onclick = function(event) {
 const addUrlButton = document.getElementById("url-input-btn");
 const addUrlText = document.getElementById("url-input");
 
+// Set the dropdown list contents based off the URLs found in storage
 const setUrls = function() {
     chrome.storage.sync.get("additionalUrls", function(data) {
         if (data.additionalUrls !== undefined) {
@@ -80,14 +85,31 @@ const setUrls = function() {
     });
 }
 
+// Regex for checking if valid URL
+function isValidUrl(string) {
+    try {
+        new URL(string);
+    } catch (_) {
+        return false;
+    }
+
+    return true;
+}
+
+// Add the URL in the text field to the list of URLs to listen to if it is a valid URL
 addUrlButton.onclick = function(event) {
-    chrome.storage.sync.get("additionalUrls", function(data) {
-        const newUrls = data.additionalUrls || [];
-        newUrls.push(addUrlText.value);
-        addUrlText.value = "";
-        chrome.storage.sync.set({ additionalUrls: newUrls });
-        setUrls();
-    });
+    if (isValidUrl(addUrlText.value)) {
+        chrome.storage.sync.get("additionalUrls", function(data) {
+            const newUrls = data.additionalUrls || [];
+            newUrls.push(addUrlText.value);
+            addUrlText.value = "";
+            chrome.storage.sync.set({ additionalUrls: newUrls });
+            setUrls();
+        });
+    } else {
+        alert("Please enter URL in correct format");
+    }
+
 }
 
 setUrls();
