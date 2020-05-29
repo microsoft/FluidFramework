@@ -229,7 +229,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         );
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         assert.equal(this.rows.getCollabWindow().collaborating, this.cols.getCollabWindow().collaborating);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
@@ -240,6 +240,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         assert(this.rows.resetPendingSegmentsToOp() === undefined);
         assert(this.cols.resetPendingSegmentsToOp() === undefined);
     }
+
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);

@@ -154,7 +154,7 @@ class ContainerUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        throw new Error("Not implemented");
     }
 }
 
@@ -209,7 +209,7 @@ class Document {
             this.containerDescription,
             errorHandler);
 
-        this.from = this.container.deltaManager.referenceSequenceNumber;
+        this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
 
         this.replayer.currentReplayedOp = this.from;
@@ -294,6 +294,11 @@ class Document {
                 ["@ms/undo-stack", Promise.resolve(chaincode)],
                 ["@ms/commanding-surface", Promise.resolve(chaincode)],
                 ["@ms/dias", Promise.resolve(chaincode)],
+                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
+                ["@fluidx/tasks", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
+                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
         const options = {};
 

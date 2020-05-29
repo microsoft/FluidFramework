@@ -54,4 +54,4 @@ launchPuppeteer(commander.document, commander.type, commander.gatewayUrl).catch(
     (error) => {
         console.error(error);
         process.exit(1);
-});
+    });

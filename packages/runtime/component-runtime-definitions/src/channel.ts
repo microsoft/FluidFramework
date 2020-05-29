@@ -52,18 +52,33 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 }
 
 /**
- * Handler provided by shared data structure to process incoming ops.
+ * Handler provided by shared data structure to process requests from the runtime.
  */
 export interface IDeltaHandler {
     /**
      * Processes the op.
+     * @param message - The message to process
+     * @param local - Whether the message originated from the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    process: (message: ISequencedDocumentMessage, local: boolean) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
 
     /**
      * State change events to indicate changes to the delta connection
+     * @param connected - true if connected, false otherwise
      */
     setConnectionState(connected: boolean): void;
+
+    /**
+     * Called when the runtime asks the client to resubmit an op. This may be because the Container reconnected and
+     * this op was not acked.
+     * The client can choose to resubmit the same message, submit different / multiple messages or not submit anything
+     * at all.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    reSubmit(message: any, localOpMetadata: unknown): void;
 }
 
 /**
@@ -73,10 +88,14 @@ export interface IDeltaConnection {
     connected: boolean;
 
     /**
-     * Send new messages to the server. Returns the client ID for the message. Must be in a connected state
-     * to submit a message.
+     * Send new messages to the server.
+     * @param messageContent - The content of the message to be sent.
+     * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
+     * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
+     * also be provided back when asked to resubmit the message.
+     * @returns A clientSequenceNumber that uniquely identifies this message for this client.
      */
-    submit(messageContent: any): number;
+    submit(messageContent: any, localOpMetadata: unknown): number;
 
     /**
      * Attaches a message handler to the delta connection
