@@ -177,7 +177,7 @@ export class MockDeltaConnectionFactory {
 }
 
 /**
- * Mock implementation IDeltaConnection for testing that does nothing
+ * Mock implementation IDeltaConnection for testing.
  */
 class MockDeltaConnection implements IDeltaConnection {
     public get connected(): boolean {
