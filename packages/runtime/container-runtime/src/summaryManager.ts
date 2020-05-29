@@ -5,7 +5,8 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@fluidframework/common-utils";
+import { Heap, IComparer, IHeapNode,  PromiseTimer } from "@fluidframework/common-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/client-common-utils";
 import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";

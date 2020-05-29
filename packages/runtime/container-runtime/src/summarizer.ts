@@ -5,7 +5,8 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { ChildLogger, CustomErrorWithProps, PerformanceEvent } from "@fluidframework/client-common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -15,7 +16,7 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { CustomErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,

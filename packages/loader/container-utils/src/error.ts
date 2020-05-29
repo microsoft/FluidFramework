@@ -5,43 +5,13 @@
 // tslint:disable: no-unsafe-any
 import assert from "assert";
 import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
+import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {
         return error.message;
     }
     return `${error}`;
-}
-
-/**
- * TODO: Needs to be removed and replaced with version in logger.ts
- * Please use version in @fluidframework/common-util package!
- *
- * Helper class for error tracking.
- * Object of this instance will record all of their properties when logged with logger.
- * Care needs to be taken not to log PII information!
- * Logger ignores all properties from any  other error objects (not being instance of CustomErrorWithProps),
- * with exception of 'message' & 'stack' properties if they exists on error object.
- * In other words, logger logs only what it knows about and has good confidence it does not container PII information.
- */
-export class CustomErrorWithProps extends Error {
-    constructor(
-        message: string,
-        props?: {[key: string]: string | number})
-    {
-        super(message);
-        Object.assign(this, props);
-    }
-
-    // Return all properties
-    public getCustomProperties(): object {
-        const props = {};
-        // Could not use {...this} because it does not return properties of base class.
-        for (const key of Object.getOwnPropertyNames(this)) {
-            props[key] = this[key];
-        }
-        return props;
-    }
 }
 
 /**

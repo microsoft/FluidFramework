@@ -20,10 +20,10 @@ import {
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
-    DebugLogger,
     Deferred,
     fromUtf8ToBase64,
 } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/client-common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
     IBlob,

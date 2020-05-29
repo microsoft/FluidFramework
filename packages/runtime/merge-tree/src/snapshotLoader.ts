@@ -4,7 +4,8 @@
  */
 
 import assert from "assert";
-import { fromBase64ToUtf8, ChildLogger } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/client-common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";

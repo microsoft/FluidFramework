@@ -24,7 +24,7 @@ import {
     IComponentFactory,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 

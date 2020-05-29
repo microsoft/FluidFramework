@@ -5,7 +5,8 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { DebugLogger, Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { Deferred, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/client-common-utils";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IPendingProposal, IQuorum, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

@@ -4,13 +4,12 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     PerformanceEvent,
-    performanceNow,
     TelemetryLogger,
-    TelemetryNullLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/client-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,

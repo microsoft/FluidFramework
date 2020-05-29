@@ -15,11 +15,9 @@ import {
     IFluidResolvedUrl,
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import {
-    CreateContainerError,
-    createWriteError,
-    CustomErrorWithProps,
-} from "@fluidframework/driver-utils";
+import { createWriteError } from "@fluidframework/driver-utils";
+import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     createOdspNetworkError,
     invalidFileNameStatusCode,

@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     ISnapshotTree,

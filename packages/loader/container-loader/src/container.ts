@@ -27,14 +27,14 @@ import {
     ContainerWarning,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
-    performanceNow,
     raiseConnectedEvent,
     TelemetryLogger,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/client-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -47,13 +47,13 @@ import {
 import {
     BlobCacheStorageService,
     buildSnapshotTree,
-    CreateContainerError,
     readAndParse,
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     isSystemMessage,
     ProtocolOpHandler,
@@ -434,7 +434,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.protocolHandler.close();
         }
 
-        this.context?.dispose(error ? new Error(error.errorType.toString()) : undefined);
+        this.context?.dispose(error ? new Error(error.message) : undefined);
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 

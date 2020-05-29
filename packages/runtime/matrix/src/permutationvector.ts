@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@fluidframework/common-utils";
+import { ChildLogger } from "@fluidframework/client-common-utils";
 import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {

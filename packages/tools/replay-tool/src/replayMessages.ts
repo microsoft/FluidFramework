@@ -11,7 +11,7 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/client-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

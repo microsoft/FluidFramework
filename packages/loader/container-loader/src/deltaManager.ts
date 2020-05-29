@@ -15,7 +15,8 @@ import {
     IThrottlingWarning,
     ErrorType,
 } from "@fluidframework/container-definitions";
-import { PerformanceEvent, performanceNow, TelemetryLogger, TypedEventEmitter } from "@fluidframework/common-utils";
+import { performanceNow, TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/client-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -38,10 +39,10 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
-    CreateContainerError,
     createWriteError,
     createGenericNetworkError,
 } from "@fluidframework/driver-utils";
+import { CreateContainerError } from "@fluidframework/container-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";

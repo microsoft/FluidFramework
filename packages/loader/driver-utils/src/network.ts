@@ -13,9 +13,7 @@ import {
     ErrorType,
     IErrorBase,
 } from "@fluidframework/container-definitions";
-import {
-    CustomErrorWithProps,
-} from "./error";
+import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
 
 export enum OnlineStatus {
     Offline,

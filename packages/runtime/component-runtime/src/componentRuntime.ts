@@ -21,10 +21,12 @@ import {
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
-    ChildLogger,
     Deferred,
-    raiseConnectedEvent,
 } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    raiseConnectedEvent,
+} from "@fluidframework/client-common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { TreeTreeEntry } from "@fluidframework/protocol-base";
 import {

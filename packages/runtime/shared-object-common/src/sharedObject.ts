@@ -6,7 +6,7 @@
 import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/client-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { DebugLogger } from "@fluidframework/common-utils";
+import { DebugLogger } from "@fluidframework/client-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
