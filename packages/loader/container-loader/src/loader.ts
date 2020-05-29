@@ -269,7 +269,7 @@ export class Loader extends EventEmitter implements ILoader {
                     resolvedAsFluid);
         }
 
-        if (container.deltaManager.referenceSequenceNumber <= fromSequenceNumber) {
+        if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {

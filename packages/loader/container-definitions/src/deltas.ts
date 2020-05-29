@@ -98,7 +98,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     minimumSequenceNumber: number;
 
     // The last sequence number processed by the delta manager
-    referenceSequenceNumber: number;
+    lastSequenceNumber: number;
 
     // The initial sequence number set when attaching the op handler
     initialSequenceNumber: number;

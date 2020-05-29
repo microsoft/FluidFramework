@@ -427,7 +427,7 @@ export abstract class ComponentContext extends EventEmitter implements
         this.verifyNotClosed();
 
         // Get the latest sequence number.
-        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+        const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
