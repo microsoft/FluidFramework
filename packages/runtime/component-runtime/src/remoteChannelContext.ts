@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -22,6 +21,7 @@ import {
     IComponentContext,
     ISummaryTracker,
 } from "@fluidframework/runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -42,7 +42,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
-        submitFn: (type: MessageType, content: any) => number,
+        submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
@@ -85,16 +85,22 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
-            this.services.deltaConnection.process(message, local);
+            this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local);
+            strongAssert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
+    }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        strongAssert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+
+        this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
@@ -110,7 +116,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded);
+        strongAssert(!this.isLoaded, "Remote channel must not already be loaded when loading");
 
         let attributes: IChannelAttributes | undefined;
         if (await this.services.objectStorage.contains(".attributes")) {
@@ -164,7 +170,7 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
             try {
-                this.services.deltaConnection.process(message, false);
+                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
             } catch (err) {
                 // record sequence number for easier debugging
                 const error = CreateContainerError(err);

@@ -38,6 +38,7 @@
     "@fluidframework/protocol-base": "^0.1006.0-0",
     "@fluidframework/protocol-definitions": "^0.1006.0-0",
     "@fluidframework/runtime-definitions": "^0.19.0",
+    "@fluidframework/runtime-utils": "^0.19.0",
     "@fluidframework/shared-object-base": "^0.19.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
