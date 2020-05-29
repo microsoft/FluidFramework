@@ -477,7 +477,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             version: cachedSnapshot.id,
         };
 
-        const seqNumber = cachedSnapshot.trees[0].sequenceNumber;
+        const seqNumber = cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber;
         if (cachedSnapshot.ops && cachedSnapshot.ops.length > 0) {
             assert(cachedSnapshot.ops[0].sequenceNumber === seqNumber);
         }
