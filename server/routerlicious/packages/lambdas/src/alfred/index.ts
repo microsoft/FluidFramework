@@ -223,6 +223,9 @@ export function configureWebSocketServices(
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                connection.initialize();
+
                 connectionsMap.set(clientId, connection);
 
                 // Eventually we will send disconnect reason as headers to client.

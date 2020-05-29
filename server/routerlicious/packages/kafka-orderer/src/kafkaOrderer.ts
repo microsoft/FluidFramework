@@ -28,7 +28,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         serviceConfiguration: IServiceConfiguration,
     ): Promise<KafkaOrdererConnection> {
         // Create the connection
-        const connection = new KafkaOrdererConnection(
+        return new KafkaOrdererConnection(
             existing,
             document,
             producer,
@@ -38,12 +38,6 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             client,
             maxMessageSize,
             serviceConfiguration);
-
-        // keep floating for now so that we do not slow down the connect_document response
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        connection.initialize();
-
-        return connection;
     }
 
     public get parentBranch(): string {
@@ -67,6 +61,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this._parentBranch = document.parent ? document.parent.documentId : null;
     }
 
+    /**
+     * Sends the client join op for this connection
+     */
     public async initialize() {
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
@@ -94,6 +91,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return this.submitRawOperation([message]);
     }
 
+    /**
+     * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially
+     * so long as their total size fits under the maxMessageSize.
+     */
     public async order(messages: IDocumentMessage[]): Promise<void> {
         const rawMessages = messages.map((message) => {
             const rawMessage: core.IRawOperationMessage = {
@@ -111,6 +112,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return this.submitRawOperation(rawMessages);
     }
 
+    /**
+     * Sends the client leave op for this connection
+     */
     public async disconnect(): Promise<void> {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
