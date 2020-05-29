@@ -38,7 +38,12 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, ICacheVersionedEntry, IFileEntry } from "./odspCache";
+import {
+    IOdspCache,
+    ICacheVersionedEntry,
+    IFileEntry,
+    snapshotExpiryDefaultPolicy,
+} from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -326,12 +331,15 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             file: this.fileEntry,
                             key: "Snapshot",
                         },
-                        this.hostPolicy.summarizerClient ? 10000 : undefined,
-                    ) as Promise<IOdspSnapshot>;
+                        this.hostPolicy.summarizerClient ? snapshotExpiryDefaultPolicy : undefined,
+                    ) as Promise<IOdspSnapshot | undefined>;
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
                         cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.

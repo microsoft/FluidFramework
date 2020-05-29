@@ -5,6 +5,7 @@
 
 import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 
 /**
@@ -133,11 +134,47 @@ class GarbageCollector<TKey> {
     }
 }
 
+export class PersistedCacheWithErrorHandling implements IPersistedCache {
+    public constructor(
+        protected readonly cache: IPersistedCache,
+        protected readonly logger: ITelemetryLogger) {
+    }
+
+    async get(entry: ICacheEntry, expiry?: number): Promise<any> {
+        try {
+            return this.cache.get(entry);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "cacheFetchError", key: entry.key }, error);
+            return undefined;
+        }
+    }
+
+    put(entry: ICacheVersionedEntry, value: any) {
+        try {
+            this.cache.put(entry, value);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "cachePutError", key: entry.key }, error);
+            return undefined;
+        }
+    }
+
+    updateUsage(entry: ICacheVersionedEntry, opCount: number): void {
+        try {
+            this.cache.updateUsage(entry, opCount);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "cacheUpdateUsageError", key: entry.key }, error);
+            return undefined;
+        }
+    }
+}
+
+export const snapshotExpiryDefaultPolicy = 10000;
+
 /**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
-export class LocalCache implements IPersistedCache {
+export class LocalPersistentCache implements IPersistedCache {
     private readonly cache = new Map<ICacheEntry, any>();
     private readonly gc = new GarbageCollector<ICacheEntry>((key) => this.cache.delete(key));
 
@@ -145,9 +182,12 @@ export class LocalCache implements IPersistedCache {
         return this.cache.get(entry);
     }
 
-    put(entry: ICacheEntry, value: any) {
-        this.gc.cancel(entry);
+    put(entry: ICacheVersionedEntry, value: any) {
         this.cache.set(entry, value);
+
+        // Do not keep items too long in memory
+        this.gc.cancel(entry);
+        this.gc.schedule(entry, snapshotExpiryDefaultPolicy);
     }
 
     updateUsage(entry: ICacheVersionedEntry, opCount: number): void {
@@ -163,12 +203,7 @@ export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string
 /**
  * Internal cache interface used within driver only
  */
-export interface IOdspCache {
-    /**
-     * Persisted cache - only serializable content is allowed
-     */
-    readonly persistedCache: IPersistedCache;
-
+export interface INonPersistentCache {
     /**
      * Cache of joined/joining session info
      * This cache will use a one hour sliding expiration window.
@@ -181,16 +216,39 @@ export interface IOdspCache {
     readonly fileUrlCache: PromiseCache<string, IOdspResolvedUrl>;
 }
 
-export class OdspCache implements IOdspCache {
+/**
+ * Internal cache interface used within driver only
+ */
+export interface IOdspCache extends INonPersistentCache {
+    /**
+     * Persisted cache - only serializable content is allowed
+     */
+    readonly persistedCache: IPersistedCache;
+}
+
+export class NonPersistentCache implements INonPersistentCache {
     public readonly sessionJoinCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
+}
+
+export class OdspCache extends NonPersistentCache implements IOdspCache {
+    readonly persistedCache: IPersistedCache;
 
     /**
      * Initialize the OdspCach, with an optional cache to store persisted data in.
      * If an IPersistedCache is not provided, we'll use a local-only cache for this session.
      */
     constructor(
-        public readonly persistedCache: IPersistedCache = new LocalCache(),
-    ) {}
+        persistedCache: IPersistedCache,
+        nonpersistentCache: NonPersistentCache,
+        logger: ITelemetryLogger)
+    {
+        super();
+        this.persistedCache = new PersistedCacheWithErrorHandling(
+            persistedCache,
+            logger);
+
+        Object.assign(this, nonpersistentCache);
+    }
 }

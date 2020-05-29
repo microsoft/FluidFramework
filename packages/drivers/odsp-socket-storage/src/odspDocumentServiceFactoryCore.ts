@@ -17,7 +17,12 @@ import {
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { IOdspCache, OdspCache, IPersistedCache } from "./odspCache";
+import {
+    LocalPersistentCache,
+    OdspCache,
+    NonPersistentCache,
+    IPersistedCache,
+} from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 import { INewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
@@ -33,7 +38,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
-    private readonly cache: IOdspCache;
+    private readonly nonPersistentCache = new NonPersistentCache();
 
     public async createContainer(
         createNewSummary: ISummaryTree,
@@ -68,7 +73,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             odspResolvedUrl = await createNewFluidFile(
                 this.getStorageToken,
                 newFileParams,
-                this.cache,
+                this.nonPersistentCache,
                 this.storageFetchWrapper,
                 createNewSummary);
             const props = {
@@ -99,25 +104,33 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
-        persistedCache?: IPersistedCache,
+        protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
-        this.cache = new OdspCache(persistedCache);
     }
 
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
+        const odspLogger = ChildLogger.create(
+            logger,
+            "OdspDriver");
+
+        const cache = new OdspCache(
+            this.persistedCache,
+            this.nonPersistentCache,
+            odspLogger);
+
         return OdspDocumentService.create(
             resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
-            ChildLogger.create(logger, "OdspDriver"),
+            odspLogger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             this.getSocketIOClient(),
-            this.cache,
+            cache,
             this.hostPolicy,
         );
     }
