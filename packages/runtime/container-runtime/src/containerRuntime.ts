@@ -234,7 +234,7 @@ export class ScheduleManager {
         }
 
         // Based on track pending update the pause state
-        this.updatePauseState(this.deltaManager.referenceSequenceNumber);
+        this.updatePauseState(this.deltaManager.lastSequenceNumber);
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
@@ -981,7 +981,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             this.storage,
             this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
@@ -1006,7 +1006,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             this.storage,
             this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
@@ -1289,7 +1289,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         safe: boolean = false,
     ): Promise<GenerateSummaryData | undefined> {
         const message =
-            `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+            `Summary @${this.deltaManager.lastSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
@@ -1304,7 +1304,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             await this.scheduleManager.pause();
 
             const attemptData: IUnsubmittedSummaryData = {
-                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
+                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
                 submitted: false,
             };
 
