@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-replay-tool",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,16 +25,16 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.18.5",
+    "@fluid-internal/client-api": "^0.18.6",
     "@microsoft/fluid-common-definitions": "^0.17.0",
     "@microsoft/fluid-common-utils": "^0.18.2",
-    "@microsoft/fluid-component-core-interfaces": "^0.18.5",
-    "@microsoft/fluid-container-definitions": "^0.18.5",
-    "@microsoft/fluid-container-loader": "^0.18.5",
-    "@microsoft/fluid-driver-definitions": "^0.18.5",
-    "@microsoft/fluid-file-driver": "^0.18.5",
+    "@microsoft/fluid-component-core-interfaces": "^0.18.6",
+    "@microsoft/fluid-container-definitions": "^0.18.6",
+    "@microsoft/fluid-container-loader": "^0.18.6",
+    "@microsoft/fluid-driver-definitions": "^0.18.6",
+    "@microsoft/fluid-file-driver": "^0.18.6",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
-    "@microsoft/fluid-replay-driver": "^0.18.5"
+    "@microsoft/fluid-replay-driver": "^0.18.6"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

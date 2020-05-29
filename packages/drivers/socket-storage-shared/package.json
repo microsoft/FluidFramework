@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-base",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "description": "Shared package across different socket-storage implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.18.2",
-    "@microsoft/fluid-driver-definitions": "^0.18.5",
-    "@microsoft/fluid-driver-utils": "^0.18.5",
+    "@microsoft/fluid-driver-definitions": "^0.18.6",
+    "@microsoft/fluid-driver-utils": "^0.18.6",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.14.6",

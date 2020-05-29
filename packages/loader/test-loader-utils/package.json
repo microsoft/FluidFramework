@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-loader-utils",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-driver-definitions": "^0.18.5",
+    "@microsoft/fluid-driver-definitions": "^0.18.6",
     "@microsoft/fluid-protocol-definitions": "^0.1005.1"
   },
   "devDependencies": {
