@@ -7,8 +7,9 @@ import { commonOptions, commonOptionString, parseOption } from "../common/common
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
-import { writeFileAsync } from "../common/utils";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { logVerbose, logStatus } from "../common/logging";
+import { Package, Packages } from "../common/npmPackage";
+import { readFileAsync, writeFileAsync } from "../common/utils";
 
 function printUsage() {
     console.log(
@@ -18,8 +19,6 @@ Options:
 ${commonOptionString}
 `);
 }
-
-let dotGraph: string | undefined;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -60,11 +59,23 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
 
     // Load the package
-    // const packages = new FluidRepoBase(resolvedRoot).packages;
-    // timer.time("Package scan completed");
+    const packages = Packages.loadDir(resolvedRoot);
+    timer.time("Package scan completed");
 
     try {
-        console.log("Hello from Package Audit main");
+        const auditPackage = async (pkg: Package) => {
+            const dir = pkg.directory;
+            const readmePath = path.join(dir, "readme.md");
+            
+            //* First check if readme exists
+            const readme = await readFileAsync(readmePath, "utf8");
+            const lines = readme.split(/\r?\n/);
+            const title = lines[0]; //* todo: Normalize (strip off #'s and collapse spaces)
+
+            //* Check directory name
+        };
+        auditPackage(packages[0]);
+        // packages.forEach(auditPackage);
         // if (!success) {
         //     process.exit(-1);
         // }
