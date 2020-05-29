@@ -66,50 +66,17 @@ export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
 }
 
 /**
- * Interface definition that represents the data submitted by a local client.
- * message - The message that is submitted.
- * localOpMetadata - The metadata associated with the message.
- */
-interface IMessageData {
-    message: ISequencedDocumentMessage,
-    localOpMetadata: unknown,
-}
-
-/**
  * Factory to create MockDeltaConnection for testing.
- * This factory imitates the ContainerRuntime for submitting and processing messages:
- * 1. It stores the messages submitted by clients until they are processed.
- * 2. When processAllMessages() is called to process the messages, it calls process on the DDSs.
- * 3. It supports disconnection / reconnection. On reconnection, for the pending messages, it calls
- *    reSubmit on the DDSs.
+ * It imitates a server for the purposes of processing messages. It stores the messages until
+ * processAllMessages() is called.
+ * It also supports disconnecting a client - In this case, it deletes all the unprocessed messages for
+ * that client.
  */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    private readonly messages: IMessageData[] = [];
+    private messages: ISequencedDocumentMessage[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
-    private _connected = true;
-
-    public get connected(): boolean {
-        return this._connected;
-    }
-
-    public set connected(connected: boolean) {
-        if (this._connected === connected) {
-            return;
-        }
-
-        this._connected = connected;
-
-        // If we have reconnected, ask the DDSs to resubmit all the pending messages.
-        if (connected === true) {
-            this.reSubmitMessages();
-        }
-
-        for (const dc of this.deltaConnections) {
-            dc.connected = connected;
-        }
-    }
 
     public getMinSeq(): number {
         let minSeq: number;
@@ -139,45 +106,48 @@ export class MockDeltaConnectionFactory {
         if (!this.minSeq.has(msg.clientId)) {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
-        this.messages.push({
-            message: msg as ISequencedDocumentMessage,
-            localOpMetadata,
-        });
+        this.messages.push(msg as ISequencedDocumentMessage);
     }
 
     public processAllMessages() {
         while (this.messages.length > 0) {
-            const messageDetail = this.messages.shift();
+            let msg = this.messages.shift();
 
             // Explicitly JSON clone the value to match the behavior of going thru the wire.
-            const msg = JSON.parse(JSON.stringify(messageDetail.message));
+            msg = JSON.parse(JSON.stringify(msg));
 
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
             for (const dc of this.deltaConnections) {
-                for (const h of dc.handlers) {
-                    const isLocal = dc.isLocal(msg);
-                    h.process(msg, isLocal, isLocal ? messageDetail.localOpMetadata : undefined);
-                }
+                dc.process(msg);
             }
         }
     }
 
-    private reSubmitMessages() {
-        while (this.messages.length > 0) {
-            const messageDetail = this.messages.shift();
-            for (const dc of this.deltaConnections) {
-                for (const h of dc.handlers) {
-                    h.reSubmit(messageDetail.message, messageDetail.localOpMetadata);
-                }
-            }
-        }
+    public clientDisconnected(clientId: string) {
+        // Delete all the messages for client with the given clientId.
+        this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
+            return message.clientId !== clientId;
+        });
     }
+}
+
+// Represents the structure of a pending message stored by the MockDeltaConnection.
+interface IPendingMessage {
+    content: any,
+    clientSequenceNumber: number,
+    localOpMetadata: unknown,
 }
 
 /**
  * Mock implementation IDeltaConnection for testing.
+ * It imitates the following functionality of ContainerRuntime:
+ * 1. It stores the messages submitted by a DDS until they are processed in a pending queue.
+ * 2. When a message is processed, it removes the message from the queue.
+ * 3. It supports disconnection / reconnection of client. On disconnection, it notifies the factory so
+ *    that the messages from this client are cleared. On reconnection, it calls reSubmit on the DDS with
+ *    the pending message.
  */
 class MockDeltaConnection implements IDeltaConnection {
     public get connected(): boolean {
@@ -185,11 +155,21 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 
     public set connected(connected: boolean) {
-        if (connected) {
-            this.runtime.clientId = uuid();
+        if (this._connected === connected) {
+            return;
         }
 
         this._connected = connected;
+
+        if (connected) {
+            this.clientSequenceNumber = 0;
+            this.runtime.clientId = uuid();
+            // We reconnected. Ask the DDS to resubmit the unacked messages.
+            this.reSubmitMessages();
+        } else {
+            this.factory.clientDisconnected(this.runtime.clientId);
+        }
+
         this.handlers.forEach((h) => {
             h.setConnectionState(this.connected);
         });
@@ -198,6 +178,7 @@ class MockDeltaConnection implements IDeltaConnection {
     private _connected = true;
     private clientSequenceNumber: number = 0;
     private referenceSequenceNumber = 0;
+    private readonly pendingMessages: IPendingMessage[] = [];
 
     constructor(
         private readonly factory: MockDeltaConnectionFactory,
@@ -212,18 +193,42 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 
     public submit(messageContent: any, localOpMetadata: unknown): number {
-        this.clientSequenceNumber++;
-        const msg: Partial<ISequencedDocumentMessage> = {
-            clientId: this.runtime.clientId,
-            clientSequenceNumber: this.clientSequenceNumber,
-            contents: messageContent,
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            type: MessageType.Operation,
+        let clientSequenceNumber = -1;
 
-        };
-        this.factory.pushMessage(msg, localOpMetadata);
+        // If we are not in connected state, do not submit the messages but just store it in the pending
+        // queue. When the client connects, we will ask the DDS to resubmit this message.
+        if (this.connected) {
+            clientSequenceNumber = this.clientSequenceNumber++;
+            const msg: Partial<ISequencedDocumentMessage> = {
+                clientId: this.runtime.clientId,
+                clientSequenceNumber,
+                contents: messageContent,
+                referenceSequenceNumber: this.referenceSequenceNumber,
+                type: MessageType.Operation,
 
-        return msg.clientSequenceNumber;
+            };
+            this.factory.pushMessage(msg, localOpMetadata);
+        }
+
+        this.pendingMessages.push({
+            content: messageContent,
+            clientSequenceNumber,
+            localOpMetadata,
+        });
+
+        return clientSequenceNumber;
+    }
+
+    public process(message: ISequencedDocumentMessage) {
+        let localOpMetadata: unknown;
+        const local = this.isLocal(message);
+        if (local) {
+            localOpMetadata = this.processLocalMessage(message);
+        }
+
+        this.handlers.forEach((handler) => {
+            handler.process(message, local, localOpMetadata);
+        });
     }
 
     public attach(handler: IDeltaHandler): void {
@@ -235,6 +240,23 @@ class MockDeltaConnection implements IDeltaConnection {
 
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId;
+    }
+
+    private processLocalMessage(message: ISequencedDocumentMessage): unknown {
+        const pendingMessage = this.pendingMessages.shift();
+        assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
+        return pendingMessage.localOpMetadata;
+    }
+
+    private reSubmitMessages() {
+        let messageCount = this.pendingMessages.length;
+        while (messageCount > 0) {
+            const pendingMessage: IPendingMessage = this.pendingMessages.shift();
+            this.handlers.forEach((handler) => {
+                handler.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
+            });
+            messageCount--;
+        }
     }
 }
 

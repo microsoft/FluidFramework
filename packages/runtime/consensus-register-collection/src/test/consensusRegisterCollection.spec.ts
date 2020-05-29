@@ -261,9 +261,9 @@ describe("ConsensusRegisterCollection", () => {
                 // Write to the first register collection.
                 const writeP = testCollection1.write(testKey, testValue);
 
-                // Drop the connection and reconnect.
-                deltaConnectionFactory.connected = false;
-                deltaConnectionFactory.connected = true;
+                // Disconnect and reconnect the first collection.
+                deltaConnection1.connected = false;
+                deltaConnection1.connected = true;
 
                 // Process the messages.
                 deltaConnectionFactory.processAllMessages();
@@ -279,14 +279,14 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             it("can store ops in disconnected state and resend them on reconnection", async () => {
-                // Drop the connection.
-                deltaConnectionFactory.connected = false;
+                // Disconnect the first collection.
+                deltaConnection1.connected = false;
 
                 // Write to the first register collection.
                 const writeP = testCollection1.write(testKey, testValue);
 
-                // Reconnect.
-                deltaConnectionFactory.connected = true;
+                // Reconnect the first collection.
+                deltaConnection1.connected = true;
 
                 // Process the messages.
                 deltaConnectionFactory.processAllMessages();

@@ -140,9 +140,9 @@ describe("SharedString", () => {
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
-            // Drop the connection and reconnect.
-            deltaConnectionFactory.connected = false;
-            deltaConnectionFactory.connected = true;
+            // Disconnect and reconnect the first collection.
+            deltaConnection1.connected = false;
+            deltaConnection1.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();
@@ -152,15 +152,15 @@ describe("SharedString", () => {
         });
 
         it("can store ops in disconnected state and resend them on reconnection", async () => {
-            // Drop the connection.
-            deltaConnectionFactory.connected = false;
+            // Disconnect the first SharedString.
+            deltaConnection1.connected = false;
 
             // Make couple of changes to it.
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
-            // Reconnect.
-            deltaConnectionFactory.connected = true;
+            // Reconnect the first SharedString.
+            deltaConnection1.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();

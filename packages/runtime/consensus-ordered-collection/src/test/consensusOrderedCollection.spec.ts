@@ -251,7 +251,7 @@ describe("ConsensusOrderedCollection", () => {
             // Add a value to the first ConsensusOrderedCollection
             const waitP = testCollection1.add(testValue);
 
-            // Drop the connection and reconnect.
+            // Disconnect and reconnect the first collection.
             deltaConnection1.connected = false;
             deltaConnection1.connected = true;
 
@@ -284,9 +284,9 @@ describe("ConsensusOrderedCollection", () => {
                 return ConsensusResult.Complete;
             });
 
-            // Drop the connection and reconnect.
-            deltaConnectionFactory.connected = false;
-            deltaConnectionFactory.connected = true;
+            // Disconnect and reconnect the first collection.
+            deltaConnection1.connected = false;
+            deltaConnection1.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();
@@ -306,8 +306,8 @@ describe("ConsensusOrderedCollection", () => {
         it("can store ops in disconnected state and resend them on reconnection", async () => {
             const testValue = "testValue";
 
-            // Add a listener to the second collection. This is used to verify that the added value reaches the remote
-            // client.
+            // Add a listener to the second collection. This is used to verify that the added value reaches the
+            // remote client.
             let addedValue: string = "";
             let newlyAdded: boolean = false;
             testCollection2.on("add", (value: any, added: boolean) => {
@@ -315,14 +315,14 @@ describe("ConsensusOrderedCollection", () => {
                 newlyAdded = added;
             });
 
-            // Drop the connection.
-            deltaConnectionFactory.connected = false;
+            // Disconnect the first collection
+            deltaConnection1.connected = false;
 
             // Add a value to the first ConsensusOrderedCollection.
             const waitP = testCollection1.add(testValue);
 
-            // Reconnect.
-            deltaConnectionFactory.connected = true;
+            // Reconnect the first collection.
+            deltaConnection1.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();
