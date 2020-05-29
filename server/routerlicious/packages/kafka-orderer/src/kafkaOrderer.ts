@@ -28,7 +28,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         serviceConfiguration: IServiceConfiguration,
     ): Promise<KafkaOrdererConnection> {
         // Create the connection
-        return new KafkaOrdererConnection(
+        const connection = new KafkaOrdererConnection(
             existing,
             document,
             producer,
@@ -38,6 +38,12 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             client,
             maxMessageSize,
             serviceConfiguration);
+
+        // keep floating for now so that we do not slow down the connect_document response
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        connection.initialize();
+
+        return connection;
     }
 
     public get parentBranch(): string {
@@ -59,7 +65,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     ) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         this._parentBranch = document.parent ? document.parent.documentId : null;
+    }
 
+    public async initialize() {
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
@@ -83,10 +91,14 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             type: core.RawOperationType,
         };
 
-        this.submitRawOperation([message]);
+        return this.submitRawOperation([message]);
     }
 
-    public order(messages: IDocumentMessage[]): void {
+    public once(event: "error", listener: (...args: any[]) => void) {
+        this.producer.once(event, listener);
+    }
+
+    public async order(messages: IDocumentMessage[]): Promise<void> {
         const rawMessages = messages.map((message) => {
             const rawMessage: core.IRawOperationMessage = {
                 clientId: this.clientId,
@@ -100,10 +112,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             return rawMessage;
         });
 
-        this.submitRawOperation(rawMessages);
+        return this.submitRawOperation(rawMessages);
     }
 
-    public disconnect() {
+    public async disconnect(): Promise<void> {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
@@ -121,14 +133,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             type: core.RawOperationType,
         };
 
-        this.submitRawOperation([message]);
+        return this.submitRawOperation([message]);
     }
 
-    public once(event: "error", listener: (...args: any[]) => void) {
-        this.producer.once(event, listener);
-    }
-
-    private submitRawOperation(messages: core.IRawOperationMessage[]) {
+    private async submitRawOperation(messages: core.IRawOperationMessage[]): Promise<void> {
         // Add trace
         messages.forEach((message) => {
             const operation = message.operation;
@@ -146,8 +154,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.producer.send(messages, this.tenantId, this.documentId);
+        return this.producer.send(messages, this.tenantId, this.documentId);
     }
 }
 

@@ -74,7 +74,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation([message]);
     }
 
-    public order(messages: IDocumentMessage[]): void {
+    public async order(messages: IDocumentMessage[]) {
         const rawMessages = messages.map((message) => {
             const rawMessage: IRawOperationMessage = {
                 clientId: this.clientId,
@@ -89,9 +89,11 @@ export class LocalOrdererConnection implements IOrdererConnection {
         });
 
         this.submitRawOperation(rawMessages);
+
+        return Promise.resolve();
     }
 
-    public disconnect() {
+    public async disconnect() {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
@@ -113,6 +115,8 @@ export class LocalOrdererConnection implements IOrdererConnection {
         // Todo: We probably don't need this either.
         this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
         this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
+
+        return Promise.resolve();
     }
 
     public once(event: "error", listener: (...args: any[]) => void) {

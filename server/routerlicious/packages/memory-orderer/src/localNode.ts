@@ -210,6 +210,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                     case "disconnect": {
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.disconnect();
                         this.connectionMap.delete(message.cid);
 
@@ -220,6 +221,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         const orderMessage = message.payload as IDocumentMessage;
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.order([orderMessage]);
                         break;
                     }

@@ -323,6 +323,7 @@ export function configureWebSocketServices(
                             .map((message) => sanitizeMessage(message));
 
                         if (sanitized.length > 0) {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             connection.order(sanitized);
                         }
                     });
@@ -406,6 +407,7 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 logger.info(`Disconnect of ${clientId}`);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map

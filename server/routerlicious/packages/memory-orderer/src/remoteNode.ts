@@ -43,12 +43,14 @@ class ProxySocketConnection implements IOrdererConnection {
         private readonly details: IConnectedMessage) {
     }
 
-    public order(messages: IDocumentMessage[]): void {
+    public async order(messages: IDocumentMessage[]) {
         this.node.send(this.cid, "order", messages);
+        return Promise.resolve();
     }
 
-    public disconnect(): void {
+    public async disconnect() {
         this.node.send(this.cid, "disconnect", null);
+        return Promise.resolve();
     }
 
     public emit(op: string, id: string, ...data: any[]) {
