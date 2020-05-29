@@ -33,7 +33,7 @@ import {
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
@@ -51,6 +51,9 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  */
 export class OdspDocumentService implements IDocumentService {
     public readonly isExperimentalDocumentService = true;
+
+    protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
+
     /**
      * @param getStorageToken - function that can provide the storage token for a given site. This is
      * is also referred to as the "VROOM" token in SPO.
@@ -125,6 +128,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private opSeqNumberMin: number | undefined;
     private opSeqNumberMax: number | undefined;
+    private opSeqNumberMaxHostNotified: number | undefined;
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
@@ -537,6 +541,11 @@ export class OdspDocumentService implements IDocumentService {
 
         const count = this.opSeqNumberMax - this.opSeqNumberMin;
 
-        this.cache.persistedCache.updateUsage(cacheEntry, count);
+        if (this.opSeqNumberMaxHostNotified === undefined ||
+                this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
+            this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
+            this.updateUsageOpFrequency *= updateUsageOpMultiplier;
+            this.cache.persistedCache.updateUsage(cacheEntry, count);
+        }
     }
 }

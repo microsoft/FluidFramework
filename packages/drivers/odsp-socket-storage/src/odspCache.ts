@@ -46,15 +46,28 @@ export interface ICacheEntry {
     key: CacheKey;
 }
 
+/*
+ * Driver will implement exponential back-off policy when it comes to updating usage of snapshots
+ * It will use these settings to start reporting every 'startingUpdateUsageOpFrequency' ops and scale
+ * that distance with 'updateUsageOpMultiplier' multiplier.
+ * As result, we will
+ *   - reach 5K ops with 19 calls, with 500 ops between the calls at that mark
+ *   - reach 1M ops with 73 calls, with 95K ops between the calls at that mark
+ */
+export const updateUsageOpMultiplier = 1.2;
+export const startingUpdateUsageOpFrequency = 100;
+
 /**
  * Versioned cache entry.
  */
 export interface ICacheVersionedEntry extends ICacheEntry {
     /**
      * Version of cached entry.
-     * When putting new entry, new entry always overwrites previous entry no matter what the version is.
-     * When removing entry, entry is removed only if version of previously stored entry matches version
-     * supplied.
+     * When new entry is put to cache, old entries (all other versions) should be trimmed from the cache.
+     * Requests for data are version-less, and should return last version put into the cache.
+     * As such, version information is useful for updateUsage() calls, as individual clients do not
+     * know if they are operating on latest version, Requests to update usage from such clients should
+     * be ignored.
      */
     version: string;
 }
@@ -92,11 +105,15 @@ export interface IPersistedCache {
      * @param entry - cache entry.
      * @param value - JSON-serializable content.
      */
-    put(entry: ICacheVersionedEntry, value: any): void;
+    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number): void;
 
     // Tells how far given entry is behind, in number of ops.
     // The bigger the number, the more stale entry (like snapshot)
-    // Eventually it should not be used and deleted.
+    // Eventually entry should not be used and deleted by host from cache,
+    // but exactly policy is host defined.
+    // NOte: Driver will implement exponential back off stretegy here, calling this API
+    // less and less often as data comes in. Please see startingUpdateUsageOpFrequency and
+    // updateUsageOpMultiplier for reference implementation
     updateUsage(entry: ICacheVersionedEntry, opCount: number): void;
 }
 
@@ -152,9 +169,9 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    put(entry: ICacheVersionedEntry, value: any) {
+    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number) {
         try {
-            this.cache.put(entry, value);
+            this.cache.put(entry, value, seqNumber);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "cachePutError", key: entry.key }, error);
             return undefined;
@@ -188,7 +205,7 @@ export class LocalPersistentCache implements IPersistedCache {
         return this.cache.get(entry);
     }
 
-    put(entry: ICacheVersionedEntry, value: any) {
+    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number) {
         this.cache.set(entry, value);
 
         // Do not keep items too long in memory
