@@ -24,7 +24,12 @@ import {
     IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl, HostStoragePolicy, ISocketStorageDiscovery } from "./contracts";
+import {
+    IOdspResolvedUrl,
+    HostStoragePolicy,
+    HostStoragePolicyInternal,
+    ISocketStorageDiscovery,
+} from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -68,7 +73,6 @@ export class OdspDocumentService implements IDocumentService {
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const options = odspResolvedUrl.createNewOptions;
@@ -103,7 +107,6 @@ export class OdspDocumentService implements IDocumentService {
             socketIOClientP,
             cache,
             hostPolicy,
-            isFirstTimeDocumentOpened,
         );
     }
 
@@ -122,6 +125,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private opSeqNumberMin: number | undefined;
     private opSeqNumberMax: number | undefined;
+
+    private readonly hostPolicy: HostStoragePolicyInternal;
 
     /**
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
@@ -142,8 +147,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
-        private readonly hostPolicy: HostStoragePolicy,
-        private readonly isFirstTimeDocumentOpened = true,
+        hostPolicy: HostStoragePolicy,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
@@ -152,6 +156,13 @@ export class OdspDocumentService implements IDocumentService {
             {
                 odc: this.isOdc,
             });
+
+        this.hostPolicy = hostPolicy;
+        if (this.odspResolvedUrl.summarizer) {
+            // deep copy
+            this.hostPolicy = JSON.parse(JSON.stringify(this.hostPolicy)) as HostStoragePolicyInternal;
+            this.hostPolicy.summarizerClient = true;
+        }
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -210,7 +221,6 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             true,
             this.cache,
-            this.isFirstTimeDocumentOpened,
             this.hostPolicy,
         );
 
@@ -525,16 +535,8 @@ export class OdspDocumentService implements IDocumentService {
         }
         assert(this.opSeqNumberMin < this.opSeqNumberMax);
 
-        const origExpiry = this.storageManager!.snapshotCacheExpiry;
         const count = this.opSeqNumberMax - this.opSeqNumberMin;
 
-        // 1K ops is close to 500K of uncompressed payload. If use use such stale snapshot, client would
-        // need to download all these ops (though we can store them in cache).
-        // Typical skeleton snapshot is around 12K.
-        // From bandwidth optimization perspective, we would want this number to be lower
-        // From latency (of first rendering) perspective, we would want this number to be higher.
-        const opsTooMany = 1000;
-
-        this.cache.persistedCache.updateExpiry(cacheEntry, origExpiry, origExpiry * (1 - count / opsTooMany));
+        this.cache.persistedCache.updateUsage(cacheEntry, count);
     }
 }

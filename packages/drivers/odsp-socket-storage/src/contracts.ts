@@ -33,6 +33,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     tokens: {};
 
     fileName: string,
+
+    summarizer: boolean,
 }
 
 /**
@@ -260,4 +262,11 @@ export interface HostStoragePolicy {
      * If storage comes last, newly fetch snapshot is pushed into cache for future usage.
      */
     concurrentSnapshotFetch?: boolean;
+}
+
+/**
+ * Same as HostStoragePolicy, but adds options that are internal to runtime.
+ */
+export interface HostStoragePolicyInternal extends HostStoragePolicy {
+    summarizerClient?: boolean;
 }

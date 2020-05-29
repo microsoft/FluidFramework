@@ -33,7 +33,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
-    private readonly documentsOpened = new Set<string>();
     private readonly cache: IOdspCache;
 
     public async createContainer(
@@ -110,13 +109,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-
-        // A hint for driver if document was opened before by this factory
-        const docId = odspResolvedUrl.hashedDocumentId;
-        const isFirstTimeDocumentOpened = !this.documentsOpened.has(docId);
-        this.documentsOpened.add(docId);
-
         return OdspDocumentService.create(
             resolvedUrl,
             this.getStorageToken,
@@ -127,7 +119,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getSocketIOClient(),
             this.cache,
             this.hostPolicy,
-            isFirstTimeDocumentOpened,
         );
     }
 }

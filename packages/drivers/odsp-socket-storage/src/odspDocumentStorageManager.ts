@@ -24,7 +24,7 @@ import {
     IOdspResolvedUrl,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
-    HostStoragePolicy,
+    HostStoragePolicyInternal,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -32,6 +32,7 @@ import {
     SnapshotTreeEntry,
     SnapshotTreeValue,
     SnapshotType,
+    ISnapshotOptions,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -53,9 +54,6 @@ type ConditionallyContextedSummary = {
 };
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
-    // 12 hours
-    public snapshotCacheExpiry = 12 * 3600 * 1000;
-
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
@@ -102,8 +100,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
-        private readonly isFirstTimeDocumentOpened: boolean,
-        private readonly hostPolicy: HostStoragePolicy,
+        private readonly hostPolicy: HostStoragePolicyInternal,
     ) {
         this.documentId = odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -299,12 +296,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                const hostPolicy = {
+                const hostPolicy: ISnapshotOptions = {
                     deltas: 1,
                     channels: 1,
                     blobs: 2,
                     ...this.hostPolicy.snapshotOptions,
                 };
+
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    hostPolicy.mds = undefined;
+                }
 
                 let delimiter = "?";
                 let options = "";
@@ -319,12 +321,15 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (refresh) {
                     cachedSnapshot = await this.fetchSnapshot(options, refresh);
                 } else {
-                    const cachedSnapshotP = this.cache.persistedCache.get({
-                        file: this.fileEntry,
-                        key: "Snapshot",
-                    }) as Promise<IOdspSnapshot>;
+                    const cachedSnapshotP = this.cache.persistedCache.get(
+                        {
+                            file: this.fileEntry,
+                            key: "Snapshot",
+                        },
+                        this.hostPolicy.summarizerClient ? 10000 : undefined,
+                    ) as Promise<IOdspSnapshot>;
 
-                    if (this.hostPolicy.concurrentSnapshotFetch) {
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
                         cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
                     } else {
@@ -367,7 +372,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    if (!this.isFirstTimeDocumentOpened) {
+                    if (!this.hostPolicy.summarizerClient) {
                         // Populate the cache with paths from id-to-path mapping.
                         for (const blob of this.blobCache.values()) {
                             const path = blobsIdToPathMap.get(blob.sha);
@@ -465,7 +470,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
 
         this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot);
-        this.cache.persistedCache.updateExpiry(this._snapshotCacheEntry, this.snapshotCacheExpiry, this.snapshotCacheExpiry);
         return cachedSnapshot;
     }
 
@@ -477,6 +481,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     // back-compat: 0.14 uploadSummary
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
+        assert(this.hostPolicy.summarizerClient);
+
         this.checkSnapshotUrl();
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({

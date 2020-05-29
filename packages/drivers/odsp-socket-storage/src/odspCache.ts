@@ -72,9 +72,15 @@ export interface IPersistedCache {
     /**
      * Get the cache value of the key
      * @param entry - cache entry.
-     * @returns Cached value. undefined if nothing is cached.
-     */
-    get(entry: ICacheEntry): Promise<any>;
+     * @param expiry - If provided, indicates driver-specific policy on expiry
+     * If entry is older then time specific, it should not be returned back.
+     * This does not mean entry should be deleted, just particular usage pattern can't use such an old entry
+     * An example of such usage would be booting summarizer client. Latency is less important in such scenario,
+     * but fetching more recent snapshot is advantageous in reducing bandwidth requirements (less ops to download).
+    * Time is in milliseconds.
+    * @returns Cached value. undefined if nothing is cached.
+    */
+    get(entry: ICacheEntry, expiry?: number): Promise<any>;
 
     /**
      * Put the value into cache. Overwrites any prior version of same entry.
@@ -84,30 +90,10 @@ export interface IPersistedCache {
      */
     put(entry: ICacheVersionedEntry, value: any): void;
 
-    /**
-     * Supplies optional expiration for the cache entry.
-     * Call should be ignored by implementer if version of entry does not match version stored in cache!
-     * Driver may periodically call this API for an entry to update host on expiration time,
-     * based on internal heuristics and new information (like how stale is snapshot based on how many ops are
-     * on top of such snapshot). Please note that expiry time is just an educated guess.
-     * The best strategy hosts can implement is not to delete entries right when they expire, but
-     * rather do a combination of
-     * 1) Delete entries on get() if it expired
-     * 2) Implement MRU (most recent used) eviction policy to control cache size
-     * This is more efficient then deleting entries based on timer as there may be no activity in a file,
-     * or tab might be suspended for a long period of time, causing expiration timer to fire. However, the
-     * next time some file activity happens (or tab gets more CPU), driver may come back and update expiry time
-     * and it may happen that it's still not that stale and could be reused, despite earlier calculation suggesting
-     * it expired.
-     * @param entry - cache entry. Call should be ignored if version of entry does not match version stored in cache.
-     * @param origExpiryTime - original expiry time, in milliseconds. This value does not change for an entry and
-     * provides information on default policy driver uses if no other information is available.
-     * @param expiryTime - suggested expiration time, in milliseconds, based on new information. Can be negative if
-     * already well into expiration! This timer linearly scales down to zero and beyond zero based on new information
-     * (like ops available on top of snapshot).
-     * Implementer of cache is free to overwrite it / implement different policy, or scale expiryTime linearly.
-     */
-    updateExpiry(entry: ICacheVersionedEntry, origExpiryTime: number, expiryTime: number): void;
+    // Tells how far given entry is behind, in number of ops.
+    // The bigger the number, the more stale entry (like snapshot)
+    // Eventually it should not be used and deleted.
+    updateUsage(entry: ICacheVersionedEntry, opCount: number): void;
 }
 
 /**
@@ -155,7 +141,7 @@ export class LocalCache implements IPersistedCache {
     private readonly cache = new Map<ICacheEntry, any>();
     private readonly gc = new GarbageCollector<ICacheEntry>((key) => this.cache.delete(key));
 
-    async get(entry: ICacheEntry): Promise<any> {
+    async get(entry: ICacheEntry, expiry?: number): Promise<any> {
         return this.cache.get(entry);
     }
 
@@ -164,13 +150,7 @@ export class LocalCache implements IPersistedCache {
         this.cache.set(entry, value);
     }
 
-    updateExpiry(entry: ICacheVersionedEntry, origExpiryTime: number, expiryTime: number): void {
-        if (expiryTime <= 0) {
-            this.cache.delete(entry);
-            this.gc.cancel(entry);
-        } else {
-            this.gc.schedule(entry, expiryTime);
-        }
+    updateUsage(entry: ICacheVersionedEntry, opCount: number): void {
     }
 }
 
