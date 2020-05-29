@@ -502,10 +502,11 @@ export class ReplayTool {
     }
 
     private async mainCycle() {
-        const originalSummaries = [...(this.mainDocument?.originalSummarySequenceNumbers ?? [this.args.to])];
+        const originalSummaries =
+            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
         do  {
-            nextSnapPoint = originalSummaries.shift();
+            nextSnapPoint = originalSummaries.shift() ?? this.args.to;
         } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
