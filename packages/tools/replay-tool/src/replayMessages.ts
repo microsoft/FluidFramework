@@ -454,7 +454,7 @@ export class ReplayTool {
 
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
-        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
+        if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
             description = this.args.version ? this.args.version : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
@@ -506,7 +506,7 @@ export class ReplayTool {
             this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
         do  {
-            nextSnapPoint = originalSummaries.shift() ?? this.args.to;
+            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
         } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -515,7 +515,7 @@ export class ReplayTool {
                 if (this.args.snapFreq !== undefined) {
                     nextSnapPoint = currentOp + this.args.snapFreq;
                 } else {
-                    nextSnapPoint = originalSummaries.shift();
+                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
                 }
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
@@ -584,7 +584,10 @@ export class ReplayTool {
         const op = content.op;
 
         // Add extra container
-        if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
+        if (!final && (
+            this.args.snapFreq !== undefined
+            && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0)
+        ) {
             const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
             const storage = new storageClass(content.snapshot);
             const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
