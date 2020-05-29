@@ -5,210 +5,21 @@
 <html>
 
 <head>
-    <style>
-        .note {
-            font-size: small;
-            font-weight: bold;
-            color: black;
-        }
-        
-        .warning {
-            font-size: small;
-            font-weight: bold;
-            color: red;
-        }
-        
-        .popup-container {
-            width: 300px;
-            padding: 5px;
-        }
-        
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 45px;
-            height: 20px;
-            margin-top: 2px;
-        }
-        
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: 0.4s;
-            transition: 0.4s;
-        }
-        
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 1px;
-            bottom: 2px;
-            background-color: white;
-            -webkit-transition: 0.4s;
-            transition: 0.4s;
-        }
-        
-        input:checked+.slider {
-            background-color: #2196f3;
-        }
-        
-        input:focus+.slider {
-            box-shadow: 0 0 1px #2196f3;
-        }
-        
-        input:checked+.slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
-        
-        .slider.round {
-            border-radius: 34px;
-        }
-        
-        .slider.round:before {
-            border-radius: 50%;
-        }
-        
-        .toggle-label {
-            font-size: medium;
-            font-weight: bold;
-            color: black;
-        }
-        
-        .labels {
-            padding-top: 5px;
-        }
-        
-        .switch-container {
-            display: flex;
-        }
-        
-        .toggle-label-container {
-            padding-left: 15px;
-        }
-        
-        .dropbtn {
-            background-color: #3498db;
-            color: white;
-            padding: 14px;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-            width: 200px;
-        }
-        
-        .dropbtn:hover,
-        .dropbtn:focus {
-            background-color: #2980b9;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            margin-top: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f1f1f1;
-            width: 200px;
-            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
-        
-        .dropdown-content a {
-            color: black;
-            text-decoration: none;
-            display: block;
-        }
-        
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-        
-        .show {
-            display: block;
-        }
-        
-        .url-input-container {
-            margin-top: 15px;
-            width: 260px;
-        }
-        
-        .url-input {
-            min-width: 190px;
-            border-radius: 2px;
-            height: 25px;
-            padding-left: 5px;
-        }
-        
-        .url-input-btn-span {
-            width: 20px;
-            padding-left: 5px;
-        }
-        
-        .url-input-btn {
-            background-color: #3498db;
-            border: none;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-        }
-        
-        .dropdown-content-item-container {
-            height: 35px;
-            width: 199px;
-            border: solid gray .5px
-        }
-        
-        .dropdown-content-item-button {
-            border: none;
-            float: right;
-            color: gray;
-            margin-top: 8px;
-        }
-        
-        .dropdown-content-item-text {
-            float: left;
-            margin-top: 8px;
-            padding-left: 4px;
-            max-width: 170px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    </style>
+    <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
     <div class="popup-container">
         <div class="switch-container">
-            <label class="switch">
-                    <input id="toggle-switch" class="off" type="checkbox" />
-                    <span class="slider round"></span>
-                </label>
             <div class="toggle-label-container">
                 <label class="toggle-label">
                         Disable Fluid Intercepting
                     </label>
             </div>
+            <label class="switch">
+                <input id="toggle-switch" class="off" type="checkbox" />
+                <span class="slider round"></span>
+            </label>
         </div>
         <div class="url-input-container">
             <input id="url-input" placeholder="Add additional intercept URLs" class="url-input" />
