@@ -14,7 +14,6 @@ async function getContent(
     repo: string,
     contentPath: string,
     ref: string): Promise<any> {
-
     const repository = await repoManager.open(owner, repo);
     const revObj = await git.Revparse.single(repository, `${ref}:${contentPath}`);
 
@@ -26,6 +25,7 @@ async function getContent(
 export function create(store: nconf.Provider, repoManager: utils.RepositoryManager): Router {
     const router: Router = Router();
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.get("/repos/:owner/:repo/contents/*", (request, response, next) => {
         const resultP = getContent(
             repoManager,

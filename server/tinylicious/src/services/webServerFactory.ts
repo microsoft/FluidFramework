@@ -5,14 +5,14 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import { HttpServer } from "@microsoft/fluid-server-services";
+import { HttpServer } from "@fluidframework/server-services";
 import {
     IWebServer,
     IWebServerFactory,
     IWebSocket,
     IWebSocketServer,
     RequestListener,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Socket } from "socket.io";
 import { WebServer } from "./webServer";
 

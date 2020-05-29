@@ -5,9 +5,9 @@
 
 // tslint:disable max-classes-per-file
 
-import * as services from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import * as services from "@fluidframework/server-services";
+import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import { ICache, RedisCache } from "./redisCache";
@@ -32,6 +32,7 @@ export class HeadlessResourcesFactory implements utils.IResourcesFactory<Headles
         const rabbitmqConfig = config.get("rabbitmq");
         const redisConfig = config.get("redis");
         const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (redisConfig.tls) {
             redisOptions.tls = {
                 serverName: redisConfig.host,

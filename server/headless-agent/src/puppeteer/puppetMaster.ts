@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import * as jwt from "jsonwebtoken";
 import * as puppeteer from "puppeteer";
-import * as request from "request";
+import request from "request";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
 
@@ -18,7 +18,6 @@ export interface ICloseEvent {
 }
 
 export class PuppetMaster extends EventEmitter {
-
     public static async create(
         documentId: string,
         tenantId: string,
@@ -26,7 +25,6 @@ export class PuppetMaster extends EventEmitter {
         agentType: string,
         jwtKey: string,
         cache?: ICache): Promise<PuppetMaster> {
-
         const browser = await puppeteer.launch({
             headless: true, // headless: false launches a browser window
         });
@@ -59,14 +57,14 @@ export class PuppetMaster extends EventEmitter {
     private cachingTimer: any;
 
     constructor(
-        private documentId: string,
-        private tenantId: string,
-        private gatewayUrl: string,
-        private agentType: string,
-        private browser: puppeteer.Browser,
-        private page: puppeteer.Page,
-        private token: string,
-        private cache?: ICache,
+        private readonly documentId: string,
+        private readonly tenantId: string,
+        private readonly gatewayUrl: string,
+        private readonly agentType: string,
+        private readonly browser: puppeteer.Browser,
+        private readonly page: puppeteer.Page,
+        private readonly token: string,
+        private readonly cache?: ICache,
     ) {
         super();
     }
@@ -102,9 +100,8 @@ export class PuppetMaster extends EventEmitter {
 
         // Joining the gateway hostname to allow for localstorage
         await this.page.goto(`${this.gatewayUrl}/public/images/`);
-        await this.page.addScriptTag({path: "client/fluid-loader.bundle.js"});
+        await this.page.addScriptTag({ path: "client/fluid-loader.bundle.js" });
         await this.page.evaluate((resolvedUrlString) => {
-
             const resolvedUrlInternal = JSON.parse(resolvedUrlString) as IResolvedUrl;
             document.body.innerHTML = `
             <div id="content" style="flex: 1 1 auto; position: relative"></div>
@@ -124,6 +121,7 @@ export class PuppetMaster extends EventEmitter {
         await this.page.exposeFunction("closeContainer", async () => {
             winston.info(`Closing browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
             this.page.removeAllListeners();
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.cachingTimer) {
                 clearInterval(this.cachingTimer);
                 this.cachingTimer = undefined;
@@ -149,6 +147,7 @@ export class PuppetMaster extends EventEmitter {
     private async upsertPageCache() {
         await this.page.exposeFunction("cachePage", async (pageHTML: string) => {
             winston.info(`Caching page for ${this.tenantId}/${this.documentId}/${this.agentType}`);
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.cache) {
                 this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
                     winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
@@ -177,6 +176,7 @@ export class PuppetMaster extends EventEmitter {
 
         return new Promise<IResolvedUrl>((resolve, reject) => {
             request(options, (err, response, body) => {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (err) {
                     reject(err);
                 }

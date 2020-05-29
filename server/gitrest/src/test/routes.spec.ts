@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import {
-    ICommitDetails,
     ICreateBlobParams,
     ICreateBlobResponse,
     ICreateCommitParams,
     ICreateRefParams,
     ICreateTreeParams,
-} from "@microsoft/fluid-gitresources";
-import * as assert from "assert";
+} from "@fluidframework/gitresources";
 import * as async from "async";
 import * as lorem from "lorem-ipsum";
 import * as moniker from "moniker";
 import * as request from "supertest";
 import * as app from "../app";
+/* eslint-disable import/no-internal-modules */
 import { createBlob as createBlobInternal } from "../routes/git/blobs";
 import { createCommit as createCommitInternal } from "../routes/git/commits";
 import { createTree as createTreeInternal } from "../routes/git/trees";
 import { getCommits } from "../routes/repository/commits";
+/* eslint-enable import/no-internal-modules */
 import * as utils from "../utils";
 import * as testUtils from "./utils";
 
@@ -28,7 +29,7 @@ import * as testUtils from "./utils";
 const commitEmail = "kurtb@microsoft.com";
 const commitName = "Kurt Berglund";
 
-function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
+async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
     return supertest
         .post(`/${owner}/repos`)
         .set("Accept", "application/json")
@@ -37,12 +38,11 @@ function createRepo(supertest: request.SuperTest<request.Test>, owner: string, n
         .expect(201);
 }
 
-function createBlob(
+async function createBlob(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
     blob: ICreateBlobParams) {
-
     return supertest
         .post(`/repos/${owner}/${repoName}/git/blobs`)
         .set("Accept", "application/json")
@@ -51,12 +51,11 @@ function createBlob(
         .expect(201);
 }
 
-function createTree(
+async function createTree(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
     tree: ICreateTreeParams) {
-
     return supertest
         .post(`/repos/${owner}/${repoName}/git/trees`)
         .set("Accept", "application/json")
@@ -65,12 +64,11 @@ function createTree(
         .expect(201);
 }
 
-function createCommit(
+async function createCommit(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
     commit: ICreateCommitParams) {
-
     return supertest
         .post(`/repos/${owner}/${repoName}/git/commits`)
         .set("Accept", "application/json")
@@ -79,12 +77,11 @@ function createCommit(
         .expect(201);
 }
 
-function createRef(
+async function createRef(
     supertest: request.SuperTest<request.Test>,
     owner: string,
     repoName: string,
     ref: ICreateRefParams) {
-
     return supertest
         .post(`/repos/${owner}/${repoName}/git/refs`)
         .set("Accept", "application/json")
@@ -101,7 +98,6 @@ async function initBaseRepo(
     testTree: ICreateTreeParams,
     testCommit: ICreateCommitParams,
     testRef: ICreateRefParams) {
-
     await createRepo(supertest, owner, repoName);
     await createBlob(supertest, owner, repoName, testBlob);
     await createTree(supertest, owner, repoName, testTree);
@@ -109,7 +105,7 @@ async function initBaseRepo(
     await createRef(supertest, owner, repoName, testRef);
 }
 
-describe("Historian", () => {
+describe("GitRest", () => {
     describe("Routes", () => {
         const testOwnerName = "owner";
         const testRepoName = "test";
@@ -166,16 +162,16 @@ describe("Historian", () => {
                         .expect(400);
                 });
 
-                it("Rejects invalid repo names", () => {
+                it("Rejects invalid repo names", async () => {
                     return supertest
                         .post(`/${testOwnerName}/repos`)
                         .set("Accept", "application/json")
                         .set("Content-Type", "application/json")
-                        .send({ name: "../evilrepo"})
+                        .send({ name: "../evilrepo" })
                         .expect(400);
                 });
 
-                it("Rejects missing repo names", () => {
+                it("Rejects missing repo names", async () => {
                     return supertest
                         .post(`/${testOwnerName}/repos`)
                         .expect(400);
@@ -396,7 +392,7 @@ describe("Historian", () => {
 
                 async function runRound() {
                     const total = Math.floor(Math.random() * MaxTreeLength);
-                    const blobsP: Array<Promise<ICreateBlobResponse>> = [];
+                    const blobsP: Promise<ICreateBlobResponse>[] = [];
                     for (let i = 0; i < total; i++) {
                         const param: ICreateBlobParams = {
                             content: lorem({
@@ -424,9 +420,10 @@ describe("Historian", () => {
                     const tree = await createTreeInternal(manager, testOwnerName, testRepoName, createTreeParams);
 
                     const parents: string[] = [];
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (lastCommit) {
                         const commits = await getCommits(manager, testOwnerName, testRepoName, lastCommit, 1);
-                        const parentCommit = commits[0] as ICommitDetails;
+                        const parentCommit = commits[0];
                         assert.ok(parentCommit.commit);
                         parents.push(parentCommit.sha);
                     }
@@ -457,6 +454,7 @@ describe("Historian", () => {
                         resolve();
                     };
 
+                    // eslint-disable-next-line @typescript-eslint/unbound-method
                     queue.error = (error) => {
                         reject(error);
                     };
