@@ -1,0 +1,140 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .note {
+        font-size: small;
+        font-weight: bold;
+        color: black;
+      }
+      .warning {
+        font-size: small;
+        font-weight: bold;
+        color: red;
+      }
+      .popup-container {
+        width: 300px;
+        padding: 5px;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 45px;
+        height: 20px;
+        margin-top: 2px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 1px;
+        bottom: 2px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+      input:checked + .slider {
+        background-color: #2196F3;
+      }
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+      }
+      input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+      }
+      .slider.round {
+        border-radius: 34px;
+      }
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      .toggle-label {
+        font-size: medium;
+        font-weight: bold;
+        color: black;
+      }
+      .labels {
+          padding-top: 5px
+      }
+      .switch-container {
+          display: flex
+      }
+      .toggle-label-container {
+          padding-left: 15px;
+      }
+    </style>
+  </head>
+  <body>
+      <div class="popup-container">
+          <div class="switch-container">
+            <label class="switch">
+                <input
+                    id="toggle-switch"
+                    class="off"
+                    type="checkbox"
+                    onclick="toggleSwitch(this)"
+                >
+                <span class="slider round"></span>
+            </label>
+            <div class="toggle-label-container">
+                <label
+                    class="toggle-label"
+                >
+                    Disable Fluid Intercepting
+                </label>
+            </div>
+          </div>
+        <div
+            class="labels"
+        >
+            <label 
+                class="note"
+            >
+                NOTE: Components that are loaded from local dev environments and injected into Fluid Preview documents will not be available for other users.
+            </label>
+            <br/>
+            <label 
+                class="note"
+            >
+                Please be careful adding local components only to test documents as they can be otherwise corrupted.
+            </label>
+            <br/>
+            <br/>
+            <label 
+                class="warning"
+            >
+                WARNING: This Google Chrome extension has access to data being sent on this site.
+            </label>
+            <br/>
+            <label 
+                class="warning"
+            >
+                Please only enable for Fluid component development purposes.
+            </label>
+        </div>
+      </div>
+      <script src="popup.js"></script>
+  </body>
+</html>
