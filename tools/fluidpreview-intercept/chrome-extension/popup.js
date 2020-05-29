@@ -85,7 +85,7 @@ const setUrls = function() {
     });
 }
 
-// Regex for checking if valid URL
+// Helper for checking if valid URL
 function isValidUrl(string) {
     try {
         new URL(string);
