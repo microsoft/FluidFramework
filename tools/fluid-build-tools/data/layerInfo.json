@@ -184,7 +184,6 @@
                 "dev": true,
                 "packages": [
                     "@fluidframework/build-common",
-                    "@fluidframework/build-common",
                     "@fluidframework/eslint-config-fluid"
                 ]
             },
@@ -234,7 +233,6 @@
                     "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
-                    "Routerlicious-Host",
                     "Server-Libs"
                 ]
             }
