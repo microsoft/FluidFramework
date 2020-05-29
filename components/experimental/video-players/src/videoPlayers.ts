@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandleContext,
@@ -163,9 +163,9 @@ export class VideoPlayerCollection extends PrimedComponent implements
     }
 
     protected async componentInitializingFirstTime() {
-        return this.initialize();
+        return this.initializeCore();
     }
-    protected async componentInitializingFromExisting() { await this.initialize(); }
+    protected async componentInitializingFromExisting() { return this.initialize(); }
 
     public get IComponentRouter() { return this; }
     public get IComponentLoadable() { return this; }

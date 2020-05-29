@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandleContext,

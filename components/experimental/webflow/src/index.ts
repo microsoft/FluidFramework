@@ -8,7 +8,7 @@ export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
-import { WebFlow } from "./host";
+import { WebFlow, WebFlowName } from "./host";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     WebFlowName,
