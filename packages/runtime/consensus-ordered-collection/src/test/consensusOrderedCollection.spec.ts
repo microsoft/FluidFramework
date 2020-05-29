@@ -251,9 +251,8 @@ describe("ConsensusOrderedCollection", () => {
             // Add a value to the first ConsensusOrderedCollection
             const waitP = testCollection1.add(testValue);
 
-            // Disconnect and reconnect the connection for the first collection.
+            // Drop the connection and reconnect.
             deltaConnection1.connected = false;
-            deltaConnectionFactory.clearMessages();
             deltaConnection1.connected = true;
 
             // Process the messages.
@@ -285,10 +284,9 @@ describe("ConsensusOrderedCollection", () => {
                 return ConsensusResult.Complete;
             });
 
-            // Disconnect and reconnect the connection for the first collection again.
-            deltaConnection1.connected = false;
-            deltaConnectionFactory.clearMessages();
-            deltaConnection1.connected = true;
+            // Drop the connection and reconnect.
+            deltaConnectionFactory.connected = false;
+            deltaConnectionFactory.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();
@@ -317,14 +315,14 @@ describe("ConsensusOrderedCollection", () => {
                 newlyAdded = added;
             });
 
-            // Drop the connection for the first collection.
-            deltaConnection1.connected = false;
+            // Drop the connection.
+            deltaConnectionFactory.connected = false;
 
             // Add a value to the first ConsensusOrderedCollection.
             const waitP = testCollection1.add(testValue);
 
-            // Reconnect the first collection.
-            deltaConnection1.connected = true;
+            // Reconnect.
+            deltaConnectionFactory.connected = true;
 
             // Process the messages.
             deltaConnectionFactory.processAllMessages();

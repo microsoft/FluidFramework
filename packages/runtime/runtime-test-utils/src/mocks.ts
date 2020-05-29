@@ -76,13 +76,40 @@ interface IMessageData {
 }
 
 /**
- * Factory to create MockDeltaConnection for testing
+ * Factory to create MockDeltaConnection for testing.
+ * This factory imitates the ContainerRuntime for submitting and processing messages:
+ * 1. It stores the messages submitted by clients until they are processed.
+ * 2. When processAllMessages() is called to process the messages, it calls process on the DDSs.
+ * 3. It supports disconnection / reconnection. On reconnection, for the pending messages, it calls
+ *    reSubmit on the DDSs.
  */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
     private readonly messages: IMessageData[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
+    private _connected = true;
+
+    public get connected(): boolean {
+        return this._connected;
+    }
+
+    public set connected(connected: boolean) {
+        if (this._connected === connected) {
+            return;
+        }
+
+        this._connected = connected;
+
+        // If we have reconnected, ask the DDSs to resubmit all the pending messages.
+        if (connected === true) {
+            this.reSubmitMessages();
+        }
+
+        for (const dc of this.deltaConnections) {
+            dc.connected = connected;
+        }
+    }
 
     public getMinSeq(): number {
         let minSeq: number;
@@ -118,10 +145,6 @@ export class MockDeltaConnectionFactory {
         });
     }
 
-    public clearMessages() {
-        while (this.messages.shift()) { }
-    }
-
     public processAllMessages() {
         while (this.messages.length > 0) {
             const messageDetail = this.messages.shift();
@@ -136,6 +159,17 @@ export class MockDeltaConnectionFactory {
                 for (const h of dc.handlers) {
                     const isLocal = dc.isLocal(msg);
                     h.process(msg, isLocal, isLocal ? messageDetail.localOpMetadata : undefined);
+                }
+            }
+        }
+    }
+
+    private reSubmitMessages() {
+        while (this.messages.length > 0) {
+            const messageDetail = this.messages.shift();
+            for (const dc of this.deltaConnections) {
+                for (const h of dc.handlers) {
+                    h.reSubmit(messageDetail.message, messageDetail.localOpMetadata);
                 }
             }
         }

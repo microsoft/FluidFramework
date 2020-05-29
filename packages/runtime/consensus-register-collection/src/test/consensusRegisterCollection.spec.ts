@@ -47,7 +47,6 @@ describe("ConsensusRegisterCollection", () => {
 
             beforeEach(() => {
                 crc.connect(runtime.services);
-                deltaConnection.connected = true;
             });
 
             it("Can create a collection", () => {
@@ -262,10 +261,9 @@ describe("ConsensusRegisterCollection", () => {
                 // Write to the first register collection.
                 const writeP = testCollection1.write(testKey, testValue);
 
-                // Disconnect and reconnect the connection for the first register collection.
-                deltaConnection1.connected = false;
-                deltaConnectionFactory.clearMessages();
-                deltaConnection1.connected = true;
+                // Drop the connection and reconnect.
+                deltaConnectionFactory.connected = false;
+                deltaConnectionFactory.connected = true;
 
                 // Process the messages.
                 deltaConnectionFactory.processAllMessages();
@@ -281,14 +279,14 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             it("can store ops in disconnected state and resend them on reconnection", async () => {
-                // Disconnect the connection for the first register collection.
-                deltaConnection1.connected = false;
+                // Drop the connection.
+                deltaConnectionFactory.connected = false;
 
                 // Write to the first register collection.
                 const writeP = testCollection1.write(testKey, testValue);
 
-                // Reconnect the first register collection.
-                deltaConnection1.connected = true;
+                // Reconnect.
+                deltaConnectionFactory.connected = true;
 
                 // Process the messages.
                 deltaConnectionFactory.processAllMessages();
