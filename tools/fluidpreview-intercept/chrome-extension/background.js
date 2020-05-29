@@ -4,35 +4,43 @@
  */
 
 let isDisabled = true
-chrome.storage.sync.get("interceptDisabled", function (obj) {  
-  isDisabled = obj.interceptDisabled; 
+chrome.storage.sync.get("interceptDisabled", function(obj) {
+    isDisabled = obj.interceptDisabled;
+});
+
+let additionalUrls = [];
+chrome.storage.sync.get("additionalUrls", function(obj) {
+    additionalUrls = obj.additionalUrls || additionalUrls;
+    setListeners();
 });
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-  for (var key in changes) {
-    if (key === "interceptDisabled") {
-      isDisabled = changes[key].newValue;
+    for (var key in changes) {
+        if (key === "interceptDisabled") {
+            isDisabled = changes[key].newValue;
+        } else if (key === "additionalUrls") {
+            additionalUrls = changes[key].newValue;
+            setUrls();
+        }
     }
-  }
 });
 
 function webPartsHandler(req) {
-  if (!isDisabled) {
-    return { redirectUrl: 'http://localhost:3000/getclientsidewebparts' };
-  }
+    if (!isDisabled) {
+        return { redirectUrl: 'http://localhost:3000/getclientsidewebparts' };
+    }
 }
 
 function setListeners() {
-  chrome.webRequest.onBeforeRequest.addListener(
-    webPartsHandler,
-    {
-      urls: [
+    const combinedUrls = additionalUrls.concat([
         "https://*.sharepoint-df.com/*/getclientsidewebparts",
         "https://*.sharepoint.com/*/getclientsidewebparts"
-      ]
-    },
-    ['requestBody', 'blocking']
-  );
+    ]);
+    chrome.webRequest.onBeforeRequest.addListener(
+        webPartsHandler, {
+            urls: combinedUrls
+        }, ['requestBody', 'blocking']
+    );
 }
 
 function removeListeners() {
@@ -42,13 +50,12 @@ function removeListeners() {
 setListeners();
 
 chrome.runtime.onInstalled.addListener(function() {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-    chrome.declarativeContent.onPageChanged.addRules([{
-      conditions: [new chrome.declarativeContent.PageStateMatcher({
-        pageUrl: {hostEquals: 'fluidpreview.office.net'},
-      })
-      ],
-          actions: [new chrome.declarativeContent.ShowPageAction()]
-    }]);
-  });
+    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+        chrome.declarativeContent.onPageChanged.addRules([{
+            conditions: [new chrome.declarativeContent.PageStateMatcher({
+                pageUrl: { hostEquals: 'fluidpreview.office.net' },
+            })],
+            actions: [new chrome.declarativeContent.ShowPageAction()]
+        }]);
+    });
 });
