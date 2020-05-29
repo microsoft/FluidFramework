@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
+import assert from "assert";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver";
 import { FluidAppOdspUrlResolver } from "../urlResolver";
 
 describe("Fluid App Url Resolver", () => {

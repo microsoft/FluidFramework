@@ -3,15 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { createNetworkError } from "@microsoft/fluid-driver-utils";
-import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import {
+    NetworkErrorBasic,
+    GenericNetworkError,
+    createGenericNetworkError,
+} from "@fluidframework/driver-utils";
+import { IClient } from "@fluidframework/protocol-definitions";
+
+function createNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+): CriticalContainerError {
+    let error: CriticalContainerError;
+
+    switch (statusCode) {
+        case 401:
+        case 403:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
+            break;
+        case 404:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
+            break;
+        case 500:
+            error = new GenericNetworkError(errorMessage, canRetry);
+            break;
+        default:
+            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+    }
+    return error;
+}
 
 /**
  * Returns specific network error based on error object.
  */
-const errorObjectFromSocketError = (socketError: any, canRetry: boolean): IError => {
+const errorObjectFromSocketError = (socketError: any, canRetry: boolean) => {
     return createNetworkError(
         socketError.message,
         canRetry,

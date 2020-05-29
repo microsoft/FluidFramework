@@ -5,9 +5,9 @@
 
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
-import { ILoader } from "@microsoft/fluid-container-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { ILoader } from "@fluidframework/container-definitions";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 
 export class ComponentView implements NodeView {
     public dom: HTMLElement;

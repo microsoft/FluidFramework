@@ -10,8 +10,8 @@ import {
     ReferenceType,
     reservedMarkerIdKey,
     TextSegment,
-} from "@microsoft/fluid-merge-tree";
-import { ISequenceDeltaRange, SharedString } from "@microsoft/fluid-sequence";
+} from "@fluidframework/merge-tree";
+import { ISequenceDeltaRange, SharedString } from "@fluidframework/sequence";
 import { CharacterMetadata, ContentBlock, ContentState, genKey, SelectionState } from "draft-js";
 import { List, OrderedSet } from "immutable";
 

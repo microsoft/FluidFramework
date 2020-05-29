@@ -4,7 +4,7 @@
  */
 
 import { FlowDocument } from "@fluid-example/webflow";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { ISharedMap } from "@fluidframework/map";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 

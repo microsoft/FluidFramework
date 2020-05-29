@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { TestHistorian } from "../testHistorian";
-import { GitManager } from "@microsoft/fluid-server-services-client";
-import { ICreateCommitParams } from "@microsoft/fluid-gitresources";
+import { GitManager } from "@fluidframework/server-services-client";
+import { ICreateCommitParams } from "@fluidframework/gitresources";
 
 describe("Test for TestUtils", () => {
     it("Historian", async () => {

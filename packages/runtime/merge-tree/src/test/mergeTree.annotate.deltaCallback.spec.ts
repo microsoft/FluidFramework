@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";

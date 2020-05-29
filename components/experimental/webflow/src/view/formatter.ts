@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceEvent } from "@microsoft/fluid-sequence";
+import { SequenceEvent } from "@fluidframework/sequence";
 import { emptyObject } from "../util";
 import { Layout } from "./layout";
 

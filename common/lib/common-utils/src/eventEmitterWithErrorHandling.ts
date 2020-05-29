@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, EventEmitterEventType } from "./typedEventEmitter";
 
 /**

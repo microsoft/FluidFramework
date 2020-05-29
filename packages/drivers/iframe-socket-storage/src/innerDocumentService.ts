@@ -9,10 +9,10 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { Remote } from "comlink";
-import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
 /**

@@ -11,12 +11,12 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 import {
     IDeltaManager,
     IDeltaQueue,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
@@ -127,7 +127,7 @@ export class MockDeltaManager extends EventEmitter
 
     public flush() {}
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
+    public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
         return 0;
     }
 

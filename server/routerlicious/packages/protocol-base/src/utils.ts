@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType } from "@microsoft/fluid-protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 
 /**
  * Check if the string is a system message type, which includes

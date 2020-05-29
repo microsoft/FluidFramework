@@ -10,21 +10,21 @@ import {
     IRequest,
     IResponse,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IMergeTreeInsertMsg,
     ReferenceType,
     reservedRangeLabelsKey,
     MergeTreeDeltaType,
     createMap,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import { EditorView } from "prosemirror-view";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
@@ -171,7 +171,7 @@ export class ProseMirror extends EventEmitter
 }
 
 class ProseMirrorFactory implements IComponentFactory {
-    public static readonly type = "@chaincode/prosemirror";
+    public static readonly type = "@fluid-example/prosemirror";
     public readonly type = ProseMirrorFactory.type;
 
     public get IComponentFactory() { return this; }

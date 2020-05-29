@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -47,6 +47,7 @@ export class DocumentPartition extends EventEmitter {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
                     winston.error("Error processing partition message", error);
+                    context.error(error, false);
                     this.corrupt = true;
                 }
 

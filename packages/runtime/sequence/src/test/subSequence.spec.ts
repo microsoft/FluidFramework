@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@microsoft/fluid-merge-tree";
+import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@microsoft/fluid-merge-tree/dist/test";
+import { TestClient } from "@fluidframework/merge-tree/dist/test";
 import { SubSequence } from "../sharedSequence";
 
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];

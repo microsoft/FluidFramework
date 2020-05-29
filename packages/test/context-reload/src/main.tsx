@@ -6,17 +6,20 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { UpgradeManager } from "@microsoft/fluid-base-host"
+} from "@fluidframework/aqueduct";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { UpgradeManager } from "@fluidframework/base-host"
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
-const upgradeKey = "u p g r a d e";
+const signalKey = {
+  upgradeHighPriority: "upgrade high priority",
+  upgradeLowPriority: "upgrade low priority",
+}
 const versionTest1Name = pkg.name as string;
 
 export class VersionTest extends PrimedComponent implements IComponentHTMLView {
@@ -31,11 +34,13 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   }
 
   protected async componentHasInitialized() {
-    this.upgradeManager = new UpgradeManager(this.runtime.getQuorum());
+    this.upgradeManager = new UpgradeManager(this.runtime);
 
     this.runtime.on("signal", (message) => {
-      if (message.type === upgradeKey) {
-          this.upgradeManagerProposeCode();
+      if (message.type === signalKey.upgradeHighPriority) {
+        this.upgradeManagerProposeCode(true);
+      } else if (message.type === signalKey.upgradeLowPriority) {
+        this.upgradeManagerProposeCode(false);
       }
     });
   }
@@ -62,7 +67,9 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
           </div>
           <button className="upgrade" onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
           <br/>
-          <button className="upgradeViaManager" onClick={() => this.sendUpgradeSignal()}>Upgrade Version Via UpgradeManager</button>
+          <button onClick={() => this.sendUpgradeSignal(true)}>Upgrade Version Via UpgradeManager (high priority)</button>
+          <br/>
+          <button onClick={() => this.sendUpgradeSignal(false)}>Upgrade Version Via UpgradeManager (low priority)</button>
         </div>,
         div
       );
@@ -74,18 +81,18 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     return div;
   }
 
-  private sendUpgradeSignal() {
-    this.runtime.submitSignal(upgradeKey, undefined);
+  private sendUpgradeSignal(highPriority: boolean) {
+    this.runtime.submitSignal(highPriority ? signalKey.upgradeHighPriority : signalKey.upgradeLowPriority, undefined);
   }
 
-  private async upgradeManagerProposeCode() {
+  private async upgradeManagerProposeCode(highPriority: boolean) {
     if (!this.upgradeManager) {
       throw Error("component not initialized; no upgrade manager")
     }
     await this.upgradeManager.upgrade({
       "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` },
       "package": `${ this.upgradeToPkg }`
-    });
+    }, highPriority);
   }
 
   private quorumProposeCode() {

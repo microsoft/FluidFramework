@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -22,16 +22,16 @@ import {
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/merge-tree";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import {
     SharedString,
     SharedStringSegment,
     SequenceMaintenanceEvent,
     SequenceDeltaEvent,
-} from "@microsoft/fluid-sequence";
-import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/sequence";
+import { IComponentHTMLOptions } from "@fluidframework/view-interfaces";
+import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";

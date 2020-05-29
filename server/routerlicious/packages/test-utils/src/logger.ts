@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as registerDebug from "debug";
-import { ILogger } from "@microsoft/fluid-server-services-core";
+import registerDebug from "debug";
+import { ILogger } from "@fluidframework/server-services-core";
 
 /**
  * Implementation of debug logger

@@ -11,12 +11,12 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IComponentLayout } from "@fluidframework/framework-experimental";
+import { IComponentCollection } from "@fluidframework/framework-interfaces";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 declare global {
     interface Window {
@@ -163,7 +163,7 @@ export class VideoPlayerCollection extends PrimedComponent implements
     }
 
     protected async componentInitializingFirstTime() {
-        this.initializeCore().catch((error) => { this.context.error(error); });
+        return this.initialize();
     }
     protected async componentInitializingFromExisting() { await this.initialize(); }
 

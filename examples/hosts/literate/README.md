@@ -8,7 +8,7 @@ The Fluid loader is all that is needed to load any Fluid document. This example 
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
 more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host.
+There are other packages which provide simple APIs to make use of the loader. For example @fluidframework/base-host.
 These may be better starting options when integrating the loader into your own code. But this example will show all
 the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
 of code.
@@ -30,17 +30,17 @@ Then navigate to <http://localhost:8080.> This will redirect you to <http://loca
 'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
 will be created but by specifying the chaincode query parameter any of the packages on
 <https://packages.wu2.prague.office-int.com> can be loaded - i.e.
-<http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.>
+<http://localhost:8080/new-document?chaincode=@fluid-example/smde@0.18.1>
 
 ## The Code
 
 ### Packages
 
-The loader itself only requires two Fluid packages: `@microsoft/fluid-container-definitions` and `@microsoft/fluid-container-loader`.
+The loader itself only requires two Fluid packages: `@fluidframework/container-definitions` and `@fluidframework/container-loader`.
 
-`@microsoft/fluid-container-loader` contains the actual loader itself.
+`@fluidframework/container-loader` contains the actual loader itself.
 
-`@microsoft/fluid-container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
+`@fluidframework/container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
 These provide the bindings between the loader code itself and the documents loaded by the loader.
 
 ### Creating the Loader
@@ -48,7 +48,7 @@ These provide the bindings between the loader code itself and the documents load
 Creating a loader is a simple process
 
 ```typescript
-import { Loader } from "@microsoft/fluid-container-loader";
+import { Loader } from "@fluidframework/container-loader";
 
 const loader = new Loader(
     insecureResolver,
@@ -154,13 +154,13 @@ Similar to how the loader defers certain tasks to the host it also defers how to
 service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
 define so long as code is provided that correctly implements the loader's driver interface.
 
-In this example the Routerlicious driver is used `@microsoft/fluid-routerlicious-driver`. But drivers also exist to
+In this example the Routerlicious driver is used `@fluidframework/routerlicious-driver`. But drivers also exist to
 talk to OneDrive/SharePoint.
 
 Creating this is simple
 
 ```typescript
-import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
 const documentServicesFactory = new RouterliciousDocumentServiceFactory();
 ```

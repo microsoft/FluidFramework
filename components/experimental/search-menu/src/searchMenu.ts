@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@fluidframework/merge-tree";
 import { CharacterCodes } from "./characterCodes";
 import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent
         extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }

@@ -11,12 +11,12 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IComponentLayout } from "@fluidframework/framework-experimental";
+import { IComponentCollection } from "@fluidframework/framework-interfaces";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {

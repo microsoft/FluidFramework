@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-common-utils";
+import { Heap, IComparer, IHeapNode } from "@fluidframework/common-utils";
 import { IClientSequenceNumber } from "./checkpointContext";
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {

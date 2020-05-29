@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import { DocumentStorage } from "@microsoft/fluid-server-services";
-import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import fs from "fs";
+import { DocumentStorage } from "@fluidframework/server-services";
+import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
-import * as socketIo from "socket.io";
-import { Historian } from "@microsoft/fluid-server-services-client";
+import socketIo from "socket.io";
+import { Historian } from "@fluidframework/server-services-client";
 import { TinyliciousResources } from "./resources";
 import {
     DbFactory,

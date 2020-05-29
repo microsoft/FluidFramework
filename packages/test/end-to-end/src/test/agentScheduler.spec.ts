@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import assert from "assert";
+import { AgentSchedulerFactory, TaskManager } from "@fluidframework/agent-scheduler";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IAgentScheduler } from "@fluidframework/runtime-definitions";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";

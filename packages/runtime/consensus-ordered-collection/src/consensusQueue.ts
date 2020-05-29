@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentRuntime, IChannelAttributes } from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";

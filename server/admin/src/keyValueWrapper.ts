@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred } from "@microsoft/fluid-core-utils";
 import { ChildProcess, fork } from "child_process";
+import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
@@ -11,7 +11,7 @@ import { IKeyValue, IKeyValueWrapper } from "./definitions";
 
 export class KeyValueWrapper implements IKeyValueWrapper {
     private readonly kvDeferred = new Deferred<void>();
-    private keyValue: ChildProcess;
+    private readonly keyValue: ChildProcess;
 
     constructor(config: Provider) {
         const keyValueLoaderFile = `${__dirname}/childLoader.js`;
@@ -27,6 +27,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
         };
         this.keyValue.once("message", (message: IIncomingChildMessage) => {
             if (message.type === "init") {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 message.status ? this.kvDeferred.resolve() : this.kvDeferred.reject(message.value);
             }
         });
@@ -42,6 +43,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
                 };
                 this.keyValue.once("message", (message: IIncomingChildMessage) => {
                     if (message.type === "get") {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         message.status ? resolve(message.value as IKeyValue[]) : reject(message.status);
                     }
                 });
@@ -61,6 +63,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
                 };
                 this.keyValue.once("message", (message: IIncomingChildMessage) => {
                     if (message.type === "set") {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         message.status ? resolve(message.value as IKeyValue) : reject(message.status);
                     }
                 });
@@ -80,6 +83,7 @@ export class KeyValueWrapper implements IKeyValueWrapper {
                 };
                 this.keyValue.once("message", (message: IIncomingChildMessage) => {
                     if (message.type === "delete") {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         message.status ? resolve(message.value as string) : reject(message.status);
                     }
                 });

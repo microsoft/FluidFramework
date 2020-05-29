@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import * as url from "url";
-import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import url from "url";
+import { BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -19,15 +18,17 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as ws from "isomorphic-ws";
+} from "@fluidframework/protocol-definitions";
+import ws from "isomorphic-ws";
 
 const protocolVersion = "^0.1.0";
 
 /**
  * Represents a connection to a stream of delta updates for routerlicious driver.
  */
-export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class WSDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
     /**
      * Represents a connection to a stream of delta updates for routerlicious driver.
      *

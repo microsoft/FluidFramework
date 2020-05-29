@@ -7,9 +7,9 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponent,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";

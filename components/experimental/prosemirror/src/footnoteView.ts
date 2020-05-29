@@ -8,7 +8,7 @@ import { keymap } from "prosemirror-keymap";
 import { undo, redo } from "prosemirror-history";
 import { EditorView } from "prosemirror-view";
 import { EditorState } from "prosemirror-state";
-import { ILoader } from "@microsoft/fluid-container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
 import { ComponentView } from "./componentView";
 
 export class FootnoteView {

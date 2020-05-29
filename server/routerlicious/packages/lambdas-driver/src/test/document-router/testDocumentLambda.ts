@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import {
     IContext,
@@ -11,7 +11,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {

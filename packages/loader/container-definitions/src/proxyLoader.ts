@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { ILoader } from "./loader";
 
 export interface IProxyLoaderFactory {

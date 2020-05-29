@@ -25,10 +25,10 @@ export class KeyValues extends React.Component<IKeyValuesProps, IKeyValuesState>
 
     public render() {
         return (
-          <div>
-            <h2 className="tenant-list-header">Key-values</h2>
-            <KeyValueManager data={this.state.data} />
-          </div>
+            <div>
+                <h2 className="tenant-list-header">Key-values</h2>
+                <KeyValueManager data={this.state.data} />
+            </div>
         );
     }
 }

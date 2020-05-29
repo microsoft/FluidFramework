@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory } from "@fluidframework/map";
 import { Song } from "./Songs";
 // eslint-disable-next-line import/no-internal-modules
 import { Note } from "./Songs/Note";

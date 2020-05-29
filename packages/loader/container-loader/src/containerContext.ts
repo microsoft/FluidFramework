@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import assert from "assert";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     ICodeLoader,
@@ -20,8 +20,10 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+    CriticalContainerError,
+    ContainerWarning,
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -36,7 +38,7 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
@@ -47,18 +49,18 @@ export class ContainerContext implements IContainerContext {
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
-        chaincode: IRuntimeFactory,
+        runtimeFactory: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        errorFn: (err: IError) => void,
+        raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (error?: IError) => void,
+        closeFn: (error?: CriticalContainerError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -66,14 +68,14 @@ export class ContainerContext implements IContainerContext {
             container,
             scope,
             codeLoader,
-            chaincode,
+            runtimeFactory,
             baseSnapshot,
             attributes,
             blobManager,
             deltaManager,
             quorum,
             loader,
-            errorFn,
+            raiseContainerWarning,
             submitFn,
             submitSignalFn,
             snapshotFn,
@@ -166,18 +168,18 @@ export class ContainerContext implements IContainerContext {
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
-        public readonly chaincode: IRuntimeFactory,
+        public readonly runtimeFactory: IRuntimeFactory,
         private readonly _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
-        private readonly errorFn: (err: IError) => void,
+        public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: (error?: IError) => void,
+        public readonly closeFn: (error?: CriticalContainerError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
@@ -252,10 +254,6 @@ export class ContainerContext implements IContainerContext {
         return this.snapshotFn(tagMessage);
     }
 
-    public error(err: IError): void {
-        this.errorFn(err);
-    }
-
     public registerTasks(tasks: string[]): any {
         return;
     }
@@ -268,7 +266,11 @@ export class ContainerContext implements IContainerContext {
         return this.runtime! instanceof NullRuntime;
     }
 
+    public async getAbsoluteUrl?(relativeUrl: string): Promise<string> {
+        return this.container.getAbsoluteUrl(relativeUrl);
+    }
+
     private async load() {
-        this.runtime = await this.chaincode.instantiateRuntime(this);
+        this.runtime = await this.runtimeFactory.instantiateRuntime(this);
     }
 }

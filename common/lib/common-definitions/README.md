@@ -1,3 +1,3 @@
-# @microsoft/fluid-common-definitions
+# @fluidframework/common-definitions
 
 Common interfaces and definitions used in Fluid Framework

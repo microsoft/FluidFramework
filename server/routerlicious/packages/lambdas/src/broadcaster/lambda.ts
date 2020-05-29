@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { INack, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { INack, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     extractBoxcar,
     IContext,
@@ -14,7 +14,7 @@ import {
     NackOperationType,
     SequencedOperationType,
     IQueuedMessage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 
 class BroadcasterBatch {
     public messages: (ISequencedDocumentMessage | INack)[] = [];

@@ -4,16 +4,16 @@
  */
 
 import { URL } from "url";
-import * as child_process from "child_process";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
-import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
-import * as odsp from "@microsoft/fluid-odsp-driver";
-import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@microsoft/fluid-odsp-utils";
-import * as r11s from "@microsoft/fluid-routerlicious-driver";
-import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { getMicrosoftConfiguration } from "@microsoft/fluid-tool-utils";
+import child_process from "child_process";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { configurableUrlResolver } from "@fluidframework/driver-utils";
+import { FluidAppOdspUrlResolver } from "@fluidframework/fluidapp-odsp-urlresolver";
+import * as odsp from "@fluidframework/odsp-driver";
+import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-utils";
+import * as r11s from "@fluidframework/routerlicious-driver";
+import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
+import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
 import { resolveWrapper } from "./fluidFetchSharePoint";
 

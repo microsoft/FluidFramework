@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IQueuedMessage, IProducer } from "@microsoft/fluid-server-services-core";
-import * as Deque from "double-ended-queue";
+import { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
+import Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
 import { LocalKafkaSubscription } from "./localKafkaSubscription";
 

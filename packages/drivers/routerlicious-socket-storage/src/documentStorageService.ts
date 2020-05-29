@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy } from "@microsoft/fluid-protocol-base";
+import assert from "assert";
+import { gitHashFile } from "@fluidframework/common-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import * as resources from "@fluidframework/gitresources";
+import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,
@@ -18,8 +18,8 @@ import {
     IVersion,
     SummaryObject,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import * as gitStorage from "@fluidframework/server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.

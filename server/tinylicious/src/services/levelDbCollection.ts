@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection } from "@microsoft/fluid-server-services-core";
+import { ICollection } from "@fluidframework/server-services-core";
 import * as charwise from "charwise";
 import * as _ from "lodash";
 
@@ -13,7 +13,6 @@ export interface ICollectionProperty {
 }
 
 export class Collection<T> implements ICollection<T> {
-
     constructor(private readonly db: any,
                 private readonly property: ICollectionProperty) {
     }
@@ -161,7 +160,6 @@ export class Collection<T> implements ICollection<T> {
                     reject(error);
                 });
             });
-
         } else {
             return new Promise<T[]>((resolve, reject) => {
                 this.db.get(key, (err, val) => {

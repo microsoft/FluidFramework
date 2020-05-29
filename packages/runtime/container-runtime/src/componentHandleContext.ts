@@ -8,8 +8,8 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IRuntime } from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IRuntime } from "@fluidframework/container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }

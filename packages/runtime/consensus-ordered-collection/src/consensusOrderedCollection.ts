@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
@@ -287,12 +287,14 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
+
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected async loadCore(
         branchId: string,
@@ -324,7 +326,7 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value: IConsensusOrderedCollectionValue<T> | undefined;

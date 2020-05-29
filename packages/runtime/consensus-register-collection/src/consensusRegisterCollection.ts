@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
@@ -244,15 +244,16 @@ export class ConsensusRegisterCollection<T>
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
-        assert(pending.length === this.pendingLocalMessages.length);
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {

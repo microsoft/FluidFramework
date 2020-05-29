@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -11,15 +11,15 @@ import {
     ISegment,
     PropertySet,
     LocalReferenceCollection,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
     IComponentRuntime,
     ISharedObjectServices,
     Jsonable,
     JsonablePrimitive,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
 
