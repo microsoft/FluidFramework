@@ -290,7 +290,29 @@
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Build Tools Script",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script",
+                "debug:${input:buildToolsScriptName}",
+            ],
+            "cwd": "${workspaceFolder}/tools/fluid-build-tools",
+            "port": 9229,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
         }
-
+    ],
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "buildToolsScriptName",
+            "description": "Which script from the @fluidframeworkd/build-tools package do you want to debug?",
+            "options": ["layer-check", "package-audit"]
+        }
     ]
 }
