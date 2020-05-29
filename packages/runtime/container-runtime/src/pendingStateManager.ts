@@ -4,7 +4,9 @@
  */
 
 import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
-import { ErrorWithProps } from "@fluidframework/driver-utils";
+import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
 import {
     MessageType,
     ISequencedDocumentMessage,
@@ -14,18 +16,15 @@ import { strongAssert } from "@fluidframework/runtime-utils";
 import Deque from "double-ended-queue";
 import { ContainerRuntime } from "./containerRuntime";
 
-export class DataCorruptionError extends ErrorWithProps implements IDataCorruptionError {
+export class DataCorruptionError extends CustomErrorWithProps implements IDataCorruptionError {
     readonly errorType = ErrorType.dataCorruptionError;
     readonly canRetry = false;
 
     constructor(
         errorMessage: string,
-        readonly clientId: string,
-        readonly sequenceNumber: number,
-        readonly clientSequenceNumber: number,
-        readonly expectedClientSequenceNumber?: number,
+        props: ITelemetryProperties,
     ) {
-        super(errorMessage);
+        super(errorMessage, props);
     }
 }
 
@@ -132,10 +131,13 @@ export class PendingStateManager {
             // Close the container because this indicates data corruption.
             const error = new DataCorruptionError(
                 "Unexpected ack received",
-                message.clientId,
-                message.sequenceNumber,
-                message.clientSequenceNumber,
-                pendingState.clientSequenceNumber);
+                {
+                    clientId: message.clientId,
+                    sequenceNumber: message.sequenceNumber,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    expectedClientSequenceNumber: pendingState.clientSequenceNumber,
+                },
+            );
 
             this.containerRuntime.closeFn(error);
             return;

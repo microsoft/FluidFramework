@@ -537,7 +537,7 @@ export class PerformanceEvent {
 export class CustomErrorWithProps extends Error {
     constructor(
         message: string,
-        props?: {[key: string]: string | number})
+        props?: ITelemetryProperties)
     {
         super(message);
         Object.assign(this, props);
