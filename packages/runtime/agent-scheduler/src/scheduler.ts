@@ -12,7 +12,6 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-    IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import { LoaderHeader } from "@fluidframework/container-definitions";
