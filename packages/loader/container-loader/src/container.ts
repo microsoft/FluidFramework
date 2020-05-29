@@ -18,7 +18,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -531,11 +530,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!path) {
-            return { mimeType: "fluid/container", status: 200, value: this };
-        }
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+            if (!path) {
+                return { mimeType: "fluid/container", status: 200, value: this };
+            }
 
-        return this.context!.request(path);
+            return this.context!.request(path);
+        });
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -1120,15 +1121,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component: IFluidModule;
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
-        try {
-            component = await this.codeLoader.load(pkg);
-        } catch (error) {
-            perfEvent.cancel({}, error);
-            throw error;
-        }
-        perfEvent.end();
+        const component = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(pkg),
+        );
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {
