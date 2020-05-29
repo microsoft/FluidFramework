@@ -190,6 +190,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             moniker.choose(),
                             connectMessage.client);
 
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        connection.initialize();
+
                         // Need to subscribe to both channels. Then broadcast subscription across pipe
                         // on receiving a message
                         this.connectionMap.set(message.cid, connection);
