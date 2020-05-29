@@ -57,6 +57,10 @@ export class Replayer {
         this.currentReplayOp = op;
     }
 
+    public get ops(): readonly Readonly<ISequencedDocumentMessage>[] {
+        return this.documentStorageService.ops;
+    }
+
     /**
      * Replay the ops upto a certain number.
      * @param replayTo - The last op number to be replayed.

@@ -33,6 +33,7 @@ import {
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
@@ -45,7 +46,7 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-
+import { ISummaryAckMessage } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -161,13 +162,14 @@ class ContainerUrlResolver implements IUrlResolver {
 /**
  * Helper class holding container and providing load / snapshot capabilities
  */
-class Document {
+class Document  {
     private container: Container;
     private replayer: Replayer;
     private documentSeqNumber = 0;
     private from = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
+    private originalSummarySeqs: number[];
 
     public constructor(
         protected readonly args: ReplayArgs,
@@ -185,6 +187,10 @@ class Document {
 
     public get logger() {
         return this.docLogger;
+    }
+
+    public get originalSummarySequenceNumbers(): readonly number[] {
+        return this.originalSummarySeqs;
     }
 
     public getFileName() {
@@ -211,6 +217,16 @@ class Document {
 
         this.from = this.container.deltaManager.referenceSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
+        this.originalSummarySeqs = [];
+        this.replayer.ops.forEach((op)=>{
+            if (op?.type === MessageType.SummaryAck) {
+                const ack = op as ISummaryAckMessage;
+                const seq = ack?.contents?.summaryProposal?.summarySequenceNumber;
+                if (seq !== undefined) {
+                    this.originalSummarySeqs.push(seq);
+                }
+            }
+        });
 
         this.replayer.currentReplayedOp = this.from;
 
@@ -235,8 +251,7 @@ class Document {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot() {
+    public async snapshot() {
         return this.container.snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
             !this.args.incremental /* generateFullTreeNoOtimizations */);
@@ -490,12 +505,19 @@ export class ReplayTool {
 
     private async mainCycle() {
         let nextSnapPoint = this.args.from;
-
+        const originalSummaries = [...this.mainDocument?.originalSummarySequenceNumbers ?? []].sort();
+        while (originalSummaries[0] < this.args.from) {
+            originalSummaries.shift();
+        }
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                nextSnapPoint = currentOp + this.args.snapFreq;
+                if (this.args.snapFreq !== undefined) {
+                    nextSnapPoint = currentOp + this.args.snapFreq;
+                } else {
+                    nextSnapPoint = originalSummaries.shift();
+                }
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
