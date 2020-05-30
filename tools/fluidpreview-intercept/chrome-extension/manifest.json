@@ -1,29 +1,39 @@
 {
-  "name": "Bohemia Intercept Chrome Extension",
-  "version": "1.0",
-  "description": "Inject a Fluid component into Bohemia",
-  "permissions": [
-    "webRequest",
-    "webRequestBlocking",
-    "https://*.fluidpreview.office.net/*",
-    "https://*.sharepoint-df.com/*",
-    "https://*.sharepoint.com/*",
-    "http://localhost:8080/*",
-    "http://localhost:3000/*"
-  ],
-  "icons": {
-    "48": "images/fluid48.png",
-    "96": "images/fluid96.png",
-    "192": "images/fluid192.png"
-  },
-  "devtools_page": "devtools.html",
-  "manifest_version": 2,
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": true
-  },
-  "web_accessible_resources": [
-    "localhost:3000",
-    "localhost:8080"
-  ]
+    "name": "Bohemia Intercept Chrome Extension",
+    "version": "1.1",
+    "description": "Inject a Fluid component into Bohemia",
+    "permissions": [
+        "declarativeContent",
+        "storage",
+        "webRequest",
+        "webRequestBlocking",
+        "https://*.fluidpreview.office.net/*",
+        "https://*.sharepoint-df.com/*",
+        "https://*.sharepoint.com/*",
+        "http://localhost:8080/*",
+        "http://localhost:3000/*"
+    ],
+    "icons": {
+        "48": "images/fluid48.png",
+        "96": "images/fluid96.png",
+        "192": "images/fluid192.png"
+    },
+    "devtools_page": "devtools.html",
+    "page_action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "images/fluid48.png",
+            "96": "images/fluid96.png",
+            "192": "images/fluid192.png"
+        }
+    },
+    "manifest_version": 2,
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": true
+    },
+    "web_accessible_resources": [
+        "localhost:3000",
+        "localhost:8080"
+    ]
 }
