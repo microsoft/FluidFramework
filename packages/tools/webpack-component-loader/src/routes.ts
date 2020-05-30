@@ -21,8 +21,8 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = (app: express.Application) => {
-    app.get("/getclientsidewebparts", async (req, res) => res.send(createManifestResponse()));
+export const before = async (app: express.Application) => {
+    app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
