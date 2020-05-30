@@ -86,13 +86,14 @@ namespace IPackageName {
 
 interface IPackageInfo {
     name: IPackageName;
+    dir: string;
     folderName: string;
     readmeInfo: IReadmeInfo;
 }
 
 namespace IPackageInfo {
     export const toString = (info: IPackageInfo): string =>
-        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} |`;
+        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |`;
 }
 
 const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
@@ -108,39 +109,41 @@ async function main() {
 
     try {
         const auditPackage = async (pkg: Package): Promise<IPackageInfo> => {
-            const dir = pkg.directory;
-            const pkgFolderName = path.basename(dir);
-            const readmePath = path.join(dir, "readme.md");
             const name = IPackageName.parse(pkg.name);
+            const dir = pkg.directory;
+            const folderName = path.basename(dir);
+            const readmePath = path.join(dir, "readme.md");
 
-            if (!existsSync(readmePath)) {
-                return {
-                    name,
-                    folderName: pkgFolderName,
-                    readmeInfo: { exists: false },
+            let readmeInfo: IReadmeInfo = { exists: false };
+            if (existsSync(readmePath)) {
+                const readme = await readFileAsync(readmePath, "utf8");
+                const lines = readme.split(/\r?\n/);
+                const titleMatches = readmeTitleRegexp.exec(lines[0]);
+                const title = titleMatches?.[1] ?? "";
+                readmeInfo = {
+                    exists: true,
+                    title,
                 };
             }
 
-            const readme = await readFileAsync(readmePath, "utf8");
-            const lines = readme.split(/\r?\n/);
-            const titleMatches = readmeTitleRegexp.exec(lines[0]);
-            const title = titleMatches?.[1] ?? "";
-
-            return {
-                name,
-                folderName: pkgFolderName,
-                readmeInfo: {
-                    exists: true,
-                    title,
-                }
-            }
+            return { name, dir, folderName, readmeInfo };
         };
         packages
             .map(auditPackage)
             .forEach(async (info) => console.log(IPackageInfo.toString(await info)));
-        // if (!success) {
-        //     process.exit(-1);
-        // }
+        
+        //* TODO
+        /**
+         * 1. Write to the file instead of the console
+         * 2. Log warnings where the columns don't match
+         *      - Open an issue with the current output of that log and make a Fluid Doc about it
+         * 3. Misc
+         *      - Use relative links for Directory
+         * 4. Optional
+         *      - Incorporate Layer info?
+         *      - Merge IPackageInfo etc into npmPackage.ts model?
+         *      - Also compare package.json format/scripts/etc?
+         */
     } catch (e) {
         console.error(e.message);
         process.exit(-2);
