@@ -107,7 +107,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
-        const options: redis.ClientOpts  = { auth_pass: redisPass };
+        const options: redis.ClientOpts = { auth_pass: redisPass };
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (config.get("redis:tls")) {
             options.tls = {
@@ -134,10 +134,10 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
             skipUserProfile: true,
             tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
         },
-        (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
-            // eslint-disable-next-line no-null/no-null
-            return done(null, jwtClaims);
-        },
+            (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                // eslint-disable-next-line no-null/no-null
+                return done(null, jwtClaims);
+            },
         ),
     );
 

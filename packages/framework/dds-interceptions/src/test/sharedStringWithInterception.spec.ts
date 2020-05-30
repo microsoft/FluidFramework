@@ -76,7 +76,7 @@ describe("Shared String with Interception", () => {
             // Annotate the shared string.
             const colorProps = { color: "green" };
             sharedStringWithInterception.annotateRange(0, 5, colorProps);
-            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps,...userAttributes }, 2);
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps, ...userAttributes }, 2);
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared string", async () => {

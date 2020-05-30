@@ -52,7 +52,7 @@ interface IEventListener {
  */
 export class DocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -137,7 +137,7 @@ export class DocumentDeltaConnection
                 this.socket.emit(submitType, this.clientId, work);
             });
 
-        this.on("newListener",(event,listener)=>{
+        this.on("newListener", (event, listener) => {
             assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
 
             // Register for the event on socket.io

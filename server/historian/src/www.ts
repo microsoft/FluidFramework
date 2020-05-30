@@ -20,12 +20,12 @@ function normalizePort(val) {
     const normalizedPort = parseInt(val, 10);
 
     if (isNaN(normalizedPort)) {
-    // named pipe
+        // named pipe
         return val;
     }
 
     if (normalizedPort >= 0) {
-    // port number
+        // port number
         return normalizedPort;
     }
 
@@ -57,7 +57,7 @@ winston.configure({
 // tslint:disable-next-line:only-arrow-functions
 (debug as any).formatArgs = function(args) {
     const name = this.namespace;
-    args[0] = `${name  } ${  args[0]}`;
+    args[0] = `${name} ${args[0]}`;
 };
 
 // Create services
@@ -102,17 +102,17 @@ function onError(error) {
     }
 
     const bind = typeof port === "string"
-        ? `Pipe ${  port}`
-        : `Port ${  port}`;
+        ? `Pipe ${port}`
+        : `Port ${port}`;
 
     // handle specific listen errors with friendly messages
     switch (error.code) {
         case "EACCES":
-            winston.error(`${bind  } requires elevated privileges`);
+            winston.error(`${bind} requires elevated privileges`);
             process.exit(1);
             break;
         case "EADDRINUSE":
-            winston.error(`${bind  } is already in use`);
+            winston.error(`${bind} is already in use`);
             process.exit(1);
             break;
         default:
@@ -127,9 +127,9 @@ function onError(error) {
 function onListening() {
     const addr = server.address();
     const bind = typeof addr === "string"
-        ? `pipe ${  addr}`
-        : `port ${  addr.port}`;
-    winston.info(`Listening on ${  bind}`);
+        ? `pipe ${addr}`
+        : `port ${addr.port}`;
+    winston.info(`Listening on ${bind}`);
 }
 
 /**

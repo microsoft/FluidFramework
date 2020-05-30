@@ -46,7 +46,7 @@ export function resolveUrl(
         if ("cela" in request.query) {
             const celaName = chooseCelaName();
             user = { id: uuid(), name: celaName, displayName: celaName };
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         } else if (request.user) {
             user = {
                 displayName: request.user.name,

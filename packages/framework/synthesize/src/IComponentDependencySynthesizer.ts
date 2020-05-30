@@ -55,12 +55,14 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * @param optionalTypes - optional types to be in the Scope object
      * @param requiredTypes - required types that need to be in the Scope object
      */
+    /* eslint-disable @typescript-eslint/indent */
     synthesize<
         O extends IComponent,
         R extends IComponent,>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>;
+            optionalTypes: ComponentSymbolProvider<O>,
+            requiredTypes: ComponentSymbolProvider<R>,
+    ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>;
+    /* eslint-enable @typescript-eslint/indent */
 
     /**
      * Check if a given type is registered

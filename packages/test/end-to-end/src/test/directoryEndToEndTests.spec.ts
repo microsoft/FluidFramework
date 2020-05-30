@@ -42,8 +42,8 @@ describe("Directory", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[ directoryId, SharedDirectory.getFactory() ]]);
-        const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const factory = new TestFluidComponentFactory([[directoryId, SharedDirectory.getFactory()]]);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 

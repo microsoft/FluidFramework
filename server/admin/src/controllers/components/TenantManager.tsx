@@ -27,7 +27,7 @@ export interface ITableProps {
     data: ITenant[];
 }
 
-export class TenantManager extends React.Component<ITableProps, ITableState > {
+export class TenantManager extends React.Component<ITableProps, ITableState> {
     public columns: any;
     public form: any;
 
@@ -143,7 +143,7 @@ export class TenantManager extends React.Component<ITableProps, ITableState > {
                 <Table bordered dataSource={dataSource} columns={columns} rowKey="id" />
                 <nav className="add-buttons">
                     <a onClick={this.showModal}>
-                Add new tenant
+                        Add new tenant
                     </a>
                 </nav>
                 <TenantCreateModal

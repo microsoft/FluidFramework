@@ -86,15 +86,15 @@ describe("ConsensusRegisterCollection", () => {
 
     describe("Summary", () => {
         const expectedSerialization = JSON.stringify({
-            key1:{
-                atomic:{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } },
-                versions:[{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } }],
+            key1: {
+                atomic: { sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } },
+                versions: [{ sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } }],
             },
         });
         const legacySharedObjectSerialization = JSON.stringify({
-            key1:{
-                atomic:{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } },
-                versions:[{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } }],
+            key1: {
+                atomic: { sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } },
+                versions: [{ sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } }],
             },
         });
         const buildTree = (serialized: string) => ({
@@ -150,7 +150,7 @@ describe("ConsensusRegisterCollection", () => {
 
     describe("reconnect", () => {
         it("message not sent before attach", async () => {
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             const res = await writeP;
             assert(res);
         });
@@ -159,7 +159,7 @@ describe("ConsensusRegisterCollection", () => {
             crc.connect(runtime.services);
 
             deltaConnection.connected = false;
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             deltaConnection.connected = true;
             deltaConnFactory.processAllMessages();
             const res = await writeP;
@@ -181,7 +181,7 @@ describe("ConsensusRegisterCollection", () => {
         it("message not sent before reconnect", async () => {
             crc.connect(runtime.services);
 
-            const writeP =  crc.write("test", "test");
+            const writeP = crc.write("test", "test");
             deltaConnection.connected = false;
             deltaConnFactory.clearMessages();
             deltaConnection.connected = true;

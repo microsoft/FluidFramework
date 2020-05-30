@@ -10,7 +10,8 @@ import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
-export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IComponent>]>;
+export type ContainerServiceRegistryEntries =
+    Iterable<[string, (runtime: IContainerRuntime) => Promise<IComponent>]>;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
@@ -42,7 +43,7 @@ class SingletonContainerServiceFactory {
 
     public async getService(runtime: IContainerRuntime): Promise<IComponent> {
         if (!this.service) {
-            this.service =  this.serviceFn(runtime);
+            this.service = this.serviceFn(runtime);
         }
         return this.service;
     }

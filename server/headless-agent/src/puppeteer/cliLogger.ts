@@ -18,7 +18,7 @@ export interface IWinstonConfig {
  * Configures the default behavior of the Winston logger based on the provided config
  */
 export function configureLogging(config: IWinstonConfig) {
-    const formatters = [ winston.format.label({ label: config.label }) ];
+    const formatters = [winston.format.label({ label: config.label })];
 
     if (config.colorize) {
         formatters.push(winston.format.colorize());
@@ -49,6 +49,6 @@ export function configureLogging(config: IWinstonConfig) {
     // tslint:disable-next-line:only-arrow-functions
     (debug as any).formatArgs = function(args: string[]) {
         const name = this.namespace;
-        args[0] = `${name  } ${  args[0]}`;
+        args[0] = `${name} ${args[0]}`;
     };
 }

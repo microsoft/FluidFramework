@@ -20,6 +20,7 @@
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:es5": "tsc --project ./tsconfig.es5.json",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "test": "npm run test:mocha",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib es5 *.tsbuildinfo *.build.log",
@@ -27,7 +28,6 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
@@ -58,6 +58,7 @@
     "@fluidframework/component-core-interfaces": "^0.19.0",
     "@fluidframework/component-runtime": "^0.19.0",
     "@fluidframework/component-runtime-definitions": "^0.19.0",
+    "uuid": "^3.3.2",
     "@fluidframework/container-definitions": "^0.19.0",
     "@fluidframework/container-runtime": "^0.19.0",
     "@fluidframework/container-runtime-definitions": "^0.19.0",
@@ -67,8 +68,7 @@
     "@fluidframework/shared-object-base": "^0.19.0",
     "@fluidframework/synthesize": "^0.19.0",
     "@fluidframework/view-adapters": "^0.19.0",
-    "@fluidframework/view-interfaces": "^0.19.0",
-    "uuid": "^3.3.2"
+    "@fluidframework/view-interfaces": "^0.19.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0-0",
@@ -88,6 +88,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
+    "lint-staged": "^10.2.7",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",

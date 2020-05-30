@@ -35,5 +35,5 @@ export interface IInternalRegistryEntry {
     capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
-    templates: {[key: string]: Layout[]};
+    templates: { [key: string]: Layout[] };
 }

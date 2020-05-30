@@ -63,7 +63,7 @@ class ProseMirrorView implements IComponentHTMLView {
     private textArea: HTMLDivElement;
     public get IComponentHTMLView() { return this; }
 
-    public constructor(private readonly collabManager: FluidCollabManager) {}
+    public constructor(private readonly collabManager: FluidCollabManager) { }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         // Create base textarea

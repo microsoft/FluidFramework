@@ -663,14 +663,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
-                    const subtree: ConditionallyContextedSummary = summary.useContext === true ? {
-                        useContext: true,
-                        parentHandle: summary.parentHandle,
-                        tree: summaryObject,
-                    } : {
-                        useContext: false,
-                        tree: summaryObject,
-                    };
+                    const subtree: ConditionallyContextedSummary = summary.useContext === true
+                        ? {
+                            useContext: true,
+                            parentHandle: summary.parentHandle,
+                            tree: summaryObject,
+                        }
+                        : {
+                            useContext: false,
+                            tree: summaryObject,
+                        };
 
                     value = await this.convertSummaryToSnapshotTree(
                         subtree,

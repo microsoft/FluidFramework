@@ -83,15 +83,15 @@ describe("BSP-set tests", () => {
         [[leftRowMin, leftRowMax], [leftColMin, leftColMax]]: Rect2D,
         [[rightRowMin, rightRowMax], [rightColMin, rightColMax]]: Rect2D,
     ): Rect2D => [
-        [
-            Math.max(leftRowMin, rightRowMin),
-            Math.min(leftRowMax, rightRowMax),
-        ],
-        [
-            Math.max(leftColMin, rightColMin),
-            Math.min(leftColMax, rightColMax),
-        ],
-    ];
+            [
+                Math.max(leftRowMin, rightRowMin),
+                Math.min(leftRowMax, rightRowMax),
+            ],
+            [
+                Math.max(leftColMin, rightColMin),
+                Math.min(leftColMax, rightColMax),
+            ],
+        ];
 
     function unionRect2D(
         [leftRowIvl, leftColIvl]: Rect2D,
@@ -464,7 +464,7 @@ describe("BSP-set tests", () => {
                         [x, x + 1],
                         [y, y + 1],
                     ]),
-                )
+            )
                 .reduce(union);
 
             assert.equal(compare(actual, expected), 0);

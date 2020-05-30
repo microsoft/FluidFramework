@@ -42,7 +42,7 @@ describe("bsearch", () => {
     });
 
     it("constrained by start", () => {
-        const array = [ 0, 1, 2, 3, 4 ];
+        const array = [0, 1, 2, 3, 4];
         for (let i = 0; i < array.length; i++) {
             const found = bsearch(array, 0, /* start: */ i);
             assert.equal(found, i);
@@ -50,7 +50,7 @@ describe("bsearch", () => {
     });
 
     it("constrained by end", () => {
-        const array = [ 0, 1, 2, 3, 4 ];
+        const array = [0, 1, 2, 3, 4];
         // Note: bsearch 'end' argument is exclusive
         for (let i = array.length; i >= 1; i--) {
             const found = bsearch(array, 5, /* start: */ 0, /* end: */ i);
@@ -91,7 +91,7 @@ describe("bsearch2", () => {
     });
 
     it("constrained by start", () => {
-        const array = [ 0, 1, 2, 3, 4 ];
+        const array = [0, 1, 2, 3, 4];
         for (let i = 0; i < array.length; i++) {
             const found = bsearch2Shim(array, 0, /* start: */ i);
             assert.equal(found, i);
@@ -99,7 +99,7 @@ describe("bsearch2", () => {
     });
 
     it("constrained by end", () => {
-        const array = [ 0, 1, 2, 3, 4 ];
+        const array = [0, 1, 2, 3, 4];
         // Note: bsearch 'end' argument is exclusive
         for (let i = array.length; i >= 1; i--) {
             const found = bsearch2Shim(array, 5, /* start: */ 0, /* end: */ i);

@@ -39,7 +39,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-    // Get our counter object that we set in initialize and pass it in to the view.
+        // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
             <CounterReactView counter={counter} />,

@@ -40,7 +40,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         Spaces,
         [],
         {},
-        [[ SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory()) ]],
+        [[SpacesStorage.ComponentName, Promise.resolve(SpacesStorage.getFactory())]],
     );
 
     public static getFactory() {
@@ -67,10 +67,10 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         ReactDOM.render(
             <SpacesView
                 supportedComponents={this.supportedComponents}
-                storage={ this.storageComponent }
-                addComponent={ addComponent }
-                templatesAvailable={ this.internalRegistry?.IComponentRegistryTemplates !== undefined }
-                applyTemplate={ this.applyTemplateFromRegistry.bind(this) }
+                storage={this.storageComponent}
+                addComponent={addComponent}
+                templatesAvailable={this.internalRegistry?.IComponentRegistryTemplates !== undefined}
+                applyTemplate={this.applyTemplateFromRegistry.bind(this)}
             />,
             div,
         );

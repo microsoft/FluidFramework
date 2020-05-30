@@ -39,7 +39,7 @@ export class Timer implements ITimer {
 
     constructor(
         private readonly defaultTimeout: number,
-        private readonly defaultHandler: () => void) {}
+        private readonly defaultHandler: () => void) { }
 
     /**
      * Calls setTimeout and tracks the resulting timeout.

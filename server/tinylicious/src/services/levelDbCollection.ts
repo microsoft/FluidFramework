@@ -14,7 +14,7 @@ export interface ICollectionProperty {
 
 export class Collection<T> implements ICollection<T> {
     constructor(private readonly db: any,
-                private readonly property: ICollectionProperty) {
+        private readonly property: ICollectionProperty) {
     }
 
     public async find(query: any, sort?: any): Promise<T[]> {

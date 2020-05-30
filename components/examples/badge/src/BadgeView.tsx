@@ -302,11 +302,11 @@ function getRelativeDate(timestamp: Date): string {
     } else if (delta < 3 * minute) {
         return "a few minutes ago";
     } else if (delta < hour) {
-        return `${Math.floor(delta / minute)  } minutes ago`;
+        return `${Math.floor(delta / minute)} minutes ago`;
     } else if (Math.floor(delta / hour) < 3) {
         return "a few hours ago.";
     } else if (delta < day) {
-        return `${Math.floor(delta / hour)  } hours ago`;
+        return `${Math.floor(delta / hour)} hours ago`;
     } else if (delta < day * 2) {
         return "yesterday";
     } else {

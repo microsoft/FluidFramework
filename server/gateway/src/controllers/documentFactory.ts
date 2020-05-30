@@ -14,8 +14,8 @@ export class DocumentFactory implements IDocumentFactory {
     public get IDocumentFactory(): IDocumentFactory { return this; }
 
     constructor(private readonly tenantId: string,
-                private readonly moniker?: string,
-                private readonly url?: string) {
+        private readonly moniker?: string,
+        private readonly url?: string) {
     }
 
     /**

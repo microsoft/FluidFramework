@@ -42,8 +42,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>>
-    {
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>> {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );
@@ -56,7 +55,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
 
     public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter(
-            (componentDetails) =>componentDetails.capabilities.includes(capability));
+            (componentDetails) => componentDetails.capabilities.includes(capability));
     }
 
     public hasCapability(type: string, capability: keyof IComponent) {
@@ -144,11 +143,11 @@ const generateFactory = () => {
     // The last edited tracker component provides container level tracking of last edits. This is the first
     // component that is loaded.
     containerComponents.push(
-        [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ]);
+        [LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory())]);
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory()) ]);
-    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory()) ]);
+    containerComponents.push([AnchorName, Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([VltavaName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

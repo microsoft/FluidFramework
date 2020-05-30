@@ -9,7 +9,7 @@ import { MockRuntime, MockSharedObjectServices } from "@fluidframework/test-runt
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
-interface ITestInterface{
+interface ITestInterface {
     value1: string;
     value2: number;
     value3: boolean[];
@@ -51,7 +51,7 @@ describe("SharedSummaryBlock", () => {
                 value4: {
                     value1: "inner string",
                     value2: 500,
-                    value3:[false, false, true],
+                    value3: [false, false, true],
                 },
             };
             sharedSummaryBlock.set(key3, value3);

@@ -11,8 +11,7 @@ import { HostStoragePolicy } from "./contracts";
 
 export class OdspDocumentServiceFactoryWithCodeSplit
     extends OdspDocumentServiceFactoryCore
-    implements IDocumentServiceFactory
-{
+    implements IDocumentServiceFactory {
     constructor(
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh: boolean) => Promise<string | null>,

@@ -1,0 +1,24 @@
+pre-push:
+  parallel: false
+  commands:
+    tsfmt:
+      files: "git diff --name-only master"
+      glob: "**.{ts,tsx}"
+      run: "tsfmt {files} --no-tslint --no-tsconfig --verify"
+    policy-check:
+      files: "git diff --name-only master"
+      glob: "**package.json"
+      run: "npm run policy-check"
+pr-check:
+  parallel: false
+  commands:
+    tsfmt:
+      files: "git diff --name-only master"
+      glob: "**.{ts,tsx}"
+      run: "tsfmt {files} --no-tslint --no-tsconfig --replace"
+    policy-check:
+      files: "git diff --name-only master"
+      glob: "**package.json"
+      run: "npm run policy-check:fix"
+    # message:
+    #   run: echo 'You can use `npm run pr-check` to check if your branch is in a good state to submit a PR.'

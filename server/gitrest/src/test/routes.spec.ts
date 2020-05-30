@@ -181,7 +181,7 @@ describe("GitRest", () => {
             describe("Blobs", () => {
                 it("Can create and retrieve a blob", async () => {
                     await createRepo(supertest, testOwnerName, testRepoName);
-                    const result = await createBlob(supertest,  testOwnerName, testRepoName, testBlob);
+                    const result = await createBlob(supertest, testOwnerName, testRepoName, testBlob);
                     assert.equal(result.body.sha, "b45ef6fec89518d314f546fd6c3025367b721684");
 
                     return supertest
@@ -203,7 +203,7 @@ describe("GitRest", () => {
                 it("Can create and retrieve a tree", async () => {
                     await createRepo(supertest, testOwnerName, testRepoName);
                     await createBlob(supertest, testOwnerName, testRepoName, testBlob);
-                    const tree = await createTree(supertest,  testOwnerName, testRepoName, testTree);
+                    const tree = await createTree(supertest, testOwnerName, testRepoName, testTree);
                     assert.equal(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
 
                     return supertest

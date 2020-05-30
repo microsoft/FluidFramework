@@ -39,7 +39,7 @@ interface ILastEditedDisplayProps {
 export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
     if (props.lastEditedState === undefined) {
         return (
-            <div/>
+            <div />
         );
     }
 
@@ -50,9 +50,8 @@ export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
     const imageInitials = nameParts.reduce((acc, val) => acc.concat(val.substr(0, 1)), "");
     // This is just a way to iterate through all colors in PersonaInitialColor in order
     const initialsColor =
-        PersonaInitialsColor[
-            PersonaInitialsColor[props.lastEditedState.user.colorCode % Object.keys(PersonaInitialsColor).length]
-        ];
+        // eslint-disable-next-line max-len
+        PersonaInitialsColor[PersonaInitialsColor[props.lastEditedState.user.colorCode % Object.keys(PersonaInitialsColor).length]];
     const persona: IFacepilePersona = {
         imageInitials,
         personaName,
@@ -67,11 +66,11 @@ export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
     };
 
     return (
-        <div style = {lastEditedBoxStyle}>
-            <div style = {lastEditByStyle}>
+        <div style={lastEditedBoxStyle}>
+            <div style={lastEditByStyle}>
                 Last Edit By
             </div>
-            <div style = {{ padding: "10px 30px" }}>
+            <div style={{ padding: "10px 30px" }}>
                 <Facepile {...facepileProps} />
             </div>
             {props.lastEditedState.time}

@@ -56,14 +56,16 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     /**
      * {@inheritDoc (IComponentDependencySynthesizer:interface).synthesize}
      */
+    /* eslint-disable @typescript-eslint/indent */
     public synthesize<
         O extends IComponent,
         R extends IComponent = {}>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>> {
+            optionalTypes: ComponentSymbolProvider<O>,
+            requiredTypes: ComponentSymbolProvider<R>,
+    ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
+        /* eslint-enable @typescript-eslint/indent */
 
         // There was nothing passed in so we can return
         if (optionalValues === [] && requiredValues === []) {
@@ -134,23 +136,29 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         if (typeof provider === "function") {
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
-            return { get [t]() {
-                if (provider && typeof provider === "function") {
-                    return Promise.resolve(provider(self)).then((p) => {
-                        if (p) {
-                            return p[t];
-                        }});
-                }
-            } };
+            return {
+                get [t]() {
+                    if (provider && typeof provider === "function") {
+                        return Promise.resolve(provider(self)).then((p) => {
+                            if (p) {
+                                return p[t];
+                            }
+                        });
+                    }
+                },
+            };
         }
 
-        return { get [t]() {
-            if (provider) {
-                return Promise.resolve(provider).then((p) => {
-                    if (p) {
-                        return p[t];
-                    }});
-            }
-        } };
+        return {
+            get [t]() {
+                if (provider) {
+                    return Promise.resolve(provider).then((p) => {
+                        if (p) {
+                            return p[t];
+                        }
+                    });
+                }
+            },
+        };
     }
 }

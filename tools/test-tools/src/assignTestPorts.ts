@@ -24,7 +24,7 @@ function main() {
     // Assign a unique port to each package
     const portMap: { [pkgName: string]: number } = {};
     let port = 8081;
-    lernaOutput.forEach((pkg: {name: string}) => {
+    lernaOutput.forEach((pkg: { name: string }) => {
         if (pkg.name === undefined) {
             console.error("missing name in lerna package entry");
             process.exit(-1);

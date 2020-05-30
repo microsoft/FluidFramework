@@ -39,7 +39,7 @@ class GarbageCollector<TKey> {
 
     constructor(
         private readonly cleanup: (key: TKey) => void,
-    ) {}
+    ) { }
 
     /**
      * Schedule GC for the given key, as applicable
@@ -129,5 +129,5 @@ export class OdspCache implements IOdspCache {
      */
     constructor(
         public readonly persistedCache: IPersistedCache = new LocalCache(),
-    ) {}
+    ) { }
 }

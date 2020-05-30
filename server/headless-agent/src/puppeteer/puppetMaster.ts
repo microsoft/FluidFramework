@@ -160,7 +160,7 @@ export class PuppetMaster extends EventEmitter {
 
     private async getResolvedUrl() {
         const path =
-        `${this.gatewayUrl}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
+            `${this.gatewayUrl}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
 
         const options = {
             form: {

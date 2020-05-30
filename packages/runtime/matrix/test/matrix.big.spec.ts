@@ -38,7 +38,7 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     return matrix2;
 }
 
-describe("Big Matrix", function () {
+describe("Big Matrix", function() {
     this.timeout(10000);
 
     let host1: TestHost;    // Note: Single client tests also require two clients to externally observe

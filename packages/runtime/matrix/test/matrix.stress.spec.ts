@@ -75,7 +75,7 @@ describe("Matrix", () => {
                 // Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
                 const setCells = (matrixIndex: number, row: number, col: number, numCols: number, values: any[]) => {
                     const matrix = matrices[matrixIndex];
-                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* numCols: */ ${numCols}, ${JSON.stringify(values)});    // numRows: ${matrix.numRows} numCols: ${matrix.numCols} stride: ${matrix.numCols} length: ${values.length}`);
+                    trace ?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* numCols: */ ${numCols}, ${JSON.stringify(values)});    // numRows: ${matrix.numRows} numCols: ${matrix.numCols} stride: ${matrix.numCols} length: ${values.length}`);
                     matrix.setCells(row, col, numCols, values);
                 }
 
@@ -83,13 +83,13 @@ describe("Matrix", () => {
                 {
                     const numRows = int32(5);
                     if (numRows > 0) {
-                        trace?.push(`matrix1.insertRows(0,${numRows});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
+                        trace ?.push(`matrix1.insertRows(0,${numRows});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
                         matrix0.insertRows(0, numRows);
                     }
 
                     const numCols = int32(5);
                     if (numCols > 0) {
-                        trace?.push(`matrix1.insertCols(0,${numCols});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
+                        trace ?.push(`matrix1.insertCols(0,${numCols});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
                         matrix0.insertCols(0, numCols);
                     }
 
@@ -117,7 +117,7 @@ describe("Matrix", () => {
                     const row = int32(numRows);
                     const col = int32(numCols);
 
-                    switch(int32(7)) {
+                    switch (int32(7)) {
                         case 0: {
                             // remove 1 or more rows (if any exist)
                             if (numRows > 0) {
@@ -126,7 +126,7 @@ describe("Matrix", () => {
                                     ? int32(numRows - row - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // numRows: ${matrix.numRows - numRemoved}, numCols: ${matrix.numCols}`);
+                                trace ?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // numRows: ${matrix.numRows - numRemoved}, numCols: ${matrix.numCols}`);
                                 matrix.removeRows(row, numRemoved);
                             }
                             break;
@@ -140,7 +140,7 @@ describe("Matrix", () => {
                                     ? int32(numCols - col - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols - numRemoved}`);
+                                trace ?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols - numRemoved}`);
                                 matrix.removeCols(col, numRemoved);
                             }
                             break;
@@ -152,7 +152,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // numRows: ${matrix.numRows + numInserted}, numCols: ${matrix.numCols}`);
+                            trace ?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // numRows: ${matrix.numRows + numInserted}, numCols: ${matrix.numCols}`);
                             matrix.insertRows(row, numInserted);
 
                             // 90% probability of filling the newly inserted row with values.
@@ -171,7 +171,7 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols + numInserted}`);
+                            trace ?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols + numInserted}`);
                             matrix.insertCols(col, numInserted);
 
                             // 90% probability of filling the newly inserted col with values.
@@ -198,7 +198,7 @@ describe("Matrix", () => {
                     // Clients periodically exchanging ops, at which point we verify they have converged
                     // on the same state.
                     if (float64() < syncProbability) {
-                        trace?.push("await expect();");
+                        trace ?.push("await expect();");
                         await expect();
                     }
                 }
@@ -234,7 +234,7 @@ describe("Matrix", () => {
             { numClients: 5, numOps: 200, syncProbability: 0.0, seed: 0x2f98736d },
         ]) {
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
-                async function () {
+                async function() {
                     this.timeout(10000);
 
                     await stress(numClients, numOps, syncProbability, seed);

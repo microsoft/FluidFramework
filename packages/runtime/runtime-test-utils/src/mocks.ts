@@ -197,7 +197,7 @@ class MockDeltaConnection implements IDeltaConnection {
         handler.setConnectionState(this.connected);
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId;
@@ -209,7 +209,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
-    constructor(... members: [string, Partial<ISequencedClient>][]) {
+    constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
@@ -612,7 +612,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         return 0;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 }
 
 /**

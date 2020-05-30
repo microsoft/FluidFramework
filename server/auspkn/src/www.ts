@@ -17,16 +17,16 @@ const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../con
  */
 const loggerConfig = provider.get("logger");
 winston.configure({
-  transports: [
-    new winston.transports.Console({
-      colorize: loggerConfig.colorize,
-      handleExceptions: true,
-      json: loggerConfig.json,
-      level: loggerConfig.level,
-      stringify: (obj) => JSON.stringify(obj),
-      timestamp: loggerConfig.timestamp,
-    }),
-  ],
+    transports: [
+        new winston.transports.Console({
+            colorize: loggerConfig.colorize,
+            handleExceptions: true,
+            json: loggerConfig.json,
+            level: loggerConfig.level,
+            stringify: (obj) => JSON.stringify(obj),
+            timestamp: loggerConfig.timestamp,
+        }),
+    ],
 });
 
 // Update debug library to output to winston
@@ -34,8 +34,8 @@ winston.configure({
 // override the default log format to not include the timestamp since winston will do this for us
 // tslint:disable-next-line:only-arrow-functions
 (debug as any).formatArgs = function(args) {
-  const name = this.namespace;
-  args[0] = name + " " + args[0];
+    const name = this.namespace;
+    args[0] = name + " " + args[0];
 };
 
 // Create the unpkg app
@@ -63,9 +63,9 @@ server.on("listening", onListening);
 
 // Listen for shutdown signal in order to shutdown gracefully
 process.on("SIGTERM", () => {
-  server.close(() => {
-    process.exit(0);
-  });
+    server.close(() => {
+        process.exit(0);
+    });
 });
 
 /**
@@ -73,19 +73,19 @@ process.on("SIGTERM", () => {
  */
 
 function normalizePort(val) {
-  const normalizedPort = parseInt(val, 10);
+    const normalizedPort = parseInt(val, 10);
 
-  if (isNaN(normalizedPort)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(normalizedPort)) {
+        // named pipe
+        return val;
+    }
 
-  if (normalizedPort >= 0) {
-    // port number
-    return normalizedPort;
-  }
+    if (normalizedPort >= 0) {
+        // port number
+        return normalizedPort;
+    }
 
-  return false;
+    return false;
 }
 
 /**
@@ -93,27 +93,27 @@ function normalizePort(val) {
  */
 
 function onError(error) {
-  if (error.syscall !== "listen") {
-    throw error;
-  }
+    if (error.syscall !== "listen") {
+        throw error;
+    }
 
-  const bind = typeof port === "string"
-    ? "Pipe " + port
-    : "Port " + port;
+    const bind = typeof port === "string"
+        ? "Pipe " + port
+        : "Port " + port;
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case "EACCES":
-      winston.error(bind + " requires elevated privileges");
-      process.exit(1);
-      break;
-    case "EADDRINUSE":
-      winston.error(bind + " is already in use");
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case "EACCES":
+            winston.error(bind + " requires elevated privileges");
+            process.exit(1);
+            break;
+        case "EADDRINUSE":
+            winston.error(bind + " is already in use");
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
 }
 
 /**
@@ -121,9 +121,9 @@ function onError(error) {
  */
 
 function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === "string"
-    ? "pipe " + addr
-    : "port " + addr.port;
-  winston.info("Listening on " + bind);
+    const addr = server.address();
+    const bind = typeof addr === "string"
+        ? "pipe " + addr
+        : "port " + addr.port;
+    winston.info("Listening on " + bind);
 }

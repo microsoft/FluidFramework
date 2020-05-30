@@ -23,15 +23,14 @@ import {
 export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry, IComponentRegistryTemplates {
     public get IComponentRegistry() { return this; }
     public get IComponentInternalRegistry() { return this; }
-    public get IComponentRegistryTemplates() {return this; }
+    public get IComponentRegistryTemplates() { return this; }
 
     constructor(
         private readonly containerComponentArray: IInternalRegistryEntry[],
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory> | undefined>
-    {
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory> | undefined> {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );

@@ -94,18 +94,18 @@ export class Content extends React.Component<IContentProps, IContentState> {
                         <div>
                             <Route exact
                                 path={"/"}
-                                component = {
+                                component={
                                     () => <Tenants data={this.props.data.tenants} />
                                 }
                             />
                             <Route
                                 path="/keyValues"
-                                component = {
+                                component={
                                     () => <KeyValues data={this.props.data.keyValues} />
                                 }
                             />
-                            <Route path="/analytics" component={Analytics}/>
-                            <Route path="/about" component={About}/>
+                            <Route path="/analytics" component={Analytics} />
+                            <Route path="/about" component={About} />
                         </div>
                     </main>
                 </div>

@@ -141,10 +141,10 @@ runTest(
     commander.iterations,
     commander.username,
     commander.password).then(
-    (metrics) => {
-        console.log(JSON.stringify(metrics, null, 2));
-    },
-    (error) => {
-        console.error(error);
-        process.exit(1);
-    });
+        (metrics) => {
+            console.log(JSON.stringify(metrics, null, 2));
+        },
+        (error) => {
+            console.error(error);
+            process.exit(1);
+        });

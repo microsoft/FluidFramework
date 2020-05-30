@@ -16,7 +16,7 @@ export class Analytics extends React.Component {
                     width="100%"
                     id="grafana"
                     height="100%"
-                    allowFullScreen/>
+                    allowFullScreen />
             </div>
         );
     }

@@ -57,8 +57,7 @@ export interface IProvideComponentHandle {
  */
 export interface IComponentHandle<
     // REVIEW: Constrain `T` to `IComponent & IComponentLoadable`?
-    T = IComponent & IComponentLoadable
-> extends IComponentHandleContext, IProvideComponentHandle {
+    T = IComponent & IComponentLoadable> extends IComponentHandleContext, IProvideComponentHandle {
     /**
      * Returns a promise to the component referenced by the handle.
      */

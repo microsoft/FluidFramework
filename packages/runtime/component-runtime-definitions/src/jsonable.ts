@@ -54,12 +54,13 @@ export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObj
  *                  Else return never
  *          Else return never
  */
+/* eslint-disable @typescript-eslint/indent */
 export type AsJsonable<T, J = JsonablePrimitive> =
-    T extends Jsonable<J> ?
-        T :
-        Extract<T, Function> extends never ?
-            { [K in keyof T ]: Extract<K, symbol> extends never ?
-                AsJsonable<T[K], J> :
-                never
-            } :
-            never;
+    T extends Jsonable<J> ? T :
+    Extract<T, Function> extends never ?
+    { [K in keyof T]: Extract<K, symbol> extends never ?
+        AsJsonable<T[K], J> :
+        never
+    } :
+    never;
+/* eslint-enable @typescript-eslint/indent */

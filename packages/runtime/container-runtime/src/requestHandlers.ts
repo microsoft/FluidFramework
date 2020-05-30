@@ -12,8 +12,8 @@ import { RequestParser } from "./requestParser";
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
  */
-export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
-=> Promise<IResponse | undefined>;
+export type RuntimeRequestHandler =
+    (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
 export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {

@@ -29,7 +29,7 @@ export class MenuWrap extends React.Component<IMenuWrapProps, IMenuWrapState> {
         const sideChanged = this.props.children.props.right !== nextProps.children.props.right;
 
         if (sideChanged) {
-            this.setState({ hidden : true });
+            this.setState({ hidden: true });
 
             setTimeout(() => {
                 this.show();
@@ -38,11 +38,11 @@ export class MenuWrap extends React.Component<IMenuWrapProps, IMenuWrapState> {
     }
 
     public show() {
-        this.setState({ hidden : false });
+        this.setState({ hidden: false });
     }
 
     public hide() {
-        this.setState({ hidden : true });
+        this.setState({ hidden: true });
     }
 
     public render() {

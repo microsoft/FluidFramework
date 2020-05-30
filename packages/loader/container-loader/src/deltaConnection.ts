@@ -85,7 +85,7 @@ export class DeltaConnection
             this.close();
         });
 
-        this.on("newListener", (event: string, listener: (...args: any[]) => void)=>{
+        this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Register for the event on connection
             // A number of events that are pass-through.
             // Note that we delay subscribing to op / op-content / signal on purpose, as

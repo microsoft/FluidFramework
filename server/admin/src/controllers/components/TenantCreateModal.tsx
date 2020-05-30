@@ -74,43 +74,43 @@ export class CreateTenantModal extends React.Component<ITenantCreateProps, ITena
                         )}
                     </FormItem>
                     {this.state.githubSelected &&
-            <FormItem label="Repository">
-                {getFieldDecorator("repository", {
-                    rules: [{ required: true, message: "Please input github repository name" }],
-                })(
-                    <Input />,
-                )}
-            </FormItem>
+                        <FormItem label="Repository">
+                            {getFieldDecorator("repository", {
+                                rules: [{ required: true, message: "Please input github repository name" }],
+                            })(
+                                <Input />,
+                            )}
+                        </FormItem>
                     }
                     {this.state.githubSelected &&
-            <FormItem label="Owner">
-                {getFieldDecorator("owner", {
-                    rules: [{ required: true, message: "Please input repository owner name" }],
-                })(
-                    <Input />,
-                )}
-            </FormItem>
+                        <FormItem label="Owner">
+                            {getFieldDecorator("owner", {
+                                rules: [{ required: true, message: "Please input repository owner name" }],
+                            })(
+                                <Input />,
+                            )}
+                        </FormItem>
                     }
                     {this.state.githubSelected &&
-            <FormItem label="Username">
-                {getFieldDecorator("username", {
-                    rules: [{ required: true, message: "Please input github username" }],
-                })(
-                    <Input prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />} placeholder="Username" />,
-                )}
-            </FormItem>
+                        <FormItem label="Username">
+                            {getFieldDecorator("username", {
+                                rules: [{ required: true, message: "Please input github username" }],
+                            })(
+                                <Input prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />} placeholder="Username" />,
+                            )}
+                        </FormItem>
                     }
                     {this.state.githubSelected &&
-            <FormItem label="Personal access token">
-                {getFieldDecorator("password", {
-                    rules: [{ required: true, message: "Please input github personal access token" }],
-                })(
-                    <Input
-                        prefix={<Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />}
-                        type="password"
-                        placeholder="Personal access token" />,
-                )}
-            </FormItem>
+                        <FormItem label="Personal access token">
+                            {getFieldDecorator("password", {
+                                rules: [{ required: true, message: "Please input github personal access token" }],
+                            })(
+                                <Input
+                                    prefix={<Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />}
+                                    type="password"
+                                    placeholder="Personal access token" />,
+                            )}
+                        </FormItem>
                     }
                     <FormItem className="collection-create-form_last-form-item" label="Ordering Service">
                         {getFieldDecorator("ordererType", {

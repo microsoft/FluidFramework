@@ -67,8 +67,7 @@ interface ISnapshotDetails {
 export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
-    IDisposable
-{
+    IDisposable {
     public readonly isExperimentalComponentContext = true;
 
     public isLocal(): boolean {

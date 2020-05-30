@@ -33,8 +33,10 @@
     "postinstall:lerna": "run-script-os",
     "postinstall:lerna:default": "npm run pre-lerna-install:default && { lerna bootstrap --strict --hoist;t1=$?;npm run post-lerna-install:default;exit $t1;}",
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
+    "pr-check": "lefthook run pr-fix",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
+    "precommit": "lefthook run pre-commit",
     "restart": "cd server/routerlicious && npm run restart",
     "start": "docker-compose up",
     "stop": "docker-compose down",
@@ -57,6 +59,7 @@
     "test:types": "lerna run test:types --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root . -s tsc",
+    "tsfmt": "tsfmt \"common/**/*.{ts,tsx}\" \"components/*/*/{src,test}/**.{ts,tsx}\" \"examples/*/*/{src,test}/**.{ts,tsx}\" \"packages/*/*/{src,test}/**.{ts,tsx}\" \"server/**/*.{ts,tsx}\" \"tools/*/{src,test}/**.{ts,tsx}\" -g --no-tslint --no-tsconfig -r",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -95,6 +98,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@arkweid/lefthook": "^0.7.2",
     "@fluidframework/build-tools": "^0.1.27804",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
@@ -104,6 +108,7 @@
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.0.7",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

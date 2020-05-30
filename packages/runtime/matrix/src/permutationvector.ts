@@ -96,7 +96,8 @@ export class PermutationVector extends Client {
     ) {
         super(
             PermutationSegment.fromJSONObject,
-            ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
+            ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`),
+            {
                 ...runtime.options,
                 newMergeTreeSnapshotFormat: true,
             },
@@ -146,7 +147,7 @@ export class PermutationVector extends Client {
                     mode: FileMode.Directory,
                     path: SnapshotPath.segments,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: super.snapshot(runtime, handle, /* tardisMsgs: */ []),
+                    value: super.snapshot(runtime, handle, /* tardisMsgs: */[]),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
                 serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),

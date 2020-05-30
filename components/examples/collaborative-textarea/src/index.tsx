@@ -56,7 +56,7 @@ export class CollaborativeText extends PrimedComponent implements IComponentHTML
 
         ReactDOM.render(
             <div className="text-area">
-                <CollaborativeTextArea sharedString={this.text}/>
+                <CollaborativeTextArea sharedString={this.text} />
             </div>,
             div,
         );

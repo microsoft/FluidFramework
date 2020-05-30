@@ -16,7 +16,7 @@ import { IVltavaUserDetails } from "./dataModel";
 const facepileStyle: React.CSSProperties = {
     position: "absolute",
     top: 17,
-    right : 45,
+    right: 45,
     cursor: "pointer",
 };
 
@@ -34,8 +34,7 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
         const imageInitials = nameParts.reduce((acc, val) => acc.concat(val.substr(0, 1)), "");
         // This is just a way to iterate through all colors in PersonaInitialColor in order
         const initialsColor =
-            PersonaInitialsColor[
-                PersonaInitialsColor[user.colorCode % Object.keys(PersonaInitialsColor).length]
+            PersonaInitialsColor[PersonaInitialsColor[user.colorCode % Object.keys(PersonaInitialsColor).length]
             ];
         const persona: IFacepilePersona = {
             imageInitials,
@@ -59,7 +58,7 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
     };
 
     return (
-        <div style = {facepileStyle}>
+        <div style={facepileStyle}>
             <Facepile {...facepileProps} />
         </div>
     );

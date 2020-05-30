@@ -97,14 +97,14 @@ class EditableCell extends React.Component<ICellProps<IKeyValue>, ICellState> {
                                         )}
                                     </FormItem>
                                 ) : (
-                                    <div
-                                        className="editable-cell-value-wrap"
-                                        style={{ paddingRight: 24 }}
-                                        onClick={this.toggleEdit}
-                                    >
-                                        {restProps.children}
-                                    </div>
-                                )
+                                        <div
+                                            className="editable-cell-value-wrap"
+                                            style={{ paddingRight: 24 }}
+                                            onClick={this.toggleEdit}
+                                        >
+                                            {restProps.children}
+                                        </div>
+                                    )
                             );
                         }}
                     </EditableContext.Consumer>
@@ -232,7 +232,7 @@ export class KeyValueManager extends React.Component<ITableProps, ITableState> {
                 />
                 <nav className="add-buttons">
                     <a onClick={this.showModal}>
-          Add an Item
+                        Add an Item
                     </a>
                 </nav>
                 <KeyValueCreateModal

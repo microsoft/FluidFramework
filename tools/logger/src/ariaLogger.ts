@@ -38,13 +38,13 @@ function uploadMetric(logger: aria.AWTLogger, metrics: object, eventName: string
             const metric = metrics[key];
 
             let ariaMetricType = aria.AWTPropertyType.Unspecified;
-            if (typeof(metric) === "string") {
+            if (typeof (metric) === "string") {
                 ariaMetricType = aria.AWTPropertyType.String;
             } else if (Number.isInteger(metric)) {
                 ariaMetricType = aria.AWTPropertyType.Int64;
-            } else if (typeof(metric) === "number") {
+            } else if (typeof (metric) === "number") {
                 ariaMetricType = aria.AWTPropertyType.Double;
-            } else if (typeof(metric) === "boolean") {
+            } else if (typeof (metric) === "boolean") {
                 ariaMetricType = aria.AWTPropertyType.Boolean;
             }
 

@@ -16,6 +16,7 @@ import { TokenProvider } from "./tokens";
  * @deprecated - The createDocumentService of document service factory directly returns
  *  the associated document service.
  */
+/* eslint-disable @typescript-eslint/indent */
 export const createDocumentService2 = (
     resolvedUrl: IResolvedUrl,
     ordererUrl: string,
@@ -28,14 +29,15 @@ export const createDocumentService2 = (
     disableCache = false,
     historianApi = true,
     credentials?: ICredentials): IDocumentService => new DocumentService2(
-    resolvedUrl,
-    ordererUrl,
-    deltaStorageUrl,
-    gitUrl,
-    errorTracking,
-    disableCache,
-    historianApi,
-    credentials,
-    tokenProvider,
-    tenantId,
-    documentId);
+        resolvedUrl,
+        ordererUrl,
+        deltaStorageUrl,
+        gitUrl,
+        errorTracking,
+        disableCache,
+        historianApi,
+        credentials,
+        tokenProvider,
+        tenantId,
+        documentId);
+/* eslint-enable @typescript-eslint/indent */

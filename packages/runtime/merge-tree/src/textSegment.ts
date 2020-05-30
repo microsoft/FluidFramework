@@ -186,8 +186,14 @@ export class MergeTreeTextHelper {
         return range;
     }
 
-    private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-                                   end: number, accumText: ITextAccumulator) => {
+    private readonly gatherText = (
+        segment: ISegment,
+        pos: number,
+        refSeq: number,
+        clientId: number,
+        start: number,
+        end: number,
+        accumText: ITextAccumulator) => {
         if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(

@@ -7,7 +7,7 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import  { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -82,7 +82,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
                 [SharedMap.getFactory()],
                 {},
             );
-            const codeLoader = new LocalCodeLoader([[ pkg1, factory ], [pkg2, testComponentFactory]]);
+            const codeLoader = new LocalCodeLoader([[pkg1, factory], [pkg2, testComponentFactory]]);
             const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             return new Loader(
                 urlResolver,
@@ -168,7 +168,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Attaching DDS should attach component", async () => {
             const { container, defaultComponent } =
-            await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -374,174 +374,174 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
                     "Test Channel 2 should be attached now after attaching other DDS");
             });
 
-        it("Stick handle of 2 dds(of 2 different components) in each other and then attaching 1 DDS should " +
-            "attach other DDS and component with correct recursion",
-        async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
-                await container.attach(request);
-            }
+        // eslint-disable-next-line max-len
+        it("Stick handle of 2 dds(of 2 different components) in each other and then attaching 1 DDS should attach other DDS and component with correct recursion",
+            async () => {
+                const { container, defaultComponent } =
+                    await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                if (!isLocal) {
+                    await container.attach(request);
+                }
 
-            // Create another component which returns the runtime channel.
-            const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component2 = peerComponent1.peerComponent;
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                // Create another component which returns the runtime channel.
+                const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component2 = peerComponent1.peerComponent;
+                assert.strictEqual(component2.runtime.isLocal(), true,
+                    createTestStatementForLocalLive("Component2", true));
+                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
-            const component3 = peerComponent2.peerComponent;
-            assert.strictEqual(component3.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component3.runtime.isAttached, false, "Component2 should be unattached");
+                // Create another component which returns the runtime channel.
+                const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component3 = peerComponent2.peerComponent;
+                assert.strictEqual(component3.runtime.isLocal(), true,
+                    createTestStatementForLocalLive("Component2", true));
+                assert.strictEqual(component3.runtime.isAttached, false, "Component2 should be unattached");
 
-            // Create first channel from component2
-            const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+                // Create first channel from component2
+                const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Create second channel from component 3
-            const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+                // Create second channel from component 3
+                const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
-            const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
-            const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
+                const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
+                const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
 
-            testChannelOfComponent2.set("channel3handle", channel3.handle);
-            testChannelOfComponent3.set("channel2handle", channel2.handle);
+                testChannelOfComponent2.set("channel3handle", channel3.handle);
+                testChannelOfComponent3.set("channel2handle", channel2.handle);
 
-            // Currently it will go in infinite loop.
-            channel2.handle.attach();
-            assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
-                "Test Channel 1 should be attached now after attaching it");
-            assert.strictEqual(testChannelOfComponent3.handle.isAttached, true,
-                "Test Channel 2 should be attached now after attaching other DDS");
-            assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.runtime.isAttached, true, "Component 3 should have get attached");
-        });
+                // Currently it will go in infinite loop.
+                channel2.handle.attach();
+                assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
+                    "Test Channel 1 should be attached now after attaching it");
+                assert.strictEqual(testChannelOfComponent3.handle.isAttached, true,
+                    "Test Channel 2 should be attached now after attaching other DDS");
+                assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should have get attached");
+                assert.strictEqual(component3.runtime.isAttached, true, "Component 3 should have get attached");
+            });
 
-        it("Stick handle of 2 different components and dds in each other and then attaching 1 component should " +
-            "attach other components and dds with correct recursion",
-        async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
-            if (!isLocal) {
-                await container.attach(request);
-            }
+        // eslint-disable-next-line max-len
+        it("Stick handle of 2 different components and dds in each other and then attaching 1 component should attach other components and dds with correct recursion",
+            async () => {
+                const { container, defaultComponent } =
+                    await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
+                if (!isLocal) {
+                    await container.attach(request);
+                }
 
-            // Create another component which returns the runtime channel.
-            const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+                // Create another component which returns the runtime channel.
+                const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
+                assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+                // Create another component which returns the runtime channel.
+                const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
+                assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
 
-            // Create first channel from component2
-            const channel2 = component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+                // Create first channel from component2
+                const channel2 = component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
-            // Create second channel from component 3
-            const channel3 = component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+                // Create second channel from component 3
+                const channel3 = component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
-            // component2 POINTS TO component3, channel3
-            // component3 POINTS TO component2, channel2
-            // channel2   POINTS TO component3, channel3
-            // channel3   POINTS TO component2, channel2
-            channel2.set("channel3handle", channel3.handle);
-            channel3.set("channel2handle", channel2.handle);
-            channel2.set("component3", component3.handle);
-            channel3.set("component2", component2.handle);
-            component2.handle.bind(component3.handle);
-            component2.handle.bind(channel3.handle);
-            component3.handle.bind(component2.handle);
-            component3.handle.bind(channel2.handle);
+                // component2 POINTS TO component3, channel3
+                // component3 POINTS TO component2, channel2
+                // channel2   POINTS TO component3, channel3
+                // channel3   POINTS TO component2, channel2
+                channel2.set("channel3handle", channel3.handle);
+                channel3.set("channel2handle", channel2.handle);
+                channel2.set("component3", component3.handle);
+                channel3.set("component2", component2.handle);
+                component2.handle.bind(component3.handle);
+                component2.handle.bind(channel3.handle);
+                component3.handle.bind(component2.handle);
+                component3.handle.bind(channel2.handle);
 
-            component2.handle.attach();
-            assert.strictEqual(channel2.handle.isAttached, true,
-                "Test Channel 2 should be attached now after attaching it");
-            assert.strictEqual(channel3.handle.isAttached, true,
-                "Test Channel 3 should be attached now after attaching other DDS");
-            assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
-        });
+                component2.handle.attach();
+                assert.strictEqual(channel2.handle.isAttached, true,
+                    "Test Channel 2 should be attached now after attaching it");
+                assert.strictEqual(channel3.handle.isAttached, true,
+                    "Test Channel 3 should be attached now after attaching other DDS");
+                assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
+                assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
+            });
 
-        it("Generate more than 1 dds of a component and then stick handles in different dds and then attaching " +
-            "1 handle should attach entire graph",
-        async () => {
-            const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
-            if (!isLocal) {
-                await container.attach(request);
-            }
+        // eslint-disable-next-line max-len
+        it("Generate more than 1 dds of a component and then stick handles in different dds and then attaching 1 handle should attach entire graph",
+            async () => {
+                const { container, defaultComponent } =
+                    await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
+                if (!isLocal) {
+                    await container.attach(request);
+                }
 
-            // Create another component which returns the runtime channel.
-            const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+                // Create another component which returns the runtime channel.
+                const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
+                assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
 
-            // Create another component which returns the runtime channel.
-            const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+                // Create another component which returns the runtime channel.
+                const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
+                assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
 
-            const component4 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component4.handle.isAttached, false, "Component4 should be unattached");
+                const component4 = await createPeerComponentForTestRootComponent(defaultComponent);
+                assert.strictEqual(component4.handle.isAttached, false, "Component4 should be unattached");
 
-            // Create two channel from component2
-            const channel1OfComponent2 =
-                component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel1OfComponent2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
+                // Create two channel from component2
+                const channel1OfComponent2 =
+                    component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel1OfComponent2.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
 
-            const channel2OfComponent2 =
-                component2.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2OfComponent2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
+                const channel2OfComponent2 =
+                    component2.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel2OfComponent2.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
 
-            // Create two channel from component 3
-            const channel1OfComponent3 =
-                component3.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel1OfComponent3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
+                // Create two channel from component 3
+                const channel1OfComponent3 =
+                    component3.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel1OfComponent3.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
 
-            const channel2OfComponent3 =
-                component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel2OfComponent3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
+                const channel2OfComponent3 =
+                    component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel2OfComponent3.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
 
-            // Create one channel from component 4
-            const channel1OfComponent4 =
-                component4.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
-            assert.strictEqual(channel1OfComponent4.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
+                // Create one channel from component 4
+                const channel1OfComponent4 =
+                    component4.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                assert.strictEqual(channel1OfComponent4.isRegistered(), false, "Channel should be unregistered");
+                assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
 
-            channel2OfComponent2.set("componet3Handle", component3.handle);
-            channel1OfComponent3.set("channel23handle", channel2OfComponent3.handle);
-            component3.handle.bind(component4.handle);
+                channel2OfComponent2.set("componet3Handle", component3.handle);
+                channel1OfComponent3.set("channel23handle", channel2OfComponent3.handle);
+                component3.handle.bind(component4.handle);
 
-            // Channel 1 of component 2 points to its parent component 2.
-            // Channel 2 of component 2 points to its parent component 2 and also to component 3.
-            // Channel 1 of component 3 points to its parent component 3 and its sibling channel 2 of component 3.
-            // Channel 2 of component 3 points to its parent component 3.
-            // Channel 1 of component 4 points to its parent component 4.
-            // Component 3 points to component 4.
-            channel1OfComponent2.handle.attach();
+                // Channel 1 of component 2 points to its parent component 2.
+                // Channel 2 of component 2 points to its parent component 2 and also to component 3.
+                // Channel 1 of component 3 points to its parent component 3 and its sibling channel 2 of component 3.
+                // Channel 2 of component 3 points to its parent component 3.
+                // Channel 1 of component 4 points to its parent component 4.
+                // Component 3 points to component 4.
+                channel1OfComponent2.handle.attach();
 
-            // Everything should be attached except channel 1 of component 4
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, true, "Test Channel 12 should be attached");
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, true, "Test Channel 22 should be attached");
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, true, "Test Channel 13 should be attached");
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, true, "Test Channel 23 should be attached");
-            assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
-            assert.strictEqual(component4.handle.isAttached, true, "Component 4 should have get attached");
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, true, "Test Channel 14 should be attached");
-        });
+                // Everything should be attached except channel 1 of component 4
+                assert.strictEqual(channel1OfComponent2.handle.isAttached, true, "Test Channel 12 should be attached");
+                assert.strictEqual(channel2OfComponent2.handle.isAttached, true, "Test Channel 22 should be attached");
+                assert.strictEqual(channel1OfComponent3.handle.isAttached, true, "Test Channel 13 should be attached");
+                assert.strictEqual(channel2OfComponent3.handle.isAttached, true, "Test Channel 23 should be attached");
+                assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
+                assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
+                assert.strictEqual(component4.handle.isAttached, true, "Component 4 should have get attached");
+                assert.strictEqual(channel1OfComponent4.handle.isAttached, true, "Test Channel 14 should be attached");
+            });
 
         afterEach(async () => {
             await testDeltaConnectionServer.webSocketServer.close();

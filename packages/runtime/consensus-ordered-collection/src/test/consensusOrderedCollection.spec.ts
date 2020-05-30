@@ -86,7 +86,7 @@ describe("ConsensusOrderedCollection", () => {
             it("Can wait for data", async () => {
                 let added = false;
                 let res: any;
-                const p = testCollection.waitAndAcquire(async (value) =>{
+                const p = testCollection.waitAndAcquire(async (value) => {
                     assert(added, "Wait resolved before value is added");
                     res = value;
                     return ConsensusResult.Complete;
@@ -157,8 +157,7 @@ describe("ConsensusOrderedCollection", () => {
     describe("Detached", () => {
         generate([1, 2], [1, 2], () => {
             return factory.create(new MockRuntime(), "consensus-ordered-collection");
-        },
-        () => {});
+        }, () => { });
     });
 
     describe("Attached, connected", () => {

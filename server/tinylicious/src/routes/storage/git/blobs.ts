@@ -92,9 +92,9 @@ export function create(store: nconf.Provider): Router {
                 }
                 response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
             },
-            (error) => {
-                response.status(400).json(error);
-            });
+                (error) => {
+                    response.status(400).json(error);
+                });
         });
 
     return router;

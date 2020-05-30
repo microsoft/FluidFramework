@@ -169,7 +169,7 @@ export class TenantManager {
         let owner;
         let repository;
         // eslint-disable-next-line no-null/no-null
-        let credentials: { user: string, password: string} = null;
+        let credentials: { user: string, password: string } = null;
 
         if (params.storageType !== "github") {
             storageEndpoint = params.storageType === "git" ? this.gitrestEndpoint : this.cobaltEndpoint;

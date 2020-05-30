@@ -105,7 +105,7 @@ export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implement
         this.doc.insertCols(startCol, numCols);
     }
 
-    public removeCols(startCol: number, numCols: number)  {
+    public removeCols(startCol: number, numCols: number) {
         this.doc.removeCols(startCol, numCols);
     }
 

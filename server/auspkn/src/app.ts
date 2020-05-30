@@ -18,7 +18,7 @@ import * as routes from "./routes";
  * Basic stream logging interface for libraries that require a stream to pipe output to
  */
 const stream = split().on("data", (message) => {
-  winston.info(message);
+    winston.info(message);
 });
 
 /**

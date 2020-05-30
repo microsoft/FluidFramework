@@ -2012,7 +2012,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker> this.getMarkerFromId(relativePos.id);
+            marker = this.getMarkerFromId(relativePos.id) as Marker;
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);
