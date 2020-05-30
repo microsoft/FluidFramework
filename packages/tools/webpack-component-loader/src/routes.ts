@@ -13,6 +13,7 @@ import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import { RouteOptions } from "./loader";
+import { createManifestResponse } from "./bohemiaIntercept";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -21,6 +22,7 @@ let odspAuthLock: Promise<void> | undefined;
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
 export const before = (app: express.Application) => {
+    app.get("/getclientsidewebparts", async (req, res) => res.send(createManifestResponse()));
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
