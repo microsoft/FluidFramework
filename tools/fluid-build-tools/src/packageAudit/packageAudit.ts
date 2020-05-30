@@ -9,7 +9,7 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
 import { logVerbose, logStatus } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
-import { readFileAsync, writeFileAsync } from "../common/utils";
+import { readFileAsync, writeFileAsync, existsSync } from "../common/utils";
 
 function printUsage() {
     console.log(
@@ -53,29 +53,91 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
+type IReadmeInfo = {
+    exists: false;
+} | {
+    exists: true;
+    title: string;
+}
+
+type IPackageName = {
+    scoped: true,
+    scope: string,
+    scopedName: string,
+} | {
+    scoped: false,
+    name: string,
+}
+
+namespace IPackageName {
+    export const parse = (name: string): IPackageName => {
+        if (name.startsWith("@")) {
+            const [scope, scopedName] = name.split("/") as [string, string];
+            return { scoped: true, scope, scopedName };
+        }
+        return { scoped: false, name };
+    }
+
+    export const toString = (name: IPackageName): string =>
+        name.scoped
+            ? `${name.scope}/${name.scopedName}`
+            : name.name;
+}
+
+interface IPackageInfo {
+    name: IPackageName;
+    folderName: string;
+    readmeInfo: IReadmeInfo;
+}
+
+namespace IPackageInfo {
+    export const toString = (info: IPackageInfo): string =>
+        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} |`;
+}
+
+const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
+
 async function main() {
     const timer = new Timer(commonOptions.timer);
 
     const resolvedRoot = await getResolvedFluidRoot();
 
-    // Load the package
+    // Load the packages
     const packages = Packages.loadDir(resolvedRoot);
     timer.time("Package scan completed");
 
     try {
-        const auditPackage = async (pkg: Package) => {
+        const auditPackage = async (pkg: Package): Promise<IPackageInfo> => {
             const dir = pkg.directory;
+            const pkgFolderName = path.basename(dir);
             const readmePath = path.join(dir, "readme.md");
-            
-            //* First check if readme exists
+            const name = IPackageName.parse(pkg.name);
+
+            if (!existsSync(readmePath)) {
+                return {
+                    name,
+                    folderName: pkgFolderName,
+                    readmeInfo: { exists: false },
+                };
+            }
+
             const readme = await readFileAsync(readmePath, "utf8");
             const lines = readme.split(/\r?\n/);
-            const title = lines[0]; //* todo: Normalize (strip off #'s and collapse spaces)
+            const titleMatches = readmeTitleRegexp.exec(lines[0]);
+            const title = titleMatches?.[1] ?? "";
 
-            //* Check directory name
+            return {
+                name,
+                folderName: pkgFolderName,
+                readmeInfo: {
+                    exists: true,
+                    title,
+                }
+            }
         };
-        auditPackage(packages[0]);
-        // packages.forEach(auditPackage);
+        packages
+            .map(auditPackage)
+            .forEach(async (info) => console.log(IPackageInfo.toString(await info)));
         // if (!success) {
         //     process.exit(-1);
         // }
