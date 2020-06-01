@@ -295,6 +295,7 @@
             "type": "node",
             "request": "launch",
             "name": "Debug Build Tools Script",
+            "preLaunchTask": "build-fluid-build-tools",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run-script",

@@ -21,6 +21,12 @@
                 },
                 "$tslint5"
             ]
-        }
+        },
+        {
+            "label": "build-fluid-build-tools",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/tools/fluid-build-tools; npm run build",
+            "problemMatcher": [],
+        },
     ]
 }
