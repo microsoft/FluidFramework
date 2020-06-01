@@ -7,7 +7,7 @@ var Generator = require("yeoman-generator");
 var { Project } = require("ts-morph");
 var chalk = require("chalk");
 
-const vanillaJS = "vanillaJS";
+const none = "none";
 const react = "react";
 
 const questions = {
@@ -16,12 +16,12 @@ const questions = {
         name: "componentName",
         message: "What is the name of your new component?",
     },
-    template : {
+    viewFramework : {
         type: "list",
-        name: "template",
+        name: "viewFramework",
         message: "Which view framework would you like to start with?",
         default: react,
-        choices: [react, vanillaJS],
+        choices: [react, none],
       }
 };
 
@@ -37,16 +37,15 @@ module.exports = class extends Generator {
 
     // Adding two options to specify the view inline
     this.option(
-      "react",
+      "view-react",
       {
         description: "Sets React as Default View",
-        alias: "r"
       });
     this.option(
-      "vanilla",
+      "view-none",
       {
-        description: "Sets VanillaJS as Default View",
-        alias: "v"
+        description: "Sets None as Default View",
+        type: Boolean,
       });
 
     // Adding argument to specify the component name inline
@@ -69,15 +68,15 @@ module.exports = class extends Generator {
       questionsCollection.push(questions.componentName);
     }
 
-    if (this.options.react && this.options.vanilla) {
-      this.log(chalk.yellow("Both --react and --vanilla have been selected. Defaulting to react"));
-      delete this.options["vanillaJS"];
+    if (this.options["view-react"] && this.options["view-none"]) {
+      this.log(chalk.yellow("Both --react and --no-view have been selected. Defaulting to react"));
+      delete this.options["view-none"];
     }
 
-    if (this.options.react || this.options.vanilla) {
-      this.log(`${chalk.green("?")} ${questions.template.message} ${chalk.blue(this._isReact() ? react : vanillaJS)}`)
+    if (this.options["view-react"] || this.options["view-none"]) {
+      this.log(`${chalk.green("?")} ${questions.viewFramework.message} ${chalk.blue(this._isReact() ? react : none)}`)
     } else {
-      questionsCollection.push(questions.template);
+      questionsCollection.push(questions.viewFramework);
     }
 
     if (questionsCollection) {
@@ -88,32 +87,35 @@ module.exports = class extends Generator {
   }
 
   moveAndModifyTemplateFiles() {
+
+    // Copy and Modify Files
     this._copyAndModifyPackageJsonFile();
     this._copyAndModifyComponentFile();
     this._copyAndModifyIndexFile();
-    this._copyAndModifyModelFile();
+    this._copyAndModifyInterfaceFile();
     this._copyAndModifyViewFile();
 
+    // Copy Remaining Files
     this.fs.copyTpl(
       this.templatePath("README.md"), // FROM
-      this.destinationPath("./README.md"), // TO Base Folder,
+      this.destinationPath("./README.md"), // TO Root Folder,
       { extension: this._getFileExtension() },
     );
 
     this.fs.copy(
       this.templatePath("webpack.config.js"), // FROM
-      this.destinationPath("./webpack.config.js"), // TO Base Folder
+      this.destinationPath("./webpack.config.js"), // TO Root Folder
     );
 
     this.fs.copy(
       this.templatePath("tsconfig.json"), // FROM
-      this.destinationPath("tsconfig.json"), // TO Base Folder
+      this.destinationPath("tsconfig.json"), // TO Root Folder
     );
 
-    // Copy the .* files from the base
+    // Copy files that start with . from the root
     this.fs.copy(
       this.templatePath(".*"), // FROM
-      this.destinationPath("./"), // TO Base Folder
+      this.destinationPath("./"), // TO Root Folder
     );
   }
 
@@ -147,8 +149,8 @@ module.exports = class extends Generator {
     const accessor = classObj.getGetAccessor("ComponentName");
     accessor.setBodyText(`return "${this._componentPkgName()}";`);
 
-    // Rename model interface name to match new component name
-    const imports = file.getImportDeclaration("./model");
+    // Rename interface name to match new component name
+    const imports = file.getImportDeclaration("./interface");
     const interfaceImport = imports.getNamedImports()[0];
     interfaceImport.setName(this._componentInterfaceModelName());
 
@@ -160,6 +162,7 @@ module.exports = class extends Generator {
 
   _copyAndModifyIndexFile() {
     const file = this._generateNewProjectFile("src/index.ts");
+
     // Update the component name on import
     const imports = file.getImportDeclaration("./component");
     const componentImport = imports.getNamedImports()[0];
@@ -180,8 +183,10 @@ module.exports = class extends Generator {
     file.save();
   }
 
-  _copyAndModifyModelFile() {
-    const file = this._generateNewProjectFile("src/model.ts");
+  _copyAndModifyInterfaceFile() {
+    const file = this._generateNewProjectFile("src/interface.ts");
+
+    // Update interface name
     const modelInterface = file.getInterface("IDiceRoller");
     modelInterface.rename(this._componentInterfaceModelName())
 
@@ -192,7 +197,7 @@ module.exports = class extends Generator {
     const file = this._generateNewProjectFile(`src/view${this._getFileExtension()}`);
 
     // Rename model interface name to match new component name
-    const imports = file.getImportDeclaration("./model");
+    const imports = file.getImportDeclaration("./interface");
     const interfaceImport = imports.getNamedImports()[0];
     interfaceImport.setName(this._componentInterfaceModelName());
 
@@ -221,7 +226,7 @@ module.exports = class extends Generator {
       fileString,
     );
 
-    // Change Classname plus references
+    // Change class name plus references
     const componentDec = file.getImportDeclaration((dec) => {
       return dec.isModuleSpecifierRelative();
     });
@@ -229,8 +234,6 @@ module.exports = class extends Generator {
     const importSpecifier = componentDec.addNamedImport(this._componentFactoryClassName());
     importSpecifier.setAlias("ComponentInstantiationFactory");
 
-    // TODO: Move this save so that it saves when the rest of the fs does a commit
-    // Or write to a string and use fs to write.
     file.save();
   }
 
@@ -271,7 +274,7 @@ module.exports = class extends Generator {
    */
 
   _isReact() {
-    return this.options.react || (this.answers && this.answers.template === react);
+    return this.options["view-react"] || (this.answers && this.answers.viewFramework === react);
   }
 
   _componentName() {

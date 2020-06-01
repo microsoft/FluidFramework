@@ -1,19 +1,19 @@
 # Fluid Generator
 
-Use this tool to quickly bootstrap a new Fluid Component package based of our example Dice Roller Fluid Component.
+Use this tool to quickly bootstrap a new Fluid component package based on the example [Dice Roller](//TODO:Add-Link) Fluid component.
 
 ## Basic Getting Started
 
 To get started ensure you have [Node.js](https://nodejs.org/en/) and [Git](https://git-scm.com/) installed, then install [Yeoman](https://yeoman.io/) and the [Fluid Component Generator](//TODO:Add-Link) with:
 
 ````bash
-npm install -g yo @fluid-framework/fluid-generator
+npm install -g yo @microsoft/fluid
 ````
 
-You're now setup to bootstrap a new Fluid component at any time. Run the generator and fill out a few prompts.
+You're now set up to bootstrap a new Fluid component at any time. Run the generator and fill out a few prompts.
 
 ````bash
-yo @fluid-framework/fluid-generator
+yo @microsoft/fluid
 
 # Congratulations! You've started building your own Fluid Component.
 # Let us help you get set up. Once we're done, you can start coding!

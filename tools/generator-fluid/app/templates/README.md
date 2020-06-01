@@ -91,8 +91,8 @@ allows for cross browser/tab testing. To learn more about `tinylicious` go to `T
 
 ### `tsc`
 
-Uses the TypeScript compiler to compile the code from `/src` into javascript with support `.d.ts` files. Output is stored in the `./dist` folder.
+Compiles the TypeScript code. Output is written to the ./dist folder.
 
 ### `webpack`
 
-Uses webpack to compile the code from `/src` into one javascript file that can be loaded in a web browser. Output is stored in the `./dist` folder.
+Compiles and webpacks the TypeScript code. Output is written to the ./dist folder.
