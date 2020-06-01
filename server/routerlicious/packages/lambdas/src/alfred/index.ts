@@ -223,6 +223,9 @@ export function configureWebSocketServices(
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                connection.connect();
+
                 connectionsMap.set(clientId, connection);
 
                 // Eventually we will send disconnect reason as headers to client.
@@ -323,6 +326,7 @@ export function configureWebSocketServices(
                             .map((message) => sanitizeMessage(message));
 
                         if (sanitized.length > 0) {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             connection.order(sanitized);
                         }
                     });
@@ -406,6 +410,7 @@ export function configureWebSocketServices(
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 logger.info(`Disconnect of ${clientId}`);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map
