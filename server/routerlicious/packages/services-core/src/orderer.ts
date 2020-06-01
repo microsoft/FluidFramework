@@ -45,7 +45,7 @@ export interface IOrdererConnection {
     /**
      * Sends the client join op for this connection
      */
-    initialize(): Promise<void>;
+    connect(): Promise<void>;
 
     /**
      * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially

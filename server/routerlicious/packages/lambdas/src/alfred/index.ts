@@ -224,7 +224,7 @@ export function configureWebSocketServices(
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                connection.initialize();
+                connection.connect();
 
                 connectionsMap.set(clientId, connection);
 

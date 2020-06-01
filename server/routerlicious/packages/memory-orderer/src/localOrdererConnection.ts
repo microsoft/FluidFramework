@@ -42,7 +42,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.parentBranch = document.parent ? document.parent.documentId : null;
     }
 
-    public async initialize() {
+    public async connect() {
         // Subscribe to the message channels
         // Todo: We probably don't need this.
         this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
@@ -74,8 +74,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
 
         // Submit on next tick to sequence behind connect response
         this.submitRawOperation([message]);
-
-        return Promise.resolve();
     }
 
     public async order(messages: IDocumentMessage[]) {
@@ -93,8 +91,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
         });
 
         this.submitRawOperation(rawMessages);
-
-        return Promise.resolve();
     }
 
     public async disconnect() {
@@ -119,8 +115,6 @@ export class LocalOrdererConnection implements IOrdererConnection {
         // Todo: We probably don't need this either.
         this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
         this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
-
-        return Promise.resolve();
     }
 
     public once(event: "error", listener: (...args: any[]) => void) {

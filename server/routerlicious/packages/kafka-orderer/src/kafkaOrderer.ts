@@ -64,7 +64,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     /**
      * Sends the client join op for this connection
      */
-    public async initialize() {
+    public async connect() {
         const clientDetail: IClientJoin = {
             clientId: this.clientId,
             detail: this.client,
