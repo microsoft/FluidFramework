@@ -2,10 +2,6 @@
   "name": "fluid-service-monitor",
   "version": "0.0.1",
   "description": "Node.js script that tests Fluid ordering service",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git"
-  },
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
