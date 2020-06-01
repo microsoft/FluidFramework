@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { Deferred } from "./promises";
 
 export interface ITimer {
@@ -22,6 +23,40 @@ export interface ITimer {
     clear(): void;
 }
 
+interface ITimeout {
+    /**
+     * Tick that timeout was started.
+     */
+    startTick: number;
+
+    /**
+     * Timeout duration in ms.
+     */
+    duration: number;
+
+    /**
+     * Handler to execute when timeout ends.
+     */
+    handler: () => void;
+}
+
+interface IRunningTimerState extends ITimeout {
+    /**
+     * JavaScript Timeout object.
+     */
+    timeout: NodeJS.Timeout;
+
+    /**
+     * Intended duration in ms.
+     */
+    intendedDuration: number;
+
+    /**
+     * Intended restart timeout.
+     */
+    restart?: ITimeout;
+}
+
 /**
  * This class is a thin wrapper over setTimeout and clearTimeout which
  * makes it simpler to keep track of recurring timeouts with the same
@@ -32,14 +67,15 @@ export class Timer implements ITimer {
      * Returns true if the timer is running.
      */
     public get hasTimer() {
-        return !!this.timer;
+        return !!this.runningState;
     }
 
-    private timer?: NodeJS.Timeout;
+    private runningState: IRunningTimerState | undefined;
 
     constructor(
         private readonly defaultTimeout: number,
-        private readonly defaultHandler: () => void) {}
+        private readonly defaultHandler: () => void,
+        private readonly getCurrentTick: () => number = () => Date.now()) {}
 
     /**
      * Calls setTimeout and tracks the resulting timeout.
@@ -47,26 +83,94 @@ export class Timer implements ITimer {
      * @param handler - overrides default handler
      */
     public start(ms: number = this.defaultTimeout, handler: () => void = this.defaultHandler) {
-        this.clear();
-        this.timer = setTimeout(() => this.wrapHandler(handler), ms);
+        this.startCore(ms, handler, ms);
     }
 
     /**
      * Calls clearTimeout on the underlying timeout if running.
      */
     public clear() {
-        if (!this.timer) {
+        if (!this.runningState) {
             return;
         }
-        clearTimeout(this.timer);
-        this.timer = undefined;
+        clearTimeout(this.runningState.timeout);
+        this.runningState = undefined;
     }
 
-    protected wrapHandler(handler: () => void) {
-        // Run clear first, in case the handler decides to start again
-        this.clear();
-        handler();
+    /**
+     * Restarts the timer with the new handler and duration.
+     * If a new handler is passed, the original handler may
+     * never execute.
+     * This is a potentially more efficient way to clear and start
+     * a new timer.
+     * @param ms - overrides previous or default timeout in ms
+     * @param handler - overrides previous or default handler
+     */
+    public restart(ms?: number, handler?: () => void) {
+        if (!this.runningState) {
+            // If restart is called first, it behaves as a call to start
+            this.start(ms, handler);
+        } else {
+            const duration = ms ?? this.runningState.intendedDuration;
+            const handlerToUse = handler ?? this.runningState.handler;
+            const remainingTime = this.calculateRemainingTime(this.runningState);
+
+            if (duration < remainingTime) {
+                // If remaining time exceeds restart duration, do a hard restart.
+                // The existing timeout time is too long.
+                this.start(duration, handlerToUse);
+            } else if (duration === remainingTime) {
+                // The existing timeout time is perfect, just update handler and data.
+                this.runningState.handler = handlerToUse;
+                this.runningState.restart = undefined;
+                this.runningState.intendedDuration = duration;
+            } else {
+                // If restart duration exceeds remaining time, set restart info.
+                // Existing timeout will start a new timeout for remaining time.
+                this.runningState.restart = {
+                    startTick: this.getCurrentTick(),
+                    duration,
+                    handler: handlerToUse,
+                };
+            }
+        }
     }
+
+    private startCore(duration: number, handler: () => void, intendedDuration: number) {
+        this.clear();
+        this.runningState = {
+            startTick: this.getCurrentTick(),
+            duration,
+            intendedDuration,
+            handler,
+            timeout: setTimeout(() => this.handler(), duration),
+        };
+    }
+
+    private handler() {
+        const runningState = this.runningState!;
+        assert.ok(runningState, "Running timer missing handler");
+        const restart = runningState.restart;
+        if (restart !== undefined) {
+            // Restart with remaining time
+            const remainingTime = this.calculateRemainingTime(restart);
+            this.startCore(remainingTime, () => restart.handler(), restart.duration);
+        } else {
+            // Run clear first, in case the handler decides to start again
+            const handler = runningState.handler;
+            this.clear();
+            handler();
+        }
+    }
+
+    private calculateRemainingTime(runningTimeout: ITimeout): number {
+        const elapsedTime = this.getCurrentTick() - runningTimeout.startTick;
+        return runningTimeout.duration - elapsedTime;
+    }
+}
+
+export interface IPromiseTimerResult {
+    timerResult: "timeout" | "cancel";
 }
 
 /**
@@ -76,20 +180,19 @@ export class Timer implements ITimer {
 export interface IPromiseTimer extends ITimer {
     /**
      * Starts the timer and returns a promise that
-     * resolves when the timer times out, or
-     * rejects if clear is called.
+     * resolves when the timer times out or is canceled.
      */
-    start(): Promise<void>;
+    start(): Promise<IPromiseTimerResult>;
 }
 
 /**
  * This class is a wrapper over setTimeout and clearTimeout which
  * makes it simpler to keep track of recurring timeouts with the
  * same handlers and timeouts, while also providing a promise that
- * settles when it times out.
+ * resolves when it times out.
  */
 export class PromiseTimer implements IPromiseTimer {
-    private deferred?: Deferred<void>;
+    private deferred?: Deferred<IPromiseTimerResult>;
     private readonly timer: Timer;
 
     public get hasTimer() {
@@ -103,7 +206,7 @@ export class PromiseTimer implements IPromiseTimer {
         this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
     }
 
-    public async start(ms?: number, handler?: () => void): Promise<void> {
+    public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
         this.deferred = new Deferred();
         this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
@@ -113,13 +216,15 @@ export class PromiseTimer implements IPromiseTimer {
     public clear() {
         this.timer.clear();
         if (this.deferred) {
-            this.deferred.reject("canceled");
+            this.deferred.resolve({ timerResult: "cancel" });
             this.deferred = undefined;
         }
     }
 
     protected wrapHandler(handler: () => void) {
         handler();
-        this.deferred!.resolve();
+        assert.ok(this.deferred, "Handler executed without deferred");
+        this.deferred!.resolve({ timerResult: "timeout" });
+        this.deferred = undefined;
     }
 }
