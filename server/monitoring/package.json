@@ -1,7 +1,7 @@
 {
   "name": "fluid-service-monitor",
   "version": "0.0.1",
-  "description": "Node.js script that connects to a fluid service endpoint",
+  "description": "Node.js script that tests Fluid ordering service",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git"
@@ -16,7 +16,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "docker:build": "docker build -t monitoring .",
+    "docker:build": "docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t monitoring .",
     "docker:start": "docker run --rm -t monitoring",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",

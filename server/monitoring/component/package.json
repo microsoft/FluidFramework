@@ -1,0 +1,8 @@
+{
+    "name": "fluid-component-loader",
+    "version": "0.0.1",
+    "description": "Node component loader",
+    "main": "index.js",
+    "author": "Microsoft",
+    "license": "MIT"
+  }

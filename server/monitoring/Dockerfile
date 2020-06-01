@@ -23,8 +23,8 @@ RUN npm install
 # COPY chaincode/* /tmp/components/
 
 # Give write permission to node user for installing dynamic packages
-RUN chown -R node:node /tmp/components/
-RUN chmod -R 755 /tmp/components/*
+# RUN chown -R node:node /tmp/components/
+# RUN chmod -R 755 /tmp/components/*
 
 COPY . .
 RUN npm run build
