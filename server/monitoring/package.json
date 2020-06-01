@@ -2,6 +2,7 @@
   "name": "fluid-service-monitor",
   "version": "0.0.1",
   "description": "Node.js script that tests Fluid ordering service",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
@@ -38,9 +39,9 @@
     "winston": "3.2.1"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.7.2",
-    "@fluidframework/eslint-config-fluid": "0.17.0-27805",
     "@fluidframework/build-common": "0.16.0-27916",
+    "@fluidframework/eslint-config-fluid": "0.17.0-27805",
+    "@microsoft/api-extractor": "^7.7.2",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
     "@typescript-eslint/parser": "~2.17.0",
