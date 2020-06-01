@@ -30,7 +30,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 // Redirect the web parts request if the extension isn't disabled
 function webPartsHandler(req) {
     if (!isDisabled) {
-        return { redirectUrl: 'http://localhost:3000/getclientsidewebparts' };
+        return { redirectUrl: 'http://localhost:8080/getclientsidewebparts' };
     }
 }
 
@@ -44,6 +44,26 @@ function setListeners() {
         webPartsHandler, {
             urls: combinedUrls
         }, ['requestBody', 'blocking']
+    );
+    chrome.webRequest.onBeforeSendHeaders.addListener(
+        function(details) {
+            return {
+                requestHeaders: []
+            };
+        }, { urls: ["http://localhost:8080/getclientsidewebparts"] }, ['blocking', 'requestHeaders']
+    );
+    chrome.webRequest.onHeadersReceived.addListener(
+        function(details) {
+            const responseHeaders = [
+                { name: "Access-Control-Allow-Origin", value: "*" },
+                { name: "Access-Control-Allow-Credentials", value: "true" },
+                { name: "Access-Control-Allow-Methods", value: "GET,HEAD,OPTIONS,POST,PUT" },
+                { name: "Access-Control-Allow-Headers", value: "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization" },
+            ]
+            return { responseHeaders };
+        }, {
+            urls: ["http://localhost:8080/getclientsidewebparts"],
+        }, ["blocking", "responseHeaders", "extraHeaders"]
     );
 }
 setListeners();
