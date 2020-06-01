@@ -9,7 +9,7 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
 import { logVerbose, logStatus } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
-import { readFileAsync, writeFileAsync, existsSync } from "../common/utils";
+import { readFileAsync, writeFileAsync, existsSync, appendFileSync } from "../common/utils";
 
 function printUsage() {
     console.log(
@@ -92,51 +92,64 @@ interface IPackageInfo {
 }
 
 namespace IPackageInfo {
-    export const toString = (info: IPackageInfo): string =>
-        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |`;
+    export const toMdString = (info: IPackageInfo): string =>
+        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
 }
 
 const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
 
+async function getPackageInfo(pkg: Package): Promise<IPackageInfo> {
+    const name = IPackageName.parse(pkg.name);
+    const dir = pkg.directory;
+    const folderName = path.basename(dir);
+    const readmePath = path.join(dir, "readme.md");
+
+    let readmeInfo: IReadmeInfo = { exists: false };
+    if (existsSync(readmePath)) {
+        const readme = await readFileAsync(readmePath, "utf8");
+        const lines = readme.split(/\r?\n/);
+        const titleMatches = readmeTitleRegexp.exec(lines[0]);
+        const title = titleMatches?.[1] ?? "";
+        readmeInfo = {
+            exists: true,
+            title,
+        };
+    }
+
+    return { name, dir, folderName, readmeInfo };
+}
+
+async function writeInfoToFile(infoP: Promise<IPackageInfo>): Promise<void> {
+    const filePath: string = path.join(repoRoot, packagesMdFileName);
+    const fileLine: string = IPackageInfo.toMdString(await infoP);
+    appendFileSync(filePath, fileLine);
+}
+
+let repoRoot: string = "UNRESOLVED";
+
 async function main() {
     const timer = new Timer(commonOptions.timer);
 
-    const resolvedRoot = await getResolvedFluidRoot();
+    repoRoot = await getResolvedFluidRoot();
 
     // Load the packages
-    const packages = Packages.loadDir(resolvedRoot);
+    const packages = Packages.loadDir(repoRoot);
     timer.time("Package scan completed");
 
     try {
-        const auditPackage = async (pkg: Package): Promise<IPackageInfo> => {
-            const name = IPackageName.parse(pkg.name);
-            const dir = pkg.directory;
-            const folderName = path.basename(dir);
-            const readmePath = path.join(dir, "readme.md");
+        // Write the file header
+        const packagesMdFilePath: string = path.join(repoRoot, packagesMdFileName);
+        await writeFileAsync(packagesMdFilePath, packagesMdHeader);
 
-            let readmeInfo: IReadmeInfo = { exists: false };
-            if (existsSync(readmePath)) {
-                const readme = await readFileAsync(readmePath, "utf8");
-                const lines = readme.split(/\r?\n/);
-                const titleMatches = readmeTitleRegexp.exec(lines[0]);
-                const title = titleMatches?.[1] ?? "";
-                readmeInfo = {
-                    exists: true,
-                    title,
-                };
-            }
-
-            return { name, dir, folderName, readmeInfo };
-        };
         packages
-            .map(auditPackage)
-            .forEach(async (info) => console.log(IPackageInfo.toString(await info)));
+            .map(getPackageInfo)
+            .forEach(writeInfoToFile);
         
         //* TODO
         /**
-         * 1. Write to the file instead of the console
          * 2. Log warnings where the columns don't match
          *      - Open an issue with the current output of that log and make a Fluid Doc about it
+         *      - Auto-fix options
          * 3. Misc
          *      - Use relative links for Directory
          * 4. Optional
@@ -149,5 +162,16 @@ async function main() {
         process.exit(-2);
     }
 }
+
+const packagesMdFileName: string = "PACKAGES.md";
+
+const packagesMdHeader: string =
+`# All Packages
+
+_This file is generated, please don't edit it manually._
+
+| package name | folder name | readme title | directory path |
+| --- | --- | --- | --- |
+`;
 
 main();
