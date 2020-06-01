@@ -69,7 +69,8 @@ module.exports = class extends Generator {
     }
 
     if (this.options["view-react"] && this.options["view-none"]) {
-      this.log(chalk.yellow("Both --react and --no-view have been selected. Defaulting to react"));
+      this.log(chalk.red("Both --view-react and --view-none options have been included. Prompting question."));
+      delete this.options["view-react"];
       delete this.options["view-none"];
     }
 
