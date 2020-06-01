@@ -41,6 +41,7 @@
     "@types/lodash.isequal": "^4.5.5",
     "@types/node": "^11.9.4",
     "@types/rimraf": "^2.0.3",
-    "@types/semver": "^7.1.0"
+    "@types/semver": "^7.1.0",
+    "replace-in-file": "^6.0.0"
   }
 }

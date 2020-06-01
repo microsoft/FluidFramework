@@ -9,9 +9,9 @@ import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import path from "path";
 import { Package, Packages } from "../common/npmPackage";
-import { readFileAsync, writeFileAsync, existsSync, appendFileSync, renameSync } from "../common/utils";
+import { writeFileAsync, readFileSync, writeFileSync, existsSync, appendFileSync, renameSync } from "../common/utils";
 import chalk from "chalk";
-import { AsyncResource } from "async_hooks";
+import replace from "replace-in-file";
 
 function printUsage() {
     console.log(
@@ -68,26 +68,12 @@ type IReadmeInfo = {
 } | {
     exists: true;
     title: string;
-    stub: false;
-}
-
-type IPackageName = {
-    fullName: string,
-    scopedName?: string,
-}
-
-namespace IPackageName {
-    export const parse = (name: string): IPackageName => {
-        if (name.startsWith("@")) {
-            const [, scopedName] = name.split("/") as [string, string];
-            return { fullName: name, scopedName };
-        }
-        return { fullName: name };
-    }
+    stub: boolean;
 }
 
 interface IPackageInfo {
-    name: IPackageName;
+    fullName: string,
+    scopedName?: string,
     dir: string;
     folderName: string;
     readmeInfo: IReadmeInfo;
@@ -95,31 +81,49 @@ interface IPackageInfo {
 
 namespace IPackageInfo {
     export const toMdString = (info: IPackageInfo): string =>
-        `| ${info.name.fullName} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
+        `| ${info.fullName} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
 }
 
 const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
 
-async function getPackageInfo(pkg: Package): Promise<IPackageInfo> {
-    const name = IPackageName.parse(pkg.name);
-    const dir = pkg.directory;
-    const folderName = path.basename(dir);
+function getReadmeInfo(dir: string): IReadmeInfo {
     const readmePath = path.join(dir, "readme.md");
-
-    let readmeInfo: IReadmeInfo = { exists: false };
-    if (existsSync(readmePath)) {
-        const readme = await readFileAsync(readmePath, "utf8");
-        const lines = readme.split(/\r?\n/);
-        const titleMatches = readmeTitleRegexp.exec(lines[0]);
-        const title = titleMatches?.[1] ?? "";
-        readmeInfo = {
-            exists: true,
-            title,
-            stub: false, //* Todo: check for (nearly?) empty readme
-        };
+    if (!existsSync(readmePath)) {
+        return { exists: false };
     }
 
-    return { name, dir, folderName, readmeInfo };
+    const findThreeNonemptyLines = (lines: string[]) => {
+        let nonemptyLineCount = 0;
+        for (const line of lines) {
+            if (line.trim() !== "") {
+                ++nonemptyLineCount;
+            }
+            if (nonemptyLineCount >= 3) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const readme = readFileSync(readmePath, "utf8");
+    const lines = readme.split(/\r?\n/);
+    const titleMatches = readmeTitleRegexp.exec(lines[0]);
+    const title = titleMatches?.[1] ?? "";
+    return {
+        exists: true,
+        title,
+        stub: !findThreeNonemptyLines(lines),
+    };
+}
+
+function getPackageInfo(pkg: Package): IPackageInfo {
+    const fullName = pkg.name;
+    const [, scopedName] = fullName.split("/") as [string, string];
+    const dir = pkg.directory;
+    const folderName = path.basename(dir);
+    const readmeInfo = getReadmeInfo(dir);
+
+    return { fullName, scopedName, dir, folderName, readmeInfo };
 }
 
 function appendInfoToFile(info: IPackageInfo) {
@@ -132,24 +136,46 @@ function appendInfoToFile(info: IPackageInfo) {
 function processPackageInfo(info: IPackageInfo) {
     appendInfoToFile(info);
 
-    const name = info.name.scopedName ?? info.name.fullName;
-
     console.log();
-    if (info.folderName !== name) {
-        console.log(chalk.yellowBright(`Folder name mismatch [${info.name.fullName}]`));
-        console.log(`  Package ${info.name.fullName} is in Folder "${info.folderName}"`);
+
+    const expectedFolderName = info.scopedName ?? info.fullName;
+    const readmeFilePath = path.join(info.dir, "readme.md");
+    const readmeTitle = `# ${info.fullName}`;
+    if (info.folderName !== expectedFolderName) {
+        console.log(chalk.yellowBright(`Folder name mismatch [${info.fullName}]`));
+        console.log(`  Package ${info.fullName} is in Folder "${info.folderName}"`);
+
+        if (fix) {
+            const newDir: string = info.dir.replace(new RegExp(`\/${info.folderName}$`), expectedFolderName);
+            if (prompt(`Rename ${info.dir} to ${newDir}? (y/n)`, "n")?.toLowerCase() === "y") {
+                renameSync(info.dir, newDir);
+            }
+        }
     }
     if (!info.readmeInfo.exists) {
-        console.log(chalk.redBright(`Readme missing [${info.name.fullName}]`));
-        console.log(`  Package ${info.name.fullName} has no readme.md`);
+        console.log(chalk.redBright(`Readme missing [${info.fullName}]`));
+        console.log(`  Package ${info.fullName} has no readme.md`);
+        
+        if (fix) {
+            const readmeFilePath = path.join(info.dir, "readme.md");
+            writeFileSync(readmeFilePath, `${readmeTitle}\n`);
+        }
     }
-    else if (info.readmeInfo.title !== name) {
-        console.log(chalk.redBright(`Readme title mismatch [${info.name.fullName}]`));
-        console.log(`  Readme for Package ${info.name.fullName} begins with "${info.readmeInfo.title}" instead of "# ${info.name.fullName}"`);
+    else if (info.readmeInfo.title !== info.fullName) {
+        console.log(chalk.redBright(`Readme title mismatch [${info.fullName}]`));
+        console.log(`  Readme for Package ${info.fullName} begins with "${info.readmeInfo.title}" instead of "# ${info.fullName}"`);
+
+        if (fix) {
+            replace.sync({
+                files: readmeFilePath,
+                from: /^(.*)\n/,
+                to: readmeTitle,
+            });
+        }
     }
     else if (info.readmeInfo.stub) {
-        console.log(chalk.yellowBright(`Empty readme [${info.name.fullName}]`));
-        console.log(`  Readme for Package ${info.name.fullName} is empty`);
+        console.log(chalk.yellowBright(`Stub readme [${info.fullName}]`));
+        console.log(`  Readme for Package ${info.fullName} is just a stub and needs more content`);
     }
 }
 
@@ -170,15 +196,13 @@ async function main() {
         await writeFileAsync(packagesMdFilePath, packagesMdHeader);
 
         // process the packages
-        (await Promise.all(packages.map(getPackageInfo)))
+        packages
+            .map(getPackageInfo)
             .sort((a, b) => a.dir < b.dir ? -1 : a.dir == b.dir ? 0 : 1) // sort in ABC order by directory
             .forEach(processPackageInfo);
 
         //* TODO
         /**
-         * 2. Log warnings where the columns don't match
-         *      - Auto-fix options
-         *      - Detect empty/stub readme's and warn on that too
          * 3. Misc
          *      - Use relative links for Directory
          * 4. Optional
