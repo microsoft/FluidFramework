@@ -30,9 +30,9 @@ The `index.ts` file is not very interesting and simply defines our exports. We a
 
 **The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-component-loader` uses this to find the Fluid component entry point when running `npm start`.
 
-#### `./src/model.ts`
+#### `./src/interface.ts`
 
-The `model.ts` file defines the interface between our Fluid component and our view. This abstraction is important to ensure we are building reusable and scalable components.
+The `interface.ts` file defines the interface between our Fluid component and our view. This abstraction is important to ensure we are building reusable and scalable components.
 
 #### `./src/view<%= extension %>`
 
@@ -43,10 +43,10 @@ The `view<%= extension %>` file contains all the view logic.
 ```text
 .
 ├── src
-|   ├── component<%= extension %>   // Fluid Component source code
+|   ├── component<%= extension %>    // Fluid Component source code
 |   ├── index.ts          // Export file
-|   ├── model.ts          // Model Interface Definition
-|   └── view<%= extension %>        // View Logic
+|   ├── interface.ts      // Model Interface Definition
+|   └── view<%= extension %>         // View Logic
 ├── .gitignore            // Ignore dist and node_modules
 ├── package.json          // Package manifest
 ├── README.md             // Description of your component's functionality

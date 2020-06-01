@@ -38,7 +38,7 @@ When running the generator a new folder will be generated with the following con
 ├── src
 |   ├── component.ts(x)   // Fluid Component source code
 |   ├── index.ts          // Export file
-|   ├── model.ts          // Model Interface Definition
+|   ├── interface.ts      // Model Interface Definition
 |   └── view.ts(x)        // View Logic
 ├── .gitignore            // Ignore dist and node_modules
 ├── package.json          // Package manifest
