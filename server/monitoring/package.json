@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
@@ -31,7 +31,6 @@
     "@fluidframework/server-services": "0.1006.0-28770",
     "@fluidframework/server-services-utils": "0.1006.0-28770",
     "@sentry/node": "^5.6.2",
-    "@types/mocha": "^5.2.5",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
@@ -42,6 +41,7 @@
     "@fluidframework/build-common": "0.16.0-27916",
     "@fluidframework/eslint-config-fluid": "0.17.0-27805",
     "@microsoft/api-extractor": "^7.7.2",
+    "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
     "@typescript-eslint/parser": "~2.17.0",
@@ -49,7 +49,6 @@
     "eslint": "~6.8.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.9.1",
-    "ts-node": "^8.6.2",
     "typescript": "~3.7.4"
   }
 }
