@@ -1,6 +1,6 @@
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { IDiceRoller } from "./model";
+import { IDiceRoller } from "./interface";
 
 export class DiceRollerView implements IComponentHTMLView {
     constructor(private readonly model: IDiceRoller) { }

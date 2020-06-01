@@ -5,7 +5,7 @@ import {
 import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { IDiceRoller } from "./model";
+import { IDiceRoller } from "./interface";
 import { DiceRollerView } from "./view";
 
 const diceValueKey = "diceValue";

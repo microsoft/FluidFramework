@@ -8,7 +8,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { IDiceRoller } from "./model";
+import { IDiceRoller } from "./interface";
 import { DiceRollerView } from "./view";
 
 const diceValueKey = "diceValue";
