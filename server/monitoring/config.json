@@ -1,0 +1,30 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "notification": {
+        "enabled": false,
+        "endpoint" : "sentry_endpoint_for_logging_error"
+    },
+    "loader": {
+        "orderer": "https://alfred.r11s-wu2.prague.office-int.com",
+        "storage": "https://historian.r11s-wu2.prague.office-int.com",
+        "tenant": "fluid",
+        "secret": "kugsxew39jx2wh163igxrglphy2kcws3",
+        "jwtKey": "Air07cdhm0FdTQAkLnv9yaR9KyMy2YwP",
+        "user": "service-monitor-user",
+        "waitMSec": 20000,
+        "docId": "",
+        "component": {
+            "load": false,
+            "packageName": "@fluid-example/key-value-cache@0.18.0-25965",
+            "installPath": "/tmp/components",
+            "timeoutMS": 60000
+        }
+    }
+}
