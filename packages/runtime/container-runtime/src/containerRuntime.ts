@@ -1053,6 +1053,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     /**
+     * back-compat: supporting <= 0.18 components
+     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
+     * local changes. All pending changes are automatically flushed by shared objects on connection.
+     */
+    public notifyPendingMessages(): void {
+        assert(!this.connected);
+        this.updateDocumentDirtyState(true);
+    }
+
+    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
