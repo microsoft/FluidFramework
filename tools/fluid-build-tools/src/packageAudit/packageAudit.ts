@@ -3,22 +3,27 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import * as path from "path";
-import { logVerbose, logStatus } from "../common/logging";
+import path from "path";
 import { Package, Packages } from "../common/npmPackage";
-import { readFileAsync, writeFileAsync, existsSync, appendFileSync } from "../common/utils";
+import { readFileAsync, writeFileAsync, existsSync, appendFileSync, renameSync } from "../common/utils";
+import chalk from "chalk";
+import { AsyncResource } from "async_hooks";
 
 function printUsage() {
     console.log(
         `
 Usage: package-audit <options>
 Options:
+     --fix           Attempt to fix any package naming inconsistencies
 ${commonOptionString}
 `);
 }
+
+let fix: boolean = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -40,6 +45,11 @@ function parseOptions(argv: string[]) {
             process.exit(0);
         }
 
+        if (arg === "--fix") {
+            fix = true;
+            continue;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -58,30 +68,22 @@ type IReadmeInfo = {
 } | {
     exists: true;
     title: string;
+    stub: false;
 }
 
 type IPackageName = {
-    scoped: true,
-    scope: string,
-    scopedName: string,
-} | {
-    scoped: false,
-    name: string,
+    fullName: string,
+    scopedName?: string,
 }
 
 namespace IPackageName {
     export const parse = (name: string): IPackageName => {
         if (name.startsWith("@")) {
-            const [scope, scopedName] = name.split("/") as [string, string];
-            return { scoped: true, scope, scopedName };
+            const [, scopedName] = name.split("/") as [string, string];
+            return { fullName: name, scopedName };
         }
-        return { scoped: false, name };
+        return { fullName: name };
     }
-
-    export const toString = (name: IPackageName): string =>
-        name.scoped
-            ? `${name.scope}/${name.scopedName}`
-            : name.name;
 }
 
 interface IPackageInfo {
@@ -93,7 +95,7 @@ interface IPackageInfo {
 
 namespace IPackageInfo {
     export const toMdString = (info: IPackageInfo): string =>
-        `| ${IPackageName.toString(info.name)} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
+        `| ${info.name.fullName} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
 }
 
 const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
@@ -113,19 +115,45 @@ async function getPackageInfo(pkg: Package): Promise<IPackageInfo> {
         readmeInfo = {
             exists: true,
             title,
+            stub: false, //* Todo: check for (nearly?) empty readme
         };
     }
 
     return { name, dir, folderName, readmeInfo };
 }
 
-async function writeInfoToFile(infoP: Promise<IPackageInfo>): Promise<void> {
-    const filePath: string = path.join(repoRoot, packagesMdFileName);
-    const fileLine: string = IPackageInfo.toMdString(await infoP);
+function appendInfoToFile(info: IPackageInfo) {
+    assert(repoRoot);
+    const filePath: string = path.join(repoRoot!, packagesMdFileName);
+    const fileLine: string = IPackageInfo.toMdString(info);
     appendFileSync(filePath, fileLine);
 }
 
-let repoRoot: string = "UNRESOLVED";
+function processPackageInfo(info: IPackageInfo) {
+    appendInfoToFile(info);
+
+    const name = info.name.scopedName ?? info.name.fullName;
+
+    console.log();
+    if (info.folderName !== name) {
+        console.log(chalk.yellowBright(`Folder name mismatch [${info.name.fullName}]`));
+        console.log(`  Package ${info.name.fullName} is in Folder "${info.folderName}"`);
+    }
+    if (!info.readmeInfo.exists) {
+        console.log(chalk.redBright(`Readme missing [${info.name.fullName}]`));
+        console.log(`  Package ${info.name.fullName} has no readme.md`);
+    }
+    else if (info.readmeInfo.title !== name) {
+        console.log(chalk.redBright(`Readme title mismatch [${info.name.fullName}]`));
+        console.log(`  Readme for Package ${info.name.fullName} begins with "${info.readmeInfo.title}" instead of "# ${info.name.fullName}"`);
+    }
+    else if (info.readmeInfo.stub) {
+        console.log(chalk.yellowBright(`Empty readme [${info.name.fullName}]`));
+        console.log(`  Readme for Package ${info.name.fullName} is empty`);
+    }
+}
+
+let repoRoot: string | undefined;
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
@@ -141,15 +169,16 @@ async function main() {
         const packagesMdFilePath: string = path.join(repoRoot, packagesMdFileName);
         await writeFileAsync(packagesMdFilePath, packagesMdHeader);
 
-        packages
-            .map(getPackageInfo)
-            .forEach(writeInfoToFile);
-        
+        // process the packages
+        (await Promise.all(packages.map(getPackageInfo)))
+            .sort((a, b) => a.dir < b.dir ? -1 : a.dir == b.dir ? 0 : 1) // sort in ABC order by directory
+            .forEach(processPackageInfo);
+
         //* TODO
         /**
          * 2. Log warnings where the columns don't match
-         *      - Open an issue with the current output of that log and make a Fluid Doc about it
          *      - Auto-fix options
+         *      - Detect empty/stub readme's and warn on that too
          * 3. Misc
          *      - Use relative links for Directory
          * 4. Optional
