@@ -19,7 +19,7 @@ describe("Yo fluid", function () {
             runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                 .withPrompts({
                     componentName: "foobar",
-                    template: "react"
+                    viewFramework: "react"
                 });
             return runContext;
         });
@@ -28,7 +28,7 @@ describe("Yo fluid", function () {
             const expectedFiles = [
                 "src/component.tsx",
                 "src/index.ts",
-                "src/model.ts",
+                "src/interface.ts",
                 "src/view.tsx",
                 ".gitignore",
                 ".npmrc",
@@ -52,7 +52,7 @@ describe("Yo fluid", function () {
         });
     });
 
-    describe("Vanilla", () => {
+    describe("None", () => {
         let runContext;
         let oldCwd;
         before(() => {
@@ -60,7 +60,7 @@ describe("Yo fluid", function () {
             runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                 .withPrompts({
                     componentName: "foobar",
-                    template: "vanillaJS"
+                    viewFramework: "none"
                 });
             return runContext;
         });
@@ -69,7 +69,7 @@ describe("Yo fluid", function () {
             const expectedFiles = [
                 "src/component.ts",
                 "src/index.ts",
-                "src/model.ts",
+                "src/interface.ts",
                 "src/view.ts",
                 ".gitignore",
                 ".npmrc",
