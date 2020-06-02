@@ -100,7 +100,6 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
-    removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
     toJSONObject(): any;
     /**
@@ -564,7 +563,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     abstract clone(): ISegment;
     abstract append(segment: ISegment): void;
-    abstract removeRange(start: number, end: number): boolean;
     protected abstract createSplitSegmentAt(pos: number): BaseSegment;
 }
 
@@ -602,10 +600,6 @@ export class ExternalSegment extends BaseSegment {
 
     append() {
         throw new Error("Can not append to external segment");
-    }
-
-    removeRange(start: number, end: number): boolean {
-        throw new Error("Method not implemented.");
     }
 
     protected createSplitSegmentAt(pos: number): BaseSegment {
@@ -819,11 +813,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
             });
         }
         return `M ${bbuf}: ${lbuf} ${pbuf}`;
-    }
-
-    removeRange(start: number, end: number): boolean {
-        console.log("remove range called on marker");
-        return false;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -1091,10 +1080,6 @@ const minListenerComparer: Collections.Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE },
     compare: (a, b) => a.minRequired - b.minRequired,
 };
-
-export interface RemoveRangeInfo {
-    highestBlockRemovingChildren: IMergeBlock;
-}
 
 export type LocalReferenceMapper = (id: string) => LocalReference;
 
