@@ -408,11 +408,11 @@ const getThemeConfig = () => {
         heroSymbol: permalinkSymbol(),
         smoothScroll: true,
         sidebarDepth: 1,
-        nav: getNav(),
-        sidebar: getAllSidebars(),
+        // nav: getNav(),
+        // sidebar: getAllSidebars(),
     };
     if (DOCS_AUDIENCE === "internal") {
-        config.repo = "microsoft/FluidFramework";
+        // config.repo = "microsoft/FluidFramework";
     }
     return config;
 }
