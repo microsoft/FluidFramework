@@ -11,6 +11,9 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
+    IComponentHandleContext,
+    IComponentHandle,
+    IComponentLoadable,
 } from "@fluidframework/component-core-interfaces";
 import { IDeltaManager, ErrorType, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -25,7 +28,7 @@ import {
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
 import { IConnectableRuntime, RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
-import { IComponentSummarizer } from "./componentSummarizer";
+import { SummarizerHandle } from "./summarizerHandle";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -63,7 +66,7 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentSummarizer {
+    extends IEventProvider<ISummarizerEvents>, IComponentRouter, IComponentRunnable, IComponentLoadable {
     /**
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
@@ -517,6 +520,7 @@ export class RunningSummarizer implements IDisposable {
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
     public get IComponentSummarizer() {return this;}
+    public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get ISummarizer() { return this; }
@@ -532,6 +536,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
     constructor(
         public readonly url: string,
         private readonly runtime: ISummarizerRuntime,
@@ -539,6 +547,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
+        handleContext: IComponentHandleContext,
         summaryCollection?: SummaryCollection,
     ) {
         super();
@@ -555,6 +564,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
+        this.innerHandle = new SummarizerHandle(this, this.url, handleContext);
     }
 
     public async run(onBehalfOf: string): Promise<void> {

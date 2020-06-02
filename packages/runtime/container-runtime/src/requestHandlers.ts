@@ -5,7 +5,6 @@
 import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "./requestParser";
-import { IComponentSummarizer } from "./componentSummarizer";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
@@ -37,9 +36,7 @@ export const createComponentResponse = (component: IComponent) => {
     return { status: 200, mimeType: "fluid/component", value: component };
 };
 
-export function createLoadableComponentRuntimeRequestHandler(
-    component: IComponentLoadable | IComponentSummarizer,
-): RuntimeRequestHandler {
+export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
     const pathParts = RequestParser.getPathParts(component.url);
     return async (request: RequestParser, runtime: IContainerRuntime) => {
         for (let i = 0; i < pathParts.length; i++) {
