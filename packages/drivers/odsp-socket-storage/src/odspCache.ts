@@ -58,30 +58,9 @@ export const updateUsageOpMultiplier = 1.2;
 export const startingUpdateUsageOpFrequency = 100;
 
 /**
- * Versioned cache entry.
- */
-export interface ICacheVersionedEntry extends ICacheEntry {
-    /**
-     * Version of cached entry.
-     * When new entry is put to cache, old entries (all other versions) should be trimmed from the cache.
-     * Requests for data are version-less, and should return last version put into the cache.
-     * As such, version information is useful for updateUsage() calls, as individual clients do not
-     * know if they are operating on latest version, Requests to update usage from such clients should
-     * be ignored.
-     */
-    version: string;
-}
-
-/**
  * Persistent cache. This interface can be implemented by the host to provide durable caching
  * across sessions. If not provided, driver will provide in-memory cache that does not survive
  * across session boundary.
- *
- * Note that entries stored in cache are versioned, but request for data are not (version-less).
- * Host is expected to store only latest version provided by driver.
- * Latest is defined by the time of put() call, there is no way to compare versions other than for equality.
- * Updates on usage contain version info. If newer version of entry is already stored in cache,
- * host should ignore such updates.
  */
 export interface IPersistedCache {
     /**
@@ -100,12 +79,12 @@ export interface IPersistedCache {
     get(entry: ICacheEntry, maxOpCount?: number): Promise<any>;
 
     /**
-     * Put the value into cache. Overwrites any prior version of same entry.
+     * Put the value into cache.
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
      * @param value - JSON-serializable content.
      */
-    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number): void;
+    put(entry: ICacheEntry, value: any, seqNumber?: number): void;
 
     // Tells how far given entry is behind, in number of ops.
     // The bigger the number, the more stale entry (like snapshot)
@@ -114,7 +93,7 @@ export interface IPersistedCache {
     // NOte: Driver will implement exponential back off stretegy here, calling this API
     // less and less often as data comes in. Please see startingUpdateUsageOpFrequency and
     // updateUsageOpMultiplier for reference implementation
-    updateUsage(entry: ICacheVersionedEntry, opCount: number): void;
+    updateUsage(entry: ICacheEntry, opCount: number): void;
 }
 
 /**
@@ -169,7 +148,7 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number) {
+    put(entry: ICacheEntry, value: any, seqNumber?: number) {
         try {
             this.cache.put(entry, value, seqNumber);
         } catch (error) {
@@ -178,7 +157,7 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    updateUsage(entry: ICacheVersionedEntry, opCount: number): void {
+    updateUsage(entry: ICacheEntry, opCount: number): void {
         try {
             this.cache.updateUsage(entry, opCount);
         } catch (error) {
@@ -205,7 +184,7 @@ export class LocalPersistentCache implements IPersistedCache {
         return this.cache.get(entry);
     }
 
-    put(entry: ICacheVersionedEntry, value: any, seqNumber?: number) {
+    put(entry: ICacheEntry, value: any, seqNumber?: number) {
         this.cache.set(entry, value);
 
         // Do not keep items too long in memory
@@ -213,7 +192,7 @@ export class LocalPersistentCache implements IPersistedCache {
         this.gc.schedule(entry, snapshotExpiryDefaultPolicy);
     }
 
-    updateUsage(entry: ICacheVersionedEntry, opCount: number): void {
+    updateUsage(entry: ICacheEntry, opCount: number): void {
     }
 }
 

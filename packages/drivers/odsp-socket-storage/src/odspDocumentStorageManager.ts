@@ -40,7 +40,7 @@ import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     IOdspCache,
-    ICacheVersionedEntry,
+    ICacheEntry,
     IFileEntry,
     snapshotExpirySummarizerOps,
 } from "./odspCache";
@@ -76,7 +76,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
     private firstVersionCall = true;
-    private _snapshotCacheEntry: ICacheVersionedEntry | undefined;
+    private _snapshotCacheEntry: ICacheEntry | undefined;
 
     private readonly fileEntry: IFileEntry;
 
@@ -474,7 +474,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this._snapshotCacheEntry = {
             file: this.fileEntry,
             key: "snapshot",
-            version: cachedSnapshot.id,
         };
 
         const seqNumber = cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber;
