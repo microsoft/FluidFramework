@@ -5,7 +5,14 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer, IPromiseTimerResult } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    Deferred,
+    PerformanceEvent,
+    PromiseTimer,
+    Timer,
+    IPromiseTimerResult,
+} from "@fluidframework/common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,

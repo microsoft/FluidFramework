@@ -5,7 +5,15 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer, IPromiseTimerResult } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    Heap,
+    IComparer,
+    IHeapNode,
+    PerformanceEvent,
+    PromiseTimer,
+    IPromiseTimerResult,
+} from "@fluidframework/common-utils";
 import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
