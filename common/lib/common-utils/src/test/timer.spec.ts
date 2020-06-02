@@ -188,6 +188,24 @@ describe("Timers", () => {
             timer.restart();
             testExactTimeout(defaultTimeout);
         });
+
+        it("Should use override handler of latest restart by default", () => {
+            let specialRunCount = 0;
+            timer.start();
+            clock.tick(defaultTimeout - 10);
+            assertShouldNotRunYet();
+
+            // Override handler for restart
+            timer.restart(undefined, () => specialRunCount++);
+            clock.tick(5); // Make sure < 10 ms passes for test
+            assertShouldNotRunYet();
+            assertShouldNotRunYet(0, () => specialRunCount);
+
+            // Now subsequent restart should use previous restart handler
+            timer.restart();
+            testExactTimeout(defaultTimeout, () => specialRunCount);
+            assert.strictEqual(runCount, 0, "Should not run default handler");
+        });
     });
 
     describe("PromiseTimer", () => {
@@ -224,12 +242,12 @@ describe("Timers", () => {
             assert.strictEqual(resolveResult, undefined, "Run promise should not be resolved yet");
         };
 
-        const testExactTimeout = async (time: number, getRunCount = () => runCount) => {
-            const initialRunCount = getRunCount();
+        const testExactTimeout = async (time: number) => {
+            const initialRunCount = runCount;
             await tickAndFlush(time - 1);
-            assertShouldNotRunYet(initialRunCount, getRunCount);
-            clock.tick(1);
-            assert.strictEqual(getRunCount(), initialRunCount + 1, "Should run exactly once");
+            assertShouldNotRunYet(initialRunCount);
+            await tickAndFlush(1);
+            assert.strictEqual(runCount, initialRunCount + 1, "Should run exactly once");
             assert(resolveResult === "timeout", "Run promise should be resolved");
         };
 
@@ -265,7 +283,7 @@ describe("Timers", () => {
             assert.strictEqual(runCount, 0, "Should not run after cleared");
 
             // Make extra sure
-            clock.tick(defaultTimeout + 1);
+            await tickAndFlush(defaultTimeout + 1);
             assert.strictEqual(runCount, 0, "Should never run after cleared");
         });
     });

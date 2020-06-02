@@ -112,7 +112,7 @@ export class Timer implements ITimer {
             this.start(ms, handler);
         } else {
             const duration = ms ?? this.runningState.intendedDuration;
-            const handlerToUse = handler ?? this.runningState.handler;
+            const handlerToUse = handler ?? this.runningState.restart?.handler ?? this.runningState.handler;
             const remainingTime = this.calculateRemainingTime(this.runningState);
 
             if (duration < remainingTime) {
@@ -148,16 +148,15 @@ export class Timer implements ITimer {
     }
 
     private handler() {
-        const runningState = this.runningState!;
-        assert.ok(runningState, "Running timer missing handler");
-        const restart = runningState.restart;
+        assert.ok(this.runningState, "Running timer missing handler");
+        const restart = this.runningState.restart;
         if (restart !== undefined) {
             // Restart with remaining time
             const remainingTime = this.calculateRemainingTime(restart);
             this.startCore(remainingTime, () => restart.handler(), restart.duration);
         } else {
             // Run clear first, in case the handler decides to start again
-            const handler = runningState.handler;
+            const handler = this.runningState.handler;
             this.clear();
             handler();
         }
@@ -224,7 +223,7 @@ export class PromiseTimer implements IPromiseTimer {
     protected wrapHandler(handler: () => void) {
         handler();
         assert.ok(this.deferred, "Handler executed without deferred");
-        this.deferred!.resolve({ timerResult: "timeout" });
+        this.deferred.resolve({ timerResult: "timeout" });
         this.deferred = undefined;
     }
 }
