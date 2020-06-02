@@ -50,7 +50,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0-0",
+    "@fluidframework/common-definitions": "^0.18.0",
     "@fluidframework/common-utils": "^0.19.0-0",
     "@fluidframework/component-core-interfaces": "^0.19.0",
     "@fluidframework/component-runtime-definitions": "^0.19.0",
