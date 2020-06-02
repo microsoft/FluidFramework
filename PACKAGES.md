@@ -4,7 +4,6 @@ _This file is generated, please don't edit it manually._
 
 | package name | folder name | readme title | directory path |
 | --- | --- | --- | --- |
-| root | FluidFramework | Fluid | C:\src\mf\FluidFramework |
 | @fluidframework/build-common | build-common | Build Common | C:\src\mf\FluidFramework\common\build\build-common |
 | @fluidframework/eslint-config-fluid | eslint-config-fluid | @fluidframework/eslint-config-fluid | C:\src\mf\FluidFramework\common\build\eslint-config-fluid |
 | @fluidframework/common-definitions | common-definitions | @fluidframework/common-definitions | C:\src\mf\FluidFramework\common\lib\common-definitions |
@@ -126,7 +125,6 @@ _This file is generated, please don't edit it manually._
 | gitrest | gitrest | [![GitRest Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/8/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=8) | C:\src\mf\FluidFramework\server\gitrest |
 | headless-chrome | headless-agent | [![Headless Agent Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/19/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=19) | C:\src\mf\FluidFramework\server\headless-agent |
 | historian | historian | [![Historian Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/7/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=7) | C:\src\mf\FluidFramework\server\historian |
-| root | routerlicious | Routerlicious | C:\src\mf\FluidFramework\server\routerlicious |
 | chaincode-loader | chaincode | Base set of files used by Paparazzi to dynamically install chaincode on the server. | C:\src\mf\FluidFramework\server\routerlicious\chaincode |
 | @fluidframework/gitresources | gitresources | GIT Resources | C:\src\mf\FluidFramework\server\routerlicious\packages\gitresources |
 | @fluidframework/server-kafka-orderer | kafka-orderer | NO README | C:\src\mf\FluidFramework\server\routerlicious\packages\kafka-orderer |

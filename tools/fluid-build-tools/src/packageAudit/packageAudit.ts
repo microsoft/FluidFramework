@@ -134,6 +134,10 @@ function appendInfoToFile(info: IPackageInfo) {
 }
 
 function processPackageInfo(info: IPackageInfo) {
+    if (info.fullName === "root") {
+        return;
+    }
+
     appendInfoToFile(info);
 
     console.log();
