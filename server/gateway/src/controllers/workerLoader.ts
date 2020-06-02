@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
+import { IContainer, ILoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IDocumentServiceFactory,
@@ -21,11 +21,15 @@ import {
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import * as Comlink from "comlink";
 
 // Container load requires a URL resolver although it does not make use of it.
 class NotUsedUrlResolver implements IUrlResolver {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        throw new Error("Method not implemented.");
+    }
+
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         throw new Error("Method not implemented.");
     }
@@ -59,15 +63,13 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 null);
         } else {
             factory = new OdspDocumentServiceFactory(
-                "", // figure this out
                 async (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
-                async () => Promise.resolve(this.resolved.tokens.socketToken),
-                new BaseTelemetryNullLogger());
+                async () => Promise.resolve(this.resolved.tokens.socketToken));
         }
         const container = await Container.load(
             this.id,
             factory,
-            new WebCodeLoader(),
+            new WebCodeLoader(new SemVerCdnCodeResolver()),
             this.options,
             {},
             (this as unknown) as Loader,
@@ -113,6 +115,10 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         if (this.runnable !== undefined && this.runnable.stop !== undefined) {
             return this.runnable.stop(reason);
         }
+    }
+
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer> {
+        throw new Error("Method not implemented.");
     }
 }
 
