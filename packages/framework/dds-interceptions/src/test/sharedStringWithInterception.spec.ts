@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
@@ -19,7 +19,6 @@ describe("Shared String with Interception", () => {
     describe("Simple User Attribution", () => {
         const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
         let componentContext: IComponentContext;
 
@@ -44,14 +43,9 @@ describe("Shared String with Interception", () => {
         }
 
         beforeEach(() => {
-            const runtime = new MockRuntime();
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-            runtime.services = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-                objectStorage: new MockStorage(undefined),
-            };
-            runtime.attach();
+            const componentRuntime = new MockComponentRuntime();
+            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+            componentRuntime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;

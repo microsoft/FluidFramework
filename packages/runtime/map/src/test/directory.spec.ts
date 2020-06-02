@@ -11,7 +11,7 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    MockRuntime,
+    MockComponentRuntime,
     MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
 
@@ -40,14 +40,16 @@ describe("Routerlicious", () => {
         let testDirectory: map.ISharedDirectory;
         let directoryFactory: map.DirectoryFactory;
         let mapFactory: map.MapFactory;
-        let runtime: MockRuntime;
+        let componentRuntime: MockComponentRuntime;
 
         beforeEach(async () => {
-            runtime = new MockRuntime();
+            componentRuntime = new MockComponentRuntime();
+            // We only want to test local state of the DDS.
+            componentRuntime.local = true;
             directoryFactory = new map.DirectoryFactory();
             mapFactory = new map.MapFactory();
-            rootDirectory = directoryFactory.create(runtime, "root");
-            testDirectory = directoryFactory.create(runtime, "test");
+            rootDirectory = directoryFactory.create(componentRuntime, "root");
+            testDirectory = directoryFactory.create(componentRuntime, "test");
         });
 
         it("Can get the root directory", () => {
@@ -142,7 +144,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("first", "second");
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
-                const subMap = mapFactory.create(runtime, "subMap");
+                const subMap = mapFactory.create(componentRuntime, "subMap");
                 testDirectory.set("object", subMap.handle);
 
                 const serialized = serialize(testDirectory);
@@ -155,7 +157,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("first", "second");
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
-                const subMap = mapFactory.create(runtime, "subMap");
+                const subMap = mapFactory.create(componentRuntime, "subMap");
                 testDirectory.set("object", subMap.handle);
                 const nestedDirectory = testDirectory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
@@ -174,7 +176,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", undefined);
                 assert.ok(testDirectory.has("fifth"));
-                const subMap = mapFactory.create(runtime, "subMap");
+                const subMap = mapFactory.create(componentRuntime, "subMap");
                 testDirectory.set("object", subMap.handle);
                 const nestedDirectory = testDirectory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
@@ -330,7 +332,7 @@ describe("Routerlicious", () => {
                 assert((tree.entries[1].value as IBlob).contents.length >= 1024);
                 assert((tree.entries[2].value as IBlob).contents.length <= 200);
 
-                const testDirectory2 = directoryFactory.create(runtime, "test");
+                const testDirectory2 = directoryFactory.create(componentRuntime, "test");
                 const storage = MockSharedObjectServices.createFromTree(tree);
                 await (testDirectory2 as SharedDirectory).load("branchId", storage);
 

@@ -6,25 +6,27 @@
 import assert from "assert";
 import { ITree } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import {
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
     describe(".snapshot", () => {
         const documentId = "fakeId";
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
         let sharedString: SharedString;
 
         beforeEach(() => {
-            const runtime = new MockRuntime();
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-            runtime.services = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-                objectStorage: new MockStorage(undefined),
-            };
-            runtime.attach();
+            const componentRuntime = new MockComponentRuntime();
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
+            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+            componentRuntime.attach();
         });
 
         it("Create and compare snapshot", async () => {
@@ -67,13 +69,14 @@ describe("SharedString", () => {
         });
 
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-            const runtime = new MockRuntime();
+            const componentRuntime = new MockComponentRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services: ISharedObjectServices = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
+                deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
 
-            const sharedString2 = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+            const sharedString2 = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/* branchId */, services);
             await sharedString2.loaded;
@@ -97,41 +100,40 @@ describe("SharedString", () => {
     });
 
     describe("reconnect", () => {
-        let deltaConnection1: IDeltaConnection;
-        let deltaConnection2: IDeltaConnection;
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
         let sharedString1: SharedString;
         let sharedString2: SharedString;
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
 
         async function createSharedString(
             id: string,
-            runtime: MockRuntime,
+            componentRuntime: MockComponentRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<SharedString> {
-            runtime.services = {
+            const services: ISharedObjectServices = {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };
-            runtime.attach();
-            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
-            runtime.local = false;
-
-            const sharedString = new SharedString(runtime, id, SharedStringFactory.Attributes);
-            sharedString.connect(runtime.services);
+            componentRuntime.attach();
+            const sharedString = new SharedString(componentRuntime, id, SharedStringFactory.Attributes);
+            sharedString.connect(services);
             return sharedString;
         }
 
         beforeEach(async () => {
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first SharedString
-            const runtime1 = new MockRuntime();
-            deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
+            const runtime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const deltaConnection1 = containerRuntime1.createDeltaConnection();
             sharedString1 = await createSharedString("sharedString1", runtime1, deltaConnection1);
 
             // Create second SharedString
-            const runtime2 = new MockRuntime();
-            deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
+            const runtime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const deltaConnection2 = containerRuntime2.createDeltaConnection();
             sharedString2 = await createSharedString("sharedString2", runtime2, deltaConnection2);
         });
 
@@ -141,11 +143,11 @@ describe("SharedString", () => {
             sharedString1.replaceText(2, 3, "aaa");
 
             // Disconnect and reconnect the first collection.
-            deltaConnection1.connected = false;
-            deltaConnection1.connected = true;
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
 
             // Process the messages.
-            deltaConnectionFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             // Verify that the changes were correctly received by the second SharedString
             assert.equal(sharedString2.getText(), "12aaa");
@@ -153,17 +155,17 @@ describe("SharedString", () => {
 
         it("can store ops in disconnected state and resend them on reconnection", async () => {
             // Disconnect the first SharedString.
-            deltaConnection1.connected = false;
+            containerRuntime1.connected = false;
 
             // Make couple of changes to it.
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
             // Reconnect the first SharedString.
-            deltaConnection1.connected = true;
+            containerRuntime1.connected = true;
 
             // Process the messages.
-            deltaConnectionFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             // Verify that the changes were correctly received by the second SharedString
             assert.equal(sharedString2.getText(), "12aaa");

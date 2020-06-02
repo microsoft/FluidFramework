@@ -4,9 +4,15 @@
  */
 
 import assert from "assert";
-import { IDeltaConnection } from "@fluidframework/component-runtime-definitions";
+import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
 import { strongAssert } from "@fluidframework/runtime-utils";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import {
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
@@ -157,78 +163,72 @@ describe("ConsensusOrderedCollection", () => {
 
     describe("Detached", () => {
         generate([1, 2], [1, 2], () => {
-            return factory.create(new MockRuntime(), "consensus-ordered-collection");
+            return factory.create(new MockComponentRuntime(), "consensus-ordered-collection");
         },
         () => {});
     });
 
     describe("Attached, connected", () => {
-        let deltaConnFactory: MockDeltaConnectionFactory;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
         let counter = 0;
 
         generate([1, 2], [1, 2],
             () => {
-                const runtime = new MockRuntime();
-                deltaConnFactory = new MockDeltaConnectionFactory();
-                const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-                runtime.services = {
-                    deltaConnection,
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                const componentRuntime = new MockComponentRuntime();
+                const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+                const services: ISharedObjectServices = {
+                    deltaConnection: containerRuntime.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
 
-                // Make the runtime non-local so that ops are submitted to the DeltaConnection.
-                runtime.local = false;
-
                 counter++;
-                const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
-                testCollection.connect(runtime.services);
-                deltaConnection.connected = true;
+                const testCollection = factory.create(componentRuntime, `consensus-ordered-collection_${counter}`);
+                testCollection.connect(services);
                 return testCollection;
             },
             () => {
-                deltaConnFactory.processAllMessages();
+                containerRuntimeFactory.processAllMessages();
             });
     });
 
     describe("Reconnection flow", () => {
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
-        let runtime1: MockRuntime;
-        let runtime2: MockRuntime;
-        let deltaConnection1: IDeltaConnection;
-        let deltaConnection2: IDeltaConnection;
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
         let testCollection1: IConsensusOrderedCollection;
         let testCollection2: IConsensusOrderedCollection;
 
         async function createConsensusOrderedCollection(
             id: string,
-            runtime: MockRuntime,
+            componentRuntime: MockComponentRuntime,
             deltaConnection: IDeltaConnection,
         ): Promise<IConsensusOrderedCollection> {
-            runtime.services = {
+            const services: ISharedObjectServices = {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };
-            runtime.attach();
-            // Make the runtime non-local so that ops are submitted to the DeltaConnection.
-            runtime.local = false;
+            componentRuntime.attach();
 
-            const consensusOrderedCollection = factory.create(runtime, id);
-            consensusOrderedCollection.connect(runtime.services);
+            const consensusOrderedCollection = factory.create(componentRuntime, id);
+            consensusOrderedCollection.connect(services);
             return consensusOrderedCollection;
         }
 
         beforeEach(async () => {
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            runtime1 = new MockRuntime();
-            deltaConnection1 = deltaConnectionFactory.createDeltaConnection(runtime1);
+            const runtime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const deltaConnection1 = containerRuntime1.createDeltaConnection();
             testCollection1 =
                 await createConsensusOrderedCollection("consenses-ordered-collection1", runtime1, deltaConnection1);
 
             // Create second ConsensusOrderedCollection
-            runtime2 = new MockRuntime();
-            deltaConnection2 = deltaConnectionFactory.createDeltaConnection(runtime2);
+            const runtime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const deltaConnection2 = containerRuntime2.createDeltaConnection();
             testCollection2 =
                 await createConsensusOrderedCollection("consenses-ordered-collection2", runtime2, deltaConnection2);
         });
@@ -252,11 +252,11 @@ describe("ConsensusOrderedCollection", () => {
             const waitP = testCollection1.add(testValue);
 
             // Disconnect and reconnect the first collection.
-            deltaConnection1.connected = false;
-            deltaConnection1.connected = true;
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
 
             // Process the messages.
-            deltaConnectionFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             await waitP;
 
@@ -285,12 +285,12 @@ describe("ConsensusOrderedCollection", () => {
             });
 
             // Disconnect and reconnect the first collection.
-            deltaConnection1.connected = false;
-            deltaConnection1.connected = true;
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
 
             // Process the messages.
-            deltaConnectionFactory.processAllMessages();
-            setImmediate(() => deltaConnectionFactory.processAllMessages());
+            containerRuntimeFactory.processAllMessages();
+            setImmediate(() => containerRuntimeFactory.processAllMessages());
 
             await resultP;
 
@@ -299,7 +299,7 @@ describe("ConsensusOrderedCollection", () => {
 
             // Verify that the remote collection received the acquired op.
             assert.equal(acquiredValue, testValue, "The remote client did not receive the acquired value");
-            assert.equal(acquiredClientId, runtime1.clientId,
+            assert.equal(acquiredClientId, containerRuntime1.clientId,
                 "The remote client did not get the correct id of client that acquired the value");
         });
 
@@ -316,16 +316,16 @@ describe("ConsensusOrderedCollection", () => {
             });
 
             // Disconnect the first collection
-            deltaConnection1.connected = false;
+            containerRuntime1.connected = false;
 
             // Add a value to the first ConsensusOrderedCollection.
             const waitP = testCollection1.add(testValue);
 
             // Reconnect the first collection.
-            deltaConnection1.connected = true;
+            containerRuntime1.connected = true;
 
             // Process the messages.
-            deltaConnectionFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             await waitP;
 

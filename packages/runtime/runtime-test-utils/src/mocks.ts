@@ -51,32 +51,149 @@ import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
-export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
-    public get minimumSequenceNumber(): number {
-        return this.connectionFactory.getMinSeq();
+/**
+ * Mock implementation of IDeltaConnection for testing
+ */
+export class MockDeltaConnection implements IDeltaConnection {
+    public get connected(): boolean {
+        return this._connected;
     }
 
-    public get referenceSequenceNumber(): number {
-        return this.connectionFactory.sequenceNumber;
+    private _connected = true;
+    public handler: IDeltaHandler | undefined;
+
+    constructor(
+        private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
+        private readonly dirtyFn: () => void,
+    ) {}
+
+    public attach(handler: IDeltaHandler): void {
+        this.handler = handler;
+        handler.setConnectionState(this.connected);
     }
 
-    constructor(readonly connectionFactory?: MockDeltaConnectionFactory) {
-        super();
+    public submit(messageContent: any, localOpMetadata: unknown): number {
+        return this.submitFn(messageContent, localOpMetadata);
+    }
+
+    public dirty(): void {
+        this.dirtyFn();
+    }
+
+    public setConnectionState(connected: boolean) {
+        this._connected = connected;
+        this.handler?.setConnectionState(connected);
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        this.handler?.process(message, local, localOpMetadata);
+    }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        this.handler?.reSubmit(content, localOpMetadata);
+    }
+}
+
+// Represents the structure of a pending message stored by the MockContainerRuntime.
+export interface IMockContainerRuntimePendingMessage {
+    content: any,
+    clientSequenceNumber: number,
+    localOpMetadata: unknown,
+}
+
+/**
+ * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * If test specific logic is required, extend this class and add the logic there. For an example, take a look
+ * at MockContainerRuntimeForReconnection.
+ */
+export class MockContainerRuntime {
+    public clientId: string;
+    protected clientSequenceNumber: number = 0;
+    protected referenceSequenceNumber = 0;
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    protected readonly deltaConnections: MockDeltaConnection[] = [];
+    protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+
+    constructor(
+        protected readonly componentRuntime: MockComponentRuntime,
+        protected readonly factory: MockContainerRuntimeFactory,
+    ) {
+        this.deltaManager = new MockDeltaManager();
+        // Set ComponentRuntime's deltaManager to ours so that they are in sync.
+        this.componentRuntime.deltaManager = this.deltaManager;
+        // ComponentRuntime already creates a clientId, reuse that so they are in sync.
+        this.clientId = this.componentRuntime.clientId;
+    }
+
+    public createDeltaConnection(): MockDeltaConnection {
+        const deltaConnection = new MockDeltaConnection(
+            (messageContent: any, localOpMetadata: unknown) => this.submit(messageContent, localOpMetadata),
+            () => this.dirty(),
+        );
+        this.deltaConnections.push(deltaConnection);
+        return deltaConnection;
+    }
+
+    public submit(messageContent: any, localOpMetadata: unknown): number {
+        const clientSequenceNumber = this.clientSequenceNumber++;
+        const msg: Partial<ISequencedDocumentMessage> = {
+            clientId: this.clientId,
+            clientSequenceNumber,
+            contents: messageContent,
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            type: MessageType.Operation,
+
+        };
+        this.factory.pushMessage(msg);
+
+        this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+
+        return clientSequenceNumber;
+    }
+
+    public dirty(): void {}
+
+    public process(message: ISequencedDocumentMessage) {
+        this.referenceSequenceNumber = message.sequenceNumber;
+        const [local, localOpMetadata] = this.processInternal(message);
+        this.deltaConnections.forEach((dc) => {
+            dc.process(message, local, localOpMetadata);
+        });
+    }
+
+    protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number) {
+        const pendingMessage: IMockContainerRuntimePendingMessage = {
+            content,
+            clientSequenceNumber,
+            localOpMetadata,
+        };
+        this.pendingMessages.push(pendingMessage);
+    }
+
+    private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+        let localOpMetadata: unknown;
+        const local = this.clientId === message.clientId;
+        if (local) {
+            const pendingMessage = this.pendingMessages.shift();
+            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
+            localOpMetadata = pendingMessage.localOpMetadata;
+        }
+        return [local, localOpMetadata];
     }
 }
 
 /**
- * Factory to create MockDeltaConnection for testing.
- * It imitates a server for the purposes of processing messages. It stores the messages until
- * processAllMessages() is called.
- * It also supports disconnecting a client - In this case, it deletes all the unprocessed messages for
- * that client.
+ * Factory to create MockContainerRuntime for testing basic submitting and processing of messages.
+ * This also acts as a very basic server that stores the messages from all the MockContainerRuntimes and
+ * processes them when asked.
+ * If test specific logic is required, extend this class and add the logic there. For an example, take a look
+ * at MockContainerRuntimeFactoryForReconnection.
  */
-export class MockDeltaConnectionFactory {
+export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    private messages: ISequencedDocumentMessage[] = [];
-    private readonly deltaConnections: MockDeltaConnection[] = [];
+    protected messages: ISequencedDocumentMessage[] = [];
+    protected readonly runtimes: MockContainerRuntime[] = [];
 
     public getMinSeq(): number {
         let minSeq: number;
@@ -90,19 +207,13 @@ export class MockDeltaConnectionFactory {
         return minSeq ? minSeq : 0;
     }
 
-    public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        const delta = new MockDeltaConnection(this, runtime);
-        this.deltaConnections.push(delta);
-
-        assert(runtime.deltaManager === undefined ||
-            runtime.deltaManager instanceof MockDeltaManagerWithConnectionFactory &&
-            runtime.deltaManager.connectionFactory === this);
-        runtime.deltaManager = new MockDeltaManagerWithConnectionFactory(this);
-        return delta;
+    public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntime {
+        const containerRuntime = new MockContainerRuntime(componentRuntime, this);
+        this.runtimes.push(containerRuntime);
+        return containerRuntime;
     }
 
-    public pushMessage(msg: Partial<ISequencedDocumentMessage>, localOpMetadata: unknown) {
+    public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
         if (!this.minSeq.has(msg.clientId)) {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
@@ -119,143 +230,9 @@ export class MockDeltaConnectionFactory {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
-            for (const dc of this.deltaConnections) {
-                dc.process(msg);
+            for (const runtime of this.runtimes) {
+                runtime.process(msg);
             }
-        }
-    }
-
-    public clientDisconnected(clientId: string) {
-        // Delete all the messages for client with the given clientId.
-        this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
-            return message.clientId !== clientId;
-        });
-    }
-}
-
-// Represents the structure of a pending message stored by the MockDeltaConnection.
-interface IPendingMessage {
-    content: any,
-    clientSequenceNumber: number,
-    localOpMetadata: unknown,
-}
-
-/**
- * Mock implementation IDeltaConnection for testing.
- * It imitates the following functionality of ContainerRuntime:
- * 1. It stores the messages submitted by a DDS until they are processed in a pending queue.
- * 2. When a message is processed, it removes the message from the queue.
- * 3. It supports disconnection / reconnection of client. On disconnection, it notifies the factory so
- *    that the messages from this client are cleared. On reconnection, it calls reSubmit on the DDS with
- *    the pending message.
- */
-class MockDeltaConnection implements IDeltaConnection {
-    public get connected(): boolean {
-        return this._connected;
-    }
-
-    public set connected(connected: boolean) {
-        if (this._connected === connected) {
-            return;
-        }
-
-        this._connected = connected;
-
-        if (connected) {
-            this.clientSequenceNumber = 0;
-            this.runtime.clientId = uuid();
-            // We reconnected. Ask the DDS to resubmit the unacked messages.
-            this.reSubmitMessages();
-        } else {
-            this.factory.clientDisconnected(this.runtime.clientId);
-        }
-
-        this.handlers.forEach((h) => {
-            h.setConnectionState(this.connected);
-        });
-    }
-    public readonly handlers: IDeltaHandler[] = [];
-    private _connected = true;
-    private clientSequenceNumber: number = 0;
-    private referenceSequenceNumber = 0;
-    private readonly pendingMessages: IPendingMessage[] = [];
-
-    constructor(
-        private readonly factory: MockDeltaConnectionFactory,
-        private readonly runtime: MockRuntime) {
-        this.handlers.push({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
-                this.referenceSequenceNumber = message.sequenceNumber;
-            },
-            setConnectionState: (connected: boolean) => { },
-            reSubmit: (content: any, localOpMetadata: unknown) => { },
-        });
-    }
-
-    public submit(messageContent: any, localOpMetadata: unknown): number {
-        let clientSequenceNumber = -1;
-
-        // If we are not in connected state, do not submit the messages but just store it in the pending
-        // queue. When the client connects, we will ask the DDS to resubmit this message.
-        if (this.connected) {
-            clientSequenceNumber = this.clientSequenceNumber++;
-            const msg: Partial<ISequencedDocumentMessage> = {
-                clientId: this.runtime.clientId,
-                clientSequenceNumber,
-                contents: messageContent,
-                referenceSequenceNumber: this.referenceSequenceNumber,
-                type: MessageType.Operation,
-
-            };
-            this.factory.pushMessage(msg, localOpMetadata);
-        }
-
-        this.pendingMessages.push({
-            content: messageContent,
-            clientSequenceNumber,
-            localOpMetadata,
-        });
-
-        return clientSequenceNumber;
-    }
-
-    public process(message: ISequencedDocumentMessage) {
-        let localOpMetadata: unknown;
-        const local = this.isLocal(message);
-        if (local) {
-            localOpMetadata = this.processLocalMessage(message);
-        }
-
-        this.handlers.forEach((handler) => {
-            handler.process(message, local, localOpMetadata);
-        });
-    }
-
-    public attach(handler: IDeltaHandler): void {
-        this.handlers.push(handler);
-        handler.setConnectionState(this.connected);
-    }
-
-    public dirty(): void {}
-
-    public isLocal(msg: ISequencedDocumentMessage) {
-        return msg.clientId === this.runtime.clientId;
-    }
-
-    private processLocalMessage(message: ISequencedDocumentMessage): unknown {
-        const pendingMessage = this.pendingMessages.shift();
-        assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
-        return pendingMessage.localOpMetadata;
-    }
-
-    private reSubmitMessages() {
-        let messageCount = this.pendingMessages.length;
-        while (messageCount > 0) {
-            const pendingMessage: IPendingMessage = this.pendingMessages.shift();
-            this.handlers.forEach((handler) => {
-                handler.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
-            });
-            messageCount--;
         }
     }
 }
@@ -379,7 +356,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockRuntime extends EventEmitter
+export class MockComponentRuntime extends EventEmitter
     implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
@@ -397,18 +374,11 @@ export class MockRuntime extends EventEmitter
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
-    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
-    public services: ISharedObjectServices;
+    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
-    private _local = true;
-    private _disposed = false;
-    public get disposed() { return this._disposed; }
-
-    public dispose(): void {
-        this._disposed = true;
-    }
+    private _local = false;
 
     public get local(): boolean {
         return this._local;
@@ -416,6 +386,14 @@ export class MockRuntime extends EventEmitter
 
     public set local(local: boolean) {
         this._local = local;
+    }
+
+    private _disposed = false;
+
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
     }
 
     public get active(): Promise<void> {
@@ -438,7 +416,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public registerChannel(channel: IChannel): void {
-        channel.connect(this.services);
+        return;
     }
 
     public attach(): void {

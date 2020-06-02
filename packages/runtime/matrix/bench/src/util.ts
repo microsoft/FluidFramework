@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "./imports";
 import { insertFragmented } from "../../test/utils";
 const process = require("process");
@@ -36,7 +36,7 @@ export function randomId() {
 }
 
 export function createMatrix() {
-    return new SharedMatrixFactory().create(new MockRuntime(), randomId()) as SharedMatrix;
+    return new SharedMatrixFactory().create(new MockComponentRuntime(), randomId()) as SharedMatrix;
 }
 
 export function createContiguousMatrix(rowCount: number, colCount: number) {
