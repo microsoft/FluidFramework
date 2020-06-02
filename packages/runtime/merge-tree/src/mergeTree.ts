@@ -914,12 +914,6 @@ export interface ClientIds {
     branchId: number;
 }
 
-export interface IUndoInfo {
-    seq: number;
-    seg: ISegment;
-    op: ops.MergeTreeDeltaType;
-}
-
 export class RegisterCollection {
     clientCollections: Properties.MapLike<Properties.MapLike<ISegment[]>> = Properties.createMap();
     set(clientId: string, id: string, segments: ISegment[]) {
@@ -1803,24 +1797,6 @@ export class MergeTree {
         this.search(startPos, UniversalSequenceNumber, clientId,
             { leaf: recordRangeLeaf, shift: rangeShift }, searchInfo);
         return searchInfo.stacks;
-    }
-
-    // TODO: with annotation op change value
-    cherryPickedUndo(undoInfo: IUndoInfo) {
-        const segment = undoInfo.seg;
-        // No branches
-        if (segment.removedSeq !== undefined) {
-            segment.removedSeq = undefined;
-            segment.removedClientId = undefined;
-        } else {
-            if (undoInfo.op === ops.MergeTreeDeltaType.REMOVE) {
-                segment.removedSeq = undoInfo.seq;
-            } else {
-                segment.removedSeq = UnassignedSequenceNumber;
-            }
-            segment.removedClientId = this.collabWindow.clientId;
-        }
-        this.blockUpdatePathLengths(segment.parent, UnassignedSequenceNumber, -1, true);
     }
 
     // TODO: filter function
@@ -2776,77 +2752,6 @@ export class MergeTree {
         // MergeTree.traceTraversal = false;
     }
 
-    // This method is deprecated should not be used. It modifies existing segments.
-    removeRange(start: number, end: number, refSeq: number, clientId: number) {
-        const removeInfo = <RemoveRangeInfo>{};
-        this.nodeRemoveRange(this.root, start, end, refSeq, clientId, removeInfo);
-        if (removeInfo.highestBlockRemovingChildren) {
-            const remBlock = removeInfo.highestBlockRemovingChildren;
-            this.nodeUpdateOrdinals(remBlock);
-        }
-    }
-
-    private nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
-        const children = block.children;
-        let startIndex: number;
-        if (start < 0) {
-            startIndex = -1;
-        }
-        let endIndex = block.childCount;
-        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
-            const child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId);
-            if ((start >= 0) && (start < len)) {
-                startIndex = childIndex;
-                if (!child.isLeaf()) {
-                    this.nodeRemoveRange(child, start, end, refSeq, clientId, removeInfo);
-                } else {
-                    const segment = child;
-                    if (segment.removeRange(start, end)) {
-                        startIndex--;
-                    }
-                }
-            }
-            // REVIEW: run this clause even if above clause runs
-            if (end < len) {
-                endIndex = childIndex;
-                if (end > 0) {
-                    if (endIndex > startIndex) {
-                        if (!child.isLeaf()) {
-                            this.nodeRemoveRange(child, start, end, refSeq, clientId, removeInfo);
-                        } else {
-                            const segment = child;
-                            if (segment.removeRange(0, end)) {
-                                endIndex++;
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-            start -= len;
-            end -= len;
-        }
-        const deleteCount = (endIndex - startIndex) - 1;
-        const deleteStart = startIndex + 1;
-        if (deleteCount > 0) {
-            // Delete nodes in middle of range
-            const copyStart = deleteStart + deleteCount;
-            const copyCount = block.childCount - copyStart;
-            for (let j = 0; j < copyCount; j++) {
-                block.assignChild(children[copyStart + j], deleteStart + j, false);
-            }
-            block.childCount -= deleteCount;
-            if (removeInfo.highestBlockRemovingChildren && removeInfo.highestBlockRemovingChildren.parent &&
-                (removeInfo.highestBlockRemovingChildren.parent === block.parent)) {
-                removeInfo.highestBlockRemovingChildren = block.parent;
-            } else {
-                removeInfo.highestBlockRemovingChildren = block;
-            }
-        }
-        this.nodeUpdateLengthNewStructure(block);
-    }
-
     private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
@@ -2933,24 +2838,6 @@ export class MergeTree {
             }
         }
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
-    }
-
-    rangeToString(start: number, end: number) {
-        let strbuf = "";
-        for (let childIndex = 0; childIndex < this.root.childCount; childIndex++) {
-            const child = this.root.children[childIndex];
-            if (!child.isLeaf()) {
-                const block = child;
-                const len = this.blockLength(block, UniversalSequenceNumber,
-                    this.collabWindow.clientId);
-                if ((start <= len) && (end > 0)) {
-                    strbuf += this.nodeToString(block, strbuf, 0);
-                }
-                start -= len;
-                end -= len;
-            }
-        }
-        return strbuf;
     }
 
     nodeToString(block: IMergeBlock, strbuf: string, indentCount = 0) {
