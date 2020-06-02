@@ -14,10 +14,7 @@ export interface IProvideComponentLoadable {
  * A shared component has a URL from which it can be referenced
  */
 export interface IComponentLoadable extends IProvideComponentLoadable {
-    /**
-     * @deprecated
-     * Absolute URL to the component within the document
-     *  */
+    // Absolute URL to the component within the document
     readonly url: string;
 
     // Handle to the loadable component
