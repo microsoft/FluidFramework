@@ -63,8 +63,9 @@ export class FluidPackageCheck {
     private static checkTestSafePromiseRequire(pkg: Package, fix: boolean) {
         let fixed = false;
         const pkgstring = "make-promises-safe";
-        const testScriptName = pkg.monoRepo?.kind === MonoRepoKind.Server ? "test" : "test:mocha";
-        const testScript = pkg.getScript(testScriptName);
+        const testMochaScript = pkg.getScript("test:mocha");
+        const testScriptName = testMochaScript ? "test:mocha" : "test";
+        const testScript = testMochaScript?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
             if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                 fixed = true;
@@ -182,11 +183,13 @@ export class FluidPackageCheck {
             // all build tasks, but optional build:webpack
             const buildCompile: string[] = [];
 
-            // all build and lint steps (build + webpack)
-            const buildFull: string[] = ["build"];
+            const hasFull = pkg.getScript("build:full") !== undefined;
 
-            // all build steps (build:compile + webpack)
-            const buildFullCompile: string[] = ["build:compile"];
+            // all build and lint steps (build + webpack) (if it is private, webpack would just be included in the main build:compile)
+            const buildFull: string[] = pkg.packageJson.private && !hasFull? [] : ["build"];
+
+            // all build steps (build:compile + webpack) (if it is private, webpack would just be included in the main build:compile)
+            const buildFullCompile: string[] = pkg.packageJson.private && !hasFull? [] : ["build:compile"];
 
             // prepack scripts
             const prepack: string[] = [];
@@ -219,16 +222,18 @@ export class FluidPackageCheck {
             let implicitWebpack = true;
 
             if (pkg.getScript("build:webpack")) {
+                // Having script build:webpack means that we want to do it in build script
                 buildCompile.push("build:webpack");
                 implicitWebpack = false;
             }
 
             if (pkg.getScript("webpack")) {
                 if (implicitWebpack) {
+                    // not having build:webpack means we only want to do webpack on build:full
                     buildFull.push("webpack");
                     buildFullCompile.push("webpack");
                 }
-                if (pkg.monoRepo?.kind !== MonoRepoKind.Server) {
+                if (!pkg.packageJson.private) {
                     prepack.push("webpack");
                 }
             }
@@ -256,7 +261,9 @@ export class FluidPackageCheck {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
-            check("prepack", prepack);
+            if (!pkg.packageJson.private) {
+                check("prepack", prepack);
+            }
         }
         return fixed;
     }
@@ -286,6 +293,9 @@ export class FluidPackageCheck {
     }
 
     public static async checkNpmIgnore(pkg: Package, fix: boolean) {
+        if (pkg.packageJson.private || pkg.getScript("build") === undefined) {
+            return;
+        }
         const filename = path.join(pkg.directory, ".npmignore");
         const expected = [
             "nyc",

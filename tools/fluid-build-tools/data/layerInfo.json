@@ -111,6 +111,14 @@
                     "Protocol-Utils",
                     "Server-Shared-Utils"
                 ]
+            },
+            "Server-Tools": {
+                "packages": [
+                    "tinylicious"
+                ],
+                "deps": [
+                    "Server-Libs"
+                ]
             }
         }
     },
@@ -192,7 +200,8 @@
             "Tools": {
                 "dot": false,
                 "dirs": [
-                    "packages/tools/"
+                    "packages/tools/",
+                    "tools/generator-fluid"
                 ],
                 "deps": [
                     "Framework",

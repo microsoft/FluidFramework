@@ -26,6 +26,26 @@
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0-0",
     "@fluidframework/common-utils": "^0.19.0-0",
