@@ -66,35 +66,34 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     /**
      * Will return a new Clicker view
      */
-    public render(div: HTMLElement) {
+    public render(element: HTMLElement) {
         // Load initial state from root before entering React render lifecycle
         // View and Fluid states are identical since we are directly using the Counter
         // DDS in the view
         const initialState = { counter:  this.root.get(CounterRootKey) };
 
         // Mark the counter as the CounterValueType so that changes to it update the view
+        // when we increment it
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
         fluidToView.set(CounterRootKey, {
             fluidObjectType: CounterValueType.Name,
         });
 
         ReactDOM.render(
-            <div>
-                <CounterReactView
-                    syncedStateId={"clicker"}
-                    root={this.root}
-                    initialViewState={initialState}
-                    initialFluidState={initialState}
-                    dataProps={{
-                        fluidComponentMap: new Map(),
-                        runtime: this.runtime,
-                    }}
-                    fluidToView={fluidToView}
-                />
-            </div>,
-            div,
+            <CounterReactView
+                syncedStateId={"clicker"}
+                root={this.root}
+                initialViewState={initialState}
+                initialFluidState={initialState}
+                dataProps={{
+                    fluidComponentMap: new Map(),
+                    runtime: this.runtime,
+                }}
+                fluidToView={fluidToView}
+            />,
+            element,
         );
-        return div;
+        return element;
     }
 
     // #endregion IComponentHTMLView
