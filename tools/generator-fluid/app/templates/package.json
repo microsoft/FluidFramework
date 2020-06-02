@@ -8,9 +8,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack && npm run tsc",
-    "start": "npm run start:local",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local --open",
-    "start:tiny": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious --open",
+    "start": "npm run start:local -- --open",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "start:tiny": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "jest",
     "tsc": "tsc",
     "webpack": "npm run build"
