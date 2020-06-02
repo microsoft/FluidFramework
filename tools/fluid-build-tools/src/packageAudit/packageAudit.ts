@@ -133,6 +133,8 @@ function appendInfoToFile(info: IPackageInfo) {
     appendFileSync(filePath, fileLine);
 }
 
+const renameCmds: string[] = [];
+
 function processPackageInfo(info: IPackageInfo) {
     if (info.fullName === "root") {
         return;
@@ -150,10 +152,9 @@ function processPackageInfo(info: IPackageInfo) {
         console.log(`  Package ${info.fullName} is in Folder "${info.folderName}"`);
 
         if (fix) {
-            const newDir: string = info.dir.replace(new RegExp(`\/${info.folderName}$`), expectedFolderName);
-            if (prompt(`Rename ${info.dir} to ${newDir}? (y/n)`, "n")?.toLowerCase() === "y") {
-                renameSync(info.dir, newDir);
-            }
+            const renameRegexp = new RegExp(`\\\\${info.folderName}$`);
+            const newDir: string = info.dir.replace(renameRegexp, `\\${expectedFolderName}`);
+            renameCmds.push(`Rename-Item -Path ${info.dir} -NewName ${newDir}`);
         }
     }
     if (!info.readmeInfo.exists) {
@@ -167,12 +168,12 @@ function processPackageInfo(info: IPackageInfo) {
     }
     else if (info.readmeInfo.title !== info.fullName) {
         console.log(chalk.redBright(`Readme title mismatch [${info.fullName}]`));
-        console.log(`  Readme for Package ${info.fullName} begins with "${info.readmeInfo.title}" instead of "# ${info.fullName}"`);
+        console.log(`  Readme for Package ${info.fullName} begins with heading "${info.readmeInfo.title}" instead of heading "${info.fullName}"`);
 
         if (fix) {
             replace.sync({
                 files: readmeFilePath,
-                from: /^(.*)\n/,
+                from: /^(.*)/,
                 to: readmeTitle,
             });
         }
@@ -204,6 +205,11 @@ async function main() {
             .map(getPackageInfo)
             .sort((a, b) => a.dir < b.dir ? -1 : a.dir == b.dir ? 0 : 1) // sort in ABC order by directory
             .forEach(processPackageInfo);
+
+        console.log("\nRun these commands to rename mismatched folders:")
+        renameCmds.forEach((cmd) => console.log(cmd));
+
+        process.exit(0);
 
         //* TODO
         /**
