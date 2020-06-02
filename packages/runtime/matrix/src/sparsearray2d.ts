@@ -5,11 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { IMatrixReader } from "@tiny-calc/nano";
+import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 
-export interface IArray2D<T> extends IMatrixReader<T | undefined | null> {
-    setCell(row: number, col: number, value: T | undefined): void;
-}
+export interface IArray2D<T> extends IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> { }
 
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
@@ -61,10 +59,10 @@ type UA<T> = (T | undefined)[];
 export class SparseArray2D<T> implements IArray2D<T> {
     constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) {}
 
-    public get numRows() { return 0xFFFFFFFF; }
-    public get numCols() { return 0xFFFFFFFF; }
+    public get rowCount() { return 0xFFFFFFFF; }
+    public get colCount() { return 0xFFFFFFFF; }
 
-    read(row: number, col: number): T | undefined | null {
+    getCell(row: number, col: number): T | undefined | null {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {
@@ -83,6 +81,8 @@ export class SparseArray2D<T> implements IArray2D<T> {
 
         return undefined;
     }
+
+    public get matrixProducer() { return undefined as any; }
 
     setCell(row: number, col: number, value: T | undefined) {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
