@@ -96,6 +96,11 @@ module.exports = class extends Generator {
     this._copyAndModifyInterfaceFile();
     this._copyAndModifyViewFile();
 
+    this.fs.copy(
+      this.templatePath("tests/diceRoller.test.ts"), // FROM
+      this.destinationPath(`tests/${this._componentPkgName()}.test.ts`), // TO Root Folder
+    );
+
     // Copy Remaining Files
     this.fs.copyTpl(
       this.templatePath("README.md"), // FROM
@@ -111,6 +116,16 @@ module.exports = class extends Generator {
     this.fs.copy(
       this.templatePath("tsconfig.json"), // FROM
       this.destinationPath("tsconfig.json"), // TO Root Folder
+    );
+
+    this.fs.copy(
+      this.templatePath("jest-puppeteer.config.js"), // FROM
+      this.destinationPath("jest-puppeteer.config.js"), // TO Root Folder
+    );
+
+    this.fs.copy(
+      this.templatePath("jest.config.js"), // FROM
+      this.destinationPath("jest.config.js"), // TO Root Folder
     );
 
     // Copy files that start with . from the root
