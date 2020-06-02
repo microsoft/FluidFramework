@@ -476,7 +476,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
                 branchId);
-            msgs.forEach((m) => this.processMergeTreeMsg(m));
+            msgs.forEach((m) => {
+                const collabWindow = this.client.getCollabWindow();
+                if(m.minimumSequenceNumber < collabWindow.minSeq
+                    || m.referenceSequenceNumber < collabWindow.minSeq
+                    || m.sequenceNumber <= collabWindow.minSeq
+                    || m.sequenceNumber <= collabWindow.currentSeq) {
+                    assert.fail(`Invalid catchup operations in snapshot: ${
+                        JSON.stringify({
+                            op:{
+                                seq: m.sequenceNumber,
+                                minSeq: m.minimumSequenceNumber,
+                                refSeq:m.referenceSequenceNumber,
+                            },
+                            collabWindow:{
+                                seq: collabWindow.currentSeq,
+                                minSeq: collabWindow.minSeq,
+                            },
+                        })}`);
+                }
+                this.processMergeTreeMsg(m);
+            });
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -513,13 +533,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // Are we fully loaded? If not, things will go south
         assert(this.isLoaded, "Snapshot called when not fully loaded");
 
-        const minSeq = this.runtime.deltaManager
-            ? this.runtime.deltaManager.minimumSequenceNumber
-            : 0;
+        assert(this.runtime.deltaManager, "Sequence: No delta manager");
+        const minSeq = this.runtime.deltaManager.minimumSequenceNumber;
 
-        if (this.runtime.deltaManager) {
-            this.processMinSequenceNumberChanged(minSeq);
-        }
+        this.processMinSequenceNumberChanged(minSeq);
 
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
 

@@ -12,6 +12,9 @@ import { SharedStringFactory } from "../sequenceFactory";
 export function* generateStrings() {
     const documentId = "fakeId";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
+    const deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
+    deltaConnectionFactory.createDeltaConnection(runtime);
+
     const insertText = "text";
 
     let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
