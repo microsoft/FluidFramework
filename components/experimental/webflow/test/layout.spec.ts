@@ -8,7 +8,7 @@ window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import { TestHost } from "@fluidframework/local-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import "mocha";
 import { htmlFormatter } from "../src";
 import { FlowDocument } from "../src/document";

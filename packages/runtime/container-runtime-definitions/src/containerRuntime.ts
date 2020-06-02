@@ -10,6 +10,7 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -60,7 +61,7 @@ export interface IContainerRuntime extends
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly submitFn: (type: MessageType, contents: any) => number;
+    readonly submitFn: (type: MessageType, contents: any, localOpMetadata: unknown) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
@@ -110,7 +111,7 @@ export interface IContainerRuntime extends
     /**
      * Used to raise an unrecoverable error on the runtime.
      */
-    error(err: any): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

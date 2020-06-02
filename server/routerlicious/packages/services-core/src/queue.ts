@@ -72,7 +72,7 @@ export interface IProducer {
     /**
      * Sends the message to a queue
      */
-    send(messages: object[], tenantId: string, documentId: string): Promise<any>;
+    send(messages: object[], tenantId: string, documentId: string): Promise<void>;
 
     /**
      * Closes the underlying connection

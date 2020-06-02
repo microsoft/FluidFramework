@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SegmentGroup } from "../";
 import { UnassignedSequenceNumber } from "../constants";

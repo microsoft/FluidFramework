@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICreateCommitParams } from "@microsoft/fluid-gitresources";
+import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
@@ -14,7 +14,6 @@ export async function createCommit(
     owner: string,
     repo: string,
     blob: ICreateCommitParams): Promise<ICommit> {
-
     const date = Date.parse(blob.author.date);
     if (isNaN(date)) {
         return Promise.reject("Invalid input");
@@ -22,13 +21,16 @@ export async function createCommit(
 
     const repository = await repoManager.open(owner, repo);
     const signature = git.Signature.create(blob.author.name, blob.author.email, Math.floor(date), 0);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, no-null/no-null
     const parents = blob.parents && blob.parents.length > 0 ? blob.parents : null;
+    // eslint-disable-next-line no-null/no-null
     const commit = await repository.createCommit(null, signature, signature, blob.message, blob.tree, parents);
 
     return {
         author: blob.author,
         committer: blob.author,
         message: blob.message,
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         parents: parents ? blob.parents.map((parent) => ({ sha: parent, url: "" })) : [],
         sha: commit.tostrS(),
         tree: {
@@ -44,7 +46,6 @@ async function getCommit(
     owner: string,
     repo: string,
     sha: string): Promise<ICommit> {
-
     const repository = await repoManager.open(owner, repo);
     const commit = await repository.getCommit(sha);
     return utils.commitToICommit(commit);
@@ -55,6 +56,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
 
     // * https://developer.github.com/v3/git/commits/
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.post("/repos/:owner/:repo/git/commits", (request, response, next) => {
         const blobP = createCommit(
             repoManager,
@@ -70,6 +72,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.get("/repos/:owner/:repo/git/commits/:sha", (request, response, next) => {
         const blobP = getCommit(
             repoManager,

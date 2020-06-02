@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";

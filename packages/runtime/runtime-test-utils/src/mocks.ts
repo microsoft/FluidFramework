@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -16,6 +16,7 @@ import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -45,6 +46,7 @@ import {
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -64,12 +66,22 @@ export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
 }
 
 /**
+ * Interface definition that represents the data submitted by a local client.
+ * message - The message that is submitted.
+ * localOpMetadata - The metadata associated with the message.
+ */
+interface IMessageData {
+    message: ISequencedDocumentMessage,
+    localOpMetadata: unknown,
+}
+
+/**
  * Factory to create MockDeltaConnection for testing
  */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    private readonly messages: ISequencedDocumentMessage[] = [];
+    private readonly messages: IMessageData[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
 
     public getMinSeq(): number {
@@ -96,11 +108,14 @@ export class MockDeltaConnectionFactory {
         return delta;
     }
 
-    public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+    public pushMessage(msg: Partial<ISequencedDocumentMessage>, localOpMetadata: unknown) {
         if (!this.minSeq.has(msg.clientId)) {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
-        this.messages.push(msg as ISequencedDocumentMessage);
+        this.messages.push({
+            message: msg as ISequencedDocumentMessage,
+            localOpMetadata,
+        });
     }
 
     public clearMessages() {
@@ -109,17 +124,18 @@ export class MockDeltaConnectionFactory {
 
     public processAllMessages() {
         while (this.messages.length > 0) {
-            let msg = this.messages.shift();
+            const messageDetail = this.messages.shift();
 
             // Explicitly JSON clone the value to match the behavior of going thru the wire.
-            msg = JSON.parse(JSON.stringify(msg));
+            const msg = JSON.parse(JSON.stringify(messageDetail.message));
 
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
             for (const dc of this.deltaConnections) {
                 for (const h of dc.handlers) {
-                    h.process(msg, dc.isLocal(msg));
+                    const isLocal = dc.isLocal(msg);
+                    h.process(msg, isLocal, isLocal ? messageDetail.localOpMetadata : undefined);
                 }
             }
         }
@@ -153,14 +169,15 @@ class MockDeltaConnection implements IDeltaConnection {
         private readonly factory: MockDeltaConnectionFactory,
         private readonly runtime: MockRuntime) {
         this.handlers.push({
-            process: (message: ISequencedDocumentMessage, local: boolean) => {
+            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.referenceSequenceNumber = message.sequenceNumber;
             },
             setConnectionState: (connected: boolean) => { },
+            reSubmit: (content: any, localOpMetadata: unknown) => { },
         });
     }
 
-    public submit(messageContent: any): number {
+    public submit(messageContent: any, localOpMetadata: unknown): number {
         this.clientSequenceNumber++;
         const msg: Partial<ISequencedDocumentMessage> = {
             clientId: this.runtime.clientId,
@@ -170,7 +187,7 @@ class MockDeltaConnection implements IDeltaConnection {
             type: MessageType.Operation,
 
         };
-        this.factory.pushMessage(msg);
+        this.factory.pushMessage(msg, localOpMetadata);
 
         return msg.clientSequenceNumber;
     }
@@ -307,7 +324,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentHandleContext {
+    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -407,10 +424,6 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public notifyPendingMessages(): void {
-        return;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         return;
     }
@@ -447,7 +460,11 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public error(err: any): void { }
+    public raiseContainerWarning(warning: ContainerWarning): void { }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        return;
+    }
 }
 
 /**

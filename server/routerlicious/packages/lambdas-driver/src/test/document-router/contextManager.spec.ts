@@ -5,7 +5,7 @@
 
 import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
 import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
 
 class TestContext implements IContext {

@@ -240,28 +240,18 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 }
 
 export class Packages {
-
-    public static loadDirs(dirs: string[], monoRepo?: MonoRepo) {
-        const packages: Package[] = [];
-        for (const dir of dirs) {
-            packages.push(...Packages.loadDir(dir, monoRepo));
+    public static loadDir(dir: string, monoRepo?: MonoRepo, ignoreDirs?: string[]) {
+        const packageJsonFileName = path.join(dir, "package.json");
+        if (existsSync(packageJsonFileName)) {
+            return [new Package(packageJsonFileName, monoRepo)];
         }
-        return packages;
-    }
 
-    public static loadDir(dir: string, monoRepo?: MonoRepo) {
         const packages: Package[] = [];
         const files = fs.readdirSync(dir, { withFileTypes: true });
         files.map((dirent) => {
-            if (dirent.isDirectory()) {
-                if (dirent.name !== "node_modules") {
-                    packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
-                }
-                return;
-            }
-            if (dirent.isFile() && dirent.name === "package.json") {
-                const packageJsonFileName = path.join(dir, "package.json");
-                packages.push(new Package(packageJsonFileName, monoRepo))
+            if (dirent.isDirectory() && dirent.name !== "node_modules"
+                && (ignoreDirs === undefined || !ignoreDirs.includes(dirent.name))) {
+                packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
             }
         });
         return packages;

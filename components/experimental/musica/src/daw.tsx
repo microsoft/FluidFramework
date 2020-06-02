@@ -7,7 +7,7 @@
 
 // See https://github.com/danigb/soundfont-player
 // for more documentation on prop options.
-import * as React from "react";
+import React from "react";
 
 // Piano
 import { KeyboardShortcuts, Piano } from "react-piano";

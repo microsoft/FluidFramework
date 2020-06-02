@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as path from "path";
+import assert from "assert";
+import path from "path";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
@@ -18,6 +18,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
@@ -56,18 +57,22 @@ interface IDirectoryMessageHandler {
      * @param op - The directory operation to apply
      * @param local - Whether the message originated from the local client
      * @param message - The full message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
     process(
         op: IDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void;
 
     /**
      * Communicate the operation to remote clients.
      * @param op - The directory operation to submit
+     * @param localOpMetadata - The metadata to be submitted with the message.
      */
-    submit(op: IDirectoryOperation): void;
+    submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
 }
 
 /**
@@ -598,11 +603,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Submits an operation
      * @param op - Op to submit
-     * @returns The client sequence number
+     * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
+     * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation): number {
-        return this.submitLocalMessage(op);
+    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
+        this.submitLocalMessage(op, localOpMetadata);
     }
 
     /**
@@ -627,7 +633,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 },
             };
 
-            this.submitDirectoryMessage(op);
+            // Send the localOpMetadata as undefined because we don't care about the ack.
+            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -642,16 +649,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      */
-    protected onConnect(pending: any[]) {
-        debug(`Directory ${this.id} is now connected`);
-
-        // Deal with the directory messages - for the directory it's always last one wins so we just resend
-        for (const message of pending as IDirectoryOperation[]) {
-            const handler = this.messageHandlers.get(message.type);
-            handler.submit(message);
-        }
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        const message = content as IDirectoryOperation;
+        const handler = this.messageHandlers.get(message.type);
+        handler.submit(message, localOpMetadata);
     }
 
     /**
@@ -738,12 +741,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             if (this.messageHandlers.has(op.type)) {
                 this.messageHandlers.get(op.type)
-                    .process(op, local, message);
+                    .process(op, local, message, localOpMetadata);
             }
         }
     }
@@ -788,15 +791,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "clear",
             {
-                process: (op: IDirectoryClearOperation, local, message) => {
+                process: (op: IDirectoryClearOperation, local, message, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
-                        subdir.processClearMessage(op, local, message);
+                        subdir.processClearMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryClearOperation) => {
+                submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitClearMessage(op);
                     }
                 },
@@ -805,15 +809,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "delete",
             {
-                process: (op: IDirectoryDeleteOperation, local, message) => {
+                process: (op: IDirectoryDeleteOperation, local, message, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
-                        subdir.processDeleteMessage(op, local, message);
+                        subdir.processDeleteMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryDeleteOperation) => {
+                submit: (op: IDirectoryDeleteOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
                     }
                 },
@@ -822,16 +827,17 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "set",
             {
-                process: (op: IDirectorySetOperation, local, message) => {
+                process: (op: IDirectorySetOperation, local, message, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
-                        subdir.processSetMessage(op, context, local, message);
+                        subdir.processSetMessage(op, context, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectorySetOperation) => {
+                submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         subdir.submitKeyMessage(op);
                     }
                 },
@@ -841,15 +847,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "createSubDirectory",
             {
-                process: (op: IDirectoryCreateSubDirectoryOperation, local, message) => {
+                process: (op: IDirectoryCreateSubDirectoryOperation, local, message, localOpMetadata) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
-                        parentSubdir.processCreateSubDirectoryMessage(op, local, message);
+                        parentSubdir.processCreateSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryCreateSubDirectoryOperation) => {
+                submit: (op: IDirectoryCreateSubDirectoryOperation, localOpMetadata: unknown) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
                 },
@@ -859,15 +866,16 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "deleteSubDirectory",
             {
-                process: (op: IDirectoryDeleteSubDirectoryOperation, local, message) => {
+                process: (op: IDirectoryDeleteSubDirectoryOperation, local, message, localOpMetadata) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
-                        parentSubdir.processDeleteSubDirectoryMessage(op, local, message);
+                        parentSubdir.processDeleteSubDirectoryMessage(op, local, message, localOpMetadata);
                     }
                 },
-                submit: (op: IDirectoryDeleteSubDirectoryOperation) => {
+                submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
+                        // We don't reuse the metadata but send a new one on each submit.
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
                 },
@@ -881,7 +889,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "act",
             {
-                process: (op: IDirectoryValueTypeOperation, local, message) => {
+                process: (op: IDirectoryValueTypeOperation, local, message, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     // Subdir might not exist if we deleted it
                     if (!subdir) {
@@ -902,8 +910,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
                 },
-                submit: (op) => {
-                    this.submitDirectoryMessage(op);
+                submit: (op, localOpMetadata: unknown) => {
+                    this.submitDirectoryMessage(op, localOpMetadata);
                 },
             },
         );
@@ -941,10 +949,15 @@ class SubDirectory implements IDirectory {
     private readonly pendingSubDirectories: Map<string, number> = new Map();
 
     /**
-     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
-     * number of that clear operation.  Otherwise, is -1.
+     * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingClearClientSequenceNumber: number = -1;
+    private pendingMessageId: number = -1;
+
+    /**
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
+     * of that clear operation. Otherwise, is -1.
+     */
+    private pendingClearMessageId: number = -1;
 
     /**
      * Constructor.
@@ -1256,16 +1269,22 @@ class SubDirectory implements IDirectory {
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @internal
      */
     public processClearMessage(
         op: IDirectoryClearOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void {
         if (local) {
-            if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
-                this.pendingClearClientSequenceNumber = -1;
+            strongAssert(localOpMetadata !== undefined,
+                `pendingMessageId is missing from the local client's ${op.type} operation`);
+            const pendingMessageId = localOpMetadata as number;
+            if (this.pendingClearMessageId === pendingMessageId) {
+                this.pendingClearMessageId = -1;
             }
             return;
         }
@@ -1278,14 +1297,17 @@ class SubDirectory implements IDirectory {
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @internal
      */
     public processDeleteMessage(
         op: IDirectoryDeleteOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void {
-        if (!this.needProcessStorageOperation(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message, localOpMetadata)) {
             return;
         }
         this.deleteCore(op.key, local, message);
@@ -1296,6 +1318,8 @@ class SubDirectory implements IDirectory {
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @internal
      */
     public processSetMessage(
@@ -1303,8 +1327,9 @@ class SubDirectory implements IDirectory {
         context: ILocalValue,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void {
-        if (!this.needProcessStorageOperation(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message, localOpMetadata)) {
             return;
         }
         this.setCore(op.key, context, local, message);
@@ -1315,14 +1340,17 @@ class SubDirectory implements IDirectory {
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @internal
      */
     public processCreateSubDirectoryMessage(
         op: IDirectoryCreateSubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void {
-        if (!this.needProcessSubDirectoryOperations(op, local, message)) {
+        if (!this.needProcessSubDirectoryOperations(op, local, message, localOpMetadata)) {
             return;
         }
         this.createSubDirectoryCore(op.subdirName, local, message);
@@ -1333,14 +1361,17 @@ class SubDirectory implements IDirectory {
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @internal
      */
     public processDeleteSubDirectoryMessage(
         op: IDirectoryDeleteSubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): void {
-        if (!this.needProcessSubDirectoryOperations(op, local, message)) {
+        if (!this.needProcessSubDirectoryOperations(op, local, message, localOpMetadata)) {
             return;
         }
         this.deleteSubDirectoryCore(op.subdirName, local, message);
@@ -1352,10 +1383,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingClearClientSequenceNumber = clientSequenceNumber;
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -1364,10 +1394,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingKeys.set(op.key, clientSequenceNumber);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -1376,10 +1405,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingSubDirectories.set(op.subdirName, clientSequenceNumber);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
     }
 
     /**
@@ -1444,14 +1472,21 @@ class SubDirectory implements IDirectory {
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
      */
     private needProcessStorageOperation(
         op: IDirectoryKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): boolean {
-        if (this.pendingClearClientSequenceNumber !== -1) {
+        if (this.pendingClearMessageId !== -1) {
+            if (local) {
+                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                    "Received out of order storage op when there is an unackd clear message");
+            }
             // If I have a NACK clear, we can ignore all ops.
             return false;
         }
@@ -1460,8 +1495,11 @@ class SubDirectory implements IDirectory {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
-                const pendingKeyClientSequenceNumber = this.pendingKeys.get(op.key);
-                if (pendingKeyClientSequenceNumber === message.clientSequenceNumber) {
+                strongAssert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
+                const pendingKeyMessageId = this.pendingKeys.get(op.key);
+                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -1478,17 +1516,23 @@ class SubDirectory implements IDirectory {
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
      */
     private needProcessSubDirectoryOperations(
         op: IDirectorySubDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): boolean {
         if (this.pendingSubDirectories.has(op.subdirName)) {
             if (local) {
-                const pendingSubDirectoryClientSequenceNumber = this.pendingSubDirectories.get(op.subdirName);
-                if (pendingSubDirectoryClientSequenceNumber === message.clientSequenceNumber) {
+                strongAssert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
+                const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
+                if (pendingSubDirectoryMessageId === pendingMessageId) {
                     this.pendingSubDirectories.delete(op.subdirName);
                 }
             }

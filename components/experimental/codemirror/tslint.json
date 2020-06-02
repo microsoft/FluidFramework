@@ -1,6 +1,0 @@
-{
-    "extends": [],
-    "rules": {
-        "ban-ts-ignore": true
-    }
-}

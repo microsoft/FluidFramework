@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as assert from "assert";
+import assert from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { MockQuorum } from "@fluidframework/test-runtime-utils";

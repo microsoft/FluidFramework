@@ -33,7 +33,7 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     });
 
     // Vet that the 2nd matrix is equivalent to the original.
-    expectSize(matrix2, matrix.numRows, matrix.numCols);
+    expectSize(matrix2, matrix.rowCount, matrix.colCount);
 
     return matrix2;
 }
@@ -99,8 +99,8 @@ describe("Big Matrix", function () {
             await sync();
             checkCorners(matrix2);
 
-            matrix1.removeRows(0, matrix1.numRows);
-            matrix1.removeCols(0, matrix1.numCols);
+            matrix1.removeRows(0, matrix1.rowCount);
+            matrix1.removeCols(0, matrix1.colCount);
             expectSize(matrix1, 0, 0);
 
             await sync();

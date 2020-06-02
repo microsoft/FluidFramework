@@ -474,6 +474,38 @@ export class PerformanceEvent {
         return new PerformanceEvent(logger, event);
     }
 
+    public static timedExec<T>(
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+        callback: () => T,
+    ) {
+        const perfEvent = PerformanceEvent.start(logger, event);
+        try {
+            const ret = callback();
+            perfEvent.end();
+            return ret;
+        } catch (error) {
+            perfEvent.cancel(undefined, error);
+            throw error;
+        }
+    }
+
+    public static async timedExecAsync<T>(
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+        callback: () => Promise<T>,
+    ) {
+        const perfEvent = PerformanceEvent.start(logger, event);
+        try {
+            const ret = await callback();
+            perfEvent.end();
+            return ret;
+        } catch (error) {
+            perfEvent.cancel(undefined, error);
+            throw error;
+        }
+    }
+
     private event?: ITelemetryGenericEvent;
     private readonly startTime = performanceNow();
     private startMark?: string;
@@ -529,5 +561,26 @@ export class PerformanceEvent {
         }
 
         this.logger.sendPerformanceEvent(event, error);
+    }
+}
+
+/**
+ * Helper class for error tracking.
+ * Object of this instance will record all of their properties when logged with logger.
+ * Care needs to be taken not to log PII information!
+ */
+export class ErrorWithProps extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+
+    // Return all properties
+    public getCustomProperties(): object {
+        const props = {};
+        // Could not use {...this} because it does not return properties of base class.
+        for (const key of Object.getOwnPropertyNames(this)) {
+            props[key] = this[key];
+        }
+        return props;
     }
 }

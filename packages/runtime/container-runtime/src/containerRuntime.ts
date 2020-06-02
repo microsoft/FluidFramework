@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -24,6 +24,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeState,
+    ContainerWarning,
+    CriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -33,11 +35,15 @@ import {
     ChildLogger,
     raiseConnectedEvent,
 } from "@fluidframework/common-utils";
-import { IDocumentStorageService, IError, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, createIError } from "@fluidframework/driver-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    BlobCacheStorageService,
+    CreateContainerError,
+    buildSnapshotTree,
+    readAndParse,
+} from "@fluidframework/driver-utils";
 import {
     BlobTreeEntry,
-    buildSnapshotTree,
     isSystemType,
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
@@ -74,7 +80,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -82,13 +87,14 @@ import {
 } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
-import { Summarizer } from "./summarizer";
+import { ISummarizerRuntime, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
+import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 
 interface ISummaryTreeWithStats {
@@ -228,7 +234,7 @@ export class ScheduleManager {
         }
 
         // Based on track pending update the pause state
-        this.updatePauseState(this.deltaManager.referenceSequenceNumber);
+        this.updatePauseState(this.deltaManager.lastSequenceNumber);
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
@@ -376,7 +382,7 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime, ISummarizerRuntime {
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalContainerRuntime = true;
     public get IContainerRuntime() { return this; }
@@ -465,7 +471,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => number {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => number {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
@@ -478,7 +484,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): (error?: IError) => void {
+    public get reSubmitFn(): (type: MessageType, content: any, localOpMetadata: unknown) => void {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        return this.reSubmit;
+    }
+
+    public get closeFn(): (error?: CriticalContainerError) => void {
         return this.context.closeFn;
     }
 
@@ -556,6 +567,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
     private readonly requestHandler = new RuntimeRequestHandlerBuilder();
+    private readonly pendingStateManager: PendingStateManager;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -610,7 +622,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
                 key,
-                value,
+                typeof value === "string" ? value : Promise.resolve(value),
                 this,
                 this.storage,
                 this.containerScope,
@@ -634,22 +646,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.deltaSender = this.deltaManager;
 
-        this.deltaManager.on("allSentOpsAckd", () => {
-            // If we are not fully connected, then we have no clue if there are any pending ops
-            // to be resubmitted. Wait for "connected" event to get that info.
-            // Not ideal, but it's better to have false negatives then false positives.
-            // We will mark document clean on becoming "connected".
-            if (this.connected) {
-                this.updateDocumentDirtyState(false);
-            }
-        });
-
-        this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
-            if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
-                this.logger.debugAssert(this.connected, { eventName: "submitOp in disconnected state" });
-                this.updateDocumentDirtyState(true);
-            }
-        });
+        this.pendingStateManager = new PendingStateManager(this);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -803,12 +800,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // If there are any pending ops, DDSs will resubmit them right away (below) and
             // we will switch back to dirty state in such case.
             this.updateDocumentDirtyState(false);
-
-            // Resend all pending attach messages prior to notifying clients
-            for (const [, message] of this.pendingAttach) {
-                this.submit(MessageType.Attach, message);
-            }
         }
+
+        this.pendingStateManager.setConnectionState(connected);
 
         for (const [component, componentContext] of this.contexts) {
             try {
@@ -826,8 +820,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         if (connected) {
             assert(clientId);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(clientId!);
+            this.summaryManager.setConnected(clientId);
         } else {
             assert(!this._leader);
             this.summaryManager.setDisconnected();
@@ -916,6 +909,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         this._flushMode = mode;
+
+        // Let the PendingStateManager know that FlushMode has been updated.
+        this.pendingStateManager.onFlushModeUpdated(mode);
     }
 
     public flush(): void {
@@ -985,7 +981,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             this.storage,
             this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             props);
 
@@ -1010,7 +1006,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this,
             this.storage,
             this.containerScope,
-            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
@@ -1034,8 +1030,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.audience!;
     }
 
-    public error(error: any) {
-        this.context.error(createIError(error));
+    public raiseContainerWarning(warning: ContainerWarning) {
+        this.context.raiseContainerWarning(warning);
     }
 
     /**
@@ -1059,6 +1055,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     /**
      * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
      * local changes. All pending changes are automatically flushed by shared objects on connection.
+     * back-compat: 0.18 components
      */
     public notifyPendingMessages(): void {
         assert(!this.connected);
@@ -1131,6 +1128,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             message = this.processRemoteChunkedMessage(messageArg);
         }
 
+        let localMessageMetadata: unknown;
+        // Call the PendingStateManager to process local messages.
+        // Do not process local chunked ops until all pieces are available.
+        if (local && message.type !== MessageType.ChunkedOp) {
+            localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
+        }
+
         // Old prepare part
         switch (message.type) {
             case MessageType.Attach: {
@@ -1141,18 +1145,21 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null = null;
+                let flatBlobsP = Promise.resolve(flatBlobs);
+                let snapshotTreeP: Promise<ISnapshotTree> | null = null;
                 if (attachMessage.snapshot) {
-                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    snapshotTreeP = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    // flatBlobs' validity is contingent on snapshotTreeP's resolution
+                    flatBlobsP = snapshotTreeP.then((snapshotTree) => { return flatBlobs; });
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
-                    snapshotTree,
+                    snapshotTreeP,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
@@ -1165,7 +1172,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Process part
         switch (message.type) {
             case MessageType.Operation:
-                this.processOperation(message, local);
+                this.processOperation(message, local, localMessageMetadata);
                 break;
 
             default:
@@ -1202,6 +1209,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
             default: // Do nothing
         }
+
+        // If there are no more pending states after processing a local message, the document is no longer dirty.
+        if (local && !this.pendingStateManager.isPendingState()) {
+            this.updateDocumentDirtyState(false);
+        }
     }
 
     private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
@@ -1216,9 +1228,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
-            if (this.connected) {
-                this.submit(MessageType.Attach, message);
-            }
+            this.submit(MessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1289,7 +1299,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         safe: boolean = false,
     ): Promise<GenerateSummaryData | undefined> {
         const message =
-            `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+            `Summary @${this.deltaManager.lastSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
@@ -1304,7 +1314,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             await this.scheduleManager.pause();
 
             const attemptData: IUnsubmittedSummaryData = {
-                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
+                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
                 submitted: false,
             };
 
@@ -1363,7 +1373,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 return { ...attemptData, ...generateData, ...uploadData };
             }
 
-            const clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
+            const clientSequenceNumber =
+                this.submit(MessageType.Summarize, summaryMessage);
 
             return {
                 ...attemptData,
@@ -1420,49 +1431,51 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
 
-        // Can't submit messages in disconnected state!
-        // It's usually a bug that needs to be addressed in the code
-        // (as callers should have logic to retain messages in disconnected state and resubmit on connection)
-        // It's possible to remove this check -  we would need to skip deltaManager.maxMessageSize call below.
-        if (!this.connected) {
-            this.logger.sendErrorEvent({ eventName: "submitInDisconnectedState", type });
-        }
+        let clientSequenceNumber: number = -1;
 
-        const serializedContent = JSON.stringify(content);
-        const maxOpSize = this.context.deltaManager.maxMessageSize;
+        if (this.connected) {
+            const serializedContent = JSON.stringify(content);
+            const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-        let clientSequenceNumber: number;
+            // If in manual flush mode we will trigger a flush at the next turn break
+            let batchBegin = false;
+            if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
+                batchBegin = true;
+                this.needsFlush = true;
 
-        // If in manual flush mode we will trigger a flush at the next turn break
-        let batchBegin = false;
-        if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-            batchBegin = true;
-            this.needsFlush = true;
+                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+                if (!this.flushTrigger) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    Promise.resolve().then(() => {
+                        this.flushTrigger = false;
+                        this.flush();
+                    });
+                }
+            }
 
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            if (!this.flushTrigger) {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                Promise.resolve().then(() => {
-                    this.flushTrigger = false;
-                    this.flush();
-                });
+            // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
+            // there will be a lot of escape characters that can make it up to 2x bigger!
+            // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
+            if (serializedContent.length <= maxOpSize) {
+                clientSequenceNumber = this.context.submitFn(
+                    type,
+                    content,
+                    this._flushMode === FlushMode.Manual,
+                    batchBegin ? { batch: true } : undefined);
+            } else {
+                clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             }
         }
 
-        // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
-        // there will be a lot of escape characters that can make it up to 2x bigger!
-        // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-        if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this.context.submitFn(
-                type,
-                content,
-                this._flushMode === FlushMode.Manual,
-                batchBegin ? { batch: true } : undefined);
-        } else {
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
+        // Let the PendingStateManager know that a message was submitted.
+        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+
+        // We have a pending op, so the document is now dirty.
+        if (!isSystemType(type)) {
+            this.updateDocumentDirtyState(true);
         }
 
         return clientSequenceNumber;
@@ -1496,7 +1509,44 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private processOperation(message: ISequencedDocumentMessage, local: boolean) {
+    /**
+     * Finds the right component and asks it to resubmit the message. This typically happens when we
+     * reconnect and there are pending messages.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    private reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        switch (type) {
+            case MessageType.Operation:
+                // For Operations, call reSubmitOperation which will find the right component and trigger
+                // resubmission on it.
+                this.reSubmitOperation(content, localOpMetadata);
+                break;
+            case MessageType.Attach:
+                // For Attach messages, submit the message again.
+                this.submit(MessageType.Attach, content, localOpMetadata);
+                break;
+            case MessageType.RemoteHelp:
+                // For RemoteHelp messages, log an error but do not resubmit them. We should look at the
+                // telemetry to determine how often this happens and revisit this as per #2312.
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedContainerResubmitMessage",
+                    messageType: type,
+                });
+                break;
+            default:
+                // For other types of messages, submit it again but log an error indicating a resubmit
+                // was triggered for it. We should look at the telemetry periodically to determine if
+                // these are valid or not and revisit this as per #2312.
+                this.submit(type, content, localOpMetadata);
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedContainerResubmitMessage",
+                    messageType: type,
+                });
+        }
+    }
+
+    private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };
@@ -1516,7 +1566,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             type: innerContents.type,
         };
 
-        componentContext.process(transformed, local);
+        componentContext.process(transformed, local, localOpMetadata);
+    }
+
+    private reSubmitOperation(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const componentContext = this.getContext(envelope.address);
+        assert(componentContext, "There should be a component context for the op");
+
+        const innerContents = envelope.contents as { content: any; type: MessageType };
+        componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     private subscribeToLeadership() {
@@ -1539,7 +1598,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     }
                 });
             }).catch((err) => {
-                this.logger.sendErrorEvent({ eventName: "ContainerRuntime_getScheduler" }, err);
+                this.closeFn(CreateContainerError(err));
             });
 
             this.context.quorum.on("removeMember", (clientId: string) => {

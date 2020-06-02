@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { generateToken } from "@fluidframework/server-services-client";
 import {
     ScopeType,
@@ -83,5 +83,8 @@ describe("LocalDeltaConnectionServer", ()=>{
         const join2 = await join2P.promise;
         assert.equal(connected2.clientId, join2.clientId);
         assert.notEqual(connected2.clientId, connected1.clientId);
+
+        socket1.disconnect();
+        socket2.disconnect();
     });
 });

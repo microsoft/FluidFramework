@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -161,7 +161,7 @@ export class ConsensusRegisterCollection<T>
             key,
             type: "write",
             serializedValue,
-            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
+            refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
 
         const clientSequenceNumber = this.submitLocalMessage(message);
@@ -244,15 +244,16 @@ export class ConsensusRegisterCollection<T>
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
-        assert(pending.length === this.pendingLocalMessages.length);
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IIncomingRegisterOperation<T> = message.contents;
             switch (op.type) {

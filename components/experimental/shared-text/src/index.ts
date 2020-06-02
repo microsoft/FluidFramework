@@ -140,10 +140,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             await Promise.all([
                 runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
                     .then((componentRuntime) => componentRuntime.attach()),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;

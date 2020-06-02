@@ -23,7 +23,7 @@ export function pointwise<T>(name: string | undefined, arr: IArray2D<T>) {
             let sum = 0;
             for (let r = row; r < numRows; r++) {
                 for (let c = col; c < numCols; c++) {
-                    sum += (arr.read(r, c) as any | 0);
+                    sum += (arr.getCell(r, c) as any | 0);
                 }
             }
             return sum;

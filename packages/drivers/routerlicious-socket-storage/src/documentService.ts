@@ -8,7 +8,7 @@ import * as api from "@fluidframework/driver-definitions";
 import { IClient, IErrorTrackingService } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import Axios from "axios";
-import * as io from "socket.io-client";
+import io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";

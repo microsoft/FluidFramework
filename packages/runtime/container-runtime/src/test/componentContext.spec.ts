@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntimeChannel,
@@ -17,7 +18,6 @@ import { MockRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { BlobCacheStorageService } from "../blobCacheStorageService";
 
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
@@ -175,9 +175,9 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                snapshotTree,
+                Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );
@@ -207,9 +207,9 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                snapshotTree,
+                Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );

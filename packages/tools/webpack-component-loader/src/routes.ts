@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import * as express from "express";
-import * as moniker from "moniker";
-import * as nconf from "nconf";
+import fs from "fs";
+import path from "path";
+import express from "express";
+import moniker from "moniker";
+import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import { RouteOptions } from "./loader";
+import { createManifestResponse } from "./bohemiaIntercept";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -20,7 +21,8 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = (app: express.Application) => {
+export const before = async (app: express.Application) => {
+    app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
@@ -164,7 +166,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 let toLog = error;
                 try {
                     toLog = JSON.stringify(error);
-                } catch {}
+                } catch { }
                 console.log(toLog);
             }
             if (!canContinue) {
@@ -197,7 +199,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/node_modules/@fluidframework/webpack-component-loader/dist/fluid-loader.bundle.js"></script>
-    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
+    ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};

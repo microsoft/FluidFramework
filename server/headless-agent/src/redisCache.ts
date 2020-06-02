@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RedisClient } from "redis";
 import * as util from "util";
+import { RedisClient } from "redis";
 
 /**
  * Interface for a page object cache
@@ -24,10 +24,10 @@ export interface ICache {
  * Redis based cache client
  */
 export class RedisCache implements ICache {
-    private getAsync: any;
-    private setAsync: any;
+    private readonly getAsync: any;
+    private readonly setAsync: any;
 
-    constructor(client: RedisClient, private prefix = "page") {
+    constructor(client: RedisClient, private readonly prefix = "page") {
         this.getAsync = util.promisify(client.get.bind(client));
         this.setAsync = util.promisify(client.set.bind(client));
     }

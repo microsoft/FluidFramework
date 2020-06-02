@@ -11,7 +11,7 @@ export class ReplayArgs {
     public outDirName: string = "output";
     public from: number = 0;
     public to: number = Number.MAX_SAFE_INTEGER;
-    public snapFreq: number = Number.MAX_SAFE_INTEGER;
+    public snapFreq: number | undefined;
     public version?: string;
     public verbose = true;
     public overlappingContainers = 4;

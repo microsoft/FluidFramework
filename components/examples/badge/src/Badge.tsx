@@ -11,8 +11,8 @@ import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";

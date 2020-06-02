@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -64,7 +64,7 @@ class ConnectionTelemetry {
                 this.logger.sendTelemetryEvent({
                     eventName: "MsnStatistics",
                     sequenceNumber: message.sequenceNumber,
-                    msnDistance: this.deltaManager.referenceSequenceNumber - this.deltaManager.minimumSequenceNumber,
+                    msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
                     timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
@@ -78,8 +78,7 @@ class ConnectionTelemetry {
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: Date.now() - this.opSendTimeForLatencyStatistics!,
+                value: Date.now() - this.opSendTimeForLatencyStatistics,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

@@ -12,8 +12,8 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { FluidEditor } from "./FluidEditor";
 import { insertBlockStart } from "./RichTextAdapter";
 import { MemberList } from "./MemberList";

@@ -6,7 +6,7 @@
 import { TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
 import { TestHost } from "@fluidframework/local-test-utils";
-import * as assert from "assert";
+import assert from "assert";
 import "mocha";
 import { FlowDocument } from "../src/document";
 

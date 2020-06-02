@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { EventEmitter } from "events";
-import { IDeltaQueue } from "@fluidframework/container-definitions";
-import { Deferred } from "@fluidframework/common-utils";
-import * as Deque from "double-ended-queue";
+import assert from "assert";
+import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import Deque from "double-ended-queue";
 
-export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
@@ -146,7 +145,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         while (!(this.q.length === 0 || this.paused || this.error)) {
             // Get the next message in the queue
             const next = this.q.shift();
-
             // Process the message.
             try {
                 this.worker(next!);

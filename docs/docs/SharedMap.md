@@ -4,7 +4,7 @@ uid: SharedMap
 
 # SharedMap
 
-- Package: [@microsoft/fluid-map](../api/fluid-map.md)
+- Package: [@fluidframework/map](../api/fluid-map.md)
 - API documentation:
   - [SharedMap](../api/fluid-map.sharedmap.md)
   - [ISharedMap](../api/fluid-map.isharedmap.md)

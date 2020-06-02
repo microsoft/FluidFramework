@@ -8,8 +8,8 @@ import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 
 /**

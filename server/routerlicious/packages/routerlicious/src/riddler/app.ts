@@ -5,8 +5,8 @@
 
 import { MongoManager } from "@fluidframework/server-services-core";
 import * as bodyParser from "body-parser";
-import * as express from "express";
-import * as morgan from "morgan";
+import express from "express";
+import morgan from "morgan";
 import * as winston from "winston";
 import * as api from "./api";
 

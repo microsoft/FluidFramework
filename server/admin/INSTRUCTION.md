@@ -31,7 +31,7 @@ Fluid uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library fo
 ### Passing auth token
 To use the token, register to fluid API with the **endpoints** and **tenantId**. Then just add a token field to api load call. Below is an example:
 ```javascript
-import { api as fluid } from "@microsoft/fluid-server-routerlicious";
+import { api as fluid } from "@fluidframework/server-routerlicious";
 
 const routerlicious = "https://alfred.wu2.prague.office-int.com";
 const historian = "https://historian.wu2.prague.office-int.com";

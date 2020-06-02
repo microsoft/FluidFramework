@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import * as assert from "assert";
+import assert from "assert";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@fluidframework/sequence";
 import { TestHost } from "@fluidframework/local-test-utils";
 

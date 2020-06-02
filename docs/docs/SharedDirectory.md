@@ -4,7 +4,7 @@ uid: SharedDirectory
 
 # SharedDirectory and IDirectory
 
-- Package: [@microsoft/fluid-map](../api/fluid-map.md)
+- Package: [@fluidframework/map](../api/fluid-map.md)
 - API documentation:
   - [SharedDirectory](../api/fluid-map.shareddirectory.md)
   - [IDirectory](../api/fluid-map.idirectory.md)

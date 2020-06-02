@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import * as CodeMirror from "codemirror";
+import CodeMirror from "codemirror";
 
 interface IPresenceInfo {
     userId: string;
