@@ -156,10 +156,11 @@ export class ScribeLambda extends SequencedLambda {
 
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
+                    const summaryRefSeqNumber = value.operation.referenceSequenceNumber;
 
                     // Process up to the summary op value to get the protocol state at the summary op.
                     // TODO: We should vaidate that we can actually make a summary prior to this call.
-                    this.processFromPending(value.operation.referenceSequenceNumber);
+                    this.processFromPending(summaryRefSeqNumber);
 
                     try {
                         const scribeCheckpoint = this.generateCheckpoint(this.lastOffset);
@@ -169,6 +170,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber,
+                            summaryRefSeqNumber,
                             value.operation.term ?? 1,
                             scribeCheckpoint);
                         this.protocolHead = this.protocolHandler.sequenceNumber;
@@ -372,6 +374,7 @@ export class ScribeLambda extends SequencedLambda {
         sequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
+        summaryRefSeqNumber: number,
         summaryTerm: number,
         checkpoint: IScribe,
     ): Promise<void> {
@@ -420,6 +423,15 @@ export class ScribeLambda extends SequencedLambda {
                 "One or more parent summaries are invalid.",
             );
             return;
+        }
+
+        // We should not accept a summary earlier than our current protocol state
+        if (summaryRefSeqNumber < sequenceNumber) {
+            return this.sendSummaryNack(
+                summarySequenceNumber,
+                // eslint-disable-next-line max-len
+                `Proposed summary reference sequence number ${summaryRefSeqNumber} is less than current sequence number ${sequenceNumber}`,
+            );
         }
 
         // At this point the summary op and its data are all valid and we can perform the write to history
