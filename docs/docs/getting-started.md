@@ -1,10 +1,13 @@
----
-uid: get-started
----
 
 # Getting Started
 
 If you are new to the Fluid Framework, we recommend reading [What is Fluid?](../what-is-fluid.md) to orient yourself.
+
+---
+
+[[toc]]
+
+---
 
 ## Set up your development environment
 

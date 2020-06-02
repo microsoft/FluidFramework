@@ -52,39 +52,40 @@ const listPages = (dirPath, includeIndex = false) => {
 
 const getNav = () => {
     const nav = [
-        { text: "What is Fluid?", link: "/what-is-fluid" },
-        { text: "Docs", link: "/docs/" },
+        { text: "What is Fluid?", link: "/docs/what-is-fluid.md" },
+        { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
+        { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/overview" },
-        {
-            text: "🤿 Dive Deeper",
-            items: [
-                { text: "How Fluid works", link: "/how/" },
-                internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
-                internalOnly({ text: "FAQ", link: "/faq/" }),
-                internalOnly({ text: "Terminology", link: "/misc/terminology" }),
-                internalOnly({ text: "Concepts", link: "/misc/concepts" }),
-                internalOnly({
-                    text: "Contributing",
-                    items: [
-                        { text: "Release process", link: "/contributing/release-process" },
-                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
-                        { text: "Compatibility", link: "/contributing/compatibility" },
-                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                        { text: "Documentation system", link: "/contributing/doc-system" },
-                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                        { text: "Miscellaneous", link: "/contributing/misc" },
-                    ]
-                }),
-                internalOnly({
-                    text: "Team",
-                    items: [
-                        { text: "Updates", link: "/team/" },
-                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                    ]
-                }),
-            ]
-        },
+        // {
+        //     text: "🤿 Dive Deeper",
+        //     items: [
+        //         { text: "How Fluid works", link: "/how/" },
+        //         internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
+        //         internalOnly({ text: "FAQ", link: "/faq/" }),
+        //         internalOnly({ text: "Terminology", link: "/misc/terminology" }),
+        //         internalOnly({ text: "Concepts", link: "/misc/concepts" }),
+        //         internalOnly({
+        //             text: "Contributing",
+        //             items: [
+        //                 { text: "Release process", link: "/contributing/release-process" },
+        //                 { text: "Breaking changes", link: "/contributing/breaking-changes" },
+        //                 { text: "Compatibility", link: "/contributing/compatibility" },
+        //                 { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+        //                 { text: "Documentation system", link: "/contributing/doc-system" },
+        //                 { text: "Building documentation locally", link: "/contributing/building-documentation" },
+        //                 { text: "Miscellaneous", link: "/contributing/misc" },
+        //             ]
+        //         }),
+        //         internalOnly({
+        //             text: "Team",
+        //             items: [
+        //                 { text: "Updates", link: "/team/" },
+        //                 { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+        //             ]
+        //         }),
+        //     ]
+        // },
         internalOnly({
             text: "Versions",
             items: [
@@ -239,17 +240,16 @@ const getApiSidebar = () => {
 const getDocsSidebar = () => {
     return [
         {
-            title: "Guide",
+            title: "Installation",
             collapsable: false,
-            path: "./",
-            children: compact([
-                "",
+            // path: "",
+            children: [
+                "getting-started.md",
+                // "spfx.md",
+                // "upload.md",
+                "create-a-new-fluid-component",
                 "package-feed.md",
-                "spfx.md",
-                "upload.md",
-                internalOnly("yo-fluid"),
-                internalOnly("water-park"),
-            ])
+            ]
         },
         {
             title: "Distributed Data Structures",

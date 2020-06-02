@@ -1,8 +1,4 @@
----
-uid: yo-fluid
----
-
-# yo fluid
+# Create a new Fluid component
 
 **yo fluid** is a tool that helps create a scaffold for a Fluid component called **diceroller**.
 
