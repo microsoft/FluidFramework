@@ -6,7 +6,7 @@
 import {
     IDocumentStorage,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as deltas from "./deltas";

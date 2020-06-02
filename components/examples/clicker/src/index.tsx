@@ -26,9 +26,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFirstTime() {
         this.root.createValueType("clicks", CounterValueType.Name, 0);
-        if (!this.runtime.connected) {
-            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
-        }
         this.setupAgent();
     }
 

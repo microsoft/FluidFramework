@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
+import { IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import { InMemoryDb } from "./inMemorydb";
 import { LevelDb } from "./levelDb";

@@ -84,7 +84,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             time: Date.now(),
             type: "createStroke",
         };
-        this.submitLocalMessage(createStrokeOperation);
+        this.submitLocalMessage(createStrokeOperation, undefined);
         return this.executeCreateStrokeOperation(createStrokeOperation);
     }
 
@@ -97,7 +97,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             point,
             type: "stylus",
         };
-        this.submitLocalMessage(stylusOperation);
+        this.submitLocalMessage(stylusOperation, undefined);
         return this.executeStylusOperation(stylusOperation);
     }
 
@@ -109,7 +109,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             time: Date.now(),
             type: "clear",
         };
-        this.submitLocalMessage(clearOperation);
+        this.submitLocalMessage(clearOperation, undefined);
         this.executeClearOperation(clearOperation);
     }
 
@@ -168,7 +168,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation && !local) {
             const operation = message.contents as IInkOperation;
             if (operation.type === "clear") {

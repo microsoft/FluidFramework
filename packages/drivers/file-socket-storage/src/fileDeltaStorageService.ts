@@ -28,6 +28,10 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         return [];
     }
 
+    public get ops(): readonly Readonly<api.ISequencedDocumentMessage>[] {
+        return this.messages;
+    }
+
     /**
      * Retrieve ops within the exclusive sequence number range.
      *

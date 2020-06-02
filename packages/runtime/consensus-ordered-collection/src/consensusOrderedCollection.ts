@@ -287,12 +287,14 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected onConnect(pending: any[]) {
+    protected onConnect() {
         // resubmit non-acked messages
         for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
+
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
 
     protected async loadCore(
         branchId: string,
@@ -324,7 +326,7 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value: IConsensusOrderedCollectionValue<T> | undefined;

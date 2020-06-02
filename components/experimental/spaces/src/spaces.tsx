@@ -26,15 +26,6 @@ import { Templates } from ".";
 const SpacesStorageKey = "spaces-storage";
 
 /**
- * ISpacesProps are the public interface that SpacesView will use to communicate with Spaces.
- */
-export interface ISpacesProps {
-    addComponent?(type: string): void;
-    templatesAvailable?: boolean;
-    applyTemplate?(template: Templates): void;
-}
-
-/**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
@@ -66,21 +57,20 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Spaces can't render, storage not found");
         }
 
-        const spacesProps: ISpacesProps = {
-            addComponent: (type: string) => {
-                this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
-                    .catch((error) => {
-                        console.error(`Error while creating component: ${type}`, error);
-                    });
-            },
-            templatesAvailable: this.internalRegistry?.IComponentRegistryTemplates !== undefined,
-            applyTemplate: this.applyTemplateFromRegistry.bind(this),
+        const addComponent = (type: string) => {
+            this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
+                .catch((error) => {
+                    console.error(`Error while creating component: ${type}`, error);
+                });
         };
+
         ReactDOM.render(
             <SpacesView
                 supportedComponents={this.supportedComponents}
                 storage={ this.storageComponent }
-                spacesProps={ spacesProps }
+                addComponent={ addComponent }
+                templatesAvailable={ this.internalRegistry?.IComponentRegistryTemplates !== undefined }
+                applyTemplate={ this.applyTemplateFromRegistry.bind(this) }
             />,
             div,
         );

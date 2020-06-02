@@ -15,12 +15,12 @@ export function fill<T extends IArray2D<U>, U>(
     matrix: T,
     row = 0,
     col = 0,
-    numRows = 256,
-    numCols = 256,
-    value = (row: number, col: number) => row * numRows + col
+    rowCount = 256,
+    colCount = 256,
+    value = (row: number, col: number) => row * rowCount + col
 ): T {
-    for (let r = row + numRows - 1; r >= row; r--) {
-        for (let c = col + numCols - 1; c >= col; c--) {
+    for (let r = row + rowCount - 1; r >= row; r--) {
+        for (let c = col + colCount - 1; c >= col; c--) {
             matrix.setCell(r, c, value(r, c) as any);
         }
     }
@@ -32,19 +32,19 @@ export function fill<T extends IArray2D<U>, U>(
  */
 export function setCorners<T extends IArray2D<U>, U>(matrix: T) {
     matrix.setCell(0, 0, "TopLeft" as any);
-    matrix.setCell(0, matrix.numCols - 1, "TopRight" as any);
-    matrix.setCell(matrix.numRows - 1, matrix.numCols - 1, "BottomRight" as any);
-    matrix.setCell(matrix.numRows - 1, 0, "BottomLeft" as any);
+    matrix.setCell(0, matrix.colCount - 1, "TopRight" as any);
+    matrix.setCell(matrix.rowCount - 1, matrix.colCount - 1, "BottomRight" as any);
+    matrix.setCell(matrix.rowCount - 1, 0, "BottomLeft" as any);
 }
 
 /**
  * Checks the corners of the given matrix.
  */
 export function checkCorners<T extends IArray2D<U>, U>(matrix: T) {
-    assert.equal(matrix.read(0, 0), "TopLeft");
-    assert.equal(matrix.read(0, matrix.numCols - 1), "TopRight");
-    assert.equal(matrix.read(matrix.numRows - 1, matrix.numCols - 1), "BottomRight");
-    assert.equal(matrix.read(matrix.numRows - 1, 0), "BottomLeft");
+    assert.equal(matrix.getCell(0, 0), "TopLeft");
+    assert.equal(matrix.getCell(0, matrix.colCount - 1), "TopRight");
+    assert.equal(matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1), "BottomRight");
+    assert.equal(matrix.getCell(matrix.rowCount - 1, 0), "BottomLeft");
 }
 
 /**
@@ -55,13 +55,13 @@ export function check<T extends IArray2D<U>, U>(
     matrix: T,
     row = 0,
     col = 0,
-    numRows = 256,
-    numCols = 256,
-    value = (row: number, col: number) => row * numRows + col
+    rowCount = 256,
+    colCount = 256,
+    value = (row: number, col: number) => row * rowCount + col
 ): T {
-    for (let r = row + numRows - 1; r >= row; r--) {
-        for (let c = col + numCols - 1; c >= col; c--) {
-            assert.equal(matrix.read(r, c), value(r, c) as any);
+    for (let r = row + rowCount - 1; r >= row; r--) {
+        for (let c = col + colCount - 1; c >= col; c--) {
+            assert.equal(matrix.getCell(r, c), value(r, c) as any);
         }
     }
     return matrix;
@@ -73,12 +73,12 @@ export function check<T extends IArray2D<U>, U>(
  */
 export function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
     const m: T[][] = [];
-    for (let r = 0; r < actual.numRows; r++) {
+    for (let r = 0; r < actual.rowCount; r++) {
         const row: T[] = [];
         m.push(row);
 
-        for (let c = 0; c < actual.numCols; c++) {
-            row.push(actual.read(r, c) as T);
+        for (let c = 0; c < actual.colCount; c++) {
+            row.push(actual.getCell(r, c) as T);
         }
     }
 
@@ -89,9 +89,9 @@ export function extract<T extends Serializable>(actual: SharedMatrix<T>): Readon
  * Asserts that given `SharedMatrix` has the specified dimensions.  This is useful for distinguishing
  * between variants of empty matrices (zero rows vs. zero cols vs. zero rows and zero cols).
  */
-export function expectSize<T extends Serializable>(matrix: SharedMatrix<T>, numRows: number, numCols: number) {
-    assert.equal(matrix.numRows, numRows, "'matrix' must have expected number of rows.");
-    assert.equal(matrix.numCols, numCols, "'matrix' must have expected number of columns.");
+export function expectSize<T extends Serializable>(matrix: SharedMatrix<T>, rowCount: number, colCount: number) {
+    assert.equal(matrix.rowCount, rowCount, "'matrix' must have expected number of rows.");
+    assert.equal(matrix.colCount, colCount, "'matrix' must have expected number of columns.");
 }
 
 /**
@@ -101,22 +101,24 @@ export function expectSize<T extends Serializable>(matrix: SharedMatrix<T>, numR
  * This is achieved by inserting even row/cols at the end of the matrix and odd row/cols
  * at the middle of the matrix (e.g, [1,3,5,7,0,2,4,6]).
  */
-export function insertFragmented(matrix: SharedMatrix, numRows: number, numCols: number) {
-    for (let r = 0; r < numRows; r++) {
+export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCount: number) {
+    for (let r = 0; r < rowCount; r++) {
         matrix.insertRows(
             (r & 1) === 0
-                ? matrix.numRows
+                ? matrix.rowCount
                 : r >> 1,
             1);
     }
 
-    for (let c = 0; c < numCols; c++) {
+    for (let c = 0; c < colCount; c++) {
         matrix.insertCols(
             (c & 1) === 0
-                ? matrix.numCols
+                ? matrix.colCount
                 : c >> 1,
             1);
     }
+
+    expectSize(matrix, rowCount, colCount);
 
     return matrix;
 }
