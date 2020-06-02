@@ -428,7 +428,7 @@ function permalinkSymbol() {
 }
 
 module.exports = {
-    title: `Fluid Framework v${THIS_VERSION}`,
+    title: `Microsoft Fluid Framework`,
     description: "State that flows",
     evergreen: true,
     base: VUEPRESS_BASE,
