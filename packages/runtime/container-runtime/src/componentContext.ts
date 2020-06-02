@@ -566,7 +566,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
         strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
 
-        // back-compat: supporting <= 0.18 components
+        // back-compat: 0.18 components
         if (this.componentRuntime.reSubmit) {
             this.componentRuntime.reSubmit(type, content, localOpMetadata);
         }
