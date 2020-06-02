@@ -40,7 +40,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
@@ -564,8 +564,12 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.reSubmit(type, content, localOpMetadata);
+        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+
+        // back-compat: 0.18 components
+        if (this.componentRuntime.reSubmit) {
+            this.componentRuntime.reSubmit(type, content, localOpMetadata);
+        }
     }
 
     private verifyNotClosed() {
