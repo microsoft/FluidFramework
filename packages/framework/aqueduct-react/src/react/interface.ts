@@ -121,7 +121,8 @@ export interface IFluidProps<
 /**
  * View converters to take the synced state Fluid value that they are keyed against in the FluidToView map
  * and convert them into their view state counterparts
- * @param stateKey - The corresponding value key within the view state type
+ * @param stateKey - The corresponding value key within the view state type, only needs to be provided if different
+ * from the fluidKey
  * @param viewConverter - A callback that takes in the partial view state containing the value that
  * this converter maps to, and returns the corresponding partial fluid state
  * @param fluidObjectType - If this is a special fluid object type (i.e. counter) on the root, specify that here
@@ -132,8 +133,8 @@ export interface IViewConverter<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
 >{
-    stateKey: keyof SV,
-    viewConverter: (syncedState: Partial<SF>, fluidComponentMap: FluidComponentMap) => Partial<SV>,
+    stateKey?: keyof SV,
+    viewConverter?: (syncedState: Partial<SF>, fluidComponentMap: FluidComponentMap) => Partial<SV>,
     fluidObjectType?: string;
     rootKey?: string;
 }

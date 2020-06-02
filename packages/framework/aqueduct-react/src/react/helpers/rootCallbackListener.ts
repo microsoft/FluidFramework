@@ -35,6 +35,7 @@ export const rootCallbackListener = <SV,SF>(
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
+    const rootKey = change.key;
     if (!local) {
         const viewToFluidKeys: string[] = viewToFluid
             ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
@@ -52,11 +53,10 @@ export const rootCallbackListener = <SV,SF>(
                 fluidToView,
             );
         } else if (viewToFluid
-            && (viewToFluidKeys).includes(change.key)
+            && (viewToFluidKeys).includes(rootKey)
             || (change.keyPrefix !== undefined && viewToFluidKeys.includes(change.keyPrefix))) {
             // If the update is to a child component, trigger only a view update as the child itself will
             // update its Fluid update
-            const rootKey = change.key;
             const stateKey = getByValue(rootKey, viewToFluid);
             if (stateKey) {
                 const newPartialState = getViewFromRoot(
@@ -68,6 +68,10 @@ export const rootCallbackListener = <SV,SF>(
                 );
                 setState({ ...state, ...newPartialState, ...{ fluidComponentMap } }, true);
             }
+        } else if (state[rootKey] !== undefined) {
+            const newState = { ...state, ...{ fluidComponentMap } };
+            newState[rootKey] = root.get(rootKey);
+            setState({ ...state, ...newState }, true);
         }
     }
 });

@@ -11,7 +11,9 @@ import {
     FluidReactComponent,
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
+    FluidToViewMap,
 } from "@fluidframework/aqueduct-react";
+import { Counter, CounterValueType } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,13 +21,14 @@ import * as ReactDOM from "react-dom";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
+const CounterRootKey = "counter";
 
 // ----- REACT STUFF -----
 
 // ---- React Class Component ----
 
 interface CounterState {
-    value: number;
+    counter: Counter;
 }
 
 interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
@@ -37,9 +40,9 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
         return (
             <div>
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.value}
+                    {this.state.counter.value}
                 </span>
-                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
+                <button onClick={() => { this.state.counter.increment(1); }}>+</button>
             </div>
         );
     }
@@ -55,7 +58,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("counterClicks", 0);
+        this.root.createValueType(CounterRootKey, CounterValueType.Name, 0);
     }
 
     // #region IComponentHTMLView
@@ -64,17 +67,29 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
+        // Load initial state from root before entering React render lifecycle
+        // View and Fluid states are identical since we are directly using the Counter
+        // DDS in the view
+        const initialState = { counter:  this.root.get(CounterRootKey) };
+
+        // Mark the counter as the CounterValueType so that changes to it update the view
+        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
+        fluidToView.set(CounterRootKey, {
+            fluidObjectType: CounterValueType.Name,
+        });
+
         ReactDOM.render(
             <div>
                 <CounterReactView
                     syncedStateId={"clicker"}
                     root={this.root}
-                    initialViewState={{ value: this.root.get("counterClicks") }}
-                    initialFluidState={{ value: this.root.get("counterClicks") }}
+                    initialViewState={initialState}
+                    initialFluidState={initialState}
                     dataProps={{
                         fluidComponentMap: new Map(),
                         runtime: this.runtime,
                     }}
+                    fluidToView={fluidToView}
                 />
             </div>,
             div,
