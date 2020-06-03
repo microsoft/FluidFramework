@@ -43,15 +43,17 @@ The `view<%= extension %>` file contains all the view logic.
 ```text
 .
 ├── src
-|   ├── component<%= extension %>    // Fluid Component source code
+|   ├── component<%= extension %>              // Fluid Component source code
 |   ├── index.ts          // Export file
 |   ├── interface.ts      // Model Interface Definition
-|   └── view<%= extension %>         // View Logic
-├── .gitignore            // Ignore dist and node_modules
-├── package.json          // Package manifest
-├── README.md             // Description of your component's functionality
-├── tsconfig.json         // TypeScript configuration
-└── webpack.config.js     // Webpack configuration
+|   └── view<%= extension %>                   // View Logic
+├── .gitignore                     // Ignore dist and node_modules
+├── jest-puppeteer.config.js       // jest-puppeteer configuration
+├── jest.config.js                 // Jest configuration
+├── package.json                   // Package manifest
+├── README.md                      // Description of your component's functionality
+├── tsconfig.json                  // TypeScript configuration
+└── webpack.config.js              // Webpack configuration
 ```
 
 ## Available Scripts
@@ -88,6 +90,10 @@ Once you run `start:local` you can navigate to `http://localhost:8080` in any br
 
 `tinylicious` is a Fluid server implementation that runs locally and
 allows for cross browser/tab testing. To learn more about `tinylicious` go to `TODO://ADD LINK`
+
+### `test`
+
+Runs end to end test using [Jest](https://jestjs.io/) and [Puppeteer](https://github.com/puppeteer/puppeteer/).
 
 ### `tsc`
 
