@@ -17,7 +17,7 @@ describe("Counter", () => {
         });
 
         it("Can create a counter with default value", () => {
-            const testCounter = factory.create(new MockRuntime(), "counter") as SharedCounter;
+            const testCounter = factory.create(new MockRuntime(), "counter") as ISharedCounter;
             assert.ok(testCounter);
             assert.equal(testCounter.value, 0);
         });
@@ -28,7 +28,7 @@ describe("Counter", () => {
 
         beforeEach(async () => {
             factory = SharedCounter.getFactory();
-            testCounter = factory.create(new MockRuntime(), "counter") as SharedCounter;
+            testCounter = factory.create(new MockRuntime(), "counter") as ISharedCounter;
             assert.ok(testCounter);
         });
 

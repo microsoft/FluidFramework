@@ -1,0 +1,238 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import assert from "assert";
+import { ISharedCell, SharedCell } from "@fluidframework/cell";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+    createLocalLoader,
+    ITestFluidComponent,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@fluidframework/test-utils";
+
+describe("Counter", () => {
+    const id = "fluid-test://localhost/counterTest";
+    const counterId = "counterKey";
+    const initialCounterValue = "Initial counter value";
+    const newCounterValue = "A new counter value";
+    const codeDetails: IFluidCodeDetails = {
+        package: "sharedCounterTestPackage",
+        config: {},
+    };
+
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let component1: ITestFluidComponent;
+    let sharedCounter1: ISharedCell;
+    let sharedCounter2: ISharedCell;
+    let sharedCounter3: ISharedCell;
+
+    async function createContainer(): Promise<Container> {
+        const factory = new TestFluidComponentFactory([[ counterId, SharedCell.getFactory() ]]);
+        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+        const response = await container.request({ url: componentId });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Component with id: ${componentId} not found`);
+        }
+        return response.value as ITestFluidComponent;
+    }
+
+    beforeEach(async () => {
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+        const container1 = await createContainer();
+        component1 = await getComponent("default", container1);
+        sharedCounter1 = await component1.getSharedObject<SharedCell>(counterId);
+
+        const container2 = await createContainer();
+        const component2 = await getComponent("default", container2);
+        sharedCounter2 = await component2.getSharedObject<SharedCell>(counterId);
+
+        const container3 = await createContainer();
+        const component3 = await getComponent("default", container3);
+        sharedCounter3 = await component3.getSharedObject<SharedCell>(counterId);
+
+        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime, component3.runtime);
+
+        // Set a starting value in the cell
+        sharedCounter1.set(initialCounterValue);
+
+        await containerDeltaEventManager.process();
+    });
+
+    function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
+        const userValue = cell.get();
+        assert.equal(userValue, expectedValue,
+            `Incorrect value ${userValue} instead of ${expectedValue} in container ${index}`);
+    }
+
+    function verifyCellValues(value1, value2, value3) {
+        verifyCellValue(sharedCounter1, value1, 1);
+        verifyCellValue(sharedCounter2, value2, 2);
+        verifyCellValue(sharedCounter3, value3, 3);
+    }
+
+    function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean) {
+        const user1Empty = sharedCounter1.empty();
+        assert.equal(user1Empty, value1, `Incorrect value ${user1Empty} instead of ${value1} in container 1`);
+        const user2Empty = sharedCounter2.empty();
+        assert.equal(user2Empty, value2, `Incorrect value ${user2Empty} instead of ${value2} in container 2`);
+        const user3Empty = sharedCounter3.empty();
+        assert.equal(user3Empty, value3, `Incorrect value ${user3Empty} instead of ${value3} in container 3`);
+    }
+
+    it("can create the cell in 3 containers correctly", async () => {
+        // Cell was created and populated in beforeEach
+        assert.ok(sharedCounter1, `Couldn't find the cell in container1, instead got ${sharedCounter1}`);
+        assert.ok(sharedCounter2, `Couldn't find the cell in container2, instead got ${sharedCounter2}`);
+        assert.ok(sharedCounter3, `Couldn't find the cell in container3, instead got ${sharedCounter3}`);
+    });
+
+    it("can get cell data in 3 containers correctly", async () => {
+        // Cell was created and populated in beforeEach
+        verifyCellValues(initialCounterValue, initialCounterValue, initialCounterValue);
+    });
+
+    it("can set and get cell data in 3 containers correctly", async () => {
+        sharedCounter2.set(newCounterValue);
+
+        await containerDeltaEventManager.process();
+
+        verifyCellValues(newCounterValue, newCounterValue, newCounterValue);
+    });
+
+    it("can delete cell data in 3 containers correctly", async () => {
+        sharedCounter3.delete();
+
+        await containerDeltaEventManager.process();
+
+        verifyCellEmpty(true, true, true);
+    });
+
+    it("can update value and trigger onValueChanged on other two containers", async () => {
+        let user1ValueChangedCount: number = 0;
+        let user2ValueChangedCount: number = 0;
+        let user3ValueChangedCount: number = 0;
+
+        // Set up event listeners for the valueChanged that will count calls and check values
+        sharedCounter1.on("valueChanged", (newValue) => {
+            assert.equal(newValue, newCounterValue, `Incorrect value for changed in container 1: ${newValue}`);
+            user1ValueChangedCount = user1ValueChangedCount + 1;
+        });
+        sharedCounter2.on("valueChanged", (newValue) => {
+            assert.equal(newValue, newCounterValue, `Incorrect value for changed in container 2: ${newValue}`);
+            user2ValueChangedCount = user2ValueChangedCount + 1;
+        });
+        sharedCounter3.on("valueChanged", (newValue) => {
+            assert.equal(newValue, newCounterValue, `Incorrect value for changed in container 3: ${newValue}`);
+            user3ValueChangedCount = user3ValueChangedCount + 1;
+        });
+
+        sharedCounter1.set(newCounterValue);
+
+        await containerDeltaEventManager.process();
+
+        assert.equal(user1ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 1");
+        assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 2");
+        assert.equal(user3ValueChangedCount, 1, "Incorrect number of valueChanged op received in container 3");
+
+        verifyCellValues(newCounterValue, newCounterValue, newCounterValue);
+    });
+
+    it("Simultaneous set should reach eventual consistency with the same value", async () => {
+        sharedCounter1.set("value1");
+        sharedCounter2.set("value2");
+        sharedCounter3.set("value0");
+        sharedCounter3.set("value3");
+
+        verifyCellValues("value1", "value2", "value3");
+
+        await containerDeltaEventManager.process();
+
+        verifyCellValues("value3", "value3", "value3");
+    });
+
+    it("Simultaneous delete/set should reach eventual consistency with the same value", async () => {
+        // set after delete
+        sharedCounter1.set("value1.1");
+        sharedCounter2.delete();
+        sharedCounter3.set("value1.3");
+
+        verifyCellValues("value1.1", undefined, "value1.3");
+
+        await containerDeltaEventManager.process();
+
+        verifyCellValues("value1.3", "value1.3", "value1.3");
+    });
+
+    it("Simultaneous delete/set on same cell should reach eventual consistency with the same value", async () => {
+        // delete and then set on the same cell
+        sharedCounter1.set("value2.1");
+        sharedCounter2.delete();
+        sharedCounter3.set("value2.3");
+
+        // drain the outgoing so that the next set will come after
+        await containerDeltaEventManager.processOutgoing();
+
+        sharedCounter2.set("value2.2");
+        verifyCellValues("value2.1", "value2.2", "value2.3");
+
+        await containerDeltaEventManager.process();
+
+        verifyCellValues("value2.2", "value2.2", "value2.2");
+    });
+
+    it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {
+        // delete after set
+        sharedCounter1.set("value3.1");
+        sharedCounter2.set("value3.2");
+        sharedCounter3.delete();
+
+        verifyCellValues("value3.1", "value3.2", undefined);
+        verifyCellEmpty(false, false, true);
+
+        await containerDeltaEventManager.process();
+
+        verifyCellValues(undefined, undefined, undefined);
+        verifyCellEmpty(true, true, true);
+    });
+
+    it("registers data if data is a shared object", async () => {
+        const detachedCell1: ISharedCell = SharedCell.create(component1.runtime);
+        const detachedCell2: ISharedCell = SharedCell.create(component1.runtime);
+        const cellValue = "cell cell cell cell";
+        detachedCell2.set(cellValue);
+        detachedCell1.set(detachedCell2.handle);
+        assert(!detachedCell2.isRegistered(), "The new cell should not be registered");
+
+        sharedCounter1.set(detachedCell1.handle);
+        assert(detachedCell2.isRegistered(), "The new cell should now be registered");
+
+        await containerDeltaEventManager.process();
+
+        async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
+            const cell = await cellP;
+            const handle = cell.get() as IComponentHandle<ISharedCell>;
+            return handle.get();
+        }
+
+        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(sharedCounter2))), cellValue, 2);
+        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(sharedCounter3))), cellValue, 3);
+    });
+
+    afterEach(async () => {
+        await deltaConnectionServer.webSocketServer.close();
+    });
+});
