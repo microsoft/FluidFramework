@@ -307,9 +307,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         cachedSnapshot = response.content;
 
                         const props = {
-                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
-                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
-                            ops: cachedSnapshot.ops?.length,
+                            trees: cachedSnapshot.trees?.length ?? 0,
+                            blobs: cachedSnapshot.blobs?.length ?? 0,
+                            ops: cachedSnapshot.ops?.length ?? 0,
                             sprequestguid: response.headers.get("sprequestguid"),
                             sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                             contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
@@ -334,17 +334,17 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     let appCommit: string | undefined;
                     this.initTreesCache(trees);
                     for (const [key, treeVal] of this.treesCache.entries()) {
-                        // First entry is protocol tree, first entry in it should
-                        if (!appCommit) {
-                            for (const entry of treeVal.entries) {
-                                if (entry.type === "commit" && entry.path === ".app") {
-                                    // This is the unacked handle of the latest summary generated.
-                                    appCommit = idFromSpoEntry(entry);
-                                    break;
-                                }
-                            }
-                            assert(appCommit); // .app commit should be first entry in first entry.
+                        if (appCommit) {
+                            break;
                         }
+                        for (const entry of treeVal.entries) {
+                            if (entry.type === "commit" && entry.path === ".app") {
+                                // This is the unacked handle of the latest summary generated.
+                                appCommit = idFromSpoEntry(entry);
+                                break;
+                            }
+                        }
+                        assert(appCommit); // .app commit should be first entry in first entry.
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
                                 blobsIdToPathMap.set(idFromSpoEntry(entry), key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
