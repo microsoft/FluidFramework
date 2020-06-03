@@ -4,4 +4,3 @@
  */
 
 export * from "./componentInternalRegistry";
-export * from "./componentRegistryTemplates";
