@@ -628,6 +628,10 @@ export class MockObjectStorageService implements IObjectStorageService {
         assert(content !== undefined);
         return fromUtf8ToBase64(content);
     }
+
+    public async contains(path: string): Promise<boolean> {
+        return this.contents[path] !== undefined;
+    }
 }
 
 /**

@@ -25,12 +25,10 @@ export class MockStorage implements IObjectStorageService {
                     if (entry.type === "Tree") {
                         return MockStorage.readCore(entry.value as ITree, paths.slice(1));
                     }
-                    // eslint-disable-next-line prefer-rest-params
-                    assert.fail(JSON.stringify({ ...arguments }));
+                    return undefined;
                 }
             }
-            // eslint-disable-next-line prefer-rest-params
-            assert.fail(JSON.stringify({ ...arguments }));
+            return undefined;
         }
     }
 
@@ -38,6 +36,12 @@ export class MockStorage implements IObjectStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        return MockStorage.readCore(this.tree, path.split("/"));
+        const blob =  MockStorage.readCore(this.tree, path.split("/"));
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        return blob;
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return MockStorage.readCore(this.tree, path.split("/")) !== undefined;
     }
 }

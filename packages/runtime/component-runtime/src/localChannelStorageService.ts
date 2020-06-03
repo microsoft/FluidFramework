@@ -16,6 +16,11 @@ export class LocalChannelStorageService implements IObjectStorageService {
         return contents !== undefined ? Promise.resolve(contents) : Promise.reject("Not found");
     }
 
+    public async contains(path: string): Promise<boolean> {
+        const contents = this.readSync(path);
+        return contents !== undefined;
+    }
+
     /**
      * Provides a synchronous access point to locally stored data
      */

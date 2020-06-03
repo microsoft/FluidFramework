@@ -39,7 +39,6 @@ export interface MergeTreeHeaderMetadata {
     orderedChunkMetadata: MergeTreeHeaderChunkMetadata[],
     sequenceNumber: number,
     minSequenceNumber: number,
-    hasTardis: boolean,
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk{
@@ -178,7 +177,6 @@ function buildHeaderMetadataForLegecyChunk(
             sequenceNumber: chunk.chunkSequenceNumber,
             totalLength: chunk.totalLengthChars,
             totalSegmentCount: chunk.totalSegmentCount,
-            hasTardis: true,
         };
     }
     return undefined;

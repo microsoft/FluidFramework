@@ -117,6 +117,8 @@ export interface IObjectStorageService {
      * Reads the object contained at the given path. Returns a base64 string representation for the object.
      */
     read(path: string): Promise<string>;
+
+    contains(path: string): Promise<boolean>;
 }
 
 /**

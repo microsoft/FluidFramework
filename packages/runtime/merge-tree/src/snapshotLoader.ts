@@ -35,9 +35,25 @@ export class SnapshotLoader {
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
         const headerP = services.read(SnapshotLegacy.header);
-        // If loading from a snapshot load tardis messages
+        // If loading from a snapshot load catchup messages
         // kick off loading in parallel to loading "body" chunk.
-        const rawMessagesP = services.read(SnapshotLegacy.tardis);
+        const hasCatchupOpsP = services.contains(SnapshotLegacy.catchupOps);
+        const hasOldCatchupOpsP = services.contains(SnapshotLegacy.oldCatchupOps);
+
+        const rawMessagesP = hasCatchupOpsP.then(
+            async (hasCatchupOps) => {
+                if (hasCatchupOps) {
+                    return services.read(SnapshotLegacy.catchupOps);
+                } else {
+                    return hasOldCatchupOpsP.then((hasOldCatchupOp) =>{
+                        if (hasOldCatchupOp) {
+                            return services.read(SnapshotLegacy.oldCatchupOps);
+                        } else {
+                            return "";
+                        }
+                    });
+                }
+            });
 
         const header = await headerP;
         assert(header);
@@ -54,11 +70,11 @@ export class SnapshotLoader {
         // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
 
-        if (headerChunk.headerMetadata.hasTardis) {
+        if (await hasCatchupOpsP || await hasOldCatchupOpsP) {
             // tslint:disable-next-line:no-suspicious-comment
-            // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
+            // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadTardis(rawMessagesP, branch);
+            return this.loadCatchupOps(rawMessagesP, branch);
         } else {
             rawMessagesP.catch(()=>{});
             return [];
@@ -209,13 +225,13 @@ export class SnapshotLoader {
     }
 
     /**
-     * If loading from a snapshot, get the tardis messages.
+     * If loading from a snapshot, get the catchup messages.
      * @param rawMessages - The messages in original encoding
      * @param branchId - The document branch
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadTardis(
+    private async loadCatchupOps(
         rawMessages: Promise<string>,
         branchId: string,
     ): Promise<ISequencedDocumentMessage[]> {

@@ -83,14 +83,14 @@ export class SnapshotV1 {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        // TODO: Remove unused 'tardisMsgs' argument once new snapshot format is the default.
+        // TODO: Remove unused 'catchUpMsgs' argument once new snapshot format is the default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        tardisMsgs: ISequencedDocumentMessage[],
+        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        assert.equal(tardisMsgs.length, 0);
+        assert.equal(catchUpMsgs.length, 0);
 
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
@@ -157,7 +157,6 @@ export class SnapshotV1 {
         const mergeTree = this.mergeTree;
         const { currentSeq, minSeq } = mergeTree.getCollabWindow();
         this.header = {
-            hasTardis: false,
             minSequenceNumber: minSeq,
             sequenceNumber: currentSeq,
             orderedChunkMetadata: [],
