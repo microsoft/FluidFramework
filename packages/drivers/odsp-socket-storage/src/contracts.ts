@@ -266,6 +266,7 @@ export interface HostStoragePolicy {
 
 /**
  * Same as HostStoragePolicy, but adds options that are internal to runtime.
+ * All fields should be optional.
  */
 export interface HostStoragePolicyInternal extends HostStoragePolicy {
     summarizerClient?: boolean;

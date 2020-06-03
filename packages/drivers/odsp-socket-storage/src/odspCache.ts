@@ -14,6 +14,7 @@ import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 export type CacheKey = "snapshot";
 
 /*
+ * File / container identifier.
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
  * Driver guarantees that docId is stable ID uniquely identifying document.
@@ -65,7 +66,7 @@ export const startingUpdateUsageOpFrequency = 100;
 export interface IPersistedCache {
     /**
      * Get the cache value of the key
-     * @param entry - cache entry.
+     * @param entry - cache entry, identifies file and particular key for this file.
      * @param maxOpCount - If provided, indicates driver-specific policy on expiry
      * If snapshot has more than that amount of ops (based on earlier updateUsage() calls), host should not
      * return such entry (and return undefined).
@@ -86,14 +87,21 @@ export interface IPersistedCache {
      */
     put(entry: ICacheEntry, value: any, seqNumber?: number): void;
 
-    // Tells how far given entry is behind, in number of ops.
-    // The bigger the number, the more stale entry (like snapshot)
-    // Eventually entry should not be used and deleted by host from cache,
-    // but exactly policy is host defined.
-    // NOte: Driver will implement exponential back off stretegy here, calling this API
-    // less and less often as data comes in. Please see startingUpdateUsageOpFrequency and
-    // updateUsageOpMultiplier for reference implementation
-    updateUsage(entry: ICacheEntry, opCount: number): void;
+    /*
+     * Driver will call this API periodically to tell hosts about changes in document.
+     * It tells latest sequence number observed for this document.
+     * The bigger the number, the more stale entry (like snapshot)
+     * Eventually entry should not be used and deleted by host from cache,
+     * but exactly policy is host defined.
+     * Notes:
+     * Driver will implement exponential back off strategy here, calling this API
+     * less and less often as data comes in. Please see startingUpdateUsageOpFrequency and
+     * updateUsageOpMultiplier for reference implementation.
+     * Multiple instances of same document can be opened by same page, host should expect some
+     * that multiple entities can update data for same file.
+     * Host should ignore sequence numbers that are lower than earlier reported for same file.
+     */
+    updateUsage(entry: ICacheEntry, seqNumber: number): void;
 }
 
 /**
@@ -157,9 +165,9 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         }
     }
 
-    updateUsage(entry: ICacheEntry, opCount: number): void {
+    updateUsage(entry: ICacheEntry, seqNumber: number): void {
         try {
-            this.cache.updateUsage(entry, opCount);
+            this.cache.updateUsage(entry, seqNumber);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "cacheUpdateUsageError", key: entry.key }, error);
             return undefined;
@@ -172,27 +180,41 @@ export const snapshotExpiryDefaultPolicy = 10000;
 /** Describes how many ops behind snapshot can be for summarizer client to still use it */
 export const snapshotExpirySummarizerOps = 1000;
 
+interface LocalCacheEntry {
+    docId: string;
+    key: string;
+}
+
 /**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-    private readonly cache = new Map<ICacheEntry, any>();
-    private readonly gc = new GarbageCollector<ICacheEntry>((key) => this.cache.delete(key));
+    private readonly cache = new Map<LocalCacheEntry, any>();
+    private readonly gc = new GarbageCollector<LocalCacheEntry>((key) => this.cache.delete(key));
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
-        return this.cache.get(entry);
+        const key = this.keyFromEntry(entry);
+        return this.cache.get(key);
     }
 
     put(entry: ICacheEntry, value: any, seqNumber?: number) {
-        this.cache.set(entry, value);
+        const key = this.keyFromEntry(entry);
+        this.cache.set(key, value);
 
         // Do not keep items too long in memory
-        this.gc.cancel(entry);
-        this.gc.schedule(entry, snapshotExpiryDefaultPolicy);
+        this.gc.cancel(key);
+        this.gc.schedule(key, snapshotExpiryDefaultPolicy);
     }
 
-    updateUsage(entry: ICacheEntry, opCount: number): void {
+    updateUsage(entry: ICacheEntry, seqNumber: number): void {
+    }
+
+    private keyFromEntry(entry: ICacheEntry): LocalCacheEntry {
+        return {
+            docId: entry.file.docId,
+            key: entry.key,
+        };
     }
 }
 

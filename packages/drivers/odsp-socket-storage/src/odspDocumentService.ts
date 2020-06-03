@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
@@ -41,6 +40,10 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
+
+// eslint-disable-next-line max-len
+// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -126,9 +129,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly isOdc: boolean;
 
-    private opSeqNumberMin: number | undefined;
-    private opSeqNumberMax: number | undefined;
-    private opSeqNumberMaxHostNotified: number | undefined;
+    // Track maximum sequence number we observed and communicated to cache layer.
+    private opSeqNumberMax = 0;
+    private opSeqNumberMaxHostNotified = 0;
 
     private readonly hostPolicy: HostStoragePolicyInternal;
 
@@ -164,7 +167,7 @@ export class OdspDocumentService implements IDocumentService {
         this.hostPolicy = hostPolicy;
         if (this.odspResolvedUrl.summarizer) {
             // deep copy
-            this.hostPolicy = JSON.parse(JSON.stringify(this.hostPolicy)) as HostStoragePolicyInternal;
+            this.hostPolicy = cloneDeep(this.hostPolicy);
             this.hostPolicy.summarizerClient = true;
         }
 
@@ -269,24 +272,24 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
-            return this.connectToDeltaStreamWithRetry(
-                websocketEndpoint.tenantId,
-                websocketEndpoint.id,
-                // This is workaround for fluid-fetcher. Need to have better long term solution
-                webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
-                io,
-                client,
-                websocketEndpoint.deltaStreamSocketUrl,
-                websocketEndpoint.deltaStreamSocketUrl2,
-            ).then((connection) => {
+            try {
+                const connection = await this.connectToDeltaStreamWithRetry(
+                    websocketEndpoint.tenantId,
+                    websocketEndpoint.id,
+                    // This is workaround for fluid-fetcher. Need to have better long term solution
+                    webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
+                    io,
+                    client,
+                    websocketEndpoint.deltaStreamSocketUrl,
+                    websocketEndpoint.deltaStreamSocketUrl2);
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
                 return connection;
-            }).catch((error) => {
+            } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 throw error;
-            });
+            }
         });
     }
 
@@ -506,29 +509,22 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
+    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+    // We use it to notify caching layer of how stale is snapshot stored in cache.
     protected opsReceived(ops: ISequencedDocumentMessage[]) {
         const cacheEntry = this.storageManager?.snapshotCacheEntry;
         if (ops.length === 0 || cacheEntry === undefined) {
             return;
         }
 
-        const minSeq = ops[0].sequenceNumber;
-        if (this.opSeqNumberMin === undefined || this.opSeqNumberMin > minSeq) {
-            this.opSeqNumberMin = minSeq;
-        }
         const maxSeq = ops[ops.length - 1].sequenceNumber;
-        if (this.opSeqNumberMax === undefined || this.opSeqNumberMax < maxSeq) {
+        if (this.opSeqNumberMax < maxSeq) {
             this.opSeqNumberMax = maxSeq;
         }
-        assert(this.opSeqNumberMin < this.opSeqNumberMax);
-
-        const count = this.opSeqNumberMax - this.opSeqNumberMin;
-
-        if (this.opSeqNumberMaxHostNotified === undefined ||
-                this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
+        if (this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
             this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
             this.updateUsageOpFrequency *= updateUsageOpMultiplier;
-            this.cache.persistedCache.updateUsage(cacheEntry, count);
+            this.cache.persistedCache.updateUsage(cacheEntry, this.opSeqNumberMax);
         }
     }
 }
