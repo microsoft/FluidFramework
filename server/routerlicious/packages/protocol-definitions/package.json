@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1006.0",
+  "version": "0.1007.0",
   "description": "Fluid protocol definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,11 +25,11 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0-0"
+    "@fluidframework/common-definitions": "^0.18.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
