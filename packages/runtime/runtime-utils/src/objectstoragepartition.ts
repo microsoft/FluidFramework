@@ -22,4 +22,8 @@ export class ObjectStoragePartition implements IObjectStorageService {
     public async contains(path: string): Promise<boolean> {
         return this.storage.contains(`${this.path}/${path}`);
     }
+
+    public async list(path: string): Promise<string[]> {
+        return this.storage.list(`${this.path}/${path}`);
+    }
 }

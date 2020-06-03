@@ -122,6 +122,11 @@ export interface IObjectStorageService {
      * Determines if there is an object contained at the given path.
      */
     contains(path: string): Promise<boolean>;
+
+    /**
+     * Lists the blobs that exist at a specific path.
+     */
+    list(path: string): Promise<string[]>;
 }
 
 /**

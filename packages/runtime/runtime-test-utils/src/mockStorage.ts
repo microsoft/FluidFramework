@@ -44,4 +44,30 @@ export class MockStorage implements IObjectStorageService {
     public async contains(path: string): Promise<boolean> {
         return MockStorage.readCore(this.tree, path.split("/")) !== undefined;
     }
+
+    public async list(path: string): Promise<string[]> {
+        const pathParts = path.split("/").filter((v)=>v !== "");
+        let tree = this.tree;
+        while (tree?.entries !== undefined && pathParts.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const part = pathParts.shift()!;
+            const index = tree.entries.findIndex((value)=>{
+                if (value.type === "Tree" && value.path === part) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            if (index === -1) {
+                tree = undefined;
+            } else {
+                const treeEntry = tree.entries[index];
+                tree = treeEntry.value as ITree;
+            }
+        }
+        if (tree?.entries === undefined || pathParts.length !== 0) {
+            throw new Error("path does not exist");
+        }
+        return tree.entries.filter((e)=>e.type === "Blob").map((e)=>e.path);
+    }
 }

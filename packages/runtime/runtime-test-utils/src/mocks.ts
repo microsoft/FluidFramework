@@ -621,7 +621,6 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IObjectStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
-
     public async read(path: string): Promise<string> {
         const content = this.contents[path];
         // Do we have such blob?
@@ -631,6 +630,13 @@ export class MockObjectStorageService implements IObjectStorageService {
 
     public async contains(path: string): Promise<boolean> {
         return this.contents[path] !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        const pathParts = path.split("/").filter((v)=>v !== "");
+        return Object.keys(this.contents)
+            .filter((key) => key.startsWith(path)
+            && key.split("/").filter((v)=>v !== "").length === pathParts.length + 1);
     }
 }
 
