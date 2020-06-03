@@ -37,7 +37,7 @@ export const updateStateAndComponentMap = async <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    newHandleList: (IComponentHandle | undefined)[],
+    newHandleList: (IComponentHandle)[],
     fluidComponentMap: FluidComponentMap,
     fromRootUpdate: boolean,
     syncedStateId: string,

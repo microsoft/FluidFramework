@@ -50,14 +50,17 @@ export function useStateFluid<
     // Create the fluidSetState function as a callback that in turn calls either our combined state
     // update to both the local and Fluid state or just the local state respectively based off of
     // if the state update is coming locally, i.e. not from the root
-    const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false) => {
+    const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false, isLocal = false) => {
         const newCombinedState = { ...reactState, ...newState, isInitialized: true };
-        if (!fromRootUpdate) {
+        if (isLocal) {
+            reactSetState(newCombinedState);
+        } else {
             const fluidState = getFluidStateFromRoot(
                 syncedStateId,
                 root,
                 dataProps.fluidComponentMap,
                 initialFluidState,
+                fluidToView,
             );
             syncStateAndRoot(
                 fromRootUpdate,
@@ -71,8 +74,6 @@ export function useStateFluid<
                 viewToFluid,
                 fluidToView,
             );
-        } else {
-            reactSetState(newCombinedState);
         }
     }, [root, viewToFluid, reactState, reactSetState, dataProps]);
 
@@ -95,7 +96,7 @@ export function useStateFluid<
 
     // If this is the first time this function is being called in this session
     if (!reactState.isInitialized) {
-        let unlistenedComponentHandles: (IComponentHandle | undefined)[] = [];
+        let unlistenedComponentHandles: IComponentHandle[] = [];
         // Check if there is a synced state value already stored, i.e. if the component has been loaded before
         let loadFromRoot = true;
         const storedFluidStateHandle = root.get(`syncedState-${syncedStateId}`);
@@ -131,6 +132,13 @@ export function useStateFluid<
             };
             setComponentSchemaToRoot(syncedStateId, root, componentSchemaHandles);
         }
+        // We should have component schemas now, either freshly generated or from the root
+        if (
+            componentSchemaHandles.componentKeyMapHandle === undefined
+            || componentSchemaHandles.viewMatchingMapHandle === undefined
+            || componentSchemaHandles.fluidMatchingMapHandle === undefined) {
+            throw Error("Failed to generate schema handles for the component");
+        }
 
         // Add the callback to the component's own root
         root.on("valueChanged", rootCallback);
@@ -156,13 +164,10 @@ export function useStateFluid<
 
         // Initialize the FluidComponentMap with our data handles
         for (const handle of unlistenedMapHandles) {
-            const path = handle?.path;
-            if (path !== undefined) {
-                dataProps.fluidComponentMap.set(path, {
-                    isListened: false,
-                    isRuntimeMap: true,
-                });
-            }
+            dataProps.fluidComponentMap.set(handle.path, {
+                isListened: false,
+                isRuntimeMap: true,
+            });
         }
 
         // Add the callback to all the unlistened components and then update the state afterwards

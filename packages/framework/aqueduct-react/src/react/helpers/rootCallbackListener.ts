@@ -34,60 +34,58 @@ export const rootCallbackListener = <SV,SF>(
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     state: SV,
-    setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
+    setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
     initialFluidState: SF,
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
-    if (!local) {
-        const rootKey = change.key;
-        const viewToFluidKeys: string[] = viewToFluid
-            ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
-            : [];
-        const currentFluidState = getFluidStateFromRoot(
+    const currentFluidState = getFluidStateFromRoot(
+        syncedStateId,
+        root,
+        fluidComponentMap,
+        initialFluidState,
+        fluidToView,
+    );
+    const rootKey = change.key;
+    const viewToFluidKeys: string[] = viewToFluid
+        ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
+        : [];
+    if (!local && change.key === `syncedState-${syncedStateId}`) {
+        // If the update is to the synced Fluid state, update both the Fluid and view states
+        syncStateAndRoot(
+            true,
             syncedStateId,
             root,
+            runtime,
+            state,
+            setState,
             fluidComponentMap,
-            initialFluidState,
+            currentFluidState,
+            viewToFluid,
             fluidToView,
         );
-        if (change.key === `syncedState-${syncedStateId}`) {
-            // If the update is to the synced Fluid state, update both the Fluid and view states
-            syncStateAndRoot(
-                true,
+    } else if (viewToFluid
+        && (viewToFluidKeys).includes(rootKey)
+        || (change.keyPrefix !== undefined && viewToFluidKeys.includes(change.keyPrefix))) {
+        // If the update is to a child component, trigger only a view update as the child itself will
+        // update its Fluid update
+        const stateKey = getByValue(rootKey, viewToFluid);
+        if (stateKey) {
+            const newPartialState = getViewFromRoot(
                 syncedStateId,
                 root,
-                runtime,
-                state,
-                setState,
+                rootKey as keyof SF,
                 fluidComponentMap,
                 currentFluidState,
-                viewToFluid,
                 fluidToView,
             );
-        } else if (viewToFluid
-            && (viewToFluidKeys).includes(rootKey)
-            || (change.keyPrefix !== undefined && viewToFluidKeys.includes(change.keyPrefix))) {
-            // If the update is to a child component, trigger only a view update as the child itself will
-            // update its Fluid update
-            const stateKey = getByValue(rootKey, viewToFluid);
-            if (stateKey) {
-                const newPartialState = getViewFromRoot(
-                    syncedStateId,
-                    root,
-                    rootKey as keyof SF,
-                    fluidComponentMap,
-                    currentFluidState,
-                    fluidToView,
-                );
-                setState({ ...state, ...newPartialState, ...{ fluidComponentMap } }, true);
-            } else {
-                throw Error(`Unable to extract view state from root change key: ${rootKey}`);
-            }
-        } else if (state[rootKey] !== undefined) {
-            const newState = { ...state, ...{ fluidComponentMap } };
-            newState[rootKey] = currentFluidState[rootKey];
-            setState({ ...state, ...newState }, true);
+            setState({ ...state, ...newPartialState, ...{ fluidComponentMap } }, true, local);
+        } else {
+            throw Error(`Unable to extract view state from root change key: ${rootKey}`);
         }
+    } else if (state[rootKey] !== undefined) {
+        const newState = { ...state, ...{ fluidComponentMap } };
+        newState[rootKey] = currentFluidState[rootKey];
+        setState({ ...state, ...newState }, true, local);
     }
 });

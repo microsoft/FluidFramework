@@ -45,7 +45,7 @@ export function syncStateAndRoot<
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     viewState: SV,
-    setState: (newState: SV) => void,
+    setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
     fluidComponentMap: FluidComponentMap,
     fluidState: SF,
     viewToFluid?: ViewToFluidMap<SV,SF>,
@@ -56,85 +56,89 @@ export function syncStateAndRoot<
 
     // Fetch the component schema
     const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
-    if (componentSchemaHandles) {
-        const {
-            componentKeyMapHandle,
-            viewMatchingMapHandle,
-            fluidMatchingMapHandle,
-        } = componentSchemaHandles;
-        if (
-            componentKeyMapHandle !== undefined
-            && viewMatchingMapHandle !== undefined
-            && fluidMatchingMapHandle !== undefined) {
-            const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)?.component as SharedMap;
-            const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)?.component as SharedMap;
-            const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)?.component as SharedMap;
-            if (
-                componentKeyMap !== undefined
-                && viewMatchingMap !== undefined
-                && fluidMatchingMap !== undefined) {
-                // Create the combined root state by combining the current root state and the new
-                // view state after it has been converted
-                let combinedRootState = { ...currentRootState };
-                Object.entries(viewState).forEach(([viewKey, viewValue]) => {
-                    const needsConverter = viewMatchingMap.get(viewKey);
-                    let partialRootState = {};
-                    if (needsConverter) {
-                        partialRootState = getRootFromView(
-                            viewState,
-                            viewKey as keyof SV,
-                            componentKeyMap,
-                            viewToFluid,
-                        );
-                    } else {
-                        partialRootState[viewKey] = viewState[viewKey];
-                    }
-                    // If it is from a root update, the values fetched from the root at the beginning overwrite those
-                    // created here. Otherwise, the new values overwrite those in the root
-                    if (fromRootUpdate) {
-                        combinedRootState = { ...partialRootState, ...combinedRootState };
-                    } else {
-                        combinedRootState = { ...combinedRootState, ...partialRootState };
-                    }
-                });
-
-                // Create the combined view state by combining the current view with the new Fluid state
-                // after it has been converted
-                let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
-                Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
-                    const needsConverter = fluidMatchingMap.get(fluidKey);
-                    let partialViewState = {};
-                    if (needsConverter) {
-                        partialViewState = getViewFromRoot(
-                            syncedStateId,
-                            root,
-                            fluidKey as keyof SF,
-                            fluidComponentMap,
-                            fluidState,
-                            fluidToView,
-                            combinedRootState,
-                        );
-                    } else {
-                        partialViewState[fluidKey] = currentRootState[fluidKey];
-                    }
-                    // If it is from a root update, the values converted from the root overwrite those
-                    // created here. Otherwise, the new view values overwrite those from the root.
-                    if (fromRootUpdate) {
-                        combinedViewState = { ...combinedViewState, ...partialViewState  };
-                    } else {
-                        combinedViewState = { ...partialViewState, ...combinedViewState };
-                    }
-                });
-
-                // If it is a local update, broadcast it by setting it on the root and updating locally
-                // Otherwise, only update locally as the root update has already been broadcasted
-                if (!fromRootUpdate) {
-                    setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState);
-                    setState(combinedViewState);
-                } else {
-                    setState(combinedViewState);
-                }
-            }
-        }
+    if (componentSchemaHandles === undefined) {
+        throw Error("No schema found stored on the root");
     }
+    const {
+        componentKeyMapHandle,
+        viewMatchingMapHandle,
+        fluidMatchingMapHandle,
+    } = componentSchemaHandles;
+
+    if (
+        componentKeyMapHandle === undefined
+        || viewMatchingMapHandle === undefined
+        || fluidMatchingMapHandle === undefined) {
+        throw Error("No schema handles found stored on the root");
+    }
+    const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)?.component as SharedMap;
+    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)?.component as SharedMap;
+    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)?.component as SharedMap;
+
+    if (
+        componentKeyMap === undefined
+                || viewMatchingMap === undefined
+                || fluidMatchingMap === undefined) {
+        throw Error("Failed to fetch shared map DDS' from the schema handles");
+    }
+
+    // Create the combined root state by combining the current root state and the new
+    // view state after it has been converted
+    let combinedRootState = { ...currentRootState };
+    Object.entries(viewState).forEach(([viewKey, viewValue]) => {
+        const needsConverter = viewMatchingMap.get(viewKey);
+        let partialRootState = {};
+        if (needsConverter) {
+            partialRootState = getRootFromView(
+                viewState,
+                viewKey as keyof SV,
+                componentKeyMap,
+                viewToFluid,
+            );
+        } else {
+            partialRootState[viewKey] = viewState[viewKey];
+        }
+        // If it is from a root update, the values fetched from the root at the beginning overwrite those
+        // created here. Otherwise, the new values overwrite those in the root
+        if (fromRootUpdate) {
+            combinedRootState = { ...partialRootState, ...combinedRootState };
+        } else {
+            combinedRootState = { ...combinedRootState, ...partialRootState };
+        }
+    });
+
+    // Create the combined view state by combining the current view with the new Fluid state
+    // after it has been converted
+    let combinedViewState = { ...viewState, ...{ fluidComponentMap } };
+    Object.entries(currentRootState).forEach(([fluidKey, fluidValue]) => {
+        const needsConverter = fluidMatchingMap.get(fluidKey);
+        let partialViewState = {};
+        if (needsConverter) {
+            partialViewState = getViewFromRoot(
+                syncedStateId,
+                root,
+                fluidKey as keyof SF,
+                fluidComponentMap,
+                fluidState,
+                fluidToView,
+                combinedRootState,
+            );
+        } else {
+            partialViewState[fluidKey] = currentRootState[fluidKey];
+        }
+        // If it is from a root update, the values converted from the root overwrite those
+        // created here. Otherwise, the new view values overwrite those from the root.
+        if (fromRootUpdate) {
+            combinedViewState = { ...combinedViewState, ...partialViewState  };
+        } else {
+            combinedViewState = { ...partialViewState, ...combinedViewState };
+        }
+    });
+
+    // If it is a local update, broadcast it by setting it on the root and updating locally
+    // Otherwise, only update locally as the root update has already been broadcasted
+    if (!fromRootUpdate) {
+        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState);
+    }
+    setState(combinedViewState, fromRootUpdate, true);
 }

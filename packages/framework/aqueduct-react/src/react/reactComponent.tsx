@@ -80,14 +80,22 @@ export abstract class FluidReactComponent<
             setComponentSchemaToRoot(this._syncedStateId, root, componentSchemaHandles);
         }
 
+        // We should have component schemas now, either freshly generated or from the root
+        if (
+            componentSchemaHandles.componentKeyMapHandle === undefined
+            || componentSchemaHandles.viewMatchingMapHandle === undefined
+            || componentSchemaHandles.fluidMatchingMapHandle === undefined) {
+            throw Error("Failed to generate schema handles for the component");
+        }
+
         // Add the list of SharedMap handles for the schema and any unlistened handles passed in through the component
         // map to the list of handles we will fetch and start listening to
-        const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
+        const unlistenedComponentHandles: IComponentHandle[] = [
             componentSchemaHandles.componentKeyMapHandle,
             componentSchemaHandles.fluidMatchingMapHandle,
             componentSchemaHandles.viewMatchingMapHandle,
         ];
-        const listenedMapHandles = [...unlistenedComponentHandles];
+        const unlistenedMapHandles = [...unlistenedComponentHandles];
         dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
             if (!value.isListened && value.component?.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
@@ -102,7 +110,7 @@ export abstract class FluidReactComponent<
             dataProps.runtime,
             this.state,
             this._setStateFromRoot.bind(this),
-            this._initialFluidState,
+            { ...this._initialFluidState },
             viewToFluid,
             fluidToView,
         );
@@ -120,21 +128,18 @@ export abstract class FluidReactComponent<
                 initialFluidState,
             );
             unlistenedComponentHandles.push(syncedStateHandle);
-            listenedMapHandles.push(syncedStateHandle);
+            unlistenedMapHandles.push(syncedStateHandle);
         } else {
             unlistenedComponentHandles.push(storedFluidStateHandle);
-            listenedMapHandles.push(storedFluidStateHandle);
+            unlistenedMapHandles.push(storedFluidStateHandle);
         }
 
         // Initialize the FluidComponentMap with our data handles
-        for (const handle of listenedMapHandles) {
-            const path = handle?.path;
-            if (path !== undefined) {
-                dataProps.fluidComponentMap.set(path, {
-                    isListened: false,
-                    isRuntimeMap: true,
-                });
-            }
+        for (const handle of unlistenedMapHandles) {
+            dataProps.fluidComponentMap.set(handle.path, {
+                isListened: false,
+                isRuntimeMap: true,
+            });
         }
 
         // Add the callback to the component's own root
@@ -164,33 +169,23 @@ export abstract class FluidReactComponent<
      * @param newState - the new state to be set
      * @param fromRootUpdate - is this update coming locally or from a synced root value change
      */
-    private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean) {
-        super.setState(newState);
-        if (fromRootUpdate) {
-            this._setRoot(newState, fromRootUpdate);
-        }
-    }
-
-    /**
-     * Function to set the current state value to the root
-     * @param newState - the new state to be set
-     * @param fromRootUpdate - is this update coming locally or from a synced root value change
-     */
-    private _setRoot(newState: SV, fromRootUpdate = false) {
-        const newCombinedState = { ...this.state, ...newState };
-        if (!fromRootUpdate) {
+    private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) {
+        if (isLocal) {
+            super.setState(newState);
+        } else if (fromRootUpdate) {
             const fluidState = getFluidStateFromRoot(
                 this._syncedStateId,
                 this._root,
                 this._dataProps.fluidComponentMap,
                 this._initialFluidState,
+                this.fluidToView,
             );
-            syncStateAndRoot<SV,SF>(
-                fromRootUpdate,
+            syncStateAndRoot(
+                true,
                 this._syncedStateId,
                 this._root,
                 this._dataProps.runtime,
-                newCombinedState,
+                newState,
                 this._setStateFromRoot.bind(this),
                 this._dataProps.fluidComponentMap,
                 fluidState,
@@ -198,7 +193,7 @@ export abstract class FluidReactComponent<
                 this.fluidToView,
             );
         } else {
-            this.setState(newCombinedState);
+            this.setState(newState);
         }
     }
 
@@ -212,6 +207,7 @@ export abstract class FluidReactComponent<
             this._root,
             this._dataProps.fluidComponentMap,
             this._initialFluidState,
+            this.fluidToView,
         );
         syncStateAndRoot(
             false,

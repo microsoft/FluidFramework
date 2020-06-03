@@ -25,7 +25,7 @@ export function getByValue<
 }
 
 export async function asyncForEach(
-    array: (IComponentHandle | undefined)[],
+    array: IComponentHandle[],
     callback: (
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
@@ -36,9 +36,7 @@ export async function asyncForEach(
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
-        if (value) {
-            promises.push(callback(value, fluidComponentMap, rootCallback));
-        }
+        promises.push(callback(value, fluidComponentMap, rootCallback));
     }
     await Promise.all(promises);
 }
