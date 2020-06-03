@@ -36,11 +36,11 @@ interface ICounterValue {
 const snapshotFileName = "header";
 
 /**
- * Implementation of a cell shared object
+ * Implementation of a counter shared object
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     /**
-     * Create a new shared cell
+     * Create a new shared counter
      *
      * @param runtime - component runtime the new shared map belongs to
      * @param id - optional name of the shared map
@@ -87,9 +87,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Create a snapshot for the cell
+     * Create a snapshot for the counter
      *
-     * @returns the snapshot of the current state of the cell
+     * @returns the snapshot of the current state of the counter
      */
     public snapshot(): ITree {
         // Get a serializable form of data
@@ -118,7 +118,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Load cell from snapshot
+     * Load counter from snapshot
      *
      * @param branchId - Not used
      * @param storage - the storage to get the snapshot from
@@ -137,13 +137,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     }
 
     /**
-     * Initialize a local instance of cell
-     */
-    protected initializeLocalCore() {
-    }
-
-    /**
-     * Process the cell value on register
+     * Process the counter value on register
      */
     protected registerCore() {
     }

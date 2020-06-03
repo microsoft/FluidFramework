@@ -12,7 +12,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents{
 /**
  * Shared counter interface
  */
-export interface ISharedCounter extends ISharedObject {
+export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     /**
      * The counter value.
      */
