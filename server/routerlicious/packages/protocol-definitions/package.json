@@ -25,7 +25,7 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0"
+    "@fluidframework/common-definitions": "^0.18.1-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

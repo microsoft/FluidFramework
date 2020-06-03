@@ -46,7 +46,7 @@
   "dependencies": {
     "@fluid-example/search-menu": "^0.19.1",
     "@fluid-internal/client-api": "^0.19.1",
-    "@fluidframework/common-utils": "^0.19.0",
+    "@fluidframework/common-utils": "^0.19.1-0",
     "@fluidframework/component-core-interfaces": "^0.19.1",
     "@fluidframework/component-runtime-definitions": "^0.19.1",
     "@fluidframework/container-definitions": "^0.19.1",
@@ -55,7 +55,7 @@
     "@fluidframework/ink": "^0.19.1",
     "@fluidframework/map": "^0.19.1",
     "@fluidframework/merge-tree": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1-0",
     "@fluidframework/runtime-definitions": "^0.19.1",
     "@fluidframework/sequence": "^0.19.1",
     "@fluidframework/undo-redo": "^0.19.1",

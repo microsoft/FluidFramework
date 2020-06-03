@@ -30,7 +30,7 @@
     "@fluidframework/container-loader": "^0.19.1",
     "@fluidframework/local-driver": "^0.19.1",
     "@fluidframework/runtime-definitions": "^0.19.1",
-    "@fluidframework/server-local-server": "^0.1006.0",
+    "@fluidframework/server-local-server": "^0.1006.1-0",
     "@fluidframework/view-adapters": "^0.19.1",
     "uuid": "^3.3.2"
   },

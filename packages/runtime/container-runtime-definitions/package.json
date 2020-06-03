@@ -26,7 +26,7 @@
     "@fluidframework/component-core-interfaces": "^0.19.1",
     "@fluidframework/container-definitions": "^0.19.1",
     "@fluidframework/driver-definitions": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1-0",
     "@fluidframework/runtime-definitions": "^0.19.1",
     "@types/node": "^10.17.24"
   },
