@@ -25,7 +25,7 @@
     "@fluidframework/component-core-interfaces": "^0.19.1",
     "@fluidframework/container-definitions": "^0.19.1",
     "@fluidframework/container-loader": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1-0",
     "@fluidframework/routerlicious-driver": "^0.19.1",
     "@fluidframework/test-runtime-utils": "^0.19.1",
     "@fluidframework/view-interfaces": "^0.19.1",

@@ -25,9 +25,9 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0",
+    "@fluidframework/common-definitions": "^0.18.1-0",
     "@fluidframework/component-core-interfaces": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.0"
+    "@fluidframework/protocol-definitions": "^0.1006.1-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

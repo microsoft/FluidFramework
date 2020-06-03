@@ -27,7 +27,7 @@
   "dependencies": {
     "@fluidframework/file-driver": "^0.19.1",
     "@fluidframework/merge-tree": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1-0",
     "@fluidframework/runtime-definitions": "^0.19.1",
     "@fluidframework/sequence": "^0.19.1",
     "lodash": "^4.17.11"
