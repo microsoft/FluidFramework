@@ -35,15 +35,21 @@ describe("Yo fluid", function () {
                 ]
                 assert.file(expectedFiles);
 
-                shell.cd(`${dirPath}/foobar`);
-                const installResponse = shell.exec("npm il");
-                assert(installResponse.exitCode !== 0, 'install failed');
-                // shell.exec("npm test");
-                // 
-                // assert(shell.exec('npm start').code !== 0, 'start failed')
-                // .then((dir) => {
-                //     assert(false, dir)
-                // });
+                const tempComponentPath = `${dirPath}/foobar`;
+                shell.echo(`Navigating to temp path ${tempComponentPath}`);
+                shell.cd(tempComponentPath);
+                shell.echo("Running npm i - this can take some time...");
+                const installResponse = shell.exec("npm i", { silent: true });
+                if (installResponse.stderr) {
+                    shell.echo(installResponse.stderr);
+                }
+                assert.equal(installResponse.code, 0, `npm install failed with code: ${installResponse.code}`);
+                shell.echo("Running npm test - this can take some time...");
+                const testResponse = shell.exec("npm test", { silent: true });
+                if (testResponse.stderr) {
+                    shell.echo(testResponse.stderr);
+                }
+                assert.equal(testResponse.code && testResponse.code, 0, `npm test failed with code: ${testResponse.code}`);
             });
 
             after(() => {
