@@ -95,6 +95,7 @@ module.exports = class extends Generator {
     this._copyAndModifyIndexFile();
     this._copyAndModifyInterfaceFile();
     this._copyAndModifyViewFile();
+    this._copyAndModifyTsconfigFile();
 
     this.fs.copy(
       this.templatePath("tests/diceRoller.test.ts"), // FROM
@@ -111,11 +112,6 @@ module.exports = class extends Generator {
     this.fs.copy(
       this.templatePath("webpack.config.js"), // FROM
       this.destinationPath("./webpack.config.js"), // TO Root Folder
-    );
-
-    this.fs.copy(
-      this.templatePath("tsconfig.json"), // FROM
-      this.destinationPath("tsconfig.json"), // TO Root Folder
     );
 
     this.fs.copy(
@@ -230,6 +226,21 @@ module.exports = class extends Generator {
     }
 
     file.save();
+  }
+
+  _copyAndModifyTsconfigFile() {
+    var tsconfigJson = this.fs.readJSON(this.templatePath("tsconfig.json"));
+
+    if (!this._isReact()) {
+      // REMOVE react-specific dependencies. This is preferred because it keeps all dependencies in one place
+      delete tsconfigJson.compilerOptions.jsx;
+      tsconfigJson.compilerOptions.types = tsconfigJson.compilerOptions.types.slice(2)
+    }
+
+    this.fs.writeJSON(
+      this.destinationPath("tsconfig.json"), // TO
+      tsconfigJson, // contents
+    );
   }
 
   _copyContainer() {
