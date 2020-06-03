@@ -75,6 +75,12 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * {@inheritDoc ISharedCounter.increment}
      */
     public increment(incrementAmount: number) {
+        // Incrementing by floating point numbers will be eventually inconsistent, since the order in which the
+        // increments are applied affects the result.  A more-robust solution would be required to support this.
+        if (incrementAmount % 1 !== 0) {
+            throw new Error("Must increment by a whole number");
+        }
+
         const op: IIncrementOperation = {
             type: "increment",
             incrementAmount,

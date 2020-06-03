@@ -19,9 +19,9 @@ export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     value: number;
 
     /**
-     * Increments or decrements the value.
+     * Increments or decrements the value.  Must only increment or decrement by a whole number value.
      *
-     * @param incrementAmount - the amount to increment or decrement by
+     * @param incrementAmount - a whole number to increment or decrement by
      */
     increment(incrementAmount: number): void;
 }
