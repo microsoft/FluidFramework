@@ -58,6 +58,7 @@
     "@fluidframework/container-definitions": "^0.20.0",
     "@fluidframework/container-loader": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",
+    "@fluidframework/counter": "^0.20.0",
     "@fluidframework/driver-base": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/driver-utils": "^0.20.0",
