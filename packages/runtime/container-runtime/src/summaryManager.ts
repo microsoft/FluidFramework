@@ -5,8 +5,14 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Heap, IComparer, IHeapNode,  PromiseTimer } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/client-common-utils";
+import {
+    Heap,
+    IComparer,
+    IHeapNode,
+    PromiseTimer,
+    IPromiseTimerResult,
+} from "@fluidframework/common-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry";
 import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
 import { IContainerContext, LoaderHeader, ISummarizingWarning } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
@@ -128,7 +134,7 @@ class Throttler {
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
-    private readonly initialDelayP: Promise<void>;
+    private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
@@ -194,7 +200,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
 
         this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
-        this.initialDelayP = this.initialDelayTimer?.start().catch(() => { }) ?? Promise.resolve();
+        this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
 
         this.refreshSummarizer();
     }

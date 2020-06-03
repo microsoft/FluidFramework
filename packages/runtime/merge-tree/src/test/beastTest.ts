@@ -8,7 +8,7 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import { DebugLogger } from "@fluidframework/client-common-utils";
+import { DebugLogger } from "@fluidframework/telemetry";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";
@@ -217,23 +217,6 @@ function checkInsertMergeTree(
     return result;
 }
 
-function checkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    const helper = new MergeTree.MergeTreeTextHelper(mergeTree);
-    const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const checkText = editFlat(origText, start, end - start);
-    const clockStart = clock();
-    mergeTree.removeRange(start, end, UniversalSequenceNumber, LocalClientId);
-    accumTime += elapsedMicroseconds(clockStart);
-    const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText == updatedText);
-    if ((!result) && verbose) {
-        log(`mismatch(o): ${origText}`);
-        log(`mismatch(c): ${checkText}`);
-        log(`mismatch(u): ${updatedText}`);
-    }
-    return result;
-}
-
 function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
     const helper = new MergeTree.MergeTreeTextHelper(mergeTree);
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
@@ -318,7 +301,7 @@ export function mergeTreeLargeTest() {
         const pos = random.integer(0, preLen)(mt);
         // Log(itree.toString());
         const clockStart = clock();
-        mergeTree.removeRange(pos, pos + dlen, UniversalSequenceNumber, LocalClientId);
+        mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
         accumTime += elapsedMicroseconds(clockStart);
 
         if ((i > 0) && (0 == (i % 50000))) {
@@ -383,7 +366,7 @@ export function mergeTreeCheckedTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         // log(itree.toString());
-        if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+        if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
             log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
             log(mergeTree.toString());
             break;
@@ -413,7 +396,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 log(mergeTree.toString());
                 errorCount++;
@@ -467,7 +450,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 log(mergeTree.toString());
                 errorCount++;
@@ -1684,11 +1667,14 @@ function findReplacePerf(filename: string) {
             const text = textSeg.text;
             const i = text.indexOf("the");
             if (i >= 0) {
-                client.mergeTree.removeRange(
+                client.mergeTree.markRangeRemoved(
                     pos + i,
                     pos + i + 3,
                     UniversalSequenceNumber,
-                    client.getClientId());
+                    client.getClientId(),
+                    1,
+                    false,
+                    undefined);
                 insertText(
                     client.mergeTree,
                     pos + i,

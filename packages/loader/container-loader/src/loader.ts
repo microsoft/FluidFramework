@@ -19,7 +19,7 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/client-common-utils";
+import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

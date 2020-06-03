@@ -16,7 +16,7 @@ import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { createWriteError } from "@fluidframework/driver-utils";
-import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
+import { CustomErrorWithProps } from "@fluidframework/telemetry";
 import { CreateContainerError } from "@fluidframework/container-utils";
 import {
     createOdspNetworkError,

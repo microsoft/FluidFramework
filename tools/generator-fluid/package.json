@@ -8,10 +8,13 @@
   "license": "MIT",
   "author": "Microsoft",
   "main": "app/index.js",
+  "files": [
+    "app"
+  ],
   "scripts": {
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link",
-    "test": "mocha --recursive test",
+    "test": "mocha --recursive test -r make-promises-safe",
     "unlink": "npm rm --global generator-fluid"
   },
   "dependencies": {
@@ -21,6 +24,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^7.1.1",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"

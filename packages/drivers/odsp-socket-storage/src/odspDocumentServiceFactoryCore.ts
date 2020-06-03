@@ -13,7 +13,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
     PerformanceEvent,
-} from "@fluidframework/client-common-utils";
+} from "@fluidframework/telemetry";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";

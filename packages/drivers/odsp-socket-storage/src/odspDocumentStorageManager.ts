@@ -13,7 +13,7 @@ import {
 import {
     PerformanceEvent,
     TelemetryLogger,
-} from "@fluidframework/client-common-utils";
+} from "@fluidframework/telemetry";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";

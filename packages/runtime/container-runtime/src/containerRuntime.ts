@@ -36,7 +36,7 @@ import {
 import {
     ChildLogger,
     raiseConnectedEvent,
-} from "@fluidframework/client-common-utils";
+} from "@fluidframework/telemetry";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     BlobCacheStorageService,
@@ -50,6 +50,7 @@ import {
     TreeTreeEntry,
 } from "@fluidframework/protocol-base";
 import {
+    ConnectionState,
     IChunkedOp,
     IClientDetails,
     IDocumentMessage,
@@ -792,6 +793,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return { snapshot, state };
     }
 
+    // Back-compat: <= 0.17
+    public changeConnectionState(state: ConnectionState, clientId?: string) {
+        if (state !== ConnectionState.Connecting) {
+            this.setConnectionState(state === ConnectionState.Connected, clientId);
+        }
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1052,6 +1060,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    /**
+     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
+     * local changes. All pending changes are automatically flushed by shared objects on connection.
+     * back-compat: 0.18 components
+     */
+    public notifyPendingMessages(): void {
+        assert(!this.connected);
+        this.updateDocumentDirtyState(true);
     }
 
     /**

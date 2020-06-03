@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/client-common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry";
 import { ISocketStorageDiscovery } from "./contracts";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";

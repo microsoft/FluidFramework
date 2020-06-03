@@ -1,12 +1,15 @@
 {
   "name": "gitrest",
   "version": "0.1.0",
+  "private": true,
   "description": "Git REST API",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/www.js",
   "scripts": {
-    "build": "concurrently npm:lint npm:tsc",
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",

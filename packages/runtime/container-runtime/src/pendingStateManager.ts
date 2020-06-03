@@ -4,7 +4,7 @@
  */
 
 import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
-import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
+import { CustomErrorWithProps } from "@fluidframework/telemetry";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 import {

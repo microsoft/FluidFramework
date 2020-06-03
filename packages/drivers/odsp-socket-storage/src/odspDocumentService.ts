@@ -9,7 +9,7 @@ import {
     ChildLogger,
     PerformanceEvent,
     TelemetryLogger,
-} from "@fluidframework/client-common-utils";
+} from "@fluidframework/telemetry";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,

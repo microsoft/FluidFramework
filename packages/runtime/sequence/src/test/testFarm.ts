@@ -1444,23 +1444,6 @@ function checkInsertMergeTree(
     return result;
 }
 
-function checkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    const helper = new MergeTreeTextHelper(mergeTree);
-    const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const checkText = editFlat(origText, start, end - start);
-    const clockStart = clock();
-    mergeTree.removeRange(start, end, UniversalSequenceNumber, LocalClientId);
-    accumTime += elapsedMicroseconds(clockStart);
-    const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText === updatedText);
-    if ((!result) && verbose) {
-        console.log(`mismatch(o): ${origText}`);
-        console.log(`mismatch(c): ${checkText}`);
-        console.log(`mismatch(u): ${updatedText}`);
-    }
-    return result;
-}
-
 function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
     const helper = new MergeTreeTextHelper(mergeTree);
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
@@ -1532,7 +1515,7 @@ export function mergeTreeCheckedTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         // Console.log(itree.toString());
-        if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+        if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
             console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
             console.log(mergeTree.toString());
             break;
@@ -1562,7 +1545,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
                 errorCount++;
@@ -1616,7 +1599,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
                 errorCount++;

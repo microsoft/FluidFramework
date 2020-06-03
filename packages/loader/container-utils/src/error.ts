@@ -5,7 +5,7 @@
 // tslint:disable: no-unsafe-any
 import assert from "assert";
 import { ErrorType, IGenericError } from "@fluidframework/container-definitions";
-import { CustomErrorWithProps } from "@fluidframework/client-common-utils";
+import { CustomErrorWithProps } from "@fluidframework/telemetry";
 
 function messageFromError(error: any) {
     if (typeof error?.message === "string") {

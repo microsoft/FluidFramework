@@ -9,7 +9,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@fluidframework/component-core-interfaces";
-import { ChildLogger } from "@fluidframework/client-common-utils";
+import { ChildLogger } from "@fluidframework/telemetry";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
