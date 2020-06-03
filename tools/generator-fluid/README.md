@@ -36,10 +36,10 @@ When running the generator a new folder will be generated with the following con
 ```text
 .
 ├── src
-|   ├── component<%= extension %>              // Fluid Component source code
-|   ├── index.ts          // Export file
-|   ├── interface.ts      // Model Interface Definition
-|   └── view<%= extension %>                   // View Logic
+|   ├── component.ts(x)            // Fluid Component source code
+|   ├── index.ts                   // Export file
+|   ├── interface.ts               // Model Interface Definition
+|   └── view.ts(x)                 // View Logic
 ├── .gitignore                     // Ignore dist and node_modules
 ├── jest-puppeteer.config.js       // jest-puppeteer configuration
 ├── jest.config.js                 // Jest configuration
