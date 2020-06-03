@@ -21,7 +21,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.19.1-0",
+    "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/driver-definitions": "^0.19.1",
     "@fluidframework/driver-utils": "^0.19.1",
     "@fluidframework/fluidapp-odsp-urlresolver": "^0.19.1",

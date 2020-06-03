@@ -50,7 +50,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.19.1",
     "@fluidframework/base-host": "^0.19.1",
-    "@fluidframework/common-utils": "^0.19.1-0",
+    "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/component-core-interfaces": "^0.19.1",
     "@fluidframework/container-definitions": "^0.19.1",
     "@fluidframework/container-loader": "^0.19.1",

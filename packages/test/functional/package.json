@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/common-utils": "^0.19.1-0",
+    "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/container-loader": "^0.19.1",
     "@fluidframework/container-runtime": "^0.19.1",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
