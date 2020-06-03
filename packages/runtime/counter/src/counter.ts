@@ -42,9 +42,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Create a new shared counter
      *
-     * @param runtime - component runtime the new shared map belongs to
-     * @param id - optional name of the shared map
-     * @returns newly create shared map (but not attached yet)
+     * @param runtime - component runtime the new shared counter belongs to
+     * @param id - optional name of the shared counter
+     * @returns newly create shared counter (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;

@@ -14,7 +14,7 @@ import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the map
+ * The factory that defines the counter
  */
 export class CounterFactory implements ISharedObjectFactory {
     public static readonly Type = "https://graph.microsoft.com/types/counter";
