@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/flow-intel-viewer",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "Chaincode for viewing insights in flow-scroll",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,8 +25,8 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluidframework/map": "^0.19.0",
-    "@fluidframework/view-interfaces": "^0.19.0"
+    "@fluidframework/map": "^0.19.1",
+    "@fluidframework/view-interfaces": "^0.19.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

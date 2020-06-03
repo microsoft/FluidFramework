@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-core",
-  "version": "0.1006.0",
+  "version": "0.1006.1",
   "description": "Fluid services core definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.0",
-    "@fluidframework/gitresources": "^0.1006.0",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
-    "@fluidframework/server-services-client": "^0.1006.0",
+    "@fluidframework/gitresources": "^0.1006.1",
+    "@fluidframework/protocol-definitions": "^0.1006.1",
+    "@fluidframework/server-services-client": "^0.1006.1",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.17.24",
     "debug": "^4.1.1",

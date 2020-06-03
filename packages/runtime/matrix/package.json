@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/matrix",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "Distributed map",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,12 +48,12 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.0",
     "@fluidframework/common-utils": "^0.19.0",
-    "@fluidframework/component-core-interfaces": "^0.19.0",
-    "@fluidframework/component-runtime-definitions": "^0.19.0",
-    "@fluidframework/merge-tree": "^0.19.0",
+    "@fluidframework/component-core-interfaces": "^0.19.1",
+    "@fluidframework/component-runtime-definitions": "^0.19.1",
+    "@fluidframework/merge-tree": "^0.19.1",
     "@fluidframework/protocol-definitions": "^0.1006.0",
-    "@fluidframework/runtime-utils": "^0.19.0",
-    "@fluidframework/shared-object-base": "^0.19.0",
+    "@fluidframework/runtime-utils": "^0.19.1",
+    "@fluidframework/shared-object-base": "^0.19.1",
     "@tiny-calc/nano": "0.0.28777",
     "debug": "^4.1.1",
     "tslib": "^1.10.0"
@@ -61,8 +61,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/local-test-utils": "^0.19.0",
-    "@fluidframework/test-runtime-utils": "^0.19.0",
+    "@fluidframework/local-test-utils": "^0.19.1",
+    "@fluidframework/test-runtime-utils": "^0.19.1",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",
