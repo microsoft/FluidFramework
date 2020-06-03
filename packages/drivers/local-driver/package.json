@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/local-driver",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "Fluid local driver",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,24 +26,44 @@
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0-0",
-    "@fluidframework/common-utils": "^0.19.0-0",
-    "@fluidframework/component-core-interfaces": "^0.19.0",
-    "@fluidframework/container-definitions": "^0.19.0",
-    "@fluidframework/driver-definitions": "^0.19.0",
-    "@fluidframework/driver-utils": "^0.19.0",
-    "@fluidframework/protocol-definitions": "^0.1006.0-0",
-    "@fluidframework/routerlicious-driver": "^0.19.0",
-    "@fluidframework/server-local-server": "^0.1006.0-0",
-    "@fluidframework/server-services-client": "^0.1006.0-0",
-    "@fluidframework/server-services-core": "^0.1006.0-0",
-    "@fluidframework/server-test-utils": "^0.1006.0-0",
+    "@fluidframework/common-definitions": "^0.18.0",
+    "@fluidframework/common-utils": "^0.19.0",
+    "@fluidframework/component-core-interfaces": "^0.20.0",
+    "@fluidframework/container-definitions": "^0.20.0",
+    "@fluidframework/driver-definitions": "^0.20.0",
+    "@fluidframework/driver-utils": "^0.20.0",
+    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/routerlicious-driver": "^0.20.0",
+    "@fluidframework/server-local-server": "^0.1006.0",
+    "@fluidframework/server-services-client": "^0.1006.0",
+    "@fluidframework/server-services-core": "^0.1006.0",
+    "@fluidframework/server-test-utils": "^0.1006.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

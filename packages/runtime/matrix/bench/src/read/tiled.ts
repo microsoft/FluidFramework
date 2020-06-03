@@ -216,16 +216,18 @@ function initGrid<T>(): SparseGrid<T> {
 export class TiledGrid<T> {
     private readonly cells: SparseGrid<T> = initGrid();
 
-    public get numRows() { return Consts.sizeH; }
-    public get numCols() { return Consts.sizeW; }
+    public get rowCount() { return Consts.sizeH; }
+    public get colCount() { return Consts.sizeW; }
 
-    public read(row: number, col: number) {
+    public getCell(row: number, col: number) {
         return getCell(row, col, this.cells);
     }
 
     public setCell(row: number, col: number, value: T) {
         setCell(row, col, this.cells, value);
     }
+
+    public get matrixProducer() { return undefined as any; }
 }
 
 pointwise("TiledGrid", new TiledGrid<number>());

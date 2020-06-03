@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
+import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own
@@ -14,46 +14,62 @@ import { IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
 export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<T> {
-    private _numCols = 0;
-    private _numRows = 0;
+    private _rowCount = 0;
+    private _colCount = 0;
     private readonly cells: T[] = [];
+    private readonly reader: IMatrixReader<T>;
 
-    public get numRows() { this.vet(); return this._numRows; }
-    public get numCols() { this.vet(); return this._numCols; }
+    constructor (producer: IMatrixProducer<T>) {
+        this.reader = producer.openMatrix(this);
+    }
+
+    public get rowCount() { this.vet(); return this._rowCount; }
+    public get colCount() { this.vet(); return this._colCount; }
+    public get matrixProducer() { return undefined as any; }
 
     // #region IMatrixConsumer
 
-    rowsChanged(row: number, numRemoved: number, numInserted: number): void {
-        if (numRemoved > 0) {
-            this.removeRows(row, numRemoved);
+    rowsChanged(rowStart: number, removedCount: number, insertedCount: number): void {
+        if (removedCount > 0) {
+            this.removeRows(rowStart, removedCount);
         }
 
-        if (numInserted > 0) {
-            this.insertRows(row, numInserted);
+        if (insertedCount > 0) {
+            this.insertRows(rowStart, insertedCount);
         }
+
+        this.vet();
     }
 
-    colsChanged(col: number, numRemoved: number, numInserted: number): void {
-        if (numRemoved > 0) {
-            this.removeCols(col, numRemoved);
+    colsChanged(colStart: number, removedCount: number, insertedCount: number): void {
+        if (removedCount > 0) {
+            this.removeCols(colStart, removedCount);
         }
 
-        if (numInserted > 0) {
-            this.insertCols(col, numInserted);
+        if (insertedCount > 0) {
+            this.insertCols(colStart, insertedCount);
         }
+
+        this.vet();
     }
 
-    cellsChanged(row: number, col: number, numRows: number, numCols: number, values: readonly T[]): void {
-        let c = this.getRowIndex(row) + col;
-        let end = c + numCols;
-        for (const value of values) {
-            this.cells[c++] = value;
-            if (c === end) {
-                if (++row > numRows) {
-                    break;
-                }
-                c = this.getRowIndex(row) + col;
-                end = c + numCols;
+    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number): void {
+        const rowEnd = rowStart + rowCount;
+        const colEnd = colStart + colCount;
+
+        for (let row = rowStart; row < rowEnd; row++) {
+            for (let col = colStart; col < colEnd; col++) {
+                this.cells[this.getRowIndex(row) + col] = this.reader.getCell(row, col);
+            }
+        }
+
+        // Vet that `rowCount` & `colCount` are consistent with the source `reader`.
+        assert(this._rowCount === this.reader.rowCount
+            && this._colCount == this.reader.colCount);
+
+        for (let i = 0, r = 0; r < this._rowCount; r++) {
+            for (let c = 0; c < this._colCount; c++) {
+                assert.equal(this.cells[i++], this.reader.getCell(r, c));
             }
         }
     }
@@ -62,57 +78,52 @@ export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<
 
     // #region IMatrixReader
 
-    read(row: number, col: number): T {
+    getCell(row: number, col: number): T {
         return this.cells[this.getRowIndex(row) + col];
     }
 
     // #endregion IMatrixReader
 
-    private insertRows(row: number, numRows: number) {
-        this.cells.splice(this.getRowIndex(row), 0, ...new Array(numRows * this._numCols));
-        this._numRows += numRows;
-        this.vet();
+    private insertRows(row: number, rowCount: number) {
+        this.cells.splice(this.getRowIndex(row), 0, ...new Array(rowCount * this._colCount));
+        this._rowCount += rowCount;
     }
 
-    private removeRows(row: number, numRows: number) {
-        this.cells.splice(this.getRowIndex(row), numRows * this._numCols);
-        this._numRows -= numRows;
-        this.vet();
+    private removeRows(row: number, rowCount: number) {
+        this.cells.splice(this.getRowIndex(row), rowCount * this._colCount);
+        this._rowCount -= rowCount;
     }
 
-    private insertCols(col: number, numCols: number) {
-        const stride = this.numCols + numCols;
-        const max = this.numRows * stride;
+    private insertCols(col: number, colCount: number) {
+        const stride = this._colCount + colCount;
+        const max = this._rowCount * stride;
         for (let c = col; c < max; c += stride) {
-            this.cells.splice(c, 0, ...new Array(numCols));
+            this.cells.splice(c, 0, ...new Array(colCount));
         }
 
-        this._numCols = stride;
-        this.vet();
+        this._colCount = stride;
     }
 
-    private removeCols(col: number, numCols: number) {
-        const stride = this.numCols - numCols;
+    private removeCols(col: number, colCount: number) {
+        const stride = this._colCount - colCount;
         for (let c = col; c < this.cells.length; c += stride) {
-            this.cells.splice(c, numCols);
+            this.cells.splice(c, colCount);
         }
-        this._numCols = stride;
-        this.vet();
+        this._colCount = stride;
     }
 
     private getRowIndex(row: number) {
-        this.vet();
-        return row * this._numCols;
+        return row * this._colCount;
     }
 
     public extract(this): ReadonlyArray<ReadonlyArray<T>> {
         const m: T[][] = [];
-        for (let r = 0; r < this.numRows; r++) {
+        for (let r = 0; r < this._rowCount; r++) {
             const row: T[] = [];
             m.push(row);
 
-            for (let c = 0; c < this.numCols; c++) {
-                row.push(this.read(r, c));
+            for (let c = 0; c < this.colCount; c++) {
+                row.push(this.getCell(r, c));
             }
         }
 
@@ -120,8 +131,8 @@ export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<
     }
 
     private vet() {
-        // Sanity check that `_numCols` and `_numRows` is consistent with the `cells` array.
-        assert((this._numCols === 0 && this.cells.length === 0)
-            || (this._numRows === this.cells.length / this._numCols));
+        // Vet that `rowCount` & `colCount` are consistent with the `cells` array.
+        assert((this._colCount === 0 && this.cells.length === 0)
+            || (this._rowCount === this.cells.length / this._colCount));
     }
 }
