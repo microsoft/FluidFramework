@@ -72,11 +72,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         // DDS in the view
         const initialState = { counter:  this.root.get(CounterRootKey) };
 
-        // Mark the counter as the CounterValueType so that changes to it update the view
-        // when we increment it
+        // Mark the counter as the CounterValueType so that changes to it update the React view
+        // when we increment it and the key it is stored under in the root
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
         fluidToView.set(CounterRootKey, {
             fluidObjectType: CounterValueType.Name,
+            rootKey: CounterRootKey,
         });
 
         ReactDOM.render(

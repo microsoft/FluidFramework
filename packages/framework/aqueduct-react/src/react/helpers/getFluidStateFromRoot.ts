@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@fluidframework/component-core-interfaces";
-import { ISharedDirectory } from "@fluidframework/map";
+import { IComponent, IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IViewConverter, FluidComponentMap } from "..";
 
 /**
@@ -19,24 +19,32 @@ export function getFluidStateFromRoot<SV,SF>(
     syncedStateId: string,
     root: ISharedDirectory,
     componentMap: FluidComponentMap,
+    initialFluidState: SF,
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
 ): SF {
-    const syncedState = root.get<SF>(`syncedState-${syncedStateId}`);
-    if (fluidToView) {
-        Object.entries(syncedState).forEach(([fluidKey, fluidValue]) => {
-            const fluidType = fluidToView.get(fluidKey as keyof SF)?.fluidObjectType;
-            if (fluidType) {
-                const rootKey = fluidToView.get(fluidKey as keyof SF)?.rootKey;
-                let value = rootKey ? root.get(rootKey) : root.get(fluidKey);
-                const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
-                if (possibleComponentPath !== undefined) {
-                    value = componentMap.get(possibleComponentPath);
-                    syncedState[fluidKey] = value.component;
+    const rootStateHandle = root.get<IComponentHandle<ISharedMap>>(`syncedState-${syncedStateId}`);
+    if (rootStateHandle) {
+        const rootState = componentMap.get(rootStateHandle.path)?.component as SharedMap;
+        if (rootState) {
+            const fluidState = {};
+            for (const fluidKey of rootState.keys()) {
+                const fluidType = fluidToView?.get(fluidKey as keyof SF)?.fluidObjectType;
+                const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
+                let value = rootKey ? root.get(rootKey) : rootState.get(fluidKey);
+                if (fluidType) {
+                    const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
+                    if (possibleComponentPath !== undefined) {
+                        value = componentMap.get(possibleComponentPath);
+                        fluidState[fluidKey] = value.component;
+                    } else {
+                        fluidState[fluidKey] = value;
+                    }
                 } else {
-                    syncedState[fluidKey] = value;
+                    fluidState[fluidKey] = value;
                 }
             }
-        });
+            return fluidState as SF;
+        }
     }
-    return syncedState;
+    return initialFluidState;
 }

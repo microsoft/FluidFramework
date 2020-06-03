@@ -185,11 +185,13 @@ export const instanceOfIComponentLoadable = (object: any): object is IComponentL
  * The values stored in the fluid component map
  * @param component - The actual Fluid component that the path this value is keyed against leads to
  * @param isListened - Boolean indicating if we are listening to changes on this component's root to trigger React
+ * @param isRuntimeMap - Is this a SharedMap that was added as a Fluid React requirement
  * state updates
  */
 export interface IFluidComponent {
     component?: IComponent & IComponentLoadable,
     isListened?: boolean,
+    isRuntimeMap?: boolean,
 }
 
 /**

@@ -5,6 +5,7 @@
 
 import { IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
@@ -41,12 +42,13 @@ export const updateStateAndComponentMap = async <
     fromRootUpdate: boolean,
     syncedStateId: string,
     root: ISharedDirectory,
+    runtime: IComponentRuntime,
     viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
+    fluidState: SF,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
-    fluidState?: SF,
 ) => asyncForEach(
     newHandleList,
     addComponent,
@@ -56,10 +58,11 @@ export const updateStateAndComponentMap = async <
     fromRootUpdate,
     syncedStateId,
     root,
+    runtime,
     viewState,
     setState,
     fluidComponentMap,
+    fluidState,
     viewToFluid,
     fluidToView,
-    fluidState,
 ));

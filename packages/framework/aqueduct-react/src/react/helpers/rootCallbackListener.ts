@@ -4,6 +4,7 @@
  */
 
 import { ISharedDirectory, IDirectoryValueChanged } from "@fluidframework/map";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     FluidComponentMap,
     ViewToFluidMap,
@@ -12,6 +13,7 @@ import {
 import { syncStateAndRoot } from "./syncStateAndRoot";
 import { getByValue } from "./utils";
 import { getViewFromRoot } from "./getViewFromRoot";
+import { getFluidStateFromRoot } from ".";
 
 /**
  * The callback that is added to the "valueChanged" event on the IComponentListened this
@@ -30,25 +32,36 @@ export const rootCallbackListener = <SV,SF>(
     fluidComponentMap: FluidComponentMap,
     syncedStateId,
     root: ISharedDirectory,
+    runtime: IComponentRuntime,
     state: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
+    initialFluidState: SF,
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
-    const rootKey = change.key;
     if (!local) {
+        const rootKey = change.key;
         const viewToFluidKeys: string[] = viewToFluid
             ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
             : [];
+        const currentFluidState = getFluidStateFromRoot(
+            syncedStateId,
+            root,
+            fluidComponentMap,
+            initialFluidState,
+            fluidToView,
+        );
         if (change.key === `syncedState-${syncedStateId}`) {
             // If the update is to the synced Fluid state, update both the Fluid and view states
             syncStateAndRoot(
                 true,
                 syncedStateId,
                 root,
+                runtime,
                 state,
                 setState,
                 fluidComponentMap,
+                currentFluidState,
                 viewToFluid,
                 fluidToView,
             );
@@ -64,13 +77,16 @@ export const rootCallbackListener = <SV,SF>(
                     root,
                     rootKey as keyof SF,
                     fluidComponentMap,
+                    currentFluidState,
                     fluidToView,
                 );
                 setState({ ...state, ...newPartialState, ...{ fluidComponentMap } }, true);
+            } else {
+                throw Error(`Unable to extract view state from root change key: ${rootKey}`);
             }
         } else if (state[rootKey] !== undefined) {
             const newState = { ...state, ...{ fluidComponentMap } };
-            newState[rootKey] = root.get(rootKey);
+            newState[rootKey] = currentFluidState[rootKey];
             setState({ ...state, ...newState }, true);
         }
     }

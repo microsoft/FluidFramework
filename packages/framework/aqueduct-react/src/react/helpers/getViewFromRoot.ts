@@ -28,10 +28,11 @@ export function getViewFromRoot<SV, SF>(
     root: ISharedDirectory,
     rootKey: keyof SF,
     fluidComponentMap: FluidComponentMap,
+    initialFluidState: SF,
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
     combinedRootState?: Partial<SF>,
 ): Partial<SV> {
-    const syncedState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    const syncedState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, initialFluidState, fluidToView);
     let value = syncedState[rootKey];
     if (combinedRootState) {
         value = (combinedRootState[rootKey] || value) as SF[keyof SF];

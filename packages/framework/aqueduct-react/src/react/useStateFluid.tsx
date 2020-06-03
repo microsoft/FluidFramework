@@ -24,6 +24,7 @@ import {
     setFluidStateToRoot,
     setComponentSchemaToRoot,
     getComponentSchemaFromRoot,
+    getFluidStateFromRoot,
 } from "./helpers";
 
 /**
@@ -52,13 +53,21 @@ export function useStateFluid<
     const fluidSetState = React.useCallback((newState: Partial<SV>, fromRootUpdate = false) => {
         const newCombinedState = { ...reactState, ...newState, isInitialized: true };
         if (!fromRootUpdate) {
+            const fluidState = getFluidStateFromRoot(
+                syncedStateId,
+                root,
+                dataProps.fluidComponentMap,
+                initialFluidState,
+            );
             syncStateAndRoot(
                 fromRootUpdate,
                 syncedStateId,
                 root,
+                dataProps.runtime,
                 newCombinedState,
                 reactSetState,
                 dataProps.fluidComponentMap,
+                fluidState,
                 viewToFluid,
                 fluidToView,
             );
@@ -74,8 +83,10 @@ export function useStateFluid<
                 dataProps.fluidComponentMap,
                 syncedStateId,
                 root,
+                dataProps.runtime,
                 reactState,
                 reactSetState,
+                initialFluidState,
                 viewToFluid,
                 fluidToView,
             );
@@ -84,13 +95,22 @@ export function useStateFluid<
 
     // If this is the first time this function is being called in this session
     if (!reactState.isInitialized) {
+        let unlistenedComponentHandles: (IComponentHandle | undefined)[] = [];
         // Check if there is a synced state value already stored, i.e. if the component has been loaded before
         let loadFromRoot = true;
-        let storedFluidState = root.get(`syncedState-${syncedStateId}`);
-        if (storedFluidState === undefined) {
+        const storedFluidStateHandle = root.get(`syncedState-${syncedStateId}`);
+        if (storedFluidStateHandle === undefined) {
             loadFromRoot = false;
-            storedFluidState = initialFluidState;
-            setFluidStateToRoot(syncedStateId, root, initialFluidState);
+            const stateMapHandle = setFluidStateToRoot(
+                syncedStateId,
+                root,
+                dataProps.runtime,
+                dataProps.fluidComponentMap,
+                initialFluidState,
+            );
+            unlistenedComponentHandles.push(stateMapHandle);
+        } else {
+            unlistenedComponentHandles.push(storedFluidStateHandle);
         }
 
         // If the stored schema is undefined on this root, i.e. it is the first time this
@@ -100,7 +120,7 @@ export function useStateFluid<
             const componentSchema: IFluidSchema = generateComponentSchema(
                 dataProps.runtime,
                 reactState,
-                storedFluidState,
+                initialFluidState,
                 viewToFluid,
                 fluidToView,
             );
@@ -119,16 +139,31 @@ export function useStateFluid<
 
         // Add the list of SharedMap handles for the schema and any unlistened handles passed in through the component
         // map to the list of handles we will fetch and start listening to
-        const unlistenedComponentHandles: (IComponentHandle | undefined)[] = [
-            componentSchemaHandles.componentKeyMapHandle,
-            componentSchemaHandles.fluidMatchingMapHandle,
-            componentSchemaHandles.viewMatchingMapHandle,
+        unlistenedComponentHandles = [
+            ...unlistenedComponentHandles,
+            ...[
+                componentSchemaHandles.componentKeyMapHandle,
+                componentSchemaHandles.fluidMatchingMapHandle,
+                componentSchemaHandles.viewMatchingMapHandle,
+            ],
         ];
+        const unlistenedMapHandles = [ ...unlistenedComponentHandles ];
         dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
             if (!value.isListened && value.component?.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
             }
         });
+
+        // Initialize the FluidComponentMap with our data handles
+        for (const handle of unlistenedMapHandles) {
+            const path = handle?.path;
+            if (path !== undefined) {
+                dataProps.fluidComponentMap.set(path, {
+                    isListened: false,
+                    isRuntimeMap: true,
+                });
+            }
+        }
 
         // Add the callback to all the unlistened components and then update the state afterwards
         updateStateAndComponentMap<SV,SF>(
@@ -137,8 +172,10 @@ export function useStateFluid<
             loadFromRoot,
             syncedStateId,
             root,
+            dataProps.runtime,
             reactState,
             reactSetState,
+            initialFluidState,
             rootCallback,
             viewToFluid,
             fluidToView,

@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { IDirectoryValueChanged } from "@fluidframework/map";
+import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
@@ -51,12 +51,16 @@ export const addComponent = async <
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
 ): Promise<void> => {
+    const existingValue = fluidComponentMap.get(handle.path);
+    const isRuntimeMap = existingValue !== undefined && existingValue.isRuntimeMap;
     fluidComponentMap.set(handle.path, { isListened: false });
     return handle.get().then((component) => {
         if (component.IComponentListened) {
             component.IComponentListened.addListenerToRootValueChanged(rootCallback);
+        } else if (isRuntimeMap) {
+            (component as SharedMap).on("valueChanged", rootCallback);
         }
-        fluidComponentMap.set(handle.path, { component, isListened: true });
+        fluidComponentMap.set(handle.path, { component, isListened: true, isRuntimeMap });
     });
 };
 

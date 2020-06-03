@@ -12,9 +12,9 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidConverter,
     IViewConverter,
-    FluidComponentMap,
     IFluidSchema,
     IFluidComponent,
+    IFluidDataProps,
 } from "./interface";
 import {
     rootCallbackListener,
@@ -24,6 +24,7 @@ import {
     setFluidStateToRoot,
     setComponentSchemaToRoot,
     getComponentSchemaFromRoot,
+    getFluidStateFromRoot,
 } from "./helpers";
 
 /**
@@ -35,9 +36,10 @@ export abstract class FluidReactComponent<
 > extends React.Component<IFluidProps<SV,SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
+    private readonly _dataProps: IFluidDataProps;
     private readonly viewToFluid?: Map<keyof SV, IFluidConverter<SV,SF>>;
     private readonly fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>;
-    private readonly fluidComponentMap?: FluidComponentMap;
+    private readonly _initialFluidState: SF;
     constructor(
         props: IFluidProps<SV,SF>,
     ) {
@@ -55,9 +57,10 @@ export abstract class FluidReactComponent<
         this.state = initialViewState;
         this.viewToFluid = viewToFluid;
         this.fluidToView = fluidToView;
-        this.fluidComponentMap = dataProps.fluidComponentMap;
         this._syncedStateId = syncedStateId;
         this._root = root;
+        this._dataProps = dataProps;
+        this._initialFluidState = initialFluidState;
         let componentSchemaHandles = getComponentSchemaFromRoot(this._syncedStateId, root);
         // If the stored schema is undefined on this root, i.e. it is the first time this
         // component is being loaded, generate it and store it
@@ -84,6 +87,7 @@ export abstract class FluidReactComponent<
             componentSchemaHandles.fluidMatchingMapHandle,
             componentSchemaHandles.viewMatchingMapHandle,
         ];
+        const listenedMapHandles = [...unlistenedComponentHandles];
         dataProps.fluidComponentMap.forEach((value: IFluidComponent, k) => {
             if (!value.isListened && value.component?.handle !== undefined) {
                 unlistenedComponentHandles.push(value.component.handle);
@@ -95,17 +99,42 @@ export abstract class FluidReactComponent<
             dataProps.fluidComponentMap,
             this._syncedStateId,
             root,
+            dataProps.runtime,
             this.state,
             this._setStateFromRoot.bind(this),
+            this._initialFluidState,
             viewToFluid,
             fluidToView,
         );
 
         // Check if there is a synced state value already stored, i.e. if the component has been loaded before
         let loadFromRoot = true;
-        if (root.get(`syncedState-${this._syncedStateId}`) === undefined) {
+        const storedFluidStateHandle = root.get(`syncedState-${syncedStateId}`);
+        if (storedFluidStateHandle === undefined) {
             loadFromRoot = false;
-            setFluidStateToRoot(this._syncedStateId, root, initialFluidState);
+            const syncedStateHandle = setFluidStateToRoot(
+                this._syncedStateId,
+                root,
+                dataProps.runtime,
+                dataProps.fluidComponentMap,
+                initialFluidState,
+            );
+            unlistenedComponentHandles.push(syncedStateHandle);
+            listenedMapHandles.push(syncedStateHandle);
+        } else {
+            unlistenedComponentHandles.push(storedFluidStateHandle);
+            listenedMapHandles.push(storedFluidStateHandle);
+        }
+
+        // Initialize the FluidComponentMap with our data handles
+        for (const handle of listenedMapHandles) {
+            const path = handle?.path;
+            if (path !== undefined) {
+                dataProps.fluidComponentMap.set(path, {
+                    isListened: false,
+                    isRuntimeMap: true,
+                });
+            }
         }
 
         // Add the callback to the component's own root
@@ -119,8 +148,10 @@ export abstract class FluidReactComponent<
             loadFromRoot,
             this._syncedStateId,
             root,
+            dataProps.runtime,
             this.state,
             this._setStateFromRoot.bind(this),
+            this._initialFluidState,
             rootCallback,
             viewToFluid,
             fluidToView,
@@ -147,14 +178,22 @@ export abstract class FluidReactComponent<
      */
     private _setRoot(newState: SV, fromRootUpdate = false) {
         const newCombinedState = { ...this.state, ...newState };
-        if (!fromRootUpdate && this.fluidComponentMap) {
+        if (!fromRootUpdate) {
+            const fluidState = getFluidStateFromRoot(
+                this._syncedStateId,
+                this._root,
+                this._dataProps.fluidComponentMap,
+                this._initialFluidState,
+            );
             syncStateAndRoot<SV,SF>(
                 fromRootUpdate,
                 this._syncedStateId,
                 this._root,
+                this._dataProps.runtime,
                 newCombinedState,
                 this._setStateFromRoot.bind(this),
-                this.fluidComponentMap,
+                this._dataProps.fluidComponentMap,
+                fluidState,
                 this.viewToFluid,
                 this.fluidToView,
             );
@@ -168,19 +207,23 @@ export abstract class FluidReactComponent<
      * @param newState - New state to be set both locally and on the synced root
      */
     public setState(newState: SV) {
-        if (this.fluidComponentMap) {
-            syncStateAndRoot(
-                false,
-                this._syncedStateId,
-                this._root,
-                newState,
-                this._setStateFromRoot.bind(this),
-                this.fluidComponentMap,
-                this.viewToFluid,
-                this.fluidToView,
-            );
-        } else if (this.state !== newState) {
-            return super.setState(newState);
-        }
+        const fluidState = getFluidStateFromRoot(
+            this._syncedStateId,
+            this._root,
+            this._dataProps.fluidComponentMap,
+            this._initialFluidState,
+        );
+        syncStateAndRoot(
+            false,
+            this._syncedStateId,
+            this._root,
+            this._dataProps.runtime,
+            newState,
+            this._setStateFromRoot.bind(this),
+            this._dataProps.fluidComponentMap,
+            fluidState,
+            this.viewToFluid,
+            this.fluidToView,
+        );
     }
 }

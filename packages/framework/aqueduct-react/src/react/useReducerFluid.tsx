@@ -56,7 +56,13 @@ export function useReducerFluid<
     });
 
     // Retrieve the current state that is stored on the root for this component ID
-    const currentFluidState = getFluidStateFromRoot(syncedStateId, root, dataProps.fluidComponentMap, fluidToView);
+    const currentFluidState = getFluidStateFromRoot(
+        syncedStateId,
+        root,
+        dataProps.fluidComponentMap,
+        initialFluidState,
+        fluidToView,
+    );
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and
@@ -89,8 +95,10 @@ export function useReducerFluid<
                     combinedDispatchDataProps.fluidComponentMap,
                     syncedStateId,
                     root,
+                    combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
+                    result.state.fluidState,
                     viewToFluid,
                     fluidToView,
                 );
@@ -101,12 +109,13 @@ export function useReducerFluid<
                     false,
                     syncedStateId,
                     root,
+                    combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
+                    result.state.fluidState,
                     callback,
                     viewToFluid,
                     fluidToView,
-                    result.state.fluidState,
                 );
             } else {
                 // Update the state directly
@@ -114,12 +123,13 @@ export function useReducerFluid<
                     false,
                     syncedStateId,
                     root,
+                    combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
                     combinedDispatchDataProps.fluidComponentMap,
+                    result.state.fluidState,
                     viewToFluid,
                     fluidToView,
-                    result.state.fluidState,
                 );
             }
         } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
@@ -133,8 +143,10 @@ export function useReducerFluid<
                     combinedDispatchDataProps.fluidComponentMap,
                     syncedStateId,
                     root,
+                    combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
+                    result.state.fluidState,
                     viewToFluid,
                     fluidToView,
                 );
@@ -146,24 +158,26 @@ export function useReducerFluid<
                         false,
                         syncedStateId,
                         root,
+                        combinedDispatchDataProps.runtime,
                         result.state.viewState,
                         setState,
+                        result.state.fluidState,
                         callback,
                         viewToFluid,
                         fluidToView,
-                        result.state.fluidState,
                     );
                 } else {
                     syncStateAndRoot(
                         false,
                         syncedStateId,
                         root,
+                        combinedDispatchDataProps.runtime,
                         result.state.viewState,
                         setState,
                         combinedDispatchDataProps.fluidComponentMap,
+                        result.state.fluidState,
                         viewToFluid,
                         fluidToView,
-                        result.state.fluidState,
                     );
                 }
             });
@@ -175,12 +189,13 @@ export function useReducerFluid<
                 false,
                 syncedStateId,
                 root,
+                combinedDispatchDataProps.runtime,
                 combinedDispatchState.viewState,
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
+                combinedDispatchState.fluidState,
                 viewToFluid,
                 fluidToView,
-                combinedDispatchState.fluidState,
             ));
         } else if (action && instanceOfEffectFunction<SV,SF,C>(action)) {
             (action.function as any)(
@@ -191,12 +206,13 @@ export function useReducerFluid<
                 false,
                 syncedStateId,
                 root,
+                combinedDispatchDataProps.runtime,
                 combinedDispatchState.viewState,
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
+                combinedDispatchState.fluidState,
                 viewToFluid,
                 fluidToView,
-                combinedDispatchState.fluidState,
             );
         } else {
             throw new Error(
@@ -277,8 +293,10 @@ export function useReducerFluid<
                     combinedFetchDataProps.fluidComponentMap,
                     syncedStateId,
                     root,
+                    combinedFetchDataProps.runtime,
                     combinedFetchState.viewState,
                     setState,
+                    combinedFetchState.fluidState,
                     viewToFluid,
                     fluidToView,
                 );
@@ -289,12 +307,13 @@ export function useReducerFluid<
                     true,
                     syncedStateId,
                     root,
+                    combinedFetchDataProps.runtime,
                     combinedFetchState.viewState,
                     setState,
+                    combinedFetchState.fluidState,
                     callback,
                     viewToFluid,
                     fluidToView,
-                    combinedFetchState.fluidState,
                 );
             }
             // Always return the result immediately

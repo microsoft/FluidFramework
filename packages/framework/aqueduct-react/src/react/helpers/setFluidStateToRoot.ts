@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@fluidframework/map";
+import { ISharedDirectory, SharedMap } from "@fluidframework/map";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { FluidComponentMap } from "../interface";
 
 /**
  * Store the Fluid state onto the shared root
@@ -14,15 +17,20 @@ import { ISharedDirectory } from "@fluidframework/map";
 export function setFluidStateToRoot<SF>(
     syncedStateId: string,
     root: ISharedDirectory,
+    runtime: IComponentRuntime,
+    componentMap: FluidComponentMap,
     fluidState: SF,
-): void {
-    const convertedState = {};
+): IComponentHandle {
+    const storedStateHandle = root.get<IComponentHandle>(`syncedState-${syncedStateId}`);
+    const storedState = ((storedStateHandle !== undefined && componentMap.get(storedStateHandle.path)?.component)
+        || SharedMap.create(runtime)) as SharedMap;
     Object.entries(fluidState).forEach(([fluidKey, fluidValue]) => {
         if (fluidValue.IComponentLoadable) {
-            convertedState[fluidKey] = fluidValue.IComponentLoadable.handle;
+            storedState.set(fluidKey, fluidValue.IComponentLoadable.handle);
         } else {
-            convertedState[fluidKey] = fluidValue;
+            storedState.set(fluidKey, fluidValue);
         }
     });
-    root.set(`syncedState-${syncedStateId}`, convertedState);
+    root.set(`syncedState-${syncedStateId}`, storedState.handle);
+    return storedState.handle;
 }

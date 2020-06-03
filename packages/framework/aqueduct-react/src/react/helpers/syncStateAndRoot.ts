@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedDirectory, SharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
@@ -42,12 +43,13 @@ export function syncStateAndRoot<
     fromRootUpdate: boolean,
     syncedStateId,
     root: ISharedDirectory,
+    runtime: IComponentRuntime,
     viewState: SV,
-    setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
+    setState: (newState: SV) => void,
     fluidComponentMap: FluidComponentMap,
+    fluidState: SF,
     viewToFluid?: ViewToFluidMap<SV,SF>,
     fluidToView?: FluidToViewMap<SV,SF>,
-    fluidState?: SF,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the root
     const currentRootState = fluidState || getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
@@ -108,6 +110,7 @@ export function syncStateAndRoot<
                             root,
                             fluidKey as keyof SF,
                             fluidComponentMap,
+                            fluidState,
                             fluidToView,
                             combinedRootState,
                         );
@@ -126,7 +129,7 @@ export function syncStateAndRoot<
                 // If it is a local update, broadcast it by setting it on the root and updating locally
                 // Otherwise, only update locally as the root update has already been broadcasted
                 if (!fromRootUpdate) {
-                    setFluidStateToRoot(syncedStateId, root, combinedRootState);
+                    setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState);
                     setState(combinedViewState);
                 } else {
                     setState(combinedViewState);
