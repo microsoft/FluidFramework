@@ -41,6 +41,7 @@ describe("Yo fluid", function () {
 
                 // Navigate to the temp folder that 
                 shell.echo("Running auth against vsts");
+                shell.exec("npm i -g vsts-npm-auth", { silent: true });
                 const authResponse = shell.exec("vsts-npm-auth -config .npmrc", { silent: true });
                 assert.equal(authResponse.code, 0, `npm auth failed with code: ${authResponse.code} - error: ${authResponse.stderr}`);
 
@@ -89,6 +90,7 @@ describe("Yo fluid", function () {
 
                 // Navigate to the temp folder that 
                 shell.echo("Running auth against vsts");
+                shell.exec("npm i -g vsts-npm-auth", { silent: true });
                 const authResponse = shell.exec("vsts-npm-auth -config .npmrc", { silent: true });
                 assert.equal(authResponse.code, 0, `npm auth failed with code: ${authResponse.code} - error: ${authResponse.stderr}`);
 
