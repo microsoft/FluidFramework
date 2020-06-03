@@ -19,7 +19,7 @@ import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import {
     LocalPersistentCache,
-    OdspCache,
+    createOdspCache,
     NonPersistentCache,
     IPersistedCache,
 } from "./odspCache";
@@ -117,7 +117,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             logger,
             "OdspDriver");
 
-        const cache = new OdspCache(
+        const cache = createOdspCache(
             this.persistedCache,
             this.nonPersistentCache,
             odspLogger);

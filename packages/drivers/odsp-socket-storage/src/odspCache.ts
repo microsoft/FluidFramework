@@ -48,20 +48,21 @@ export interface ICacheEntry {
 }
 
 /*
- * Driver will implement exponential back-off policy when it comes to updating usage of snapshots
- * It will use these settings to start reporting every 'startingUpdateUsageOpFrequency' ops and scale
- * that distance with 'updateUsageOpMultiplier' multiplier.
+ * Driver will implement exponential back-off policy when calling IPersistedCache.updateUsage()
+ * to update host about file changes.
+ * It will use these settings to start calling IPersistedCache.updateUsage()  every
+ * 'startingUpdateUsageOpFrequency' ops initially and scale it with 'updateUsageOpMultiplier' multiplier.
  * As result, we will
- *   - reach 5K ops with 19 calls, with 500 ops between the calls at that mark
- *   - reach 1M ops with 73 calls, with 95K ops between the calls at that mark
+ *   - reach 5K ops after 19 calls, with 500 ops between the calls at that mark
+ *   - reach 1M ops after 73 calls, with 95K ops between the calls at that mark
  */
 export const updateUsageOpMultiplier = 1.2;
 export const startingUpdateUsageOpFrequency = 100;
 
 /**
  * Persistent cache. This interface can be implemented by the host to provide durable caching
- * across sessions. If not provided, driver will provide in-memory cache that does not survive
- * across session boundary.
+ * across sessions. If not provided at driver factory construction, factory will use in-memory
+ * cache implementation that does not survive across sessions.
  */
 export interface IPersistedCache {
     /**
@@ -84,6 +85,8 @@ export interface IPersistedCache {
      * Important - only serializable content is allowed since this cache may be persisted between sessions
      * @param entry - cache entry.
      * @param value - JSON-serializable content.
+     * @param seqNumber - (reference) sequence number of snapshot. Incomming Ops will start with this number
+     * (see updateUsage API).
      */
     put(entry: ICacheEntry, value: any, seqNumber?: number): void;
 
@@ -148,12 +151,10 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
     }
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
-        try {
-            return this.cache.get(entry);
-        } catch (error) {
+        return this.cache.get(entry).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "cacheFetchError", key: entry.key }, error);
             return undefined;
-        }
+        });
     }
 
     put(entry: ICacheEntry, value: any, seqNumber?: number) {
@@ -175,8 +176,6 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
     }
 }
 
-export const snapshotExpiryDefaultPolicy = 10000;
-
 /** Describes how many ops behind snapshot can be for summarizer client to still use it */
 export const snapshotExpirySummarizerOps = 1000;
 
@@ -190,6 +189,7 @@ interface LocalCacheEntry {
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
+    private readonly snapshotExpiryPolicy = 10000;
     private readonly cache = new Map<LocalCacheEntry, any>();
     private readonly gc = new GarbageCollector<LocalCacheEntry>((key) => this.cache.delete(key));
 
@@ -204,7 +204,7 @@ export class LocalPersistentCache implements IPersistedCache {
 
         // Do not keep items too long in memory
         this.gc.cancel(key);
-        this.gc.schedule(key, snapshotExpiryDefaultPolicy);
+        this.gc.schedule(key, this.snapshotExpiryPolicy);
     }
 
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
@@ -256,23 +256,13 @@ export class NonPersistentCache implements INonPersistentCache {
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }
 
-export class OdspCache extends NonPersistentCache implements IOdspCache {
-    readonly persistedCache: IPersistedCache;
-
-    /**
-     * Initialize the OdspCach, with an optional cache to store persisted data in.
-     * If an IPersistedCache is not provided, we'll use a local-only cache for this session.
-     */
-    constructor(
-        persistedCache: IPersistedCache,
-        nonpersistentCache: NonPersistentCache,
-        logger: ITelemetryLogger)
-    {
-        super();
-        this.persistedCache = new PersistedCacheWithErrorHandling(
-            persistedCache,
-            logger);
-
-        Object.assign(this, nonpersistentCache);
-    }
+export function createOdspCache(
+    persistedCache: IPersistedCache,
+    nonpersistentCache: INonPersistentCache,
+    logger: ITelemetryLogger): IOdspCache
+{
+    return {
+        ...nonpersistentCache,
+        persistedCache: new PersistedCacheWithErrorHandling(persistedCache, logger),
+    };
 }

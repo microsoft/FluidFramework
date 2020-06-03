@@ -166,7 +166,6 @@ export class OdspDocumentService implements IDocumentService {
 
         this.hostPolicy = hostPolicy;
         if (this.odspResolvedUrl.summarizer) {
-            // deep copy
             this.hostPolicy = cloneDeep(this.hostPolicy);
             this.hostPolicy.summarizerClient = true;
         }
