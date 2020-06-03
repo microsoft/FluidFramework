@@ -331,7 +331,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const cachedSnapshotP = this.cache.persistedCache.get(
                         {
                             file: this.fileEntry,
-                            key: "snapshot",
+                            type: "snapshot",
+                            key: "",
                         },
                         this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
                     ) as Promise<IOdspSnapshot | undefined>;
@@ -475,16 +476,22 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         assert(this._snapshotCacheEntry === undefined);
         this._snapshotCacheEntry = {
             file: this.fileEntry,
-            key: "snapshot",
+            type: "snapshot",
+            key: "",
         };
 
         // There maybe no snapshot - TreesLatest would return just ops.
-        const seqNumber = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
-        if (cachedSnapshot.ops && cachedSnapshot.ops.length > 0) {
-            assert(cachedSnapshot.ops[0].sequenceNumber - 1 === seqNumber);
+        const seqNumber: number = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
+        const seqNumberFromOps = cachedSnapshot.ops && cachedSnapshot.ops.length > 0 ?
+            cachedSnapshot.ops[0].sequenceNumber - 1 :
+            undefined;
+
+        if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
+            this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
+        } else {
+            this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
         }
 
-        this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
         return cachedSnapshot;
     }
 

@@ -11,17 +11,17 @@ import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 /**
  * Describes what kind of content is stored in cache entry.
  */
-export type CacheKey = "snapshot";
+export type CacheContentType = "snapshot";
 
 /*
  * File / container identifier.
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
- * Driver guarantees that docId is stable ID uniquely identifying document.
  */
 export interface IFileEntry {
     /**
-     * Unique and stable ID of the document. This is the key to the cache
+     * Unique and stable ID of the document.
+     * Driver guarantees that docId is stable ID uniquely identifying document.
      */
     docId: string;
     /**
@@ -41,10 +41,23 @@ export interface ICacheEntry {
      * Identifies file in storage this cached entry is for
      */
     file: IFileEntry;
+
     /**
-     * Identifies individual entry for a given file.
+     * Identifies type of entry for a given file.
+     * Each file can have multiple types of entries associated with it.
+     * For example, it can be snapshot, blob, ops, etc.
      */
-    key: CacheKey;
+    type: CacheContentType;
+
+    /**
+     * Identifies individual entry for a given file and type.
+     * Each file can have multiple cache entries associated with it.
+     * This property identifies a particular instance of entry.
+     * For example, for blobs it will be unique ID of the blob in a file.
+     * For batch of ops, it can be starting op sequence number.
+     * For types that have only one entry (like snapshots), it will be empty string.
+     */
+    key: string;
 }
 
 /*
@@ -88,7 +101,7 @@ export interface IPersistedCache {
      * @param seqNumber - (reference) sequence number of snapshot. Incomming Ops will start with this number
      * (see updateUsage API).
      */
-    put(entry: ICacheEntry, value: any, seqNumber?: number): void;
+    put(entry: ICacheEntry, value: any, seqNumber: number): void;
 
     /*
      * Driver will call this API periodically to tell hosts about changes in document.
@@ -152,16 +165,16 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
         return this.cache.get(entry).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "cacheFetchError", key: entry.key }, error);
+            this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
             return undefined;
         });
     }
 
-    put(entry: ICacheEntry, value: any, seqNumber?: number) {
+    put(entry: ICacheEntry, value: any, seqNumber: number) {
         try {
             this.cache.put(entry, value, seqNumber);
         } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "cachePutError", key: entry.key }, error);
+            this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
             return undefined;
         }
     }
@@ -170,7 +183,7 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
         try {
             this.cache.updateUsage(entry, seqNumber);
         } catch (error) {
-            this.logger.sendErrorEvent({ eventName: "cacheUpdateUsageError", key: entry.key }, error);
+            this.logger.sendErrorEvent({ eventName: "cacheUpdateUsageError", type: entry.type }, error);
             return undefined;
         }
     }
@@ -193,7 +206,7 @@ export class LocalPersistentCache implements IPersistedCache {
         return this.cache.get(key);
     }
 
-    put(entry: ICacheEntry, value: any, seqNumber?: number) {
+    put(entry: ICacheEntry, value: any, seqNumber: number) {
         const key = this.keyFromEntry(entry);
         this.cache.set(key, value);
 
@@ -206,7 +219,7 @@ export class LocalPersistentCache implements IPersistedCache {
     }
 
     private keyFromEntry(entry: ICacheEntry): string {
-        return `${entry.file.docId}_${entry.key}`;
+        return `${entry.file.docId}_${entry.type}_${entry.key}`;
     }
 }
 

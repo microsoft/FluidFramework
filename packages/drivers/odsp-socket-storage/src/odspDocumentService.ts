@@ -23,6 +23,7 @@ import {
     IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import { cloneDeep } from "lodash";
 import {
     IOdspResolvedUrl,
     HostStoragePolicy,
@@ -40,10 +41,6 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-
-// eslint-disable-next-line max-len
-// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
