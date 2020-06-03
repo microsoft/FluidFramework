@@ -76,19 +76,8 @@ type IConsensusOrderedCollectionOperation =
     IConsensusOrderedCollectionCompleteOperation |
     IConsensusOrderedCollectionReleaseOperation;
 
-/**
- * A record of the pending operation
- */
-interface IPendingRecord<T> {
-    /** The resolve function to call after the operation is ack'ed */
-    resolve: (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
-
-    /** The client sequence number of the operation. For assert only. */
-    clientSequenceNumber: number;
-
-    /** The original operation message. For assert only. */
-    message: IConsensusOrderedCollectionOperation;
-}
+/** The type of the resolve function to call after the local operation is ack'd */
+type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
 
 /**
  * For job tracking, we need to keep track of which client "owns" a given value.
@@ -109,9 +98,6 @@ const idForLocalUnattachedClient = undefined;
  */
 export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
-    /** Queue of local messages awaiting ack from the server */
-    private readonly pendingLocalMessages: IPendingRecord<T>[] = [];
-
     /**
      * The set of values that have been acquired but not yet completed or released
      */
@@ -287,15 +273,6 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected onConnect() {
-        // resubmit non-acked messages
-        for (const record of this.pendingLocalMessages) {
-            record.clientSequenceNumber = this.submitLocalMessage(record.message);
-        }
-    }
-
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
-
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
@@ -350,7 +327,9 @@ export class ConsensusOrderedCollection<T = any>
                 default: unreachableCase(op);
             }
             if (local) {
-                this.onLocalMessageAck(message, value);
+                strongAssert(
+                    localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
+                this.onLocalMessageAck(value, localOpMetadata as PendingResolve<T>);
             }
         }
     }
@@ -358,17 +337,13 @@ export class ConsensusOrderedCollection<T = any>
     /**
      * Resolve the promise of a local operation
      *
-     * @param message - the message of the operation
      * @param value - the value related to the operation
+     * @param resolve - the resolve function to call on the ack.
      */
     private onLocalMessageAck(
-        message: ISequencedDocumentMessage,
-        value: IConsensusOrderedCollectionValue<T> | undefined) {
-        const pending = this.pendingLocalMessages.shift();
-        strongAssert(pending);
-        assert(message.contents.opName === pending.message.opName);
-        assert(message.clientSequenceNumber === pending.clientSequenceNumber);
-        pending.resolve(value);
+        value: IConsensusOrderedCollectionValue<T> | undefined,
+        resolve: PendingResolve<T>) {
+        resolve(value);
     }
 
     private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
@@ -376,10 +351,10 @@ export class ConsensusOrderedCollection<T = any>
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(!this.isLocal());
 
-        const clientSequenceNumber = this.submitLocalMessage(message);
         return this.newAckBasedPromise((resolve) => {
-            // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
-            this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
+            // Send the resolve function as the localOpMetadata. This will be provided back to us when the
+            // op is ack'd.
+            this.submitLocalMessage(message, resolve);
         });
     }
 

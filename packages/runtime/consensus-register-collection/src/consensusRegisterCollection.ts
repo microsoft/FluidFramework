@@ -84,19 +84,8 @@ type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<
 /** Distinguish between incoming op formats so we know which type it is */
 const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
 
-/**
- * A record of the pending operation awaiting ack
- */
-interface IPendingRecord {
-    /** The resolve function to call after the local operation is ack'ed */
-    resolve: (winner: boolean) => void;
-
-    /** The client sequence number of the operation. For assert only */
-    clientSequenceNumber: number;
-
-    /** Pending Message */
-    message: IRegisterOperation;
-}
+/** The type of the resolve function to call after the local operation is ack'd */
+type PendingResolve = (winner: boolean) => void;
 
 const snapshotFileName = "header";
 
@@ -126,9 +115,6 @@ export class ConsensusRegisterCollection<T>
     }
 
     private readonly data = new Map<string, ILocalData<T>>();
-
-    /** Queue of local messages awaiting ack from the server */
-    private readonly pendingLocalMessages: IPendingRecord[] = [];
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -164,10 +150,10 @@ export class ConsensusRegisterCollection<T>
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
 
-        const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve) => {
-            // Note that clientSequenceNumber and message are only used for asserts and aren't strictly necessary.
-            this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
+        return this.newAckBasedPromise((resolve) => {
+            // Send the resolve function as the localOpMetadata. This will be provided back to us when the
+            // op is ack'd.
+            this.submitLocalMessage(message, resolve);
         });
     }
 
@@ -244,15 +230,6 @@ export class ConsensusRegisterCollection<T>
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect() {
-        // resubmit non-acked messages
-        for (const record of this.pendingLocalMessages) {
-            record.clientSequenceNumber = this.submitLocalMessage(record.message);
-        }
-    }
-
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
-
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IIncomingRegisterOperation<T> = message.contents;
@@ -278,7 +255,8 @@ export class ConsensusRegisterCollection<T>
                         message.sequenceNumber,
                         local);
                     if (local) {
-                        this.onLocalMessageAck(message, winner);
+                        strongAssert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
+                        this.onLocalMessageAck(winner, localOpMetadata as PendingResolve);
                     }
                     break;
                 }
@@ -361,12 +339,8 @@ export class ConsensusRegisterCollection<T>
         return winner;
     }
 
-    private onLocalMessageAck(message: ISequencedDocumentMessage, winner: boolean) {
-        const pending = this.pendingLocalMessages.shift();
-        strongAssert(pending);
-        assert.strictEqual(message.clientSequenceNumber, pending.clientSequenceNumber,
-            "ConsensusRegistryCollection: unexpected ack");
-        pending.resolve(winner);
+    private onLocalMessageAck(winner: boolean, resolve: PendingResolve) {
+        resolve(winner);
     }
 
     private stringify(value: any): string {
