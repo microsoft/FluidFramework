@@ -10,6 +10,11 @@ The Dice roller is a simple Fluid component that uses Fluid's distributed data s
 If you haven't already, [set up your Fluid Framework development
 environment](../guide/README.md#set-up-your-development-environment).
 
+::: danger TODO
+
+Update these instructions.
+
+:::
 
 First, clone one of the tutorial repositories below. One repository uses React for rendering, and the other uses
 JavaScript directly.

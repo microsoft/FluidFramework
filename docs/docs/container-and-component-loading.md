@@ -52,7 +52,7 @@ The `Container` will use the provided `url` and `Driver` to connect, and start p
 
 The Operation Stream (op stream) is how fluid stores state. State, including, connected clients, the code to load, as
 well as Distributed Data Structure modifications, are stored as a series of operations that when played in order produce
-the current state. I don’t go into further details about it here.
+the current state. I don't go into further details about it here.
 
 :::
 
@@ -77,7 +77,7 @@ responsibility is to listen specifically for one event emitted from the `Quorum`
 ::: tip
 
 The `Quorum` is a special key/value Distributed Data Structure that requires all current members to agree on the value
-before the it is accepted. I don’t go into further details about it here.
+before the it is accepted. I don't go into further details about it here.
 
 :::
 
@@ -126,7 +126,7 @@ The `instantiateRuntime` function can perform any number of functions but has be
 
 ![Image 6](./container-and-component-loading-6.jpg)
 
-Containers can exist without Components but they are not very functional. The paradigm we’ve created is for the
+Containers can exist without Components but they are not very functional. The paradigm we've created is for the
 Container Developer (`instantiateRuntime` implementer) to create a default `Component`. The default `Component` is simply
 the first `Component` in the `Container`. Having a default `Component` allows the Hosting Application to make a `request`
 against the `Container` asking for the default `Component` without knowing what the default `Component` is (more on
@@ -137,7 +137,7 @@ The default `Component` is created the same as every other `Component`. The only
 this later).
 
 A `Component` is created by calling `createComponent("packageName")` on the `ContainerRuntime` **(6.2)**. The
-`ContainerRuntime` uses its `ComponentRegistry` to look for the entry of `"packageName"`. When it’s found it creates a
+`ContainerRuntime` uses its `ComponentRegistry` to look for the entry of `"packageName"`. When it's found it creates a
 `ComponentContext` **(7)** and executes the corresponding `instantiateComponent` with the `ComponentContext` **(8.1)**.
 
 ![Image 7](./container-and-component-loading-7.jpg)
@@ -193,7 +193,7 @@ Calling `createComponent` causes the `ContainerRuntime` to look at the `Componen
 
 ![Appendix 1](./container-and-component-loading-11.jpg)
 
-Great! Now we’ve loaded our entire `Container` plus our two Components. But we don’t actually have anything rendered on
+Great! Now we've loaded our entire `Container` plus our two Components. But we don't actually have anything rendered on
 the page. All these objects just exist in memory.
 
 ## Requesting and Routing
@@ -204,19 +204,19 @@ In the most basic case of rendering the default `Component` the Hosting Applicat
 `Container` object. This `request` will look something like `container.request({ url: "/" });` where the `"/"` denotes the
 default component.
 
-We’ve talked briefly about setting `request` handlers, and that it is done in the `instantiateRuntime` and `instantiateComponent`
-section. Well now we have a request on the `Container` object. But the `Container` doesn’t know how to handle this `request`,
+We've talked briefly about setting `request` handlers, and that it is done in the `instantiateRuntime` and `instantiateComponent`
+section. Well now we have a request on the `Container` object. But the `Container` doesn't know how to handle this `request`,
 so it forwards the `request` to the `ContainerContext` **(5)**. The `ContainerContext` doesn't do much so it forwards
 the `request` to the `ContainerRuntime` **(6)**.
 
 In our `instantiateRuntime` we set a specific `request` handler on the `ContainerRuntime` that says if someone asks for `"/"`
-we will return the default `Component` we’ve created. So the `ContainerRuntime` finds the `ComponentContext` relating the
-default `Component` and forwards the `request` there **(7)**. The `ComponentContext` doesn’t do much so it forwards the request
+we will return the default `Component` we've created. So the `ContainerRuntime` finds the `ComponentContext` relating the
+default `Component` and forwards the `request` there **(7)**. The `ComponentContext` doesn't do much so it forwards the request
 to the `ComponentRuntime` **(8)**.
 
 Now in our `instantiateComponent` for the default `Component` we set a specific `request` handler that said if anyone asks
 for this `ComponentRuntime` to forward the request to the `Component` object itself. So the `ComponentRuntime` forwards the
-request to the `Component` **(8.3.2)**. Finally, in the `Component` we’ve set a `request` handler that if anyone should send
+request to the `Component` **(8.3.2)**. Finally, in the `Component` we've set a `request` handler that if anyone should send
 it a `request` it will return itself.
 
 So now by simply requesting `"/"`, the Hosting Application has retrieved the default `Component` object.

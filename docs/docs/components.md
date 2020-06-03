@@ -9,10 +9,16 @@ interfaces, examples, and links to relevant resources.
 
 For an overview of Fluid, please read [What is Fluid?](../what-is-fluid.md)
 
-## What makes a component a ‘Fluid Component’?
+---
+
+[[toc]]
+
+---
+
+## What makes a component a 'Fluid Component?'
 
 A Fluid component is at its core a JavaScript object. Its relationship to the Fluid Framework is defined by the
-interfaces it exposes through the Fluid component model’s feature detection convention.
+interfaces it exposes through the Fluid component model's feature detection convention.
 
 One of the primary design principles in the Fluid component design is to support delegation and feature detection
 patterns. Feature detection is a technique to dynamically determine the capabilities of another component, while
@@ -76,11 +82,11 @@ rendering but not have a need for distributed data structures. Alternatively a c
 distributed data structures but have no need for rendering. Here are some examples:
 
 Additionally components can implement experience integration interfaces, which will be optional in many contexts but
-could be required by certain applications (i.e. an application may refuse to load components that don’t implement
+could be required by certain applications (i.e. an application may refuse to load components that don't implement
 certain interfaces). This would include supporting capabilities such as search, presence, cursoring, clipboard support,
 and much more.
 
-We’ll break these set of interfaces into three categories:
+We'll break these set of interfaces into three categories:
 
 * Fluid **Rendering** Interfaces
 * Fluid **Data** Interfaces
@@ -97,7 +103,7 @@ Fluid does provide a set of core interfaces on how components can be placed into
 ### Core Rendering (IComponentHTMLView):
 
 The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLView. It supports a single
-method ‘render’, where HTML is written to output the display for the control.
+method 'render', where HTML is written to output the display for the control.
 
 Here is the interface definition:
 
@@ -120,8 +126,8 @@ class MyDisplayComponent implements IComponentHTMLView {
 }
 ```
 
-In this very simple example the component is always outputting “Hello World” in bold. In a more sophisticated component
-this ‘render’ method would contain all of the display code for the component.
+In this very simple example the component is always outputting "Hello World" in bold. In a more sophisticated component
+this `render` method would contain all of the display code for the component.
 
 The `IComponentHTMLOptions` interface provides an optional mechanism for parameterization. Additional options can and
 will be added. Here is a current base definition for the interface:
@@ -139,7 +145,7 @@ For an introduction to the Fluid Data model, please read [What is Fluid?](../wha
 The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing the
 `IComponentLoadable` interface.
 
-However, we expect most component developers to access the data model via the base classes in Fluid’s Aqueduct package
+However, we expect most component developers to access the data model via the base classes in Fluid's Aqueduct package
 (this package contains implementations of the Fluid Framework interfaces that help developers to quickly get started),
 specifically [PrimedComponent][], and then use distributed data structures via their APIs (SharedDirectory, SharedMap,
 SharedString, etc).

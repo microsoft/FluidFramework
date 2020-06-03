@@ -1,18 +1,18 @@
 ---
 home: true
-heroImage: /images/homescreen144.png
+# heroImage: /images/homescreen144.png
 heroText: "Fluid Framework"
 showHeroSymbol: true
 # tagline: State that flows
-actionText: Stay up to date →
-actionLink: /docs/
+actionText: Get started →
+actionLink: /docs/getting-started.md
 features:
-- title: What is Fluid Framework
+- title: What is Fluid Framework?
   details: Some details go here.
 - title: FAQ
-  details: Enjoy the dev experience of Vue + webpack, use Vue components in markdown, and develop custom themes with Vue.
+  details: Some details go here.
 - title: Other media
-  details: VuePress generates pre-rendered static HTML for each page, and runs as an SPA once a page is loaded.
+  details: Some details go here.
 footer: Made with ❤ in Redmond.
 ---
 

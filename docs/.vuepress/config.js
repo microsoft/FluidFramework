@@ -52,7 +52,7 @@ const listPages = (dirPath, includeIndex = false) => {
 
 const getNav = () => {
     const nav = [
-        { text: "What is Fluid?", link: "/docs/what-is-fluid.md" },
+        { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
         { text: "Ecosystem", link: "/ecosystem/" },
@@ -245,17 +245,19 @@ const getDocsSidebar = () => {
             // path: "",
             children: [
                 "getting-started.md",
-                // "spfx.md",
-                // "upload.md",
+                "dev-env.md",
                 "create-a-new-fluid-component",
-                "package-feed.md",
+                "hello-world.md",
+                "release-process.md",
             ]
         },
         {
             title: "Distributed Data Structures",
             collapsable: false,
-            path: "dds",
+            // path: "dds",
             children: [
+                // "overview",
+                "dds.md",
                 "SharedDirectory",
                 "SharedMap",
                 "SharedCell",
@@ -263,13 +265,13 @@ const getDocsSidebar = () => {
                     title: "Sequences",
                     path: "sequences",
                     children: [
-                        "SharedNumberSequence",
-                        "SharedObjectSequence",
-                        "SharedString",
-                        "SparseMatrix",
+                        "SharedNumberSequence.md",
+                        "SharedObjectSequence.md",
+                        "SharedString.md",
+                        "SparseMatrix.md",
                     ],
                 },
-                "consensus",
+                "consensus.md",
             ]
         },
         // {
@@ -286,7 +288,7 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Advanced",
+            title: "Advanced guides",
             collapsable: false,
             children: [
                 "dds-anatomy",
@@ -484,6 +486,7 @@ module.exports = {
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
+        toc: { includeLevel: [2, 3, 4] },
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins

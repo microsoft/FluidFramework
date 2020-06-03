@@ -62,8 +62,8 @@ the Fluid core.
 
 - [Design](https://github.com/microsoft/FluidFramework/issues/1096)
 
-Today, it’s tempting to initialize container by having singleton components with well-defined names / IDs, relying on
-being connected through initialization process and be the only one online client on the wire. That’s the easiest but not
+Today, it's tempting to initialize container by having singleton components with well-defined names / IDs, relying on
+being connected through initialization process and be the only one online client on the wire. That's the easiest but not
 correct (robust to failure) way of initialization. We're working on better patterns to address these needs.
 
 ### Render / view interfaces
