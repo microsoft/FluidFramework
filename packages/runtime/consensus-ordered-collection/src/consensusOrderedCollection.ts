@@ -329,21 +329,11 @@ export class ConsensusOrderedCollection<T = any>
             if (local) {
                 strongAssert(
                     localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
-                this.onLocalMessageAck(value, localOpMetadata as PendingResolve<T>);
+                // Resolve the pending promise for this operation now that we have received an ack for it.
+                const resolve = localOpMetadata as PendingResolve<T>;
+                resolve(value);
             }
         }
-    }
-
-    /**
-     * Resolve the promise of a local operation
-     *
-     * @param value - the value related to the operation
-     * @param resolve - the resolve function to call on the ack.
-     */
-    private onLocalMessageAck(
-        value: IConsensusOrderedCollectionValue<T> | undefined,
-        resolve: PendingResolve<T>) {
-        resolve(value);
     }
 
     private async submit<TMessage extends IConsensusOrderedCollectionOperation>(

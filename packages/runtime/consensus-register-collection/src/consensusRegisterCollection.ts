@@ -256,7 +256,9 @@ export class ConsensusRegisterCollection<T>
                         local);
                     if (local) {
                         strongAssert(localOpMetadata, "localOpMetadata is missing from the client's write operation");
-                        this.onLocalMessageAck(winner, localOpMetadata as PendingResolve);
+                        // Resolve the pending promise for this operation now that we have received an ack for it.
+                        const resolve = localOpMetadata as PendingResolve;
+                        resolve(winner);
                     }
                     break;
                 }
@@ -337,10 +339,6 @@ export class ConsensusRegisterCollection<T>
         this.emit("versionChanged", key, value, local);
 
         return winner;
-    }
-
-    private onLocalMessageAck(winner: boolean, resolve: PendingResolve) {
-        resolve(winner);
     }
 
     private stringify(value: any): string {
