@@ -31,7 +31,7 @@
     "@fluidframework/protocol-definitions": "^0.1006.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/node": "^10.17.24",
