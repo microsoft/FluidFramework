@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-utils",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "ODSP utilities",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

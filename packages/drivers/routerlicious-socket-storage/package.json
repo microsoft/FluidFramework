@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-driver",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "Socket.IO + Git implementation of Fluid service API",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,10 +27,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/container-definitions": "^0.19.2",
-    "@fluidframework/driver-base": "^0.19.2",
-    "@fluidframework/driver-definitions": "^0.19.2",
-    "@fluidframework/driver-utils": "^0.19.2",
+    "@fluidframework/container-definitions": "^0.19.3",
+    "@fluidframework/driver-base": "^0.19.3",
+    "@fluidframework/driver-definitions": "^0.19.3",
+    "@fluidframework/driver-utils": "^0.19.3",
     "@fluidframework/gitresources": "^0.1006.1",
     "@fluidframework/protocol-base": "^0.1006.1",
     "@fluidframework/protocol-definitions": "^0.1006.1",

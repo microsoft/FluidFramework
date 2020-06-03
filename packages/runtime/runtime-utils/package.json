@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-utils",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "Collection of utility functions for Fluid Runtime",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -49,10 +49,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.2",
-    "@fluidframework/component-runtime-definitions": "^0.19.2",
+    "@fluidframework/component-core-interfaces": "^0.19.3",
+    "@fluidframework/component-runtime-definitions": "^0.19.3",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/runtime-definitions": "^0.19.2"
+    "@fluidframework/runtime-definitions": "^0.19.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/hosts-sample",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "private": true,
   "description": "Sample Fluid container host",
   "license": "MIT",
@@ -22,14 +22,14 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.2",
-    "@fluidframework/container-definitions": "^0.19.2",
-    "@fluidframework/container-loader": "^0.19.2",
+    "@fluidframework/component-core-interfaces": "^0.19.3",
+    "@fluidframework/container-definitions": "^0.19.3",
+    "@fluidframework/container-loader": "^0.19.3",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/routerlicious-driver": "^0.19.2",
-    "@fluidframework/test-runtime-utils": "^0.19.2",
-    "@fluidframework/view-interfaces": "^0.19.2",
-    "@fluidframework/web-code-loader": "^0.19.2",
+    "@fluidframework/routerlicious-driver": "^0.19.3",
+    "@fluidframework/test-runtime-utils": "^0.19.3",
+    "@fluidframework/view-interfaces": "^0.19.3",
+    "@fluidframework/web-code-loader": "^0.19.3",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.4.0"
   },
