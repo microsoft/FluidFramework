@@ -9,28 +9,28 @@ import {
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { SharedCell } from "./counter";
-import { ISharedCell } from "./interfaces";
+import { SharedCounter } from "./counter";
+import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
  * The factory that defines the map
  */
-export class CellFactory implements ISharedObjectFactory {
-    public static readonly Type = "https://graph.microsoft.com/types/cell";
+export class CounterFactory implements ISharedObjectFactory {
+    public static readonly Type = "https://graph.microsoft.com/types/counter";
 
     public static readonly Attributes: IChannelAttributes = {
-        type: CellFactory.Type,
+        type: CounterFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
     public get type() {
-        return CellFactory.Type;
+        return CounterFactory.Type;
     }
 
     public get attributes() {
-        return CellFactory.Attributes;
+        return CounterFactory.Attributes;
     }
 
     public async load(
@@ -38,15 +38,15 @@ export class CellFactory implements ISharedObjectFactory {
         id: string,
         services: ISharedObjectServices,
         branchId: string,
-        attributes: IChannelAttributes): Promise<ISharedCell> {
-        const cell = new SharedCell(id, runtime, attributes);
-        await cell.load(branchId, services);
-        return cell;
+        attributes: IChannelAttributes): Promise<ISharedCounter> {
+        const counter = new SharedCounter(id, runtime, attributes);
+        await counter.load(branchId, services);
+        return counter;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedCell {
-        const cell = new SharedCell(id, document, this.attributes);
-        cell.initializeLocal();
-        return cell;
+    public create(document: IComponentRuntime, id: string): ISharedCounter {
+        const counter = new SharedCounter(id, document, this.attributes);
+        counter.initializeLocal();
+        return counter;
     }
 }

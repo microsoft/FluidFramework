@@ -5,27 +5,27 @@
 
 import assert from "assert";
 import { MockRuntime } from "@fluidframework/test-runtime-utils";
-import { CellFactory } from "../counterFactory";
-import { ISharedCell } from "..";
+import { CounterFactory } from "../counterFactory";
+import { ISharedCounter } from "..";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
-        describe("cell", () => {
-            let testCell: ISharedCell;
+        describe("counter", () => {
+            let testCounter: ISharedCounter;
 
             beforeEach(async () => {
-                const factory = new CellFactory();
-                testCell = factory.create(new MockRuntime(), "cell");
+                const factory = new CounterFactory();
+                testCounter = factory.create(new MockRuntime(), "counter");
             });
 
-            it("Can create a cell", () => {
-                assert.ok(testCell);
+            it("Can create a counter", () => {
+                assert.ok(testCounter);
             });
 
-            it("Can set and get cell data", async () => {
-                testCell.set("testValue");
-                assert.equal(testCell.get(), "testValue");
-            });
+            // it("Can set and get cell data", async () => {
+            //     testCounter.set("testValue");
+            //     assert.equal(testCounter.get(), "testValue");
+            // });
         });
     });
 });

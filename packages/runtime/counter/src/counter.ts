@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
@@ -13,35 +12,25 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-    IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
-import { CellFactory } from "./counterFactory";
+import { ISharedObjectFactory, SharedObject } from "@fluidframework/shared-object-base";
+import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
-import { ISharedCell, ISharedCellEvents } from "./interfaces";
+import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
+
+interface IIncrementOperation {
+    type: "increment";
+    incrementAmount: number;
+}
 
 /**
- * Description of a cell delta operation
+ * Used in snapshotting.
  */
-type ICellOperation = ISetCellOperation | IDeleteCellOperation;
-
-interface ISetCellOperation {
-    type: "setCell";
-    value: ICellValue;
-}
-
-interface IDeleteCellOperation {
-    type: "deleteCell";
-}
-
-interface ICellValue {
-    // The type of the value
-    type: string;
-
-    // The actual value
-    value: any;
+interface ICounterValue {
+    // The value of the counter
+    value: number;
 }
 
 const snapshotFileName = "header";
@@ -49,7 +38,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell shared object
  */
-export class SharedCell extends SharedObject<ISharedCellEvents> implements ISharedCell {
+export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     /**
      * Create a new shared cell
      *
@@ -58,85 +47,43 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(id, CellFactory.Type) as SharedCell;
+        return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
     /**
-     * Get a factory for SharedCell to register with the component.
+     * Get a factory for SharedCounter to register with the component.
      *
-     * @returns a factory that creates and load SharedCell
+     * @returns a factory that creates and load SharedCounter
      */
     public static getFactory(): ISharedObjectFactory {
-        return new CellFactory();
+        return new CounterFactory();
     }
-    /**
-     * The data held by this cell.
-     */
-    private data: any;
+
+    private _value: number = 0;
 
     /**
-     * Tracks the most recent clientSequenceNumber of any pending op, or -1 if there is no pending op.
+     * {@inheritDoc ISharedCounter.value}
      */
-    private pendingClientSequenceNumber: number;
-
-    /**
-     * Constructs a new shared cell. If the object is non-local an id and service interfaces will
-     * be provided
-     *
-     * @param runtime - component runtime the shared map belongs to
-     * @param id - optional name of the shared map
-     */
-    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
-        this.pendingClientSequenceNumber = -1;
+    public get value() {
+        return this._value;
     }
 
     /**
-     * {@inheritDoc ISharedCell.get}
+     * {@inheritDoc ISharedCounter.increment}
      */
-    public get() {
-        return this.data;
-    }
-
-    /**
-     * {@inheritDoc ISharedCell.set}
-     */
-    public set(value: any) {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
-        const operationValue: ICellValue = {
-            type: ValueType[ValueType.Plain],
-            value: this.toSerializable(value),
+    public increment(incrementAmount: number) {
+        const op: IIncrementOperation = {
+            type: "increment",
+            incrementAmount,
         };
 
-        const op: ISetCellOperation = {
-            type: "setCell",
-            value: operationValue,
-        };
-
-        this.setCore(value);
-        this.submitCellMessage(op);
+        this.incrementCore(incrementAmount);
+        this.submitLocalMessage(op);
     }
 
-    /**
-     * {@inheritDoc ISharedCell.delete}
-     */
-    public delete() {
-        const op: IDeleteCellOperation = {
-            type: "deleteCell",
-        };
-
-        this.deleteCore();
-        this.submitCellMessage(op);
-    }
-
-    /**
-     * {@inheritDoc ISharedCell.empty}
-     */
-    public empty() {
-        return this.data === undefined;
+    private incrementCore(incrementAmount: number) {
+        this._value += incrementAmount;
+        this.emit("incremented", incrementAmount, this._value);
     }
 
     /**
@@ -146,9 +93,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     public snapshot(): ITree {
         // Get a serializable form of data
-        const content: ICellValue = {
-            type: ValueType[ValueType.Plain],
-            value: this.toSerializable(this.data),
+        const content: ICounterValue = {
+            value: this.value,
         };
 
         // And then construct the tree for it
@@ -184,37 +130,33 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined
-            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICellValue
-            : { type: ValueType[ValueType.Plain], value: undefined };
+            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICounterValue
+            : { value: 0 };
 
-        this.data = this.fromSerializable(content);
+        this._value = content.value;
     }
 
     /**
      * Initialize a local instance of cell
      */
     protected initializeLocalCore() {
-        this.data = undefined;
     }
 
     /**
      * Process the cell value on register
      */
     protected registerCore() {
-        if (SharedObject.is(this.data)) {
-            this.data.register();
-        }
     }
 
     /**
      * Call back on disconnect
      */
     protected onDisconnect() {
-        debug(`Cell ${this.id} is now disconnected`);
+        debug(`Counter ${this.id} is now disconnected`);
     }
 
     /**
-     * Process a cell operation
+     * Process a counter operation
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
@@ -222,76 +164,17 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        if (this.pendingClientSequenceNumber !== -1) {
-            // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
-            if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {
-                // This is the ACK, so clear pending
-                this.pendingClientSequenceNumber = -1;
-            }
-            return;
-        }
-
         if (message.type === MessageType.Operation && !local) {
-            const op = message.contents as ICellOperation;
+            const op = message.contents as IIncrementOperation;
 
             switch (op.type) {
-                case "setCell":
-                    this.setCore(this.fromSerializable(op.value));
-                    break;
-
-                case "deleteCell":
-                    this.deleteCore();
+                case "increment":
+                    this.incrementCore(op.incrementAmount);
                     break;
 
                 default:
                     throw new Error("Unknown operation");
             }
         }
-    }
-
-    private setCore(value: any) {
-        this.data = value;
-        this.emit("valueChanged", value);
-    }
-
-    private deleteCore() {
-        this.data = undefined;
-        this.emit("delete");
-    }
-
-    private submitCellMessage(op: ICellOperation): void {
-        // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
-        this.pendingClientSequenceNumber = this.submitLocalMessage(op);
-    }
-
-    private toSerializable(value: any) {
-        if (value === undefined) {
-            return value;
-        }
-
-        // Stringify to convert to the serialized handle values - and then parse in order to create
-        // a POJO for the op
-        const stringified = this.runtime.IComponentSerializer.stringify(
-            value,
-            this.runtime.IComponentHandleContext,
-            this.handle);
-        return JSON.parse(stringified);
-    }
-
-    private fromSerializable(operation: ICellValue) {
-        let value = operation.value;
-
-        // Convert any stored shared object to updated handle
-        if (operation.type === ValueType[ValueType.Shared]) {
-            const handle: ISerializedHandle = {
-                type: "__fluid_handle__",
-                url: operation.value as string,
-            };
-            value = handle;
-        }
-
-        return value !== undefined
-            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
-            : value;
     }
 }
