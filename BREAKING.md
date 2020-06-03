@@ -1,5 +1,11 @@
 # Breaking changes
 
+## 0.20 Breaking Changes
+- [Counter value type deprecated](#Counter-value-type-deprecated)
+
+### `Counter` value type deprecated
+The `Counter` value type on `SharedMap` and `SharedDirectory` is now deprecated and will be removed in an upcoming release.  Instead, the `@fluidframework/counter` DDS can be used for counter functionality.
+
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
 - [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
