@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-kafka-orderer",
-  "version": "0.1006.0",
+  "version": "0.1007.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -20,12 +20,12 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1006.0",
-    "@fluidframework/server-services-core": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1007.0",
+    "@fluidframework/server-services-core": "^0.1007.0",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
