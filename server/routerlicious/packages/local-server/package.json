@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-local-server",
-  "version": "0.1006.1",
+  "version": "0.1006.2",
   "description": "Local server implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,12 +48,12 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/server-lambdas": "^0.1006.1",
-    "@fluidframework/server-memory-orderer": "^0.1006.1",
-    "@fluidframework/server-services-client": "^0.1006.1",
-    "@fluidframework/server-services-core": "^0.1006.1",
-    "@fluidframework/server-test-utils": "^0.1006.1"
+    "@fluidframework/protocol-definitions": "^0.1006.2",
+    "@fluidframework/server-lambdas": "^0.1006.2",
+    "@fluidframework/server-memory-orderer": "^0.1006.2",
+    "@fluidframework/server-services-client": "^0.1006.2",
+    "@fluidframework/server-services-core": "^0.1006.2",
+    "@fluidframework/server-test-utils": "^0.1006.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

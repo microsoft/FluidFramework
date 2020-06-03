@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-kafka-orderer",
-  "version": "0.1006.1",
+  "version": "0.1006.2",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -20,8 +20,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/server-services-core": "^0.1006.1",
+    "@fluidframework/protocol-definitions": "^0.1006.2",
+    "@fluidframework/server-services-core": "^0.1006.2",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {

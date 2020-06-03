@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/execution-context-loader",
-  "version": "0.19.1",
+  "version": "0.19.2",
   "description": "Allows loading container inside execution contexts. Currently supports web worker",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,9 +25,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.1",
-    "@fluidframework/container-definitions": "^0.19.1",
-    "@fluidframework/driver-definitions": "^0.19.1",
+    "@fluidframework/component-core-interfaces": "^0.19.2",
+    "@fluidframework/container-definitions": "^0.19.2",
+    "@fluidframework/driver-definitions": "^0.19.2",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },

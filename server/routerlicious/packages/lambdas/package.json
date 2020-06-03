@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-lambdas",
-  "version": "0.1006.1",
+  "version": "0.1006.2",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -47,11 +47,11 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/gitresources": "^0.1006.1",
-    "@fluidframework/protocol-base": "^0.1006.1",
-    "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/server-services-client": "^0.1006.1",
-    "@fluidframework/server-services-core": "^0.1006.1",
+    "@fluidframework/gitresources": "^0.1006.2",
+    "@fluidframework/protocol-base": "^0.1006.2",
+    "@fluidframework/protocol-definitions": "^0.1006.2",
+    "@fluidframework/server-services-client": "^0.1006.2",
+    "@fluidframework/server-services-core": "^0.1006.2",
     "@types/semver": "^6.0.1",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
@@ -65,7 +65,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/server-test-utils": "^0.1006.1",
+    "@fluidframework/server-test-utils": "^0.1006.2",
     "@types/async": "^2.0.50",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/lodash": "^4.14.118",

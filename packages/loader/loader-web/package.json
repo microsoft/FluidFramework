@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/web-code-loader",
-  "version": "0.19.1",
+  "version": "0.19.2",
   "description": "Loader client app",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.19.1",
+    "@fluidframework/container-definitions": "^0.19.2",
     "@types/node": "^10.17.24",
     "isomorphic-fetch": "^2.2.1"
   },

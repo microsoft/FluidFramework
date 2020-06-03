@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/draft-js",
-  "version": "0.19.1",
+  "version": "0.19.2",
   "description": "An example of integrating the Fluid Framework with Draft.js",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -30,14 +30,14 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.19.1",
-    "@fluidframework/component-runtime-definitions": "^0.19.1",
-    "@fluidframework/map": "^0.19.1",
-    "@fluidframework/merge-tree": "^0.19.1",
+    "@fluidframework/aqueduct": "^0.19.2",
+    "@fluidframework/component-runtime-definitions": "^0.19.2",
+    "@fluidframework/map": "^0.19.2",
+    "@fluidframework/merge-tree": "^0.19.2",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/sequence": "^0.19.1",
-    "@fluidframework/shared-object-base": "^0.19.1",
-    "@fluidframework/view-interfaces": "^0.19.1",
+    "@fluidframework/sequence": "^0.19.2",
+    "@fluidframework/shared-object-base": "^0.19.2",
+    "@fluidframework/view-interfaces": "^0.19.2",
     "draft-js": "^0.11.0",
     "immutable": "~3.7.4",
     "react": "^16.10.2",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/webpack-component-loader": "^0.19.1",
+    "@fluidframework/webpack-component-loader": "^0.19.2",
     "@types/draft-js": "^0.10.34",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
