@@ -18,7 +18,7 @@ import {
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
+import { CellFactory } from "./counterFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 

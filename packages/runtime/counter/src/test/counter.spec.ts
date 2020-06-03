@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { MockRuntime } from "@fluidframework/test-runtime-utils";
-import { CellFactory } from "../cellFactory";
+import { CellFactory } from "../counterFactory";
 import { ISharedCell } from "..";
 
 describe("Routerlicious", () => {

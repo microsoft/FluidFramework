@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./cell";
+export * from "./counter";
 export * from "./interfaces";

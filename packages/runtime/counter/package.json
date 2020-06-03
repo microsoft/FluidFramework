@@ -1,7 +1,7 @@
 {
-  "name": "@fluidframework/cell",
+  "name": "@fluidframework/counter",
   "version": "0.20.0",
-  "description": "Distributed map",
+  "description": "Counter DDS",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

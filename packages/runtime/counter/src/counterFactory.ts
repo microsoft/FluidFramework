@@ -9,7 +9,7 @@ import {
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { SharedCell } from "./cell";
+import { SharedCell } from "./counter";
 import { ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
