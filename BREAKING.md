@@ -3,6 +3,10 @@
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
 - [IUrlResolver change from requestUrl to getAbsoluteUrl](#IUrlResolver-change-from-requestUrl-to-getAbsoluteUrl)
+- [Package rename from `@microsoft/fluid-*` to `@fluidframework/*`](#package-rename)
+
+### Package rename
+Package with the prefix "@microsoft/fluid-" is renamed to "@fluidframework/" to take advanage a separate namespace for fluid framework SDK packages. 
 
 ### Container Error Event
 "error" event is gone. All critical errors are raised on "closed" event via optiona error object.
