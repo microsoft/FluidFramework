@@ -49,9 +49,9 @@
     "@fluidframework/component-core-interfaces": "^0.19.1",
     "@fluidframework/container-definitions": "^0.19.1",
     "@fluidframework/driver-definitions": "^0.19.1",
-    "@fluidframework/gitresources": "^0.1006.1-0",
-    "@fluidframework/protocol-base": "^0.1006.1-0",
-    "@fluidframework/protocol-definitions": "^0.1006.1-0"
+    "@fluidframework/gitresources": "^0.1006.1",
+    "@fluidframework/protocol-base": "^0.1006.1",
+    "@fluidframework/protocol-definitions": "^0.1006.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
