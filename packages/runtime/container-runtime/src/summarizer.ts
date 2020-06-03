@@ -5,7 +5,14 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@fluidframework/common-utils";
+import {
+    ChildLogger,
+    Deferred,
+    PerformanceEvent,
+    PromiseTimer,
+    Timer,
+    IPromiseTimerResult,
+} from "@fluidframework/common-utils";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -105,6 +112,13 @@ export interface ISummaryAttempt {
     summarySequenceNumber?: number;
 }
 
+const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): something is T => {
+    if (something === undefined) {
+        return false;
+    }
+    return (something as IPromiseTimerResult).timerResult === undefined;
+};
+
 /**
  * This class contains the heuristics for when to summarize.
  */
@@ -160,7 +174,7 @@ class SummarizerHeuristics {
         } else if (opCountSinceLastSummary > this.configuration.maxOps) {
             this.trySummarize("maxOps");
         } else {
-            this.idleTimer.start();
+            this.idleTimer.restart();
         }
     }
 
@@ -327,7 +341,7 @@ export class RunningSummarizer implements IDisposable {
         ]);
         this.pendingAckTimer.clear();
 
-        if (maybeLastAck) {
+        if (checkNotTimeout(maybeLastAck)) {
             this.heuristics.lastSent = {
                 refSequenceNumber: maybeLastAck.summaryOp.referenceSequenceNumber,
                 summaryTime: maybeLastAck.summaryOp.timestamp,
@@ -410,7 +424,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
         broadcastDef.resolve(); // broadcast means client is free to close
-        if (!summaryOp) {
+        if (!checkNotTimeout(summaryOp)) {
             return undefined;
         }
         this.heuristics.lastSent.summarySequenceNumber = summaryOp.sequenceNumber;
@@ -424,7 +438,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Wait for ack/nack
         const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
-        if (!ackNack) {
+        if (!checkNotTimeout(ackNack)) {
             return undefined;
         }
         this.logger.sendTelemetryEvent({

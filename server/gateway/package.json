@@ -1,6 +1,7 @@
 {
   "name": "@microsoft/fluid-server-gateway",
   "version": "0.15.0",
+  "private": true,
   "description": "Routerlicious Gateway",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

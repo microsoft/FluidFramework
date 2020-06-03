@@ -40,7 +40,9 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
         this.parentBranch = document.parent ? document.parent.documentId : null;
+    }
 
+    public async connect() {
         // Subscribe to the message channels
         // Todo: We probably don't need this.
         this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
@@ -74,7 +76,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation([message]);
     }
 
-    public order(messages: IDocumentMessage[]): void {
+    public async order(messages: IDocumentMessage[]) {
         const rawMessages = messages.map((message) => {
             const rawMessage: IRawOperationMessage = {
                 clientId: this.clientId,
@@ -91,7 +93,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation(rawMessages);
     }
 
-    public disconnect() {
+    public async disconnect() {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,

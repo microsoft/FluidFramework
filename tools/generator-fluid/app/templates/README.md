@@ -1,69 +1,98 @@
-# Welcome to your first Fluid Component
+# A Fluid Component Appeared...
 
-Welcome to your first component component.
+This project was bootstrapped with the [yo-fluid generator](...)
 
 ## Getting Started
-To start coding, open this directory in your IDE and check out ./src/index.tsx
 
-You can try the following commands
+### Running your Fluid Component
 
-````
+To start testing run the following:
+
+```bash
     npm start
-       Hosts the component at http://localhost:8080
+```
 
+### Code Structure
 
-    npm run build
-       Builds the component into bundled js files
+All the code logic lives within the `./src` folder. There are 4 files that makeup a basic component.
 
+The important thing to note is that the Fluid component represents the data model which is separated out from our view via an interface. This separation allows us to build view agnostic, reusable, and scalable Fluid component objects.
 
-    npm run deploy
-       Publishes the component to https://packages.wu2.prague.office-int.com/#/
-````
+#### `./src/component<%= extension %>`
 
-We suggest you start by typing:
+The `component<%= extension %>` file contains the Fluid component and the logic for our data model.
 
-    npm start
+#### `./src/index.ts`
 
+The `index.ts` file is not very interesting and simply defines our exports. We are exporting two things:
 
-## Get Coding
+**The Fluid component itself** which allows other packages to consume the Fluid component object directly.
 
-Uncomment the commented code in ./src/index.tsx to add a title to your component.
+**The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-component-loader` uses this to find the Fluid component entry point when running `npm start`.
 
+#### `./src/interface.ts`
 
-## Deploy
+The `interface.ts` file defines the interface between our Fluid component and our view. This abstraction is important to ensure we are building reusable and scalable components.
 
-To deploy and make your component "Live" you'll have to deploy it to verdaccio, our private npm repository.
+#### `./src/view<%= extension %>`
 
-Go to https://packages.wu2.prague.office-int.com
+The `view<%= extension %>` file contains all the view logic.
 
-Login with:
+### Directory Anatomy
 
-    UN: prague
-    PW: 8Fxttu_A
+```text
+.
+├── src
+|   ├── component<%= extension %>    // Fluid Component source code
+|   ├── index.ts          // Export file
+|   ├── interface.ts      // Model Interface Definition
+|   └── view<%= extension %>         // View Logic
+├── .gitignore            // Ignore dist and node_modules
+├── package.json          // Package manifest
+├── README.md             // Description of your component's functionality
+├── tsconfig.json         // TypeScript configuration
+└── webpack.config.js     // Webpack configuration
+```
 
-And follow the npm adduser steps
+## Available Scripts
 
-To deploy, use
+Below are the following available scripts. They can be run from the project root with the following command:
 
-    npm run deploy
+```bash
+npm run [script-name]
+```
 
+### `build`
 
-To view your component, you can go to the URL:
+Runs [`tsc`](###-tsc) and [`webpack`](###-webpack) and outputs the results in `./dist`.
 
-    https://www.wu2.prague.office-int.com/waterpark
+### `start`
 
-And specifiy your component in the input box in the format: {pkg.name}@{pkg.version}, and click add componenent.
+A shortcut cmd from `start:local`
 
-This link is then shareable and, in an expanding list of components, embeddable!
+### `start:local`
 
-## npm or Azure DevOps auth Issue
+Uses `webpack-dev-server` to start a local webserver that will host your webpack file.
 
-[Stack Overflow Issue](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
+Once you run `start:local` you can navigate to `http://localhost:8080` in any browser window to test your fluid example.
 
-If you run into an auth issue. Please set up your .npmrc. This is a common issue during npm install.
+Uses [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) and an in memory Fluid Server implementation to allow for fluid collaboration within a Tab instance.
 
-For windows: https://www.npmjs.com/package/vsts-npm-auth
+### `start:tiny`
 
-For mac you’ll need to add credentials to your npmrc manually. Go to this link, https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague, click on “Connect to Feed” then select **npm** on the left, and follow the instructions.
+> Requires `tinylicious` Fluid server running locally at `http://localhost:3000`.
 
+Uses `webpack-dev-server` to start a local webserver that will host your webpack file.
 
+Once you run `start:local` you can navigate to `http://localhost:8080` in any browser window to test your fluid example.
+
+`tinylicious` is a Fluid server implementation that runs locally and
+allows for cross browser/tab testing. To learn more about `tinylicious` go to `TODO://ADD LINK`
+
+### `tsc`
+
+Compiles the TypeScript code. Output is written to the ./dist folder.
+
+### `webpack`
+
+Compiles and webpacks the TypeScript code. Output is written to the ./dist folder.
