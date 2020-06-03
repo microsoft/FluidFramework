@@ -118,6 +118,9 @@ export interface IObjectStorageService {
      */
     read(path: string): Promise<string>;
 
+    /**
+     * Determines if there is an object contained at the given path.
+     */
     contains(path: string): Promise<boolean>;
 }
 
