@@ -39,6 +39,11 @@ describe("Yo fluid", function () {
                 shell.echo(`Navigating to temp path ${tempComponentPath}`);
                 shell.cd(tempComponentPath);
 
+                // Navigate to the temp folder that 
+                shell.echo("Running auth against vsts");
+                const authResponse = shell.exec("vsts-npm-auth -config .npmrc", { silent: true });
+                assert.equal(authResponse.code, 0, `npm auth failed with code: ${authResponse.code} - error: ${authResponse.stderr}`);
+
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
                 const installResponse = shell.exec("npm i", { silent: true });
@@ -81,6 +86,11 @@ describe("Yo fluid", function () {
                 const tempComponentPath = `${dirPath}/foobar`;
                 shell.echo(`Navigating to temp path ${tempComponentPath}`);
                 shell.cd(tempComponentPath);
+
+                // Navigate to the temp folder that 
+                shell.echo("Running auth against vsts");
+                const authResponse = shell.exec("vsts-npm-auth -config .npmrc", { silent: true });
+                assert.equal(authResponse.code, 0, `npm auth failed with code: ${authResponse.code} - error: ${authResponse.stderr}`);
 
                 // Navigate to the temp folder that is created
                 shell.echo("Running npm i - this can take some time...");
