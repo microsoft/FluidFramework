@@ -476,9 +476,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             key: "snapshot",
         };
 
-        const seqNumber = cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber;
+        // There maybe no snapshot - TreesLatest would return just ops.
+        const seqNumber = cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber && 0;
         if (cachedSnapshot.ops && cachedSnapshot.ops.length > 0) {
-            assert(cachedSnapshot.ops[0].sequenceNumber === seqNumber);
+            assert(cachedSnapshot.ops[0].sequenceNumber - 1 === seqNumber);
         }
 
         this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
