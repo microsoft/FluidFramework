@@ -6,5 +6,5 @@
 import registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("fluid:cell");
+export const debug = registerDebug("fluid:counter");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

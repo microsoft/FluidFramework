@@ -40,3 +40,20 @@ export interface ISharedCell extends ISharedObject<ISharedCellEvents> {
      */
     delete(): void;
 }
+
+/**
+ * Shared counter interface
+ */
+export interface ISharedCounter extends ISharedObject {
+    /**
+     * The counter value.
+     */
+    value: number;
+
+    /**
+     * Increments or decrements the value.
+     *
+     * @param incrementAmount - the amount to increment or decrement by
+     */
+    increment(incrementAmount: number): void;
+}
