@@ -14,7 +14,9 @@
   "scripts": {
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link",
-    "test": "mocha --recursive test -r make-promises-safe",
+    "test": "npm run test:unit && npm run test:end-to-end",
+    "test:unit": "mocha test/testApp.js -r make-promises-safe",
+    "test:end-to-end": "mocha test/endToEnd.js -r make-promises-safe",
     "unlink": "npm rm --global generator-fluid"
   },
   "dependencies": {
