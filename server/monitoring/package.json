@@ -1,6 +1,7 @@
 {
   "name": "fluid-service-monitor",
   "version": "0.0.1",
+  "private": true,
   "description": "Node.js script that tests Fluid ordering service",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
