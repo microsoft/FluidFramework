@@ -21,9 +21,10 @@ import {
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
+    IOdspResolvedUrl,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
-    HostStoragePolicy,
+    HostStoragePolicyInternal,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -31,12 +32,18 @@ import {
     SnapshotTreeEntry,
     SnapshotTreeValue,
     SnapshotType,
+    ISnapshotOptions,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import {
+    IOdspCache,
+    ICacheEntry,
+    IFileEntry,
+    snapshotExpirySummarizerOps,
+} from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -69,6 +76,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
     private firstVersionCall = true;
+    private _snapshotCacheEntry: ICacheEntry | undefined;
+
+    private readonly fileEntry: IFileEntry;
+
+    private readonly documentId: string;
+    private readonly snapshotUrl: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -80,18 +93,27 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return this._ops;
     }
 
+    public get snapshotCacheEntry() {
+        return this._snapshotCacheEntry;
+    }
+
     constructor(
-        private readonly documentId: string,
-        private readonly snapshotUrl: string | undefined,
+        odspResolvedUrl: IOdspResolvedUrl,
         private latestSha: string | null | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
-        private readonly isFirstTimeDocumentOpened: boolean,
-        private readonly hostPolicy: HostStoragePolicy,
+        private readonly hostPolicy: HostStoragePolicyInternal,
     ) {
+        this.documentId = odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+
+        this.fileEntry = {
+            resolvedUrl: odspResolvedUrl,
+            docId: this.documentId,
+        };
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
@@ -279,58 +301,58 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                // Note: There's a race condition here - another caller may come past the undefined check
-                // while the first caller is awaiting later async code in this block.
-                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
-                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
-                if (cachedSnapshot === undefined) {
-                    const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+                const hostPolicy: ISnapshotOptions = {
+                    deltas: 1,
+                    channels: 1,
+                    blobs: 2,
+                    ...this.hostPolicy.snapshotOptions,
+                };
 
-                    const hostPolicy = {
-                        deltas: 1,
-                        channels: 1,
-                        blobs: 2,
-                        ...this.hostPolicy.snapshotOptions,
-                    };
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    hostPolicy.mds = undefined;
+                }
 
-                    let delimiter = "?";
-                    let options = "";
-                    for (const [key, value] of Object.entries(hostPolicy)) {
+                let delimiter = "?";
+                let options = "";
+                for (const [key, value] of Object.entries(hostPolicy)) {
+                    if (value !== undefined) {
                         options = `${options}${delimiter}${key}=${value}`;
                         delimiter = "&";
                     }
-
-                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
-
-                    // This event measures only successful cases of getLatest call (no tokens, no retries).
-                    const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
-
-                    try {
-                        const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        cachedSnapshot = response.content;
-
-                        const props = {
-                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
-                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
-                            ops: cachedSnapshot.ops.length,
-                            sprequestguid: response.headers.get("sprequestguid"),
-                            sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                            contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
-                            bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
-                        };
-                        event.end(props);
-                    } catch (error) {
-                        event.cancel({}, error);
-                        throw error;
-                    }
-
-                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                    // want to use the same getLatest result.
-                    await this.cache.persistedCache.put(snapshotCacheKey, cachedSnapshot, 10 * 1000 /* durationMs */);
                 }
+
+                let cachedSnapshot: IOdspSnapshot | undefined;
+
+                // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
+                if (refresh) {
+                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                } else {
+                    const cachedSnapshotP = this.cache.persistedCache.get(
+                        {
+                            file: this.fileEntry,
+                            type: "snapshot",
+                            key: "",
+                        },
+                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                    ) as Promise<IOdspSnapshot | undefined>;
+
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const snapshotP = this.fetchSnapshot(options, refresh);
+                        cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
+                        cachedSnapshot = await cachedSnapshotP;
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                        }
+                    }
+                }
+
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
                 const { trees, tree, blobs, ops, sha } = odspSnapshot;
@@ -361,7 +383,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    if (!this.isFirstTimeDocumentOpened) {
+                    if (!this.hostPolicy.summarizerClient) {
                         // Populate the cache with paths from id-to-path mapping.
                         for (const blob of this.blobCache.values()) {
                             const path = blobsIdToPathMap.get(blob.sha);
@@ -422,6 +444,57 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         });
     }
 
+    private async fetchSnapshot(options: string, refresh: boolean) {
+        const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+
+        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
+
+        // This event measures only successful cases of getLatest call (no tokens, no retries).
+        const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+
+        let cachedSnapshot: IOdspSnapshot;
+        try {
+            const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+            cachedSnapshot = response.content;
+            const props = {
+                trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
+                blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
+                ops: cachedSnapshot.ops.length,
+                sprequestguid: response.headers.get("sprequestguid"),
+                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
+                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+            };
+            event.end(props);
+        }
+        catch (error) {
+            event.cancel({}, error);
+            throw error;
+        }
+        assert(this._snapshotCacheEntry === undefined);
+        this._snapshotCacheEntry = {
+            file: this.fileEntry,
+            type: "snapshot",
+            key: "",
+        };
+
+        // There maybe no snapshot - TreesLatest would return just ops.
+        const seqNumber: number = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
+        const seqNumberFromOps = cachedSnapshot.ops && cachedSnapshot.ops.length > 0 ?
+            cachedSnapshot.ops[0].sequenceNumber - 1 :
+            undefined;
+
+        if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
+            this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
+        } else {
+            this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
+        }
+
+        return cachedSnapshot;
+    }
+
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         this.checkSnapshotUrl();
 
@@ -430,6 +503,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     // back-compat: 0.14 uploadSummary
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
+        assert(this.hostPolicy.summarizerClient);
+
         this.checkSnapshotUrl();
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
