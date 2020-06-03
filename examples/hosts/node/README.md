@@ -29,7 +29,7 @@ const timeoutMS = 60000; // Timeout for successful installation
 const docId = ""; // Document id (randomly chosen if not specified)
 ```
 
-Once parameters are set up, run the following commands for building and running:
+Once parameters are set up, use the following commands for building and running:
 
 ```bash
 npm run build
