@@ -978,8 +978,9 @@ export class DeltaManager
         this.emit("connect", connection.details);
 
         /* Issue #1566: Backward compat */
+        const initialMessages = connection.details.initialMessages ?? [];
         this.processInitialMessages(
-            connection.details.initialMessages ?? [],
+            initialMessages,
             connection.details.initialContents ?? [],
             connection.details.initialSignals ?? [],
             this.connectFirstConnection);
@@ -987,8 +988,7 @@ export class DeltaManager
         // if we have some op on the wire (or will have a "join" op for ourselves for r/w connection), then client
         // can detect it has a gap and fetch missing ops. However if we are connecting as view-only, then there
         // is no good signal to realize if client is behind. Thus we have to hit storage to see if any ops are there.
-        if (this.handler && connection.details.mode !== "write" &&
-            (connection.details.initialMessages === undefined || connection.details.initialMessages.length === 0)) {
+        if (this.handler && connection.details.mode !== "write" && initialMessages.length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("Reconnect", this.lastQueuedSequenceNumber);
         }

@@ -179,19 +179,14 @@ export class PersistedCacheWithErrorHandling implements IPersistedCache {
 /** Describes how many ops behind snapshot can be for summarizer client to still use it */
 export const snapshotExpirySummarizerOps = 1000;
 
-interface LocalCacheEntry {
-    docId: string;
-    key: string;
-}
-
 /**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-    private readonly snapshotExpiryPolicy = 10000;
-    private readonly cache = new Map<LocalCacheEntry, any>();
-    private readonly gc = new GarbageCollector<LocalCacheEntry>((key) => this.cache.delete(key));
+    private readonly snapshotExpiryPolicy = 30 * 1000;
+    private readonly cache = new Map<string, any>();
+    private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
 
     async get(entry: ICacheEntry, expiry?: number): Promise<any> {
         const key = this.keyFromEntry(entry);
@@ -210,11 +205,8 @@ export class LocalPersistentCache implements IPersistedCache {
     updateUsage(entry: ICacheEntry, seqNumber: number): void {
     }
 
-    private keyFromEntry(entry: ICacheEntry): LocalCacheEntry {
-        return {
-            docId: entry.file.docId,
-            key: entry.key,
-        };
+    private keyFromEntry(entry: ICacheEntry): string {
+        return `${entry.file.docId}_${entry.key}`;
     }
 }
 

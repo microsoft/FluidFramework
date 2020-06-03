@@ -316,8 +316,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 let delimiter = "?";
                 let options = "";
                 for (const [key, value] of Object.entries(hostPolicy)) {
-                    options = `${options}${delimiter}${key}=${value}`;
-                    delimiter = "&";
+                    if (value !== undefined) {
+                        options = `${options}${delimiter}${key}=${value}`;
+                        delimiter = "&";
+                    }
                 }
 
                 let cachedSnapshot: IOdspSnapshot | undefined;
@@ -477,7 +479,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
 
         // There maybe no snapshot - TreesLatest would return just ops.
-        const seqNumber = cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber && 0;
+        const seqNumber = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
         if (cachedSnapshot.ops && cachedSnapshot.ops.length > 0) {
             assert(cachedSnapshot.ops[0].sequenceNumber - 1 === seqNumber);
         }
