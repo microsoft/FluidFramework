@@ -23,7 +23,7 @@
   "dependencies": {
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/merge-tree": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1",
     "@fluidframework/sequence": "^0.20.0",
     "request": "^2.88.0"
   },

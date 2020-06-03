@@ -23,10 +23,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.18.0",
+    "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/container-definitions": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1",
     "@fluidframework/runtime-definitions": "^0.20.0",
     "@types/node": "^10.17.24"
   },
