@@ -122,6 +122,7 @@ export class SnapshotLoader {
             SnapshotLegacy.header,
             header,
             this.logger,
+            this.mergeTree.options,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
@@ -175,6 +176,7 @@ export class SnapshotLoader {
                 services,
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
+                this.mergeTree.options,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext);
             lengthSofar += chunk.length;

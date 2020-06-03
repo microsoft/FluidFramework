@@ -120,6 +120,7 @@ export class SnapshotV1 {
                         id,
                         chunk,
                         this.logger,
+                        this.mergeTree.options,
                         serializer,
                         context,
                         bind),
@@ -139,6 +140,7 @@ export class SnapshotV1 {
                             SnapshotLegacy.header,
                             headerChunk,
                             this.logger,
+                            this.mergeTree.options,
                             serializer,
                             context,
                             bind),
@@ -255,22 +257,24 @@ export class SnapshotV1 {
         storage: IObjectStorageService,
         path: string,
         logger: ITelemetryLogger,
+        options: Properties.PropertySet,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<MergeTreeChunkV1> {
         const chunkAsString: string = await storage.read(path);
-        return SnapshotV1.processChunk(path, chunkAsString, logger, serializer, context);
+        return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer, context);
     }
 
     public static processChunk(
         path: string,
         chunk: string,
         logger: ITelemetryLogger,
+        options: Properties.PropertySet,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): MergeTreeChunkV1 {
         const utf8 = fromBase64ToUtf8(chunk);
         const chunkObj = serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
-        return toLatestVersion(path, chunkObj, logger);
+        return toLatestVersion(path, chunkObj, logger, options);
     }
 }
