@@ -20,6 +20,9 @@ import { CounterFactory } from "./counterFactory";
 import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
+/**
+ * Describes the op format for incrementing the counter
+ */
 interface IIncrementOperation {
     type: "increment";
     incrementAmount: number;
@@ -28,7 +31,7 @@ interface IIncrementOperation {
 /**
  * Used in snapshotting.
  */
-interface ICounterValue {
+interface ICounterSnapshotFormat {
     // The value of the counter
     value: number;
 }
@@ -93,7 +96,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     public snapshot(): ITree {
         // Get a serializable form of data
-        const content: ICounterValue = {
+        const content: ICounterSnapshotFormat = {
             value: this.value,
         };
 
@@ -130,15 +133,12 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined
-            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICounterValue
+            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICounterSnapshotFormat
             : { value: 0 };
 
         this._value = content.value;
     }
 
-    /**
-     * Process the counter value on register
-     */
     protected registerCore() {
     }
 
