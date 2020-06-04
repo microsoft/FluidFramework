@@ -34,7 +34,7 @@
     "@fluidframework/component-runtime-definitions": "^0.20.0",
     "@fluidframework/map": "^0.20.0",
     "@fluidframework/merge-tree": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1006.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1",
     "@fluidframework/sequence": "^0.20.0",
     "@fluidframework/shared-object-base": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0",
@@ -44,7 +44,7 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0-0",
+    "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
     "@fluidframework/webpack-component-loader": "^0.20.0",
     "@types/draft-js": "^0.10.34",

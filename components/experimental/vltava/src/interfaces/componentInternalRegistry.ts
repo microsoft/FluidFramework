@@ -5,7 +5,6 @@
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
-import { Layout } from "react-grid-layout";
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -35,5 +34,4 @@ export interface IInternalRegistryEntry {
     capabilities: (keyof IComponent)[];
     friendlyName: string;
     fabricIconName: string;
-    templates: {[key: string]: Layout[]};
 }

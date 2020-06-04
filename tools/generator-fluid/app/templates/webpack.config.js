@@ -30,7 +30,6 @@ module.exports = env => {
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            open: true, // Opens the browser after running `start`
             before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         },

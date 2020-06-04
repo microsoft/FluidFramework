@@ -18,13 +18,13 @@ export const supportedVersions = new Map<string, any>([
 export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
-        const runtime: mocks.MockRuntime = new mocks.MockRuntime();
+        const componentRuntime: mocks.MockComponentRuntime = new mocks.MockComponentRuntime();
         for (const key of Object.keys(options)) {
-            runtime.options[key] = options[key];
+            componentRuntime.options[key] = options[key];
         }
         const insertText = "text";
 
-        let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        let sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Small enough so snapshot won't have body
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
@@ -33,7 +33,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/headerOnly`, sharedString];
 
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Big enough that snapshot will have body
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -42,7 +42,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/headerAndBody`, sharedString];
 
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Very big sharedString
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
@@ -51,7 +51,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/largeBody`, sharedString];
 
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // SharedString with markers
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -68,7 +68,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/withMarkers`, sharedString];
 
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // SharedString with annotations
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -80,7 +80,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 
         yield [`${version}/withAnnotations`, sharedString];
 
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         // Very big sharedString
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {

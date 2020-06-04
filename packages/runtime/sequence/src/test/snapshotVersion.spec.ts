@@ -6,7 +6,11 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import * as mocks from "@fluidframework/test-runtime-utils";
+import {
+    MockContainerRuntimeFactory,
+    MockHistorian,
+    MockComponentRuntime,
+} from "@fluidframework/test-runtime-utils";
 import { GitManager } from "@fluidframework/server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -31,23 +35,21 @@ describe("SharedString Snapshot Version", () => {
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
 
-            const historian: mocks.MockHistorian = new mocks.MockHistorian();
+            const historian: MockHistorian = new MockHistorian();
             const gitManager: GitManager = new GitManager(historian);
 
             await gitManager.createTree(oldsnap);
 
             // load snapshot into sharedString
             const documentId = "fakeId";
-            const runtime = new mocks.MockRuntime();
-            const deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
-
+            const containerRuntimeFactory = new MockContainerRuntimeFactory();
+            const componentRuntime = new MockComponentRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services = {
-                // deltaConnection: new mocks.MockDeltaConnection(runtime),
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-
+                deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: historian,
             };
-            const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+            const sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/* branchId */, services);
             await sharedString.loaded;
