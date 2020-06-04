@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { TestHost } from "@fluidframework/local-test-utils";
 import { Serializable } from "@fluidframework/component-runtime-definitions";
-import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockEmptyDeltaConnection, MockComponentRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
@@ -21,8 +21,10 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
-    const runtime = new MockRuntime();
-    const matrix2 = new SharedMatrix<T>(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+    const componentRuntime = new MockComponentRuntime();
+    // We only want to test local state of the DDS.
+    componentRuntime.local = true;
+    const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage

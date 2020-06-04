@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedMap, SharedMap, MapFactory } from "@fluidframework/map";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createSharedMapWithInterception } from "../map";
@@ -19,7 +19,6 @@ describe("Shared Map with Interception", () => {
         const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
         const attributionKey = (key: string) => `${key}.attribution`;
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedMap: SharedMap;
         let componentContext: IComponentContext;
 
@@ -32,14 +31,9 @@ describe("Shared Map with Interception", () => {
         }
 
         beforeEach(() => {
-            const runtime = new MockRuntime();
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedMap = new SharedMap(documentId, runtime, MapFactory.Attributes);
-            runtime.services = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-                objectStorage: new MockStorage(undefined),
-            };
-            runtime.attach();
+            const componentRuntime = new MockComponentRuntime();
+            sharedMap = new SharedMap(documentId, componentRuntime, MapFactory.Attributes);
+            componentRuntime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;

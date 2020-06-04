@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IBlob } from "@fluidframework/protocol-definitions";
-import { MockRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
@@ -17,14 +17,16 @@ interface ITestInterface{
 }
 
 describe("SharedSummaryBlock", () => {
-    let runtime: MockRuntime;
+    let componentRuntime: MockComponentRuntime;
     let factory: SharedSummaryBlockFactory;
     let sharedSummaryBlock: ISharedSummaryBlock;
 
     beforeEach(async () => {
-        runtime = new MockRuntime();
+        componentRuntime = new MockComponentRuntime();
+        // We only want to test local state of the DDS.
+        componentRuntime.local = true;
         factory = new SharedSummaryBlockFactory();
-        sharedSummaryBlock = factory.create(runtime, "root") as ISharedSummaryBlock;
+        sharedSummaryBlock = factory.create(componentRuntime, "root") as ISharedSummaryBlock;
     });
 
     describe("Api", () => {
@@ -90,8 +92,9 @@ describe("SharedSummaryBlock", () => {
             });
 
             // Load another object from the snapshot and ensure that it has loaded the data from the original object.
-            const sharedSummaryBlock2 =
-                await factory.load(runtime, "mapId", services, "branchId", factory.attributes) as ISharedSummaryBlock;
+            const sharedSummaryBlock2 = await factory.load(
+                componentRuntime, "mapId", services, "branchId", factory.attributes,
+            ) as ISharedSummaryBlock;
             assert.equal(sharedSummaryBlock2.get(key1), value1);
             assert.equal(sharedSummaryBlock2.get(key2), value2);
             assert.deepEqual(sharedSummaryBlock2.get(key3), value3);

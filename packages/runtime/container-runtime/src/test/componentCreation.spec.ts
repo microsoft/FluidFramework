@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { LocalComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
@@ -50,7 +50,7 @@ describe("Component Creation Tests", () => {
             const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
                 instantiateComponent: (context: IComponentContext) => {
-                    context.bindRuntime(new MockRuntime());
+                    context.bindRuntime(new MockComponentRuntime());
                 },
             };
             const registry: IComponentRegistry = {
