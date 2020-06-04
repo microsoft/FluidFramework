@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./getRootFromView";
-export * from "./getViewFromRoot";
+export * from "./getFluidFromView";
+export * from "./getViewFromFluid";
 export * from "./rootCallbackListener";
 export * from "./syncStateAndRoot";
 export * from "./updateStateAndComponentMap";

@@ -38,15 +38,6 @@ export interface IFluidSchema {
 }
 
 /**
- * The respective handles for the fluid schema params listed above
- */
-export interface IFluidSchemaHandles {
-    componentKeyMapHandle?: IComponentHandle<ISharedMap>,
-    viewMatchingMapHandle?: IComponentHandle<ISharedMap>,
-    fluidMatchingMapHandle?: IComponentHandle<ISharedMap>,
-}
-
-/**
  * A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
@@ -125,9 +116,9 @@ export interface IFluidProps<
  * from the fluidKey
  * @param viewConverter - A callback that takes in the partial view state containing the value that
  * this converter maps to, and returns the corresponding partial fluid state
- * @param fluidObjectType - If this is a special fluid object type (i.e. counter) on the root, specify that here
+ * @param fluidObjectType - If this is a special fluid DDS object type (i.e. counter) on the root, specify that here
  * @param rootKey - If this Fluid object is stored on the root under a different key than the name of this Fluid state
- * key, provide the key on the root for this object here
+ * key within the synced state map, provide the key on the root for this object here
  */
 export interface IViewConverter<
     SV extends IFluidFunctionalComponentViewState,
@@ -376,9 +367,12 @@ export const instanceOfComponentSelectorFunction = <
  * @param selector - The Fluid selector containing all the functions as defined by an extension of the IFluidSelector
  * type. Any fetching of new components or data from other components should be done here.
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
- * respective converters
+ * respective converters. Optional if only using primitive values in both states, no Fluid DDS' are being used, the
+ * Fluid and View state types match, and the values stored in the root do not need to be directly accessed later,
+ * i.e. they are only used for the view state of this
+ * React component
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
- * respective converters
+ * respective converters. Optional if fluid and view are of the same type
  * @param dataProps - Data props that are loaded in during the Fluid initialization step. This contains the runtime
  * and the fluid component map
  */

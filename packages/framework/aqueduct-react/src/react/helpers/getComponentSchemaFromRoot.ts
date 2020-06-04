@@ -4,7 +4,7 @@
  */
 
 import { ISharedDirectory } from "@fluidframework/map";
-import { IFluidSchemaHandles } from "../interface";
+import { IFluidSchemaHandles } from "./internalInterface";
 
 /**
  * Returns the component schema stored on the root for this component

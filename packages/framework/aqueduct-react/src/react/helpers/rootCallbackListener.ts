@@ -12,7 +12,7 @@ import {
 } from "../interface";
 import { syncStateAndRoot } from "./syncStateAndRoot";
 import { getByValue } from "./utils";
-import { getViewFromRoot } from "./getViewFromRoot";
+import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidStateFromRoot } from ".";
 
 /**
@@ -71,7 +71,7 @@ export const rootCallbackListener = <SV,SF>(
         // update its Fluid update
         const stateKey = getByValue(rootKey, viewToFluid);
         if (stateKey) {
-            const newPartialState = getViewFromRoot(
+            const newPartialState = getViewFromFluid(
                 syncedStateId,
                 root,
                 rootKey as keyof SF,

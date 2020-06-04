@@ -12,8 +12,8 @@ import {
     ViewToFluidMap,
     FluidToViewMap,
 } from "../interface";
-import { getRootFromView } from "./getRootFromView";
-import { getViewFromRoot } from "./getViewFromRoot";
+import { getFluidFromView } from "./getFluidFromView";
+import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 import { setFluidStateToRoot } from "./setFluidStateToRoot";
 import { getComponentSchemaFromRoot } from "./getComponentSchemaFromRoot";
@@ -89,7 +89,7 @@ export function syncStateAndRoot<
         const needsConverter = viewMatchingMap.get(viewKey);
         let partialRootState = {};
         if (needsConverter) {
-            partialRootState = getRootFromView(
+            partialRootState = getFluidFromView(
                 viewState,
                 viewKey as keyof SV,
                 componentKeyMap,
@@ -114,7 +114,7 @@ export function syncStateAndRoot<
         const needsConverter = fluidMatchingMap.get(fluidKey);
         let partialViewState = {};
         if (needsConverter) {
-            partialViewState = getViewFromRoot(
+            partialViewState = getViewFromFluid(
                 syncedStateId,
                 root,
                 fluidKey as keyof SF,

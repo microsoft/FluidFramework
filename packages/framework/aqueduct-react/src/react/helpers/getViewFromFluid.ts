@@ -23,7 +23,7 @@ import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
  * @param combinedRootState - Optional param containing the combined root state so far to fetch from, instead of getting
  * the current value on the root
  */
-export function getViewFromRoot<SV, SF>(
+export function getViewFromFluid<SV, SF>(
     syncedStateId: string,
     root: ISharedDirectory,
     rootKey: keyof SF,

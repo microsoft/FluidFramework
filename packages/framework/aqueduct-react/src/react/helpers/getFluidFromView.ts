@@ -19,7 +19,7 @@ import {
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
-export function getRootFromView<SV, SF>(
+export function getFluidFromView<SV, SF>(
     state: SV,
     stateKey: keyof SV,
     componentKeyMap: ISharedMap,
