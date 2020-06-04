@@ -95,11 +95,12 @@ async function createNewOdspFile(
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
         let fetchResponse;
+        const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : '';
         if (createNewSummary) {
             const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
             const initialUrl =
-                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
-                `${encodeURIComponent(newFileInfo.filePath)}/${encodedFilename}` +
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+                `${filePath}/${encodedFilename}` +
                 `:/opStream/snapshots/snapshot`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
@@ -119,10 +120,8 @@ async function createNewOdspFile(
             };
         } else {
             const initialUrl =
-                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
-                `${encodeURIComponent(
-                    newFileInfo.filePath,
-                )}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+                `${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             fetchResponse = await fetchHelper(url, {
                 method: "PUT",
