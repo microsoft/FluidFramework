@@ -12,8 +12,10 @@ import {
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
     FluidToViewMap,
+    FluidComponentMap,
 } from "@fluidframework/aqueduct-react";
-import { Counter, CounterValueType } from "@fluidframework/map";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -28,7 +30,7 @@ const CounterRootKey = "counter";
 // ---- React Class Component ----
 
 interface CounterState {
-    counter: Counter;
+    counter: SharedCounter;
 }
 
 interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
@@ -54,11 +56,24 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    private _counter: SharedCounter | undefined;
+    private readonly _fluidComponentMap: FluidComponentMap = new Map();
+
     /**
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.createValueType(CounterRootKey, CounterValueType.Name, 0);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(CounterRootKey, counter.handle);
+    }
+
+    protected async componentHasInitialized() {
+        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(CounterRootKey);
+        this._counter = await counterHandle.get();
+        this._fluidComponentMap.set(this._counter.handle.path, {
+            component: this._counter,
+            listenedEvents: ["incremented"],
+        });
     }
 
     // #region IComponentHTMLView
@@ -67,33 +82,35 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(element: HTMLElement) {
-        // Load initial state from root before entering React render lifecycle
-        // View and Fluid states are identical since we are directly using the Counter
-        // DDS in the view
-        const initialState = { counter:  this.root.get(CounterRootKey) };
+        if (this._counter !== undefined && this._fluidComponentMap !== undefined) {
+            // Load initial state from root before entering React render lifecycle
+            // View and Fluid states are identical since we are directly using the Counter
+            // DDS in the view
+            const initialState = { counter:  this._counter };
 
-        // Mark the counter as the CounterValueType so that changes to it update the React view
-        // when we increment it and the key it is stored under in the root
-        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set(CounterRootKey, {
-            fluidObjectType: CounterValueType.Name,
-            rootKey: CounterRootKey,
-        });
+            // Mark the counter as the CounterValueType so that changes to it update the React view
+            // when we increment it and the key it is stored under in the root
+            const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
+            fluidToView.set(CounterRootKey, {
+                fluidObjectType: SharedCounter.name,
+                rootKey: CounterRootKey,
+            });
 
-        ReactDOM.render(
-            <CounterReactView
-                syncedStateId={"clicker"}
-                root={this.root}
-                initialViewState={initialState}
-                initialFluidState={initialState}
-                dataProps={{
-                    fluidComponentMap: new Map(),
-                    runtime: this.runtime,
-                }}
-                fluidToView={fluidToView}
-            />,
-            element,
-        );
+            ReactDOM.render(
+                <CounterReactView
+                    syncedStateId={"clicker"}
+                    root={this.root}
+                    initialViewState={initialState}
+                    initialFluidState={initialState}
+                    dataProps={{
+                        fluidComponentMap: this._fluidComponentMap,
+                        runtime: this.runtime,
+                    }}
+                    fluidToView={fluidToView}
+                />,
+                element,
+            );
+        }
         return element;
     }
 
@@ -101,5 +118,10 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerInstantiationFactory = new PrimedComponentFactory(ClickerName, Clicker, [], {});
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
+    ClickerName,
+    Clicker,
+    [SharedCounter.getFactory()],
+    {},
+);
 export const fluidExport = ClickerInstantiationFactory;

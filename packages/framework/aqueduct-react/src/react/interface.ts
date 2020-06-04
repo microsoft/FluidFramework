@@ -225,15 +225,21 @@ export interface IFluidComponent {
      * The actual Fluid component that the path this value is keyed against leads to
      */
     component?: IComponent & IComponentLoadable,
-    /**
-     * Boolean indicating if we are listening to changes on this component's root to trigger React
-     * state updates
-     */
     isListened?: boolean,
     /**
+     * List of events fired on this component that will trigger a state update
+     */
+    listenedEvents?: string[]
+    /**
+     * Boolean indicating if we are listening to changes on this component's root to trigger React
+     * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
+     */
+    /**
+     * INTERNAL
+     * Does not need to be set
      * Is this a SharedMap that was added as a Fluid React requirement
      */
-    isRuntimeMap?: boolean,
+    isRuntimeMap?: boolean;
 }
 
 /**

@@ -5,6 +5,7 @@
 
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IDirectoryValueChanged, SharedMap } from "@fluidframework/map";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
@@ -30,13 +31,15 @@ export async function asyncForEach(
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
         rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+        refreshView: () => void,
     ) => Promise<void>,
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    refreshView: () => void,
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
-        promises.push(callback(value, fluidComponentMap, rootCallback));
+        promises.push(callback(value, fluidComponentMap, rootCallback, refreshView));
     }
     await Promise.all(promises);
 }
@@ -48,17 +51,27 @@ export const addComponent = async <
     handle: IComponentHandle,
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    refreshView: () => void,
 ): Promise<void> => {
-    const existingValue = fluidComponentMap.get(handle.path);
-    const isRuntimeMap = existingValue !== undefined && existingValue.isRuntimeMap;
-    fluidComponentMap.set(handle.path, { isListened: false });
+    const value = fluidComponentMap.get(handle.path);
+    if (!value) {
+        throw Error("Tried fetch a component that wasn't present on the fluid component map");
+    }
+    value.isListened = false;
+    fluidComponentMap.set(handle.path, value);
     return handle.get().then((component) => {
         if (component.IComponentListened) {
             component.IComponentListened.addListenerToRootValueChanged(rootCallback);
-        } else if (isRuntimeMap) {
+        } else if (value.isRuntimeMap) {
             (component as SharedMap).on("valueChanged", rootCallback);
+        } else if (value.listenedEvents) {
+            for (const event of value.listenedEvents) {
+                (component as SharedObject).on(event, refreshView);
+            }
         }
-        fluidComponentMap.set(handle.path, { component, isListened: true, isRuntimeMap });
+        value.component = component;
+        value.isListened = true;
+        fluidComponentMap.set(handle.path, value);
     });
 };
 

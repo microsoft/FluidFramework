@@ -54,6 +54,18 @@ export const updateStateAndComponentMap = async <
     addComponent,
     fluidComponentMap,
     rootCallback,
+    () => syncStateAndRoot(
+        fromRootUpdate,
+        syncedStateId,
+        root,
+        runtime,
+        viewState,
+        setState,
+        fluidComponentMap,
+        fluidState,
+        viewToFluid,
+        fluidToView,
+    ),
 ).then(() => syncStateAndRoot(
     fromRootUpdate,
     syncedStateId,
