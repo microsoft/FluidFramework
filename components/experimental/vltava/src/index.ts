@@ -6,11 +6,7 @@
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import {
-    IComponentInternalRegistry,
-    IInternalRegistryEntry,
-    Spaces,
-} from "@fluid-example/spaces";
+import { Spaces } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -32,6 +28,10 @@ import {
     Vltava,
     VltavaName,
 } from "./components";
+import {
+    IComponentInternalRegistry,
+    IInternalRegistryEntry,
+} from "./interfaces";
 
 export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
     public get IComponentRegistry() { return this; }
@@ -100,7 +100,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
-            templates: {},
         },
         {
             type: "tabs",
@@ -108,7 +107,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
-            templates: {},
         },
         {
             type: "spaces",
@@ -116,7 +114,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
-            templates: {},
         },
         {
             type: "codemirror",
@@ -124,7 +121,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
-            templates: {},
         },
         {
             type: "prosemirror",
@@ -132,7 +128,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
-            templates: {},
         },
     ];
 

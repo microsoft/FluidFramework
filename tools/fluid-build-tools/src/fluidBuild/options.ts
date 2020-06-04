@@ -27,6 +27,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     concurrency: number;
     samples: boolean;
     fix: boolean;
+    services: boolean;
 }
 
 // defaults
@@ -51,6 +52,7 @@ export const options: FastBuildOptions = {
     fix: false,
     all: false,
     server: false,
+    services: false,
 };
 
 function printUsage() {
@@ -186,6 +188,11 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--uninstall") {
             setUninstall();
+            continue;
+        }
+
+        if (arg === "--services") {
+            options.services = true;
             continue;
         }
 

@@ -12,7 +12,7 @@ export class FluidRepoBase {
     public readonly serverMonoRepo: MonoRepo;
 
     public readonly packages: Packages;
-    constructor(public readonly resolvedRoot: string) {
+    constructor(public readonly resolvedRoot: string, services: boolean) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
         this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
         this.packages = new Packages(
@@ -20,6 +20,11 @@ export class FluidRepoBase {
                 ...Packages.loadDir(path.join(this.resolvedRoot, "common")),
                 ...this.serverMonoRepo.packages,
                 ...this.clientMonoRepo.packages,
+                ...Packages.loadDir(path.join(this.resolvedRoot, "tools/generator-fluid")),
+                ...services ? 
+                    Packages.loadDir(path.join(this.resolvedRoot, "server"), undefined, ["routerlicious"]):
+                    Packages.loadDir(path.join(this.resolvedRoot, "server/tinylicious")),
+
             ]
         );
     }

@@ -14,11 +14,10 @@ import {
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-    IComponentInternalRegistry,
-} from "@fluid-example/spaces";
 
 import { v4 as uuid } from "uuid";
+
+import { IComponentInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
     type: string;

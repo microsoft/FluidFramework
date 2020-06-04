@@ -118,9 +118,6 @@ describe("loader/runtime compatibility", () => {
                 createContainerWithOldLoader( // old loader, new container/component runtimes
                     { fluidExport: createRuntimeFactory(TestComponent.type, createComponentFactory()) },
                     this.deltaConnectionServer),
-                createContainerWithOldLoader( // old loader/container runtime, new component runtime
-                    { fluidExport: createOldRuntimeFactory(TestComponent.type, createComponentFactory()) },
-                    this.deltaConnectionServer),
                 createContainerWithOldLoader( // old everything
                     { fluidExport: createOldRuntimeFactory(TestComponent.type, createOldComponentFactory()) },
                     this.deltaConnectionServer),
@@ -175,26 +172,6 @@ describe("loader/runtime compatibility", () => {
             this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
             this.container = await createContainer(
                 { fluidExport: createOldRuntimeFactory(OldTestComponent.type, createOldComponentFactory()) },
-                this.deltaConnectionServer,
-            );
-
-            this.component = await getComponent<OldTestComponent>("default", this.container);
-            this.containerDeltaEventManager.registerDocuments(this.component._runtime);
-        });
-
-        tests();
-
-        afterEach(async function() {
-            await this.deltaConnectionServer.webSocketServer.close();
-        });
-    });
-
-    describe("old ContainerRuntime, new ComponentRuntime", function() {
-        beforeEach(async function() {
-            this.deltaConnectionServer = LocalDeltaConnectionServer.create();
-            this.containerDeltaEventManager = new DocumentDeltaEventManager(this.deltaConnectionServer);
-            this.container = await createContainerWithOldLoader(
-                { fluidExport: createOldRuntimeFactory(TestComponent.type, createComponentFactory()) },
                 this.deltaConnectionServer,
             );
 

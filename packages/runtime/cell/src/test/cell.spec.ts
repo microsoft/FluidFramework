@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { CellFactory } from "../cellFactory";
 import { ISharedCell } from "..";
 
@@ -15,7 +15,7 @@ describe("Routerlicious", () => {
 
             beforeEach(async () => {
                 const factory = new CellFactory();
-                testCell = factory.create(new MockRuntime(), "cell");
+                testCell = factory.create(new MockComponentRuntime(), "cell");
             });
 
             it("Can create a cell", () => {
