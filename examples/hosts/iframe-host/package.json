@@ -21,11 +21,13 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": " npm run build:copy & webpack-dev-server --content-base dist/",
     "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env build"
   },
   "dependencies": {
@@ -62,6 +64,7 @@
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "webpack": "^4.43.0",
     "webpack-dev-server": "^3.8.0"
   }

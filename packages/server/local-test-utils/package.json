@@ -19,10 +19,12 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "prepack": "npm run webpack",
     "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --config webpack.config.js"
   },
   "nyc": {
@@ -88,6 +90,7 @@
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
   }

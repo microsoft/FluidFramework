@@ -20,9 +20,11 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
@@ -51,6 +53,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }
