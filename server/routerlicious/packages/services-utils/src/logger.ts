@@ -5,6 +5,8 @@
 
 import * as debug from "debug";
 import * as winston from "winston";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import Transport = require("winston-transport");
 
 export interface IWinstonConfig {
     colorize: boolean;
@@ -12,6 +14,7 @@ export interface IWinstonConfig {
     label: string;
     level: string;
     timestamp: boolean;
+    customTransportList: Transport[];
 }
 
 /**
@@ -43,6 +46,11 @@ export function configureLogging(config: IWinstonConfig) {
             }),
         ],
     });
+    if (config.customTransportList) {
+        for (const transport of config.customTransportList) {
+            winston.add(transport);
+        }
+    }
 
     // Forward all debug library logs through winston
     (debug as any).log = (msg, ...args) => winston.info(msg, ...args);

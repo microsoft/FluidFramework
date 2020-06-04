@@ -93,8 +93,7 @@ export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
     group: string,
-    configFile: string) {
-    const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
+    config: nconf.Provider) {
     configureLogging(config.get("logger"));
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;
