@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedCounter, SharedCounter } from "..";
 
 describe("Counter", () => {
@@ -17,7 +17,7 @@ describe("Counter", () => {
         });
 
         it("Can create a counter with default value", () => {
-            const testCounter = factory.create(new MockRuntime(), "counter") as ISharedCounter;
+            const testCounter = factory.create(new MockComponentRuntime(), "counter") as ISharedCounter;
             assert.ok(testCounter);
             assert.equal(testCounter.value, 0);
         });
@@ -28,7 +28,7 @@ describe("Counter", () => {
 
         beforeEach(async () => {
             factory = SharedCounter.getFactory();
-            testCounter = factory.create(new MockRuntime(), "counter") as ISharedCounter;
+            testCounter = factory.create(new MockComponentRuntime(), "counter") as ISharedCounter;
             assert.ok(testCounter);
         });
 
