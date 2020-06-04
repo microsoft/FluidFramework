@@ -30,14 +30,16 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:ci": "npm run test:report",
     "test:coverage": "nyc npm run test:report",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "test:report": "npm test -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-junit-report.xml",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -95,6 +97,7 @@
     "rimraf": "^2.6.2",
     "sinon": "^7.4.2",
     "ts-node": "^7.0.1",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }
