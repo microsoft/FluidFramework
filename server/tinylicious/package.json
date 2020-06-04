@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/tinylicious",
+  "name": "tinylicious",
   "version": "0.1.0",
   "description": "Tiny routerlicious",
   "repository": {
