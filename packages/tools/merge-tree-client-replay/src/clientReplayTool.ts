@@ -226,8 +226,22 @@ export class ClientReplayTool {
                                 const reconnectMessage =
                                     cloneDeep(pendingMessages.shift()) as IFullPathSequencedDocumentMessage;
                                 if (!reconnectPaths.has(reconnectMessage.fullPath)) {
-                                    const reconnectOp =
-                                        client.get(reconnectMessage.fullPath).resetPendingSegmentsToOp();
+                                    const reconnectClient = client.get(reconnectMessage.fullPath);
+                                    const ops: IMergeTreeOp[] = [];
+                                    while (reconnectClient.peekPendingSegmentGroups() !== undefined) {
+                                        ops.push(reconnectClient.resetPendingSegmentsToOp(
+                                            reconnectClient.peekPendingSegmentGroups()));
+                                    }
+                                    // we can't rewrite the op stream, so need to fit all the ops in one op
+                                    // so coalese into a single group op;
+                                    const reconnectOp = createGroupOp(... ops.reduce<IMergeTreeOp[]>((pv,cv)=> {
+                                        if (cv.type === MergeTreeDeltaType.GROUP) {
+                                            pv.push(... cv.ops);
+                                        } else {
+                                            pv.push(cv);
+                                        }
+                                        return pv;
+                                    },[]));
                                     reconnectMessage.contents = reconnectOp;
                                     reconnectMessages.push(reconnectMessage);
                                     reconnectPaths.add(reconnectMessage.fullPath);

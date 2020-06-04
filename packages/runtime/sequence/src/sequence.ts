@@ -314,7 +314,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated);
+        this.submitLocalMessage(translated, this.client.peekPendingSegmentGroups());
     }
 
     public addLocalReference(lref) {
@@ -449,10 +449,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
-        const groupOp = this.client.resetPendingSegmentsToOp();
-        if (groupOp) {
-            this.submitSequenceMessage(groupOp);
-        }
     }
 
     protected onDisconnect() {
@@ -461,6 +457,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
+
+        this.submitSequenceMessage(
+            this.client.resetPendingSegmentsToOp(localOpMetadata as MergeTree.SegmentGroup));
     }
 
     protected async loadCore(
@@ -476,7 +475,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
                 branchId);
-            msgs.forEach((m) => this.processMergeTreeMsg(m));
+            msgs.forEach((m) => this.processMergeTreeMsg(m, undefined));
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -490,7 +489,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
 
         if (!handled) {
-            this.processMergeTreeMsg(message);
+            this.processMergeTreeMsg(message, localOpMetadata as MergeTree.SegmentGroup | undefined);
         }
     }
 
@@ -526,7 +525,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
     }
 
-    private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
+    private processMergeTreeMsg(
+        rawMessage: ISequencedDocumentMessage,
+        segmentGroup: MergeTree.SegmentGroup | undefined) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,

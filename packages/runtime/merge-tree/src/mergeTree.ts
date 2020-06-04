@@ -198,7 +198,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
-    onAck?(seq: number);
+    op: ops.MergeTreeDeltaType,
 }
 
 export class MergeNode implements IMergeNodeCommon {
@@ -1944,12 +1944,12 @@ export class MergeTree {
         }
     }
 
-    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup) {
+    private addToPendingList(op: ops.MergeTreeDeltaType, segment: ISegment, segmentGroup?: SegmentGroup) {
         if (segmentGroup === undefined) {
-            segmentGroup = { segments: [] };
+            segmentGroup = { segments: [], op };
             this.pendingSegments.enqueue(segmentGroup);
         }
-        // TODO: share this group with UNDO
+        assert(op === segmentGroup.op);
         segment.segmentGroups.enqueue(segmentGroup);
         return segmentGroup;
     }
@@ -2116,7 +2116,7 @@ export class MergeTree {
         }
 
         if (this.collabWindow.collaborating) {
-            this.addToPendingList(insertSegment);
+            this.addToPendingList(ops.MergeTreeDeltaType.INSERT, insertSegment);
         }
     }
 
@@ -2190,7 +2190,7 @@ export class MergeTree {
             if (this.collabWindow.collaborating) {
                 if ((locSegment.seq === UnassignedSequenceNumber) &&
                     (clientId === this.collabWindow.clientId)) {
-                    segmentGroup = this.addToPendingList(locSegment, segmentGroup);
+                    segmentGroup = this.addToPendingList(ops.MergeTreeDeltaType.INSERT, locSegment, segmentGroup);
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
@@ -2599,7 +2599,7 @@ export class MergeTree {
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup);
+                    segmentGroup = this.addToPendingList(ops.MergeTreeDeltaType.ANNOTATE, segment, segmentGroup);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
@@ -2667,7 +2667,7 @@ export class MergeTree {
                 // Use removal information
                 const removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
                 if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup);
+                    segmentGroup = this.addToPendingList(ops.MergeTreeDeltaType.REMOVE, segment, segmentGroup);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);

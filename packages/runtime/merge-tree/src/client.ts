@@ -85,6 +85,10 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
 
+    public peekPendingSegmentGroups() {
+        return this.mergeTree.pendingSegments?.first();
+    }
+
     /**
      * Annotate a maker and call the callback on concensus.
      * @param marker - The marker to annotate
@@ -391,7 +395,7 @@ export class Client {
                 // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({ segments: [] });
+                    this.mergeTree.pendingSegments.enqueue({ segments: [] , op: ops.MergeTreeDeltaType.INSERT });
                 }
                 return true;
             }
@@ -644,50 +648,45 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
+    private resetPendingSegmentToOp(segment: ISegment, segmentGroup: SegmentGroup): ops.IMergeTreeOp {
         let op: ops.IMergeTreeOp;
-        if (!segment.segmentGroups.empty) {
-            segment.segmentGroups.clear();
+        assert(segmentGroup === segment.segmentGroups.dequeue());
 
-            // The segment was added and removed, so we don't need to send any ops for it
-            if (segment.seq === UnassignedSequenceNumber && segment.removedSeq === UnassignedSequenceNumber) {
-                // Set to the universal sequence number so it can be zambonied
-                segment.removedSeq = UniversalSequenceNumber;
-                segment.seq = UniversalSequenceNumber;
-                return undefined;
-            }
-
-            const segmentPosition = this.getPosition(segment);
-
-            // If removed we only need to send a remove op
-            // if inserted, we only need to send insert, as that will contain props
-            // if pending properties send annotate
-            if (segment.removedSeq === UnassignedSequenceNumber) {
-                op = OpBuilder.createRemoveRangeOp(
-                    segmentPosition,
-                    segmentPosition + segment.cachedLength);
-            } else if (segment.seq === UnassignedSequenceNumber) {
-                op = OpBuilder.createInsertSegmentOp(
-                    segmentPosition,
-                    segment);
-
-                if (segment.propertyManager) {
-                    segment.propertyManager.clearPendingProperties();
-                }
-            } else if (segment.propertyManager && segment.propertyManager.hasPendingProperties()) {
+        const segmentPosition = this.getPosition(segment);
+        switch (segmentGroup.op) {
+            case ops.MergeTreeDeltaType.ANNOTATE:
+                // todo figure out annotate
+                assert(segment.propertyManager.hasPendingProperties());
                 const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
                 op = OpBuilder.createAnnotateRangeOp(
                     segmentPosition,
                     segmentPosition + segment.cachedLength,
                     annotateInfo.props,
                     annotateInfo.combiningOp);
-            }
+                break;
 
-            if (op) {
-                const segmentGroup: SegmentGroup = { segments: [] };
-                segment.segmentGroups.enqueue(segmentGroup);
-                this.mergeTree.pendingSegments.enqueue(segmentGroup);
-            }
+            case ops.MergeTreeDeltaType.INSERT:
+                assert(segment.seq === UnassignedSequenceNumber);
+                op = OpBuilder.createInsertSegmentOp(
+                    segmentPosition,
+                    segment);
+                break;
+
+            case ops.MergeTreeDeltaType.REMOVE:
+                assert(segment.removedSeq === UnassignedSequenceNumber);
+                op = OpBuilder.createRemoveRangeOp(
+                    segmentPosition,
+                    segmentPosition + segment.cachedLength);
+                break;
+
+            default:
+                throw new Error(`Invalid op type: ${segmentGroup.op}`);
+        }
+
+        if (op) {
+            const newSegmentGroup: SegmentGroup = { segments: [], op: op.type };
+            segment.segmentGroups.enqueue(newSegmentGroup);
+            this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
         }
         return op;
     }
@@ -773,18 +772,16 @@ export class Client {
             shortRemoteClientId);
     }
 
-    public resetPendingSegmentsToOp(): ops.IMergeTreeOp {
+    public resetPendingSegmentsToOp(segmentGroup: SegmentGroup): ops.IMergeTreeOp {
+        const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
+        assert(segmentGroup === NACKedSegmentGroup);
         const orderedSegments = new SortedSegmentSet();
-        while (!this.mergeTree.pendingSegments.empty()) {
-            const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
-            for (const segment of NACKedSegmentGroup.segments) {
-                orderedSegments.addOrUpdate(segment);
-            }
+        for (const segment of NACKedSegmentGroup.segments) {
+            orderedSegments.addOrUpdate(segment);
         }
-
         const opList: ops.IMergeTreeOp[] = [];
         for (const segment of orderedSegments.items) {
-            const op = this.resetPendingSegmentToOp(segment);
+            const op = this.resetPendingSegmentToOp(segment, segmentGroup);
             if (op) {
                 opList.push(op);
             }
