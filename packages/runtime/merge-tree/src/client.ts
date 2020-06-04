@@ -644,8 +644,8 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
-        let op: ops.IMergeTreeOp;
+    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeDeltaOp {
+        let op: ops.IMergeTreeDeltaOp;
         if (!segment.segmentGroups.empty) {
             segment.segmentGroups.clear();
 
@@ -782,7 +782,7 @@ export class Client {
             }
         }
 
-        const opList: ops.IMergeTreeOp[] = [];
+        const opList: ops.IMergeTreeDeltaOp[] = [];
         for (const segment of orderedSegments.items) {
             const op = this.resetPendingSegmentToOp(segment);
             if (op) {
