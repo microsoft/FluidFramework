@@ -22,7 +22,7 @@ import {
     TextSegment,
     createGroupOp,
     PropertySet,
-    IMergeTreeOp,
+    IMergeTreeDeltaOp,
     MergeTreeTextHelper,
     // eslint-disable-next-line import/no-duplicates
 } from "@fluidframework/merge-tree";
@@ -419,7 +419,7 @@ export function TestPack(verbose = true) {
             if (word1) {
                 const removeStart = word1.pos;
                 const removeEnd = removeStart + word1.text.length;
-                const ops: IMergeTreeOp[] = [];
+                const ops: IMergeTreeDeltaOp[] = [];
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(client.makeOpMessage(removeOp));
