@@ -95,7 +95,7 @@ async function createNewOdspFile(
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
         let fetchResponse;
-        const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : '';
+        const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
         if (createNewSummary) {
             const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
             const initialUrl =
