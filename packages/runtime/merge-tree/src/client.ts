@@ -8,6 +8,7 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -84,6 +85,13 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
 
+    /**
+     * The merge tree maintains a queue of segment groups for each local operation.
+     * These segment groups track segments modified by an operation.
+     * This method peeks the tail of that queue, and returns the segments groups there.
+     * It is used to get the segment group(s) for the previous operations.
+     * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
+     */
     public peekPendingSegmentGroups(count?: number) {
         if (count === undefined || count === 1) {
             return this.mergeTree.pendingSegments?.last();
@@ -660,16 +668,24 @@ export class Client {
     private resetPendingDeltaToOps(
         resetOp: ops.IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
-        assert(segmentGroup);
+        assert(segmentGroup, "Segment group undefined");
         const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
-        assert(NACKedSegmentGroup);
-        assert(segmentGroup === NACKedSegmentGroup);
+        assert(segmentGroup === NACKedSegmentGroup, "Segment group not at head of merge tree pending queue");
 
         const opList = [];
         for (const segment of segmentGroup.segments) {
-            assert(segmentGroup === segment.segmentGroups.dequeue());
+            assert(segmentGroup === segment.segmentGroups.dequeue(),
+                "Segment group not at head of segment pending queue");
             let newOp: ops.IMergeTreeDeltaOp;
             let segmentPosition = 0;
+            /*
+                Walk the segments up to the current segment, and calculate it's
+                position taking into account local segments that were modified,
+                after the current segment.
+
+                TODO: Consider embeding this infomation into the tree for
+                more efficent look up of pending segment positions.
+            */
             this.mergeTree.walkAllSegments(this.mergeTree.root, (seg)=>{
                 if (seg !== segment) {
                     // segment isn't local, so count it
@@ -696,7 +712,7 @@ export class Client {
             });
             switch (resetOp.type) {
                 case ops.MergeTreeDeltaType.ANNOTATE:
-                    assert(segment.propertyManager.hasPendingProperties());
+                    assert(segment.propertyManager.hasPendingProperties(), "Segment has no pending properties");
                     newOp = OpBuilder.createAnnotateRangeOp(
                         segmentPosition,
                         segmentPosition + segment.cachedLength,
@@ -814,26 +830,41 @@ export class Client {
             shortRemoteClientId);
     }
 
+    /**
+     *  Given an pending operation and segment group, regenerate the op, so it
+     *  can be resubmitted
+     * @param resetOp - The op to reset
+     * @param segmentGroup - The segment group associated with the op
+     */
     public regeneratePendingOp(
         resetOp: ops.IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): ops.IMergeTreeOp {
-        const opList: ops.IMergeTreeDeltaOp[] = [];
+        const start = performanceNow();
+        try {
+            const opList: ops.IMergeTreeDeltaOp[] = [];
 
-        if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
-            assert(Array.isArray(segmentGroup));
-            assert.equal(resetOp.ops.length, segmentGroup.length);
-            for (let i = 0; i < resetOp.ops.length; i++) {
+            if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
+                assert(Array.isArray(segmentGroup));
+                assert.equal(resetOp.ops.length, segmentGroup.length);
+                for (let i = 0; i < resetOp.ops.length; i++) {
+                    opList.push(
+                        ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+                }
+            } else {
+                assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
+                assert(!Array.isArray(segmentGroup));
                 opList.push(
-                    ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+                    ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
             }
-        } else {
-            assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
-            assert(!Array.isArray(segmentGroup));
-            opList.push(
-                ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
+            return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
+        } finally {
+            this.logger.sendPerformanceEvent({
+                eventName: "MergeTree:RegeneratePendingOp",
+                category: "performance",
+                duration: performanceNow() - start,
+            });
         }
-        return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
     }
 
     public createTextHelper() {
