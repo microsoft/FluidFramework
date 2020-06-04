@@ -6,4 +6,5 @@
 export * from "./insecureUrlResolver";
 export * from "./mocks";
 export * from "./mockDeltas";
+export * from "./mocksForReconnection";
 export * from "./mockStorage";

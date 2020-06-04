@@ -32,7 +32,7 @@ describe("Matrix", () => {
                 assert.deepEqual(actual0, actualN);
 
                 // Vet that empty matrices have identical dimensions (see notes on `expectSize`).
-                expectSize(matrixN, matrix0.numRows, matrix0.numCols);
+                expectSize(matrixN, matrix0.rowCount, matrix0.colCount);
             }
         };
 
@@ -73,29 +73,29 @@ describe("Matrix", () => {
                     .map(() => int32(100));
 
                 // Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
-                const setCells = (matrixIndex: number, row: number, col: number, numCols: number, values: any[]) => {
+                const setCells = (matrixIndex: number, row: number, col: number, colCount: number, values: any[]) => {
                     const matrix = matrices[matrixIndex];
-                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* numCols: */ ${numCols}, ${JSON.stringify(values)});    // numRows: ${matrix.numRows} numCols: ${matrix.numCols} stride: ${matrix.numCols} length: ${values.length}`);
-                    matrix.setCells(row, col, numCols, values);
+                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* colCount: */ ${colCount}, ${JSON.stringify(values)});    // rowCount: ${matrix.rowCount} colCount: ${matrix.colCount} stride: ${matrix.colCount} length: ${values.length}`);
+                    matrix.setCells(row, col, colCount, values);
                 }
 
                 // Initialize with [0..5] row and [0..5] cols, filling the cells.
                 {
-                    const numRows = int32(5);
-                    if (numRows > 0) {
-                        trace?.push(`matrix1.insertRows(0,${numRows});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
-                        matrix0.insertRows(0, numRows);
+                    const rowCount = int32(5);
+                    if (rowCount > 0) {
+                        trace?.push(`matrix1.insertRows(0,${rowCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        matrix0.insertRows(0, rowCount);
                     }
 
-                    const numCols = int32(5);
-                    if (numCols > 0) {
-                        trace?.push(`matrix1.insertCols(0,${numCols});    // numRows: ${matrix0.numRows}, numCols: ${matrix0.numCols}`);
-                        matrix0.insertCols(0, numCols);
+                    const colCount = int32(5);
+                    if (colCount > 0) {
+                        trace?.push(`matrix1.insertCols(0,${colCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        matrix0.insertCols(0, colCount);
                     }
 
-                    if (numCols > 0 && numRows > 0) {
-                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, numCols,
-                            new Array(numCols * numRows).fill(0).map((_, index) => index));
+                    if (colCount > 0 && rowCount > 0) {
+                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, colCount,
+                            new Array(colCount * rowCount).fill(0).map((_, index) => index));
                     }
                 }
 
@@ -113,20 +113,20 @@ describe("Matrix", () => {
                     const matrixIndex = int32(matrices.length);
                     const matrix = matrices[matrixIndex];
 
-                    const { numRows, numCols } = matrix;
-                    const row = int32(numRows);
-                    const col = int32(numCols);
+                    const { rowCount, colCount } = matrix;
+                    const row = int32(rowCount);
+                    const col = int32(colCount);
 
                     switch(int32(7)) {
                         case 0: {
                             // remove 1 or more rows (if any exist)
-                            if (numRows > 0) {
+                            if (rowCount > 0) {
                                 // 10% probability of removing multiple rows.
                                 const numRemoved = float64() < 0.1
-                                    ? int32(numRows - row - 1) + 1
+                                    ? int32(rowCount - row - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // numRows: ${matrix.numRows - numRemoved}, numCols: ${matrix.numCols}`);
+                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // rowCount: ${matrix.rowCount - numRemoved}, colCount: ${matrix.colCount}`);
                                 matrix.removeRows(row, numRemoved);
                             }
                             break;
@@ -134,13 +134,13 @@ describe("Matrix", () => {
 
                         case 1: {
                             // remove 1 or more cols (if any exist)
-                            if (numCols > 0) {
+                            if (colCount > 0) {
                                 // 10% probability of removing multiple cols.
                                 const numRemoved = float64() < 0.1
-                                    ? int32(numCols - col - 1) + 1
+                                    ? int32(colCount - col - 1) + 1
                                     : 1;
 
-                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols - numRemoved}`);
+                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount - numRemoved}`);
                                 matrix.removeCols(col, numRemoved);
                             }
                             break;
@@ -152,14 +152,14 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // numRows: ${matrix.numRows + numInserted}, numCols: ${matrix.numCols}`);
+                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // rowCount: ${matrix.rowCount + numInserted}, colCount: ${matrix.colCount}`);
                             matrix.insertRows(row, numInserted);
 
                             // 90% probability of filling the newly inserted row with values.
                             if (float64() < 0.9) {
-                                if (numCols > 0) {
-                                    setCells(matrixIndex, row, /* col: */ 0, matrix.numCols,
-                                        values(matrix.numCols * numInserted));
+                                if (colCount > 0) {
+                                    setCells(matrixIndex, row, /* col: */ 0, matrix.colCount,
+                                        values(matrix.colCount * numInserted));
                                 }
                             }
                             break;
@@ -171,14 +171,14 @@ describe("Matrix", () => {
                                 ? int32(3) + 1
                                 : 1;
 
-                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // numRows: ${matrix.numRows}, numCols: ${matrix.numCols + numInserted}`);
+                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount + numInserted}`);
                             matrix.insertCols(col, numInserted);
 
                             // 90% probability of filling the newly inserted col with values.
                             if (float64() < 0.9) {
-                                if (numRows > 0) {
+                                if (rowCount > 0) {
                                     setCells(matrixIndex, /* row: */ 0, col, numInserted,
-                                        values(matrix.numRows * numInserted));
+                                        values(matrix.rowCount * numInserted));
                                 }
                             }
                             break;
@@ -186,9 +186,9 @@ describe("Matrix", () => {
 
                         default: {
                             // set a range of cells (if matrix is non-empty)
-                            if (numRows > 0 && numCols > 0) {
-                                const stride = int32(numCols - col - 1) + 1;
-                                const length = (int32(numRows - row - 1) + 1) * stride;
+                            if (rowCount > 0 && colCount > 0) {
+                                const stride = int32(colCount - col - 1) + 1;
+                                const length = (int32(rowCount - row - 1) + 1) * stride;
                                 setCells(matrixIndex, row, col, stride, values(length));
                             }
                             break;

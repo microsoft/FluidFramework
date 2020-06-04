@@ -63,6 +63,7 @@ export class TestWebSocket implements core.IWebSocket {
         for (const room of this.rooms) {
             this.server.rooms.get(room).delete(this);
         }
+        this.emit("disconnect");
     }
 }
 

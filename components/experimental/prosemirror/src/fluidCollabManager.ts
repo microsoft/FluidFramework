@@ -9,10 +9,10 @@ import { ILoader } from "@fluidframework/container-definitions";
 import {
     createGroupOp,
     createRemoveRangeOp,
-    IMergeTreeOp,
     Marker,
     ReferenceType,
     TextSegment,
+    IMergeTreeDeltaOp,
 } from "@fluidframework/merge-tree";
 import { SharedString } from "@fluidframework/sequence";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
@@ -332,7 +332,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;
 
-                    let operations = new Array<IMergeTreeOp>();
+                    let operations = new Array<IMergeTreeDeltaOp>();
 
                     if (from !== to) {
                         const removeOp = createRemoveRangeOp(from, to);
@@ -354,7 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 }
 
                 case "replaceAround": {
-                    let operations = new Array<IMergeTreeOp>();
+                    let operations = new Array<IMergeTreeDeltaOp>();
 
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;

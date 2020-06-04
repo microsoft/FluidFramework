@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { TestHost } from "@fluidframework/local-test-utils";
 import { Serializable } from "@fluidframework/component-runtime-definitions";
-import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockEmptyDeltaConnection, MockComponentRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
@@ -21,15 +21,17 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
-    const runtime = new MockRuntime();
-    const matrix2 = new SharedMatrix<T>(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+    const componentRuntime = new MockComponentRuntime();
+    // We only want to test local state of the DDS.
+    componentRuntime.local = true;
+    const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage
     });
 
     // Vet that the 2nd matrix is equivalent to the original.
-    expectSize(matrix2, matrix.numRows, matrix.numCols);
+    expectSize(matrix2, matrix.rowCount, matrix.colCount);
     assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
 
     return matrix2;
@@ -50,7 +52,7 @@ describe("Matrix", () => {
 
     describe("local client", () => {
         let matrix: SharedMatrix<number>;       // SharedMatrix under test
-        let consumer: TestConsumer<number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
         async function sync() {
             await TestHost.sync(host1, host2);
@@ -76,8 +78,7 @@ describe("Matrix", () => {
             matrix = await host1.createType(uuid(), SharedMatrixFactory.Type);
 
             // Attach a new IMatrixConsumer
-            consumer = new TestConsumer();
-            matrix.openMatrix(consumer);
+            consumer = new TestConsumer(matrix);
         });
 
         afterEach(async () => {
@@ -91,9 +92,9 @@ describe("Matrix", () => {
             assert.deepEqual(consumer.extract(), extract(matrix));
 
             // Sanity check that removing the consumer stops change notifications.
-            matrix.removeMatrixConsumer(consumer);
+            matrix.closeMatrix(consumer);
             matrix.insertCols(0, 1);
-            assert.equal(consumer.numCols, matrix.numCols - 1);
+            assert.equal(consumer.colCount, matrix.colCount - 1);
         });
 
         // Vet our three variants of an empty matrix (no rows, no cols, and both no rows and no cols).
@@ -101,20 +102,20 @@ describe("Matrix", () => {
             // Note: We check the num rows/cols explicitly in these tests to differentiate between
             //       matrices that are 0 length in one or both dimensions.
             it("0x0", async () => {
-                expectSize(matrix, /* numRows: */ 0, /* numCols: */ 0);
-                expectSize(await expect([]), /* numRows: */ 0, /* numCols: */ 0);
+                expectSize(matrix, /* rowCount: */ 0, /* colCount: */ 0);
+                expectSize(await expect([]), /* rowCount: */ 0, /* colCount: */ 0);
             });
 
             it("0x1", async () => {
                 matrix.insertCols(/* start: */ 0, /* count: */ 1);
-                expectSize(matrix, /* numRows: */ 0, /* numCols: */ 1);
-                expectSize(await expect([]), /* numRows: */ 0, /* numCols: */ 1);
+                expectSize(matrix, /* rowCount: */ 0, /* colCount: */ 1);
+                expectSize(await expect([]), /* rowCount: */ 0, /* colCount: */ 1);
             });
 
             it("1x0", async () => {
                 matrix.insertRows(/* start: */ 0, /* count: */ 1);
-                expectSize(matrix, /* numRows: */ 1, /* numCols: */ 0);
-                expectSize(await expect([[]]), /* numRows: */ 1, /* numCols: */ 0);
+                expectSize(matrix, /* rowCount: */ 1, /* colCount: */ 0);
+                expectSize(await expect([[]]), /* rowCount: */ 1, /* colCount: */ 0);
             });
         });
 
@@ -141,7 +142,7 @@ describe("Matrix", () => {
             ]);
 
             // Note: It's valid to leave the last row incomplete.
-            matrix.setCells(/* row: */ 1, /* col: */ 1, /* numCols: */ 2, [
+            matrix.setCells(/* row: */ 1, /* col: */ 1, /* colCount: */ 2, [
                 1, 2,
                 3, 4,
                 5
@@ -158,18 +159,18 @@ describe("Matrix", () => {
         // Vet that we can set and read back the cell in a 1x1 matrix.
         it("out-of-bounds read must throw", async () => {
             // Reading cell (0,0) of an empty matrix must throw.
-            assert.throws(() => { matrix.read(0, 0); });
+            assert.throws(() => { matrix.getCell(0, 0); });
 
             matrix.insertRows(0, 1);
             matrix.insertCols(0, 2);
 
             // Reading negative indices must throw.
-            assert.throws(() => { matrix.read(-1, 0); });
-            assert.throws(() => { matrix.read(0, -1); });
+            assert.throws(() => { matrix.getCell(-1, 0); });
+            assert.throws(() => { matrix.getCell(0, -1); });
 
             // Reading past end of matrix must throw.
-            assert.throws(() => { matrix.read(1, 0);  });
-            assert.throws(() => { matrix.read(0, 2); });
+            assert.throws(() => { matrix.getCell(1, 0);  });
+            assert.throws(() => { matrix.getCell(0, 2); });
         });
 
         // Vet that we can insert a column in a 1x2 matrix.
@@ -212,10 +213,10 @@ describe("Matrix", () => {
         it("remove 1 row, insert 2 rows", async () => {
             matrix.insertRows(0,4);
             matrix.insertCols(0,1);
-            matrix.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, [0,1,2,3]);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0,1,2,3]);
             matrix.removeRows(2,1);
             matrix.insertRows(0,2);
-            matrix.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, [84,45]);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [84,45]);
             await expect([
                 [84],
                 [45],
@@ -229,16 +230,16 @@ describe("Matrix", () => {
             it("read/write 256x256", () => {
                 matrix.insertRows(0, 256);
                 matrix.insertCols(0, 256);
-                fill(matrix, /* row: */ 0, /* col: */ 0, /* numRows: */ 16, /* numCols: */ 16);
-                check(matrix, /* row: */ 0, /* col: */ 0, /* numRows: */ 16, /* numCols: */ 16);
+                fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
+                check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
             });
         });
 
         describe("fragmented", () => {
             it("read/write 16x16", () => {
                 insertFragmented(matrix, 16, 16);
-                fill(matrix, /* row: */ 0, /* col: */ 0, /* numRows: */ 16, /* numCols: */ 16);
-                check(matrix, /* row: */ 0, /* col: */ 0, /* numRows: */ 16, /* numCols: */ 16);
+                fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
+                check(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 16, /* colCount: */ 16);
             });
         });
 
@@ -306,17 +307,17 @@ describe("Matrix", () => {
 
         beforeEach(async () => {
             matrix1 = await host1.createType(uuid(), SharedMatrixFactory.Type);
-            matrix1.openMatrix(consumer1 = new TestConsumer());
+            consumer1 = new TestConsumer(matrix1);
 
             matrix2 = await host2.getType(matrix1.id);
-            matrix2.openMatrix(consumer2 = new TestConsumer());
+            consumer2 = new TestConsumer(matrix2);
         });
 
         afterEach(async () => {
             await expect();
 
-            matrix1.removeMatrixConsumer(consumer1);
-            matrix2.removeMatrixConsumer(consumer2);
+            matrix1.closeMatrix(consumer1);
+            matrix2.closeMatrix(consumer2);
         });
 
         describe("conflict", () => {
@@ -356,7 +357,7 @@ describe("Matrix", () => {
                 matrix1.insertCols(0,2);
                 await expect();
                 matrix1.insertRows(0,1);
-                matrix1.setCells(/* row: */ 0, /* col: */ 1, /* numCols: */ 1, ["x"]);
+                matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["x"]);
                 await expect([[undefined, "x"]]);
             });
 
@@ -367,7 +368,7 @@ describe("Matrix", () => {
                     [],
                 ]);
                 matrix1.insertCols(0,1);
-                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* numCols: */ 1, ["x"]);
+                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["x"]);
                 await expect([
                     [undefined],
                     ["x"]
@@ -449,7 +450,7 @@ describe("Matrix", () => {
             it("insert col vs. remove row", async () => {
                 matrix1.insertCols(0, 2);
                 matrix1.insertRows(0, 3);
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 2, [
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
                     "A1", "C1",
                     "A2", "C2",
                     "A3", "C3",
@@ -462,7 +463,7 @@ describe("Matrix", () => {
                 ]);
 
                 matrix1.insertCols(1, 1);
-                matrix1.setCells(/* row: */ 0, /* col: */ 1, /* numCols: */ 1, [
+                matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, [
                     "B1",
                     "B2",
                     "B3",
@@ -479,7 +480,7 @@ describe("Matrix", () => {
             it("insert row vs. remove col", async () => {
                 matrix1.insertRows(0, 2);
                 matrix1.insertCols(0, 3);
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 3, [
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 3, [
                     "A1", "B1", "C1",
                     "A3", "B3", "C3",
                 ]);
@@ -490,7 +491,7 @@ describe("Matrix", () => {
                 ]);
 
                 matrix1.insertRows(1, 1);
-                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* numCols: */ 3, [
+                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 3, [
                     "A2", "B2", "C2",
                 ]);
 
@@ -506,7 +507,7 @@ describe("Matrix", () => {
             it("insert row vs. remove col", async () => {
                 matrix1.insertRows(0, 2);
                 matrix1.insertCols(0, 3);
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 3, [
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 3, [
                     "A1", "B1", "C1",
                     "A3", "B3", "C3",
                 ]);
@@ -517,7 +518,7 @@ describe("Matrix", () => {
                 ]);
 
                 matrix1.insertRows(1, 1);
-                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* numCols: */ 3, [
+                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 3, [
                     "A2", "B2", "C2",
                 ]);
 
@@ -534,7 +535,7 @@ describe("Matrix", () => {
             it("insert col vs. insert & remove row", async () => {
                 matrix1.insertRows(0, 2);
                 matrix1.insertCols(0, 2);
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 2, [
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
                     "A1", "C1",
                     "A2", "C2",
                 ]);
@@ -559,7 +560,7 @@ describe("Matrix", () => {
 
                 matrix1.insertRows(0,1);
                 matrix2.insertRows(0,2);
-                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 4, ["A","B","C","D"]);
+                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, ["A","B","C","D"]);
                 matrix1.insertCols(1,1);
 
                 await expect();
@@ -577,24 +578,24 @@ describe("Matrix", () => {
                 await expect();
 
                 matrix1.removeRows(1,1);
-                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, ["A", "B", "C"]);
+                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
                 await expect();
             });
 
             // This case is interesting because the removal of [0..1] is split on client2 to straddle the
             // inserted "B".
             it("overlapping insert/set vs. remove/insert/set", async () => {
-                matrix1.insertRows(0,1);    // numRows: 0, numCols: 0
-                matrix1.insertCols(0,4);    // numRows: 1, numCols: 0
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 4, [0,1,2,3]);
+                matrix1.insertRows(0,1);    // rowCount: 0, colCount: 0
+                matrix1.insertCols(0,4);    // rowCount: 1, colCount: 0
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0,1,2,3]);
                 await expect([
                     [0, 1, 2, 3]
                 ]);
-                matrix2.insertCols(1,1);    // numRows: 1, numCols: 5
-                matrix2.setCells(/* row: */ 0, /* col: */ 1, /* numCols: */ 1, ["A"]);
-                matrix1.removeCols(0,2);    // numRows: 1, numCols: 2
-                matrix1.insertCols(0,1);    // numRows: 1, numCols: 3
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, ["B"]);
+                matrix2.insertCols(1,1);    // rowCount: 1, colCount: 5
+                matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["A"]);
+                matrix1.removeCols(0,2);    // rowCount: 1, colCount: 2
+                matrix1.insertCols(0,1);    // rowCount: 1, colCount: 3
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
                 await expect([
                     ["B", "A", 2, 3]
                 ]);

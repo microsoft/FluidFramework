@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
 import * as level from "level";
 import * as sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";

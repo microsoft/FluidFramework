@@ -224,7 +224,7 @@ function initialize(
 
         const details: IFluidCodeDetails = {
             config: {
-                "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+                "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
             },
             package: `@fluid-example/shared-text@${version}`,
         };

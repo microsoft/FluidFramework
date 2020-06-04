@@ -49,3 +49,15 @@ export class EsLintTask extends LintBaseTask {
         return this._configFileFullPath;
     }
 }
+
+export class TsFormatTask extends LintBaseTask {
+    protected get doneFile() {
+        // TODO: This assume there is only one tsfmt task per package
+        return "tsfmt.done.build.log";
+    }
+
+    protected get configFileFullPath() {
+        // Currently there's no package-level config file, so just use tsconfig.json
+        return this.getPackageFileFullPath("tsconfig.json");
+    }
+}

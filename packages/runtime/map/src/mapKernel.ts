@@ -6,6 +6,7 @@
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -33,14 +34,17 @@ interface IMapMessageHandler {
      * @param op - The map operation to apply
      * @param local - Whether the message originated from the local client
      * @param message - The full message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage, localOpMetadata: unknown): void;
 
     /**
      * Communicate the operation to remote clients.
      * @param op - The map operation to submit
+     * @param localOpMetadata - The metadata to be submitted with the message.
      */
-    submit(op: IMapOperation): void;
+    submit(op: IMapOperation, localOpMetadata: unknown): void;
 }
 
 /**
@@ -157,10 +161,15 @@ export class MapKernel {
     private readonly pendingKeys: Map<string, number> = new Map();
 
     /**
-     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
-     * number of that clear operation.  Otherwise, is -1.
+     * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingClearClientSequenceNumber: number = -1;
+    private pendingMessageId: number = -1;
+
+    /**
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
+     * of that clear operation. Otherwise, is -1.
+     */
+    private pendingClearMessageId: number = -1;
 
     /**
      * Object to create encapsulations of the values stored in the map.
@@ -178,7 +187,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any) => number,
+        private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -452,12 +461,15 @@ export class MapKernel {
     /**
      * Submit the given op if a handler is registered.
      * @param op - The operation to attempt to submit
+     * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
+     * and not sent to the server. This will be sent back when this message is received back from the server. This is
+     * also sent if we are asked to resubmit the message.
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any): boolean {
+    public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            this.messageHandlers.get(type).submit(op as IMapOperation);
+            this.messageHandlers.get(type).submit(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -467,14 +479,16 @@ export class MapKernel {
      * Process the given op if a handler is registered.
      * @param message - The message to process
      * @param local - Whether the message originated from the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation was processed, false otherwise.
      */
-    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): boolean {
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
                 .get(op.type)
-                .process(op, local, message);
+                .process(op, local, message, localOpMetadata);
             return true;
         }
         return false;
@@ -571,24 +585,34 @@ export class MapKernel {
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
      * @param message - The message
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      * @returns True if the operation should be processed, false otherwise
      */
     private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
+        localOpMetadata: unknown,
     ): boolean {
-        if (this.pendingClearClientSequenceNumber !== -1) {
-            // If I have a NACK clear, we can ignore all ops.
+        if (this.pendingClearMessageId !== -1) {
+            if (local) {
+                strongAssert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
+                    "Received out of order op when there is an unackd clear message");
+            }
+            // If we have an unack'd clear, we can ignore all ops.
             return false;
         }
 
         if (this.pendingKeys.has(op.key)) {
-            // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
+            // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
-                const pendingKeyClientSequenceNumber = this.pendingKeys.get(op.key);
-                if (pendingKeyClientSequenceNumber === message.clientSequenceNumber) {
+                strongAssert(localOpMetadata !== undefined,
+                    `pendingMessageId is missing from the local client's ${op.type} operation`);
+                const pendingMessageId = localOpMetadata as number;
+                const pendingKeyMessageId = this.pendingKeys.get(op.key);
+                if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
             }
@@ -608,10 +632,13 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, message) => {
+                process: (op: IMapClearOperation, local, message, localOpMetadata) => {
                     if (local) {
-                        if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
-                            this.pendingClearClientSequenceNumber = -1;
+                        strongAssert(localOpMetadata !== undefined,
+                            "pendingMessageId is missing from the local client's clear operation");
+                        const pendingMessageId = localOpMetadata as number;
+                        if (this.pendingClearMessageId === pendingMessageId) {
+                            this.pendingClearMessageId = -1;
                         }
                         return;
                     }
@@ -621,28 +648,30 @@ export class MapKernel {
                     }
                     this.clearCore(local, message);
                 },
-                submit: (op: IMapClearOperation) => {
+                submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapClearMessage(op);
                 },
             });
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, message) => {
-                    if (!this.needProcessKeyOperation(op, local, message)) {
+                process: (op: IMapDeleteOperation, local, message, localOpMetadata) => {
+                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
                 },
-                submit: (op: IMapDeleteOperation) => {
+                submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
             });
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, message) => {
-                    if (!this.needProcessKeyOperation(op, local, message)) {
+                process: (op: IMapSetOperation, local, message, localOpMetadata) => {
+                    if (!this.needProcessKeyOperation(op, local, message, localOpMetadata)) {
                         return;
                     }
 
@@ -650,7 +679,8 @@ export class MapKernel {
 
                     this.setCore(op.key, context, local, message);
                 },
-                submit: (op: IMapSetOperation) => {
+                submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
+                    // We don't reuse the metadata but send a new one on each submit.
                     this.submitMapKeyMessage(op);
                 },
             });
@@ -662,7 +692,7 @@ export class MapKernel {
         messageHandlers.set(
             "act",
             {
-                process: (op: IMapValueTypeOperation, local, message) => {
+                process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
                     // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     if (!localValue) {
@@ -679,7 +709,9 @@ export class MapKernel {
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
-                submit: this.submitMessage,
+                submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
+                    this.submitMessage(op, localOpMetadata);
+                },
             });
 
         return messageHandlers;
@@ -690,10 +722,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const clientSequenceNumber = this.submitMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingClearClientSequenceNumber = clientSequenceNumber;
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -701,10 +732,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const clientSequenceNumber = this.submitMessage(op);
-        if (clientSequenceNumber !== -1) {
-            this.pendingKeys.set(op.key, clientSequenceNumber);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -729,7 +759,8 @@ export class MapKernel {
                     value: translatedParams,
                 },
             };
-            this.submitMessage(op);
+            // Send the localOpMetadata as undefined because we don't care about the ack.
+            this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);

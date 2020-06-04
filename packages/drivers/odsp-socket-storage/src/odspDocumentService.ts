@@ -29,8 +29,7 @@ import { IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
-import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
-import { OdspDocumentStorageService } from "./odspDocumentStorageService";
+import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
@@ -105,7 +104,7 @@ export class OdspDocumentService implements IDocumentService {
         );
     }
 
-    private storageManager?: OdspDocumentStorageManager;
+    private storageManager?: OdspDocumentStorageService;
 
     private readonly logger: TelemetryLogger;
 
@@ -155,32 +154,15 @@ export class OdspDocumentService implements IDocumentService {
                 // (fluid-fetcher)
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
-            const event = PerformanceEvent.start(this.logger,
-                { eventName: `${name || "OdspDocumentService"}_GetToken` });
-            let token: string | null;
-            try {
-                token = await getStorageToken(this.odspResolvedUrl.siteUrl, refresh);
-            } catch (error) {
-                event.cancel({}, error);
-                throw error;
-            }
-            event.end();
 
-            return token;
+            return PerformanceEvent.timedExecAsync(this.logger,
+                { eventName: `${name || "OdspDocumentService"}_GetToken` },
+                async () => getStorageToken(this.odspResolvedUrl.siteUrl, refresh));
         };
 
         this.getWebsocketToken = async (refresh) => {
-            const event = PerformanceEvent.start(this.logger, { eventName: "GetWebsocketToken" });
-            let token: string | null;
-            try {
-                token = await getWebsocketToken(refresh);
-            } catch (error) {
-                event.cancel({}, error);
-                throw error;
-            }
-            event.end();
-
-            return token;
+            return PerformanceEvent.timedExecAsync(this.logger, { eventName: "GetWebsocketToken" },
+                async () => getWebsocketToken(refresh));
         };
 
         this.localStorageAvailable = isLocalStorageAvailable();
@@ -196,21 +178,21 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document storage service for sharepoint driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        const latestSha: string | null | undefined = undefined;
-        this.storageManager = new OdspDocumentStorageManager(
-            this.odspResolvedUrl.hashedDocumentId,
-            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
-            latestSha,
-            this.storageFetchWrapper,
-            this.getStorageToken,
-            this.logger,
-            true,
-            this.cache,
-            this.isFirstTimeDocumentOpened,
-            this.hostPolicy,
-        );
+        if (!this.storageManager) {
+            this.storageManager = new OdspDocumentStorageService(
+                this.odspResolvedUrl.hashedDocumentId,
+                this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+                this.storageFetchWrapper,
+                this.getStorageToken,
+                this.logger,
+                true,
+                this.cache,
+                this.isFirstTimeDocumentOpened,
+                this.hostPolicy,
+            );
+        }
 
-        return new OdspDocumentStorageService(this.storageManager);
+        return this.storageManager;
     }
 
     /**

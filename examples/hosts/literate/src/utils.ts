@@ -14,7 +14,7 @@ import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-i
  * on this package.
  */
 export async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (pkg !== undefined) {
+    if (pkg === undefined) {
         return;
     }
 

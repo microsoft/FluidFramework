@@ -14,6 +14,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
@@ -30,7 +31,7 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [],
+    scopes: [ScopeType.DocWrite],
     tenantId: "",
     user: {
         id: "",
@@ -54,6 +55,10 @@ export class Replayer {
 
     public set currentReplayedOp(op: number) {
         this.currentReplayOp = op;
+    }
+
+    public get ops(): readonly Readonly<ISequencedDocumentMessage>[] {
+        return this.documentStorageService.ops;
     }
 
     /**

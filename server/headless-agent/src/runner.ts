@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import { Deferred } from "@fluidframework/common-utils";
+import { IQueueMessage } from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import * as winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";
 import { ICache } from "./redisCache";
 
 export class HeadlessRunner implements utils.IRunner {
-    private running = new Deferred<void>();
-    private permission: Set<string>;
-    private puppetCache = new Map<string, PuppetMaster>();
+    private readonly running = new Deferred<void>();
+    private readonly permission: Set<string>;
+    private readonly puppetCache = new Map<string, PuppetMaster>();
 
     constructor(
-        private workerConfig: any,
-        private messageReceiver: core.ITaskMessageReceiver,
-        private cache: ICache) {
+        private readonly workerConfig: any,
+        private readonly messageReceiver: core.ITaskMessageReceiver,
+        private readonly cache: ICache) {
         this.permission = new Set(workerConfig.permission as string[]);
     }
 
@@ -65,6 +65,7 @@ export class HeadlessRunner implements utils.IRunner {
     }
 
     private launchPuppetMaster(requestMessage: IQueueMessage, task: string) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         PuppetMaster.create(
             requestMessage.documentId,
             requestMessage.tenantId,
@@ -73,7 +74,6 @@ export class HeadlessRunner implements utils.IRunner {
             this.workerConfig.key,
             this.cache)
             .then((puppet) => {
-
                 puppet.launch().then(() => {
                     const cacheKey = this.createKey(
                         requestMessage.tenantId,
