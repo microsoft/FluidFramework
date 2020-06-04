@@ -58,7 +58,7 @@ export class UrlRegistry implements IComponentRegistry {
         const codeDetails: IFluidCodeDetails = {
             package: fluidPackage,
             config:{
-                cdn:"https://pragueauspkn-3873244262.azureedge.net",
+                cdn:"https://pragueauspkn.azureedge.net",
             },
         };
         const fluidModule = await this.webloader.load(codeDetails);
