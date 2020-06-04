@@ -15,11 +15,11 @@ import {
 export function getByValue<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
->(searchValue: string, map?: Map<keyof SV, IFluidConverter<SV,SF>>) {
-    if (map !== undefined) {
-        for (const [key, value] of map.entries()) {
-            if (value.fluidKey === searchValue)
-            {return key;}
+>(searchValue: string, map: Map<keyof SV, IFluidConverter<SV,SF>>) {
+    for (const [key, value] of map.entries()) {
+        if (value.fluidKey === searchValue)
+        {
+            return key;
         }
     }
 }

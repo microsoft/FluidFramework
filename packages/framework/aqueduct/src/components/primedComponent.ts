@@ -15,6 +15,7 @@ import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
+
 /**
  * PrimedComponent is a base component that is primed with a root directory and task manager. It
  * ensures that both are created and ready before you can access it.
@@ -59,6 +60,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         if (!this.internalRoot) {
             throw new Error(this.getUninitializedErrorString(`root`));
         }
+
         return this.internalRoot;
     }
 
