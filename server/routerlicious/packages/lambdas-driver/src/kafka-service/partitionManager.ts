@@ -9,7 +9,8 @@ import {
     IQueuedMessage,
     IPartition,
     IPartitionWithEpoch,
-    IPartitionLambdaFactory } from "@fluidframework/server-services-core";
+    IPartitionLambdaFactory
+} from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Partition } from "./partition";
