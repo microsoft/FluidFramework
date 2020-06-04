@@ -6,6 +6,7 @@
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";
+/* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -14,6 +15,7 @@ import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
+/* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
     git: {
@@ -30,6 +32,7 @@ export interface IRoutes {
     };
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(store: nconf.Provider, tenantService: ITenantService, cache: ICache): IRoutes {
     return {
         git: {

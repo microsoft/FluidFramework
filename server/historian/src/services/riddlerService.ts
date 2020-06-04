@@ -7,7 +7,7 @@ import * as request from "request-promise-native";
 import { ITenant, ITenantService } from "./definitions";
 
 export class RiddlerService implements ITenantService {
-    constructor(private endpoint: string) {
+    constructor(private readonly endpoint: string) {
     }
 
     public async getTenant(tenantId: string, token: string): Promise<ITenant> {
@@ -30,6 +30,7 @@ export class RiddlerService implements ITenantService {
     }
 
     private async verifyToken(tenantId: string, token: string): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!token) {
             return;
         }

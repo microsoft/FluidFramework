@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHeader } from "@microsoft/fluid-gitresources";
+import { IHeader } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../../services";
@@ -18,7 +18,7 @@ export function create(store: nconf.Provider, tenantService: ITenantService, cac
         sha: string,
         useCache: boolean): Promise<IHeader> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache);
-        return await service.getHeader(sha, useCache);
+        return service.getHeader(sha, useCache);
     }
 
     async function getTree(

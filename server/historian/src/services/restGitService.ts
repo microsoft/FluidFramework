@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
 import * as querystring from "querystring";
+import * as git from "@fluidframework/gitresources";
 import * as request from "request";
 import * as winston from "winston";
 import { ICache, IStorage } from "./definitions";
 
 // We include the historian version in the user-agent string
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageDetails = require("../../package.json");
 const userAgent = `Historian/${packageDetails.version}`;
 
@@ -31,24 +31,24 @@ function endsWith(value: string, endings: string[]): boolean {
 }
 
 export class RestGitService {
-    private authHeader: string;
+    private readonly authHeader: string;
 
-    constructor(private storage: IStorage, private cache: ICache) {
+    constructor(private readonly storage: IStorage, private readonly cache: ICache) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (storage.credentials) {
-            const token = new Buffer(`${storage.credentials.user}:${storage.credentials.password}`);
+            const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             this.authHeader = `Basic ${token.toString("base64")}`;
         }
     }
 
-    public getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
+    public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
         return this.resolve(
             sha,
-            () => this.get<git.IBlob>(`/repos/${this.getRepoPath()}/git/blobs/${encodeURIComponent(sha)}`),
+            async () => this.get<git.IBlob>(`/repos/${this.getRepoPath()}/git/blobs/${encodeURIComponent(sha)}`),
             useCache);
     }
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-
         const createResults = await this.post<git.ICreateBlobResponse>(
             `/repos/${this.getRepoPath()}/git/blobs`,
             blob);
@@ -61,12 +61,12 @@ export class RestGitService {
         return createResults;
     }
 
-    public getContent(path: string, ref: string): Promise<any> {
+    public async getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
         return this.get(`/repos/${this.getRepoPath()}/contents/${path}?${query}`);
     }
 
-    public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+    public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         const query = querystring.stringify({
             count,
             sha,
@@ -77,13 +77,12 @@ export class RestGitService {
     public async getCommit(sha: string, useCache: boolean): Promise<git.ICommit> {
         return this.resolve(
             sha,
-            () => this.get<git.ICommit>(
+            async () => this.get<git.ICommit>(
                 `/repos/${this.getRepoPath()}/git/commits/${encodeURIComponent(sha)}`),
             useCache);
     }
 
     public async createCommit(commitParams: git.ICreateCommitParams): Promise<git.ICommit> {
-
         const commit = await this.post<git.ICommit>(
             `/repos/${this.getRepoPath()}/git/commits`,
             commitParams);
@@ -102,31 +101,31 @@ export class RestGitService {
         return commit;
     }
 
-    public getRefs(): Promise<git.IRef[]> {
+    public async getRefs(): Promise<git.IRef[]> {
         return this.get(`/repos/${this.getRepoPath()}/git/refs`);
     }
 
-    public getRef(ref: string): Promise<git.IRef> {
+    public async getRef(ref: string): Promise<git.IRef> {
         return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 
-    public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
-    public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
         return this.patch(`/repos/${this.getRepoPath()}/git/refs/${ref}`, params);
     }
 
-    public deleteRef(ref: string): Promise<void> {
+    public async deleteRef(ref: string): Promise<void> {
         return this.delete(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
     }
 
-    public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
+    public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
         return this.post(`/repos/${this.getRepoPath()}/git/tags`, tag);
     }
 
-    public getTag(tag: string): Promise<git.ITag> {
+    public async getTag(tag: string): Promise<git.ITag> {
         return this.get(`/repos/${this.getRepoPath()}/git/tags/${tag}`);
     }
 
@@ -138,12 +137,11 @@ export class RestGitService {
         return tree;
     }
 
-    public getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
-
+    public async getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
         const key = recursive ? `${sha}:recursive` : sha;
         return this.resolve(
             key,
-            () => {
+            async () => {
                 const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
                 return this.get<git.ITree>(
                     `/repos/${this.getRepoPath()}/git/trees/${encodeURIComponent(sha)}?${query}`);
@@ -190,7 +188,7 @@ export class RestGitService {
                 let quorumValues: string;
 
                 baseTree.tree.forEach((entry) => {
-                    if (entry.path.indexOf("quorum") !== -1) {
+                    if (entry.path.includes("quorum")) {
                         quorumValuesSha.push(entry.sha);
                     }
 
@@ -235,11 +233,11 @@ export class RestGitService {
         return `${encodeURIComponent(this.storage.owner)}/${encodeURIComponent(this.storage.repository)}`;
     }
 
-    private getHeaderBlobs(tree: git.ITree, useCache: boolean): Promise<git.IBlob[]> {
+    private async getHeaderBlobs(tree: git.ITree, useCache: boolean): Promise<git.IBlob[]> {
         // List of blobs that will be included within the cached list of headers
         const includeBlobs = [".attributes", ".messages", "header"];
 
-        const blobsP: Array<Promise<git.IBlob>> = [];
+        const blobsP: Promise<git.IBlob>[] = [];
         for (const entry of tree.tree) {
             if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
                 const blobP = this.getBlob(entry.sha, useCache);
@@ -250,7 +248,7 @@ export class RestGitService {
         return Promise.all(blobsP);
     }
 
-    private get<T>(url: string): Promise<T> {
+    private async get<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
@@ -264,7 +262,7 @@ export class RestGitService {
         return this.request(options, 200);
     }
 
-    private post<T>(url: string, requestBody: any): Promise<T> {
+    private async post<T>(url: string, requestBody: any): Promise<T> {
         const options: request.OptionsWithUrl = {
             body: requestBody,
             headers: {
@@ -280,7 +278,7 @@ export class RestGitService {
         return this.request(options, 201);
     }
 
-    private delete<T>(url: string): Promise<T> {
+    private async delete<T>(url: string): Promise<T> {
         const options: request.OptionsWithUrl = {
             headers: {
                 "User-Agent": userAgent,
@@ -293,7 +291,7 @@ export class RestGitService {
         return this.request(options, 204);
     }
 
-    private patch<T>(url: string, requestBody: any): Promise<T> {
+    private async patch<T>(url: string, requestBody: any): Promise<T> {
         const options: request.OptionsWithUrl = {
             body: requestBody,
             headers: {
@@ -313,16 +311,18 @@ export class RestGitService {
      * Updates the provided options with authorization information
      */
     private authorize(options: request.OptionsWithUrl) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this.authHeader) {
             options.headers.Authorization = this.authHeader;
         }
     }
 
-    private request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
+    private async request<T>(options: request.OptionsWithUrl, statusCode: number): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             request(
                 options,
                 (error, response, body) => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (error) {
                         return reject(error);
                     } else if (response.statusCode !== statusCode) {
@@ -350,9 +350,11 @@ export class RestGitService {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
+                // eslint-disable-next-line no-null/no-null
                 return null;
             });
 
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (cachedValue) {
                 winston.info(`Resolving ${key} from cache`);
                 return cachedValue;

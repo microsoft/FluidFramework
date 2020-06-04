@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "./imports";
-import { strict as assert } from "assert";
 import { insertFragmented } from "../../test/utils";
 const process = require("process");
 
@@ -16,42 +15,39 @@ let cached: any;
  * Paranoid defense against dead code elimination.
  */
 export function consume(value: any) {
-  count++;
-  if (count >>> 0 === 0) {
-    cached = value;
-  }
+    count++;
+    if (count >>> 0 === 0) {
+        cached = value;
+    }
 }
 
 // Prevent v8"s optimizer from identifying "cached" as an unused value.
 process.on("exit", () => {
-  if (count >>> 0 === 0) {
-    console.log(`Ignore this: ${cached}`);
-  }
+    if (count >>> 0 === 0) {
+        console.log(`Ignore this: ${cached}`);
+    }
 });
 
 export function randomId() {
-  // tslint:disable-next-line:insecure-random
-  return Math.random()
-    .toString(36)
-    .slice(2);
+    // tslint:disable-next-line:insecure-random
+    return Math.random()
+        .toString(36)
+        .slice(2);
 }
 
-export function createContiguousMatrix(numRows: number, numCols: number) {
-  const runtime = new MockRuntime();
-  const matrix = new SharedMatrixFactory().create(runtime, randomId()) as SharedMatrix;
-  matrix.insertRows(0, numRows);
-  matrix.insertCols(0, numCols);
-  return matrix;
+export function createMatrix() {
+    return new SharedMatrixFactory().create(new MockComponentRuntime(), randomId()) as SharedMatrix;
 }
 
-export function createFragmentedMatrix(numRows: number, numCols: number) {
-  const runtime = new MockRuntime();
-  const matrix = new SharedMatrixFactory().create(runtime, randomId()) as SharedMatrix;
+export function createContiguousMatrix(rowCount: number, colCount: number) {
+    const matrix = createMatrix();
+    matrix.insertRows(0, rowCount);
+    matrix.insertCols(0, colCount);
+    return matrix;
+}
 
-  insertFragmented(matrix, numRows, numCols);
-
-  assert.equal(matrix.numRows, numRows);
-  assert.equal(matrix.numCols, numCols);
-
-  return matrix;
+export function createFragmentedMatrix(rowCount: number, colCount: number) {
+    const matrix = createMatrix();
+    insertFragmented(matrix, rowCount, colCount);
+    return matrix;
 }

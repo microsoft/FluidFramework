@@ -33,6 +33,7 @@ import {
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
@@ -45,7 +46,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-
 import { ReplayArgs } from "./replayArgs";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -154,20 +154,21 @@ class ContainerUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        throw new Error("Not implemented");
     }
 }
 
 /**
  * Helper class holding container and providing load / snapshot capabilities
  */
-class Document {
+class Document  {
     private container: Container;
     private replayer: Replayer;
     private documentSeqNumber = 0;
     private from = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
+    private originalSummarySeqs: number[];
 
     public constructor(
         protected readonly args: ReplayArgs,
@@ -185,6 +186,10 @@ class Document {
 
     public get logger() {
         return this.docLogger;
+    }
+
+    public get originalSummarySequenceNumbers(): readonly number[] {
+        return this.originalSummarySeqs;
     }
 
     public getFileName() {
@@ -209,8 +214,17 @@ class Document {
             this.containerDescription,
             errorHandler);
 
-        this.from = this.container.deltaManager.referenceSequenceNumber;
+        this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
+        this.originalSummarySeqs = [];
+        this.replayer.ops.forEach((op)=>{
+            if (op?.type === MessageType.Summarize) {
+                const seq = op.referenceSequenceNumber;
+                if (seq !== undefined) {
+                    this.originalSummarySeqs.push(seq);
+                }
+            }
+        });
 
         this.replayer.currentReplayedOp = this.from;
 
@@ -235,8 +249,7 @@ class Document {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot() {
+    public async snapshot() {
         return this.container.snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
             !this.args.incremental /* generateFullTreeNoOtimizations */);
@@ -294,6 +307,11 @@ class Document {
                 ["@ms/undo-stack", Promise.resolve(chaincode)],
                 ["@ms/commanding-surface", Promise.resolve(chaincode)],
                 ["@ms/dias", Promise.resolve(chaincode)],
+                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
+                ["@fluidx/tasks", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
+                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
@@ -436,7 +454,7 @@ export class ReplayTool {
 
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
-        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
+        if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
             description = this.args.version ? this.args.version : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
@@ -484,13 +502,21 @@ export class ReplayTool {
     }
 
     private async mainCycle() {
-        let nextSnapPoint = this.args.from;
-
+        const originalSummaries =
+            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
+        let nextSnapPoint;
+        do  {
+            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
+        } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                nextSnapPoint = currentOp + this.args.snapFreq;
+                if (this.args.snapFreq !== undefined) {
+                    nextSnapPoint = currentOp + this.args.snapFreq;
+                } else {
+                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
+                }
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -558,7 +584,10 @@ export class ReplayTool {
         const op = content.op;
 
         // Add extra container
-        if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
+        if (!final && (
+            this.args.snapFreq !== undefined
+            && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0)
+        ) {
             const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
             const storage = new storageClass(content.snapshot);
             const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);

@@ -4,18 +4,18 @@
  */
 
 import assert from "assert";
-import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
     IDeltaManager,
+    IDeltaManagerEvents,
     IDeltaQueue,
     CriticalContainerError,
     IThrottlingWarning,
     ErrorType,
 } from "@fluidframework/container-definitions";
-import { PerformanceEvent, performanceNow, TelemetryLogger } from "@fluidframework/common-utils";
+import { PerformanceEvent, performanceNow, TelemetryLogger, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -96,10 +96,24 @@ export enum ReconnectMode {
 }
 
 /**
+ * Includes events emitted by the concrete implementation DeltaManager
+ * but not exposed on the public interface IDeltaManager
+ */
+export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
+    (event: "throttled", listener: (error: IThrottlingWarning) => void);
+    (event: "closed", listener: (error?: CriticalContainerError) => void);
+}
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
-export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+export class DeltaManager
+    extends TypedEventEmitter<IDeltaManagerInternalEvents>
+    implements
+        IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        IEventProvider<IDeltaManagerInternalEvents>
+{
     public get disposed() { return this.isDisposed; }
 
     public readonly clientDetails: IClientDetails;
@@ -133,7 +147,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
-    private baseSequenceNumber: number = 0;
+    private _lastSequenceNumber: number = 0;
     private baseTerm: number = 0;
 
     // The sequence number we initially loaded from
@@ -180,8 +194,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.initSequenceNumber;
     }
 
-    public get referenceSequenceNumber(): number {
-        return this.baseSequenceNumber;
+    public get lastSequenceNumber(): number {
+        return this._lastSequenceNumber;
     }
 
     public get referenceTerm(): number {
@@ -359,21 +373,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal.pause();
     }
 
-    on(event: "throttled", listener: (error: IThrottlingWarning) => void);
-    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
-    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
-    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
-    on(event: "closed", listener: (error?: CriticalContainerError) => void);
-    on(event: "pong" | "processTime", listener: (latency: number) => void);
-    on(event: "connect", listener: (details: IConnectionDetails) => void);
-    on(event: "disconnect", listener: (reason: string) => void);
-    on(event: "readonly", listener: (readonly: boolean) => void);
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     public dispose() {
         assert.fail("Not implemented.");
         this.isDisposed = true;
@@ -391,7 +390,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
-        this.baseSequenceNumber = sequenceNumber;
+        this._lastSequenceNumber = sequenceNumber;
         this.baseTerm = term;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
@@ -594,7 +593,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: JSON.stringify(contents),
             metadata,
-            referenceSequenceNumber: this.baseSequenceNumber,
+            referenceSequenceNumber: this._lastSequenceNumber,
             traces,
             type,
         };
@@ -916,7 +915,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Always connect in write mode after getting nacked.
-        connection.on("nack", (message: INack) => {
+        connection.on("nack", (documentId: string, messages: INack[]) => {
+            const message = messages[0];
             // TODO: we should remove this check when service updates?
             if (this._readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
@@ -1100,7 +1100,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // We did not setup handler yet.
             // This happens when we connect to web socket faster than we get attributes for container
             // and thus faster than attachOpHandler() is called
-            // this.baseSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
+            // this._lastSequenceNumber is still zero, so we can't rely on this.fetchMissingDeltas()
             // to do the right thing.
             this.pending = this.pending.concat(messages);
             return;
@@ -1161,9 +1161,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 "Incoming local client seq# > generated by this client");
 
             this.clientSequenceNumberObserved = clientSequenceNumber;
-            if (clientSequenceNumber === this.clientSequenceNumber) {
-                this.emit("allSentOpsAckd");
-            }
         }
 
         // TODO Remove after SPO picks up the latest build.
@@ -1184,8 +1181,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert(this.minSequenceNumber <= message.minimumSequenceNumber, "msn moves backwards");
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1, "non-seq seq#");
-        this.baseSequenceNumber = message.sequenceNumber;
+        assert.equal(message.sequenceNumber, this._lastSequenceNumber + 1, "non-seq seq#");
+        this._lastSequenceNumber = message.sequenceNumber;
 
         // Back-compat for older server with no term
         this.baseTerm = message.term === undefined ? 1 : message.term;

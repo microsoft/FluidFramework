@@ -18,7 +18,6 @@ import {
     IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -45,6 +44,8 @@ import {
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
 import {
+    BlobCacheStorageService,
+    buildSnapshotTree,
     CreateContainerError,
     readAndParse,
     OnlineStatus,
@@ -53,7 +54,6 @@ import {
     combineAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
-    buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
     QuorumProxy,
@@ -92,7 +92,6 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 
 export { ErrorWithProps, CreateContainerError } from "@fluidframework/driver-utils";
 
@@ -441,11 +440,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         if (error !== undefined) {
+            // Log current sequence number - useful if we have access to a file to understand better
+            // what op caused trouble (if it's related to op processing).
+            // Runtime may provide sequence number as part of error object - this may not match DeltaManager
+            // knowledge as old ops are processed when components / DDS are re-hydrated when delay-loaded
             this.logger.sendErrorEvent(
                 {
                     eventName: "ContainerClose",
-                    // record sequence number for easier debugging
-                    sequenceNumber: this._deltaManager.referenceSequenceNumber,
+                    sequenceNumber: error.sequenceNumber ?? this._deltaManager.lastSequenceNumber,
                 },
                 error,
             );
@@ -528,11 +530,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        if (!path) {
-            return { mimeType: "fluid/container", status: 200, value: this };
-        }
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+            if (!path) {
+                return { mimeType: "fluid/container", status: 200, value: this };
+            }
 
-        return this.context!.request(path);
+            return this.context!.request(path);
+        });
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -696,16 +700,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState.snapshot) {
-            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
+            snapshot = await buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         if (blobs.size > 0) {
-            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, blobs);
+            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, Promise.resolve(blobs));
         }
         const attributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
 
@@ -729,7 +733,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Generate base snapshot message
         const deltaDetails =
-            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+            `${this._deltaManager.lastSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
@@ -788,7 +792,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const documentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            sequenceNumber: this._deltaManager.lastSequenceNumber,
             term: this._deltaManager.referenceTerm,
         };
         entries.push({
@@ -1117,15 +1121,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component: IFluidModule;
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
-        try {
-            component = await this.codeLoader.load(pkg);
-        } catch (error) {
-            perfEvent.cancel({}, error);
-            throw error;
-        }
-        perfEvent.end();
+        const component = await PerformanceEvent.timedExecAsync(this.logger, { eventName: "CodeLoad" },
+            async () => this.codeLoader.load(pkg),
+        );
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {

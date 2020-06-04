@@ -4,17 +4,14 @@
  */
 
 import {
-    AuthorizationError,
-    FileNotFoundOrAccessDeniedError,
+    NetworkErrorBasic,
     GenericNetworkError,
-    InvalidFileNameError,
-    OfflineError,
-    OutOfStorageError,
+    NonRetryableError,
     isOnline,
     createGenericNetworkError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { CriticalContainerError } from "@fluidframework/container-definitions";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -41,23 +38,25 @@ export function createOdspNetworkError(
     switch (statusCode) {
         case 401:
         case 403:
-            error = new AuthorizationError(errorMessage, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
             break;
         case 404:
-            error = new FileNotFoundOrAccessDeniedError(errorMessage, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, canRetry);
             break;
         case 507:
-            error = new OutOfStorageError(errorMessage, canRetry);
+            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, canRetry);
             break;
+        case 413:
+            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, canRetry);
         case 414:
         case invalidFileNameStatusCode:
-            error = new InvalidFileNameError(errorMessage, canRetry);
+            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, canRetry);
             break;
         case offlineFetchFailureStatusCode:
-            error = new OfflineError(errorMessage, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, canRetry);
             break;
 
         case fetchFailureStatusCode:

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import { Deferred } from "@fluidframework/common-utils";
+import * as core from "@fluidframework/server-services-core";
+import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
@@ -16,13 +16,13 @@ export class AdminRunner implements utils.IRunner {
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: IWebServerFactory,
-        private config: Provider,
-        private port: string | number,
-        private mongoManager: core.MongoManager) {
+        private readonly serverFactory: IWebServerFactory,
+        private readonly config: Provider,
+        private readonly port: string | number,
+        private readonly mongoManager: core.MongoManager) {
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         const admin = app.create(
@@ -42,7 +42,7 @@ export class AdminRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
             () => {
@@ -64,8 +64,8 @@ export class AdminRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? "Pipe " + this.port
-            : "Port " + this.port;
+            ? `Pipe ${  this.port}`
+            : `Port ${  this.port}`;
 
         // handle specific listen errors with friendly messages
         switch (error.code) {
@@ -86,8 +86,8 @@ export class AdminRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        winston.info("Listening on " + bind);
+            ? `pipe ${  addr}`
+            : `port ${  addr.port}`;
+        winston.info(`Listening on ${  bind}`);
     }
 }

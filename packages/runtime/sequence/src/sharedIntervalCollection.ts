@@ -116,7 +116,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel = new MapKernel(
             runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             [new IntervalCollectionValueType()],
         );
     }
@@ -163,11 +163,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    protected onConnect(pending: any[]) {
-        debug(`${this.id} is now connected`);
-        for (const message of pending) {
-            this.intervalMapKernel.trySubmitMessage(message);
-        }
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
     protected onDisconnect() {
@@ -183,9 +180,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel.populate(data);
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local);
+            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
         }
     }
 

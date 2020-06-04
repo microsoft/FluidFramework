@@ -101,7 +101,7 @@ class ReplayProcessArgs extends ReplayArgs {
                     break;
                 case "--stressTest":
                     this.verbose = false;
-                    if (this.snapFreq === Number.MAX_SAFE_INTEGER) {
+                    if (this.snapFreq === undefined) {
                         this.snapFreq = 50;
                     }
                     break;

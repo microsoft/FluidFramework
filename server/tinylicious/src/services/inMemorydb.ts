@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Collection } from "./inMemorycollection";
 
 export class InMemoryDb extends EventEmitter implements IDb {

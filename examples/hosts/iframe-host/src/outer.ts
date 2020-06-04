@@ -86,7 +86,7 @@ export async function loadDiv(divId: string) {
     const pkg: IFluidCodeDetails = {
         package: "@fluid-example/todo@^0.15.0",
         config:{
-            "@fluid-example:cdn":"https://pragueauspkn-3873244262.azureedge.net",
+            "@fluid-example:cdn":"https://pragueauspkn.azureedge.net",
         },
     };
 

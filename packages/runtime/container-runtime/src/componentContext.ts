@@ -40,7 +40,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTracker } from "@fluidframework/runtime-utils";
+import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -120,7 +120,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
         return this._containerRuntime.submitFn;
     }
 
@@ -335,14 +335,14 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local);
+            return this.componentRuntime!.process(message, local, localOpMetadata);
         } else {
             assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -410,10 +410,10 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any): number {
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content);
+        return this.submitOp(type, content, localOpMetadata);
     }
 
     /**
@@ -428,7 +428,7 @@ export abstract class ComponentContext extends EventEmitter implements
         this.verifyNotClosed();
 
         // Get the latest sequence number.
-        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+        const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
@@ -490,7 +490,7 @@ export abstract class ComponentContext extends EventEmitter implements
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false);
+                componentRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -552,7 +552,7 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any): number {
+    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -561,7 +561,16 @@ export abstract class ComponentContext extends EventEmitter implements
                 type,
             },
         };
-        return this._containerRuntime.submitFn(MessageType.Operation, envelope);
+        return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
+    }
+
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+
+        // back-compat: 0.18 components
+        if (this.componentRuntime.reSubmit) {
+            this.componentRuntime.reSubmit(type, content, localOpMetadata);
+        }
     }
 
     private verifyNotClosed() {
@@ -580,7 +589,7 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -616,7 +625,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.initSnapshotValue;
+                tree = await this.initSnapshotValue;
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {

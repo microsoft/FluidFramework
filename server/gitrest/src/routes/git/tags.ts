@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateTagParams, ITag } from "@microsoft/fluid-gitresources";
+import { ICreateTagParams, ITag } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";
@@ -11,6 +11,7 @@ import * as utils from "../../utils";
 
 async function tagToITag(tag: git.Tag): Promise<ITag> {
     const tagger = tag.tagger() as any;
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const target = await tag.target();
 
     return {
@@ -36,7 +37,6 @@ async function createTag(
     owner: string,
     repo: string,
     tag: ICreateTagParams): Promise<ITag> {
-
     const date = Date.parse(tag.tagger.date);
     if (isNaN(date)) {
         return Promise.reject("Invalid input");
@@ -64,6 +64,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
 
     // https://developer.github.com/v3/git/tags/
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.post("/repos/:owner/:repo/git/tags", (request, response, next) => {
         const blobP = createTag(
             repoManager,
@@ -80,6 +81,7 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
             });
     });
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     router.get("/repos/:owner/:repo/git/tags/*", (request, response, next) => {
         const blobP = getTag(repoManager, request.params.owner, request.params.repo, request.params[0]);
         return blobP.then(

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@microsoft/fluid-gitresources";
 import * as fs from "fs";
-import * as git from "nodegit";
 import * as path from "path";
 import * as util from "util";
+import * as git from "nodegit";
+import * as resources from "@fluidframework/gitresources";
 
 const exists = util.promisify(fs.exists);
 
@@ -60,8 +60,10 @@ export async function commitToICommit(commit: git.Commit): Promise<resources.ICo
         author: authorToIAuthor(commit.author(), commit.date()),
         committer: committerToICommitter(commit.committer(), commit.date()),
         message: commit.message(),
-        // tslint:disable-next-line
-        parents: commit.parents() && commit.parents().length > 0 ? commit.parents().map((parent) => oidToCommitHash(parent)) : null,
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        parents: commit.parents() && commit.parents().length > 0 ?
+            // eslint-disable-next-line no-null/no-null
+            commit.parents().map((parent) => oidToCommitHash(parent)) : null,
         sha: commit.id().tostrS(),
         tree: {
             sha: tree.id().tostrS(),
@@ -88,7 +90,7 @@ export class RepositoryManager {
     // Cache repositories to allow for reuse
     private repositoryCache: { [key: string]: Promise<git.Repository> } = {};
 
-    constructor(private baseDir) {
+    constructor(private readonly baseDir) {
     }
 
     public async create(owner: string, name: string): Promise<git.Repository> {

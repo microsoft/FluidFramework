@@ -43,17 +43,25 @@ export interface IOrdererConnection {
     readonly serviceConfiguration: IServiceConfiguration;
 
     /**
+     * Sends the client join op for this connection
+     */
+    connect(): Promise<void>;
+
+    /**
      * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially
      * so long as their total size fits under the maxMessageSize.
      */
-    order(message: IDocumentMessage[]): void;
+    order(message: IDocumentMessage[]): Promise<void>;
 
     /**
      * Error event Handler.
      */
     once(event: "error", listener: (...args: any[]) => void): void;
 
-    disconnect(): void;
+    /**
+     * Sends the client leave op for this connection
+     */
+    disconnect(): Promise<void>;
 }
 
 export interface IOrderer {

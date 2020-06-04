@@ -14,6 +14,7 @@ export enum MonoRepoKind {
 
 export class MonoRepo {
     public readonly packages: Package[] = [];
+    public readonly version: string;
     constructor(public readonly kind: MonoRepoKind, public readonly repoPath: string) {
         const lernaPath = path.join(repoPath, "lerna.json");
         if (!existsSync(lernaPath)) {
@@ -25,6 +26,7 @@ export class MonoRepo {
             const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
             this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), this));
         }
+        this.version = lerna.version;
     }
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { MongoManager } from "@fluidframework/server-services-core";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam } from "../../utils";

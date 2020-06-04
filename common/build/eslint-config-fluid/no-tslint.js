@@ -70,19 +70,7 @@ module.exports = {
         ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/indent": [
-            "error",
-            4,
-            {
-                "FunctionDeclaration": {
-                    "parameters": "first"
-                },
-                "FunctionExpression": {
-                    "parameters": "first"
-                },
-                "SwitchCase": 1
-            }
-        ],
+        "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/member-delimiter-style": "off",
         "@typescript-eslint/no-dynamic-delete": "error",
@@ -224,7 +212,7 @@ module.exports = {
             "error",
             "smart"
         ],
-        "func-call-spacing": "error",
+        "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
         "guard-for-in": "error",
         "id-match": "error",
         "linebreak-style": "off",
