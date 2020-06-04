@@ -689,15 +689,15 @@ export class Client {
             this.mergeTree.walkAllSegments(this.mergeTree.root, (seg)=>{
                 if (seg !== segment) {
                     // segment isn't local, so count it
-                    if (seg.localSeq === undefined && seg.localRemoveSeq === undefined) {
+                    if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
                         if (seg.removedSeq === undefined) {
                             segmentPosition += seg.cachedLength;
                             return true;
                         }
                     }
                     // segment is remove locally before this op, so skip it
-                    if (seg.localRemoveSeq !== undefined) {
-                        if (seg.localRemoveSeq <= segmentGroup.localSeq) {
+                    if (seg.localRemovedSeq !== undefined) {
+                        if (seg.localRemovedSeq <= segmentGroup.localSeq) {
                             return true;
                         }
                     }
