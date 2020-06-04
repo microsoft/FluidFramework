@@ -49,7 +49,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
  */
-export interface IFluidCodeResolver{
+export interface IFluidCodeResolver {
     /**
      * Resolves a fluid code details into a form that can be loaded
      * @param details - The fluid code details to resolve

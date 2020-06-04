@@ -95,7 +95,7 @@ interface IPendingRecord<T> {
  * Key is the acquireId from when it was acquired
  * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-type JobTrackingInfo<T> = Map<string, {value: T, clientId: string | undefined}>;
+type JobTrackingInfo<T> = Map<string, { value: T, clientId: string | undefined }>;
 const idForLocalUnattachedClient = undefined;
 
 /**
@@ -294,7 +294,7 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) { }
 
     protected async loadCore(
         branchId: string,

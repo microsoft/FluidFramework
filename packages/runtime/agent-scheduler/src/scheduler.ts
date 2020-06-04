@@ -79,7 +79,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
-    private readonly locallyRunnableTasks = new Map<string,() => Promise<void>>();
+    private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
 
     // Set of registered tasks client is currently running.
     // It's subset of this.locallyRunnableTasks
@@ -395,8 +395,7 @@ export class TaskManager implements ITaskManager {
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
-        private readonly context: IComponentContext)
-    { }
+        private readonly context: IComponentContext) { }
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {

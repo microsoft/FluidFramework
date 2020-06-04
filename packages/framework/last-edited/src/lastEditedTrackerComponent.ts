@@ -23,7 +23,7 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
     private static readonly factory = new PrimedComponentFactory(
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
-        [ SharedSummaryBlock.getFactory() ],
+        [SharedSummaryBlock.getFactory()],
         {},
     );
 

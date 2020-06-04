@@ -53,7 +53,7 @@ export function isSpoUrl(url: string): boolean {
  * Whether or not the given URL is a valid ODC URL
  * @param url - The URL to check
  */
-export function isOdcUrl(url: string|URL): boolean {
+export function isOdcUrl(url: string | URL): boolean {
     const urlObj = typeof url === "string" ? new URL(url) : url;
 
     if (!isOdcOrigin(urlObj.origin)) {
@@ -77,7 +77,7 @@ export function isOdcUrl(url: string|URL): boolean {
  * Returns undefined for invalid/malformed URLs.
  * @param url - The (raw) URL to parse
  */
-export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts|undefined> {
+export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = url.pathname;
 
     // Joinsession like URL

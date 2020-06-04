@@ -1252,7 +1252,7 @@ export class MergeTree {
                 // and update the block's info.
                 for (let childIndex = 0;
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
-                    childIndex++, nodeIndex++                               // Advance to next child & node
+                    childIndex++ , nodeIndex++                               // Advance to next child & node
                 ) {
                     // Insert the next node into the current block
                     this.addNode(block, nodes[nodeIndex]);
@@ -1973,7 +1973,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker> this.getMarkerFromId(relativePos.id);
+            marker = <Marker>this.getMarkerFromId(relativePos.id);
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);

@@ -60,7 +60,7 @@ export class SnapshotLoader {
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             return this.loadTardis(rawMessagesP, branch);
         } else {
-            rawMessagesP.catch(()=>{});
+            rawMessagesP.catch(() => { });
             return [];
         }
     }
@@ -133,7 +133,7 @@ export class SnapshotLoader {
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
                 ? chunk.headerMetadata.minSequenceNumber
-                : chunk.headerMetadata.sequenceNumber ,
+                : chunk.headerMetadata.sequenceNumber,
             /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
             branching);
 

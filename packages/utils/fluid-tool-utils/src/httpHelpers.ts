@@ -20,10 +20,12 @@ export function createTrackedServer(port: number, requestListener: http.RequestL
         socket.on("close", () => sockets.delete(socket));
     });
 
-    return { server, sockets, fullyClose() {
-        server.close();
-        sockets.forEach((socket) => socket.destroy());
-    } };
+    return {
+        server, sockets, fullyClose() {
+            server.close();
+            sockets.forEach((socket) => socket.destroy());
+        }
+    };
 }
 export type OnceListenerHandler<T> = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<T>;
 export type OnceListenerResult<T> = Promise<() => Promise<T>>;

@@ -37,7 +37,7 @@ export class MultiUrlResolver implements IUrlResolver {
         return urlResolver;
     }
 
-    private constructor(private readonly urlResolvers: IUrlResolver[]) {}
+    private constructor(private readonly urlResolvers: IUrlResolver[]) { }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         return configurableUrlResolver(this.urlResolvers, request);

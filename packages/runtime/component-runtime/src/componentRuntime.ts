@@ -61,8 +61,7 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
-    IComponentRuntime, IComponentHandleContext
-{
+    IComponentRuntime, IComponentHandleContext {
     public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
@@ -583,16 +582,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         switch (type) {
             case MessageType.Operation:
-            {
-                // For Operations, find the right channel and trigger resubmission on it.
-                const envelope = content as IEnvelope;
-                const channelContext = this.contexts.get(envelope.address);
-                strongAssert(channelContext, "There should be a channel context for the op");
+                {
+                    // For Operations, find the right channel and trigger resubmission on it.
+                    const envelope = content as IEnvelope;
+                    const channelContext = this.contexts.get(envelope.address);
+                    strongAssert(channelContext, "There should be a channel context for the op");
 
-                channelContext.reSubmit(envelope.contents, localOpMetadata);
+                    channelContext.reSubmit(envelope.contents, localOpMetadata);
 
-                break;
-            }
+                    break;
+                }
             case MessageType.Attach:
                 // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);

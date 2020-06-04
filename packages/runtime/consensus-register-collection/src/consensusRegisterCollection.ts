@@ -238,7 +238,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected registerCore() {}
+    protected registerCore() { }
 
     protected onDisconnect() {
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
@@ -251,7 +251,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) { }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {

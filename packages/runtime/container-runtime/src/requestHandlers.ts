@@ -13,7 +13,7 @@ import { RequestParser } from "./requestParser";
  * the route, or fulling the specific request.
  */
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
-=> Promise<IResponse | undefined>;
+    => Promise<IResponse | undefined>;
 
 export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {

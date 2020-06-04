@@ -125,8 +125,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         return `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
             odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-            odspResolvedUrl.itemId,
-        )}&path=${encodeURIComponent("/")}`;
+                odspResolvedUrl.itemId,
+            )}&path=${encodeURIComponent("/")}`;
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

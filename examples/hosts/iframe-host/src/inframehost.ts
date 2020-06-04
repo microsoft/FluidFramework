@@ -9,7 +9,7 @@ import {
 import { Loader, Container } from "@fluidframework/container-loader";
 import {
     IProxyLoaderFactory,
-    ICodeLoader ,
+    ICodeLoader,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
@@ -65,7 +65,7 @@ class ProxyCodeLoader implements ICodeLoader {
     }
 }
 
-export interface IFrameOuterHostConfig{
+export interface IFrameOuterHostConfig {
     documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
     urlResolver: IUrlResolver | IUrlResolver[];
 
@@ -106,7 +106,7 @@ export class IFrameOuterHost {
 
         // don't try to connect until the iframe does, so they get existing false
 
-        await new Promise((resolve)=>setTimeout(() => resolve(), 200));
+        await new Promise((resolve) => setTimeout(() => resolve(), 200));
 
         const container = await this.loader.resolve(request);
         if (!container.getQuorum().has("code")) {

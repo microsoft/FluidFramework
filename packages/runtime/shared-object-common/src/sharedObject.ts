@@ -281,7 +281,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Called when the object has fully connected to the delta stream
      * Default implementation for DDS, override if different behavior is required.
      */
-    protected onConnect() {}
+    protected onConnect() { }
 
     /**
      * Called when a message has to be resubmitted. This typically happens after a reconnection for unacked messages.

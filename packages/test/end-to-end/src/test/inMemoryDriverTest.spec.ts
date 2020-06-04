@@ -35,8 +35,8 @@ describe("In Memory Driver", () => {
     function createInMemoryDriverLoader(): Loader {
         const urlResolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const documentServiceFactory = new CreationDocumentServiceFactory();
-        const factory = new TestFluidComponentFactory([[ stringId, SharedString.getFactory() ]]);
-        const codeLoader: ICodeLoader = new LocalCodeLoader([[ codeDetails, factory ]]);
+        const factory = new TestFluidComponentFactory([[stringId, SharedString.getFactory()]]);
+        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
 
         // The default client to be used.
         const client = {

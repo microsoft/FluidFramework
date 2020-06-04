@@ -65,7 +65,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     constructor(
         private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
         private readonly dirtyFn: () => void,
-    ) {}
+    ) { }
 
     public attach(handler: IDeltaHandler): void {
         this.handler = handler;
@@ -151,7 +151,7 @@ export class MockContainerRuntime {
         return clientSequenceNumber;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 
     public process(message: ISequencedDocumentMessage) {
         this.referenceSequenceNumber = message.sequenceNumber;
@@ -242,7 +242,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
-    constructor(... members: [string, Partial<ISequencedClient>][]) {
+    constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
@@ -655,7 +655,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         return 0;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 }
 
 /**
