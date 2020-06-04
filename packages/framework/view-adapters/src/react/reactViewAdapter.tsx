@@ -70,7 +70,7 @@ interface IHTMLViewProps {
 /**
  * Embeds a Fluid Component that supports IComponentHTMLView
  */
-class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, {}> {
+class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLViewProps) {
@@ -98,7 +98,7 @@ interface IHTMLVisualProps {
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
-class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, {}> {
+class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLVisualProps) {

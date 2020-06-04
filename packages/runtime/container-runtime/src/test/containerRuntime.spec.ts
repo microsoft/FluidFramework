@@ -71,7 +71,7 @@ describe("Runtime", () => {
                             new TreeTreeEntry("h", {
                                 id: "test-handle", entries: [
                                     new BlobTreeEntry("ignore", "this-should-be-ignored"),
-                                ]
+                                ],
                             }),
                         ],
                     };
