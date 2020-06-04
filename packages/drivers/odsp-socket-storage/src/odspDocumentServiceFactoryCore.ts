@@ -52,7 +52,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const searchParams = new URLSearchParams(queryString);
         const filePath = searchParams.get("path");
-        if (!filePath) {
+        if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
         const newFileParams: INewFileInfo = {
