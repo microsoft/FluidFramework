@@ -81,7 +81,7 @@ interface IPackageInfo {
 
 namespace IPackageInfo {
     export const toMdString = (info: IPackageInfo): string =>
-        `| ${info.fullName} | ${info.folderName} | ${info.readmeInfo.exists ? info.readmeInfo.title : "NO README"} | ${info.dir} |\n`;
+        `- [${info.fullName}](${info.dir})\n`;
 }
 
 const readmeTitleRegexp: RegExp = /^[#\s]*(.+)$/;  // e.g. # @fluidframework/build-tools
@@ -117,9 +117,11 @@ function getReadmeInfo(dir: string): IReadmeInfo {
 }
 
 function getPackageInfo(pkg: Package): IPackageInfo {
+    assert(repoRoot);
+
     const fullName = pkg.name;
     const [, scopedName] = fullName.split("/") as [string, string];
-    const dir = pkg.directory;
+    const dir = `/${path.relative(repoRoot!, pkg.directory).replace(/\\/g, "/")}`;
     const folderName = path.basename(dir);
     const readmeInfo = getReadmeInfo(dir);
 
@@ -233,8 +235,6 @@ const packagesMdHeader: string =
 
 _This file is generated, please don't edit it manually._
 
-| package name | folder name | readme title | directory path |
-| --- | --- | --- | --- |
 `;
 
 main();
