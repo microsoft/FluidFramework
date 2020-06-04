@@ -37,7 +37,7 @@ describe("segmentGroupCollection", () => {
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], opType });
+            segment.segmentGroups.enqueue({ segments: [] });
         }
 
         const dequeuedSegmentGroup = segment.segmentGroups.dequeue();
@@ -53,7 +53,7 @@ describe("segmentGroupCollection", () => {
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], opType });
+            segment.segmentGroups.enqueue({ segments: [] });
         }
 
         segment.segmentGroups.clear();
@@ -68,7 +68,7 @@ describe("segmentGroupCollection", () => {
     it(".copyTo", () => {
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], opType });
+            segment.segmentGroups.enqueue({ segments: [] });
         }
 
         const segmentCopy = TextSegment.make("");

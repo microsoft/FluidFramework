@@ -84,8 +84,18 @@ export class Client {
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
 
-    public peekPendingSegmentGroups() {
-        return this.mergeTree.pendingSegments?.first();
+    public peekPendingSegmentGroups(count?: number) {
+        if (count === undefined || count === 1) {
+            return this.mergeTree.pendingSegments?.last();
+        }
+        let taken = 0;
+        return this.mergeTree.pendingSegments?.some(()=> {
+            if (taken < count) {
+                taken ++;
+                return true;
+            }
+            return false;
+        }, true);
     }
 
     /**
@@ -394,7 +404,7 @@ export class Client {
                 // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({ segments: [] , opType: ops.MergeTreeDeltaType.INSERT });
+                    this.mergeTree.pendingSegments.enqueue({ segments: [] });
                 }
                 return true;
             }
@@ -647,48 +657,55 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingDeltaToOp(
+    private resetPendingDeltaToOps(
         resetOp: ops.IMergeTreeDeltaOp,
-        segment: ISegment,
-        segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp {
-        let newOp: ops.IMergeTreeDeltaOp;
-        assert(segmentGroup === segment.segmentGroups.dequeue());
+        segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
+        assert(segmentGroup);
+        const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
+        assert(NACKedSegmentGroup);
+        assert(segmentGroup === NACKedSegmentGroup);
+        const opList = [];
+        for (const segment of segmentGroup.segments) {
+            assert(segmentGroup === segment.segmentGroups.dequeue());
+            let newOp: ops.IMergeTreeDeltaOp;
+            const segmentPosition = this.getPosition(segment);
+            switch (resetOp.type) {
+                case ops.MergeTreeDeltaType.ANNOTATE:
+                    assert(segment.propertyManager.hasPendingProperties());
+                    newOp = OpBuilder.createAnnotateRangeOp(
+                        segmentPosition,
+                        segmentPosition + segment.cachedLength,
+                        resetOp.props,
+                        resetOp.combiningOp);
+                    break;
 
-        const segmentPosition = this.getPosition(segment);
-        switch (resetOp.type) {
-            case ops.MergeTreeDeltaType.ANNOTATE:
-                assert(segment.propertyManager.hasPendingProperties());
-                newOp = OpBuilder.createAnnotateRangeOp(
-                    segmentPosition,
-                    segmentPosition + segment.cachedLength,
-                    resetOp.props,
-                    resetOp.combiningOp);
-                break;
+                case ops.MergeTreeDeltaType.INSERT:
+                    assert(segment.seq === UnassignedSequenceNumber);
+                    newOp = OpBuilder.createInsertSegmentOp(
+                        segmentPosition,
+                        segment);
+                    break;
 
-            case ops.MergeTreeDeltaType.INSERT:
-                assert(segment.seq === UnassignedSequenceNumber);
-                newOp = OpBuilder.createInsertSegmentOp(
-                    segmentPosition,
-                    segment);
-                break;
+                case ops.MergeTreeDeltaType.REMOVE:
+                    assert(segment.removedSeq === UnassignedSequenceNumber);
+                    newOp = OpBuilder.createRemoveRangeOp(
+                        segmentPosition,
+                        segmentPosition + segment.cachedLength);
+                    break;
 
-            case ops.MergeTreeDeltaType.REMOVE:
-                assert(segment.removedSeq === UnassignedSequenceNumber);
-                newOp = OpBuilder.createRemoveRangeOp(
-                    segmentPosition,
-                    segmentPosition + segment.cachedLength);
-                break;
+                default:
+                    throw new Error(`Invalid op type`);
+            }
 
-            default:
-                throw new Error(`Invalid op type: ${segmentGroup.opType}`);
+            if (newOp) {
+                const newSegmentGroup: SegmentGroup = { segments: [] };
+                segment.segmentGroups.enqueue(newSegmentGroup);
+                this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
+                opList.push(newOp);
+            }
         }
 
-        if (newOp) {
-            const newSegmentGroup: SegmentGroup = { segments: [], opType: newOp.type };
-            segment.segmentGroups.enqueue(newSegmentGroup);
-            this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
-        }
-        return newOp;
+        return opList;
     }
 
     private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
@@ -777,28 +794,19 @@ export class Client {
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): ops.IMergeTreeOp {
         const opList: ops.IMergeTreeDeltaOp[] = [];
-        const resetSegmentGroup = (op: ops.IMergeTreeDeltaOp, sg: SegmentGroup)=>{
-            const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
-            assert(sg === NACKedSegmentGroup);
-            assert(op.type === sg.opType);
 
-            for (const segment of sg.segments) {
-                const newOp = this.resetPendingDeltaToOp(op, segment, sg);
-                if (newOp) {
-                    opList.push(newOp);
-                }
-            }
-        };
-
-        if (Array.isArray(segmentGroup)) {
-            assert(resetOp.type === ops.MergeTreeDeltaType.GROUP);
-            assert(resetOp.ops.length === segmentGroup.length);
+        if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
+            assert(Array.isArray(segmentGroup));
+            assert.equal(resetOp.ops.length, segmentGroup.length);
             for (let i = 0; i < resetOp.ops.length; i++) {
-                resetSegmentGroup(resetOp.ops[i], segmentGroup[i]);
+                opList.push(
+                    ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
             }
         } else {
-            assert(resetOp.type !== ops.MergeTreeDeltaType.GROUP);
-            resetSegmentGroup(resetOp, segmentGroup);
+            assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
+            assert(!Array.isArray(segmentGroup));
+            opList.push(
+                ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
         }
         return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
     }
@@ -863,7 +871,6 @@ export class Client {
         }
     }
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
-        const segmentGroups = [];
         for (const op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
@@ -872,21 +879,17 @@ export class Client {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
-                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     this.applyAnnotateRangeOp(opArgs);
-                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 case ops.MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
-                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 default:
                     break;
             }
         }
-        return segmentGroups;
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
         const markerId = op.relativePos1.id;

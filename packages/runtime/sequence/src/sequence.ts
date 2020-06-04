@@ -223,9 +223,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
-        this.submitSequenceMessage(
-            groupOp,
-            this.client.localTransaction(groupOp));
+        this.client.localTransaction(groupOp);
+        this.submitSequenceMessage(groupOp);
     }
 
     public getContainingSegment(pos: number) {
@@ -309,13 +308,18 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             remoteClientId);
     }
 
-    public submitSequenceMessage(message: MergeTree.IMergeTreeOp, segmentGroups?: MergeTree.SegmentGroup[]) {
+    public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
+        if (this.isLocal()) {
+            return;
+        }
         const translated = makeHandlesSerializable(
             message,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated, segmentGroups ?? this.client.peekPendingSegmentGroups());
+        const metadata = this.client.peekPendingSegmentGroups(
+            message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
+        this.submitLocalMessage(translated, metadata);
     }
 
     public addLocalReference(lref) {
@@ -457,12 +461,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
-
-        this.submitSequenceMessage(
-            this.client.regeneratePendingOp(
-                content as MergeTree.IMergeTreeOp,
-                localOpMetadata as MergeTree.SegmentGroup | MergeTree.SegmentGroup[]));
+        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
+            this.submitSequenceMessage(
+                this.client.regeneratePendingOp(
+                    content as MergeTree.IMergeTreeOp,
+                    localOpMetadata as MergeTree.SegmentGroup | MergeTree.SegmentGroup[]));
+        }
     }
 
     protected async loadCore(
@@ -478,7 +482,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
                 branchId);
-            msgs.forEach((m) => this.processMergeTreeMsg(m, undefined));
+            msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -492,7 +496,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
 
         if (!handled) {
-            this.processMergeTreeMsg(message, localOpMetadata as MergeTree.SegmentGroup | undefined);
+            this.processMergeTreeMsg(message);
         }
     }
 
@@ -529,8 +533,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private processMergeTreeMsg(
-        rawMessage: ISequencedDocumentMessage,
-        segmentGroup: MergeTree.SegmentGroup | undefined) {
+        rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
