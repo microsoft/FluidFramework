@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
 import {
     PrimedComponent,
-    PrimedComponentFactory,
+    PrimedComponentFactory
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -20,58 +18,53 @@ const diceValueKey = "diceValue";
 /**
  * IDiceRoller describes the public API surface for our dice roller component.
  */
-interface IDiceRoller extends EventEmitter {
+interface IDiceRollerViewProps {
     /**
      * Get the dice value as a number.
      */
     readonly value: number;
 
     /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     * Roll the dice.
      */
     roll: () => void;
-
-    /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-     */
-    on(event: "diceRolled", listener: () => void): this;
 }
 
-interface IDiceRollerViewProps {
-    model: IDiceRoller;
-}
-
-const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
-    const [diceValue, setDiceValue] = React.useState(props.model.value);
-
-    React.useEffect(() => {
-        const onDiceRolled = () => {
-            setDiceValue(props.model.value);
-        };
-        props.model.on("diceRolled", onDiceRolled);
-        return () => {
-            props.model.off("diceRolled", onDiceRolled);
-        };
-    }, [props.model]);
-
+const DiceRollerView: React.FC<IDiceRollerViewProps> = props => {
     // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267F + diceValue);
+    const diceChar = String.fromCodePoint(0x267f + props.value);
 
     return (
         <div>
             <span style={{ fontSize: 50 }}>{diceChar}</span>
-            <button onClick={props.model.roll}>Roll</button>
+            <button onClick={props.roll}>Roll</button>
         </div>
     );
+};
+
+const FluidReactClient = (props: { model: any }): JSX.Element => {
+    const [value, setValue] = React.useState(props.model.value);
+    const updateValue = () => setValue(props.model.value);
+    React.useEffect(() => {
+        props.model.on("diceRolled", updateValue);
+        return () => {
+            props.model.off("diceRolled", updateValue);
+        };
+    }, [props.model]);
+    return <DiceRollerView value={value} roll={props.model.roll} />;
 };
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
-    public static get ComponentName() { return "@fluid-example/dice-roller"; }
+export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+    public static get ComponentName() {
+        return "@fluid-example/dice-roller";
+    }
 
-    public get IComponentHTMLView() { return this; }
+    public get IComponentHTMLView() {
+        return this;
+    }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -94,10 +87,11 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
     /**
      * Render the dice.
      */
+
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <DiceRollerView model={ this } />,
-            div,
+            React.createElement(FluidReactClient, { model: this }),
+            div
         );
     }
 
@@ -119,5 +113,5 @@ export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller.ComponentName,
     DiceRoller,
     [],
-    {},
+    {}
 );
