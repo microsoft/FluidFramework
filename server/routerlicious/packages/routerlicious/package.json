@@ -29,13 +29,15 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "foreman": "node dist/foreman/index.js",
     "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "scriptorium": "node dist/scriptorium/index.js",
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -145,6 +147,7 @@
     "thread-loader": "^1.2.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "url-loader": "^2.1.0"
   }
 }
