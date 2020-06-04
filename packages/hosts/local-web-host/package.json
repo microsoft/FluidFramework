@@ -23,7 +23,7 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/base-host": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/container-definitions": "^0.20.0",

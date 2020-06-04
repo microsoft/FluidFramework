@@ -38,7 +38,7 @@
     "@fluid-example/codemirror": "^0.20.0",
     "@fluid-example/collaborative-textarea": "^0.20.0",
     "@fluid-example/prosemirror": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/aqueduct-react": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/framework-interfaces": "^0.20.0",

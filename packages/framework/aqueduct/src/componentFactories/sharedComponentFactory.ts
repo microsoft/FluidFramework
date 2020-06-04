@@ -130,4 +130,16 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
         );
     }
+
+    /**
+     * Helper to create a component from a type rather than through a factory
+     * @param context The creating context
+     * @param type The component type to create
+     */
+    public static async createComponentFromType<T extends IComponent & IComponentLoadable>(
+        context: IComponentContext,
+        type: string,
+    ): Promise<T> {
+        return context.createComponentWithRealizationFn(type) as Promise<T>;
+    }
 }

@@ -36,7 +36,7 @@
     "@fluid-example/codemirror": "^0.20.0",
     "@fluid-example/prosemirror": "^0.20.0",
     "@fluid-example/spaces": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/component-runtime-definitions": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",

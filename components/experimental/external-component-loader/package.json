@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@fluid-example/spaces": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/container-definitions": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",

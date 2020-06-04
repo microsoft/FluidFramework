@@ -36,7 +36,7 @@
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.20.0",
     "@fluid-example/table-document": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0"
   },

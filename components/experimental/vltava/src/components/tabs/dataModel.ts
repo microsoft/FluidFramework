@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 
+import { SharedComponentFactory } from "@fluidframework/aqueduct";
 import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import {
     ISharedDirectory,
@@ -14,6 +15,8 @@ import {
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import {
     IComponentInternalRegistry,
 } from "@fluid-example/spaces";
@@ -44,8 +47,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
-        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
-        (pkg: string, props?: any) => Promise<T>,
+        private readonly parentContext: IComponentContext,
         private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
             id: string,
             directory: IDirectory,
@@ -76,7 +78,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newKey = uuid();
-        const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
+        const component = await SharedComponentFactory.createComponentFromType(this.parentContext, type);
         this.tabs.set(newKey, {
             type,
             handleOrId: component.handle,

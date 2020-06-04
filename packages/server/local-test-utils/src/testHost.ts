@@ -9,6 +9,7 @@ import {
     PrimedComponentFactory,
     ContainerServiceRegistryEntries,
     generateContainerServicesRequestHandler,
+    SharedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
     IComponent,
@@ -56,9 +57,9 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     }
 
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string, type: string, props?: any,
+        id: string, type: string,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(type, props).then((component: T) => {
+        return SharedComponentFactory.createComponentFromType<T>(this.context, type).then((component: T) => {
             this.root.set(id, component.handle);
             return component;
         });
@@ -226,16 +227,14 @@ export class TestHost {
      * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param props optional props to be passed to the component on creation
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
         id: string,
         type: string,
-        props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(id, type, props);
+        return root.createAndAttachComponent<T>(id, type);
     }
 
     /* Wait and get the component with the id.

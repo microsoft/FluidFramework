@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@fluid-example/clicker": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/aqueduct-react": "^0.20.0",
     "@fluidframework/cell": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",

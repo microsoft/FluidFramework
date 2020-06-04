@@ -29,7 +29,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/map": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0",
     "rc-slider": "^8.6.9",

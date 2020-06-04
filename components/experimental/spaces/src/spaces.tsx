@@ -77,7 +77,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFirstTime() {
-        const storageComponent = await this.createAndAttachComponent<SpacesStorage>(SpacesStorage.ComponentName);
+        const storageComponent = await SpacesStorage.getFactory().createComponent(this.context);
         this.root.set(SpacesStorageKey, storageComponent.handle);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -137,7 +137,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
-        const component = await this.createAndAttachComponent(type);
+        const component = await PrimedComponentFactory.createComponentFromType(this.context, type);
 
         if (component.handle === undefined) {
             throw new Error("Can't add, component must have a handle");

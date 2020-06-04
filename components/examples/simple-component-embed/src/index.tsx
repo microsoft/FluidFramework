@@ -24,7 +24,7 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    * but in this scenario we only want it to be created once.
    */
     protected async componentInitializingFirstTime() {
-        const component = await this.createAndAttachComponent(ClickerInstantiationFactory.type);
+        const component = await ClickerInstantiationFactory.createComponent(this.context);
         this.root.set("myEmbeddedCounter", component.handle);
     }
 

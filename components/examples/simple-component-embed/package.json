@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fluid-example/clicker": "^0.20.0",
-    "@fluidframework/aqueduct": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.20.0-0",
     "@fluidframework/view-interfaces": "^0.20.0"
   },
   "devDependencies": {

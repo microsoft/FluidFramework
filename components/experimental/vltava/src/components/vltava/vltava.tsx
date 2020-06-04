@@ -9,6 +9,7 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { TabsComponent } from "../tabs/tabs";
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
@@ -37,7 +38,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
-        const tabsComponent = await this.createAndAttachComponent("tabs");
+        const tabsComponent = await TabsComponent.getFactory().createComponent(this.context);
         this.root.set("tabs-component-id", tabsComponent.handle);
     }
 

@@ -52,16 +52,16 @@ import * as ReactDOM from "react-dom";
 
 Below we define our component class `ExampleFluidComponent`.
 
-#### PrimedComponent
+#### PrimedComponent and PrimedComponentFactory
 
-Extending [PrimedComponent](../api/fluid-aqueduct.primedcomponent.md) sets up our component with required default
+Extending [PrimedComponent](../api/fluid-aqueduct.primedcomponent.md) and [PrimedComponentFactory](../api/fluid-aqueduct.primedcomponentfactory.md) sets up our component with required default
 behavior as well as additional helpers to make component development easier.
 
 ##### Key benefits
 
 1. Setup a `root` [SharedDirectory](../api/fluid-map.shareddirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
-2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
+2. Provide `factory.createComponentFromType(...)` and `this.root.get(...)`/`this.root.set(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
    - `componentInitializingFirstTime()` - only called the first time a component is initialized

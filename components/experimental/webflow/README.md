@@ -21,16 +21,19 @@ There are three primary components:
 ## Examples
 
 To host an instance of the Editor, your Fluid component will need to create an instance of a FlowDocument.  In the Host
-example, this is done in host/host.ts:
+example, this is done in host/index.ts:
 
 ```ts
-    const docP = this.createAndAttachComponent<FlowDocument>(this.docId, FlowDocument.type);
+    const doc = FlowDocument.create(this.context);
+    this.root.set("doc", doc.handle);
+    ...
+    return new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
 ```
 
 On subsequent loads, you'll want to open the same flow document:
 
 ```ts
-    const docP = this.getComponent<FlowDocument>(this.docId);
+    const docP = this.root.get<IComponentHandle<FlowDocument>>("doc").get();
 ```
 
 When the document resolves, pass it to a new Editor instance, along with the HTML DOM node you want the Editor to attach

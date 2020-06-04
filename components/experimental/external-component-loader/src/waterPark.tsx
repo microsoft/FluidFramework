@@ -92,9 +92,9 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFirstTime() {
-        const storage = await this.createAndAttachComponent(SpacesStorage.ComponentName);
+        const storage = await SpacesStorage.getFactory().createComponent(this.context);
         this.root.set(storageKey, storage.handle);
-        const loader = await this.createAndAttachComponent(ExternalComponentLoader.ComponentName);
+        const loader = await ExternalComponentLoader.getFactory().createComponent(this.context);
         this.root.set(loaderKey, loader.handle);
     }
 
