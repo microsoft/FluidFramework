@@ -7,9 +7,6 @@
         "timestamp": true,
         "label": "winston"
     },
-    "aria":{
-        "key": "978e115fcf9846189c84c44420044563-b891ade9-bd2a-4311-980a-539bfafe846a-7201"
-    },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {

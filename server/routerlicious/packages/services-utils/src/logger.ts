@@ -14,7 +14,7 @@ export interface IWinstonConfig {
     label: string;
     level: string;
     timestamp: boolean;
-    customTransportList: Transport[];
+    additionalTransportList: Transport[];
 }
 
 /**
@@ -46,8 +46,8 @@ export function configureLogging(config: IWinstonConfig) {
             }),
         ],
     });
-    if (config.customTransportList) {
-        for (const transport of config.customTransportList) {
+    if (config.additionalTransportList) {
+        for (const transport of config.additionalTransportList) {
             winston.add(transport);
         }
     }
