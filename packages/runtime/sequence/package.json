@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@fluidframework/gitresources": "^0.1006.1",
     "@fluidframework/server-services-client": "^0.1006.1",
     "@fluidframework/test-runtime-utils": "^0.20.0",

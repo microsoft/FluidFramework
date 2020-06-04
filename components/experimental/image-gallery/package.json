@@ -37,7 +37,7 @@
     "react-image-gallery": "^0.9.1"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@fluidframework/webpack-component-loader": "^0.20.0",
     "@types/node": "^10.17.24",
     "@types/react-dom": "^16.9.4",

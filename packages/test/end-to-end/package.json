@@ -62,7 +62,7 @@
     "@fluidframework/driver-base": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/driver-utils": "^0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@fluidframework/experimental-creation-driver": "^0.20.0",
     "@fluidframework/local-driver": "^0.20.0",
     "@fluidframework/local-test-utils": "^0.20.0",
