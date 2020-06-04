@@ -6,7 +6,6 @@
 import assert from "assert";
 import {
     createInsertSegmentOp,
-    IMergeTreeOp,
     Marker,
     MergeTreeDeltaType,
     ReferenceType,
@@ -402,7 +401,7 @@ function sliceToGroupOpsInternal(
     openStart: number,
     openEnd: number,
     from: number,
-    ops: IMergeTreeOp[],
+    ops: IMergeTreeDeltaOp[],
     insert?: number,
     gapDistance?: number,
 ) {
