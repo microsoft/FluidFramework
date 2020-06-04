@@ -404,7 +404,7 @@ export class Client {
                 // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({ segments: [] });
+                    this.mergeTree.pendingSegments.enqueue({ segments: [], localSeq: this.getCollabWindow().localSeq });
                 }
                 return true;
             }
@@ -664,11 +664,36 @@ export class Client {
         const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
         assert(NACKedSegmentGroup);
         assert(segmentGroup === NACKedSegmentGroup);
+
         const opList = [];
         for (const segment of segmentGroup.segments) {
             assert(segmentGroup === segment.segmentGroups.dequeue());
             let newOp: ops.IMergeTreeDeltaOp;
-            const segmentPosition = this.getPosition(segment);
+            let segmentPosition = 0;
+            this.mergeTree.walkAllSegments(this.mergeTree.root, (seg)=>{
+                if (seg !== segment) {
+                    // segment isn't local, so count it
+                    if (seg.localSeq === undefined && seg.localRemoveSeq === undefined) {
+                        if (seg.removedSeq === undefined) {
+                            segmentPosition += seg.cachedLength;
+                            return true;
+                        }
+                    }
+                    // segment is remove locally before this op, so skip it
+                    if (seg.localRemoveSeq !== undefined) {
+                        if (seg.localRemoveSeq <= segmentGroup.localSeq) {
+                            return true;
+                        }
+                    }
+                    // segment is inserted locally before this op, so count it
+                    if (seg.localSeq <= segmentGroup.localSeq) {
+                        segmentPosition += seg.cachedLength;
+                        return true;
+                    }
+                    return true;
+                }
+                return false;
+            });
             switch (resetOp.type) {
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager.hasPendingProperties());
@@ -698,7 +723,7 @@ export class Client {
             }
 
             if (newOp) {
-                const newSegmentGroup: SegmentGroup = { segments: [] };
+                const newSegmentGroup: SegmentGroup = { segments: [], localSeq: segmentGroup.localSeq };
                 segment.segmentGroups.enqueue(newSegmentGroup);
                 this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
                 opList.push(newOp);

@@ -91,6 +91,8 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
     propertyManager: SegmentPropertiesManager;
+    localSeq?: number;
+    localRemoveSeq?: number;
     seq?: number;  // If not present assumed to be previous to window min
     clientId?: number;
     localRefs?: LocalReferenceCollection;
@@ -198,6 +200,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
+    localSeq: number;
 }
 
 export class MergeNode implements IMergeNodeCommon {
@@ -442,6 +445,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     properties: Properties.PropertySet;
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
+    localSeq?: number;
+    localRemoveSeq?: number;
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
@@ -483,7 +488,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert.equal(currentSegmentGroup, segmentGroup);
-
         switch (opArgs.op.type) {
             case ops.MergeTreeDeltaType.ANNOTATE:
                 assert(this.propertyManager);
@@ -493,6 +497,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             case ops.MergeTreeDeltaType.INSERT:
                 assert.equal(this.seq, UnassignedSequenceNumber);
                 this.seq = opArgs.sequencedMessage.sequenceNumber;
+                this.localSeq = undefined;
                 return true;
 
             case ops.MergeTreeDeltaType.REMOVE:
@@ -500,6 +505,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 const removalInfo = mergeTree.getRemovalInfo(mergeTree.localBranchId, segBranchId, this);
                 assert(removalInfo);
                 assert(removalInfo.removedSeq);
+                this.localRemoveSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage.sequenceNumber;
                     return true;
@@ -532,6 +538,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
                 leafSegment.removedClientId = this.removedClientId;
                 leafSegment.removedSeq = this.removedSeq;
+                leafSegment.localRemoveSeq = this.localRemoveSeq;
                 if (this.removalsByBranch) {
                     leafSegment.removalsByBranch = [];
                     for (let i = 0, len = this.removalsByBranch.length; i < len; i++) {
@@ -546,6 +553,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                     }
                 }
                 leafSegment.seq = this.seq;
+                leafSegment.localSeq = this.localSeq;
                 leafSegment.clientId = this.clientId;
                 if (this.removedClientOverlap) {
                     leafSegment.removedClientOverlap = [...this.removedClientOverlap];
@@ -855,6 +863,8 @@ export class CollaborationWindow {
     // Highest-numbered segment in window and current
     // reference segment for this client
     currentSeq = 0;
+
+    localSeq = 0;
 
     loadFrom(a: CollaborationWindow) {
         this.clientId = a.clientId;
@@ -1943,9 +1953,9 @@ export class MergeTree {
         }
     }
 
-    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup) {
+    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup, localSeq?: number) {
         if (segmentGroup === undefined) {
-            segmentGroup = { segments: [] };
+            segmentGroup = { segments: [], localSeq };
             this.pendingSegments.enqueue(segmentGroup);
         }
         segment.segmentGroups.enqueue(segmentGroup);
@@ -1997,8 +2007,9 @@ export class MergeTree {
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
         }
+        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
-        this.blockInsert(pos, refSeq, clientId, seq, segments);
+        this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
 
         // opArgs == undefined => loading snapshot or test code
         if (this.mergeTreeDeltaCallback && opArgs !== undefined) {
@@ -2089,8 +2100,9 @@ export class MergeTree {
             }
             return false;
         });
-
+        const localSeq = ++this.collabWindow.localSeq;
         insertSegment.seq = UnassignedSequenceNumber;
+        insertSegment.localSeq = localSeq;
         insertSegment.clientId = clientId;
 
         if (Marker.is(insertSegment)) {
@@ -2114,7 +2126,7 @@ export class MergeTree {
         }
 
         if (this.collabWindow.collaborating) {
-            this.addToPendingList(insertSegment);
+            this.addToPendingList(insertSegment, undefined, localSeq);
         }
     }
 
@@ -2160,7 +2172,7 @@ export class MergeTree {
         block.assignChild(child, childIndex, false);
     }
 
-    private blockInsert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, newSegments: T[]) {
+    private blockInsert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, localSeq: number | undefined, newSegments: T[]) {
         let segIsLocal = false;
         const checkSegmentIsLocal = (segment: ISegment, pos: number, refSeq: number, clientId: number) => {
             if (segment.seq === UnassignedSequenceNumber) {
@@ -2188,7 +2200,7 @@ export class MergeTree {
             if (this.collabWindow.collaborating) {
                 if ((locSegment.seq === UnassignedSequenceNumber) &&
                     (clientId === this.collabWindow.clientId)) {
-                    segmentGroup = this.addToPendingList(locSegment, segmentGroup);
+                    segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
@@ -2218,6 +2230,7 @@ export class MergeTree {
             segIsLocal = false;
             if (newSegment.cachedLength > 0) {
                 newSegment.seq = seq;
+                newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
@@ -2590,6 +2603,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const deltaSegments: IMergeTreeSegmentDelta[] = [];
+        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         let segmentGroup: SegmentGroup;
 
         const annotateSegment = (segment: ISegment) => {
@@ -2597,7 +2611,7 @@ export class MergeTree {
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup);
+                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
@@ -2631,6 +2645,7 @@ export class MergeTree {
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
         const savedLocalRefs: LocalReferenceCollection[] = [];
+        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, start: number, end: number) => {
             const branchId = this.getBranchId(clientId);
             const segBranchId = this.getBranchId(segment.clientId);
@@ -2646,6 +2661,7 @@ export class MergeTree {
                         // replace because comes later
                         removalInfo.removedClientId = clientId;
                         removalInfo.removedSeq = seq;
+                        segment.localRemoveSeq = undefined;
                     } else {
                         // Do not replace earlier sequence number for remove
                         this.addOverlappingClient(removalInfo, clientId);
@@ -2653,6 +2669,8 @@ export class MergeTree {
                 } else {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
+                    segment.localRemoveSeq = localSeq;
+
                     removedSegments.push({ segment });
                     if (segment.localRefs && !segment.localRefs.empty && brid === this.localBranchId) {
                         savedLocalRefs.push(segment.localRefs);
@@ -2665,7 +2683,7 @@ export class MergeTree {
                 // Use removal information
                 const removalInfo = this.getRemovalInfo(this.localBranchId, segBranchId, segment);
                 if ((removalInfo.removedSeq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup);
+                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
