@@ -16,17 +16,17 @@ const template = isBrowser && new Template(
                     {
                         tag: "div", ref: "expand", props: { className: style.expand }, children: [
                             { tag: "div", ref: "expandChild", props: { className: style.expandChild } },
-                        ]
+                        ],
                     },
                     {
                         tag: "div", ref: "shrink", props: { className: style.shrink }, children: [
                             { tag: "div", props: { className: style.shrinkChild } },
-                        ]
+                        ],
                     },
-                ]
+                ],
             },
             { tag: "span", ref: "slot" },
-        ]
+        ],
     },
 );
 

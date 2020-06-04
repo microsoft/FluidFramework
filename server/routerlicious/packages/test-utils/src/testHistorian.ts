@@ -139,7 +139,7 @@ export class TestHistorian implements IHistorian {
                 object: {
                     sha: val.value.sha,
                     url: "",
-                    type: ""
+                    type: "",
                 },
             };
         }

@@ -143,7 +143,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
                             }
                         });
                     }
-                }
+                },
             };
         }
 
@@ -156,7 +156,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
                         }
                     });
                 }
-            }
+            },
         };
     }
 }
