@@ -601,14 +601,19 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Submits an operation
+     * Tries to submit an operation
      * @param op - Op to submit
      * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
      * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
+     * @returns - false, it we are local. true, otherwise.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): number {
-        return this.submitLocalMessage(op, localOpMetadata);
+    public trySubmitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): boolean {
+        if (this.isLocal()) {
+            return false;
+        }
+        this.submitLocalMessage(op, localOpMetadata);
+        return true;
     }
 
     /**
@@ -634,7 +639,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             };
 
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
+            this.trySubmitDirectoryMessage(op, undefined /* localOpMetadata */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -911,7 +916,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op, localOpMetadata: unknown) => {
-                    this.submitDirectoryMessage(op, localOpMetadata);
+                    this.trySubmitDirectoryMessage(op, localOpMetadata);
                 },
             },
         );
@@ -1383,7 +1388,7 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
             this.pendingClearMessageId = this.pendingMessageId++;
         }
     }
@@ -1394,7 +1399,7 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
             this.pendingKeys.set(op.key, this.pendingMessageId++);
         }
     }
@@ -1405,7 +1410,7 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
             this.pendingSubDirectories.set(op.subdirName, this.pendingMessageId++);
         }
     }

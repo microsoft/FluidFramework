@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+            (content, localOpMetadata) => this.trySubmitLocalMessage(content, localOpMetadata),
             valueTypes,
             this,
         );
@@ -322,6 +322,21 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     public getSerializableStorage(): IMapDataObjectSerializable {
         return this.kernel.getSerializableStorage();
+    }
+
+    /**
+     * Tries to submit a message.
+     * @param content - The content of the message to be submitted
+     * @param localOpMetadata - The metadata associated with the op
+     * @returns - false, if we are local. true, otherwise
+     */
+    private trySubmitLocalMessage(content: any, localOpMetadata: unknown): boolean {
+        if (this.isLocal()) {
+            return false;
+        }
+
+        this.submitLocalMessage(content, localOpMetadata);
+        return true;
     }
 
     /**

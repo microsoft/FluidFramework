@@ -180,14 +180,14 @@ export class MapKernel {
      * Create a new shared map kernel.
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
-     * @param submitMessage - A callback to submit a message through the shared object
+     * @param trySubmitLocalMessage - A callback to try and submit a message through the shared object
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any, localOpMetadata: unknown) => number,
+        private readonly trySubmitLocalMessage: (op: any, localOpMetadata: unknown) => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -702,7 +702,7 @@ export class MapKernel {
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
-                    this.submitMessage(op, localOpMetadata);
+                    this.trySubmitLocalMessage(op, localOpMetadata);
                 },
             });
 
@@ -714,7 +714,7 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        if (this.submitMessage(op, this.pendingMessageId) !== -1) {
+        if (this.trySubmitLocalMessage(op, this.pendingMessageId)) {
             this.pendingClearMessageId = this.pendingMessageId++;
         }
     }
@@ -724,7 +724,7 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        if (this.submitMessage(op, this.pendingMessageId) !== -1) {
+        if (this.trySubmitLocalMessage(op, this.pendingMessageId)) {
             this.pendingKeys.set(op.key, this.pendingMessageId++);
         }
     }
@@ -752,7 +752,7 @@ export class MapKernel {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, undefined /* localOpMetadata */);
+            this.trySubmitLocalMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);
