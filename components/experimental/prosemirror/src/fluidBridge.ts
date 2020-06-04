@@ -13,6 +13,7 @@ import {
     reservedRangeLabelsKey,
     TextSegment,
     ISegment,
+    IMergeTreeDeltaOp,
 } from "@fluidframework/merge-tree";
 import {
     SharedString,
@@ -372,8 +373,8 @@ export function sliceToGroupOps(
     schema: Schema,
     insert?: number,
     gapDistance?: number,
-): IMergeTreeOp[] {
-    const ops = new Array<IMergeTreeOp>();
+): IMergeTreeDeltaOp[] {
+    const ops = new Array<IMergeTreeDeltaOp>();
 
     const sliceOpenStart = slice.openStart || 0;
     const sliceOpenEnd = slice.openEnd || 0;

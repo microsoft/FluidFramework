@@ -198,7 +198,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
-    op: ops.MergeTreeDeltaType,
+    opType: ops.MergeTreeDeltaType,
 }
 
 export class MergeNode implements IMergeNodeCommon {
@@ -1946,10 +1946,10 @@ export class MergeTree {
 
     private addToPendingList(op: ops.MergeTreeDeltaType, segment: ISegment, segmentGroup?: SegmentGroup) {
         if (segmentGroup === undefined) {
-            segmentGroup = { segments: [], op };
+            segmentGroup = { segments: [], opType: op };
             this.pendingSegments.enqueue(segmentGroup);
         }
-        assert(op === segmentGroup.op);
+        assert(op === segmentGroup.opType);
         segment.segmentGroups.enqueue(segmentGroup);
         return segmentGroup;
     }

@@ -9,7 +9,7 @@ import { TextSegment } from "../textSegment";
 import { MergeTreeDeltaType } from "../ops";
 
 describe("segmentGroupCollection", () => {
-    const op = MergeTreeDeltaType.INSERT;
+    const opType = MergeTreeDeltaType.INSERT;
     let segment: ISegment;
     beforeEach(() => {
         segment = TextSegment.make("abc");
@@ -23,7 +23,7 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".enqueue", () => {
-        const  segmentGroup = { segments: [], op };
+        const  segmentGroup = { segments: [], opType };
         segment.segmentGroups.enqueue(segmentGroup);
 
         assert(!segment.segmentGroups.empty);
@@ -33,11 +33,11 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".dequeue", () => {
-        const segmentGroup = { segments: [], op };
+        const segmentGroup = { segments: [], opType };
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], op });
+            segment.segmentGroups.enqueue({ segments: [], opType });
         }
 
         const dequeuedSegmentGroup = segment.segmentGroups.dequeue();
@@ -49,11 +49,11 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".clear", () => {
-        const  segmentGroup = { segments: [], op };
+        const  segmentGroup = { segments: [], opType };
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], op });
+            segment.segmentGroups.enqueue({ segments: [], opType });
         }
 
         segment.segmentGroups.clear();
@@ -68,7 +68,7 @@ describe("segmentGroupCollection", () => {
     it(".copyTo", () => {
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [], op });
+            segment.segmentGroups.enqueue({ segments: [], opType });
         }
 
         const segmentCopy = TextSegment.make("");

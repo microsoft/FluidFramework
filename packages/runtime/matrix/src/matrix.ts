@@ -244,6 +244,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         assert(this.cols.peekPendingSegmentGroups() === undefined);
     }
 
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);
     }

@@ -31,7 +31,6 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import {
@@ -395,7 +394,7 @@ export class Client {
                 // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({ segments: [] , op: ops.MergeTreeDeltaType.INSERT });
+                    this.mergeTree.pendingSegments.enqueue({ segments: [] , opType: ops.MergeTreeDeltaType.INSERT });
                 }
                 return true;
             }
@@ -648,47 +647,48 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment, segmentGroup: SegmentGroup): ops.IMergeTreeOp {
-        let op: ops.IMergeTreeOp;
+    private resetPendingDeltaToOp(
+        resetOp: ops.IMergeTreeDeltaOp,
+        segment: ISegment,
+        segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp {
+        let newOp: ops.IMergeTreeDeltaOp;
         assert(segmentGroup === segment.segmentGroups.dequeue());
 
         const segmentPosition = this.getPosition(segment);
-        switch (segmentGroup.op) {
+        switch (resetOp.type) {
             case ops.MergeTreeDeltaType.ANNOTATE:
-                // todo figure out annotate
                 assert(segment.propertyManager.hasPendingProperties());
-                const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
-                op = OpBuilder.createAnnotateRangeOp(
+                newOp = OpBuilder.createAnnotateRangeOp(
                     segmentPosition,
                     segmentPosition + segment.cachedLength,
-                    annotateInfo.props,
-                    annotateInfo.combiningOp);
+                    resetOp.props,
+                    resetOp.combiningOp);
                 break;
 
             case ops.MergeTreeDeltaType.INSERT:
                 assert(segment.seq === UnassignedSequenceNumber);
-                op = OpBuilder.createInsertSegmentOp(
+                newOp = OpBuilder.createInsertSegmentOp(
                     segmentPosition,
                     segment);
                 break;
 
             case ops.MergeTreeDeltaType.REMOVE:
                 assert(segment.removedSeq === UnassignedSequenceNumber);
-                op = OpBuilder.createRemoveRangeOp(
+                newOp = OpBuilder.createRemoveRangeOp(
                     segmentPosition,
                     segmentPosition + segment.cachedLength);
                 break;
 
             default:
-                throw new Error(`Invalid op type: ${segmentGroup.op}`);
+                throw new Error(`Invalid op type: ${segmentGroup.opType}`);
         }
 
-        if (op) {
-            const newSegmentGroup: SegmentGroup = { segments: [], op: op.type };
+        if (newOp) {
+            const newSegmentGroup: SegmentGroup = { segments: [], opType: newOp.type };
             segment.segmentGroups.enqueue(newSegmentGroup);
             this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
         }
-        return op;
+        return newOp;
     }
 
     private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
@@ -772,24 +772,35 @@ export class Client {
             shortRemoteClientId);
     }
 
-    public resetPendingSegmentsToOp(segmentGroup: SegmentGroup): ops.IMergeTreeOp {
-        const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
-        assert(segmentGroup === NACKedSegmentGroup);
-        const orderedSegments = new SortedSegmentSet();
-        for (const segment of NACKedSegmentGroup.segments) {
-            orderedSegments.addOrUpdate(segment);
-        }
-        const opList: ops.IMergeTreeOp[] = [];
-        for (const segment of orderedSegments.items) {
-            const op = this.resetPendingSegmentToOp(segment, segmentGroup);
-            if (op) {
-                opList.push(op);
-            }
-        }
+    public regeneratePendingOp(
+        resetOp: ops.IMergeTreeOp,
+        segmentGroup: SegmentGroup | SegmentGroup[],
+    ): ops.IMergeTreeOp {
+        const opList: ops.IMergeTreeDeltaOp[] = [];
+        const resetSegmentGroup = (op: ops.IMergeTreeDeltaOp, sg: SegmentGroup)=>{
+            const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
+            assert(sg === NACKedSegmentGroup);
+            assert(op.type === sg.opType);
 
-        if (opList.length > 0) {
-            return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
+            for (const segment of sg.segments) {
+                const newOp = this.resetPendingDeltaToOp(op, segment, sg);
+                if (newOp) {
+                    opList.push(newOp);
+                }
+            }
+        };
+
+        if (Array.isArray(segmentGroup)) {
+            assert(resetOp.type === ops.MergeTreeDeltaType.GROUP);
+            assert(resetOp.ops.length === segmentGroup.length);
+            for (let i = 0; i < resetOp.ops.length; i++) {
+                resetSegmentGroup(resetOp.ops[i], segmentGroup[i]);
+            }
+        } else {
+            assert(resetOp.type !== ops.MergeTreeDeltaType.GROUP);
+            resetSegmentGroup(resetOp, segmentGroup);
         }
+        return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
     }
 
     public createTextHelper() {
@@ -852,6 +863,7 @@ export class Client {
         }
     }
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
+        const segmentGroups = [];
         for (const op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
@@ -860,17 +872,21 @@ export class Client {
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
+                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     this.applyAnnotateRangeOp(opArgs);
+                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 case ops.MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
+                    segmentGroups.push(this.peekPendingSegmentGroups());
                     break;
                 default:
                     break;
             }
         }
+        return segmentGroups;
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
         const markerId = op.relativePos1.id;

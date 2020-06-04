@@ -57,8 +57,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
-        const ops: MergeTree.IMergeTreeOp[] = [];
+    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeDeltaOp[] {
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE: {
@@ -223,8 +223,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
-        this.client.localTransaction(groupOp);
-        this.submitSequenceMessage(groupOp);
+        this.submitSequenceMessage(
+            groupOp,
+            this.client.localTransaction(groupOp));
     }
 
     public getContainingSegment(pos: number) {
@@ -308,13 +309,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             remoteClientId);
     }
 
-    public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
+    public submitSequenceMessage(message: MergeTree.IMergeTreeOp, segmentGroups?: MergeTree.SegmentGroup[]) {
         const translated = makeHandlesSerializable(
             message,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated, this.client.peekPendingSegmentGroups());
+        this.submitLocalMessage(translated, segmentGroups ?? this.client.peekPendingSegmentGroups());
     }
 
     public addLocalReference(lref) {
@@ -459,7 +460,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
 
         this.submitSequenceMessage(
-            this.client.resetPendingSegmentsToOp(localOpMetadata as MergeTree.SegmentGroup));
+            this.client.regeneratePendingOp(
+                content as MergeTree.IMergeTreeOp,
+                localOpMetadata as MergeTree.SegmentGroup | MergeTree.SegmentGroup[]));
     }
 
     protected async loadCore(
@@ -533,7 +536,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
 
-        const ops: MergeTree.IMergeTreeOp[] = [];
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
