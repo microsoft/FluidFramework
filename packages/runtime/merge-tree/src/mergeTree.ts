@@ -92,7 +92,7 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly trackingCollection: TrackingGroupCollection;
     propertyManager: SegmentPropertiesManager;
     localSeq?: number;
-    localRemoveSeq?: number;
+    localRemovedSeq?: number;
     seq?: number;  // If not present assumed to be previous to window min
     clientId?: number;
     localRefs?: LocalReferenceCollection;
@@ -446,7 +446,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
     localSeq?: number;
-    localRemoveSeq?: number;
+    localRemovedSeq?: number;
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
@@ -505,7 +505,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 const removalInfo = mergeTree.getRemovalInfo(mergeTree.localBranchId, segBranchId, this);
                 assert(removalInfo);
                 assert(removalInfo.removedSeq);
-                this.localRemoveSeq = undefined;
+                this.localRemovedSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage.sequenceNumber;
                     return true;
@@ -538,7 +538,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
                 leafSegment.removedClientId = this.removedClientId;
                 leafSegment.removedSeq = this.removedSeq;
-                leafSegment.localRemoveSeq = this.localRemoveSeq;
+                leafSegment.localRemovedSeq = this.localRemovedSeq;
                 if (this.removalsByBranch) {
                     leafSegment.removalsByBranch = [];
                     for (let i = 0, len = this.removalsByBranch.length; i < len; i++) {
@@ -2661,7 +2661,7 @@ export class MergeTree {
                         // replace because comes later
                         removalInfo.removedClientId = clientId;
                         removalInfo.removedSeq = seq;
-                        segment.localRemoveSeq = undefined;
+                        segment.localRemovedSeq = undefined;
                     } else {
                         // Do not replace earlier sequence number for remove
                         this.addOverlappingClient(removalInfo, clientId);
@@ -2669,7 +2669,7 @@ export class MergeTree {
                 } else {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
-                    segment.localRemoveSeq = localSeq;
+                    segment.localRemovedSeq = localSeq;
 
                     removedSegments.push({ segment });
                     if (segment.localRefs && !segment.localRefs.empty && brid === this.localBranchId) {
