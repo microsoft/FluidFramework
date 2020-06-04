@@ -126,6 +126,7 @@ export abstract class FluidReactComponent<
                 dataProps.runtime,
                 dataProps.fluidComponentMap,
                 initialFluidState,
+                fluidToView,
             );
             unlistenedComponentHandles.push(syncedStateHandle);
             unlistenedMapHandles.push(syncedStateHandle);

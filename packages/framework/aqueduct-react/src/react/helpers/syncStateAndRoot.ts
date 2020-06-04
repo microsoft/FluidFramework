@@ -138,7 +138,7 @@ export function syncStateAndRoot<
     // If it is a local update, broadcast it by setting it on the root and updating locally
     // Otherwise, only update locally as the root update has already been broadcasted
     if (!fromRootUpdate) {
-        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState);
+        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState, fluidToView);
     }
     setState(combinedViewState, fromRootUpdate, true);
 }

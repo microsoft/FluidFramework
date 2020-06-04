@@ -108,6 +108,7 @@ export function useStateFluid<
                 dataProps.runtime,
                 dataProps.fluidComponentMap,
                 initialFluidState,
+                fluidToView,
             );
             unlistenedComponentHandles.push(stateMapHandle);
         } else {

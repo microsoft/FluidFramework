@@ -31,7 +31,7 @@ export function getFluidStateFromRoot<SV,SF>(
                 const fluidType = fluidToView?.get(fluidKey as keyof SF)?.fluidObjectType;
                 const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
                 let value = rootKey ? root.get(rootKey) : rootState.get(fluidKey);
-                if (fluidType) {
+                if (value && fluidType) {
                     const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
                     if (possibleComponentPath !== undefined) {
                         value = componentMap.get(possibleComponentPath);
@@ -43,7 +43,7 @@ export function getFluidStateFromRoot<SV,SF>(
                     fluidState[fluidKey] = value;
                 }
             }
-            return fluidState as SF;
+            return { ...initialFluidState, ...fluidState };
         }
     }
     return initialFluidState;
