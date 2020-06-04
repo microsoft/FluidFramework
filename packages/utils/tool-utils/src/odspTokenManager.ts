@@ -137,7 +137,32 @@ export class OdspTokenManager {
         return tokens;
     }
 
+    private current: Promise<IOdspTokens> | undefined;
     private async acquireTokens(
+        authUrl: string,
+        server: string,
+        clientConfig: IClientConfig,
+        scope: string,
+        initialNavigator: (url: string) => void,
+        redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+    ): Promise<IOdspTokens> {
+        while (this.current) {
+            await this.current;
+        }
+        this.current = this.acquireTokensCore(
+            authUrl,
+            server,
+            clientConfig,
+            scope,
+            initialNavigator,
+            redirectUriCallback,
+        );
+        const result = await this.current;
+        this.current = undefined;
+        return result;
+    }
+
+    private async acquireTokensCore(
         authUrl: string,
         server: string,
         clientConfig: IClientConfig,
