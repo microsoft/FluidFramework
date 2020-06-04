@@ -607,8 +607,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
-        this.submitLocalMessage(op, localOpMetadata);
+    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): number {
+        return this.submitLocalMessage(op, localOpMetadata);
     }
 
     /**
@@ -951,7 +951,7 @@ class SubDirectory implements IDirectory {
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingMessageId: number = -1;
+    private pendingMessageId: number = 0;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
@@ -1383,9 +1383,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.pendingClearMessageId = pendingMessageId;
+        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+            this.pendingClearMessageId = this.pendingMessageId++;
+        }
     }
 
     /**
@@ -1394,9 +1394,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.pendingKeys.set(op.key, pendingMessageId);
+        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+            this.pendingKeys.set(op.key, this.pendingMessageId++);
+        }
     }
 
     /**
@@ -1405,9 +1405,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.directory.submitDirectoryMessage(op, pendingMessageId);
-        this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
+        if (this.directory.submitDirectoryMessage(op, this.pendingMessageId) !== -1) {
+            this.pendingSubDirectories.set(op.subdirName, this.pendingMessageId++);
+        }
     }
 
     /**

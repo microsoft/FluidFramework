@@ -163,7 +163,7 @@ export class MapKernel {
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingMessageId: number = -1;
+    private pendingMessageId: number = 0;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
@@ -187,7 +187,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
+        private readonly submitMessage: (op: any, localOpMetadata: unknown) => number,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -714,9 +714,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.submitMessage(op, pendingMessageId);
-        this.pendingClearMessageId = pendingMessageId;
+        if (this.submitMessage(op, this.pendingMessageId) !== -1) {
+            this.pendingClearMessageId = this.pendingMessageId++;
+        }
     }
 
     /**
@@ -724,9 +724,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        const pendingMessageId = ++this.pendingMessageId;
-        this.submitMessage(op, pendingMessageId);
-        this.pendingKeys.set(op.key, pendingMessageId);
+        if (this.submitMessage(op, this.pendingMessageId) !== -1) {
+            this.pendingKeys.set(op.key, this.pendingMessageId++);
+        }
     }
 
     /**
