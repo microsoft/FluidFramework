@@ -24,22 +24,12 @@ steps:
     customRegistry: 'useFeed'
     customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-- script: |
-    if [ "true" == `node -e "console.log(('policy-check:full' in require('./package.json').scripts))"` ] ;
-    then
-    # back-compat <= 0.17
-        npm run policy-check:full
-    else
-        npm run policy-check
-    fi
-  displayName: 'Policy Check'
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    customCommand: 'run policy-check'
 
-- script: |
-    if [ "true" == `node -e "console.log(('layer-check:full' in require('./package.json').scripts))"` ] ;
-    then
-    # back-compat <= 0.17
-        npm run layer-check:full
-    else
-        npm run layer-check
-    fi
-  displayName: 'Layer Check'
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    customCommand: 'run layer-check'
