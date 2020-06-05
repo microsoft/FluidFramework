@@ -182,7 +182,7 @@ export function useReducerFluid<
                 }
             });
         } else if (action && instanceOfAsyncEffectFunction<SV,SF,C>(action)) {
-            (action.function as any)(
+            (action.asyncFunction as any)(
                 combinedDispatchState,
                 ...args,
             ).then(() => syncStateAndRoot(

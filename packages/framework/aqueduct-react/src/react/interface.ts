@@ -225,15 +225,15 @@ export interface IFluidComponent {
      * The actual Fluid component that the path this value is keyed against leads to
      */
     component?: IComponent & IComponentLoadable,
+    /**
+     * Boolean indicating if we are listening to changes on this component's root to trigger React
+     * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
+     */
     isListened?: boolean,
     /**
      * List of events fired on this component that will trigger a state update
      */
     listenedEvents?: string[]
-    /**
-     * Boolean indicating if we are listening to changes on this component's root to trigger React
-     * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
-     */
     /**
      * INTERNAL
      * Does not need to be set
@@ -300,7 +300,7 @@ export interface FluidAsyncEffectFunction<
      *  The function defined here will take the combined state and apply some
      * async logic that does not cause any state update changes
      */
-    function: (oldState: ICombinedState<SV,SF,C>, ...args: any) => Promise<void>;
+    asyncFunction: (oldState: ICombinedState<SV,SF,C>, ...args: any) => Promise<void>;
 }
 
 export const instanceOfAsyncEffectFunction = <
@@ -310,7 +310,7 @@ export const instanceOfAsyncEffectFunction = <
 >(
     object: any,
 ): object is FluidAsyncEffectFunction<SV,SF,C> =>
-    object === Object(object) && "function" in object;
+    object === Object(object) && "asyncFunction" in object;
 
 /**
  * Definition for a state update function used in reducers
