@@ -6,6 +6,7 @@
 import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private readonly tree: ITree) {
@@ -22,29 +23,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
     }
 
     public async list(path: string): Promise<string[]> {
-        const pathParts = path.split("/").filter((v)=>v !== "");
-        let tree: ITree | undefined = this.tree;
-        while (tree !== undefined && pathParts.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const part = pathParts.shift()!;
-            const index = tree.entries.findIndex((value)=>{
-                if (value.type === "Tree" && value.path === part) {
-                    return true;
-                } else {
-                    return false;
-                }
-            });
-            if (index === -1) {
-                tree = undefined;
-            } else {
-                const entry = tree.entries[index];
-                tree = entry.value as ITree;
-            }
-        }
-        if (tree === undefined || pathParts.length !== 0) {
-            throw new Error("path does not exist");
-        }
-        return tree.entries.filter((e) => e.type === "Blob").map((e) => e.path);
+        return listBlobsAtTreePath(this.tree, path);
     }
 
     /**

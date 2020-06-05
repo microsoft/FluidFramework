@@ -633,10 +633,10 @@ export class MockObjectStorageService implements IObjectStorageService {
     }
 
     public async list(path: string): Promise<string[]> {
-        const pathParts = path.split("/").filter((v)=>v !== "");
+        const pathParts = path.split("/");
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
-            && key.split("/").filter((v)=>v !== "").length === pathParts.length + 1);
+            && key.split("/").length === pathParts.length + 1);
     }
 }
 
