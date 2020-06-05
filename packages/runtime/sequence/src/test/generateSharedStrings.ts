@@ -13,7 +13,9 @@ export const LocationBase: string = "src/test/snapshots/";
 
 export const supportedVersions = new Map<string, any>([
     ["legacy", {}],
-    ["v1", { newMergeTreeSnapshotFormat: true }]]);
+    ["legacyWithCatchUp", { useNewCatchUpBlobName: true }],
+    ["v1", { newMergeTreeSnapshotFormat: true }],
+]);
 
 export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {
