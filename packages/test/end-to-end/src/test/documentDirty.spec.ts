@@ -35,6 +35,7 @@ describe("Document Dirty", () => {
     let firstContainerComp: ITestFluidComponent & IComponentLoadable;
     let firstContainerCompContainerRuntime: IContainerRuntime;
     let firstContainerCompMap: SharedMap;
+    let wasMarkedDirty: boolean;
     let wasMarkedClean: boolean;
 
     /**
@@ -50,6 +51,16 @@ describe("Document Dirty", () => {
     async function waitForMarkedClean(runtime: IContainerRuntime): Promise<void> {
         await new Promise((resolve) => runtime.once("savedDocument", () => {
             wasMarkedClean = true;
+            resolve();
+        }));
+    }
+
+    /**
+     * Waits for the "dirtyDocument" event on the runtime
+     */
+    async function waitForMarkedDirty(runtime: IContainerRuntime): Promise<void> {
+        await new Promise((resolve) => runtime.once("dirtyDocument", () => {
+            wasMarkedDirty = true;
             resolve();
         }));
     }
@@ -104,6 +115,7 @@ describe("Document Dirty", () => {
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
         containerDeltaEventManager.registerDocuments(firstContainerComp.runtime);
 
+        wasMarkedDirty = false;
         wasMarkedClean = false;
     });
 
@@ -131,9 +143,6 @@ describe("Document Dirty", () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false,
-                "Document is marked clean on disconnect");
-
             // Set values in DDSes in disconnected state.
             firstContainerCompMap.set("key", "value");
 
@@ -143,12 +152,17 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(firstContainer),
+                waitForMarkedDirty(firstContainerCompContainerRuntime),
                 waitForMarkedClean(firstContainerCompContainerRuntime),
             ]);
 
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedClean, true,
                 "Document will have been marked clean on reconnection");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirty, true,
+                "Document should have been marked dirty again due to pending DDS ops");
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
@@ -182,12 +196,17 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(firstContainer),
+                waitForMarkedDirty(firstContainerCompContainerRuntime),
                 waitForMarkedClean(firstContainerCompContainerRuntime),
             ]);
 
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedClean, true,
                 "Document will have been marked clean on reconnection");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirty, true,
+                "Document should have been marked dirty again due to pending DDS ops");
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
