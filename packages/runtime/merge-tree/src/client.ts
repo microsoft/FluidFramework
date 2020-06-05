@@ -92,8 +92,8 @@ export class Client {
      * It is used to get the segment group(s) for the previous operations.
      * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
      */
-    public peekPendingSegmentGroups(count?: number) {
-        if (count === undefined || count === 1) {
+    public peekPendingSegmentGroups(count: number = 1) {
+        if (count === 1) {
             return this.mergeTree.pendingSegments?.last();
         }
         let taken = 0;
