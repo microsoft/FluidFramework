@@ -9,9 +9,8 @@ import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { SharedString } from "@fluidframework/sequence";
 import {
     LocalCodeLoader,
     initializeLocalContainer,
@@ -22,10 +21,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 
 describe("Document Dirty", () => {
     const id = `fluid-test://localhost/documentDirtyTest`;
-    const map1Id = "map1Key";
-    const map2Id = "map2Key";
-    const directoryId = "directoryKey";
-    const stringId = "sharedStringKey";
+    const mapId = "mapKey";
     const codeDetails: IFluidCodeDetails = {
         package: "documentDirtyTestPackage",
         config: {},
@@ -36,9 +32,9 @@ describe("Document Dirty", () => {
     let containerDeltaEventManager: DocumentDeltaEventManager;
     let firstContainer: Container;
     let firstContainerClientId: string;
-    let firstContainerComp1: ITestFluidComponent & IComponentLoadable;
-    let firstContainerComp1ContainerRuntime: IContainerRuntime;
-    let firstContainerComp1Map1: SharedMap;
+    let firstContainerComp: ITestFluidComponent & IComponentLoadable;
+    let firstContainerCompContainerRuntime: IContainerRuntime;
+    let firstContainerCompMap: SharedMap;
     let wasMarkedDirty: boolean;
     let wasMarkedClean: boolean;
 
@@ -66,10 +62,7 @@ describe("Document Dirty", () => {
     async function createContainer(): Promise<Container> {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
             [
-                [ map1Id, SharedMap.getFactory() ],
-                [ map2Id, SharedMap.getFactory() ],
-                [ directoryId, SharedDirectory.getFactory() ],
-                [ stringId, SharedString.getFactory() ],
+                [ mapId, SharedMap.getFactory() ],
             ],
         );
 
@@ -78,7 +71,6 @@ describe("Document Dirty", () => {
                 "default",
                 [
                     ["default", Promise.resolve(factory)],
-                    ["component2", Promise.resolve(factory)],
                 ],
             );
 
@@ -111,11 +103,11 @@ describe("Document Dirty", () => {
 
         // Create the first container, component and DDSes.
         firstContainer = await createContainer();
-        firstContainerComp1 = await getComponent("default", firstContainer);
-        firstContainerComp1ContainerRuntime = firstContainerComp1.context.containerRuntime as IContainerRuntime;
-        firstContainerComp1Map1 = await firstContainerComp1.getSharedObject<SharedMap>(map1Id);
+        firstContainerComp = await getComponent("default", firstContainer);
+        firstContainerCompContainerRuntime = firstContainerComp.context.containerRuntime as IContainerRuntime;
+        firstContainerCompMap = await firstContainerComp.getSharedObject<SharedMap>(mapId);
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        containerDeltaEventManager.registerDocuments(firstContainerComp1.runtime);
+        containerDeltaEventManager.registerDocuments(firstContainerComp.runtime);
 
         wasMarkedClean = false;
         wasMarkedDirty = false;
@@ -124,14 +116,14 @@ describe("Document Dirty", () => {
     describe("Dirty state is updated correctly while in connected state", () => {
         it("marked dirty when ops are sent and clean when acks are received", async () => {
             // Set values in DDSes in disconnected state.
-            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
         });
     });
 
@@ -143,18 +135,18 @@ describe("Document Dirty", () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
 
             // Set values in DDSes in disconnected state.
-            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(firstContainer),
-                waitForMarkedClean(firstContainerComp1ContainerRuntime),
-                waitForMarkedDirty(firstContainerComp1ContainerRuntime),
+                waitForMarkedClean(firstContainerCompContainerRuntime),
+                waitForMarkedDirty(firstContainerCompContainerRuntime),
             ]);
 
             // Document will have been marked clean on reconnection
@@ -165,12 +157,12 @@ describe("Document Dirty", () => {
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
         });
 
         it(`marked dirty when ops are sent while connected and not set clean until 
@@ -178,20 +170,20 @@ describe("Document Dirty", () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Set values in DDSes in disconnected state.
-            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(firstContainer),
-                waitForMarkedClean(firstContainerComp1ContainerRuntime),
-                waitForMarkedDirty(firstContainerComp1ContainerRuntime),
+                waitForMarkedClean(firstContainerCompContainerRuntime),
+                waitForMarkedDirty(firstContainerCompContainerRuntime),
             ]);
 
             // Document will have been marked clean on reconnection
@@ -202,12 +194,12 @@ describe("Document Dirty", () => {
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerComp1ContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
         });
     });
 });
