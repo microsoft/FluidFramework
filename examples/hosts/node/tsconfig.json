@@ -5,7 +5,6 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "sourceMap": true,
         "rootDir": "./src",
         "outDir": "dist",
         "types": []
