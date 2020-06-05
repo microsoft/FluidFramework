@@ -533,7 +533,6 @@ export class RunningSummarizer implements IDisposable {
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-    public get IComponentSummarizer() {return this;}
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
