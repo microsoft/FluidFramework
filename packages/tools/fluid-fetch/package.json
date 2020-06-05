@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/component-runtime": "^0.20.0",
+    "@fluidframework/container-runtime": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/driver-utils": "^0.20.0",
     "@fluidframework/fluidapp-odsp-urlresolver": "^0.20.0",

@@ -13,6 +13,8 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ComponentMessageType } from "@fluidframework/component-runtime";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -473,7 +475,7 @@ function processOp(
     messageTypeStats: Map<string, [number, number]>) {
     let type = message.type;
     let recorded = false;
-    if (message.type === MessageType.Attach) {
+    if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
         processComponentAttachOp(attachMessage, dataType);
     } else if (message.type === MessageType.Operation) {
@@ -488,7 +490,7 @@ function processOp(
         };
         const address = envelop.address;
         type = `${type}/${innerContent.type}`;
-        if (innerContent.type === MessageType.Attach) {
+        if (innerContent.type === ComponentMessageType.Attach) {
             const attachMessage = innerContent.content as IAttachMessage;
             let objectType = attachMessage.type;
             if (objectType.startsWith(objectTypePrefix)) {

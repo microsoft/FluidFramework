@@ -51,6 +51,11 @@ import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
+export enum ComponentMessageType {
+    // Creates a new channel
+    Attach = "attach",
+}
+
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
@@ -416,7 +421,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
-            case MessageType.Attach: {
+            case ComponentMessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
 
                 // If a non-local operation then go and create the object
@@ -563,14 +568,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            this.submit(MessageType.Attach, message);
+            this.submit(ComponentMessageType.Attach, message);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
+    private submit(
+        type: MessageType | ComponentMessageType,
+        content: any,
+        localOpMetadata: unknown = undefined): number
+    {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content, localOpMetadata);
     }
@@ -582,7 +591,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+    public reSubmit(type: MessageType | ComponentMessageType, content: any, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         switch (type) {
@@ -597,7 +606,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
                 break;
             }
-            case MessageType.Attach:
+            case ComponentMessageType.Attach:
                 // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);
                 break;

@@ -49,7 +49,6 @@ import {
 } from "@fluidframework/protocol-base";
 import {
     ConnectionState,
-    IChunkedOp,
     IClientDetails,
     IDocumentMessage,
     IHelpMessage,
@@ -67,7 +66,6 @@ import {
 import {
     FlushMode,
     IAliasProposalMessage,
-    IRuntimeMessage,
     IAttachMessage,
     IComponentContext,
     IComponentRegistry,
@@ -102,6 +100,27 @@ import { pkgVersion } from "./packageVersion";
 
 const chunksBlobName = ".chunks";
 const aliasesBlobName = ".aliases";
+
+export enum ContainerMessageType {
+    // Creates a new component
+    Attach = "attach",
+
+    // Chunked operation.
+    ChunkedOp = "chunkedOp",
+
+    // Proposes an alias to a component
+    AliasProposal = "aliasProposal",
+}
+
+export interface IChunkedOp {
+    chunkId: number;
+
+    totalChunks: number;
+
+    contents: string;
+
+    originalType: MessageType | ContainerMessageType;
+}
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -175,9 +194,10 @@ interface IRuntimeMessageMetadata {
 
 function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
-        case MessageType.ChunkedOp:
-        case MessageType.Attach:
+        case ContainerMessageType.ChunkedOp:
+        case ContainerMessageType.Attach:
         case MessageType.Operation:
+        case ContainerMessageType.AliasProposal:
             return true;
         default:
             return false;
@@ -612,10 +632,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        for (const [alias, id] of aliases) {
-            this.aliases.set(alias, { id });
-        }
-
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
@@ -654,11 +670,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
-            const deferred = new Deferred<ComponentContext>();
-            deferred.resolve(componentContext);
+            this.setNewContext(key, componentContext);
+        }
 
-            this.contexts.set(key, componentContext);
-            this.contextsDeferred.set(key, deferred);
+        for (const [alias, id] of aliases) {
+            this.aliases.set(alias, { id });
+            this.setNewContext(alias, this.contexts.get(id));
         }
 
         this.logger = ChildLogger.create(context.logger, undefined, {
@@ -823,7 +840,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         const result = this.serializeAliases();
         if (result.length > 0) {
             summaryTree.tree[aliasesBlobName] = {
-                content: JSON.stringify([...result]),
+                content: JSON.stringify(result),
                 type: SummaryType.Blob,
             };
         }
@@ -1067,11 +1084,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.aliases.set(alias, result);
 
         const proposal: IAliasProposalMessage = {
-            type: "aliasProposal",
             componentId,
             alias,
         };
-        this.submit(MessageType.Operation, proposal);
+        this.submit(ContainerMessageType.AliasProposal, proposal);
 
         return deferred.promise;
     }
@@ -1226,26 +1242,27 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
         let message = messageArg;
-        if (messageArg.type === MessageType.ChunkedOp) {
+        if (messageArg.type === ContainerMessageType.ChunkedOp) {
             message = this.processRemoteChunkedMessage(messageArg);
         }
 
         let localMessageMetadata: unknown;
         // Call the PendingStateManager to process local messages.
         // Do not process local chunked ops until all pieces are available.
-        if (local && message.type !== MessageType.ChunkedOp) {
+        if (local && message.type !== ContainerMessageType.ChunkedOp) {
             localMessageMetadata = this.pendingStateManager.processPendingLocalMessage(message);
         }
 
-        // Old prepare part
         switch (message.type) {
-            case MessageType.Attach: {
+            case ContainerMessageType.Attach: {
+                const attachMessage = message.contents as IAttachMessage;
                 // The local object has already been attached
                 if (local) {
+                    assert(this.pendingAttach.has(attachMessage.id));
+                    this.pendingAttach.delete(attachMessage.id);
                     break;
                 }
 
-                const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
                 let flatBlobsP = Promise.resolve(flatBlobs);
                 let snapshotTreeP: Promise<ISnapshotTree> | null = null;
@@ -1265,53 +1282,49 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
+
+                // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+                assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
+                assert(!this.aliases.has(attachMessage.id), "Component attached with existing alias ID");
+
+                // Resolve pending gets and store off any new ones
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.setNewContext(attachMessage.id, remotedComponentContext!);
+
+                // Equivalent of nextTick() - Prefetch once all current ops have completed
+                // eslint-disable-next-line max-len
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
+                Promise.resolve().then(() => remotedComponentContext.realize());
+
                 break;
             }
 
-            default:
-        }
-
-        // Process part
-        switch (message.type) {
             case MessageType.Operation:
                 this.processOperation(message, local, localMessageMetadata);
                 break;
+
+            case ContainerMessageType.AliasProposal: {
+                const runtimeMessage = message.contents as IAliasProposalMessage;
+                const finalState = { id: runtimeMessage.componentId };
+                const pendingProposal = this.aliases.get(runtimeMessage.alias);
+
+                // Previous request is already resolved. Ignore incoming op.
+                if (pendingProposal !== undefined && pendingProposal.deferred === undefined) {
+                    return;
+                }
+
+                // Incoming op wins the race (if any)
+                this.aliases.set(runtimeMessage.alias, finalState);
+                this.setNewContext(runtimeMessage.alias, this.contexts.get(runtimeMessage.componentId));
+                pendingProposal?.deferred?.resolve(runtimeMessage.componentId);
+
+                break;
+            }
 
             default:
         }
 
         this.emit("op", message);
-
-        // Post-process part
-        switch (message.type) {
-            case MessageType.Attach: {
-                const attachMessage = message.contents as IAttachMessage;
-
-                // If a non-local operation then go and create the object, otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
-                    this.pendingAttach.delete(attachMessage.id);
-                } else {
-                    assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
-                    assert(!this.aliases.has(attachMessage.id), "Component attached with existing alias ID");
-
-                    // Resolve pending gets and store off any new ones
-                    const deferred = this.ensureContextDeferred(attachMessage.id);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    deferred.resolve(remotedComponentContext!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.contexts.set(attachMessage.id, remotedComponentContext!);
-
-                    // Equivalent of nextTick() - Prefetch once all current ops have completed
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
-                    Promise.resolve().then(() => remotedComponentContext.realize());
-                }
-                break;
-            }
-
-            default: // Do nothing
-        }
 
         // If there are no more pending states after processing a local message, the document is no longer dirty.
         if (local && !this.pendingStateManager.isPendingState()) {
@@ -1331,7 +1344,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
-            this.submit(MessageType.Attach, message);
+            this.submit(ContainerMessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
@@ -1352,6 +1365,14 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         const deferred = this.contextsDeferred.get(id)!;
         assert(deferred);
         return deferred;
+    }
+
+    private setNewContext(id: string, context?: ComponentContext) {
+        assert(context);
+        assert(!this.contexts.has(id));
+        this.contexts.set(id, context);
+        const deferred = this.ensureContextDeferred(id);
+        deferred.resolve(context);
     }
 
     private getContext(id: string): ComponentContext {
@@ -1531,7 +1552,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
+    private submit(
+        type: MessageType | ContainerMessageType,
+        content: any,
+        localOpMetadata: unknown = undefined): number
+    {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1561,7 +1586,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
             if (serializedContent.length <= maxOpSize) {
                 clientSequenceNumber = this.context.submitFn(
-                    type,
+                    type as MessageType,
                     content,
                     this._flushMode === FlushMode.Manual,
                     batchBegin ? { batch: true } : undefined);
@@ -1571,7 +1596,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(type, clientSequenceNumber, content, localOpMetadata);
+        this.pendingStateManager.onSubmitMessage(type as MessageType, clientSequenceNumber, content, localOpMetadata);
 
         // We have a pending op, so the document is now dirty.
         if (!isSystemType(type)) {
@@ -1581,7 +1606,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return clientSequenceNumber;
     }
 
-    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
+    private submitChunkedMessage(type: MessageType | ContainerMessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
         const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
         let offset = 0;
@@ -1594,7 +1619,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            clientSequenceNumber = this.context.submitFn(MessageType.ChunkedOp, chunkedOp, false);
+            clientSequenceNumber = this.context.submitFn(
+                ContainerMessageType.ChunkedOp as any as MessageType,
+                chunkedOp,
+                false);
         }
         return clientSequenceNumber;
     }
@@ -1615,16 +1643,16 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+    private reSubmit(type: MessageType | ContainerMessageType, content: any, localOpMetadata: unknown) {
         switch (type) {
             case MessageType.Operation:
                 // For Operations, call reSubmitOperation which will find the right component and trigger
                 // resubmission on it.
                 this.reSubmitOperation(content, localOpMetadata);
                 break;
-            case MessageType.Attach:
-                // For Attach messages, submit the message again.
-                this.submit(MessageType.Attach, content, localOpMetadata);
+            case ContainerMessageType.Attach:
+            case ContainerMessageType.AliasProposal:
+                this.submit(type, content, localOpMetadata);
                 break;
             case MessageType.RemoteHelp:
                 // For RemoteHelp messages, log an error but do not resubmit them. We should look at the
@@ -1649,53 +1677,25 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private processOperation(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         const envelope = message.contents as IEnvelope;
 
-        if (envelope.address === undefined) {
-            const runtimeMessage = message.contents as IRuntimeMessage;
-            // Message for container runtime itself
-            switch (runtimeMessage.type) {
-                case "aliasProposal": {
-                    const finalState = { id: runtimeMessage.componentId };
+        const componentContext = this.getContext(envelope.address);
+        const innerContents = envelope.contents as { content: any; type: string };
 
-                    const pendingProposal = this.aliases.get(runtimeMessage.alias);
-                    if (pendingProposal === undefined) {
-                        this.aliases.set(runtimeMessage.alias, finalState);
-                        return;
-                    }
+        const transformed: ISequencedDocumentMessage = {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: innerContents.content,
+            metadata: message.metadata,
+            minimumSequenceNumber: message.minimumSequenceNumber,
+            origin: message.origin,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            sequenceNumber: message.sequenceNumber,
+            timestamp: message.timestamp,
+            term: message.term ?? 1,
+            traces: message.traces,
+            type: innerContents.type,
+        };
 
-                    // Previous request is already resolved. Ignore incoming op.
-                    if (pendingProposal.deferred === undefined) {
-                        return;
-                    }
-
-                    // Incoming op wins the race (if any)
-                    this.aliases.set(runtimeMessage.alias, finalState);
-                    pendingProposal.deferred.resolve(runtimeMessage.componentId);
-
-                    break;
-                }
-                default:
-            }
-        } else {
-            const componentContext = this.getContext(envelope.address);
-            const innerContents = envelope.contents as { content: any; type: string };
-
-            const transformed: ISequencedDocumentMessage = {
-                clientId: message.clientId,
-                clientSequenceNumber: message.clientSequenceNumber,
-                contents: innerContents.content,
-                metadata: message.metadata,
-                minimumSequenceNumber: message.minimumSequenceNumber,
-                origin: message.origin,
-                referenceSequenceNumber: message.referenceSequenceNumber,
-                sequenceNumber: message.sequenceNumber,
-                timestamp: message.timestamp,
-                term: message.term ?? 1,
-                traces: message.traces,
-                type: innerContents.type,
-            };
-
-            componentContext.process(transformed, local, localOpMetadata);
-        }
+        componentContext.process(transformed, local, localOpMetadata);
     }
 
     private reSubmitOperation(content: any, localOpMetadata: unknown) {

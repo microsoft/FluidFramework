@@ -6,13 +6,14 @@
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, MessageType, IQuorum } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 const schedulerId = "_schdeuler";
 
 // Returns if an "Attach" or "Operation" type message is from the scheduler.
 function isSchedulerMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Attach) {
+    if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
         if (attachMessage.id === schedulerId) {
             return true;
@@ -29,7 +30,7 @@ function isSchedulerMessage(message: ISequencedDocumentMessage) {
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Attach || message.type === MessageType.Operation) {
+    if (message.type === ContainerMessageType.Attach || message.type === MessageType.Operation) {
         return false;
     }
     return true;

@@ -17,7 +17,6 @@ import {
 import { TestClient } from "@fluidframework/merge-tree/dist/test/testClient";
 import {
     IBlob,
-    IChunkedOp,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -30,6 +29,7 @@ import {
     SharedStringFactory,
     SparseMatrixFactory,
 } from "@fluidframework/sequence";
+import { ContainerMessageType, IChunkedOp } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 
 // eslint-disable-next-line max-len
@@ -120,7 +120,7 @@ export class ClientReplayTool {
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         const chunkMap = new Map<string, string[]>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
-            if (message.type === MessageType.ChunkedOp) {
+            if (message.type === ContainerMessageType.ChunkedOp) {
                 const chunk = JSON.parse(message.contents as string) as IChunkedOp;
                 if (!chunkMap.has(message.clientId)) {
                     chunkMap.set(message.clientId, new Array<string>(chunk.totalChunks));
@@ -146,7 +146,7 @@ export class ClientReplayTool {
             }
 
             const messagePathParts: string[] = [];
-            switch (message.type as MessageType) {
+            switch (message.type) {
                 case MessageType.Operation:
                     let contents = message.contents as Partial<IMessageContents>;
                     if (contents) {
@@ -186,7 +186,7 @@ export class ClientReplayTool {
                     }
                     break;
 
-                case MessageType.Attach:
+                case ContainerMessageType.Attach:
                     this.processAttachMessage(
                         message.contents as IAttachMessage,
                         mergeTreeAttachTrees);

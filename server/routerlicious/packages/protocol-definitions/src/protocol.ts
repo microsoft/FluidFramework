@@ -65,16 +65,6 @@ export enum MessageType {
     Control = "control",
 }
 
-export interface IChunkedOp {
-    chunkId: number;
-
-    totalChunks: number;
-
-    contents: string;
-
-    originalType: MessageType;
-}
-
 /**
  * Messages to track latency trace
  */

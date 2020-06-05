@@ -48,13 +48,6 @@ export interface IAttachMessage {
 }
 
 export interface IAliasProposalMessage {
-    type: "aliasProposal";
     componentId: string;
     alias: string;
 }
-
-/**
- * Runtime message type - union of message interfaces
- * IAttachMessage should ideally move into this type.
- */
-export type IRuntimeMessage = IAliasProposalMessage;
