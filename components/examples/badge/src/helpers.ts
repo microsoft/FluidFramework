@@ -12,8 +12,7 @@ import {
 } from "office-ui-fabric-react";
 
 export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
-    const mapItems = [];
-    options.forEach((v) => mapItems.push(v));
+    const mapItems = [...options];
 
     mapItems.push({
         key: "divider_1",

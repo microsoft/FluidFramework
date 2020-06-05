@@ -17,7 +17,15 @@ import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";
 import { IBadgeType } from "./IBadgeType";
 
-export class Badge extends PrimedComponent implements IComponentHTMLView {
+interface IBadgeModel {
+    addOption: (text: string, color: IColor) => void;
+    changeSelectedOption: (newItem: IBadgeType) => void;
+    getOptions: () => Iterable<any>;
+    getHistoryItems: () => IHistory<IBadgeType>[];
+    getSelectedOptionKey: () => any
+}
+
+export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTMLView {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
@@ -89,12 +97,12 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
         this.root.set(this.optionsId, options.handle);
 
         // Create a sequence to store the badge's history
-        const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
-        history.insert(0, [{
+        const badgeHistory = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
+        badgeHistory.insert(0, [{
             value: current.get(),
             timestamp: new Date(),
         }]);
-        this.root.set(this.historyId, history.handle);
+        this.root.set(this.historyId, badgeHistory.handle);
     }
 
     /**
@@ -160,32 +168,41 @@ export class Badge extends PrimedComponent implements IComponentHTMLView {
     */
 
     public FluidReactClient: React.FC = (): JSX.Element => {
-        const [queries, setQueries] = React.useState(this.queries);
+        const [options, setOptions] = React.useState(this.getOptions());
+        const [historyItems, setHistoryItems] = React.useState(this.getHistoryItems());
+        const [selectedOption, setSelectedOption] = React.useState(this.getSelectedOptionKey());
 
         React.useEffect(() => {
             this.currentCell.on("valueChanged", () => {
-                setQueries(this.queries);
+                setSelectedOption(this.getSelectedOptionKey());
+                setHistoryItems(this.getHistoryItems());
             });
 
             this.optionsMap.on("valueChanged", () => {
-                setQueries(this.queries);
+                setOptions(this.getOptions());
             });
         });
 
         return (
             <BadgeView
-                {...queries}
+                options={ options}
+                historyItems={ historyItems}
+                selectedOption={ selectedOption}
                 addOption={this.addOption}
                 changeSelectedOption={this.changeSelectedOption}
             />
         );
     };
 
-    private get queries() {
-        return {
-            options: [...this.optionsMap.values()],
-            historyItems: this.historySequence.getItems(0),
-            selectedOption: this.currentCell.get().key,
-        };
+    public getOptions = () => {
+        return [...this.optionsMap.values()];
+    };
+
+    public getHistoryItems = () => {
+        return this.historySequence.getItems(0);
+    };
+
+    public getSelectedOptionKey() {
+        return this.currentCell.get().key;
     }
 }
