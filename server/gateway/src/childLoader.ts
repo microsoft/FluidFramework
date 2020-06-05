@@ -6,7 +6,7 @@ import { parse } from "url";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -78,10 +78,8 @@ class KeyValueLoader {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Fake app-id",
             async (siteUrl: string) => Promise.resolve("fake token"),
-            async () => Promise.resolve("fake token"),
-            new BaseTelemetryNullLogger()));
+            async () => Promise.resolve("fake token")));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,

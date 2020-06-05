@@ -117,6 +117,16 @@ export interface IObjectStorageService {
      * Reads the object contained at the given path. Returns a base64 string representation for the object.
      */
     read(path: string): Promise<string>;
+
+    /**
+     * Determines if there is an object contained at the given path.
+     */
+    contains(path: string): Promise<boolean>;
+
+    /**
+     * Lists the blobs that exist at a specific path.
+     */
+    list(path: string): Promise<string[]>;
 }
 
 /**

@@ -45,7 +45,8 @@ export interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly tardis = "tardis";
+    public static readonly oldCatchupOps = "tardis";
+    public static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -100,7 +101,7 @@ export class SnapshotLegacy {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        tardisMsgs: ISequencedDocumentMessage[],
+        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
@@ -119,6 +120,7 @@ export class SnapshotLegacy {
                             SnapshotLegacy.header,
                             chunk1,
                             this.logger,
+                            this.mergeTree.options,
                             serializer,
                             context,
                             bind),
@@ -143,6 +145,7 @@ export class SnapshotLegacy {
                         SnapshotLegacy.body,
                         chunk2,
                         this.logger,
+                        this.mergeTree.options,
                         serializer,
                         context,
                         bind),
@@ -161,10 +164,11 @@ export class SnapshotLegacy {
 
         tree.entries.push({
             mode: FileMode.File,
-            path: SnapshotLegacy.tardis,
+            path: this.mergeTree.options?.useNewCatchUpBlobName === true ?
+                SnapshotLegacy.catchupOps : SnapshotLegacy.oldCatchupOps,
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),
+                contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
                 encoding: "utf-8",
             },
         });
