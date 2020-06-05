@@ -161,6 +161,18 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
         }
     };
 
+    public getOptions = () => {
+        return [...this.optionsMap.values()];
+    };
+
+    public getHistoryItems = () => {
+        return this.historySequence.getItems(0);
+    };
+
+    public getSelectedOptionKey() {
+        return this.currentCell.get().key;
+    }
+
     /**
     * The FluidReactClient is a stateful functional component that stores Fluid queries in state
     * and passes those queries to the BadgeView. The queries state is updated each time that the Fluid DDS's
@@ -177,11 +189,13 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
                 setSelectedOption(this.getSelectedOptionKey());
                 setHistoryItems(this.getHistoryItems());
             });
+        }, [this.currentCell]);
 
+        React.useEffect(() => {
             this.optionsMap.on("valueChanged", () => {
                 setOptions(this.getOptions());
             });
-        });
+        }, [this.optionsMap]);
 
         return (
             <BadgeView
@@ -193,16 +207,4 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
             />
         );
     };
-
-    public getOptions = () => {
-        return [...this.optionsMap.values()];
-    };
-
-    public getHistoryItems = () => {
-        return this.historySequence.getItems(0);
-    };
-
-    public getSelectedOptionKey() {
-        return this.currentCell.get().key;
-    }
 }
