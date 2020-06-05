@@ -5,6 +5,7 @@
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IComponentHandle, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 
+// TODO #2424 Expose Summarizer handle as ComponentHandle w/ tests
 export class SummarizerHandle extends ComponentHandle {
     public async get(): Promise<any> {
         throw Error("Do not try to get a summarizer object from the handle. Reference it directly.");
