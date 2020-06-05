@@ -112,12 +112,14 @@ describe("Document Dirty", () => {
             // Set values in DDSes in disconnected state.
             firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is dirty after value set");
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
         });
     });
 
@@ -129,12 +131,14 @@ describe("Document Dirty", () => {
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is marked clean on disconnect");
 
             // Set values in DDSes in disconnected state.
             firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is marked dirty on edit");
 
             // Wait for the Container to get reconnected.
             await Promise.all([
@@ -143,16 +147,20 @@ describe("Document Dirty", () => {
             ]);
 
             // Document will have been marked clean on reconnection
-            assert.equal(wasMarkedClean, true);
+            assert.equal(wasMarkedClean, true,
+                "Document will have been marked clean on reconnection");
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document should have been marked dirty after to overwrite the clean value,"
+                + "so that the final state is dirty");
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
         });
 
         it(`marked dirty when ops are sent while connected and not set clean until 
@@ -162,12 +170,14 @@ describe("Document Dirty", () => {
             // Set values in DDSes in disconnected state.
             firstContainerCompMap.set("key", "value");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is marked dirty on edit");
 
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document is still dirty on disconnect");
 
             // Wait for the Container to get reconnected.
             await Promise.all([
@@ -176,16 +186,20 @@ describe("Document Dirty", () => {
             ]);
 
             // Document will have been marked clean on reconnection
-            assert.equal(wasMarkedClean, true);
+            assert.equal(wasMarkedClean, true,
+                "Document will have been marked clean on reconnection");
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), true,
+                "Document should have been marked dirty after to overwrite the clean value, so that the final"
+                + "state is dirty");
 
             // Wait for the ops to get processed by both the containers.
             await containerDeltaEventManager.process();
 
-            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false);
+            assert.equal(firstContainerCompContainerRuntime.isDocumentDirty(), false,
+                "Document is cleaned after all ops have been acked");
         });
     });
 });
