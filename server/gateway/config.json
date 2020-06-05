@@ -82,8 +82,8 @@
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
         "repository": "prague",
-        "npm": "https://pragueauspkn-3873244262.azureedge.net",
-        "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
+        "npm": "https://pragueauspkn.azureedge.net",
+        "clusterNpm": "https://pragueauspkn.azureedge.net",
         "localNpm": "http://localhost:3002",
         "localClusterNpm": "http://auspkn:3000",
         "packageManager": {

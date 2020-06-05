@@ -129,7 +129,7 @@ export interface ILoader {
     resolve(request: IRequest): Promise<IContainer>;
 
     /**
-     * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
+     * Creates a new container using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explicitly attaches the container to a service provider.
      */
     createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
