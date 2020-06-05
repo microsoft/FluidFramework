@@ -52,6 +52,7 @@
     "@fluidframework/base-host": "^0.19.4",
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/cell": "^0.19.4",
+    "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/component-core-interfaces": "^0.19.4",
     "@fluidframework/component-runtime": "^0.19.4",
     "@fluidframework/component-runtime-definitions": "^0.19.4",
