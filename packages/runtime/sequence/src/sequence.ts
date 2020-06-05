@@ -164,7 +164,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel = new MapKernel(
             this.runtime,
             this.handle,
-            (content, localOpMetadata) => this.trySubmitLocalMessage(content, localOpMetadata),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+            () => this.isLocal(),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -416,21 +417,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         };
 
         return tree;
-    }
-
-    /**
-     * Tries to submit a message.
-     * @param content - The content of the message to be submitted
-     * @param localOpMetadata - The metadata associated with the op
-     * @returns - false, if we are local. true, otherwise
-     */
-    private trySubmitLocalMessage(content: any, localOpMetadata: unknown): boolean {
-        if (this.isLocal()) {
-            return false;
-        }
-
-        this.submitLocalMessage(content, localOpMetadata);
-        return true;
     }
 
     /**

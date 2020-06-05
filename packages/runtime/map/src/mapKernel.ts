@@ -163,7 +163,7 @@ export class MapKernel {
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingMessageId: number = 0;
+    private pendingMessageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
@@ -180,14 +180,16 @@ export class MapKernel {
      * Create a new shared map kernel.
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
-     * @param trySubmitLocalMessage - A callback to try and submit a message through the shared object
+     * @param submitMessage - A callback to submit a message through the shared object
+     * @param isLocal - To query whether the shared object is in local state
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly trySubmitLocalMessage: (op: any, localOpMetadata: unknown) => boolean,
+        private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
+        private readonly isLocal: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -323,19 +325,25 @@ export class MapKernel {
             throw new Error("Undefined and null keys are not supported");
         }
 
+        // Set the value locally first.
         const localValue = this.localValueMaker.fromInMemory(value);
-        const serializableValue = makeSerializable(
-            localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.handle);
-
         this.setCore(
             key,
             localValue,
             true,
             null,
         );
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
+        const serializableValue = makeSerializable(
+            localValue,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
 
         const op: IMapSetOperation = {
             key,
@@ -349,7 +357,19 @@ export class MapKernel {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any) {
+        // Set the value locally first.
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IComponentSerializer it
@@ -363,13 +383,6 @@ export class MapKernel {
         // This is a special form of serialized valuetype only used for set, containing info for initialization.
         // After initialization, the serialized form will need to come from the .store of the value type's factory.
         const serializableValue = { type, value: transformedValue };
-
-        this.setCore(
-            key,
-            localValue,
-            true,
-            null,
-        );
 
         const op: IMapSetOperation = {
             key,
@@ -385,13 +398,20 @@ export class MapKernel {
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
+        // Delete the key locally first.
+        const successfullyRemoved = this.deleteCore(key, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IMapDeleteOperation = {
             key,
             type: "delete",
         };
-
-        const successfullyRemoved = this.deleteCore(op.key, true, null);
         this.submitMapKeyMessage(op);
+
         return successfullyRemoved;
     }
 
@@ -399,11 +419,17 @@ export class MapKernel {
      * Clear all data from the map.
      */
     public clear(): void {
+        // Clear the data locally first.
+        this.clearCore(true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
         const op: IMapClearOperation = {
             type: "clear",
         };
-
-        this.clearCore(true, null);
         this.submitMapClearMessage(op);
     }
 
@@ -702,7 +728,7 @@ export class MapKernel {
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op: IMapValueTypeOperation, localOpMetadata: unknown) => {
-                    this.trySubmitLocalMessage(op, localOpMetadata);
+                    this.submitMessage(op, localOpMetadata);
                 },
             });
 
@@ -714,9 +740,9 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
-        if (this.trySubmitLocalMessage(op, this.pendingMessageId)) {
-            this.pendingClearMessageId = this.pendingMessageId++;
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -724,9 +750,9 @@ export class MapKernel {
      * @param op - The map key message
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
-        if (this.trySubmitLocalMessage(op, this.pendingMessageId)) {
-            this.pendingKeys.set(op.key, this.pendingMessageId++);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.submitMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -752,7 +778,7 @@ export class MapKernel {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.trySubmitLocalMessage(op, undefined /* localOpMetadata */);
+            this.submitMessage(op, undefined /* localOpMetadata */);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this);

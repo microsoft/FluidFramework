@@ -601,19 +601,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * Tries to submit an operation
+     * Submits an operation
      * @param op - Op to submit
      * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
      * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
-     * @returns - false, it we are local. true, otherwise.
      * @internal
      */
-    public trySubmitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): boolean {
-        if (this.isLocal()) {
-            return false;
-        }
+    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
         this.submitLocalMessage(op, localOpMetadata);
-        return true;
     }
 
     /**
@@ -639,7 +634,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             };
 
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.trySubmitDirectoryMessage(op, undefined /* localOpMetadata */);
+            this.submitDirectoryMessage(op, undefined /* localOpMetadata */);
             const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
@@ -916,7 +911,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op, localOpMetadata: unknown) => {
-                    this.trySubmitDirectoryMessage(op, localOpMetadata);
+                    this.submitDirectoryMessage(op, localOpMetadata);
                 },
             },
         );
@@ -956,7 +951,7 @@ class SubDirectory implements IDirectory {
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
      */
-    private pendingMessageId: number = 0;
+    private pendingMessageId: number = -1;
 
     /**
      * If a clear has been performed locally but not yet ack'd from the server, then this stores the pending id
@@ -1027,19 +1022,25 @@ class SubDirectory implements IDirectory {
             throw new Error("Undefined and null keys are not supported");
         }
 
+        // Set the value locally first.
         const localValue = this.directory.localValueMaker.fromInMemory(value);
-        const serializableValue = makeSerializable(
-            localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.directory.handle);
-
         this.setCore(
             key,
             localValue,
             true,
             null,
         );
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return this;
+        }
+
+        const serializableValue = makeSerializable(
+            localValue,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.directory.handle);
 
         const op: IDirectorySetOperation = {
             key,
@@ -1055,11 +1056,24 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any): this {
+        // Set the value locally first.
         const localValue = this.directory.localValueMaker.makeValueType(
             type,
             this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
             params,
         );
+
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return this;
+        }
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IComponentSerializer it
@@ -1074,13 +1088,6 @@ class SubDirectory implements IDirectory {
         // This is a special form of serialized valuetype only used for set, containing info for initialization.
         // After initialization, the serialized form will need to come from the .store of the value type's factory.
         const serializableValue = { type, value: transformedValue };
-
-        this.setCore(
-            key,
-            localValue,
-            true,
-            null,
-        );
 
         const op: IDirectorySetOperation = {
             key,
@@ -1105,7 +1112,15 @@ class SubDirectory implements IDirectory {
             throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
+        // Create the sub directory locally first.
         this.createSubDirectoryCore(subdirName, true, null);
+
+        const subDir: IDirectory = this._subdirectories.get(subdirName);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return subDir;
+        }
 
         const op: IDirectoryCreateSubDirectoryOperation = {
             path: this.absolutePath,
@@ -1114,7 +1129,7 @@ class SubDirectory implements IDirectory {
         };
         this.submitSubDirectoryMessage(op);
 
-        return this._subdirectories.get(subdirName);
+        return subDir;
     }
 
     /**
@@ -1135,13 +1150,20 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
+        // Delete the sub directory locally first.
+        const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IDirectoryDeleteSubDirectoryOperation = {
             path: this.absolutePath,
             subdirName,
             type: "deleteSubDirectory",
         };
 
-        const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
         this.submitSubDirectoryMessage(op);
         return successfullyRemoved;
     }
@@ -1166,13 +1188,20 @@ class SubDirectory implements IDirectory {
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
+        // Delete the key locally first.
+        const successfullyRemoved = this.deleteCore(key, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IDirectoryDeleteOperation = {
             key,
             path: this.absolutePath,
             type: "delete",
         };
 
-        const successfullyRemoved = this.deleteCore(op.key, true, null);
         this.submitKeyMessage(op);
         return successfullyRemoved;
     }
@@ -1181,12 +1210,18 @@ class SubDirectory implements IDirectory {
      * Deletes all keys from within this IDirectory.
      */
     public clear(): void {
+        // Clear the data locally first.
+        this.clearCore(true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return;
+        }
+
         const op: IDirectoryClearOperation = {
             path: this.absolutePath,
             type: "clear",
         };
-
-        this.clearCore(true, null);
         this.submitClearMessage(op);
     }
 
@@ -1388,9 +1423,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
-            this.pendingClearMessageId = this.pendingMessageId++;
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingClearMessageId = pendingMessageId;
     }
 
     /**
@@ -1399,9 +1434,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
-            this.pendingKeys.set(op.key, this.pendingMessageId++);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingKeys.set(op.key, pendingMessageId);
     }
 
     /**
@@ -1410,9 +1445,9 @@ class SubDirectory implements IDirectory {
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        if (this.directory.trySubmitDirectoryMessage(op, this.pendingMessageId)) {
-            this.pendingSubDirectories.set(op.subdirName, this.pendingMessageId++);
-        }
+        const pendingMessageId = ++this.pendingMessageId;
+        this.directory.submitDirectoryMessage(op, pendingMessageId);
+        this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
     }
 
     /**
