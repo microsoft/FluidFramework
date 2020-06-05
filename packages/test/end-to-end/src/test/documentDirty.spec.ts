@@ -45,6 +45,9 @@ describe("Document Dirty", () => {
         await new Promise((resolve) => container.once("connected", () => resolve()));
     }
 
+    /**
+     * Waits for the "dirtyDocument" event on the runtime
+     */
     async function waitForMarkedDirty(runtime: IContainerRuntime): Promise<void> {
         await new Promise((resolve) => runtime.once("dirtyDocument", () => {
             wasMarkedDirty = true;
@@ -52,6 +55,9 @@ describe("Document Dirty", () => {
         }));
     }
 
+    /**
+     * Waits for the "savedDocument" event on the runtime
+     */
     async function waitForMarkedClean(runtime: IContainerRuntime): Promise<void> {
         await new Promise((resolve) => runtime.once("savedDocument", () => {
             wasMarkedClean = true;
