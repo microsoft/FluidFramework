@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/musica",
-  "version": "0.19.2",
+  "version": "0.19.4",
   "description": "Play music collaboratively",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -29,9 +29,9 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.19.2",
-    "@fluidframework/map": "^0.19.2",
-    "@fluidframework/view-interfaces": "^0.19.2",
+    "@fluidframework/aqueduct": "^0.19.4",
+    "@fluidframework/map": "^0.19.4",
+    "@fluidframework/view-interfaces": "^0.19.4",
     "rc-slider": "^8.6.9",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
@@ -42,7 +42,7 @@
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/webpack-component-loader": "^0.19.2",
+    "@fluidframework/webpack-component-loader": "^0.19.4",
     "@types/node": "^10.17.24",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

@@ -1,6 +1,6 @@
 {
   "name": "@yo-fluid/dice-roller",
-  "version": "0.19.1",
+  "version": "0.19.3",
   "description": "Minimal Fluid example to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "author": "Microsoft",
@@ -27,7 +27,7 @@
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@fluidframework/webpack-component-loader": "^0.19.0-0",
+    "@fluidframework/webpack-component-loader": "^0.19.3-0",
     "@types/node": "^10.17.24",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",

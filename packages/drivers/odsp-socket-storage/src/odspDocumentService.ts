@@ -21,12 +21,18 @@ import {
 import {
     IClient,
     IErrorTrackingService,
+    ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl, HostStoragePolicy, ISocketStorageDiscovery } from "./contracts";
+import {
+    IOdspResolvedUrl,
+    HostStoragePolicy,
+    HostStoragePolicyInternal,
+    ISocketStorageDiscovery,
+} from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { IOdspCache } from "./odspCache";
+import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
@@ -34,6 +40,10 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
+
+// eslint-disable-next-line max-len
+// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+const cloneDeep = require("lodash/cloneDeep");
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
@@ -44,6 +54,9 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  */
 export class OdspDocumentService implements IDocumentService {
     public readonly isExperimentalDocumentService = true;
+
+    protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
+
     /**
      * @param getStorageToken - function that can provide the storage token for a given site. This is
      * is also referred to as the "VROOM" token in SPO.
@@ -66,7 +79,6 @@ export class OdspDocumentService implements IDocumentService {
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const options = odspResolvedUrl.createNewOptions;
@@ -101,7 +113,6 @@ export class OdspDocumentService implements IDocumentService {
             socketIOClientP,
             cache,
             hostPolicy,
-            isFirstTimeDocumentOpened,
         );
     }
 
@@ -117,6 +128,12 @@ export class OdspDocumentService implements IDocumentService {
     private readonly joinSessionKey: string;
 
     private readonly isOdc: boolean;
+
+    // Track maximum sequence number we observed and communicated to cache layer.
+    private opSeqNumberMax = 0;
+    private opSeqNumberMaxHostNotified = 0;
+
+    private readonly hostPolicy: HostStoragePolicyInternal;
 
     /**
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
@@ -137,8 +154,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
-        private readonly hostPolicy: HostStoragePolicy,
-        private readonly isFirstTimeDocumentOpened = true,
+        hostPolicy: HostStoragePolicy,
     ) {
         this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.isOdc = isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin);
@@ -147,6 +163,12 @@ export class OdspDocumentService implements IDocumentService {
             {
                 odc: this.isOdc,
             });
+
+        this.hostPolicy = hostPolicy;
+        if (this.odspResolvedUrl.summarizer) {
+            this.hostPolicy = cloneDeep(this.hostPolicy);
+            this.hostPolicy.summarizerClient = true;
+        }
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -181,15 +203,13 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
-            this.odspResolvedUrl.hashedDocumentId,
-            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+            this.odspResolvedUrl,
             latestSha,
             this.storageFetchWrapper,
             this.getStorageToken,
             this.logger,
             true,
             this.cache,
-            this.isFirstTimeDocumentOpened,
             this.hostPolicy,
         );
 
@@ -207,13 +227,21 @@ export class OdspDocumentService implements IDocumentService {
             return websocketEndpoint.deltaStorageUrl;
         };
 
-        return new OdspDeltaStorageService(
+        const res = new OdspDeltaStorageService(
             urlProvider,
             this.deltasFetchWrapper,
-            this.storageManager ? this.storageManager.ops : undefined,
+            this.storageManager?.ops,
             this.getStorageToken,
             this.logger,
         );
+
+        return {
+            get: async (from?: number, to?: number) => {
+                const ops = await res.get(from, to);
+                this.opsReceived(ops);
+                return ops;
+            },
+        };
     }
 
     /**
@@ -243,19 +271,24 @@ export class OdspDocumentService implements IDocumentService {
                 throw new Error("websocket endpoint should be defined");
             }
 
-            return this.connectToDeltaStreamWithRetry(
-                websocketEndpoint.tenantId,
-                websocketEndpoint.id,
-                // This is workaround for fluid-fetcher. Need to have better long term solution
-                webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
-                io,
-                client,
-                websocketEndpoint.deltaStreamSocketUrl,
-                websocketEndpoint.deltaStreamSocketUrl2,
-            ).catch((error) => {
+            try {
+                const connection = await this.connectToDeltaStreamWithRetry(
+                    websocketEndpoint.tenantId,
+                    websocketEndpoint.id,
+                    // This is workaround for fluid-fetcher. Need to have better long term solution
+                    webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
+                    io,
+                    client,
+                    websocketEndpoint.deltaStreamSocketUrl,
+                    websocketEndpoint.deltaStreamSocketUrl2);
+                connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+                    this.opsReceived(ops);
+                });
+                return connection;
+            } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 throw error;
-            });
+            }
         });
     }
 
@@ -473,5 +506,24 @@ export class OdspDocumentService implements IDocumentService {
             }
             throw connectionError;
         });
+    }
+
+    // Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+    // We use it to notify caching layer of how stale is snapshot stored in cache.
+    protected opsReceived(ops: ISequencedDocumentMessage[]) {
+        const cacheEntry = this.storageManager?.snapshotCacheEntry;
+        if (ops.length === 0 || cacheEntry === undefined) {
+            return;
+        }
+
+        const maxSeq = ops[ops.length - 1].sequenceNumber;
+        if (this.opSeqNumberMax < maxSeq) {
+            this.opSeqNumberMax = maxSeq;
+        }
+        if (this.opSeqNumberMaxHostNotified + this.updateUsageOpFrequency < this.opSeqNumberMax) {
+            this.opSeqNumberMaxHostNotified = this.opSeqNumberMax;
+            this.updateUsageOpFrequency *= updateUsageOpMultiplier;
+            this.cache.persistedCache.updateUsage(cacheEntry, this.opSeqNumberMax);
+        }
     }
 }

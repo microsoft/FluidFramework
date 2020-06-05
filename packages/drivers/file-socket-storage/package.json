@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/file-driver",
-  "version": "0.19.2",
+  "version": "0.19.4",
   "description": "A driver that reads/write from/to local file storage.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,11 +26,11 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/driver-definitions": "^0.19.2",
-    "@fluidframework/driver-utils": "^0.19.2",
+    "@fluidframework/driver-definitions": "^0.19.4",
+    "@fluidframework/driver-utils": "^0.19.4",
     "@fluidframework/protocol-base": "^0.1006.1",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/replay-driver": "^0.19.2",
+    "@fluidframework/replay-driver": "^0.19.4",
     "debug": "^4.1.1"
   },
   "devDependencies": {
