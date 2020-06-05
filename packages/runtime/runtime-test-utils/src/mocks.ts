@@ -45,7 +45,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
@@ -633,10 +633,10 @@ export class MockObjectStorageService implements IObjectStorageService {
     }
 
     public async list(path: string): Promise<string[]> {
-        const pathParts = path.split("/");
+        const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
-            && key.split("/").length === pathParts.length + 1);
+            && key.split("/").length === pathPartsLength + 1);
     }
 }
 
