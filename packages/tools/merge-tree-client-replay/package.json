@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree-client-replay",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,11 +25,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/file-driver": "^0.19.4",
-    "@fluidframework/merge-tree": "^0.19.4",
+    "@fluidframework/file-driver": "^0.19.5",
+    "@fluidframework/merge-tree": "^0.19.5",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/runtime-definitions": "^0.19.4",
-    "@fluidframework/sequence": "^0.19.4",
+    "@fluidframework/runtime-definitions": "^0.19.5",
+    "@fluidframework/sequence": "^0.19.5",
     "lodash": "^4.17.11"
   },
   "devDependencies": {

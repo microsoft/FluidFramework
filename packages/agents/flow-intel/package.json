@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/flow-intel",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Runs agents on webFlow",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,9 +21,9 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-example/webflow": "^0.19.4",
-    "@fluidframework/component-core-interfaces": "^0.19.4",
-    "@fluidframework/map": "^0.19.4",
+    "@fluid-example/webflow": "^0.19.5",
+    "@fluidframework/component-core-interfaces": "^0.19.5",
+    "@fluidframework/map": "^0.19.5",
     "request": "^2.88.0"
   },
   "devDependencies": {

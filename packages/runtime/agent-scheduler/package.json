@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/agent-scheduler",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Component in charge of distributing agents across instances of a component",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -43,14 +43,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.4",
-    "@fluidframework/component-runtime": "^0.19.4",
-    "@fluidframework/component-runtime-definitions": "^0.19.4",
-    "@fluidframework/container-definitions": "^0.19.4",
-    "@fluidframework/map": "^0.19.4",
-    "@fluidframework/register-collection": "^0.19.4",
-    "@fluidframework/runtime-definitions": "^0.19.4",
-    "@fluidframework/shared-object-base": "^0.19.4",
+    "@fluidframework/component-core-interfaces": "^0.19.5",
+    "@fluidframework/component-runtime": "^0.19.5",
+    "@fluidframework/component-runtime-definitions": "^0.19.5",
+    "@fluidframework/container-definitions": "^0.19.5",
+    "@fluidframework/map": "^0.19.5",
+    "@fluidframework/register-collection": "^0.19.5",
+    "@fluidframework/runtime-definitions": "^0.19.5",
+    "@fluidframework/shared-object-base": "^0.19.5",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },

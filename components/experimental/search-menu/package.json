@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/search-menu",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Search menu",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,8 +22,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.4",
-    "@fluidframework/merge-tree": "^0.19.4",
+    "@fluidframework/component-core-interfaces": "^0.19.5",
+    "@fluidframework/merge-tree": "^0.19.5",
     "@types/node": "^10.17.24"
   },
   "devDependencies": {

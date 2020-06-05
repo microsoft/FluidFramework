@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/replay-tool",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,17 +25,17 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.19.4",
+    "@fluid-internal/client-api": "^0.19.5",
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.19.4",
-    "@fluidframework/container-definitions": "^0.19.4",
-    "@fluidframework/container-loader": "^0.19.4",
-    "@fluidframework/container-runtime": "^0.19.4",
-    "@fluidframework/driver-definitions": "^0.19.4",
-    "@fluidframework/file-driver": "^0.19.4",
+    "@fluidframework/component-core-interfaces": "^0.19.5",
+    "@fluidframework/container-definitions": "^0.19.5",
+    "@fluidframework/container-loader": "^0.19.5",
+    "@fluidframework/container-runtime": "^0.19.5",
+    "@fluidframework/driver-definitions": "^0.19.5",
+    "@fluidframework/file-driver": "^0.19.5",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/replay-driver": "^0.19.4"
+    "@fluidframework/replay-driver": "^0.19.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
