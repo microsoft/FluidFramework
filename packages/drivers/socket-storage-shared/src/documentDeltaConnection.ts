@@ -137,12 +137,10 @@ export class DocumentDeltaConnection
                 this.socket.emit(submitType, this.clientId, work);
             });
 
-        this.on("newListener", (event, listener) => {
-            assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
-
+        this.on("newListener", (event,listener)=>{
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
-            if (event !== "error") {
+            if (event !== "error" && this.listeners(event).length === 0) {
                 this.addTrackedListener(
                     event,
                     (...args: any[]) => {
@@ -226,9 +224,12 @@ export class DocumentDeltaConnection
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
-        this.removeEarlyOpHandler();
-
+        // Can't really calling initialMessages() twice - we do not keep ops after first call!
+        assert(this.earlyOpHandler !== undefined, "initialMessages called twice");
+        // We will lose ops and perf will tank as we need to go to storage to become current!
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
+
+        this.removeEarlyOpHandler();
 
         if (this.queuedMessages.length > 0) {
             // Some messages were queued.

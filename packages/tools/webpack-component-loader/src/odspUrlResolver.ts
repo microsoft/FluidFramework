@@ -44,7 +44,7 @@ export class OdspUrlResolver implements IUrlResolver {
             item,
             "");
 
-        return this.driverUrlResolver.resolve({ url: odspUrl });
+        return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
 
     private formFilePath(documentId: string): string {

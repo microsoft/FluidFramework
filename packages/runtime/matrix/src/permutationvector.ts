@@ -146,7 +146,7 @@ export class PermutationVector extends Client {
                     mode: FileMode.Directory,
                     path: SnapshotPath.segments,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: super.snapshot(runtime, handle, /* tardisMsgs: */[]),
+                    value: super.snapshot(runtime, handle, /* catchUpMsgs: */ []),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
                 serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),

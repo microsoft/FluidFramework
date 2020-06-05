@@ -35,9 +35,7 @@ export class SnapshotLoader {
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
         const headerP = services.read(SnapshotLegacy.header);
-        // If loading from a snapshot load tardis messages
-        // kick off loading in parallel to loading "body" chunk.
-        const rawMessagesP = services.read(SnapshotLegacy.tardis);
+        const blobsP = services.list("");
 
         const header = await headerP;
         assert(header);
@@ -54,15 +52,19 @@ export class SnapshotLoader {
         // To fully support this we need to be able to process inbound ops for pending segments.
         await this.loadBody(headerChunk, services);
 
-        if (headerChunk.headerMetadata.hasTardis) {
+        const blobs = await blobsP;
+        if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
+            headerChunk.headerMetadata.orderedChunkMetadata.forEach(
+                (md) => blobs.splice(blobs.indexOf(md.id),1));
+            assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
             // tslint:disable-next-line:no-suspicious-comment
-            // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
+            // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            return this.loadTardis(rawMessagesP, branch);
-        } else {
-            rawMessagesP.catch(() => { });
-            return [];
+            return this.loadCatchupOps(services.read(blobs[0]), branch);
+        } else if (blobs.length !== headerChunk.headerMetadata.orderedChunkMetadata.length) {
+            throw new Error("Unexpected blobs in snapshot");
         }
+        return [];
     }
 
     private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
@@ -106,6 +108,7 @@ export class SnapshotLoader {
             SnapshotLegacy.header,
             header,
             this.logger,
+            this.mergeTree.options,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
         const segs = chunk.segments.map(this.specToSegment);
@@ -159,6 +162,7 @@ export class SnapshotLoader {
                 services,
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
+                this.mergeTree.options,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext);
             lengthSofar += chunk.length;
@@ -209,13 +213,13 @@ export class SnapshotLoader {
     }
 
     /**
-     * If loading from a snapshot, get the tardis messages.
+     * If loading from a snapshot, get the catchup messages.
      * @param rawMessages - The messages in original encoding
      * @param branchId - The document branch
      * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
      * SharedObject.processCore.
      */
-    private async loadTardis(
+    private async loadCatchupOps(
         rawMessages: Promise<string>,
         branchId: string,
     ): Promise<ISequencedDocumentMessage[]> {

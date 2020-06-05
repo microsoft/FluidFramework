@@ -630,7 +630,7 @@ export class ReplayTool {
         const op = content.op;
 
         // Keep doc from previous iteration and validate here - this gives us shortest
-        // distance between load & save, and finds bugs in tardis.
+        // distance between load & save, and finds bugs in catchup ops.
         // No need to do it if overlappingContainers === 1 - there is container like that
         // in validateSlidingSnapshots()!
         if (this.documentPriorWindow && this.args.overlappingContainers !== 1) {

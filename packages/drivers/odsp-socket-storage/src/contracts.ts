@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase } from "@fluidframework/driver-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
-export interface IOdspResolvedUrl extends IResolvedUrlBase {
+export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
 
     // URL to send to fluid, contains the documentId and the path
@@ -32,6 +32,8 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
     tokens: {};
 
     fileName: string,
+
+    summarizer: boolean,
 }
 
 /**
@@ -220,4 +222,23 @@ export interface ISnapshotOptions {
 
 export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
+
+    /**
+     * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
+     * Container loads from whatever comes first in such case.
+     * Snapshot fetched from storage is pushed to cache in either case.
+     * If set to false, driver will first consult with cache. Only on cache miss (cache does not
+     * return snapshot), driver will fetch snapshot from storage (and push it to cache), otherwise
+     * it will load from cache and not reach out to storage.
+     * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
+     */
+    concurrentSnapshotFetch?: boolean;
+}
+
+/**
+ * Same as HostStoragePolicy, but adds options that are internal to runtime.
+ * All fields should be optional.
+ */
+export interface HostStoragePolicyInternal extends HostStoragePolicy {
+    summarizerClient?: boolean;
 }
