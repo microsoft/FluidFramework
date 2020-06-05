@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/node-test",
+  "name": "@fluid-internal/service-load-test",
   "version": "0.20.0",
   "private": true,
   "description": "End to end tests",
