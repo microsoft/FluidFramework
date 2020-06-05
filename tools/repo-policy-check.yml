@@ -3,8 +3,6 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-name: repo-policy-check
-
 trigger:
 - master
 - release/*
