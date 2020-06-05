@@ -679,6 +679,7 @@ export class MockObjectStorageService implements IObjectStorageService {
         const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 && key.split("/").length === pathPartsLength + 1);
     }
 }
