@@ -93,7 +93,9 @@ export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
     group: string,
-    config: nconf.Provider) {
+    configOrPath: nconf.Provider | string) {
+    // eslint-disable-next-line max-len
+    const config = typeof configOrPath === "string" ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory") : configOrPath;
     configureLogging(config.get("logger"));
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;

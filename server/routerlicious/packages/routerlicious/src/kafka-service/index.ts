@@ -4,13 +4,9 @@
  */
 
 import * as path from "path";
-import nconf from "nconf";
 import { KafkaResourcesFactory } from "@fluidframework/server-lambdas-driver";
 import { execute } from "./command";
 
-const configFile = path.join(__dirname, "../../config/config.json");
-const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
-
 execute(
     (name: string, lambda: string) => new KafkaResourcesFactory(name, lambda),
-    config);
+    path.join(__dirname, "../../config/config.json"));
