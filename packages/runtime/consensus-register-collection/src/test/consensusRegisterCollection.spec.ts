@@ -163,33 +163,20 @@ describe("ConsensusRegisterCollection", () => {
         let testCollection1: IConsensusRegisterCollection;
         let testCollection2: IConsensusRegisterCollection;
 
-        // Creates a ConsensusRegisterCollection but does not connect it.
-        async function createConsensusRegisterCollection(
-            id: string,
-            componentRuntime: MockComponentRuntime,
-            deltaConnection: IDeltaConnection,
-        ): Promise<IConsensusRegisterCollection> {
-            componentRuntime.attach();
-            const consensusRegisterCollection = crcFactory.create(componentRuntime, id);
-            return consensusRegisterCollection;
-        }
-
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const runtime1 = new MockComponentRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const componentRuntime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 =
-                await createConsensusRegisterCollection("consenses-register-collection1", runtime1, deltaConnection1);
+            testCollection1 = crcFactory.create(componentRuntime1, "consenses-register-collection1");
 
             // Create second ConsensusOrderedCollection
-            const runtime2 = new MockComponentRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const componentRuntime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 =
-                await createConsensusRegisterCollection("consenses-register-collection2", runtime2, deltaConnection2);
+            testCollection2 = crcFactory.create(componentRuntime2, "consenses-register-collection2");
         });
 
         describe("Object not connected", () => {
