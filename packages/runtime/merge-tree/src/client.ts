@@ -20,7 +20,6 @@ import {
     IConsensusInfo,
     ISegment,
     ISegmentAction,
-    IUndoInfo,
     Marker,
     MergeTree,
     RegisterCollection,
@@ -55,8 +54,6 @@ export class Client {
     public accumOps = 0;
     public maxWindowTime = 0;
     public longClientId: string;
-    public undoSegments: IUndoInfo[];
-    public redoSegments: IUndoInfo[];
 
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
     set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = callback; }
@@ -611,89 +608,11 @@ export class Client {
 
     // as functions are modified move them above the eslint-disabled waterline and lint them
 
-    undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
-        const len = undoSegments.length;
-        let index = len - 1;
-        const seq = undoSegments[index].seq;
-        if (seq === 0) {
-            return 0;
-        }
-        while (index >= 0) {
-            const undoInfo = undoSegments[index];
-            if (seq === undoInfo.seq) {
-                this.mergeTree.cherryPickedUndo(undoInfo);
-                redoSegments.push(undoInfo);
-            }
-            else {
-                break;
-            }
-            index--;
-        }
-        undoSegments.length = index + 1;
-        return seq;
-    }
-    historyToPct(pct: number) {
-        const count = this.undoSegments.length + this.redoSegments.length;
-        let curPct = this.undoSegments.length / count;
-        let seq = -1;
-        if (curPct >= pct) {
-            while (curPct > pct) {
-                seq = this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
-                curPct = this.undoSegments.length / count;
-            }
-        }
-        else {
-            while (curPct < pct) {
-                seq = this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
-                curPct = this.undoSegments.length / count;
-            }
-        }
-        return seq;
-    }
-    undo() {
-        return this.undoSingleSequenceNumber(this.undoSegments, this.redoSegments);
-    }
-    redo() {
-        return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
-    }
     cloneFromSegments() {
         const clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
         const segments: ISegment[] = [];
         const newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
-        let undoSeg: IUndoInfo[] = [];
-        for (const segment of segments) {
-            if (segment.seq !== 0) {
-                undoSeg.push({
-                    seq: segment.seq,
-                    seg: segment,
-                    op: ops.MergeTreeDeltaType.INSERT,
-                });
-            }
-            if (segment.removedSeq !== undefined) {
-                undoSeg.push({
-                    seq: segment.removedSeq,
-                    seg: segment,
-                    op: ops.MergeTreeDeltaType.REMOVE,
-                });
-            }
-        }
-        undoSeg = undoSeg.sort((a, b) => {
-            if (b.seq === a.seq) {
-                return 0;
-            }
-            else if (b.seq === UnassignedSequenceNumber) {
-                return -1;
-            }
-            else if (a.seq === UnassignedSequenceNumber) {
-                return 1;
-            }
-            else {
-                return a.seq - b.seq;
-            }
-        });
-        clone.undoSegments = undoSeg;
-        clone.redoSegments = [];
         return clone;
     }
     getOrAddShortClientId(longClientId: string, branchId = 0) {
@@ -725,8 +644,8 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
-        let op: ops.IMergeTreeOp;
+    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeDeltaOp {
+        let op: ops.IMergeTreeDeltaOp;
         if (!segment.segmentGroups.empty) {
             segment.segmentGroups.clear();
 
@@ -863,7 +782,7 @@ export class Client {
             }
         }
 
-        const opList: ops.IMergeTreeOp[] = [];
+        const opList: ops.IMergeTreeDeltaOp[] = [];
         for (const segment of orderedSegments.items) {
             const op = this.resetPendingSegmentToOp(segment);
             if (op) {
@@ -892,7 +811,7 @@ export class Client {
         // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
         // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (deltaManager) {
-            this.updateSeqNumbers(minSeq, deltaManager.referenceSequenceNumber);
+            this.updateSeqNumbers(minSeq, deltaManager.lastSequenceNumber);
 
             // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
             // Not sure why - need to catch it sooner

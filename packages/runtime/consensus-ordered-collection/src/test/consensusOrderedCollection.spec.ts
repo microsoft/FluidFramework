@@ -4,8 +4,15 @@
  */
 
 import assert from "assert";
+import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
 import { strongAssert } from "@fluidframework/runtime-utils";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import {
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
@@ -156,71 +163,175 @@ describe("ConsensusOrderedCollection", () => {
 
     describe("Detached", () => {
         generate([1, 2], [1, 2], () => {
-            return factory.create(new MockRuntime(), "consensus-ordered-collection");
+            return factory.create(new MockComponentRuntime(), "consensus-ordered-collection");
         },
         () => {});
     });
 
     describe("Attached, connected", () => {
-        let deltaConnFactory: MockDeltaConnectionFactory;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
         let counter = 0;
 
         generate([1, 2], [1, 2],
             () => {
-                const runtime = new MockRuntime();
-                deltaConnFactory = new MockDeltaConnectionFactory();
-                const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-                runtime.services = {
-                    deltaConnection,
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+                const componentRuntime = new MockComponentRuntime();
+                const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+                const services: ISharedObjectServices = {
+                    deltaConnection: containerRuntime.createDeltaConnection(),
                     objectStorage: new MockStorage(),
                 };
+
                 counter++;
-                const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
-                testCollection.connect(runtime.services);
-                deltaConnection.connected = true;
+                const testCollection = factory.create(componentRuntime, `consensus-ordered-collection_${counter}`);
+                testCollection.connect(services);
                 return testCollection;
             },
             () => {
-                deltaConnFactory.processAllMessages();
+                containerRuntimeFactory.processAllMessages();
             });
     });
 
-    it("Disconnection flow", async () => {
-        const runtime = new MockRuntime();
-        const deltaConnFactory = new MockDeltaConnectionFactory();
-        const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-        runtime.services = {
-            deltaConnection,
-            objectStorage: new MockStorage(),
-        };
-        const testCollection = factory.create(runtime, "consensus-ordered-collection");
-        testCollection.connect(runtime.services);
-        deltaConnection.connected = true;
+    describe("Reconnection flow", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
+        let testCollection1: IConsensusOrderedCollection;
+        let testCollection2: IConsensusOrderedCollection;
 
-        const waitP = testCollection.add("sample");
+        async function createConsensusOrderedCollection(
+            id: string,
+            componentRuntime: MockComponentRuntime,
+            deltaConnection: IDeltaConnection,
+        ): Promise<IConsensusOrderedCollection> {
+            const services: ISharedObjectServices = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            componentRuntime.attach();
 
-        // Drop connection
-        deltaConnection.connected = false;
-        deltaConnFactory.clearMessages();
-        deltaConnection.connected = true;
-        deltaConnFactory.processAllMessages();
+            const consensusOrderedCollection = factory.create(componentRuntime, id);
+            consensusOrderedCollection.connect(services);
+            return consensusOrderedCollection;
+        }
 
-        await waitP;
+        beforeEach(async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-        let res: any;
-        const resultP = testCollection.acquire(async (value) => {
-            res = value;
-            return ConsensusResult.Complete;
+            // Create first ConsensusOrderedCollection
+            const runtime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const deltaConnection1 = containerRuntime1.createDeltaConnection();
+            testCollection1 =
+                await createConsensusOrderedCollection("consenses-ordered-collection1", runtime1, deltaConnection1);
+
+            // Create second ConsensusOrderedCollection
+            const runtime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const deltaConnection2 = containerRuntime2.createDeltaConnection();
+            testCollection2 =
+                await createConsensusOrderedCollection("consenses-ordered-collection2", runtime2, deltaConnection2);
         });
 
-        // Drop connection one more time
-        deltaConnection.connected = false;
-        deltaConnFactory.clearMessages();
-        deltaConnection.connected = true;
-        deltaConnFactory.processAllMessages();
-        setImmediate(() => deltaConnFactory.processAllMessages());
+        it("can resend unacked ops on reconnection", async () => {
+            /**
+             * First, we will add a value to the first collection and verify the op is resent.
+             */
+            const testValue = "testValue";
 
-        await resultP;
-        assert.equal(res, "sample");
+            // Add a listener to the second collection. This is used to verify that the added value reaches the remote
+            // client.
+            let addedValue: string = "";
+            let newlyAdded: boolean = false;
+            testCollection2.on("add", (value: any, added: boolean) => {
+                addedValue = value;
+                newlyAdded = added;
+            });
+
+            // Add a value to the first ConsensusOrderedCollection
+            const waitP = testCollection1.add(testValue);
+
+            // Disconnect and reconnect the first collection.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Process the messages.
+            containerRuntimeFactory.processAllMessages();
+
+            await waitP;
+
+            // Verify that the remote collection received the added value.
+            assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+            assert.equal(newlyAdded, true, "The remote client's value was not newly added");
+
+            /**
+             * Now, we will acquire the added value in the first collection and verify the op is resent.
+             */
+
+            // Add a listener to the second collection. This is used to verify that the acquired op reaches the remote
+            // client.
+            let acquiredValue: string = "";
+            let acquiredClientId: string | undefined = "";
+            testCollection2.on("acquire", (value: any, clientId?: string) => {
+                acquiredValue = value;
+                acquiredClientId = clientId;
+            });
+
+            // Acquire the previously added value.
+            let res: any;
+            const resultP = testCollection1.acquire(async (value) => {
+                res = value;
+                return ConsensusResult.Complete;
+            });
+
+            // Disconnect and reconnect the first collection.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Process the messages.
+            containerRuntimeFactory.processAllMessages();
+            setImmediate(() => containerRuntimeFactory.processAllMessages());
+
+            await resultP;
+
+            // Verify that the value acquired is the one that was added earlier.
+            assert.equal(res, testValue, "The acquired value does not match the added value");
+
+            // Verify that the remote collection received the acquired op.
+            assert.equal(acquiredValue, testValue, "The remote client did not receive the acquired value");
+            assert.equal(acquiredClientId, containerRuntime1.clientId,
+                "The remote client did not get the correct id of client that acquired the value");
+        });
+
+        it("can store ops in disconnected state and resend them on reconnection", async () => {
+            const testValue = "testValue";
+
+            // Add a listener to the second collection. This is used to verify that the added value reaches the
+            // remote client.
+            let addedValue: string = "";
+            let newlyAdded: boolean = false;
+            testCollection2.on("add", (value: any, added: boolean) => {
+                addedValue = value;
+                newlyAdded = added;
+            });
+
+            // Disconnect the first collection
+            containerRuntime1.connected = false;
+
+            // Add a value to the first ConsensusOrderedCollection.
+            const waitP = testCollection1.add(testValue);
+
+            // Reconnect the first collection.
+            containerRuntime1.connected = true;
+
+            // Process the messages.
+            containerRuntimeFactory.processAllMessages();
+
+            await waitP;
+
+            // Verify that the remote collection received the added value.
+            assert.equal(addedValue, testValue, "The remote client did not receive the added value");
+            assert.equal(newlyAdded, true, "The remote client's value was not newly added");
+        });
     });
 });

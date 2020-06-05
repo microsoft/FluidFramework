@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateTreeParams, ITree, ITreeEntry } from "@microsoft/fluid-gitresources";
+import { ICreateTreeParams, ITree, ITreeEntry } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import * as nconf from "nconf";

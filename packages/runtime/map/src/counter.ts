@@ -27,8 +27,7 @@ export class CounterFactory implements IValueFactory<Counter> {
 }
 
 /**
- * Value type that can store a numerical value and modify it through increment/decrement.
- * @alpha
+ * @deprecated The Counter value type is deprecated.  Use the Counter shared object instead (\@fluidframework/counter)
  */
 export class Counter extends EventEmitter {
     /**

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantManager } from "@microsoft/fluid-server-services-core";
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { ITenantManager } from "@fluidframework/server-services-core";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
-import { IAlfredTenant, generateToken } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant, generateToken } from "@fluidframework/server-services-client";
 
 /**
  * Helper function to return tenant specific configuration

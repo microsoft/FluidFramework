@@ -63,7 +63,8 @@
                 ],
                 "deps": [
                     "Protocol-Utils",
-                    "Driver-Definitions"
+                    "Driver-Definitions",
+                    "@fluidframework/container-definitions"
                 ]
             },
             "Framework-Utils": {
@@ -110,6 +111,14 @@
                     "Protocol-Utils",
                     "Server-Shared-Utils"
                 ]
+            },
+            "Server-Tools": {
+                "packages": [
+                    "tinylicious"
+                ],
+                "deps": [
+                    "Server-Libs"
+                ]
             }
         }
     },
@@ -122,7 +131,8 @@
                 ],
                 "deps": [
                     "Driver-Utils",
-                    "@fluidframework/component-core-interfaces"
+                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/container-definitions"
                 ]
             },
             "Loader": {
@@ -184,14 +194,14 @@
                 "dev": true,
                 "packages": [
                     "@fluidframework/build-common",
-                    "@fluidframework/build-common",
                     "@fluidframework/eslint-config-fluid"
                 ]
             },
             "Tools": {
                 "dot": false,
                 "dirs": [
-                    "packages/tools/"
+                    "packages/tools/",
+                    "tools/generator-fluid"
                 ],
                 "deps": [
                     "Framework",
@@ -226,7 +236,8 @@
                 ],
                 "deps": [
                     "Driver",
-                    "Server-Shared-Utils"
+                    "Server-Shared-Utils",
+                    "@fluidframework/container-definitions"
                 ]
             },
             "Routerlicious-Server": {
@@ -234,7 +245,6 @@
                     "@fluidframework/server-routerlicious"
                 ],
                 "deps": [
-                    "Routerlicious-Host",
                     "Server-Libs"
                 ]
             }

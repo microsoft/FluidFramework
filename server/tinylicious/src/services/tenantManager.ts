@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITenant, ITenantManager } from "@microsoft/fluid-server-services-core";
+import { ITenant, ITenantManager } from "@fluidframework/server-services-core";
 
 export class TenantManager implements ITenantManager {
     public getTenant(tenantId: string): Promise<ITenant> {

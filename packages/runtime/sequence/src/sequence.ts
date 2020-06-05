@@ -57,8 +57,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
-        const ops: MergeTree.IMergeTreeOp[] = [];
+    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeDeltaOp[] {
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE: {
@@ -164,7 +164,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel = new MapKernel(
             this.runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -446,11 +446,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.intervalMapKernel.trySubmitMessage(message);
-        }
-
+    protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
         const groupOp = this.client.resetPendingSegmentsToOp();
@@ -461,6 +457,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);
+    }
+
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
     protected async loadCore(
@@ -483,10 +483,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            handled = this.intervalMapKernel.tryProcessMessage(message, local);
+            handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
         }
 
         if (!handled) {
@@ -532,7 +532,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
 
-        const ops: MergeTree.IMergeTreeOp[] = [];
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }

@@ -43,6 +43,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -174,7 +175,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     this,
                     componentContext,
                     componentContext.storage,
-                    (type, content) => this.submit(type, content),
+                    (type, content, localOpMetadata) => this.submit(type, content, localOpMetadata),
                     (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
@@ -183,7 +184,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                     componentContext.branch,
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
-                        this.deltaManager.referenceSequenceNumber,
+                        this.deltaManager.lastSequenceNumber,
                     ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -270,7 +271,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content) => this.submit(t, content),
+            (t, content, localOpMetadata) => this.submit(t, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
@@ -358,13 +359,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
-        // Resend all pending attach messages prior to notifying clients
-        if (connected) {
-            for (const [, message] of this.pendingAttach) {
-                this.submit(MessageType.Attach, message);
-            }
-        }
-
         for (const [, object] of this.contexts) {
             object.setConnectionState(connected, clientId);
         }
@@ -414,7 +408,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.blobManager.getBlobMetadata();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean) {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach: {
@@ -440,7 +434,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                         this,
                         this.componentContext,
                         this.componentContext.storage,
-                        (type, content) => this.submit(type, content),
+                        (type, content, localContentMetadata) => this.submit(type, content, localContentMetadata),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTreeP,
@@ -467,7 +461,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
 
             case MessageType.Operation:
-                this.processOp(message, local);
+                this.processOp(message, local, localOpMetadata);
                 break;
             default:
         }
@@ -517,18 +511,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return entries;
     }
 
-    public submitMessage(type: MessageType, content: any) {
-        this.submit(type, content);
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown) {
+        this.submit(type, content, localOpMetadata);
     }
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         return this.componentContext.submitSignal(type, content);
-    }
-
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.componentContext.containerRuntime.notifyPendingMessages();
     }
 
     /**
@@ -568,18 +557,63 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 type: channel.attributes.type,
             };
             this.pendingAttach.set(channel.id, message);
-            if (this.connected) {
-                this.submit(MessageType.Attach, message);
-            }
+            this.submit(MessageType.Attach, message);
         }
 
         const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
-    private submit(type: MessageType, content: any): number {
+    private submit(type: MessageType, content: any, localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
-        return this.componentContext.submitMessage(type, content);
+        return this.componentContext.submitMessage(type, content, localOpMetadata);
+    }
+
+    /**
+     * For messages of type MessageType.Operation, finds the right channel and asks it to resubmit the message.
+     * For all other messages, just submit it again.
+     * This typically happens when we reconnect and there are unacked messages.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        this.verifyNotClosed();
+
+        switch (type) {
+            case MessageType.Operation:
+            {
+                // For Operations, find the right channel and trigger resubmission on it.
+                const envelope = content as IEnvelope;
+                const channelContext = this.contexts.get(envelope.address);
+                strongAssert(channelContext, "There should be a channel context for the op");
+
+                channelContext.reSubmit(envelope.contents, localOpMetadata);
+
+                break;
+            }
+            case MessageType.Attach:
+                // For Attach messages, just submit them again.
+                this.submit(type, content, localOpMetadata);
+                break;
+            case MessageType.Save:
+            case MessageType.BlobUploaded:
+                // For Save and BlobUploaded messages, but log an error but do not resubmit them. We should look at the
+                // telemetry to determine how often this happens and revisit this as per #2312.
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedComponentResubmitMessage",
+                    messageType: type,
+                });
+                break;
+            default:
+                // For other types of messages, submit it again but log an error indicating a resubmit was triggered
+                // for it. We should look at the telemetry periodically to determine if these are valid or not and
+                // revisit this as per #2312.
+                this.submit(type, content, localOpMetadata);
+                this.logger.sendErrorEvent({
+                    eventName: "UnexpectedComponentResubmitMessage",
+                    messageType: type,
+                });
+        }
     }
 
     private setChannelDirty(address: string): void {
@@ -587,7 +621,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.setChannelDirty(address);
     }
 
-    private processOp(message: ISequencedDocumentMessage, local: boolean) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -609,7 +643,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             type: message.type,
         };
 
-        channelContext.processOp(transformed, local);
+        channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;
     }
