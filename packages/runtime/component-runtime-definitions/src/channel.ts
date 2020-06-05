@@ -49,6 +49,9 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: ISharedObjectServices): void;
+
+    // Tells the shared object to start collaboration.
+    startCollaboration(): void;
 }
 
 /**

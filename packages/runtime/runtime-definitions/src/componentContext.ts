@@ -192,6 +192,9 @@ export interface IComponentRuntimeChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: MessageType, content: any, localOpMetadata: unknown);
+
+    // Tells the layers below to start collaboration.
+    startCollaboration(): void;
 }
 
 export interface ISummaryTracker {

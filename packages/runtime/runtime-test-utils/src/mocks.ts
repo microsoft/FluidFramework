@@ -372,6 +372,10 @@ export class MockRuntime extends EventEmitter
         return true;
     }
 
+    public startCollaboration(): void {
+        return;
+    }
+
     public registerChannel(channel: IChannel): void {
         channel.connect(this.services);
     }

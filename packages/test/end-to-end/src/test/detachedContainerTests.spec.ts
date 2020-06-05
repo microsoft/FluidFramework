@@ -9,7 +9,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/containe
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
-import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentContext, IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
@@ -17,6 +17,16 @@ import {
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { Deferred } from "@fluidframework/common-utils";
+import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { Ink, IColor } from  "@fluidframework/ink";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { SharedCell } from "@fluidframework/cell";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -24,6 +34,16 @@ describe("Detached Container", () => {
         package: "detachedContainerTestPackage",
         config: {},
     };
+
+    const sharedStringId = "ss1Key";
+    const sharedMapId = "sm1Key";
+    const crcId = "crc1Key";
+    const cocId = "coc1Key";
+    const sharedDirectoryId = "sd1Key";
+    const sharedCellId = "scell1Key";
+    const sharedMatrixId = "smatrix1Key";
+    const sharedInkId = "sink1Key";
+    const sparseMatrixId = "sparsematrixKey";
 
     let request: IRequest;
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -39,7 +59,17 @@ describe("Detached Container", () => {
     });
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
-        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([]);
+        const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+            [sharedStringId, SharedString.getFactory()],
+            [sharedMapId, SharedMap.getFactory()],
+            [crcId, ConsensusRegisterCollection.getFactory()],
+            [sharedDirectoryId, SharedDirectory.getFactory()],
+            [sharedCellId, SharedCell.getFactory()],
+            [sharedInkId, Ink.getFactory()],
+            [sharedMatrixId, SharedMatrix.getFactory()],
+            [cocId, ConsensusQueue.getFactory()],
+            [sparseMatrixId, SparseMatrix.getFactory()],
+        ]);
         const codeLoader = new LocalCodeLoader([[ pkg, factory ]]);
         const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
@@ -173,5 +203,346 @@ describe("Detached Container", () => {
         assert.strictEqual(testChannel2.isRegistered(), testChannel1.isRegistered(),
             "Value for registration should be same!!");
         assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
+    });
+
+    it("Fire ops during container attach for shared string", async () => {
+        const ops = [ { pos1: 0, seg: "c", type: 0 }, { pos1: 1, seg: "b", type: 0 } ];
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.contents.ops.length, 2, "2 ops should be there");
+            assert.strictEqual(contents.contents.content.address,
+                sharedStringId, "Address should be shared string");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops),
+                JSON.stringify(ops), "Ops should be equal");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SharedString>(sharedStringId);
+
+        // Fire op before attaching the container
+        testChannel1.insertText(0, "a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.insertText(0, "b");
+        testChannel1.insertText(0, "c");
+        await containerP;
+
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for shared map", async () => {
+        const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sharedMapId, "Address should be shared map");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(ops), "Ops should be equal");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SharedMap>(sharedMapId);
+
+        // Fire op before attaching the container
+        testChannel1.set("0", "a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.set("1", "b");
+        await containerP;
+
+        await defPromise.promise;
+    });
+
+    it("Fire channel attach ops during container attach", async () => {
+        const testChannelId = "testChannel1";
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.id,
+                testChannelId, "Channel id should match");
+            assert.strictEqual(contents.contents.content.type,
+                SharedMap.getFactory().type, "Channel type should match");
+            assert.strictEqual(contents.contents.type,
+                MessageType.Attach, "Op should be an attach op");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+
+        const containerP = container.attach(request);
+
+        // Fire attach op
+        const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
+        testChannel.handle.attach();
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire component attach ops during container attach", async () => {
+        const testComponentType = "default";
+        // eslint-disable-next-line prefer-const
+        let peerComponentRuntimeChannel: IComponentRuntimeChannel;
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.id,
+                peerComponentRuntimeChannel.id, "Component id should match");
+            assert.strictEqual(contents.type,
+                testComponentType, "Component type should match");
+            assert.strictEqual(type,
+                MessageType.Attach, "Op should be an attach op");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+
+        const containerP = container.attach(request);
+        peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
+            .createComponentWithRealizationFn([testComponentType]);
+        // Fire attach op
+        peerComponentRuntimeChannel.attach();
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for consensus register collection", async () => {
+        const op = { key: "1", type: "write", serializedValue: JSON.stringify("b"), refSeq: 0 };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                crcId, "Address should be consensus register collection");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+
+        // Fire op before attaching the container
+        await testChannel1.write("0", "a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        testChannel1.write("1", "b");
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for shared directory", async () => {
+        const op = {
+            key: "1",
+            path: "/",
+            type: "set",
+            value: { type: "Plain", value: "b" },
+        };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sharedDirectoryId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SharedDirectory>(sharedDirectoryId);
+
+        // Fire op before attaching the container
+        testChannel1.set("0", "a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.set("1", "b");
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for shared cell", async () => {
+        const op = { type: "setCell", value: { type: "Plain", value: "b" } };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sharedCellId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SharedCell>(sharedCellId);
+
+        // Fire op before attaching the container
+        testChannel1.set("a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.set("b");
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for shared ink", async () => {
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sharedInkId, "Address should be ink");
+            assert.strictEqual(contents.contents.content.contents.type,
+                "createStroke", "Op type should be same");
+            assert.strictEqual(contents.contents.content.contents.pen.thickness,
+                20, "Thickness should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<Ink>(sharedInkId);
+
+        // Fire op before attaching the container
+        const color: IColor = {
+            a: 2, r: 127, b: 127, g: 127,
+        };
+        testChannel1.createStroke({ color, thickness: 10 });
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.createStroke({ color, thickness: 20 });
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for consensus ordered collection", async () => {
+        const op = { opName: "add", value: JSON.stringify("s") };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                cocId, "Address should be consensus queue");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<ConsensusQueue>(cocId);
+
+        // Fire op before attaching the container
+        await testChannel1.add("a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        testChannel1.add("s");
+
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for sparse matrix", async () => {
+        const seg = { items: ["s"] };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sparseMatrixId, "Address should be sparse matrix");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[1].seg),
+                JSON.stringify(seg), "Seg should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SparseMatrix>(sparseMatrixId);
+
+        // Fire op before attaching the container
+        testChannel1.insertRows(0, 1);
+        testChannel1.insertCols(0, 1);
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.setItems(0, 0, seg.items);
+
+        await containerP;
+        await defPromise.promise;
+    });
+
+    it("Fire ops during container attach for shared matrix", async () => {
+        const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
+        const defPromise = new Deferred();
+        const container = await loader.createDetachedContainer(pkg);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        container.deltaManager.submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.content.address,
+                sharedMatrixId, "Address should be shared matrix");
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root component from the detached container.
+        const response = await container.request({ url: "/" });
+        const component = response.value as ITestFluidComponent;
+        const testChannel1 = await component.getSharedObject<SharedMatrix>(sharedMatrixId);
+
+        // Fire op before attaching the container
+        testChannel1.insertRows(0, 20);
+        testChannel1.insertCols(0, 20);
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.insertRows(0, 9);
+
+        await containerP;
+        await defPromise.promise;
     });
 });

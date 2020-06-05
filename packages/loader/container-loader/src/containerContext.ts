@@ -186,6 +186,12 @@ export class ContainerContext implements IContainerContext {
         this.logger = container.subLogger;
     }
 
+    public startCollaboration(): void {
+        if (this.runtime?.startCollaboration !== undefined) {
+            this.runtime.startCollaboration();
+        }
+    }
+
     public dispose(error?: Error): void {
         if (this._disposed) {
             return;

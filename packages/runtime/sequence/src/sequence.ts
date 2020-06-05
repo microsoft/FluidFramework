@@ -317,6 +317,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.submitLocalMessage(translated);
     }
 
+    public startCollaboration() {
+        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "startCollab");
+    }
+
     public addLocalReference(lref) {
         return this.client.addLocalReference(lref);
     }

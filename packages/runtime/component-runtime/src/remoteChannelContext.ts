@@ -75,6 +75,10 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
+    public startCollaboration(): void {
+        this.channel?.startCollaboration();
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {

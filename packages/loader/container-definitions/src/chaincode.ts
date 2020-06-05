@@ -169,6 +169,9 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean);
 
     createSummary(): ISummaryTree;
+
+    // Tells the layers below to start collaboration.
+    startCollaboration(): void;
 }
 
 export interface IMessageScheduler {

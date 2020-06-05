@@ -689,6 +689,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
+    public startCollaboration(): void {
+        for (const [, componentContext] of this.contexts) {
+            componentContext.startCollaboration();
+        }
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;

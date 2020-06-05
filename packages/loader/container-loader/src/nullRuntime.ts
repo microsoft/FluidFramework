@@ -50,6 +50,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve(null);
     }
 
+    public startCollaboration(): void {
+        return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public summarize(fullTree: boolean = false): Promise<ISummaryTree> {
         return Promise.resolve({

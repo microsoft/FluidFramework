@@ -19,6 +19,7 @@ import {
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import { IMergeTreeOp, MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
@@ -175,10 +176,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
             value,
         });
 
-        if (cliSeq !== -1) {
+        if (cliSeq !== -1 || this.rows.longClientId !== undefined || this.cols.longClientId !== undefined) {
             this.pendingCliSeqs.setCell(rowHandle, colHandle, cliSeq);
             this.pendingQueue.push({ cliSeq, rowHandle, colHandle });
         }
+    }
+
+    public startCollaboration(): void {
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "startCollab");
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "startCollab");
     }
 
     public insertCols(colStart: number, count: number) {
@@ -239,9 +245,26 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 
-        // TODO: Resend pending ops on reconnect
-        assert(this.rows.resetPendingSegmentsToOp() === undefined);
-        assert(this.cols.resetPendingSegmentsToOp() === undefined);
+        const groupOpForRows = this.rows.resetPendingSegmentsToOp();
+        if (groupOpForRows !== undefined) {
+            this.addTargetOnOps(groupOpForRows, SnapshotPath.rows);
+            this.submitLocalMessage(groupOpForRows);
+        }
+        const groupOpForCols = this.cols.resetPendingSegmentsToOp();
+        if (groupOpForCols !== undefined) {
+            this.addTargetOnOps(groupOpForCols, SnapshotPath.cols);
+            this.submitLocalMessage(groupOpForCols);
+        }
+    }
+
+    private addTargetOnOps(groupOp: IMergeTreeOp, target: string) {
+        if (groupOp.type === MergeTreeDeltaType.GROUP) {
+            groupOp.ops.forEach((op) => {
+                (op as any).target = target;
+            });
+        } else {
+            (groupOp as any).target = target;
+        }
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {}

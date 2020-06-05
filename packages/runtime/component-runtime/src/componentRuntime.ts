@@ -212,6 +212,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.emit("dispose");
     }
 
+    public startCollaboration(): void {
+        for (const [, channelContext] of this.contexts) {
+            channelContext.startCollaboration();
+        }
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
         if (request.url === "/_scheduler") {

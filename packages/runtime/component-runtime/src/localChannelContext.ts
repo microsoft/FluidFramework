@@ -53,6 +53,10 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel.isRegistered();
     }
 
+    public startCollaboration(): void {
+        this.channel.startCollaboration();
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
         if (!this.attached) {

@@ -474,6 +474,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
+        // This will tell the components/dds to start collaborating/generating ops because all upto this point was
+        // included in the app summary and form now on we need to generate ops for changes so that they can be send
+        // over wire once we are connected.
+        this.context.startCollaboration();
+        this.attached = true;
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
@@ -512,7 +517,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-            this.attached = true;
 
             // We know this is create new flow.
             this._existing = false;
@@ -524,6 +528,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.propagateConnectionState();
             this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
+            this.attached = false;
             this.close(CreateContainerError(error));
             throw error;
         }

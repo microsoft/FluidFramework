@@ -28,6 +28,8 @@ export interface IChannelContext {
     isRegistered(): boolean;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
+
+    startCollaboration(): void;
 }
 
 export function createServiceEndpoints(
