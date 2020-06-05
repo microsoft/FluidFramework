@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/component-runtime",
-  "version": "0.19.2",
+  "version": "0.19.4",
   "description": "Fluid component API",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,22 +22,45 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.19.2",
-    "@fluidframework/component-runtime-definitions": "^0.19.2",
-    "@fluidframework/container-definitions": "^0.19.2",
-    "@fluidframework/driver-definitions": "^0.19.2",
-    "@fluidframework/driver-utils": "^0.19.2",
+    "@fluidframework/component-core-interfaces": "^0.19.4",
+    "@fluidframework/component-runtime-definitions": "^0.19.4",
+    "@fluidframework/container-definitions": "^0.19.4",
+    "@fluidframework/driver-definitions": "^0.19.4",
+    "@fluidframework/driver-utils": "^0.19.4",
     "@fluidframework/protocol-base": "^0.1006.1",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/runtime-definitions": "^0.19.2",
-    "@fluidframework/runtime-utils": "^0.19.2",
-    "@fluidframework/shared-object-base": "^0.19.2",
+    "@fluidframework/runtime-definitions": "^0.19.4",
+    "@fluidframework/runtime-utils": "^0.19.4",
+    "@fluidframework/shared-object-base": "^0.19.4",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },

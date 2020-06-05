@@ -30,6 +30,10 @@ import { IDeltaManager } from "./deltas";
 import { CriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 
+// Issue #2375
+// TODO: remove, replace all usage with version from protocol-definitions
+export const summarizerClientType = "summarizer";
+
 /**
  * Person definition in a npm script
  */

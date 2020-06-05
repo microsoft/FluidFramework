@@ -45,7 +45,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
@@ -625,12 +625,22 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IObjectStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
-
     public async read(path: string): Promise<string> {
         const content = this.contents[path];
         // Do we have such blob?
         assert(content !== undefined);
         return fromUtf8ToBase64(content);
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return this.contents[path] !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
+        return Object.keys(this.contents)
+            .filter((key) => key.startsWith(path)
+            && key.split("/").length === pathPartsLength + 1);
     }
 }
 

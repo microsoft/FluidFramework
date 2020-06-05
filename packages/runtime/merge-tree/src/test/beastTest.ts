@@ -1196,14 +1196,14 @@ export function TestPack(verbose = true) {
         if (verbose) {
             log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2, cli.getClientId());
+        let fwdRanges = cli.mergeTree.findHistorialRange(0, 5, 1, 2, cli.getClientId());
         if (verbose) {
             log(`fwd range 0 5 on 1 => 2`);
             for (const r of fwdRanges) {
                 log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        const fwdPos = cli.mergeTree.tardisPosition(2, 1, 2, cli.getClientId());
+        const fwdPos = cli.mergeTree.findHistorialPosition(2, 1, 2, cli.getClientId());
         if (verbose) {
             log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1253,7 +1253,7 @@ export function TestPack(verbose = true) {
             }
         }
         const removeOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.tardisRangeFromClient(3, 6, 9, 10, 2);
+        fwdRanges = cli.mergeTree.findHistorialRangeFromClient(3, 6, 9, 10, 2);
         if (verbose) {
             log(cli.mergeTree.toString());
             log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);

@@ -83,14 +83,14 @@ export class SnapshotV1 {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        // TODO: Remove unused 'tardisMsgs' argument once new snapshot format is the default.
+        // TODO: Remove unused 'catchUpMsgs' argument once new snapshot format is the default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        tardisMsgs: ISequencedDocumentMessage[],
+        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        assert.equal(tardisMsgs.length, 0);
+        assert.equal(catchUpMsgs.length, 0);
 
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
@@ -120,6 +120,7 @@ export class SnapshotV1 {
                         id,
                         chunk,
                         this.logger,
+                        this.mergeTree.options,
                         serializer,
                         context,
                         bind),
@@ -139,6 +140,7 @@ export class SnapshotV1 {
                             SnapshotLegacy.header,
                             headerChunk,
                             this.logger,
+                            this.mergeTree.options,
                             serializer,
                             context,
                             bind),
@@ -157,7 +159,6 @@ export class SnapshotV1 {
         const mergeTree = this.mergeTree;
         const { currentSeq, minSeq } = mergeTree.getCollabWindow();
         this.header = {
-            hasTardis: false,
             minSequenceNumber: minSeq,
             sequenceNumber: currentSeq,
             orderedChunkMetadata: [],
@@ -256,22 +257,24 @@ export class SnapshotV1 {
         storage: IObjectStorageService,
         path: string,
         logger: ITelemetryLogger,
+        options: Properties.PropertySet,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<MergeTreeChunkV1> {
         const chunkAsString: string = await storage.read(path);
-        return SnapshotV1.processChunk(path, chunkAsString, logger, serializer, context);
+        return SnapshotV1.processChunk(path, chunkAsString, logger, options, serializer, context);
     }
 
     public static processChunk(
         path: string,
         chunk: string,
         logger: ITelemetryLogger,
+        options: Properties.PropertySet,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): MergeTreeChunkV1 {
         const utf8 = fromBase64ToUtf8(chunk);
         const chunkObj = serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
-        return toLatestVersion(path, chunkObj, logger);
+        return toLatestVersion(path, chunkObj, logger, options);
     }
 }
