@@ -880,9 +880,9 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager
             ? deltaManager.minimumSequenceNumber
@@ -907,7 +907,7 @@ export class Client {
 
         snap.extractSync();
         return snap.emit(
-            tardisMsgs,
+            catchUpMsgs,
             runtime.IComponentSerializer,
             runtime.IComponentHandleContext,
             handle);

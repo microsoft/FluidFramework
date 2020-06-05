@@ -6,6 +6,7 @@
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 
 export class ChannelStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -23,8 +24,8 @@ export class ChannelStorageService implements IObjectStorageService {
     private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
 
     constructor(
-        tree: Promise<ISnapshotTree> | undefined,
-        private readonly storage: IDocumentStorageService,
+        private readonly tree: Promise<ISnapshotTree> | undefined,
+        private readonly storage: Pick<IDocumentStorageService, "read">,
         private readonly extraBlobs?: Promise<Map<string, string>>,
     ) {
         // Create a map from paths to blobs
@@ -50,6 +51,21 @@ export class ChannelStorageService implements IObjectStorageService {
             : undefined;
 
         return blob ?? this.storage.read(id);
+    }
+
+    public async list(path: string): Promise<string[]> {
+        let tree = await this.tree;
+        const pathParts = getNormalizedObjectStoragePathParts(path);
+        while (tree !== undefined && pathParts.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const part = pathParts.shift()!;
+            tree = tree.trees[part];
+        }
+        if (tree === undefined || pathParts.length !== 0) {
+            throw new Error("path does not exist");
+        }
+
+        return Object.keys(tree?.blobs ?? {});
     }
 
     private async getIdForPath(path: string): Promise<string> {

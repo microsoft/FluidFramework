@@ -7,7 +7,6 @@ import assert from "assert";
 import fs from "fs";
 import path from "path";
 import * as mocks from "@fluidframework/test-runtime-utils";
-import { GitManager } from "@fluidframework/server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
@@ -31,11 +30,6 @@ describe("SharedString Snapshot Version", () => {
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
 
-            const historian: mocks.MockHistorian = new mocks.MockHistorian();
-            const gitManager: GitManager = new GitManager(historian);
-
-            await gitManager.createTree(oldsnap);
-
             // load snapshot into sharedString
             const documentId = "fakeId";
             const runtime = new mocks.MockRuntime();
@@ -45,7 +39,7 @@ describe("SharedString Snapshot Version", () => {
                 // deltaConnection: new mocks.MockDeltaConnection(runtime),
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
 
-                objectStorage: historian,
+                objectStorage: new mocks.MockStorage(oldsnap),
             };
             const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
@@ -93,8 +87,8 @@ describe("SharedString Snapshot Version", () => {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
-            const data = fs.readFileSync(filename, "utf8");
-            const testData = JSON.stringify(testString.snapshot(), undefined, 1);
+            const data = fs.readFileSync(filename, "utf8").trim();
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1).trim();
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }
