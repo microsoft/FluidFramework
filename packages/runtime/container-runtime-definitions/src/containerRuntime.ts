@@ -20,7 +20,6 @@ import {
     IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
@@ -61,7 +60,6 @@ export interface IContainerRuntime extends
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly submitFn: (type: MessageType, contents: any, localOpMetadata: unknown) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;

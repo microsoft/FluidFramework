@@ -31,17 +31,8 @@ export enum MessageType {
     // Blob uploaded
     BlobUploaded = "blobUploaded",
 
-    // TODO the attach and operation names are partially historican. We may want to rename to align with changes
-    // coming from code loading.
-
-    // Creates a new channel and attaches chaincode to it
-    Attach = "attach",
-
     // Channel operation.
     Operation = "op",
-
-    // Chunked operation.
-    ChunkedOp = "chunkedOp",
 
     // Forced snapshot
     Save = "saveOp",

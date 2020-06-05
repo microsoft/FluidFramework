@@ -120,10 +120,6 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
-        return this._containerRuntime.submitFn;
-    }
-
     public get submitSignalFn(): (contents: any) => void {
         return this._containerRuntime.submitSignalFn;
     }
@@ -561,7 +557,7 @@ export abstract class ComponentContext extends EventEmitter implements
                 type,
             },
         };
-        return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
+        return this._containerRuntime.submit(MessageType.Operation, envelope, localOpMetadata);
     }
 
     public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {

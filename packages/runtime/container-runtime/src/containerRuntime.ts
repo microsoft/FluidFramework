@@ -510,11 +510,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.branch;
     }
 
-    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => number {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        return this.submit;
-    }
-
     public get submitSignalFn(): (contents: any) => void {
         return this.context.submitSignalFn;
     }
@@ -1552,7 +1547,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private submit(
+    public submit(
         type: MessageType | ContainerMessageType,
         content: any,
         localOpMetadata: unknown = undefined): number
