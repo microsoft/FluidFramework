@@ -44,8 +44,8 @@ The `view<%= extension %>` file contains all the view logic.
 .
 ├── src
 |   ├── component<%= extension %>              // Fluid Component source code
-|   ├── index.ts          // Export file
-|   ├── interface.ts      // Model Interface Definition
+|   ├── index.ts                   // Export file
+|   ├── interface.ts               // Model Interface Definition
 |   └── view<%= extension %>                   // View Logic
 ├── .gitignore                     // Ignore dist and node_modules
 ├── jest-puppeteer.config.js       // jest-puppeteer configuration

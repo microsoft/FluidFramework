@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -38,10 +37,8 @@ export async function initialize(
     const documentServiceFactories: IDocumentServiceFactory[] = [];
     // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
-        clientId,
         async (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
-        async () => Promise.resolve(resolved.tokens.socketToken),
-        new BaseTelemetryNullLogger()));
+        async () => Promise.resolve(resolved.tokens.socketToken)));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         false,

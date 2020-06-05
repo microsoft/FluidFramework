@@ -8,10 +8,9 @@ import fs from "fs";
 import path from "path";
 import {
     MockContainerRuntimeFactory,
-    MockHistorian,
     MockComponentRuntime,
+    MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { GitManager } from "@fluidframework/server-services-client";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
@@ -35,11 +34,6 @@ describe("SharedString Snapshot Version", () => {
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
 
-            const historian: MockHistorian = new MockHistorian();
-            const gitManager: GitManager = new GitManager(historian);
-
-            await gitManager.createTree(oldsnap);
-
             // load snapshot into sharedString
             const documentId = "fakeId";
             const containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -47,7 +41,7 @@ describe("SharedString Snapshot Version", () => {
             const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
-                objectStorage: historian,
+                objectStorage: new MockStorage(oldsnap),
             };
             const sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
@@ -95,8 +89,8 @@ describe("SharedString Snapshot Version", () => {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
-            const data = fs.readFileSync(filename, "utf8");
-            const testData = JSON.stringify(testString.snapshot(), undefined, 1);
+            const data = fs.readFileSync(filename, "utf8").trim();
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1).trim();
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }
