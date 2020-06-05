@@ -679,7 +679,7 @@ export class MockObjectStorageService implements IObjectStorageService {
         const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
         return Object.keys(this.contents)
             .filter((key) => key.startsWith(path)
-            && key.split("/").length === pathPartsLength + 1);
+                && key.split("/").length === pathPartsLength + 1);
     }
 }
 

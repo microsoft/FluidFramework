@@ -264,8 +264,7 @@ export class NonPersistentCache implements INonPersistentCache {
 export function createOdspCache(
     persistedCache: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
-    logger: ITelemetryLogger): IOdspCache
-{
+    logger: ITelemetryLogger): IOdspCache {
     return {
         ...nonpersistentCache,
         persistedCache: new PersistedCacheWithErrorHandling(persistedCache, logger),

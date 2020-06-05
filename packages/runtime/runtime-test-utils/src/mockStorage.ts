@@ -37,7 +37,7 @@ export class MockStorage implements IObjectStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        const blob =  MockStorage.readCore(this.tree, path.split("/"));
+        const blob = MockStorage.readCore(this.tree, path.split("/"));
         assert(blob !== undefined, `Blob does not exist: ${path}`);
         return blob;
     }
