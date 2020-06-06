@@ -1,36 +1,171 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# repo-policy-check pipeline to ensure repo conventions
+# build-npm-package template to build NPM packages/projects
 
-trigger:
-- master
-- release/*
+parameters:
+- name: buildDirectory
+  type: string
 
-pr:
-- master
-- release/*
+- name: taskBuild
+  type: string
+  default: ci:build
 
-pool:
-  vmImage: 'ubuntu-latest'
+- name: taskBuildDocs
+  type: boolean
+  default: true
+
+- name: taskLint
+  type: boolean
+  default: true
+  
+- name: taskNpmAuth
+  type: boolean
+  default: true
+
+- name: taskTest
+  type: string
+  default: ci:test
+
+variables:
+- name: taskTestComputed
+  
+trigger: none
 
 steps:
+- script: |
+    # Show all task group conditions
+
+    echo NPM Authenticate=$(taskNpmAuth)
+    echo Build=$(taskBuild)
+    echo Lint=$(taskLint)
+    echo Test=$(taskTest)
+    echo BuildDoc=$(taskBuildDocs)
+
+    if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
+      echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
+    fi
+  displayName: Parameters
+
+- task: UseNode@1
+  displayName: Use Node 10.x
+  inputs: 
+    version: 10.x
+
+- script: |
+    sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+    sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
+    perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+    git status
+  workingDirectory: $(buildDirectory)    
+  displayName: Strip MIT License
+
 - task: Npm@1
   displayName: npm ci
   inputs:
     command: 'custom'
+    workingDir: $(buildDirectory)
     customCommand: 'ci --ignore-scripts'
     customRegistry: 'useFeed'
     customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-- task: Npm@1
-  displayName: Policy Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run policy-check'
+- script: |
+    # expect lerna.json and package.json be in the current working directory
+    # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
+
+    echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
+    echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
+
+    version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+    echo COMPUTED_VERSION=$version
+
+    if [ -f "lerna.json" ]; then
+        npx lerna version $version --no-git-tag-version --no-push --yes
+    else
+        npm version --no-git-tag-version $version -f --allow-same-version
+    fi
+  workingDirectory: $(buildDirectory)
+  displayName: Set Package Version
 
 - task: Npm@1
-  displayName: Layer Check
+  displayName: npm run $(taskBuild)  
   inputs:
     command: 'custom'
-    customCommand: 'run layer-check'
+    workingDir: $(buildDirectory)
+    customCommand: 'run $(taskBuild)'
+  condition: and(succeeded(), ne(variables['taskBuild'], 'false'))
+
+- task: Npm@1
+  displayName: npm run lint
+  inputs:
+    command: 'custom'
+    workingDir: $(buildDirectory)
+    customCommand: 'run lint'
+  condition: and(succeeded(), ne(variables['taskLint'], false))
+
+- task: Npm@1
+  displayName: npm run $(taskTestComputed)
+  inputs:
+    command: 'custom'
+    workingDir: $(buildDirectory)
+    customCommand: 'run $(taskTestComputed)'
+  condition: and(succeeded(), ne(variables['taskTestComputed'], 'false'))
+
+- task: PublishTestResults@2
+  displayName: Publish Test Results
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/*junit-report.xml'
+    searchFolder: $(buildDirectory)/nyc
+    mergeTestResults: true
+  condition: succeededOrFailed()
+
+- task: PublishCodeCoverageResults@1
+  displayName: Publish Code Coverage
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: $(buildDirectory)/nyc/report/cobertura-coverage.xml
+    reportDirectory: $(buildDirectory)/nyc/report
+  condition: and(succeeded(), eq(variables['taskTestComputed'], 'ci:test:coverage'))
+
+- script: |
+    mkdir $(Build.ArtifactStagingDirectory)/pack/
+    if [ -f "lerna.json" ]; then
+        npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+        npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+    else
+        npm pack --unsafe-perm
+        mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+    fi
+  workingDirectory: $(buildDirectory)
+  displayName: npm pack
+
+- task: CopyFiles@2
+  displayName: Copy GenPublish script
+  inputs:
+    SourceFolder: $(Build.SourcesDirectory)/tools/build-server-resources
+    TargetFolder: $(Build.ArtifactStagingDirectory)/pack
+    Contents: gen_publish.sh
+    
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact - pack
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+    ArtifactName: 'pack'
+    publishLocation: 'Container'
+
+- task: Npm@1
+  displayName: npm run build:docs
+  inputs:
+    command: 'custom'
+    workingDir: $(buildDirectory)
+    customCommand: 'run build:docs'
+  condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact - _api-extractor-temp
+  inputs:
+    PathtoPublish: '$(buildDirectory)/_api-extractor-temp'
+    ArtifactName: '_api-extractor-temp'
+    publishLocation: 'Container'
+  condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
