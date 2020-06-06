@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# build-common-definitions pipeline
+# build-eslint-config-fluid pipeline
 
 name: $(Build.BuildId)
 
@@ -12,7 +12,7 @@ trigger:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
+    - common/build/eslint-config-fluid
 
 pr:
   branches:
@@ -21,10 +21,16 @@ pr:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
+    - common/build/eslint-config-fluid
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
-    buildDirectory: common/lib/common-definitions
+    buildDirectory: common/build/eslint-config-fluid
+    taskBuild: false
+    taskBuildDocs: false
+    taskLint: false
     taskTest: false

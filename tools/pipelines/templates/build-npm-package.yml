@@ -18,26 +18,20 @@ parameters:
 - name: taskLint
   type: boolean
   default: true
-  
-- name: taskNpmAuth
-  type: boolean
-  default: true
 
 - name: taskTest
   type: string
   default: ci:test
 
 - name: poolCG
-  type: string
-  default: Shared
+  type: object
+  default:
+    vmImage: 'ubuntu-latest'
 
 - name: poolBuild
-  type: string
-  default: Shared
-
-variables:
-  - name: testCoverage
-    value: and(eq(parameters.taskTest, 'ci:test'), eq(variables['Build.Reason'], 'PullRequest')
+  type: object
+  default:
+    vmImage: 'ubuntu-latest'
 
 trigger: none
 
@@ -56,6 +50,9 @@ jobs:
 
   - job: Build
     pool: ${{ parameters.poolBuild }}
+    variables:
+      - name: testCoverage
+        value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
     steps:
     - task: Bash@3
       displayName: Parameters
@@ -68,6 +65,7 @@ jobs:
           echo Lint=${{ parameters.taskLint }}
           echo Test=${{ parameters.taskTest }}
           echo BuildDoc=${{ parameters.taskBuildDocs }}
+          echo TestCoverage=$(testCoverage)
 
     - task: UseNode@1
       displayName: Use Node 10.x

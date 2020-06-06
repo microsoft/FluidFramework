@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# build-common-definitions pipeline
+# build-common-utils pipeline
 
 name: $(Build.BuildId)
 
@@ -12,7 +12,7 @@ trigger:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
+    - common/lib/common-utils
 
 pr:
   branches:
@@ -21,10 +21,9 @@ pr:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
+    - common/lib/common-utils
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
-    buildDirectory: common/lib/common-definitions
-    taskTest: false
+    buildDirectory: common/lib/common-utils
