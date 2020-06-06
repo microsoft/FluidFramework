@@ -3,7 +3,7 @@ home: true
 # heroImage: /images/homescreen144.png
 heroText: "Fluid Framework"
 showHeroSymbol: true
-# tagline: State that flows
+tagline: null
 actionText: Get started →
 actionLink: /docs/getting-started.md
 features:
