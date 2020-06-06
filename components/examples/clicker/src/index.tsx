@@ -82,35 +82,36 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(element: HTMLElement) {
-        if (this._counter !== undefined && this._fluidComponentMap !== undefined) {
-            // Load initial state from root before entering React render lifecycle
-            // View and Fluid states are identical since we are directly using the Counter
-            // DDS in the view
-            const initialState = { counter:  this._counter };
-
-            // Mark the counter as the CounterValueType so that changes to it update the React view
-            // when we increment it and the key it is stored under in the root
-            const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-            fluidToView.set(CounterRootKey, {
-                fluidObjectType: SharedCounter.name,
-                rootKey: CounterRootKey,
-            });
-
-            ReactDOM.render(
-                <CounterReactView
-                    syncedStateId={"clicker"}
-                    root={this.root}
-                    initialViewState={initialState}
-                    initialFluidState={initialState}
-                    dataProps={{
-                        fluidComponentMap: this._fluidComponentMap,
-                        runtime: this.runtime,
-                    }}
-                    fluidToView={fluidToView}
-                />,
-                element,
-            );
+        if (this._counter === undefined || this._fluidComponentMap === undefined) {
+            throw Error("Component was not initialized correctly");
         }
+        // Load initial state from root before entering React render lifecycle
+        // View and Fluid states are identical since we are directly using the Counter
+        // DDS in the view
+        const initialState = { counter:  this._counter };
+
+        // Mark the counter as the CounterValueType so that changes to it update the React view
+        // when we increment it and the key it is stored under in the root
+        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
+        fluidToView.set(CounterRootKey, {
+            fluidObjectType: SharedCounter.name,
+            rootKey: CounterRootKey,
+        });
+
+        ReactDOM.render(
+            <CounterReactView
+                syncedStateId={"clicker"}
+                root={this.root}
+                initialViewState={initialState}
+                initialFluidState={initialState}
+                dataProps={{
+                    fluidComponentMap: this._fluidComponentMap,
+                    runtime: this.runtime,
+                }}
+                fluidToView={fluidToView}
+            />,
+            element,
+        );
         return element;
     }
 

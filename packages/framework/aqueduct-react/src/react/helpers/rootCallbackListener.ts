@@ -9,6 +9,8 @@ import {
     FluidComponentMap,
     ViewToFluidMap,
     FluidToViewMap,
+    IFluidFunctionalComponentViewState,
+    IFluidFunctionalComponentFluidState,
 } from "../interface";
 import { syncStateAndRoot } from "./syncStateAndRoot";
 import { getByValue } from "./utils";
@@ -28,7 +30,10 @@ import { getFluidStateFromRoot } from ".";
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  */
-export const rootCallbackListener = <SV,SF>(
+export const rootCallbackListener = <
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(
     fluidComponentMap: FluidComponentMap,
     syncedStateId,
     root: ISharedDirectory,
@@ -79,7 +84,9 @@ export const rootCallbackListener = <SV,SF>(
                 currentFluidState,
                 fluidToView,
             );
-            setState({ ...state, ...newPartialState, ...{ fluidComponentMap } }, true, local);
+            state[stateKey as string] = newPartialState[stateKey];
+            state.fluidComponentMap = fluidComponentMap;
+            setState(state, true, local);
         } else {
             throw Error(`Unable to extract view state from root change key: ${rootKey}`);
         }

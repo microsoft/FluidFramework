@@ -21,11 +21,13 @@ import {
     FluidToViewMap,
     ViewToFluidMap,
     IFluidContextProps,
+    FluidComponentMap,
 } from "@fluidframework/aqueduct-react";
-import { Counter, CounterValueType } from "@fluidframework/map";
+import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -66,7 +68,7 @@ interface ICounterReducerViewState extends IFluidFunctionalComponentViewState {
 }
 
 interface ICounterReducerFluidState extends IFluidFunctionalComponentFluidState {
-    counter: Counter;
+    counter: SharedCounter;
 }
 
 interface IActionReducer extends IFluidReducer<ICounterReducerViewState, ICounterReducerFluidState, IFluidDataProps> {
@@ -77,9 +79,7 @@ const ActionReducer: IActionReducer = {
     increment: {
         function: (state, step: number) => {
             state.fluidState.counter.increment(step);
-            state.viewState.value =  step === undefined
-                ? state.viewState.value + 1
-                : state.viewState.value + step;
+            state.viewState.value = state.fluidState.counter.value;
             return { state };
         },
     },
@@ -147,14 +147,26 @@ IFluidDataProps
  */
 export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
+    private _counter: SharedCounter | undefined;
+    private readonly _fluidComponentMap: FluidComponentMap = new Map();
 
     /**
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
         this.root.set("counterClicksFunctional", 0);
-        this.root.createValueType("counterClicksReducer", CounterValueType.Name, 0);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set("counterClicksReducer", counter.handle);
         this.root.set("counterClicksContext", 0);
+    }
+
+    protected async componentHasInitialized() {
+        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>("counterClicksReducer");
+        this._counter = await counterHandle.get();
+        this._fluidComponentMap.set(this._counter.handle.path, {
+            component: this._counter,
+            listenedEvents: ["incremented"],
+        });
     }
 
     // #region IComponentHTMLView
@@ -163,12 +175,12 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
      * Will return a new ClickerWithHooks view
      */
     public render(div: HTMLElement) {
-        // const stateToRootContext = new Map<keyof CounterState, string>();
-        // stateToRootContext.set("value", "counterClicksContext");
-        const functionalFluidToView: FluidToViewMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
+        if (this._counter === undefined || this._fluidComponentMap === undefined) {
+            throw Error("Component was not initialized correctly");
+        }
+
+        const functionalFluidToView:
+        FluidToViewMap<ICounterFunctionalViewState, ICounterFunctionalFluidState> = new Map();
         functionalFluidToView.set("value", {
             rootKey: "counterClicksFunctional",
         });
@@ -182,17 +194,17 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                     value: syncedState.counter?.value,
                 };
             },
-            fluidObjectType: CounterValueType.Name,
+            fluidObjectType: SharedCounter.name,
         });
         const reducerViewToFluidMap: ViewToFluidMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
         reducerViewToFluidMap.set("value", {
             fluidKey: "counter",
+            fluidConverter: () => {
+                return {};
+            },
         });
 
-        const contextFluidToView: FluidToViewMap<
-        ICounterFunctionalViewState,
-        ICounterFunctionalFluidState
-        > = new Map();
+        const contextFluidToView: FluidToViewMap<ICounterFunctionalViewState,ICounterFunctionalFluidState> = new Map();
         contextFluidToView.set("value", {
             rootKey: "counterClicksContext",
         });
@@ -214,11 +226,11 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                     syncedStateId={"counter-reducer"}
                     root={this.root}
                     dataProps={{
-                        fluidComponentMap: new Map(),
+                        fluidComponentMap: this._fluidComponentMap,
                         runtime: this.runtime,
                     }}
-                    initialViewState={{ value: 0 }}
-                    initialFluidState={{ counter: this.root.get("counterClicksReducer") }}
+                    initialViewState={{ value: this._counter.value }}
+                    initialFluidState={{ counter:  this._counter }}
                     fluidToView={reducerFluidToViewMap}
                     viewToFluid={reducerViewToFluidMap}
                     reducer={ActionReducer}
@@ -249,7 +261,7 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
 export const ClickerWithHooksInstantiationFactory = new PrimedComponentFactory(
     ClickerWithHooksName,
     ClickerWithHooks,
-    [],
+    [SharedCounter.getFactory()],
     {},
 );
 export const fluidExport = ClickerWithHooksInstantiationFactory;
