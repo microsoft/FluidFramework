@@ -47,6 +47,7 @@ extends:
     buildDirectory: .
     poolBuild: Default
     cgSubDirectory: packages
+    checkoutSubmodules: true
     preCG:
     - task: Npm@1
       displayName: npm ci
