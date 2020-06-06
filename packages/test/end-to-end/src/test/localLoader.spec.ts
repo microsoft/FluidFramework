@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
@@ -68,7 +69,8 @@ export class TestComponent extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        this.counter = await this.root.wait(counterKey);
+        const counterHandle = await this.root.wait<IComponentHandle<SharedCounter>>(counterKey);
+        this.counter = await counterHandle.get();
     }
 }
 
