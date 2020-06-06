@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
 import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { SharedCounter } from "@fluidframework/counter";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
-import { Counter, CounterValueType } from "@fluidframework/map";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -19,6 +19,8 @@ import {
     initializeLocalContainer,
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
+
+const counterKey = "count";
 
 /**
  * Implementation of counter component for testing.
@@ -35,7 +37,7 @@ export class TestComponent extends PrimedComponent {
         {},
     );
 
-    private counter!: Counter;
+    private counter!: SharedCounter;
 
     /**
      * Expose the runtime for testing purposes.
@@ -61,18 +63,22 @@ export class TestComponent extends PrimedComponent {
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("count", CounterValueType.Name, 0);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(counterKey, counter.handle);
     }
 
     protected async componentHasInitialized() {
-        this.counter = await this.root.wait("count");
+        this.counter = await this.root.wait(counterKey);
     }
 }
 
 const testComponentFactory = new PrimedComponentFactory(
     TestComponent.type,
     TestComponent,
-    [SharedString.getFactory()],
+    [
+        SharedCounter.getFactory(),
+        SharedString.getFactory(),
+    ],
     {},
 );
 
