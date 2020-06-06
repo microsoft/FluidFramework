@@ -17,4 +17,8 @@
     "typescript.format.placeOpenBraceOnNewLineForFunctions": false,
     "typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
     "typescript.tsdk": "node_modules/typescript/lib",
+    "files.associations": {
+        "tools/pipelines/*.yml": "azure-pipelines"
+    },
+    "[azure-pipelines].customSchemaFile": "",
 }

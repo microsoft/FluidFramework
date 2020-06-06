@@ -405,8 +405,7 @@ export class TaskManager implements ITaskManager {
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
-        private readonly context: IComponentContext)
-    {
+        private readonly context: IComponentContext) {
         this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
