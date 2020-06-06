@@ -46,32 +46,38 @@ jobs:
 
   - job: Build
     steps:
-    - script: |
-        # Show all task group conditions
-
-        echo NPM Authenticate=$(taskNpmAuth)
-        echo Build=$(taskBuild)
-        echo Lint=$(taskLint)
-        echo Test=$(taskTest)
-        echo BuildDoc=$(taskBuildDocs)
-
-        if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
-          echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
-        fi
+    - task: Bash@3
       displayName: Parameters
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Show all task group conditions
+
+          echo NPM Authenticate=$(taskNpmAuth)
+          echo Build=$(taskBuild)
+          echo Lint=$(taskLint)
+          echo Test=$(taskTest)
+          echo BuildDoc=$(taskBuildDocs)
+
+          if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
+            echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
+          fi
 
     - task: UseNode@1
       displayName: Use Node 10.x
       inputs: 
         version: 10.x
 
-    - script: |
-        sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-        sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
-        perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-        git status
-      workingDirectory: $(buildDirectory)    
+    - task: Bash@3
       displayName: Strip MIT License
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(buildDirectory)
+        script: |
+          sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+          sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
+          perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+          git status
 
     - task: Npm@1
       displayName: npm ci
@@ -82,23 +88,27 @@ jobs:
         customRegistry: 'useFeed'
         customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-    - script: |
-        # expect lerna.json and package.json be in the current working directory
-        # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
-
-        echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
-        echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
-
-        version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-        echo COMPUTED_VERSION=$version
-
-        if [ -f "lerna.json" ]; then
-            npx lerna version $version --no-git-tag-version --no-push --yes
-        else
-            npm version --no-git-tag-version $version -f --allow-same-version
-        fi
-      workingDirectory: $(buildDirectory)
+    - task: Bash@3
       displayName: Set Package Version
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(buildDirectory)
+        script: |
+          # expect lerna.json and package.json be in the current working directory
+          # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
+
+          echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
+          echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
+
+          version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+          echo COMPUTED_VERSION=$version
+
+          if [ -f "lerna.json" ]; then
+              npx lerna version $version --no-git-tag-version --no-push --yes
+          else
+              npm version --no-git-tag-version $version -f --allow-same-version
+          fi
+      
 
     - task: Npm@1
       displayName: npm run $(taskBuild)  
@@ -141,17 +151,20 @@ jobs:
         reportDirectory: $(buildDirectory)/nyc/report
       condition: and(succeeded(), eq(variables['taskTestComputed'], 'ci:test:coverage'))
 
-    - script: |
-        mkdir $(Build.ArtifactStagingDirectory)/pack/
-        if [ -f "lerna.json" ]; then
-            npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-            npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-        else
-            npm pack --unsafe-perm
-            mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-        fi
-      workingDirectory: $(buildDirectory)
+    - task: Bash@3
       displayName: npm pack
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(buildDirectory)
+        script: |
+          mkdir $(Build.ArtifactStagingDirectory)/pack/
+          if [ -f "lerna.json" ]; then
+              npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+              npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+          else
+              npm pack --unsafe-perm
+              mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+          fi
 
     - task: CopyFiles@2
       displayName: Copy GenPublish script
