@@ -30,7 +30,7 @@ pr:
 extends:
   template: templates/build-npm-package.yml
   parameters:
-    buildDirectory: tools/generator-fluid.yml
+    buildDirectory: tools/generator-fluid
     taskBuild: false
     taskBuildDocs: false
     taskLint: false
