@@ -3,6 +3,8 @@
 
 # repo-policy-check pipeline to ensure repo conventions
 
+name: $(Build.BuildId)
+
 trigger:
 - master
 - release/*
@@ -18,5 +20,4 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     buildDirectory: common/lib/common-definitions
-
- 
+    taskTest: false

@@ -27,6 +27,14 @@ parameters:
   type: string
   default: ci:test
 
+- name: poolCG
+  type: string
+  default: Shared
+
+- name: poolBuild
+  type: string
+  default: Shared
+
 variables:
   - name: testCoverage
     value: and(eq(parameters.taskTest, 'ci:test'), eq(variables['Build.Reason'], 'PullRequest')
@@ -36,6 +44,7 @@ trigger: none
 jobs:
   - job: CG
     displayName: Component Detection
+    pool: ${{ parameters.poolCG }}
     steps:
       - task: ComponentGovernanceComponentDetection@0
         displayName: ComponentDetection
@@ -46,6 +55,7 @@ jobs:
           alertWarningLevel: High
 
   - job: Build
+    pool: ${{ parameters.poolBuild }}
     steps:
     - task: Bash@3
       displayName: Parameters
@@ -85,21 +95,22 @@ jobs:
 
     - task: Bash@3
       displayName: Set Package Version
+      env:
+        VERSION_BUILDBRANCH: $(Build.SourceBranch)
+        VERSION_BUILDNUMBER: $(Build.BuildNumber)
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # expect lerna.json and package.json be in the current working directory
-          # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
 
-          echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
-          echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
-          VERSION_BUILDBRANCH=$(Build.SourcesBranch)
-          VERSION_BUILDNUMBER=$(Build.BuildNumber)
+          echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
+          echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+
           version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
           echo COMPUTED_VERSION=$version
 
-          if [ '$COMPUTED_VERSION' == '' ]; then
+          if [ "$version" == '' ]; then
               exit -1
           fi
 
