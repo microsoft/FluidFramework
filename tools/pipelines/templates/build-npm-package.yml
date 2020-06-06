@@ -148,7 +148,7 @@ jobs:
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/nyc
         mergeTestResults: true
-      condition: and(succeededOrFailed(), ne('${{ parameters.taskTest }}', 'false')))
+      condition: and(succeededOrFailed(), ne('${{ parameters.taskTest }}', 'false'))
 
     - task: PublishCodeCoverageResults@1
       displayName: Publish Code Coverage
