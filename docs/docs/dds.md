@@ -1,8 +1,4 @@
----
-uid: dds
----
-
-# Distributed Data Structures
+# Introducing distributed data structures
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
 as such as [SharedMap](./SharedMap.md) and the various types in the @fluidframework/sequence package, are eventually
@@ -24,18 +20,19 @@ Thus, you need not check for changes prior to 'committing' local changes. If the
 be retrieved and merged in seamlessly, and events will be emitted by the data structures, allowing your code to react to
 the changes if needed. And this all happens _very_ quickly.
 
-::: tip
-To avoid UI jitter when inbounding a lot of changes, consider just rendering based on frames per second, rather than on
-data inbound. At data inbound you can invalidate portions of the UI to re-render when you render next. This decoupling
-rendering from data inbound should reduce UI jitter.
-:::
-
 There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the consensus data
 structures are useful. These types of data structures defer applying operations until they're acknowledged by the
-server. This ensures that each client .pops() a different value from a stack, for example.
+server. This ensures that each client `.pop`s a different value from a stack, for example.
 
-<!-- The content for this section will come from this [source document][1].
+## Picking the right data structure
 
-[1]: https://microsoft.sharepoint.com/:w:/t/Prague/EbN0Q0YfRpxLhvu71KvtpacBWAUoOm88XDRXd_p-6GfmfQ?e=3DckiM
+### Merge behavior
 
-<iframe src="https://microsoft.sharepoint.com/teams/Prague/_layouts/15/Doc.aspx?sourcedoc={464374b3-461f-4b9c-86fb-bbd4abeda5a7}&amp;action=embedview&amp;wdStartOn=1" width="695px" height="1000px" frameborder="0">This is an embedded <a target="_blank" href="https://office.com">Microsoft Office</a> document, powered by <a target="_blank" href="https://office.com/webapps">Office</a>.</iframe> -->
+## Map-like data structures
+
+## Sequence-like data structures
+
+## Consensus-based data structures
+
+## Quorum data structure
+

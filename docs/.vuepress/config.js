@@ -252,12 +252,21 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Distributed Data Structures",
+            title: "Main concepts",
+            collapsable: false,
+            children: [
+                "dds.md",
+                "components.md",
+                "aqueduct.md",
+                "component-interfaces.md",
+            ]
+        },
+        {
+            title: "DDS reference",
             collapsable: false,
             // path: "dds",
             children: [
                 // "overview",
-                "dds.md",
                 "SharedDirectory",
                 "SharedMap",
                 "SharedCell",
@@ -283,7 +292,6 @@ const getDocsSidebar = () => {
             title: "Component model",
             collapsable: false,
             children: [
-                "components.md",
                 "component-design-principles.md",
             ]
         },
