@@ -35,6 +35,7 @@
     "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",
+    "@fluidframework/counter": "^0.20.0",
     "@fluidframework/map": "^0.20.0",
     "@fluidframework/protocol-definitions": "^0.1006.1",
     "@fluidframework/runtime-definitions": "^0.20.0",
