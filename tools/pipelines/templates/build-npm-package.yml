@@ -52,6 +52,11 @@ jobs:
       value: true
     steps:
     # Setup
+    - checkout: self
+      clean: true
+      fetchDepth: 1
+      lfs: true
+      submodules: true
     - task: Bash@3
       displayName: Parameters
       inputs:
