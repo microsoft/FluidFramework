@@ -39,7 +39,15 @@ parameters:
   type: string
   default:
 
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
 trigger: none
+
+variables:
+  - name: skipComponentGovernanceDetection
+    value: true
 
 jobs:
   # Job - Build
@@ -48,15 +56,14 @@ jobs:
     variables:
     - name: testCoverage
       value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
-    - name: skipComponentGovernanceDetection
-      value: true
     steps:
     # Setup
     - checkout: self
       clean: true
       fetchDepth: 1
-      lfs: true
-      submodules: true
+      lfs: ${{ parameters.checkoutSubmodules }}
+      submodules: ${{ parameters.checkoutSubmodules }}
+
     - task: Bash@3
       displayName: Parameters
       inputs:
@@ -230,7 +237,14 @@ jobs:
       displayName: Component Detection
       pool: ${{ parameters.poolCG }}
       steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
+        lfs: false
+        submodules: false
+
       - ${{ parameters.preCG }}
+
       - task: ComponentGovernanceComponentDetection@0
         displayName: Component Detection
         inputs:
