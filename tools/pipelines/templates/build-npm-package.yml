@@ -28,18 +28,19 @@ parameters:
   default: ci:test
 
 variables:
-- name: taskTestComputed
-  
+  - name: testCoverage
+    value: and(eq(parameters.taskTest, 'ci:test'), eq(variables['Build.Reason'], 'PullRequest')
+
 trigger: none
 
 jobs:
   - job: CG
-    displayName: ComponentDetection
+    displayName: Component Detection
     steps:
       - task: ComponentGovernanceComponentDetection@0
         displayName: ComponentDetection
         inputs:
-          sourceScanPath: $(buildDirectory)
+          sourceScanPath: ${{ parameters.buildDirectory }}
           verbosity: Verbose
           scanType: Register
           alertWarningLevel: High
@@ -53,15 +54,10 @@ jobs:
         script: |
           # Show all task group conditions
 
-          echo NPM Authenticate=$(taskNpmAuth)
-          echo Build=$(taskBuild)
-          echo Lint=$(taskLint)
-          echo Test=$(taskTest)
-          echo BuildDoc=$(taskBuildDocs)
-
-          if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
-            echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
-          fi
+          echo Build=${{ parameters.taskBuild }}
+          echo Lint=${{ parameters.taskLint }}
+          echo Test=${{ parameters.taskTest }}
+          echo BuildDoc=${{ parameters.taskBuildDocs }}
 
     - task: UseNode@1
       displayName: Use Node 10.x
@@ -72,7 +68,7 @@ jobs:
       displayName: Strip MIT License
       inputs:
         targetType: 'inline'
-        workingDirectory: $(buildDirectory)
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
           sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
@@ -83,7 +79,7 @@ jobs:
       displayName: npm ci
       inputs:
         command: 'custom'
-        workingDir: $(buildDirectory)
+        workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'ci --ignore-scripts'
         customRegistry: 'useFeed'
         customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
@@ -92,7 +88,7 @@ jobs:
       displayName: Set Package Version
       inputs:
         targetType: 'inline'
-        workingDirectory: $(buildDirectory)
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # expect lerna.json and package.json be in the current working directory
           # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
@@ -108,38 +104,45 @@ jobs:
           else
               npm version --no-git-tag-version $version -f --allow-same-version
           fi
-      
 
     - task: Npm@1
-      displayName: npm run $(taskBuild)  
+      displayName: npm run ${{ parameters.taskBuild }}
       inputs:
         command: 'custom'
-        workingDir: $(buildDirectory)
-        customCommand: 'run $(taskBuild)'
-      condition: and(succeeded(), ne(variables['taskBuild'], 'false'))
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run ${{ parameters.taskBuild }}'
+      condition: and(succeeded(), ne('${{ parameters.taskBuild }}', 'false'))
 
     - task: Npm@1
       displayName: npm run lint
       inputs:
         command: 'custom'
-        workingDir: $(buildDirectory)
+        workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run lint'
-      condition: and(succeeded(), ne(variables['taskLint'], false))
+      condition: and(succeeded(), ne(${{ parameters.taskLint }}, false))
 
     - task: Npm@1
-      displayName: npm run $(taskTestComputed)
+      displayName: npm run ${{ parameters.taskBuildDocs.taskTest }}
       inputs:
         command: 'custom'
-        workingDir: $(buildDirectory)
-        customCommand: 'run $(taskTestComputed)'
-      condition: and(succeeded(), ne(variables['taskTestComputed'], 'false'))
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run ${{ parameters.taskTest }}'
+      condition: and(succeeded(), and(ne(variables['testCoverage'], true), ne('${{ parameters.taskTest }}', 'false')))
+
+    - task: Npm@1
+      displayName: npm run ci:test:coverage
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'run ci:test:coverage'
+      condition: and(succeeded(), eq(variables['testCoverage'], true))
 
     - task: PublishTestResults@2
       displayName: Publish Test Results
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: $(buildDirectory)/nyc
+        searchFolder: ${{ parameters.buildDirectory }}/nyc
         mergeTestResults: true
       condition: succeededOrFailed()
 
@@ -147,15 +150,15 @@ jobs:
       displayName: Publish Code Coverage
       inputs:
         codeCoverageTool: Cobertura
-        summaryFileLocation: $(buildDirectory)/nyc/report/cobertura-coverage.xml
-        reportDirectory: $(buildDirectory)/nyc/report
-      condition: and(succeeded(), eq(variables['taskTestComputed'], 'ci:test:coverage'))
+        summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
+        reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
+      condition: and(succeeded(), eq(variables['testCoverage'], true))
 
     - task: Bash@3
       displayName: npm pack
       inputs:
         targetType: 'inline'
-        workingDirectory: $(buildDirectory)
+        workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           mkdir $(Build.ArtifactStagingDirectory)/pack/
           if [ -f "lerna.json" ]; then
@@ -184,14 +187,14 @@ jobs:
       displayName: npm run build:docs
       inputs:
         command: 'custom'
-        workingDir: $(buildDirectory)
+        workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'run build:docs'
-      condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+      condition: and(succeeded(), ne(${{ parameters.taskBuildDocs }}, false))
 
     - task: PublishBuildArtifacts@1
       displayName: Publish Artifact - _api-extractor-temp
       inputs:
-        PathtoPublish: '$(buildDirectory)/_api-extractor-temp'
+        PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
         ArtifactName: '_api-extractor-temp'
         publishLocation: 'Container'
-      condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+      condition: and(succeeded(), ne(${{ parameters.taskBuildDocs }}, false))
