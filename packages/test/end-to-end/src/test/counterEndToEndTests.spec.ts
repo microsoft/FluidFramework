@@ -16,7 +16,7 @@ import {
     TestFluidComponentFactory,
 } from "@fluidframework/test-utils";
 
-describe("Counter", () => {
+describe("SharedCounter", () => {
     const id = "fluid-test://localhost/counterTest";
     const counterId = "counterKey";
     const codeDetails: IFluidCodeDetails = {
@@ -80,7 +80,7 @@ describe("Counter", () => {
 
     describe("constructor", () => {
         it("can create the counter in 3 containers correctly", async () => {
-            // Counter was created in beforeEach
+            // SharedCounter was created in beforeEach
             assert.ok(sharedCounter1, `Couldn't find the counter in container1, instead got ${sharedCounter1}`);
             assert.ok(sharedCounter2, `Couldn't find the counter in container2, instead got ${sharedCounter2}`);
             assert.ok(sharedCounter3, `Couldn't find the counter in container3, instead got ${sharedCounter3}`);
@@ -89,7 +89,7 @@ describe("Counter", () => {
 
     describe("usage", () => {
         it("can get the value in 3 containers correctly", async () => {
-            // Counter was created in beforeEach
+            // SharedCounter was created in beforeEach
             verifyCounterValues(0, 0, 0);
         });
 
