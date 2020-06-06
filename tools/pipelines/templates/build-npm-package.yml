@@ -25,13 +25,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default:
-    vmImage: 'ubuntu-latest'
+  default: Shared
 
 - name: poolBuild
   type: object
-  default:
-    vmImage: 'ubuntu-latest'
+  default: Shared
 
 trigger: none
 
@@ -41,7 +39,7 @@ jobs:
     pool: ${{ parameters.poolCG }}
     steps:
       - task: ComponentGovernanceComponentDetection@0
-        displayName: ComponentDetection
+        displayName: Component Detection
         inputs:
           sourceScanPath: ${{ parameters.buildDirectory }}
           verbosity: Verbose
