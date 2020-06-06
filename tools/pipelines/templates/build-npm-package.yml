@@ -32,140 +32,153 @@ variables:
   
 trigger: none
 
-steps:
-- script: |
-    # Show all task group conditions
+jobs:
+  - job: CG
+    displayName: ComponentDetection
+    steps:
+      - task: ComponentGovernanceComponentDetection@0
+        displayName: ComponentDetection
+        inputs:
+          sourceScanPath: $(buildDirectory)
+          verbosity: Verbose
+          scanType: Register
+          alertWarningLevel: High
 
-    echo NPM Authenticate=$(taskNpmAuth)
-    echo Build=$(taskBuild)
-    echo Lint=$(taskLint)
-    echo Test=$(taskTest)
-    echo BuildDoc=$(taskBuildDocs)
+  - job: Build
+    steps:
+    - script: |
+        # Show all task group conditions
 
-    if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
-      echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
-    fi
-  displayName: Parameters
+        echo NPM Authenticate=$(taskNpmAuth)
+        echo Build=$(taskBuild)
+        echo Lint=$(taskLint)
+        echo Test=$(taskTest)
+        echo BuildDoc=$(taskBuildDocs)
 
-- task: UseNode@1
-  displayName: Use Node 10.x
-  inputs: 
-    version: 10.x
+        if [ "$(taskTest)" == "ci:test" ] && [ "$(Build.Reason)" != "PullRequest" ]; then
+          echo '##vso[task.setvariable variable=taskTestComputed]ci:test:coverage'
+        fi
+      displayName: Parameters
 
-- script: |
-    sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-    sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
-    perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-    git status
-  workingDirectory: $(buildDirectory)    
-  displayName: Strip MIT License
+    - task: UseNode@1
+      displayName: Use Node 10.x
+      inputs: 
+        version: 10.x
 
-- task: Npm@1
-  displayName: npm ci
-  inputs:
-    command: 'custom'
-    workingDir: $(buildDirectory)
-    customCommand: 'ci --ignore-scripts'
-    customRegistry: 'useFeed'
-    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+    - script: |
+        sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+        sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
+        perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+        git status
+      workingDirectory: $(buildDirectory)    
+      displayName: Strip MIT License
 
-- script: |
-    # expect lerna.json and package.json be in the current working directory
-    # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
+    - task: Npm@1
+      displayName: npm ci
+      inputs:
+        command: 'custom'
+        workingDir: $(buildDirectory)
+        customCommand: 'ci --ignore-scripts'
+        customRegistry: 'useFeed'
+        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-    echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
-    echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
+    - script: |
+        # expect lerna.json and package.json be in the current working directory
+        # VERSION_BUILDNUMBER and VERSION_BUILDBRANCH should be set in the task
 
-    version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-    echo COMPUTED_VERSION=$version
+        echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
+        echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
 
-    if [ -f "lerna.json" ]; then
-        npx lerna version $version --no-git-tag-version --no-push --yes
-    else
-        npm version --no-git-tag-version $version -f --allow-same-version
-    fi
-  workingDirectory: $(buildDirectory)
-  displayName: Set Package Version
+        version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+        echo COMPUTED_VERSION=$version
 
-- task: Npm@1
-  displayName: npm run $(taskBuild)  
-  inputs:
-    command: 'custom'
-    workingDir: $(buildDirectory)
-    customCommand: 'run $(taskBuild)'
-  condition: and(succeeded(), ne(variables['taskBuild'], 'false'))
+        if [ -f "lerna.json" ]; then
+            npx lerna version $version --no-git-tag-version --no-push --yes
+        else
+            npm version --no-git-tag-version $version -f --allow-same-version
+        fi
+      workingDirectory: $(buildDirectory)
+      displayName: Set Package Version
 
-- task: Npm@1
-  displayName: npm run lint
-  inputs:
-    command: 'custom'
-    workingDir: $(buildDirectory)
-    customCommand: 'run lint'
-  condition: and(succeeded(), ne(variables['taskLint'], false))
+    - task: Npm@1
+      displayName: npm run $(taskBuild)  
+      inputs:
+        command: 'custom'
+        workingDir: $(buildDirectory)
+        customCommand: 'run $(taskBuild)'
+      condition: and(succeeded(), ne(variables['taskBuild'], 'false'))
 
-- task: Npm@1
-  displayName: npm run $(taskTestComputed)
-  inputs:
-    command: 'custom'
-    workingDir: $(buildDirectory)
-    customCommand: 'run $(taskTestComputed)'
-  condition: and(succeeded(), ne(variables['taskTestComputed'], 'false'))
+    - task: Npm@1
+      displayName: npm run lint
+      inputs:
+        command: 'custom'
+        workingDir: $(buildDirectory)
+        customCommand: 'run lint'
+      condition: and(succeeded(), ne(variables['taskLint'], false))
 
-- task: PublishTestResults@2
-  displayName: Publish Test Results
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/*junit-report.xml'
-    searchFolder: $(buildDirectory)/nyc
-    mergeTestResults: true
-  condition: succeededOrFailed()
+    - task: Npm@1
+      displayName: npm run $(taskTestComputed)
+      inputs:
+        command: 'custom'
+        workingDir: $(buildDirectory)
+        customCommand: 'run $(taskTestComputed)'
+      condition: and(succeeded(), ne(variables['taskTestComputed'], 'false'))
 
-- task: PublishCodeCoverageResults@1
-  displayName: Publish Code Coverage
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: $(buildDirectory)/nyc/report/cobertura-coverage.xml
-    reportDirectory: $(buildDirectory)/nyc/report
-  condition: and(succeeded(), eq(variables['taskTestComputed'], 'ci:test:coverage'))
+    - task: PublishTestResults@2
+      displayName: Publish Test Results
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*junit-report.xml'
+        searchFolder: $(buildDirectory)/nyc
+        mergeTestResults: true
+      condition: succeededOrFailed()
 
-- script: |
-    mkdir $(Build.ArtifactStagingDirectory)/pack/
-    if [ -f "lerna.json" ]; then
-        npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-        npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-    else
-        npm pack --unsafe-perm
-        mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-    fi
-  workingDirectory: $(buildDirectory)
-  displayName: npm pack
+    - task: PublishCodeCoverageResults@1
+      displayName: Publish Code Coverage
+      inputs:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: $(buildDirectory)/nyc/report/cobertura-coverage.xml
+        reportDirectory: $(buildDirectory)/nyc/report
+      condition: and(succeeded(), eq(variables['taskTestComputed'], 'ci:test:coverage'))
 
-- task: CopyFiles@2
-  displayName: Copy GenPublish script
-  inputs:
-    SourceFolder: $(Build.SourcesDirectory)/tools/build-server-resources
-    TargetFolder: $(Build.ArtifactStagingDirectory)/pack
-    Contents: gen_publish.sh
-    
-- task: PublishBuildArtifacts@1
-  displayName: Publish Artifact - pack
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-    ArtifactName: 'pack'
-    publishLocation: 'Container'
+    - script: |
+        mkdir $(Build.ArtifactStagingDirectory)/pack/
+        if [ -f "lerna.json" ]; then
+            npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+            npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+        else
+            npm pack --unsafe-perm
+            mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+        fi
+      workingDirectory: $(buildDirectory)
+      displayName: npm pack
 
-- task: Npm@1
-  displayName: npm run build:docs
-  inputs:
-    command: 'custom'
-    workingDir: $(buildDirectory)
-    customCommand: 'run build:docs'
-  condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+    - task: CopyFiles@2
+      displayName: Copy GenPublish script
+      inputs:
+        SourceFolder: $(Build.SourcesDirectory)/tools/build-server-resources
+        TargetFolder: $(Build.ArtifactStagingDirectory)/pack
+        Contents: gen_publish.sh
+        
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact - pack
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+        ArtifactName: 'pack'
+        publishLocation: 'Container'
 
-- task: PublishBuildArtifacts@1
-  displayName: Publish Artifact - _api-extractor-temp
-  inputs:
-    PathtoPublish: '$(buildDirectory)/_api-extractor-temp'
-    ArtifactName: '_api-extractor-temp'
-    publishLocation: 'Container'
-  condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+    - task: Npm@1
+      displayName: npm run build:docs
+      inputs:
+        command: 'custom'
+        workingDir: $(buildDirectory)
+        customCommand: 'run build:docs'
+      condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact - _api-extractor-temp
+      inputs:
+        PathtoPublish: '$(buildDirectory)/_api-extractor-temp'
+        ArtifactName: '_api-extractor-temp'
+        publishLocation: 'Container'
+      condition: and(succeeded(), ne(variables['taskBuildDocs'], false))
