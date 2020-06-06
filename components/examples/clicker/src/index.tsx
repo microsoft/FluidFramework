@@ -95,7 +95,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
         fluidToView.set(CounterRootKey, {
             fluidObjectType: SharedCounter.name,
-            rootKey: CounterRootKey,
         });
 
         ReactDOM.render(
