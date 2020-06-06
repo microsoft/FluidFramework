@@ -86,7 +86,7 @@ jobs:
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --ignore-scripts'
+        customCommand: 'ci --unsafe-perm'
         customRegistry: 'useFeed'
         customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
