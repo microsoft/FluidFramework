@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.20.0",
+    "@fluidframework/cell": "^0.20.0",
     "@fluidframework/sequence": "^0.20.0",
     "react": "^16.10.2"
   },
