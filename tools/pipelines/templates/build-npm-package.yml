@@ -53,6 +53,8 @@ jobs:
     variables:
       - name: testCoverage
         value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+      - name: skipComponentGovernanceDetection
+        value: true
     steps:
     - task: Bash@3
       displayName: Parameters
