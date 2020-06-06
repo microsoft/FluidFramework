@@ -9,3 +9,4 @@ export {
     ISharedComponentProps,
     SharedComponent,
 } from "./sharedComponent";
+export { SyncComponent } from "./syncComponent";

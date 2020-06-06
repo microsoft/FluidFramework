@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SyncComponent, SyncComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponent,
     IComponentHandleContext,
@@ -14,9 +15,7 @@ import {
 import { ComponentHandle } from "@fluidframework/component-runtime";
 import { IComponentLayout } from "@fluidframework/framework-experimental";
 import { IComponentCollection } from "@fluidframework/framework-interfaces";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export class ImageComponent implements
@@ -53,23 +52,21 @@ export class ImageComponent implements
     }
 }
 
-export class ImageCollection extends SharedComponent<ISharedDirectory> implements
+export class ImageCollection extends SyncComponent implements
     IComponentLoadable, IComponentRouter, IComponentCollection
 {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new SyncComponentFactory(
         "@fluid-example/image-collection",
         ImageCollection,
-        SharedDirectory.getFactory(),
+        [],
+        {},
     );
 
     public static getFactory(): IComponentFactory { return ImageCollection.factory; }
 
-    public static create(parentContext: IComponentContext, props?: any) {
-        return ImageCollection.factory.create(parentContext, props);
+    public static create(parentContext: IComponentContext) {
+        return ImageCollection.factory.createComponentSync(parentContext);
     }
-
-    public create() { this.initialize(); }
-    public async load() { this.initialize(); }
 
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
@@ -114,7 +111,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
         return this.images.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    private initialize() {
+    protected initializeFirstTimeSync() {
         for (const key of this.root.keys()) {
             this.images.set(
                 key,
@@ -138,6 +135,10 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                 this.images.set(changed.key, player);
             }
         });
+    }
+
+    protected async componentInitializingFromExisting() {
+        return this.initializeFirstTimeSync();
     }
 }
 

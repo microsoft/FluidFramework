@@ -5,3 +5,4 @@
 
 export * from "./primedComponentFactory";
 export * from "./sharedComponentFactory";
+export * from "./syncComponentFactory";

@@ -33,14 +33,14 @@ export class SharedComponentFactory<P extends IComponent, S = undefined> impleme
     IComponentFactory,
     Partial<IProvideComponentRegistry>
 {
-    private readonly sharedObjectRegistry: ISharedObjectRegistry;
+    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
+        protected readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent<P, S>,
         sharedObjects: readonly ISharedObjectFactory[],
-        private readonly optionalProviders: ComponentSymbolProvider<P>,
+        protected readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {

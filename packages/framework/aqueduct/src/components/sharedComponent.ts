@@ -41,7 +41,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     extends EventForwarder<E>
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
 {
-    private initializeP: Promise<void> | undefined;
+    protected initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
 

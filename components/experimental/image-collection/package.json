@@ -25,6 +25,7 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
+    "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/component-base": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/component-runtime": "^0.20.0",
