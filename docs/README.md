@@ -13,6 +13,4 @@ features:
   details: Some details go here.
 - title: Other media
   details: Some details go here.
-footer: Made with ❤ in Redmond.
 ---
-
