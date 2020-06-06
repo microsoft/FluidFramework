@@ -4,20 +4,18 @@
  */
 
 import assert from "assert";
-import { MockRuntime } from "@fluidframework/test-runtime-utils";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import * as map from "../";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Counter", () => {
-            let runtime: MockRuntime;
             let testMap: map.ISharedMap;
             let testCounter: map.Counter;
 
             beforeEach(async () => {
-                runtime = new MockRuntime();
                 const factory = new map.MapFactory();
-                testMap = factory.create(runtime, "test");
+                testMap = factory.create(new MockComponentRuntime(), "test");
 
                 testCounter = testMap.
                     createValueType("defaultCounter", map.CounterValueType.Name, undefined).

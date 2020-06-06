@@ -17,13 +17,14 @@ import { buildHierarchy, getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
+    IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
-    IDocumentStorageManager,
+    IOdspResolvedUrl,
     IOdspSnapshot,
     ISequencedDeltaOpMessage,
-    HostStoragePolicy,
+    HostStoragePolicyInternal,
     ISnapshotRequest,
     ISnapshotResponse,
     ISnapshotTree,
@@ -31,12 +32,21 @@ import {
     SnapshotTreeEntry,
     SnapshotTreeValue,
     SnapshotType,
+    ISnapshotOptions,
+    ITree,
+    IBlob,
+    idFromSpoEntry,
 } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import {
+    IOdspCache,
+    ICacheEntry,
+    IFileEntry,
+    snapshotExpirySummarizerOps,
+} from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -51,16 +61,34 @@ type ConditionallyContextedSummary = {
     tree: api.ISummaryTree,
 };
 
-export class OdspDocumentStorageManager implements IDocumentStorageManager {
+function convertOdspTree(tree: ITree) {
+    const gitTree: resources.ITree = {
+        sha: idFromSpoEntry(tree),
+        url: "",
+        tree: [],
+    };
+    for (const entry of tree.entries) {
+        gitTree.tree.push({
+            path: entry.path,
+            mode: "",
+            type: entry.type,
+            size: 0,
+            sha: idFromSpoEntry(entry),
+            url: "",
+        });
+    }
+    return gitTree;
+}
+
+export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
     private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
-    private readonly blobCache: Map<string, resources.IBlob> = new Map();
-    private readonly treesCache: Map<string, resources.ITree> = new Map();
+    private readonly blobCache: Map<string, IBlob> = new Map();
+    private readonly treesCache: Map<string, ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
-    private treesInsteadOfTree: boolean = false;
 
     private lastSummaryHandle: string | undefined;
     // Last proposed handle of the uploaded app summary.
@@ -69,6 +97,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private _ops: ISequencedDeltaOpMessage[] | undefined;
 
     private firstVersionCall = true;
+    private _snapshotCacheEntry: ICacheEntry | undefined;
+
+    private readonly fileEntry: IFileEntry;
+
+    private readonly documentId: string;
+    private readonly snapshotUrl: string | undefined;
 
     public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
         assert(this._ops === undefined);
@@ -80,18 +114,30 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return this._ops;
     }
 
+    public get snapshotCacheEntry() {
+        return this._snapshotCacheEntry;
+    }
+
     constructor(
-        private readonly documentId: string,
-        private readonly snapshotUrl: string | undefined,
-        private latestSha: string | null | undefined,
+        odspResolvedUrl: IOdspResolvedUrl,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
-        private readonly isFirstTimeDocumentOpened: boolean,
-        private readonly hostPolicy: HostStoragePolicy,
+        private readonly hostPolicy: HostStoragePolicyInternal,
     ) {
+        this.documentId = odspResolvedUrl.hashedDocumentId;
+        this.snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+
+        this.fileEntry = {
+            resolvedUrl: odspResolvedUrl,
+            docId: this.documentId,
+        };
+    }
+
+    public get repositoryUrl(): string {
+        return "";
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
@@ -114,7 +160,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         event.end();
     }
 
-    public async getBlob(blobid: string): Promise<resources.IBlob> {
+    public async read(blobid: string): Promise<string> {
         let blob = this.blobCache.get(blobid);
         if (!blob) {
             this.checkSnapshotUrl();
@@ -124,7 +170,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
-                return this.fetchWrapper.get<resources.IBlob>(url, blobid, headers);
+                return this.fetchWrapper.get<IBlob>(url, blobid, headers);
             });
             blob = response.content;
         }
@@ -139,10 +185,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
         }
 
-        return blob;
+        return blob.content;
     }
 
-    public async getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
         this.checkSnapshotUrl();
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
@@ -150,8 +196,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
 
-            const response = await this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
-            return response.content;
+            const response = await this.fetchWrapper.get<IBlob>(url, version.id, headers);
+            return response.content.content;
         });
     }
 
@@ -161,26 +207,18 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return `${this.snapshotUrl}/blobs/${blobid}`;
     }
 
-    public async getTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
 
         let id: string;
         if (!version || !version.id) {
-            // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
-            if (this.latestSha === null) {
+            const versions = await this.getVersions(null, 1);
+            if (!versions || versions.length === 0) {
                 return null;
             }
-            if (this.latestSha === undefined) {
-                const versions = await this.getVersions(null, 1);
-                if (!versions || versions.length === 0) {
-                    return null;
-                }
-                id = versions[0].id;
-            } else {
-                id = this.latestSha;
-            }
+            id = versions[0].id;
         } else {
             id = version.id;
         }
@@ -190,7 +228,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(tree);
+        const hierarchicalTree = buildHierarchy(convertOdspTree(tree));
 
         // Decode commit paths
         const commits = {};
@@ -203,11 +241,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (commits && commits[".app"]) {
             // The latest snapshot is a summary
             // attempt to read .protocol from commits for backwards compat
-            return this.readSummaryTree(tree.sha, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
+            return this.readSummaryTree(idFromSpoEntry(tree), commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
         }
 
         if (hierarchicalTree.blobs) {
-            const attributesBlob = hierarchicalTree.blobs[".attributes"];
+            const attributesBlob = hierarchicalTree.blobs.attributes;
             if (attributesBlob) {
                 this.attributesBlobHandles.add(attributesBlob);
             }
@@ -220,7 +258,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         const appTree = hierarchicalTree.trees[".app"];
         const protocolTree = hierarchicalTree.trees[".protocol"];
         if (appTree && protocolTree) {
-            return this.combineProtocolAndAppSnapshotTree(tree.sha, appTree, protocolTree);
+            return this.combineProtocolAndAppSnapshotTree(idFromSpoEntry(tree), appTree, protocolTree);
         }
 
         return hierarchicalTree;
@@ -228,38 +266,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
-        if (blobid === this.documentId) {
-            if (count === 1) {
-                // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
-                const latestSha = this.latestSha;
-
-                // Clear it after using it once - this allows summary clients to fetch the correct versions
-                this.latestSha = undefined;
-
-                if (latestSha === null) {
-                    return [];
-                }
-
-                if (latestSha !== undefined) {
-                    const cachedTree = this.treesCache.get(latestSha);
-                    if (cachedTree) {
-                        return [{ id: cachedTree.sha, treeId: undefined! }];
-                    }
-                }
-            }
-        } else {
+        if (blobid !== this.documentId && blobid) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
-            // In such case we need to make a call against SPO to give full picture to the tool, no matter if we have
+            // In such case we need to make a call against SPO to give full picture to the tool.
             // Otherwise, each commit calls getVersions but odsp doesn't have a history for each commit
             // return the blobid as is
-            if (blobid) {
-                return [
-                    {
-                        id: blobid,
-                        treeId: undefined!,
-                    },
-                ];
-            }
+            return [
+                {
+                    id: blobid,
+                    treeId: undefined!,
+                },
+            ];
         }
 
         // Can't really make a call if we do not have URL
@@ -279,92 +296,91 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.logger.sendErrorEvent({ eventName: "TreeLatest_SecondCall" });
                 }
 
-                // Note: There's a race condition here - another caller may come past the undefined check
-                // while the first caller is awaiting later async code in this block.
-                const snapshotCacheKey: string = `${this.documentId}/getlatest`;
-                let cachedSnapshot: IOdspSnapshot | undefined = await this.cache.persistedCache.get(snapshotCacheKey);
-                if (cachedSnapshot === undefined) {
-                    const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+                const hostPolicy: ISnapshotOptions = {
+                    deltas: 1,
+                    channels: 1,
+                    blobs: 2,
+                    ...this.hostPolicy.snapshotOptions,
+                };
 
-                    const hostPolicy = {
-                        deltas: 1,
-                        channels: 1,
-                        blobs: 2,
-                        ...this.hostPolicy.snapshotOptions,
-                    };
+                // No limit on size of snapshot, as otherwise we fail all clients to summarize
+                if (this.hostPolicy.summarizerClient) {
+                    hostPolicy.mds = undefined;
+                }
 
-                    let delimiter = "?";
-                    let options = "";
-                    for (const [key, value] of Object.entries(hostPolicy)) {
+                let delimiter = "?";
+                let options = "";
+                for (const [key, value] of Object.entries(hostPolicy)) {
+                    if (value !== undefined) {
                         options = `${options}${delimiter}${key}=${value}`;
                         delimiter = "&";
                     }
-
-                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
-
-                    // This event measures only successful cases of getLatest call (no tokens, no retries).
-                    const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
-
-                    try {
-                        const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                        cachedSnapshot = response.content;
-
-                        const props = {
-                            trees: cachedSnapshot.trees ? cachedSnapshot.trees.length : 0,
-                            blobs: cachedSnapshot.blobs ? cachedSnapshot.blobs.length : 0,
-                            ops: cachedSnapshot.ops.length,
-                            sprequestguid: response.headers.get("sprequestguid"),
-                            sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
-                            contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
-                            bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
-                        };
-                        event.end(props);
-                    } catch (error) {
-                        event.cancel({}, error);
-                        throw error;
-                    }
-
-                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                    // want to use the same getLatest result.
-                    await this.cache.persistedCache.put(snapshotCacheKey, cachedSnapshot, 10 * 1000 /* durationMs */);
                 }
+
+                let cachedSnapshot: IOdspSnapshot | undefined;
+
+                // No need to ask cache twice - if first request was unsuccessful, cache unlikely to have data on second turn.
+                if (refresh) {
+                    cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                } else {
+                    const cachedSnapshotP = this.cache.persistedCache.get(
+                        {
+                            file: this.fileEntry,
+                            type: "snapshot",
+                            key: "",
+                        },
+                        this.hostPolicy.summarizerClient ? snapshotExpirySummarizerOps : undefined,
+                    ) as Promise<IOdspSnapshot | undefined>;
+
+                    if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        const snapshotP = this.fetchSnapshot(options, refresh);
+                        cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await snapshotP;
+                        }
+                    } else {
+                        // Note: There's a race condition here - another caller may come past the undefined check
+                        // while the first caller is awaiting later async code in this block.
+                        cachedSnapshot = await cachedSnapshotP;
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                        }
+                    }
+                }
+
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
-                const { trees, tree, blobs, ops, sha } = odspSnapshot;
+                const { trees, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
-                    this.treesInsteadOfTree = true;
                     let appCommit: string | undefined;
                     this.initTreesCache(trees);
                     for (const [key, treeVal] of this.treesCache.entries()) {
-                        for (const entry of treeVal.tree) {
-                            if (entry.type === "blob") {
-                                blobsIdToPathMap.set(entry.sha, key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
-                            } else if (entry.type === "commit" && entry.path === ".app") {
+                        if (appCommit) {
+                            break;
+                        }
+                        for (const entry of treeVal.entries) {
+                            if (entry.type === "commit" && entry.path === ".app") {
                                 // This is the unacked handle of the latest summary generated.
-                                appCommit = entry.sha;
+                                appCommit = idFromSpoEntry(entry);
+                                break;
+                            }
+                        }
+                        assert(appCommit); // .app commit should be first entry in first entry.
+                        for (const entry of treeVal.entries) {
+                            if (entry.type === "blob") {
+                                blobsIdToPathMap.set(idFromSpoEntry(entry), key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
                             }
                         }
                     }
                 }
 
-                // Sometimes we get the tree instead of trees. Odsp has maintained this for back-compat reasons. They are in process of removing this
-                // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
-                // instead of "Tree"
-                if (tree) {
-                    this.treesInsteadOfTree = false;
-                    this.treesCache.set(sha, (odspSnapshot as any) as resources.ITree);
-                }
-
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    if (!this.isFirstTimeDocumentOpened) {
+                    if (!this.hostPolicy.summarizerClient) {
                         // Populate the cache with paths from id-to-path mapping.
                         for (const blob of this.blobCache.values()) {
-                            const path = blobsIdToPathMap.get(blob.sha);
+                            const path = blobsIdToPathMap.get(idFromSpoEntry(blob));
                             // If this is the first container that was created for the service, it cannot be
                             // the summarizing container (becauase the summarizing container is always created
                             // after the main container). In this case, we do not need to do any hashing
@@ -415,11 +431,62 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 }
                 return {
                     date,
-                    id: version.sha,
+                    id: idFromSpoEntry(version),
                     treeId: undefined!,
                 };
             });
         });
+    }
+
+    private async fetchSnapshot(options: string, refresh: boolean) {
+        const storageToken = await this.getStorageToken(refresh, "TreesLatest");
+
+        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest${options}`, storageToken);
+
+        // This event measures only successful cases of getLatest call (no tokens, no retries).
+        const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+
+        let cachedSnapshot: IOdspSnapshot;
+        try {
+            const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+            cachedSnapshot = response.content;
+
+            const props = {
+                trees: cachedSnapshot.trees?.length ?? 0,
+                blobs: cachedSnapshot.blobs?.length ?? 0,
+                ops: cachedSnapshot.ops?.length ?? 0,
+                sprequestguid: response.headers.get("sprequestguid"),
+                sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
+                bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
+            };
+            event.end(props);
+        } catch (error) {
+            event.cancel({}, error);
+            throw error;
+        }
+        assert(this._snapshotCacheEntry === undefined);
+        this._snapshotCacheEntry = {
+            file: this.fileEntry,
+            type: "snapshot",
+            key: "",
+        };
+
+        // There maybe no snapshot - TreesLatest would return just ops.
+        const seqNumber: number = (cachedSnapshot.trees && (cachedSnapshot.trees[0] as any).sequenceNumber) ?? 0;
+        const seqNumberFromOps = cachedSnapshot.ops && cachedSnapshot.ops.length > 0 ?
+            cachedSnapshot.ops[0].sequenceNumber - 1 :
+            undefined;
+
+        if (!Number.isInteger(seqNumber) || seqNumberFromOps !== undefined && seqNumberFromOps !== seqNumber) {
+            this.logger.sendErrorEvent({ eventName: "fetchSnapshotError", seqNumber, seqNumberFromOps });
+        } else {
+            this.cache.persistedCache.put(this._snapshotCacheEntry, cachedSnapshot, seqNumber);
+        }
+
+        return cachedSnapshot;
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
@@ -430,22 +497,25 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     // back-compat: 0.14 uploadSummary
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
+        assert(this.hostPolicy.summarizerClient);
+
         this.checkSnapshotUrl();
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: false,
             tree,
         });
-        if (!result || !result.sha) {
+
+        if (!result || !idFromSpoEntry(result)) {
             throw new Error(`Failed to write summary tree`);
         }
         if (blobsShaToPathCacheLatest) {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
         }
 
-        this.lastSummaryHandle = result.sha;
+        this.lastSummaryHandle = idFromSpoEntry(result);
         return {
-            handle: result.sha,
+            handle: this.lastSummaryHandle,
             handleType: api.SummaryType.Tree,
             type: api.SummaryType.Handle,
         };
@@ -459,49 +529,37 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (context.proposalHandle !== this.blobsShaProposalHandle) {
             this.blobsShaToPathCache.clear();
         }
-        if (this.treesInsteadOfTree) {
-            this.lastSummaryHandle = context.ackHandle;
-        } else {
-            this.lastSummaryHandle = `${context.ackHandle}/.app`;
-        }
+        this.lastSummaryHandle = context.ackHandle;
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
             tree: summary,
         });
-        if (!result || !result.sha) {
+        const id = result ? idFromSpoEntry(result) : undefined;
+        if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
         }
         if (blobsShaToPathCacheLatest) {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
-            this.blobsShaProposalHandle = result.sha;
+            this.blobsShaProposalHandle = id;
         }
 
-        return result.sha;
+        return id;
     }
 
     public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
         throw new Error("Not implemented yet");
     }
 
-    private initTreesCache(trees: resources.ITree[]) {
+    private initTreesCache(trees: ITree[]) {
         trees.forEach((tree) => {
-            // A WHOLE BUNCH OF FIXING SPO
-            if (!tree.sha) {
-                throw new Error("Tree must have a sha");
-            }
-
-            if (!tree.tree) {
-                tree.tree = (tree as any).entries;
-            }
-
-            this.treesCache.set(tree.sha, tree);
+            this.treesCache.set(idFromSpoEntry(tree), tree);
         });
     }
 
-    private initBlobsCache(blobs: resources.IBlob[]) {
-        blobs.forEach((blob) => this.blobCache.set(blob.sha, blob));
+    private initBlobsCache(blobs: IBlob[]) {
+        blobs.forEach((blob) => this.blobCache.set(idFromSpoEntry(blob), blob));
     }
 
     private checkSnapshotUrl() {
@@ -510,7 +568,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
     }
 
-    private async readTree(id: string): Promise<resources.ITree | null> {
+    private async readTree(id: string): Promise<ITree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
@@ -525,8 +583,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
                         this.initTreesCache(odspSnapshot.trees);
-                    } else if (odspSnapshot.tree) {
-                        this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
                     }
                     if (odspSnapshot.blobs) {
                         this.initBlobsCache(odspSnapshot.blobs);
@@ -536,7 +592,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             });
         }
 
-        if (!tree || !tree.tree) {
+        if (!tree) {
             return null;
         }
 
@@ -552,7 +608,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
         // Load the app and protocol trees and return them
         let hierarchicalProtocolTree: api.ISnapshotTree;
-        let appTree: resources.ITree | null;
+        let appTree: ITree | null;
 
         if (typeof (protocolTreeOrId) === "string") {
             // Backwards compat for older summaries
@@ -568,7 +624,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(protocolTree);
+            hierarchicalProtocolTree = buildHierarchy(convertOdspTree(protocolTree));
         } else {
             appTree = await this.readTree(appTreeId);
 
@@ -579,7 +635,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(appTree);
+        const hierarchicalAppTree = buildHierarchy(convertOdspTree(appTree));
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -624,7 +680,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: depth === 0 ? 1 : 2,
-            sha: snapshotTree.id!,
             type: SnapshotType.Channel,
         };
 
@@ -694,11 +749,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             content,
                             encoding,
                         };
-                        if (this.treesInsteadOfTree) {
-                            completePath = `/.app${path}/${key}`;
-                        } else {
-                            completePath = `${path}/${key}`;
-                        }
+                        completePath = `/.app${path}/${key}`;
                         blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
@@ -714,11 +765,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                             handlePath = `/${handlePath}`;
                         }
-                        if (this.treesInsteadOfTree) {
-                            id = `${summary.parentHandle}/.app${handlePath}`;
-                        } else {
-                            id = `${summary.parentHandle}${handlePath}`;
-                        }
+                        id = `${summary.parentHandle}/.app${handlePath}`;
                     } else {
                         // back-compat: 0.14 uploadSummary
                         id = summaryObject.handle;

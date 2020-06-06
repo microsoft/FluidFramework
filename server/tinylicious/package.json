@@ -17,8 +17,6 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "docker:build": "docker build -t tinylicious .",
-    "docker:start": "docker run --rm -t -p 3000:3000 tinylicious",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",

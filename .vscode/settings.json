@@ -1,4 +1,12 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
-    "eslint.workingDirectories": [{ "mode": "auto" }],
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "files.associations": {
+        "tools/pipelines/*.yml": "azure-pipelines"
+    },
+    "[azure-pipelines].customSchemaFile": "",
 }

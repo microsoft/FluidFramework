@@ -15,7 +15,7 @@ import {
     SnapshotType,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache } from "./odspCache";
+import { INonPersistentCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
@@ -51,7 +51,7 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfo: INewFileInfo,
-    cache: IOdspCache,
+    cache: INonPersistentCache,
     storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
@@ -95,11 +95,12 @@ async function createNewOdspFile(
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
         let fetchResponse;
+        const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
         if (createNewSummary) {
             const containerSnapshot: ISnapshotTree = convertSummaryIntoContainerSnapshot(createNewSummary);
             const initialUrl =
-                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
-                `${encodeURIComponent(newFileInfo.filePath)}/${encodedFilename}` +
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+                `${filePath}/${encodedFilename}` +
                 `:/opStream/snapshots/snapshot`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
@@ -119,10 +120,8 @@ async function createNewOdspFile(
             };
         } else {
             const initialUrl =
-                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
-                `${encodeURIComponent(
-                    newFileInfo.filePath,
-                )}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+                `${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             fetchResponse = await fetchHelper(url, {
                 method: "PUT",

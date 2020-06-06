@@ -669,6 +669,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             () => this.summaryConfiguration,
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
+            this.IComponentHandleContext,
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state

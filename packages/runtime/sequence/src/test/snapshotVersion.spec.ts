@@ -6,8 +6,11 @@
 import assert from "assert";
 import fs from "fs";
 import path from "path";
-import * as mocks from "@fluidframework/test-runtime-utils";
-import { GitManager } from "@fluidframework/server-services-client";
+import {
+    MockContainerRuntimeFactory,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
@@ -31,23 +34,16 @@ describe("SharedString Snapshot Version", () => {
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
 
-            const historian: mocks.MockHistorian = new mocks.MockHistorian();
-            const gitManager: GitManager = new GitManager(historian);
-
-            await gitManager.createTree(oldsnap);
-
             // load snapshot into sharedString
             const documentId = "fakeId";
-            const runtime = new mocks.MockRuntime();
-            const deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
-
+            const containerRuntimeFactory = new MockContainerRuntimeFactory();
+            const componentRuntime = new MockComponentRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services = {
-                // deltaConnection: new mocks.MockDeltaConnection(runtime),
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-
-                objectStorage: historian,
+                deltaConnection: containerRuntime.createDeltaConnection(),
+                objectStorage: new MockStorage(oldsnap),
             };
-            const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+            const sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/* branchId */, services);
             await sharedString.loaded;
@@ -93,8 +89,8 @@ describe("SharedString Snapshot Version", () => {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
-            const data = fs.readFileSync(filename, "utf8");
-            const testData = JSON.stringify(testString.snapshot(), undefined, 1);
+            const data = fs.readFileSync(filename, "utf8").trim();
+            const testData = JSON.stringify(testString.snapshot(), undefined, 1).trim();
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }

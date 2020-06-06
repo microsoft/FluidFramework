@@ -57,8 +57,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
-        const ops: MergeTree.IMergeTreeOp[] = [];
+    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeDeltaOp[] {
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE: {
@@ -532,7 +532,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
 
-        const ops: MergeTree.IMergeTreeOp[] = [];
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }

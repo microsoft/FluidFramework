@@ -10,8 +10,9 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
+    IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ComponentRuntime } from "@fluidframework/component-runtime";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
@@ -224,7 +225,7 @@ function initialize(
 
         const details: IFluidCodeDetails = {
             config: {
-                "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+                "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
             },
             package: `@fluid-example/shared-text@${version}`,
         };
@@ -387,7 +388,12 @@ export class Scribe
         return collection;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
@@ -399,6 +405,7 @@ export class Scribe
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
