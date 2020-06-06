@@ -31,28 +31,24 @@ parameters:
   type: object
   default: Shared
 
+- name: preCG
+  type: stepList
+  default: []
+
+- name: cgSubDirectory
+  type: string
+  default:
+
 trigger: none
 
 jobs:
-  - job: CG
-    displayName: Component Detection
-    pool: ${{ parameters.poolCG }}
-    steps:
-      - task: ComponentGovernanceComponentDetection@0
-        displayName: Component Detection
-        inputs:
-          sourceScanPath: ${{ parameters.buildDirectory }}
-          verbosity: Verbose
-          scanType: Register
-          alertWarningLevel: High
-
   - job: Build
     pool: ${{ parameters.poolBuild }}
     variables:
-      - name: testCoverage
-        value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
-      - name: skipComponentGovernanceDetection
-        value: true
+    - name: testCoverage
+      value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+    - name: skipComponentGovernanceDetection
+      value: true
     steps:
     - task: Bash@3
       displayName: Parameters
@@ -109,13 +105,13 @@ jobs:
           echo COMPUTED_VERSION=$version
 
           if [ "$version" == '' ]; then
-              exit -1
+            exit -1
           fi
 
           if [ -f "lerna.json" ]; then
-              npx lerna version $version --no-git-tag-version --no-push --yes
+            npx lerna version $version --no-git-tag-version --no-push --yes
           else
-              npm version --no-git-tag-version $version -f --allow-same-version
+            npm version --no-git-tag-version $version -f --allow-same-version
           fi
 
     - task: Npm@1
@@ -175,11 +171,11 @@ jobs:
         script: |
           mkdir $(Build.ArtifactStagingDirectory)/pack/
           if [ -f "lerna.json" ]; then
-              npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-              npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+            npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+            npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
           else
-              npm pack --unsafe-perm
-              mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+            npm pack --unsafe-perm
+            mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
           fi
 
     - task: CopyFiles@2
@@ -211,3 +207,17 @@ jobs:
         ArtifactName: '_api-extractor-temp'
         publishLocation: 'Container'
       condition: and(succeeded(), ne(${{ parameters.taskBuildDocs }}, false))
+
+  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    - job: CG
+      displayName: Component Detection
+      pool: ${{ parameters.poolCG }}
+      steps:
+      - ${{ parameters.preCG }}
+      - task: ComponentGovernanceComponentDetection@0
+        displayName: Component Detection
+        inputs:
+          sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
+          verbosity: Verbose
+          scanType: Register
+          alertWarningLevel: High

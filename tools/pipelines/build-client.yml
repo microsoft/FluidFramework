@@ -1,0 +1,56 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-client pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - packages
+    - tools/pipelines/build-client.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - packages
+    - tools/pipelines/build-client.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    buildDirectory: .
+    poolBuild: Default
+    cgSubDirectory: packages
+    preCG:
+    - task: Npm@1
+      displayName: npm ci
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.buildDirectory }}
+        customCommand: 'ci --ignore-scripts'
+        customRegistry: 'useFeed'
+        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+
+    - task: Bash@3
+      displayName: 'Generate Mono repo package json'
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Copy the lerna package lock so we would scan it.
+          
+          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+          cp repo-package.json packages/package.json
+          cp lerna-package-lock.json packages/package-lock.json

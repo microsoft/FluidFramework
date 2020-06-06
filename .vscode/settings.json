@@ -5,8 +5,4 @@
             "mode": "auto"
         }
     ],
-    "files.associations": {
-        "tools/pipelines/*.yml": "azure-pipelines"
-    },
-    "[azure-pipelines].customSchemaFile": "",
 }

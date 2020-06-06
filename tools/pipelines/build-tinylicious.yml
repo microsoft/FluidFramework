@@ -1,0 +1,37 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-tinylicious pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - server/tinylicious
+    - tools/pipelines/build-tinylicious.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - server/tinylicious
+    - tools/pipelines/build-tinylicious.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    buildDirectory: server/tinylicious
+    taskBuild: build
+    taskBuildDocs: false
+    taskLint: true
+    taskTest: false
