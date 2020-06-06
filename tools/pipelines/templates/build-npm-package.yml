@@ -71,7 +71,6 @@ jobs:
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-          sed -i '/\/\/ Copyright file header/,/\],/d' packages/utils/build-common/tslint.json
           perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
           git status
 
@@ -95,9 +94,14 @@ jobs:
 
           echo VERSION_BUILDBRANCH=$(Build.SourcesBranch)
           echo VERSION_BUILDNUMBER=$(Build.BuildNumber)
-
+          VERSION_BUILDBRANCH=$(Build.SourcesBranch)
+          VERSION_BUILDNUMBER=$(Build.BuildNumber)
           version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
           echo COMPUTED_VERSION=$version
+
+          if [ '$COMPUTED_VERSION' == '' ]; then
+              exit -1
+          fi
 
           if [ -f "lerna.json" ]; then
               npx lerna version $version --no-git-tag-version --no-push --yes
@@ -122,7 +126,7 @@ jobs:
       condition: and(succeeded(), ne(${{ parameters.taskLint }}, false))
 
     - task: Npm@1
-      displayName: npm run ${{ parameters.taskBuildDocs.taskTest }}
+      displayName: npm run ${{ parameters.taskTest }}
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.buildDirectory }}
@@ -144,7 +148,7 @@ jobs:
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/nyc
         mergeTestResults: true
-      condition: succeededOrFailed()
+      condition: and(succeededOrFailed(), ne('${{ parameters.taskTest }}', 'false')))
 
     - task: PublishCodeCoverageResults@1
       displayName: Publish Code Coverage
