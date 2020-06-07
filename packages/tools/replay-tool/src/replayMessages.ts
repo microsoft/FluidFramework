@@ -755,7 +755,7 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.17.3" , "g"), `${packageJson.version}`)
+        if (snapshotAsString.replace(new RegExp("0.17.3", "g"), `${packageJson.version}`)
             !== content.snapshotAsString) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
