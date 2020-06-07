@@ -75,7 +75,7 @@ export class Timer implements ITimer {
     constructor(
         private readonly defaultTimeout: number,
         private readonly defaultHandler: () => void,
-        private readonly getCurrentTick: () => number = () => Date.now()) {}
+        private readonly getCurrentTick: () => number = () => Date.now()) { }
 
     /**
      * Calls setTimeout and tracks the resulting timeout.

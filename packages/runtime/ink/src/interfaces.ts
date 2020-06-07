@@ -55,7 +55,7 @@ export interface IColor {
     a: number;
 }
 
-export interface IInkEvents extends ISharedObjectEvents{
+export interface IInkEvents extends ISharedObjectEvents {
     (event: "stylus", listener: (operation: IStylusOperation) => void);
     (event: "clear", listener: () => void);
 }

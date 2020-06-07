@@ -14,8 +14,8 @@ const viewStyle: React.CSSProperties = {
     width: "100%",
     height: 50,
     textAlign: "center",
-    borderBottom:"1px solid lightgray",
-    boxSizing:"border-box",
+    borderBottom: "1px solid lightgray",
+    boxSizing: "border-box",
 };
 
 const lastEditedStyle: React.CSSProperties = {
@@ -40,13 +40,13 @@ interface IVltavaViewState {
     lastEditedState?: IVltavaLastEditedState;
 }
 
-export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewState> {
+export class VltavaView extends React.Component<IVltavaViewProps, IVltavaViewState> {
     constructor(props: IVltavaViewProps) {
         super(props);
 
         this.state = {
             users: props.dataModel.getUsers(),
-            view: <div/>,
+            view: <div />,
         };
 
         props.dataModel.on("membersChanged", (users) => {
@@ -78,18 +78,18 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
     render() {
         return (
             <div>
-                <div style = {viewStyle}>
+                <div style={viewStyle}>
                     <div>
                         <h2>
                             {this.props.dataModel.getTitle()}
                         </h2>
                     </div>
-                    <VltavaFacepile users={this.state.users}/>
+                    <VltavaFacepile users={this.state.users} />
                     <div
-                        style = {lastEditedStyle}
-                        onMouseOver = { this.setLastEditedState.bind(this) }
-                        onMouseOut = { this.resetLastEditedState.bind(this) }>
-                        <LastEditedDisplay lastEditedState={this.state.lastEditedState}/>
+                        style={lastEditedStyle}
+                        onMouseOver={this.setLastEditedState.bind(this)}
+                        onMouseOut={this.resetLastEditedState.bind(this)}>
+                        <LastEditedDisplay lastEditedState={this.state.lastEditedState} />
                     </div>
                 </div>
                 {this.state.view}

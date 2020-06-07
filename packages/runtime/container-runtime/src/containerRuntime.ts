@@ -896,7 +896,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public notifyComponentInstantiated(componentContext: IComponentContext) {
         const componentPkgName = componentContext.packagePath[componentContext.packagePath.length - 1];
         const registryPath =
-            `/${componentContext.packagePath.slice(0,componentContext.packagePath.length - 1).join("/")}`;
+            `/${componentContext.packagePath.slice(0, componentContext.packagePath.length - 1).join("/")}`;
         this.emit("componentInstantiated", componentPkgName, registryPath, !componentContext.existing);
     }
 
@@ -971,7 +971,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
-    Promise<IComponentRuntimeChannel> {
+        Promise<IComponentRuntimeChannel> {
         return this._createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 

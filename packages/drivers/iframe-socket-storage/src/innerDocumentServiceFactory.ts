@@ -36,16 +36,16 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         // If innerFactory is created second, the outerFactory will trigger the connection
         const evtListener = (resolve) => {
             create()
-                .then((value)=>{
+                .then((value) => {
                     if (value) {
                         resolve(value);
                     }
                 })
-                .catch(()=>{});
+                .catch(() => { });
         };
 
         const eventP = new Promise<Comlink.Remote<IDocumentServiceFactoryProxy>>(
-            (resolve)=>window.addEventListener("message", () => evtListener(resolve), { once: true }));
+            (resolve) => window.addEventListener("message", () => evtListener(resolve), { once: true }));
 
         // Attempt to connect, does not connect if innerDocumentServiceFactory
         // is created before outerDocumentServiceFactory

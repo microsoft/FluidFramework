@@ -35,8 +35,8 @@ describe("Cell", () => {
     let sharedCell3: ISharedCell;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[ cellId, SharedCell.getFactory() ]]);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const factory = new TestFluidComponentFactory([[cellId, SharedCell.getFactory()]]);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 

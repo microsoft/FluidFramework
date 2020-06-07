@@ -199,9 +199,9 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
 
         return (
             <BadgeView
-                options={ options}
-                historyItems={ historyItems}
-                selectedOption={ selectedOption}
+                options={options}
+                historyItems={historyItems}
+                selectedOption={selectedOption}
                 addOption={this.addOption}
                 changeSelectedOption={this.changeSelectedOption}
             />

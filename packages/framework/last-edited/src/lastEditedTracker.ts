@@ -18,7 +18,7 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
      * Creates a LastEditedTracker object.
      * @param sharedSummaryBlock - The shared summary block where the details will be stored.
      */
-    constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) {}
+    constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) { }
 
     public get IComponentLastEditedTracker() {
         return this;

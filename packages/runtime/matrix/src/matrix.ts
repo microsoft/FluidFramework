@@ -36,8 +36,8 @@ const enum SnapshotPath {
 export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
-        IMatrixReader<T | undefined | null>,
-        IMatrixWriter<T | undefined>
+    IMatrixReader<T | undefined | null>,
+    IMatrixWriter<T | undefined>
 {
     private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
@@ -244,7 +244,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         assert(this.cols.resetPendingSegmentsToOp() === undefined);
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) { }
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);

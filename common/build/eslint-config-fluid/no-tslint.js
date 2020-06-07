@@ -43,7 +43,7 @@ module.exports = {
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
-        // Please keep entried alphabetized within a group
+        // Please keep entries alphabetized within a group
 
         // @typescript-eslint
         "@typescript-eslint/adjacent-overload-signatures": "error",
@@ -70,7 +70,6 @@ module.exports = {
         ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/member-delimiter-style": "off",
         "@typescript-eslint/no-dynamic-delete": "error",
@@ -212,7 +211,7 @@ module.exports = {
             "error",
             "smart"
         ],
-        "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
+        "func-call-spacing": "error",
         "guard-for-in": "error",
         "id-match": "error",
         "linebreak-style": "off",
@@ -345,15 +344,11 @@ module.exports = {
     },
     "overrides": [
         {
-            // enable the rule specifically for TypeScript files
+            // Rules only for TypeScript files
             "files": ["*.ts", "*.tsx"],
             "rules": {
-                // "@typescript-eslint/explicit-function-return-type": [
-                //     "error",
-                //     {
-                //         "allowExpressions": true
-                //     }
-                // ]
+                "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
+                "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
             }
         }
     ],

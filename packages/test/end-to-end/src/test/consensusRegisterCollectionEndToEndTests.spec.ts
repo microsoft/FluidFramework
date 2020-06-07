@@ -51,10 +51,10 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
-                [ mapId, SharedMap.getFactory() ],
-                [ undefined, ConsensusRegisterCollection.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [undefined, ConsensusRegisterCollection.getFactory()],
             ]);
-            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }
 

@@ -19,7 +19,7 @@ export const MatchMakerContainerServiceId = "matchMaker";
 
 const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
     const response = await context.containerRuntime.request({
-        url:`/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
+        url: `/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
     });
     if (response.status === 200 && response.mimeType === "fluid/component") {
         const value = response.value as IComponent;
