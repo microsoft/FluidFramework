@@ -33,8 +33,8 @@ export function generateComponentSchema<
     runtime: IComponentRuntime,
     viewState: SV,
     fluidState: SF,
+    fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,
-    fluidToView?: FluidToViewMap<SV,SF>,
 ): IFluidSchema {
     // matched components w/ matching keys and their handles
     const componentKeyMap = SharedMap.create(runtime);
@@ -79,8 +79,6 @@ export function generateComponentSchema<
                             // Maybe its handle is stored somewhere under a different key
                             unmatchedViewKeys.set(loadableComponentHandle, viewKey);
                         }
-                    } else {
-                        throw new Error("Unmatched view keys found with no root converter");
                     }
                 }
             }
@@ -133,8 +131,6 @@ export function generateComponentSchema<
                         } else {
                             throw new Error("Unmatched fluid keys found for a handle with no component converter");
                         }
-                    } else {
-                        throw new Error("Unmatched view keys found with no root converter");
                     }
                 } else {
                     fluidMatchingMap.set(fluidKey, false);

@@ -41,7 +41,6 @@ export function useReducerFluid<
         viewToFluid,
         fluidToView,
         initialViewState,
-        initialFluidState,
         dataProps,
     } = props;
     // Get our combined synced state and setState callbacks from the useStateFluid function
@@ -49,20 +48,10 @@ export function useReducerFluid<
         syncedStateId,
         root,
         initialViewState,
-        initialFluidState,
         dataProps,
         fluidToView,
         viewToFluid,
     });
-
-    // Retrieve the current state that is stored on the root for this component ID
-    const currentFluidState = getFluidStateFromRoot(
-        syncedStateId,
-        root,
-        dataProps.fluidComponentMap,
-        initialFluidState,
-        fluidToView,
-    );
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and
@@ -74,10 +63,20 @@ export function useReducerFluid<
         type: keyof A,
         ...args: any
     ) => {
+        // Retrieve the current state that is stored on the root for this component ID
+        const currentFluidState = getFluidStateFromRoot(
+            syncedStateId,
+            root,
+            dataProps.fluidComponentMap,
+            fluidToView,
+        );
+        if (currentFluidState === undefined) {
+            throw Error("Attempted to dispatch function before fluid state was initialized");
+        }
         const combinedDispatchFluidState: SF = { ...currentFluidState, ...dispatchState.fluidState };
         const combinedDispatchViewState: SV = { ...state, ...dispatchState.viewState };
         const combinedDispatchDataProps: C = { ...dataProps, ...dispatchState.dataProps };
-        const combinedDispatchState: ICombinedState<SV,SF,C> = {
+        const combinedDispatchState = {
             fluidState: combinedDispatchFluidState,
             viewState: combinedDispatchViewState,
             dataProps: combinedDispatchDataProps,
@@ -98,9 +97,8 @@ export function useReducerFluid<
                     combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
-                    result.state.fluidState,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 updateStateAndComponentMap(
@@ -112,10 +110,10 @@ export function useReducerFluid<
                     combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
-                    result.state.fluidState,
+                    result.state.fluidState || combinedDispatchState.fluidState,
                     callback,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
             } else {
                 // Update the state directly
@@ -128,8 +126,8 @@ export function useReducerFluid<
                     setState,
                     combinedDispatchDataProps.fluidComponentMap,
                     result.state.fluidState,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
             }
         } else if (action && instanceOfAsyncStateUpdateFunction<SV,SF,C>(action)) {
@@ -146,9 +144,8 @@ export function useReducerFluid<
                     combinedDispatchDataProps.runtime,
                     result.state.viewState,
                     setState,
-                    result.state.fluidState,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
                 if (result.newComponentHandles) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -161,10 +158,10 @@ export function useReducerFluid<
                         combinedDispatchDataProps.runtime,
                         result.state.viewState,
                         setState,
-                        result.state.fluidState,
+                        result.state.fluidState || combinedDispatchState.fluidState,
                         callback,
-                        viewToFluid,
                         fluidToView,
+                        viewToFluid,
                     );
                 } else {
                     syncStateAndRoot(
@@ -175,9 +172,9 @@ export function useReducerFluid<
                         result.state.viewState,
                         setState,
                         combinedDispatchDataProps.fluidComponentMap,
-                        result.state.fluidState,
-                        viewToFluid,
+                        result.state.fluidState || combinedDispatchState.fluidState,
                         fluidToView,
+                        viewToFluid,
                     );
                 }
             });
@@ -194,8 +191,8 @@ export function useReducerFluid<
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
                 combinedDispatchState.fluidState,
-                viewToFluid,
                 fluidToView,
+                viewToFluid,
             ));
         } else if (action && instanceOfEffectFunction<SV,SF,C>(action)) {
             (action.function as any)(
@@ -211,15 +208,15 @@ export function useReducerFluid<
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
                 combinedDispatchState.fluidState,
-                viewToFluid,
                 fluidToView,
+                viewToFluid,
             );
         } else {
             throw new Error(
                 `Action with key ${action} does not
                  exist in the reducers provided`);
         }
-    }, [reducer, state, setState, dataProps, currentFluidState]);
+    }, [reducer, state, setState, dataProps]);
 
     // The combinedReducer is then created using the dispatch functions we created above.
     // This allows us to preserve the reducer interface while injecting Fluid-specific logic
@@ -265,10 +262,20 @@ export function useReducerFluid<
         type: keyof B,
         handle?: IComponentHandle,
     ) => {
+        // Retrieve the current state that is stored on the root for this component ID
+        const currentFluidState = getFluidStateFromRoot(
+            syncedStateId,
+            root,
+            dataProps.fluidComponentMap,
+            fluidToView,
+        );
+        if (currentFluidState === undefined) {
+            throw Error("Attempted to dispatch function before fluid state was initialized");
+        }
         const combinedFetchFluidState: SF = { ...currentFluidState, ...fetchState.fluidState };
         const combinedFetchViewState: SV = { ...state, ...fetchState.viewState };
         const combinedFetchDataProps: C = { ...dataProps, ...fetchState.dataProps };
-        const combinedFetchState: ICombinedState<SV,SF,C> = {
+        const combinedFetchState = {
             fluidState: combinedFetchFluidState,
             viewState: combinedFetchViewState,
             dataProps: combinedFetchDataProps,
@@ -296,9 +303,8 @@ export function useReducerFluid<
                     combinedFetchDataProps.runtime,
                     combinedFetchState.viewState,
                     setState,
-                    combinedFetchState.fluidState,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 updateStateAndComponentMap(
@@ -312,8 +318,8 @@ export function useReducerFluid<
                     setState,
                     combinedFetchState.fluidState,
                     callback,
-                    viewToFluid,
                     fluidToView,
+                    viewToFluid,
                 );
             }
             // Always return the result immediately
@@ -337,10 +343,18 @@ export function useReducerFluid<
         };
     });
 
+    // Retrieve the current state that is stored on the root for this component ID
+    const fluidState = getFluidStateFromRoot(
+        syncedStateId,
+        root,
+        dataProps.fluidComponentMap,
+        fluidToView,
+    );
+
     return [
         {
             viewState: state,
-            fluidState: currentFluidState,
+            fluidState,
             dataProps,
         },
         combinedReducer as A,

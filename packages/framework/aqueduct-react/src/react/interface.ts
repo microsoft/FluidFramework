@@ -5,6 +5,7 @@
 import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentHandle, IComponentLoadable, IComponent } from "@fluidframework/component-core-interfaces";
+import { SharedObject } from "@fluidframework/shared-object-base";
 
 /**
  * The combined state contains the fluid and view states and the data props
@@ -22,7 +23,7 @@ export interface ICombinedState<
     /**
      * The fluid state that will be used to update the synced values in the state
      */
-    fluidState: SF,
+    fluidState?: SF,
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map, along with any other properties the user wants to pass to reducers
@@ -115,10 +116,6 @@ export interface IFluidProps<
      */
     initialViewState: SV,
     /**
-     * The Fluid state loaded during the Fluid initialization step before rendering
-     */
-    initialFluidState: SF,
-    /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map
      */
@@ -132,7 +129,7 @@ export interface IFluidProps<
      * A map of the Fluid state values that need conversion to their view state counterparts and the
      * respective converters
      */
-    fluidToView?: FluidToViewMap<SV,SF>,
+    fluidToView: FluidToViewMap<SV,SF>,
 }
 
 /**
@@ -156,7 +153,8 @@ export interface IViewConverter<
     /**
      * If this is a special fluid DDS object type (i.e. counter) on the root, specify that here
      */
-    fluidObjectType?: string;
+    sharedObjectCreate?: (runtime: IComponentRuntime) => SharedObject
+    listenedEvents?: string[];
     /**
      * If this Fluid object is stored on the root under a different key than the name of this Fluid state
      * key within the synced state map, provide the key on the root for this object here
@@ -460,10 +458,6 @@ export interface IFluidReducerProps<
      */
     initialViewState: SV,
     /**
-     * The Fluid state loaded during the Fluid initialization step before rendering
-     */
-    initialFluidState: SF,
-    /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
      * Any mutations to the state, or effects outside of the component involving the state should be done here.
      */
@@ -485,7 +479,7 @@ export interface IFluidReducerProps<
      *  A map of the Fluid state values that need conversion to their view state counterparts and the
      * respective converters. Optional if fluid and view are of the same type
      */
-    fluidToView?: FluidToViewMap<SV,SF>;
+    fluidToView: FluidToViewMap<SV,SF>;
     /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map

@@ -78,8 +78,9 @@ interface IActionReducer extends IFluidReducer<ICounterReducerViewState, ICounte
 const ActionReducer: IActionReducer = {
     increment: {
         function: (state, step: number) => {
-            state.fluidState.counter.increment(step);
-            state.viewState.value = state.fluidState.counter.value;
+            state.fluidState?.counter.increment(step);
+            state.viewState.value = state.fluidState !== undefined ? state.fluidState.counter.value
+                : state.viewState.value;
             return { state };
         },
     },
@@ -154,10 +155,8 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("counterClicksFunctional", 0);
         const counter = SharedCounter.create(this.runtime);
         this.root.set("counterClicksReducer", counter.handle);
-        this.root.set("counterClicksContext", 0);
     }
 
     protected async componentHasInitialized() {
@@ -182,19 +181,29 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
         const functionalFluidToView:
         FluidToViewMap<ICounterFunctionalViewState, ICounterFunctionalFluidState> = new Map();
         functionalFluidToView.set("value", {
-            rootKey: "counterClicksFunctional",
+            viewConverter: (syncedState: Partial<ICounterFunctionalFluidState>) => {
+                return {
+                    value: syncedState.value,
+                };
+            },
+        });
+        const functionalViewToFluid:
+        ViewToFluidMap<ICounterFunctionalViewState, ICounterFunctionalFluidState> = new Map();
+        functionalViewToFluid.set("value", {
+            fluidKey: "value",
+            fluidConverter: (state: Partial<IFluidFunctionalComponentViewState>) => state,
         });
 
         const reducerFluidToViewMap: FluidToViewMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
         reducerFluidToViewMap.set("counter", {
-            rootKey: "counterClicksReducer",
             stateKey: "value",
             viewConverter: (syncedState: Partial<ICounterReducerFluidState>) => {
                 return {
                     value: syncedState.counter?.value,
                 };
             },
-            fluidObjectType: SharedCounter.name,
+            sharedObjectCreate: SharedCounter.create,
+            listenedEvents: ["incremented"],
         });
         const reducerViewToFluidMap: ViewToFluidMap<ICounterReducerViewState, ICounterReducerFluidState> = new Map();
         reducerViewToFluidMap.set("value", {
@@ -202,11 +211,6 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
             fluidConverter: () => {
                 return {};
             },
-        });
-
-        const contextFluidToView: FluidToViewMap<ICounterFunctionalViewState,ICounterFunctionalFluidState> = new Map();
-        contextFluidToView.set("value", {
-            rootKey: "counterClicksContext",
         });
 
         ReactDOM.render(
@@ -219,8 +223,8 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                         runtime: this.runtime,
                     }}
                     initialViewState={{ value: 0 }}
-                    initialFluidState={{ value: this.root.get("counterClicksFunctional") }}
                     fluidToView={functionalFluidToView}
+                    viewToFluid={functionalViewToFluid}
                 />
                 <CounterReactFunctionalReducer
                     syncedStateId={"counter-reducer"}
@@ -230,7 +234,6 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                         runtime: this.runtime,
                     }}
                     initialViewState={{ value: this._counter.value }}
-                    initialFluidState={{ counter:  this._counter }}
                     fluidToView={reducerFluidToViewMap}
                     viewToFluid={reducerViewToFluidMap}
                     reducer={ActionReducer}
@@ -245,8 +248,8 @@ export class ClickerWithHooks extends PrimedComponent implements IComponentHTMLV
                     }}
                     reactContext={{}}
                     initialViewState={{ value: 0 }}
-                    initialFluidState={{ value: this.root.get("counterClicksContext") }}
-                    fluidToView={contextFluidToView}
+                    fluidToView={functionalFluidToView}
+                    viewToFluid={functionalViewToFluid}
                 />
             </div>,
             div,

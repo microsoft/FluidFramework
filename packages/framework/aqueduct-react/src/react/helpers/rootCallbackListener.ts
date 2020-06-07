@@ -40,17 +40,18 @@ export const rootCallbackListener = <
     runtime: IComponentRuntime,
     state: SV,
     setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
-    initialFluidState: SF,
+    fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,
-    fluidToView?: FluidToViewMap<SV,SF>,
 ) => ((change: IDirectoryValueChanged, local: boolean) => {
     const currentFluidState = getFluidStateFromRoot(
         syncedStateId,
         root,
         fluidComponentMap,
-        initialFluidState,
         fluidToView,
     );
+    if (!currentFluidState) {
+        throw Error("Root update triggered before fluid state was initialized");
+    }
     const rootKey = change.key;
     const viewToFluidKeys: string[] = viewToFluid
         ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
@@ -66,8 +67,8 @@ export const rootCallbackListener = <
             setState,
             fluidComponentMap,
             currentFluidState,
-            viewToFluid,
             fluidToView,
+            viewToFluid,
         );
     } else if (viewToFluid !== undefined
         && ((viewToFluidKeys).includes(rootKey)
@@ -81,7 +82,6 @@ export const rootCallbackListener = <
                 root,
                 rootKey as keyof SF,
                 fluidComponentMap,
-                currentFluidState,
                 fluidToView,
             );
             state[stateKey as string] = newPartialState[stateKey];
@@ -90,9 +90,5 @@ export const rootCallbackListener = <
         } else {
             throw Error(`Unable to extract view state from root change key: ${rootKey}`);
         }
-    } else if (state[rootKey] !== undefined) {
-        const newState = { ...state, ...{ fluidComponentMap } };
-        newState[rootKey] = currentFluidState[rootKey];
-        setState({ ...state, ...newState }, true, local);
     }
 });

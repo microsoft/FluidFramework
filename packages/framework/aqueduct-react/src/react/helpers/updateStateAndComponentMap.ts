@@ -47,8 +47,8 @@ export const updateStateAndComponentMap = async <
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
     fluidState: SF,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,
-    fluidToView?: FluidToViewMap<SV,SF>,
 ) => asyncForEach(
     newHandleList,
     addComponent,
@@ -63,8 +63,8 @@ export const updateStateAndComponentMap = async <
         setState,
         fluidComponentMap,
         fluidState,
-        viewToFluid,
         fluidToView,
+        viewToFluid,
     ),
 ).then(() => syncStateAndRoot(
     fromRootUpdate,
@@ -75,6 +75,6 @@ export const updateStateAndComponentMap = async <
     setState,
     fluidComponentMap,
     fluidState,
-    viewToFluid,
     fluidToView,
+    viewToFluid,
 ));

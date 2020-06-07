@@ -13,3 +13,4 @@ export * from "./getFluidStateFromRoot";
 export * from "./setFluidStateToRoot";
 export * from "./getComponentSchemaFromRoot";
 export * from "./setComponentSchemaToRoot";
+export * from "./initializeState";

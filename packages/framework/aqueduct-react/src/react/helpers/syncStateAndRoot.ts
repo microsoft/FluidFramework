@@ -48,12 +48,14 @@ export function syncStateAndRoot<
     setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
     fluidComponentMap: FluidComponentMap,
     fluidState: SF,
+    fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,
-    fluidToView?: FluidToViewMap<SV,SF>,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the root
-    const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidState, fluidToView);
-
+    const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    if (currentRootState === undefined) {
+        throw Error("Attempted to sync view and fluid states before fluid state was initialized");
+    }
     // Fetch the component schema
     const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
     if (componentSchemaHandles === undefined) {
@@ -119,7 +121,6 @@ export function syncStateAndRoot<
                 root,
                 fluidKey as keyof SF,
                 fluidComponentMap,
-                fluidState,
                 fluidToView,
                 combinedRootState,
             );
@@ -138,7 +139,7 @@ export function syncStateAndRoot<
     // If it is a local update, broadcast it by setting it on the root and updating locally
     // Otherwise, only update locally as the root update has already been broadcasted
     if (!fromRootUpdate) {
-        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, combinedRootState, fluidToView);
+        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, fluidToView, combinedRootState);
     }
     setState(combinedViewState, fromRootUpdate, true);
 }

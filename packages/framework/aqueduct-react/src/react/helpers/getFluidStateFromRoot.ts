@@ -19,23 +19,21 @@ export function getFluidStateFromRoot<SV,SF>(
     syncedStateId: string,
     root: ISharedDirectory,
     componentMap: FluidComponentMap,
-    initialFluidState: SF,
     fluidToView?: Map<keyof SF, IViewConverter<SV,SF>>,
-): SF {
+): SF | undefined {
     const rootStateHandle = root.get<IComponentHandle<ISharedMap>>(`syncedState-${syncedStateId}`);
-    if (rootStateHandle) {
+    if (rootStateHandle !== undefined) {
         const rootState = componentMap.get(rootStateHandle.path)?.component as SharedMap;
-        if (rootState) {
+        if (rootState !== undefined) {
             const fluidState = {};
             for (const fluidKey of rootState.keys()) {
-                const fluidType = fluidToView?.get(fluidKey as keyof SF)?.fluidObjectType;
-                const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
-                let value = rootKey ? root.get(rootKey) : rootState.get(fluidKey);
-                if (value && fluidType) {
+                const createCallback = fluidToView?.get(fluidKey as keyof SF)?.sharedObjectCreate;
+                let value = rootState.get(fluidKey);
+                if (value && createCallback) {
                     const possibleComponentPath = (value as IComponent)?.IComponentHandle?.path;
                     if (possibleComponentPath !== undefined) {
                         value = componentMap.get(possibleComponentPath);
-                        fluidState[fluidKey] = value.component;
+                        fluidState[fluidKey] = value?.component;
                     } else {
                         fluidState[fluidKey] = value;
                     }
@@ -43,8 +41,8 @@ export function getFluidStateFromRoot<SV,SF>(
                     fluidState[fluidKey] = value;
                 }
             }
-            return { ...initialFluidState, ...fluidState };
+            return fluidState as SF;
         }
     }
-    return initialFluidState;
+    return;
 }
