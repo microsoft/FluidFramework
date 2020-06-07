@@ -52,7 +52,7 @@ export function syncStateAndRoot<
     fluidToView?: FluidToViewMap<SV,SF>,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the root
-    const currentRootState = fluidState || getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidState, fluidToView);
 
     // Fetch the component schema
     const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
