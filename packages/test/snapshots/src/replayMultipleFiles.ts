@@ -33,15 +33,19 @@ export async function processOneFile(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
 
+    const listener = (error) => {
+        process.removeListener("unhandledRejection", listener);
+        throw new Error(error);
+    };
+    process.on("unhandledRejection", listener);
+
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
 
-    await new ReplayTool(replayArgs).Go()
-        .then((success) => {
-            if (!success) {
-                throw new Error("Error count was greater than 0");
-            }
-        });
+    const res = await new ReplayTool(replayArgs).Go();
+    if (!res) {
+        throw new Error(`Error processing ${args.folder}`);
+    }
 }
 
 export async function processContent(mode: Mode, concurrently = true) {
