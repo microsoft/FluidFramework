@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory } from "@fluidframework/map";
 import { Song } from "./Songs";
 // eslint-disable-next-line import/no-internal-modules
 import { Note } from "./Songs/Note";
@@ -13,7 +13,7 @@ export class Recorder {
     private isRecording = false;
     private lastNoteTime = new Date();
 
-    constructor(private readonly rootDir: ISharedDirectory) {}
+    constructor(private readonly rootDir: ISharedDirectory) { }
 
     // Save each new note into Fluid as they come in
     public postSaveNewNote(note: Note, currentTempo: number) {
@@ -77,7 +77,7 @@ export class Recorder {
 
     public stopRecording() {
         this.isRecording = false;
-    // Save recorded song to Fluid
+        // Save recorded song to Fluid
     }
 }
 

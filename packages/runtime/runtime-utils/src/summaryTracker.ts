@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTracker } from "@fluidframework/runtime-definitions";
 
 /**
  * SummaryTracker is a tree node which allows for deferred
@@ -103,7 +103,7 @@ export class SummaryTracker implements ISummaryTracker {
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
         private _latestSequenceNumber: number,
-        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
+        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) { }
 
     private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
         return async () => (await this._getSnapshotTree())?.trees[key];

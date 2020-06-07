@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IZookeeperClient } from "@microsoft/fluid-server-services-core";
+import { IZookeeperClient } from "@fluidframework/server-services-core";
 import * as zookeeper from "node-zookeeper-client";
 
 const RetryAttemps = 3;

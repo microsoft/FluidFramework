@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as uuid from "uuid";
-import * as React from "react";
+import { v4 as uuid } from "uuid";
+import React from "react";
 
 interface WaterParkToolbarViewProps {
     componentUrls: string[];
@@ -22,7 +22,7 @@ export const WaterParkToolbar: React.FC<WaterParkToolbarViewProps> =
         const datalistId = uuid();
 
         const datalistOptions = props.componentUrls.map((member) => {
-            return <option value={ member } key={ member }></option>;
+            return <option value={member} key={member}></option>;
         });
 
         const inputRef = React.createRef<HTMLInputElement>();
@@ -50,25 +50,25 @@ export const WaterParkToolbar: React.FC<WaterParkToolbarViewProps> =
         };
 
         const errorElement = errorText !== undefined
-            ? <div>{ errorText }</div>
+            ? <div>{errorText}</div>
             : undefined;
 
         return (
             <div className="waterpark-toolbar">
                 <datalist id={datalistId}>
-                    { datalistOptions }
+                    {datalistOptions}
                 </datalist>
                 <input
-                    ref={ inputRef }
-                    list={ datalistId }
+                    ref={inputRef}
+                    list={datalistId}
                     type="text"
                     placeholder="@fluid-example/component-name@version"
                     style={{ width: "100%" }}
-                    onKeyUp={ inputKeyUpHandler }
+                    onKeyUp={inputKeyUpHandler}
                 />
-                <button onClick={ pickComponent }>Add Component</button>
-                <button onClick={ props.toggleEditable }>Toggle Edit</button>
-                { errorElement }
+                <button onClick={pickComponent}>Add Component</button>
+                <button onClick={props.toggleEditable}>Toggle Edit</button>
+                {errorElement}
             </div>
         );
     };

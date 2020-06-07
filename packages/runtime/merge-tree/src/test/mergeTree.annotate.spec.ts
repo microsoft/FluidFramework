@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as assert from "assert";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { BaseSegment, Marker, MergeTree } from "../mergeTree";

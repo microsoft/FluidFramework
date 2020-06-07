@@ -21,6 +21,10 @@ function printUsage() {
         `
 Usage: fluid-bump-version <options>
 Options:
+  -b --bump [<pkg>[=<type>]]     Bump the package version of specified package or monorepo (default: client)
+  -d --dep [<pkg>[=<version>]]   Bump the dependencies version of specified package or monorepo (default: client)
+  -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
+     --version [<pkg>[=<type>]]  Collect and show version of specified package or monorepo and dependencies (default: client)
 ${commonOptionString}
 `);
 }
@@ -210,10 +214,6 @@ class VersionBag {
         }
     }
     protected internalAdd(pkg: Package, version: string) {
-        if (pkg.name.startsWith("@fluid-example/version-test")) {
-            // Ignore example packages
-            return;
-        }
         const entryName = VersionBag.getEntryName(pkg);
         const existing = this.versionData[entryName];
         if (existing) {
@@ -384,7 +384,7 @@ class ReferenceVersionBag extends VersionBag {
         console.log();
     }
 
-    public printPublished() {
+    public printPublished(name: string) {
         console.log(`Current Versions from ${name}:`);
         for (const [name] of this.repoVersions) {
             const depVersion = this.get(name) ?? "undefined";
@@ -422,15 +422,16 @@ class BumpVersion {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
-        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot);
+        this.repo = new FluidRepoBase(this.gitRepo.resolvedRoot, false);
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
 
-        // TODO: Fold the generator package to the FluidRepoBase
-        const generatorDir = path.join(this.gitRepo.resolvedRoot, "tools", "generator-fluid");
-        this.generatorPackage = new Package(path.join(generatorDir, "package.json"));
-        this.templatePackage = new Package(path.join(generatorDir, "app", "templates", "package.json"));
+        // TODO: Is there a way to generate this automatically?
+        const generatorPackage = this.fullPackageMap.get("@microsoft/generator-fluid");
+        if (!generatorPackage) { fatal("Unable to find @microsoft/generator-fluid package") };
+        this.generatorPackage = generatorPackage;
+        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
     }
 
     /**
@@ -469,6 +470,16 @@ class BumpVersion {
         return changed;
     }
 
+    private async switchBranchAndReloadPackageJson(name: string) {
+        await this.gitRepo.switchBranch(name);
+        this.reloadPackageJson();
+    }
+
+    private reloadPackageJson() {
+        this.repo.reload();
+        this.templatePackage.reload();
+    }
+
     /**
      * Collect the version of the packages in a VersionBag
      */
@@ -476,10 +487,12 @@ class BumpVersion {
         const versions = new VersionBag();
 
         this.repo.packages.packages.forEach(pkg => {
+            if (pkg.packageJson.private && pkg.monoRepo === undefined) {
+                return;
+            }
             versions.add(pkg, pkg.version);
         });
 
-        versions.add(this.generatorPackage, this.generatorPackage.version);
         versions.add(this.templatePackage, this.templatePackage.version);
         return versions;
     }
@@ -505,18 +518,17 @@ class BumpVersion {
 
         const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck = [];
-        // TODO: Allow bumping from a different layer then the client
-        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
-            pendingDepCheck.push(...this.repo.clientMonoRepo.packages);
+        const processMonoRepo = (monoRepo: MonoRepo) => {
+            pendingDepCheck.push(...monoRepo.packages);
             // Fake these for printing.
-            const firstClientPackage = this.repo.clientMonoRepo.packages[0];
+            const firstClientPackage = monoRepo.packages[0];
             depVersions.add(firstClientPackage, firstClientPackage.version);
-            depVersions.add(this.generatorPackage, this.generatorPackage.version);
-            depVersions.add(this.templatePackage, this.templatePackage.version);
+        };
+
+        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
+            processMonoRepo(this.repo.clientMonoRepo);
         } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
-            pendingDepCheck.push(...this.repo.serverMonoRepo.packages);
-            const firstServerPackage = this.repo.serverMonoRepo.packages[0];
-            depVersions.add(firstServerPackage, firstServerPackage.version);
+            processMonoRepo(this.repo.serverMonoRepo);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {
@@ -530,6 +542,9 @@ class BumpVersion {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
                 break;
+            }
+            if (pkg === this.generatorPackage) {
+                pendingDepCheck.push(this.templatePackage);
             }
             for (const { name: dep, version } of pkg.combinedDependencies) {
                 const depBuildPackage = this.fullPackageMap.get(dep);
@@ -582,17 +597,17 @@ class BumpVersion {
         if (!publishedVersion) {
             versions = await this.collectVersionInfo(name);
         } else {
+            const processMonoRepo = async (monoRepo: MonoRepo) => {
+                await Promise.all(monoRepo.packages.map(pkg => {
+                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
+                }));
+            };
             const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
             let pkg: Package | undefined;
             if (name === MonoRepoKind[MonoRepoKind.Client]) {
-                await Promise.all(this.repo.clientMonoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
-                }));
-                await depVersions.collectPublishedPackageDependencies(this.generatorPackage, publishedVersion.toString())
+                await processMonoRepo(this.repo.clientMonoRepo);
             } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-                await Promise.all(this.repo.serverMonoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
-                }));
+                await processMonoRepo(this.repo.serverMonoRepo);
             } else {
                 pkg = this.fullPackageMap.get(name);
                 if (!pkg) {
@@ -602,11 +617,11 @@ class BumpVersion {
             versions = depVersions;
         }
 
-        versions.printPublished();
+        versions.printPublished(name);
     }
 
     /**
-     * Bump version of the repo
+     * Bump version of packages in the repo
      * 
      * @param versionBump the kind of version bump
      */
@@ -619,7 +634,6 @@ class BumpVersion {
             console.log("  Bumping client version");
             await this.bumpLegacyDependencies(versionBump);
             await bumpMonoRepo(this.repo.clientMonoRepo);
-            await this.bumpGeneratorFluid(versionBump);
         }
 
         if (serverNeedBump) {
@@ -637,29 +651,8 @@ class BumpVersion {
         }
 
         // Package json has changed. Reload.
-        this.repo.reload();
-
+        this.reloadPackageJson();
         return this.collectVersions();
-    }
-
-    /**
-     * Bump version of the generator packages
-     * 
-     * @param versionBump the kind of version bump
-     */
-    private async bumpGeneratorFluid(versionBump: VersionChangeType) {
-        console.log("  Bumping generator version");
-
-        const bumpDepMap = new Map(this.repo.packages.packages.map(pkg => [pkg.name, { pkg, version: `${pkg.version}-0` }]));
-
-        // Immediate depend on the pre-release bit for the generator to begin with.
-        await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpDepMap, false);
-        await exec(`npm version ${versionBump}`, this.templatePackage.directory, "bump yo template");
-        await exec(`npm version ${versionBump}`, this.generatorPackage.directory, "bump yo generator");
-
-        // Generate has changed. Reload.
-        this.generatorPackage.reload();
-        this.templatePackage.reload();
     }
 
     private async bumpLegacyDependencies(versionBump: VersionChangeType) {
@@ -971,21 +964,6 @@ class BumpVersion {
         return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDep, paramPublishCheck, true, true);
     }
 
-    public async releaseGeneratorFluid() {
-        // TODO: switch to detect package publish instead when the CI change the version scheme
-        const tagName = `generator-fluid_v${this.generatorPackage.version}`;
-        if (!await this.gitRepo.getShaForTag(tagName)) {
-            await this.addTag(tagName);
-            await this.pushTag(tagName);
-        } else {
-            // Resumed
-            if (!await this.prompt(`>>> ${tagName} already exists. Skip publish and bump version after?`)) {
-                fatal("Operation stopped.");
-            }
-        }
-
-    }
-
     /**
      * Bump package version of the client monorepo
      * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
@@ -1046,20 +1024,18 @@ class BumpVersion {
             if (!await this.prompt(`>>> Branch ${pendingReleaseBranch} exist, resume progress?`)) {
                 fatal("Operation aborted");
             }
-            await this.gitRepo.switchBranch(pendingReleaseBranch);
-            this.repo.reload();
+            await this.switchBranchAndReloadPackageJson(pendingReleaseBranch);
         } else {
             await this.createBranch(pendingReleaseBranch);
         }
 
         // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@microsoft/eslint-config-fluid", "@microsoft/fluid-build-common"]);
-        await this.releasePackage(depVersions, ["@microsoft/fluid-common-definitions"]);
-        await this.releasePackage(depVersions, ["@microsoft/fluid-common-utils"]);
+        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/fluid-build-common"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
+        await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releaseGeneratorFluid();
-
+        await this.releasePackage(depVersions, ["@microsoft/generator-fluid", "tinylicious"]);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1075,10 +1051,8 @@ class BumpVersion {
             allRepoState += `\n${minorRepoState}`;
 
             // switch package to pendingReleaseBranch
-            await this.gitRepo.switchBranch(pendingReleaseBranch);
-            this.repo.reload();
-            this.generatorPackage.reload();
-            this.templatePackage.reload();
+            await this.switchBranchAndReloadPackageJson(pendingReleaseBranch);
+
         }
 
         // ------------------------------------------------------------------------------------------------------------------
@@ -1105,7 +1079,6 @@ class BumpVersion {
         let clientNeedBump = false;
         let serverNeedBump = false;
         let packageNeedBump = new Set<Package>();
-        const repoVersions = this.collectVersions();
         if (name === MonoRepoKind[MonoRepoKind.Client]) {
             clientNeedBump = true;
             const ret = await this.repo.clientMonoRepo.install();

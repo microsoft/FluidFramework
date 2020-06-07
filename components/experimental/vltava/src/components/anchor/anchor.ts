@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
     LastEditedTrackerComponentName,
-} from "@microsoft/fluid-last-edited-experimental";
-import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/last-edited-experimental";
+import { IComponentHTMLView, IProvideComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export const AnchorName = "anchor";
 
@@ -61,7 +61,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
                 .IComponentHTMLView;
 
         this.lastEditedComponent =
-                (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
-                    .IComponentLastEditedTracker;
+            (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
+                .IComponentLastEditedTracker;
     }
 }

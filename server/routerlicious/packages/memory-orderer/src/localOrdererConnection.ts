@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@microsoft/fluid-common-utils";
+import { performanceNow } from "@fluidframework/common-utils";
 import {
     IClient,
     IClientJoin,
@@ -11,7 +11,7 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -20,7 +20,7 @@ import {
     IProducer,
     IRawOperationMessage,
     RawOperationType,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import { IPubSub, ISubscriber } from "./";
 
 export class LocalOrdererConnection implements IOrdererConnection {
@@ -40,7 +40,9 @@ export class LocalOrdererConnection implements IOrdererConnection {
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
         this.parentBranch = document.parent ? document.parent.documentId : null;
+    }
 
+    public async connect() {
         // Subscribe to the message channels
         // Todo: We probably don't need this.
         this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
@@ -74,7 +76,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation([message]);
     }
 
-    public order(messages: IDocumentMessage[]): void {
+    public async order(messages: IDocumentMessage[]) {
         const rawMessages = messages.map((message) => {
             const rawMessage: IRawOperationMessage = {
                 clientId: this.clientId,
@@ -91,7 +93,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         this.submitRawOperation(rawMessages);
     }
 
-    public disconnect() {
+    public async disconnect() {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,

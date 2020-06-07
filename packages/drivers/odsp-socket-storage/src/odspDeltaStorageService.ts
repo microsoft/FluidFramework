@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import * as api from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import * as api from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";

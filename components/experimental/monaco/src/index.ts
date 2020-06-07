@@ -6,10 +6,10 @@
 import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
+} from "@fluidframework/aqueduct";
+import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
+import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
+import * as sequence from "@fluidframework/sequence";
 import { MonacoRunner } from "./chaincode";
 
 const monacoName = "@fluid-example/monaco";

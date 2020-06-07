@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import { ReplayArgs, ReplayTool } from "@microsoft/fluid-replay-tool";
+import fs from "fs";
+import { ReplayArgs, ReplayTool } from "@fluidframework/replay-tool";
 
 const fileLocation: string = "content/snapshotTestContent";
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import {
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 function printUsage() {
     console.log("Usage:");

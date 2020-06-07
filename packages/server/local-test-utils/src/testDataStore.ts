@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
     IFluidCodeDetails,
     IProxyLoaderFactory,
-} from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { debug } from "./debug";
 
 /**
@@ -51,7 +51,6 @@ export class TestDataStore {
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""
-            // eslint-disable-next-line @typescript-eslint/indent
             }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);

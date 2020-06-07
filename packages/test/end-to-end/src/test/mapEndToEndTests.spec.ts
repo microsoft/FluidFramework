@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { MessageType } from "@microsoft/fluid-protocol-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import assert from "assert";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 describe("Map", () => {
     const id = "fluid-test://localhost/mapTest";
@@ -40,8 +40,8 @@ describe("Map", () => {
     }
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[ mapId, SharedMap.getFactory() ]]);
-        const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const factory = new TestFluidComponentFactory([[mapId, SharedMap.getFactory()]]);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 

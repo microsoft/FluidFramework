@@ -12,22 +12,22 @@ import {
     IRequest,
     IResponse,
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
     TextSegment,
     ReferenceType,
     reservedTileLabelsKey,
     Marker,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as SimpleMDE from "simplemde";
+} from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
@@ -44,7 +44,12 @@ export class Smde extends EventEmitter implements
         return collection;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
@@ -56,13 +61,13 @@ export class Smde extends EventEmitter implements
 
     private get text() {
         assert(this._text);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._text!;
+        return this._text;
     }
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -209,7 +214,7 @@ export class Smde extends EventEmitter implements
 }
 
 class SmdeFactory implements IComponentFactory {
-    public static readonly type = "@chaincode/smde";
+    public static readonly type = "@fluid-example/smde";
     public readonly type = SmdeFactory.type;
 
     public get IComponentFactory() { return this; }

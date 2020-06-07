@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { DebugLogger } from "@fluidframework/common-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { DeltaManager } from "@microsoft/fluid-container-loader";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
-import { ScheduleManager, DeltaScheduler } from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/protocol-definitions";
+import { DeltaManager } from "@fluidframework/container-loader";
+import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
+import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
 describe("Container Runtime", () => {
     /**
@@ -73,7 +73,7 @@ describe("Container Runtime", () => {
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
             const processingDelay = DeltaScheduler.processingTime + 10;
             const startTime = Date.now();
-            while (Date.now() - startTime < processingDelay) {}
+            while (Date.now() - startTime < processingDelay) { }
 
             scheduleManager.endOperation(undefined, message);
         }
@@ -122,7 +122,7 @@ describe("Container Runtime", () => {
                     processOp(message);
                     return {};
                 },
-                processSignal() {},
+                processSignal() { },
             });
         });
 

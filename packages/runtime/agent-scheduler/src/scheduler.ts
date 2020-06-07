@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
@@ -12,23 +12,23 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     IAgentScheduler,
     IComponentContext,
     IComponentFactory,
     ITask,
     ITaskManager,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import * as debug from "debug";
+} from "@fluidframework/runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import debug from "debug";
 import { v4 as uuid } from "uuid";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -55,7 +55,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
 
@@ -65,7 +70,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
         const clientId = this.runtime.clientId;
         assert(clientId);
-        return clientId as string;
+        return clientId;
     }
 
     public url = "_tasks";
@@ -79,7 +84,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
-    private readonly locallyRunnableTasks = new Map<string,() => Promise<void>>();
+    private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
 
     // Set of registered tasks client is currently running.
     // It's subset of this.locallyRunnableTasks
@@ -90,6 +95,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly context: IComponentContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
         super();
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -384,7 +390,11 @@ export class TaskManager implements ITaskManager {
         return new TaskManager(agentScheduler, runtime, context);
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
     public get IAgentScheduler() { return this.scheduler; }
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get ITaskManager() { return this; }
@@ -395,8 +405,9 @@ export class TaskManager implements ITaskManager {
     constructor(
         private readonly scheduler: IAgentScheduler,
         private readonly runtime: IComponentRuntime,
-        private readonly context: IComponentContext)
-    { }
+        private readonly context: IComponentContext) {
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
+    }
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
@@ -443,7 +454,7 @@ export class TaskManager implements ITaskManager {
                     type: "agent",
                 },
                 [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: worker ? "worker" : undefined,
             },
             url,

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "./typedEventEmitter";
 
 /**
@@ -24,7 +24,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     public get disposed() { return this.isDisposed; }
     private isDisposed: boolean = false;
 
-    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>,() => void>>();
+    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>, () => void>>();
 
     constructor(source?: EventEmitter | IEventProvider<TEvent>) {
         super();
@@ -78,7 +78,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
                 if (sources?.has(source)) {
                     if (this.listenerCount(event) === 0) {
                         const listenerRemover = sources.get(source);
-                        if (listenerRemover  !== undefined) {
+                        if (listenerRemover !== undefined) {
                             listenerRemover();
                         }
                         sources.delete(source);

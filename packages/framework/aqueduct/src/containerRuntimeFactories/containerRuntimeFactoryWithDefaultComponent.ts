@@ -4,30 +4,17 @@
  */
 
 import {
-    componentRuntimeRequestHandler,
-    RequestParser,
     RuntimeRequestHandler,
-} from "@microsoft/fluid-container-runtime";
-import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
-import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+} from "@fluidframework/container-runtime";
+import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
+import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { DependencyContainerRegistry } from "@fluidframework/synthesize";
+import { MountableView } from "@fluidframework/view-adapters";
+import { defaultComponentRuntimeRequestHandler, mountableViewRequestHandler } from "../requestHandlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultComponentId = "default";
-
-const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length === 0) {
-            return componentRuntimeRequestHandler(
-                new RequestParser({
-                    url: defaultComponentId,
-                    headers: request.headers,
-                }),
-                runtime);
-        }
-        return undefined;
-    };
 
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default component, which can be requested from
@@ -45,7 +32,17 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ) {
-        super(registryEntries, providerEntries, [defaultComponentRuntimeRequestHandler, ...requestHandlers]);
+        super(
+            registryEntries,
+            providerEntries,
+            [
+                // The mountable view request handler must go before any other request handlers that we might
+                // want to return mountable views, so it can correctly handle the header and reissue the request.
+                mountableViewRequestHandler(MountableView),
+                defaultComponentRuntimeRequestHandler(defaultComponentId),
+                ...requestHandlers,
+            ],
+        );
     }
 
     public get IComponentDefaultFactoryName() { return this; }
@@ -61,7 +58,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         );
         // We need to request the component before attaching to ensure it
         // runs through its entire instantiation flow.
-        await componentRuntime.request({ url:"/" });
+        await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
     }
 }

@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import React from "react";
 import "react-grid-layout/css/styles.css";
-import { IInternalRegistryEntry } from "./interfaces";
-import { ISpacesProps } from "./spaces";
+import { ISpacesComponentEntry } from "./spacesComponentMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    supportedComponents: IInternalRegistryEntry[];
+    componentMap: Map<string, ISpacesComponentEntry>;
     storage: ISpacesStorage;
-    spacesProps: ISpacesProps;
+    addComponent(type: string): void;
+    templates?: string[];
+    applyTemplate?(template: string): void;
 }
 
 /**
@@ -27,10 +28,12 @@ export const SpacesView: React.FC<ISpacesViewProps> =
         return (
             <div className="spaces-view">
                 <SpacesToolbar
-                    spacesProps={props.spacesProps}
                     editable={editable}
                     setEditable={setEditable}
-                    components={props.supportedComponents}
+                    componentMap={props.componentMap}
+                    addComponent={props.addComponent}
+                    templates={props.templates}
+                    applyTemplate={props.applyTemplate}
                 />
                 <SpacesStorageView storage={props.storage} editable={editable} />
             </div>

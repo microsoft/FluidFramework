@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 

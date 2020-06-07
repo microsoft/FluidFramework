@@ -3,17 +3,70 @@
  * Licensed under the MIT License.
  */
 
-import { createNetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
-import { IError } from "@microsoft/fluid-driver-definitions";
+import {
+    NetworkErrorBasic,
+    GenericNetworkError,
+    NonRetryableError,
+    isOnline,
+    createGenericNetworkError,
+    OnlineStatus,
+} from "@fluidframework/driver-utils";
+import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
     RequestInit as FetchRequestInit,
     Headers as FetchHeaders,
 } from "node-fetch";
-import * as sha from "sha.js";
+import sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+
+export const offlineFetchFailureStatusCode: number = 709;
+export const fetchFailureStatusCode: number = 710;
+// Status code for invalid file name error in odsp driver.
+export const invalidFileNameStatusCode: number = 711;
+
+export function createOdspNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+): CriticalContainerError {
+    let error: CriticalContainerError;
+
+    switch (statusCode) {
+        case 401:
+        case 403:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
+            break;
+        case 404:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
+            break;
+        case 500:
+            error = new GenericNetworkError(errorMessage, canRetry);
+            break;
+        case 507:
+            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, canRetry);
+            break;
+        case 413:
+            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, canRetry);
+        case 414:
+        case invalidFileNameStatusCode:
+            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, canRetry);
+            break;
+        case offlineFetchFailureStatusCode:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, canRetry);
+            break;
+
+        case fetchFailureStatusCode:
+        default:
+            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+    }
+
+    (error as any).online = OnlineStatus[isOnline()];
+    return error;
+}
 
 /**
  * Throws network error - an object with a bunch of network related properties
@@ -23,7 +76,6 @@ export function throwOdspNetworkError(
     statusCode: number,
     canRetry: boolean,
     response?: Response,
-    online?: string,
 ) {
     let message = errorMessage;
     let sprequestguid;
@@ -32,12 +84,11 @@ export function throwOdspNetworkError(
         sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
     }
 
-    const networkError = createNetworkError(
+    const networkError = createOdspNetworkError(
         message,
         canRetry,
         statusCode,
-        undefined /* retryAfterSeconds */,
-        online);
+        undefined /* retryAfterSeconds */);
     (networkError as any).sprequestguid = sprequestguid;
     throw networkError;
 }
@@ -45,13 +96,18 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
-    return createNetworkError(
+export function errorObjectFromSocketError(
+    socketError: IOdspSocketError,
+    retryFilter?: RetryFilter) {
+    return createOdspNetworkError(
         socketError.message,
         retryFilter?.(socketError.code) ?? true,
         socketError.code,
         socketError.retryAfter);
 }
+
+/** Parse the given url and return the origin (host name) */
+export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
  * Returns true when the request should/can be retried
@@ -162,16 +218,15 @@ export async function fetchHelper(
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.
-        let online: string | undefined;
+        let online = OnlineStatus.Unknown;
         if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
-            online = OnlineStatus[OnlineStatus.Offline];
+            online = OnlineStatus.Offline;
         }
         throwOdspNetworkError(
             `Fetch error: ${error}`,
-            709,
+            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             true, // canRetry
             undefined, // response
-            online,
         );
     });
 }
@@ -204,7 +259,7 @@ export interface INewFileInfoHeader {
     newFileInfoPromise: Promise<INewFileInfo>,
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<INewFileInfoHeader> { }
 }

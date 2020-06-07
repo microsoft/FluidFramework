@@ -3,18 +3,18 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IPackage } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { IPackage } from "@fluidframework/container-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
     SpacesStorageView,
 } from "@fluid-example/spaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { WaterParkToolbar } from "./waterParkToolbar";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
@@ -135,9 +135,9 @@ export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsW
     return (
         <>
             <WaterParkToolbar
-                componentUrls={ componentUrls }
-                onSelectOption={ props.onSelectOption }
-                toggleEditable={ () => setEditable(!editable) }
+                componentUrls={componentUrls}
+                onSelectOption={props.onSelectOption}
+                toggleEditable={() => setEditable(!editable)}
             />
             <SpacesStorageView storage={props.storage} editable={editable} />
         </>

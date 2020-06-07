@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,
     IChannelAttributes,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {
@@ -84,7 +84,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             time: Date.now(),
             type: "createStroke",
         };
-        this.submitLocalMessage(createStrokeOperation);
+        this.submitLocalMessage(createStrokeOperation, undefined);
         return this.executeCreateStrokeOperation(createStrokeOperation);
     }
 
@@ -97,7 +97,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             point,
             type: "stylus",
         };
-        this.submitLocalMessage(stylusOperation);
+        this.submitLocalMessage(stylusOperation, undefined);
         return this.executeStylusOperation(stylusOperation);
     }
 
@@ -109,7 +109,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
             time: Date.now(),
             type: "clear",
         };
-        this.submitLocalMessage(clearOperation);
+        this.submitLocalMessage(clearOperation, undefined);
         this.executeClearOperation(clearOperation);
     }
 
@@ -128,7 +128,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {
@@ -151,7 +151,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
         branchId: string,
@@ -166,9 +166,9 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation && !local) {
             const operation = message.contents as IInkOperation;
             if (operation.type === "clear") {
@@ -182,14 +182,14 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
      */
     protected registerCore(): void {
         return;
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect(): void {
         return;

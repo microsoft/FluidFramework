@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import assert from "assert";
+import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { IValueChanged, MapKernel } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/component-runtime-definitions";
+import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import {
     makeHandlesSerializable,
     parseHandles,
     SharedObject,
     ISharedObjectEvents,
-} from "@microsoft/fluid-shared-object-base";
-import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/shared-object-base";
+import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -57,8 +57,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
-        const ops: MergeTree.IMergeTreeOp[] = [];
+    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeDeltaOp[] {
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE: {
@@ -164,7 +164,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel = new MapKernel(
             this.runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -446,11 +446,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.intervalMapKernel.trySubmitMessage(message);
-        }
-
+    protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
         const groupOp = this.client.resetPendingSegmentsToOp();
@@ -461,6 +457,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);
+    }
+
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
     protected async loadCore(
@@ -483,10 +483,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            handled = this.intervalMapKernel.tryProcessMessage(message, local);
+            handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
         }
 
         if (!handled) {
@@ -532,7 +532,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
 
-        const ops: MergeTree.IMergeTreeOp[] = [];
+        const ops: MergeTree.IMergeTreeDeltaOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }

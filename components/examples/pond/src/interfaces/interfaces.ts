@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideComponentUserInformation>> { }
 }
 
-export const IComponentUserInformation: keyof IProvideComponentUserInformation  = "IComponentUserInformation";
+export const IComponentUserInformation: keyof IProvideComponentUserInformation = "IComponentUserInformation";
 
 export interface IProvideComponentUserInformation {
     readonly IComponentUserInformation: IComponentUserInformation;

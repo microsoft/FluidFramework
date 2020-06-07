@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { ConnectionState, Loader } from "@microsoft/fluid-container-loader";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import assert from "assert";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {
@@ -40,7 +40,7 @@ describe("Detached Container", () => {
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory([]);
-        const codeLoader = new LocalCodeLoader([[ pkg, factory ]]);
+        const codeLoader = new LocalCodeLoader([[pkg, factory]]);
         const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,
@@ -157,8 +157,8 @@ describe("Detached Container", () => {
         const urlResolver2 = new TestResolver();
         const loader2 = createTestLoader(urlResolver2);
         // Create a new request url from the resolvedUrl of the first container.
-        const requestUrl2 = await urlResolver2.requestUrl(container.resolvedUrl, { url : "" });
-        const container2 = await loader2.resolve({ url: requestUrl2.value });
+        const requestUrl2 = await urlResolver2.getAbsoluteUrl(container.resolvedUrl, "");
+        const container2 = await loader2.resolve({ url: requestUrl2 });
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });

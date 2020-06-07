@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 // eslint-disable-next-line import/no-unassigned-import
 import "mocha";
 // eslint-disable-next-line import/no-internal-modules

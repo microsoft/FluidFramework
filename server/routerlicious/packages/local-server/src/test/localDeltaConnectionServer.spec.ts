@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+import assert from "assert";
+import { generateToken } from "@fluidframework/server-services-client";
 import {
     ScopeType,
     IUser,
     MessageType,
     ISequencedDocumentSystemMessage,
     IClient,
-} from  "@microsoft/fluid-protocol-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/common-utils";
 import { LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
-describe("LocalDeltaConnectionServer", ()=>{
-    it("connectWebSocket and validate join", async ()=>{
+describe("LocalDeltaConnectionServer", () => {
+    it("connectWebSocket and validate join", async () => {
         const lts = LocalDeltaConnectionServer.create();
         const user: IUser = { id: "id" };
         const client: IClient = {
-            details: { capabilities:{ interactive: true } },
+            details: { capabilities: { interactive: true } },
             mode: "write",
             permission: [],
             scopes: [],
             user,
         };
 
-        const joinHandler = (joinP: Deferred<any>, msgs: ISequencedDocumentSystemMessage[])=>{
+        const joinHandler = (joinP: Deferred<any>, msgs: ISequencedDocumentSystemMessage[]) => {
             for (const msg of msgs) {
                 if (joinP.isCompleted === false) {
                     if (msg.type !== MessageType.ClientJoin) {
@@ -83,5 +83,8 @@ describe("LocalDeltaConnectionServer", ()=>{
         const join2 = await join2P.promise;
         assert.equal(connected2.clientId, join2.clientId);
         assert.notEqual(connected2.clientId, connected1.clientId);
+
+        socket1.disconnect();
+        socket2.disconnect();
     });
 });

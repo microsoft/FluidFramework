@@ -8,9 +8,9 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
-} from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
@@ -18,10 +18,10 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
         if (Array.isArray(documentServiceFactory)) {
             const factories: IDocumentServiceFactory[] = [];
-            documentServiceFactory.forEach((factory)=>{
+            documentServiceFactory.forEach((factory) => {
                 const maybeMulti = factory as MultiDocumentServiceFactory;
                 if (maybeMulti.protocolToDocumentFactoryMap !== undefined) {
-                    factories.push(... maybeMulti.protocolToDocumentFactoryMap.values());
+                    factories.push(...maybeMulti.protocolToDocumentFactoryMap.values());
                 } else {
                     factories.push(factory);
                 }

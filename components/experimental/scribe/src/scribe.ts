@@ -10,30 +10,31 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+    IComponentHandle,
+} from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime, ComponentHandle } from "@fluidframework/component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IDocumentFactory } from "@fluidframework/host-service-interfaces";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IComponentRuntime,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     IComponentContext,
     IComponentFactory,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 import {
     IContainerRuntime,
-} from "@microsoft/fluid-container-runtime-definitions";
-import * as scribe from "@microsoft/fluid-server-tools-core";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/container-runtime-definitions";
+import * as scribe from "@fluidframework/server-tools-core";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
 
 // eslint-disable-next-line max-len
@@ -224,7 +225,7 @@ function initialize(
 
         const details: IFluidCodeDetails = {
             config: {
-                "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+                "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
             },
             package: `@fluid-example/shared-text@${version}`,
         };
@@ -387,7 +388,12 @@ export class Scribe
         return collection;
     }
 
+    private readonly innerHandle: IComponentHandle<this>;
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+    public get IComponentHandle() { return this.innerHandle; }
     public get IComponentLoadable() { return this; }
+
     public get IComponentRouter() { return this; }
     public get IComponentHTMLView() { return this; }
 
@@ -399,6 +405,7 @@ export class Scribe
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -482,10 +489,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
                 runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
-            ])
-                .catch((error) => {
-                    context.error(error);
-                });
+            ]);
         }
 
         return runtime;

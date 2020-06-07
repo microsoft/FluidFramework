@@ -7,9 +7,9 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
+} from "@fluidframework/aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
 
@@ -37,8 +37,8 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
     }
 
     public render(div: HTMLDivElement) {
-    // Create a div that we will use to embed the component
-    // and attach that div to the page
+        // Create a div that we will use to embed the component
+        // and attach that div to the page
         const componentDiv = document.createElement("div");
         componentDiv.id = "componentDiv";
         div.appendChild(componentDiv);

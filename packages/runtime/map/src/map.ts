@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { addBlobToTree } from "@microsoft/fluid-protocol-base";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { addBlobToTree } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,
-} from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     ISharedMap,
@@ -44,12 +44,12 @@ const snapshotFileName = "header";
  */
 export class MapFactory implements ISharedObjectFactory {
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
    */
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
    */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
@@ -58,21 +58,21 @@ export class MapFactory implements ISharedObjectFactory {
     };
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
    */
     public get type() {
         return MapFactory.Type;
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
    */
     public get attributes() {
         return MapFactory.Attributes;
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
    */
     public async load(
         runtime: IComponentRuntime,
@@ -87,7 +87,7 @@ export class MapFactory implements ISharedObjectFactory {
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
+   * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.create}
    */
     public create(runtime: IComponentRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime, MapFactory.Attributes);
@@ -144,7 +144,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             valueTypes,
             this,
         );
@@ -226,6 +226,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
    * {@inheritDoc IValueTypeCreator.createValueType}
    */
     public createValueType(key: string, type: string, params: any): this {
+        console.warn("Value types are deprecated.  Use the Counter shared object instead (@fluidframework/counter)");
         this.kernel.createValueType(key, type, params);
         return this;
     }
@@ -245,7 +246,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshot}
    */
     public snapshot(): ITree {
         let currentSize = 0;
@@ -325,7 +326,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
    */
     protected async loadCore(
         branchId: string,
@@ -348,34 +349,30 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
    */
     protected onDisconnect() {
         debug(`Map ${this.id} is now disconnected`);
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
-   */
-    protected onConnect(pending: any[]) {
-        debug(`Map ${this.id} is now connected`);
-
-        for (const message of pending) {
-            this.kernel.trySubmitMessage(message);
-        }
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     */
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
    */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message, local);
+            this.kernel.tryProcessMessage(message, local, localOpMetadata);
         }
     }
 
     /**
-   * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
+   * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
    */
     protected registerCore() {
         for (const value of this.values()) {

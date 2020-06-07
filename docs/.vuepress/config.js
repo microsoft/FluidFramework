@@ -202,8 +202,6 @@ const getApiSidebar = () => {
             title: "Sample Hosts",
             children: [
                 "fluid-base-host",
-                "react-web-host",
-                "tiny-web-host",
             ]
         });
     }
@@ -219,11 +217,11 @@ const getApiSidebar = () => {
         });
     }
 
-    if (files.includes("fluid-core-utils.md")) {
+    if (files.includes("fluid-common-utils.md")) {
         apiSidebar.push({
             title: "Miscellaneous",
             children: [
-                "fluid-core-utils",
+                "fluid-common-utils",
             ]
         });
     }

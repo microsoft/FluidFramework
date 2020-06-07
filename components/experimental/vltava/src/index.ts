@@ -6,24 +6,20 @@
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import {
-    IComponentInternalRegistry,
-    IInternalRegistryEntry,
-    Spaces,
-} from "@fluid-example/spaces";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+import { Spaces } from "@fluid-example/spaces";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     LastEditedTrackerComponentName,
     LastEditedTrackerComponent,
     setupLastEditedTrackerForContainer,
-} from "@microsoft/fluid-last-edited-experimental";
+} from "@fluidframework/last-edited-experimental";
 import {
     IComponentRegistry,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
 import {
     Anchor,
@@ -32,6 +28,10 @@ import {
     Vltava,
     VltavaName,
 } from "./components";
+import {
+    IComponentInternalRegistry,
+    IInternalRegistryEntry,
+} from "./interfaces";
 
 export class InternalRegistry implements IComponentRegistry, IComponentInternalRegistry {
     public get IComponentRegistry() { return this; }
@@ -42,8 +42,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>>
-    {
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>> {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );
@@ -56,7 +55,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentInternalR
 
     public getFromCapability(capability: keyof IComponent): IInternalRegistryEntry[] {
         return this.containerComponentArray.filter(
-            (componentDetails) =>componentDetails.capabilities.includes(capability));
+            (componentDetails) => componentDetails.capabilities.includes(capability));
     }
 
     public hasCapability(type: string, capability: keyof IComponent) {
@@ -87,7 +86,7 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
         // We should be able to wait here after the create-new workflow is in place.
         setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
             .catch((error) => {
-                runtime.error(error);
+                console.error(error);
             });
     }
 }
@@ -100,7 +99,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
-            templates: {},
         },
         {
             type: "tabs",
@@ -108,7 +106,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
-            templates: {},
         },
         {
             type: "spaces",
@@ -116,7 +113,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
-            templates: {},
         },
         {
             type: "codemirror",
@@ -124,7 +120,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
-            templates: {},
         },
         {
             type: "prosemirror",
@@ -132,7 +127,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
-            templates: {},
         },
     ];
 
@@ -144,11 +138,11 @@ const generateFactory = () => {
     // The last edited tracker component provides container level tracking of last edits. This is the first
     // component that is loaded.
     containerComponents.push(
-        [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ]);
+        [LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory())]);
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory()) ]);
-    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory()) ]);
+    containerComponents.push([AnchorName, Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([VltavaName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

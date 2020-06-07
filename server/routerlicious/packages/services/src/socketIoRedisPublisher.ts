@@ -5,9 +5,9 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as redis from "redis";
-import * as socketIoEmitter from "socket.io-emitter";
+import socketIoEmitter from "socket.io-emitter";
 
 export class SocketIoRedisTopic implements core.ITopic {
     constructor(private readonly topic: any) {

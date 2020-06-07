@@ -9,16 +9,18 @@ import * as git from "nodegit";
 import * as testUtils from "./utils";
 
 async function mockTree(repository: git.Repository, entries: number) {
+    // eslint-disable-next-line no-null/no-null
     const builder = await git.Treebuilder.create(repository, null);
 
     const oid = git.Oid.fromString("b45ef6fec89518d314f546fd6c3025367b721684");
     for (let i = 0; i < entries; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         builder.insert(
             moniker.choose(),
             oid,
             parseInt("100644", 8));
     }
-    await builder.write();
+    return builder.write();
 }
 
 describe("Treebuilder", () => {
@@ -34,13 +36,15 @@ describe("Treebuilder", () => {
             `${testUtils.defaultProvider.get("storageDir")}/test`,
             isBare);
 
-        const buffer = new Buffer("Hello, World!", "utf-8");
+        const buffer = Buffer.from("Hello, World!", "utf-8");
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         await repository.createBlobFromBuffer(buffer);
 
         // create a queue object with concurrency 2
         return new Promise<void>((resolve, reject) => {
             const q = async.queue((task, callback) => {
                 const mockP = mockTree(repository, treeEntries).catch();
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 mockP.then(() => {
                     callback();
                 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as webpack from "webpack";
+import webpack from "webpack";
 
 const path = require('path');
 
@@ -40,15 +40,15 @@ const options: webpack.Configuration = {
 
 
 describe("Routerlicious.Lambdas", () => {
-        it("Webpack to ensure isomorphism", () => {
-            webpack(options, (err, stats) => {
-                if (err) {
-                    throw err;
-                }
-                if (stats.hasErrors()) {
-                    throw stats.toString();
-                }
-            });
+    it("Webpack to ensure isomorphism", () => {
+        webpack(options, (err, stats) => {
+            if (err) {
+                throw err;
+            }
+            if (stats.hasErrors()) {
+                throw stats.toString();
+            }
+        });
 
-        }).timeout(5000);
+    }).timeout(5000);
 });

@@ -9,12 +9,12 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IErrorTrackingService,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     MockDocumentDeltaStorageService,
 } from "./mockDeltaStorage";
@@ -33,7 +33,7 @@ export class MockDocumentService implements IDocumentService {
     constructor(
         private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
         private readonly deltaConnectionFactory?: () => IDocumentDeltaConnection,
-    ) {}
+    ) { }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {

@@ -3,27 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 import {
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
-} from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
+} from "@fluidframework/common-utils";
+import * as git from "@fluidframework/gitresources";
 import {
     IBlob,
     ICommittedProposal,
@@ -35,7 +36,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
@@ -43,34 +44,156 @@ import {
     IDeltaHandler,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/component-runtime-definitions";
+import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
+import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
-export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
-    public get minimumSequenceNumber(): number {
-        return this.connectionFactory.getMinSeq();
+/**
+ * Mock implementation of IDeltaConnection for testing
+ */
+export class MockDeltaConnection implements IDeltaConnection {
+    public get connected(): boolean {
+        return this._connected;
     }
 
-    public get referenceSequenceNumber(): number {
-        return this.connectionFactory.sequenceNumber;
+    private _connected = true;
+    public handler: IDeltaHandler | undefined;
+
+    constructor(
+        private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
+        private readonly dirtyFn: () => void,
+    ) { }
+
+    public attach(handler: IDeltaHandler): void {
+        this.handler = handler;
+        handler.setConnectionState(this.connected);
     }
 
-    constructor(readonly connectionFactory?: MockDeltaConnectionFactory) {
-        super();
+    public submit(messageContent: any, localOpMetadata: unknown): number {
+        return this.submitFn(messageContent, localOpMetadata);
+    }
+
+    public dirty(): void {
+        this.dirtyFn();
+    }
+
+    public setConnectionState(connected: boolean) {
+        this._connected = connected;
+        this.handler?.setConnectionState(connected);
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        this.handler?.process(message, local, localOpMetadata);
+    }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        this.handler?.reSubmit(content, localOpMetadata);
+    }
+}
+
+// Represents the structure of a pending message stored by the MockContainerRuntime.
+export interface IMockContainerRuntimePendingMessage {
+    content: any,
+    clientSequenceNumber: number,
+    localOpMetadata: unknown,
+}
+
+/**
+ * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * If test specific logic is required, extend this class and add the logic there. For an example, take a look
+ * at MockContainerRuntimeForReconnection.
+ */
+export class MockContainerRuntime {
+    public clientId: string;
+    protected clientSequenceNumber: number = 0;
+    protected referenceSequenceNumber = 0;
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    protected readonly deltaConnections: MockDeltaConnection[] = [];
+    protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+
+    constructor(
+        protected readonly componentRuntime: MockComponentRuntime,
+        protected readonly factory: MockContainerRuntimeFactory,
+    ) {
+        this.deltaManager = new MockDeltaManager();
+        // Set ComponentRuntime's deltaManager to ours so that they are in sync.
+        this.componentRuntime.deltaManager = this.deltaManager;
+        // ComponentRuntime already creates a clientId, reuse that so they are in sync.
+        this.clientId = this.componentRuntime.clientId;
+    }
+
+    public createDeltaConnection(): MockDeltaConnection {
+        const deltaConnection = new MockDeltaConnection(
+            (messageContent: any, localOpMetadata: unknown) => this.submit(messageContent, localOpMetadata),
+            () => this.dirty(),
+        );
+        this.deltaConnections.push(deltaConnection);
+        return deltaConnection;
+    }
+
+    public submit(messageContent: any, localOpMetadata: unknown): number {
+        const clientSequenceNumber = this.clientSequenceNumber++;
+        const msg: Partial<ISequencedDocumentMessage> = {
+            clientId: this.clientId,
+            clientSequenceNumber,
+            contents: messageContent,
+            referenceSequenceNumber: this.referenceSequenceNumber,
+            type: MessageType.Operation,
+
+        };
+        this.factory.pushMessage(msg);
+
+        this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+
+        return clientSequenceNumber;
+    }
+
+    public dirty(): void { }
+
+    public process(message: ISequencedDocumentMessage) {
+        this.referenceSequenceNumber = message.sequenceNumber;
+        const [local, localOpMetadata] = this.processInternal(message);
+        this.deltaConnections.forEach((dc) => {
+            dc.process(message, local, localOpMetadata);
+        });
+    }
+
+    protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number) {
+        const pendingMessage: IMockContainerRuntimePendingMessage = {
+            content,
+            clientSequenceNumber,
+            localOpMetadata,
+        };
+        this.pendingMessages.push(pendingMessage);
+    }
+
+    private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+        let localOpMetadata: unknown;
+        const local = this.clientId === message.clientId;
+        if (local) {
+            const pendingMessage = this.pendingMessages.shift();
+            assert(pendingMessage.clientSequenceNumber === message.clientSequenceNumber);
+            localOpMetadata = pendingMessage.localOpMetadata;
+        }
+        return [local, localOpMetadata];
     }
 }
 
 /**
- * Factory to create MockDeltaConnection for testing
+ * Factory to create MockContainerRuntime for testing basic submitting and processing of messages.
+ * This also acts as a very basic server that stores the messages from all the MockContainerRuntimes and
+ * processes them when asked.
+ * If test specific logic is required, extend this class and add the logic there. For an example, take a look
+ * at MockContainerRuntimeFactoryForReconnection.
  */
-export class MockDeltaConnectionFactory {
+export class MockContainerRuntimeFactory {
     public sequenceNumber = 0;
     public minSeq = new Map<string, number>();
-    private readonly messages: ISequencedDocumentMessage[] = [];
-    private readonly deltaConnections: MockDeltaConnection[] = [];
+    protected messages: ISequencedDocumentMessage[] = [];
+    protected readonly runtimes: MockContainerRuntime[] = [];
 
     public getMinSeq(): number {
         let minSeq: number;
@@ -84,16 +207,10 @@ export class MockDeltaConnectionFactory {
         return minSeq ? minSeq : 0;
     }
 
-    public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        const delta = new MockDeltaConnection(this, runtime);
-        this.deltaConnections.push(delta);
-
-        assert(runtime.deltaManager === undefined ||
-            runtime.deltaManager instanceof MockDeltaManagerWithConnectionFactory &&
-            runtime.deltaManager.connectionFactory === this);
-        runtime.deltaManager = new MockDeltaManagerWithConnectionFactory(this);
-        return delta;
+    public createContainerRuntime(componentRuntime: MockComponentRuntime): MockContainerRuntime {
+        const containerRuntime = new MockContainerRuntime(componentRuntime, this);
+        this.runtimes.push(containerRuntime);
+        return containerRuntime;
     }
 
     public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
@@ -101,10 +218,6 @@ export class MockDeltaConnectionFactory {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
         }
         this.messages.push(msg as ISequencedDocumentMessage);
-    }
-
-    public clearMessages() {
-        while (this.messages.shift()) { }
     }
 
     public processAllMessages() {
@@ -117,73 +230,10 @@ export class MockDeltaConnectionFactory {
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
-            for (const dc of this.deltaConnections) {
-                for (const h of dc.handlers) {
-                    h.process(msg, dc.isLocal(msg));
-                }
+            for (const runtime of this.runtimes) {
+                runtime.process(msg);
             }
         }
-    }
-}
-
-/**
- * Mock implementation IDeltaConnection for testing that does nothing
- */
-class MockDeltaConnection implements IDeltaConnection {
-    public get connected(): boolean {
-        return this._connected;
-    }
-
-    public set connected(connected: boolean) {
-        if (connected) {
-            this.runtime.clientId = uuid();
-        }
-
-        this._connected = connected;
-        this.handlers.forEach((h) => {
-            h.setConnectionState(this.connected);
-        });
-    }
-    public readonly handlers: IDeltaHandler[] = [];
-    private _connected = true;
-    private clientSequenceNumber: number = 0;
-    private referenceSequenceNumber = 0;
-
-    constructor(
-        private readonly factory: MockDeltaConnectionFactory,
-        private readonly runtime: MockRuntime) {
-        this.handlers.push({
-            process: (message: ISequencedDocumentMessage, local: boolean) => {
-                this.referenceSequenceNumber = message.sequenceNumber;
-            },
-            setConnectionState: (connected: boolean) => { },
-        });
-    }
-
-    public submit(messageContent: any): number {
-        this.clientSequenceNumber++;
-        const msg: Partial<ISequencedDocumentMessage> = {
-            clientId: this.runtime.clientId,
-            clientSequenceNumber: this.clientSequenceNumber,
-            contents: messageContent,
-            referenceSequenceNumber: this.referenceSequenceNumber,
-            type: MessageType.Operation,
-
-        };
-        this.factory.pushMessage(msg);
-
-        return msg.clientSequenceNumber;
-    }
-
-    public attach(handler: IDeltaHandler): void {
-        this.handlers.push(handler);
-        handler.setConnectionState(this.connected);
-    }
-
-    public dirty(): void {}
-
-    public isLocal(msg: ISequencedDocumentMessage) {
-        return msg.clientId === this.runtime.clientId;
     }
 }
 
@@ -192,7 +242,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
-    constructor(... members: [string, Partial<ISequencedClient>][]) {
+    constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
@@ -306,8 +356,8 @@ export class MockQuorum implements IQuorum, EventEmitter {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentHandleContext {
+export class MockComponentRuntime extends EventEmitter
+    implements IComponentRuntime, IComponentRuntimeChannel, IComponentHandleContext {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -324,12 +374,22 @@ export class MockRuntime extends EventEmitter
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
-    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
-    public services: ISharedObjectServices;
+    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockComponentRuntime");
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
+    private _local = false;
+
+    public get local(): boolean {
+        return this._local;
+    }
+
+    public set local(local: boolean) {
+        this._local = local;
+    }
+
     private _disposed = false;
+
     public get disposed() { return this._disposed; }
 
     public dispose(): void {
@@ -352,11 +412,11 @@ export class MockRuntime extends EventEmitter
     }
 
     public isLocal(): boolean {
-        return true;
+        return this.local;
     }
 
     public registerChannel(channel: IChannel): void {
-        channel.connect(this.services);
+        return;
     }
 
     public attach(): void {
@@ -407,10 +467,6 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public notifyPendingMessages(): void {
-        return;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         return;
     }
@@ -447,7 +503,11 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public error(err: any): void { }
+    public raiseContainerWarning(warning: ContainerWarning): void { }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        return;
+    }
 }
 
 /**
@@ -595,7 +655,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         return 0;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 }
 
 /**
@@ -604,12 +664,23 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IObjectStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
-
     public async read(path: string): Promise<string> {
         const content = this.contents[path];
         // Do we have such blob?
         assert(content !== undefined);
         return fromUtf8ToBase64(content);
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return this.contents[path] !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
+        return Object.keys(this.contents)
+            .filter((key) => key.startsWith(path)
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+                && key.split("/").length === pathPartsLength + 1);
     }
 }
 

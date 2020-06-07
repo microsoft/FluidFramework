@@ -22,7 +22,7 @@ export class NpmDepChecker {
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
-    private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "eslint", "mocha-junit-reporter", "mocha", "url-loader", "style-loader"];
+    private readonly dev = ["@fluidframework/build-common", "nyc", "typescript", "eslint", "mocha-junit-reporter", "mocha", "url-loader", "style-loader"];
     private readonly records: DepCheckRecord[] = [];
     private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
     private readonly peerDependencies = new Map<string, string>([["ws", "socket.io-client"], ["@angular/compiler", "@angular/platform-browser-dynamic"]]);

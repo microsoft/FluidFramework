@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import http from "http";
 import { Socket } from "net";
 
 export interface ITrackedHttpServer {
@@ -20,10 +20,12 @@ export function createTrackedServer(port: number, requestListener: http.RequestL
         socket.on("close", () => sockets.delete(socket));
     });
 
-    return { server, sockets, fullyClose() {
-        server.close();
-        sockets.forEach((socket) => socket.destroy());
-    } };
+    return {
+        server, sockets, fullyClose() {
+            server.close();
+            sockets.forEach((socket) => socket.destroy());
+        },
+    };
 }
 export type OnceListenerHandler<T> = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<T>;
 export type OnceListenerResult<T> = Promise<() => Promise<T>>;

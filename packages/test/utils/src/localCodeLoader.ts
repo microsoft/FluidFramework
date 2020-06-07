@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
 import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
     IFluidCodeDetails,
-} from "@microsoft/fluid-container-definitions";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/container-definitions";
+import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 
 // Represents the entry point for a fluid container.
 export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
@@ -67,7 +67,7 @@ export class LocalCodeLoader implements ICodeLoader {
             entryPoint.fluidExport ?? entryPoint;
         const runtimeFactory: IProvideRuntimeFactory =
             factory.IRuntimeFactory ??
-                new ContainerRuntimeFactoryWithDefaultComponent("default", [["default", Promise.resolve(factory)]]);
+            new ContainerRuntimeFactoryWithDefaultComponent("default", [["default", Promise.resolve(factory)]]);
 
         const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
         return fluidModule;

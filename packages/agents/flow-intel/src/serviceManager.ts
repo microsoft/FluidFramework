@@ -4,7 +4,7 @@
  */
 
 import { FlowDocument } from "@fluid-example/webflow";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { ISharedMap } from "@fluidframework/map";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 
@@ -28,7 +28,7 @@ export class IntelligentServicesManager {
     private rateLimiter: RateLimiter | undefined;
     private intelInvoked: boolean = false;
 
-    constructor(private readonly document: FlowDocument, private readonly documentInsights: ISharedMap) {}
+    constructor(private readonly document: FlowDocument, private readonly documentInsights: ISharedMap) { }
 
     /**
      * Registers a new intelligent service

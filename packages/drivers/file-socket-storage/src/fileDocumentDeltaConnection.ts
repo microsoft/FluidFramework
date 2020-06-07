@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -16,7 +15,8 @@ import {
     ISignalMessage,
     ITokenClaims,
     ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
@@ -55,6 +55,10 @@ export class Replayer {
 
     public set currentReplayedOp(op: number) {
         this.currentReplayOp = op;
+    }
+
+    public get ops(): readonly Readonly<ISequencedDocumentMessage>[] {
+        return this.documentStorageService.ops;
     }
 
     /**
@@ -98,7 +102,9 @@ export class Replayer {
     }
 }
 
-export class ReplayFileDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class ReplayFileDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
     /**
      * Mimic the delta connection to replay ops on it.
      *
@@ -121,7 +127,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
-                maxMessageSize:  16 * 1024,
+                maxMessageSize: 16 * 1024,
                 summary: {
                     idleTime: 5000,
                     maxOps: 1000,

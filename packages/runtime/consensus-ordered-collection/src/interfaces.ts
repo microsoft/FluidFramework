@@ -7,8 +7,8 @@ import {
     IComponentRuntime,
     ISharedObjectServices,
     IChannelAttributes,
-} from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
     Release,
@@ -41,7 +41,7 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
 /**
  * Events notifying about addition, acquisition, release and completion of items
  */
-export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents{
+export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
 
     /**
      * Event fires when new item is added to the queue or

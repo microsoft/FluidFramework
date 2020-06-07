@@ -3,29 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITree } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObjectServices } from "@microsoft/fluid-component-runtime-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import assert from "assert";
+import { ITree } from "@fluidframework/protocol-definitions";
+import { IDeltaConnection, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import {
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { SnapshotLegacy } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
-    const documentId = "fakeId";
-    let deltaConnectionFactory: MockDeltaConnectionFactory;
-    let sharedString: SharedString;
-    beforeEach(() => {
-        const runtime = new MockRuntime();
-        deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-        runtime.services = {
-            deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-            objectStorage: new MockStorage(undefined),
-        };
-        runtime.attach();
-    });
-
     describe(".snapshot", () => {
+        const documentId = "fakeId";
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
+        let sharedString: SharedString;
+
+        beforeEach(() => {
+            const componentRuntime = new MockComponentRuntime();
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
+            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+            componentRuntime.attach();
+        });
+
         it("Create and compare snapshot", async () => {
             const insertText = "text";
             const segmentCount = 1000;
@@ -43,7 +47,7 @@ describe("SharedString", () => {
             let subTree = tree.entries[1].value as ITree;
             assert(subTree.entries.length === 2);
             assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "tardis");
+            assert(subTree.entries[1].path === SnapshotLegacy.oldCatchupOps);
 
             await CreateStringAndCompare(tree);
 
@@ -60,19 +64,20 @@ describe("SharedString", () => {
             subTree = tree.entries[1].value as ITree;
             assert(subTree.entries.length === 2);
             assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "tardis");
+            assert(subTree.entries[1].path === SnapshotLegacy.oldCatchupOps);
 
             await CreateStringAndCompare(tree);
         });
 
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-            const runtime = new MockRuntime();
+            const componentRuntime = new MockComponentRuntime();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
             const services: ISharedObjectServices = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
+                deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(tree),
             };
 
-            const sharedString2 = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+            const sharedString2 = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/* branchId */, services);
             await sharedString2.loaded;
@@ -92,6 +97,79 @@ describe("SharedString", () => {
             // This assert relies on the behvaior that replacement for a reversed range
             // will insert at the max end of the range but not delete the range
             assert.equal(sharedString.getText(), "12aaa3");
+        });
+    });
+
+    describe("reconnect", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
+        let sharedString1: SharedString;
+        let sharedString2: SharedString;
+
+        async function createSharedString(
+            id: string,
+            componentRuntime: MockComponentRuntime,
+            deltaConnection: IDeltaConnection,
+        ): Promise<SharedString> {
+            const services: ISharedObjectServices = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            componentRuntime.attach();
+            const sharedString = new SharedString(componentRuntime, id, SharedStringFactory.Attributes);
+            sharedString.connect(services);
+            return sharedString;
+        }
+
+        beforeEach(async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+            // Create first SharedString
+            const runtime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const deltaConnection1 = containerRuntime1.createDeltaConnection();
+            sharedString1 = await createSharedString("sharedString1", runtime1, deltaConnection1);
+
+            // Create second SharedString
+            const runtime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const deltaConnection2 = containerRuntime2.createDeltaConnection();
+            sharedString2 = await createSharedString("sharedString2", runtime2, deltaConnection2);
+        });
+
+        it("can resend unacked ops on reconnection", async () => {
+            // Make couple of changes to the first SharedString.
+            sharedString1.insertText(0, "123");
+            sharedString1.replaceText(2, 3, "aaa");
+
+            // Disconnect and reconnect the first collection.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Process the messages.
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify that the changes were correctly received by the second SharedString
+            assert.equal(sharedString2.getText(), "12aaa");
+        });
+
+        it("can store ops in disconnected state and resend them on reconnection", async () => {
+            // Disconnect the first SharedString.
+            containerRuntime1.connected = false;
+
+            // Make couple of changes to it.
+            sharedString1.insertText(0, "123");
+            sharedString1.replaceText(2, 3, "aaa");
+
+            // Reconnect the first SharedString.
+            containerRuntime1.connected = true;
+
+            // Process the messages.
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify that the changes were correctly received by the second SharedString
+            assert.equal(sharedString2.getText(), "12aaa");
         });
     });
 });

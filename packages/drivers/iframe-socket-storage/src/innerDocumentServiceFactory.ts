@@ -9,10 +9,10 @@ import {
     IUrlResolver,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import * as Comlink from "comlink";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/driver-definitions";
+import Comlink from "comlink";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 import { InnerUrlResolver } from "./innerUrlResolver";
@@ -36,16 +36,16 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         // If innerFactory is created second, the outerFactory will trigger the connection
         const evtListener = (resolve) => {
             create()
-                .then((value)=>{
+                .then((value) => {
                     if (value) {
                         resolve(value);
                     }
                 })
-                .catch(()=>{});
+                .catch(() => { });
         };
 
         const eventP = new Promise<Comlink.Remote<IDocumentServiceFactoryProxy>>(
-            (resolve)=>window.addEventListener("message", () => evtListener(resolve), { once: true }));
+            (resolve) => window.addEventListener("message", () => evtListener(resolve), { once: true }));
 
         // Attempt to connect, does not connect if innerDocumentServiceFactory
         // is created before outerDocumentServiceFactory

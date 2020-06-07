@@ -2,24 +2,19 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import assert from "assert";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedNumberSequence } from "../sharedNumberSequence";
 import { SharedNumberSequenceFactory } from "../sequenceFactory";
 
 describe("SharedNumberSequence", () => {
     const documentId = "fakeId";
-    let deltaConnectionFactory: MockDeltaConnectionFactory;
     let sharedNumberSequence: SharedNumberSequence;
     beforeEach(() => {
-        const runtime = new MockRuntime();
-        deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedNumberSequence = new SharedNumberSequence(runtime, documentId, SharedNumberSequenceFactory.Attributes);
-        runtime.services = {
-            deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-            objectStorage: new MockStorage(undefined),
-        };
-        runtime.attach();
+        const componentRuntime = new MockComponentRuntime();
+        sharedNumberSequence =
+            new SharedNumberSequence(componentRuntime, documentId, SharedNumberSequenceFactory.Attributes);
+        componentRuntime.attach();
     });
 
     describe("getItems", () => {

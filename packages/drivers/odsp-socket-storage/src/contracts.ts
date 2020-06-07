@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
 import { INewFileInfoHeader } from "./odspUtils";
 
-export interface IOdspResolvedUrl extends IResolvedUrlBase {
+export interface IOdspResolvedUrl extends IFluidResolvedUrl {
     type: "fluid";
 
     // URL to send to fluid, contains the documentId and the path
@@ -33,75 +32,8 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
     tokens: {};
 
     fileName: string,
-}
 
-/**
- * Interface for creating/getting/writing blobs to the underlying storage.
- */
-export interface IDocumentStorageManager {
-    /**
-     * Create blob response containing url from a buffer.
-     * @param file - Buffer to create a blob response from.
-     * @returns A blob response.
-     */
-    createBlob(file: Buffer): Promise<api.ICreateBlobResponse>;
-
-    /**
-     * Get the blob for a particular blobid from storage.
-     * @param blobid - Id for the blob.
-     * @returns A blob.
-     */
-    getBlob(blobid: string): Promise<resources.IBlob>;
-
-    /**
-     * Get the content for a particular version id.
-     * @param version - Version for which to get the content.
-     * @param path - Path of the blob
-     * @returns Blobs for the given version id.
-     */
-    getContent(version: api.IVersion, path: string): Promise<resources.IBlob>;
-
-    /**
-     * Get the url for the given blobid.
-     * @param blobid - Id of the blob.
-     */
-    getRawUrl(blobid: string): string;
-
-    /**
-     * Get the snapshot tree for a given version id.
-     * @param version - Id of the snapshot to be read.
-     * @returns ITree for the snapshot.
-     */
-    getTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-
-    /**
-     * Gets a list of versions for the given blobid.
-     * @param blobid - Id of the blob.
-     * @param count - Number of versions requested.
-     */
-    getVersions(blobid: string, count: number): Promise<api.IVersion[]>;
-
-    /**
-     * Writes the snapshot to the underlying storage.
-     * @param tree - Snapshot to write to storage.
-     * @param parents - Parents of the given snapshot.
-     * @param message - Message to be saved with the snapshot.
-     */
-    write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion>;
-
-    /**
-     * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
-     * is returned as a result of this call.
-     */
-    uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle>;
-
-    uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
-
-    /**
-     * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
-     * server has deleted it this call may result in a broken promise.
-     */
-    downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
+    summarizer: boolean,
 }
 
 /**
@@ -169,7 +101,10 @@ export interface IDocumentStorageGetVersionsResponse {
 
 export interface IDocumentStorageVersion {
     message: string;
-    sha: string;
+
+    // Interchangeable, one of them is there.
+    sha?: string;
+    id?: string;
 }
 
 export enum SnapshotType {
@@ -182,11 +117,12 @@ export interface ISnapshotRequest {
     message: string;
     sequenceNumber: number;
     entries: SnapshotTreeEntry[];
-    sha: string | null;
 }
 
 export interface ISnapshotResponse {
-    sha: string;
+    // Interchangeable, one of them is there.
+    sha?: string;
+    id?: string;
 }
 
 export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEntry;
@@ -224,17 +160,85 @@ export interface ISnapshotCommit {
     content: string;
 }
 
+export interface ITreeEntry {
+    // Interchangeable, one of them is there.
+    id?: string;
+    sha?: string;
+
+    path: string;
+    type: "commit" | "tree" | "blob";
+}
+
+export interface ITree {
+    entries: ITreeEntry[];
+
+    // Interchangeable, one of them is there.
+    id?: string;
+    sha?: string;
+
+    sequenceNumber: number;
+}
+
+export function idFromSpoEntry(tree: { id?: string; sha?: string; }) {
+    return (tree.sha ?? tree.id) as string;
+}
+
+/**
+ * Blob content
+ */
+export interface IBlob {
+    content: string;
+    encoding: string;
+    id?: string;
+    sha?: string;
+    size: number;
+}
+
 export interface IOdspSnapshot {
     id: string;
-    sha: string;
-    trees?: resources.ITree[];
-    tree?: resources.ITree;
-    blobs: resources.IBlob[];
-    ops: ISequencedDeltaOpMessage[];
+    sha?: string;
+    trees: ITree[];
+    blobs?: IBlob[];
+    ops?: ISequencedDeltaOpMessage[];
 }
 
 export interface IOdspUrlParts {
     site: string;
     drive: string;
     item: string;
+}
+
+export interface ISnapshotOptions {
+    blobs?: number;
+    deltas?: number;
+    channels?: number;
+    /*
+     * Maximum Data size (in bytes)
+     * If specified, SPO will fail snapshot request with 413 error (see ErrorType.snapshotTooBig)
+     * if snapshot is bigger in size than specified limit.
+     */
+    mds?: number;
+}
+
+export interface HostStoragePolicy {
+    snapshotOptions?: ISnapshotOptions;
+
+    /**
+     * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
+     * Container loads from whatever comes first in such case.
+     * Snapshot fetched from storage is pushed to cache in either case.
+     * If set to false, driver will first consult with cache. Only on cache miss (cache does not
+     * return snapshot), driver will fetch snapshot from storage (and push it to cache), otherwise
+     * it will load from cache and not reach out to storage.
+     * Passing true results in faster loads and keeping cache more current, but it increases bandwidth consumption.
+     */
+    concurrentSnapshotFetch?: boolean;
+}
+
+/**
+ * Same as HostStoragePolicy, but adds options that are internal to runtime.
+ * All fields should be optional.
+ */
+export interface HostStoragePolicyInternal extends HostStoragePolicy {
+    summarizerClient?: boolean;
 }

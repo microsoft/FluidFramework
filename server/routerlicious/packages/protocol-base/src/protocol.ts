@@ -16,7 +16,7 @@ import {
     ISummaryTree,
     MessageType,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Quorum } from "./quorum";
 
 export interface IScribeProtocolState {

@@ -6,14 +6,13 @@
 import { EventEmitter } from "events";
 import {
     ITelemetryLogger,
-} from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/common-definitions";
 
 export function raiseConnectedEvent(
     logger: ITelemetryLogger,
     emitter: EventEmitter,
     connected: boolean,
-    clientId?: string)
-{
+    clientId?: string) {
     try {
         if (connected) {
             emitter.emit("connected", clientId);

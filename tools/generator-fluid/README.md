@@ -1,41 +1,69 @@
 # Fluid Generator
 
-Use this tool to quickly bootstrap a dice roller component example.
+Use this tool to quickly bootstrap a new Fluid component package based on the example [Dice Roller](//TODO:Add-Link) Fluid component.
 
-To set up, do these one time steps.
+## Basic Getting Started
+
+To get started ensure you have [Node.js](https://nodejs.org/en/) and [Git](https://git-scm.com/) installed, then install [Yeoman](https://yeoman.io/) and the [Fluid Component Generator](https://www.npmjs.com/package/generator-fluid) with:
+
 ````bash
-npm install -g yo
-
-cd {path_to_cloned_repo}/tools/generator-fluid
-
-npm install
-npm link
+npm install -g yo generator-fluid
 ````
 
+You're now set up to bootstrap a new Fluid component at any time. Run the generator and fill out a few prompts.
 
-You can now bootstrap a new dice roller component at any time. 
-
-Go back to your root directory and try it now.
 ````bash
-yo @microsoft/fluid
+yo fluid
+
+# Congratulations! You've started building your own Fluid Component.
+# Let us help you get set up. Once we're done, you can start coding!
+# ? What the name of your new component? helloworld
+# ? Which view framework would you like to start with? (Use arrow keys) react
+# > react
+#   vanillaJS
+
+cd helloworld
+
+npm start
 ````
+
 ---
 
-## npm or Azure DevOps auth issues and private npm repositories
+## Directory Structure
 
-If you run into an auth issue. Please set up your .npmrc.
+When running the generator a new folder will be generated with the following contents:
 
-#### Windows
-https://www.npmjs.com/package/vsts-npm-auth
+```text
+.
+├── src
+|   ├── component.ts(x)            // Fluid Component source code
+|   ├── index.ts                   // Export file
+|   ├── interface.ts               // Model Interface Definition
+|   └── view.ts(x)                 // View Logic
+├── .gitignore                     // Ignore dist and node_modules
+├── jest-puppeteer.config.js       // jest-puppeteer configuration
+├── jest.config.js                 // Jest configuration
+├── package.json                   // Package manifest
+├── README.md                      // Description of your component's functionality
+├── tsconfig.json                  // TypeScript configuration
+└── webpack.config.js              // Webpack configuration
+```
 
-#### Mac
+## Advanced (Command Line)
 
-* Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed
-* Click the "Connect to feed" link
-* Choose "npm"
-* And then follow the steps provided. This involves adding a new line to your project's .npmrc as well as storing credentials to access the private repo on your machine.
-* IMPORTANT NOTE: VSTS will give you a line like this to put into your .npmrc file:
-  `registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/`
-  
-  You need to prefix that line with @prague in order to not force all package lookups to go to the Prague/Fluid registry. The line you add to your .npmrc file should actually look like this:
-  `@prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/`
+```text
+Usage:
+  yo fluid [<componentName>] [options]
+
+Options:
+  -h,    --help           # Print the generator's options and usage
+         --skip-cache     # Do not remember prompt answers               Default: false
+         --skip-install   # Do not automatically install dependencies    Default: false
+         --force-install  # Fail on install dependencies error           Default: false
+         --ask-answered   # Show prompts for already configured options  Default: false
+  -r,    --react          # Sets React as Default View
+  -v,    --vanilla        # Sets VanillaJS as Default View
+
+Arguments:
+  componentName  # Defines the Component Name  Type: String  Required: false
+```

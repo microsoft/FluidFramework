@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IBlob } from "@microsoft/fluid-protocol-definitions";
-import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
+import assert from "assert";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IBlob } from "@fluidframework/protocol-definitions";
+import { MockComponentRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
 
 import * as map from "../";
 import { SharedMap } from "../map";
@@ -16,13 +16,15 @@ describe("Routerlicious", () => {
         let rootMap: map.ISharedMap;
         let testMap: map.ISharedMap;
         let factory: map.MapFactory;
-        let runtime: MockRuntime;
+        let componentRuntime: MockComponentRuntime;
 
         beforeEach(async () => {
-            runtime = new MockRuntime();
+            componentRuntime = new MockComponentRuntime();
+            // We only want to test local state of the DDS.
+            componentRuntime.local = true;
             factory = new map.MapFactory();
-            rootMap = factory.create(runtime, "root");
-            testMap = factory.create(runtime, "test");
+            rootMap = factory.create(componentRuntime, "root");
+            testMap = factory.create(componentRuntime, "test");
         });
 
         describe("SharedMap", () => {
@@ -94,14 +96,14 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to set a shared object handle as a key", () => {
-                    const subMap = factory.create(runtime, "subMap");
+                    const subMap = factory.create(componentRuntime, "subMap");
                     sharedMap.set("test", subMap.handle);
                     assert.equal(sharedMap.get<IComponentHandle>("test").path, subMap.id);
                 });
 
                 it("Should be able to set and retrieve a plain object with nested handles", async () => {
-                    const subMap = factory.create(runtime, "subMap");
-                    const subMap2 = factory.create(runtime, "subMap2");
+                    const subMap = factory.create(componentRuntime, "subMap");
+                    const subMap2 = factory.create(componentRuntime, "subMap2");
                     const containingObject = {
                         subMapHandle: subMap.handle,
                         nestedObj: {
@@ -154,7 +156,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("first", "second");
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", "sixth");
-                    const subMap = factory.create(runtime, "subMap");
+                    const subMap = factory.create(componentRuntime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
                     const parsed = (sharedMap as SharedMap).getSerializableStorage();
@@ -175,7 +177,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", undefined);
                     assert.ok(sharedMap.has("fifth"));
-                    const subMap = factory.create(runtime, "subMap");
+                    const subMap = factory.create(componentRuntime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
                     const parsed = (sharedMap as SharedMap).getSerializableStorage();
@@ -192,8 +194,8 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should serialize an object with nested handles", async () => {
-                    const subMap = factory.create(runtime, "subMap");
-                    const subMap2 = factory.create(runtime, "subMap2");
+                    const subMap = factory.create(componentRuntime, "subMap");
+                    const subMap2 = factory.create(componentRuntime, "subMap2");
                     const containingObject = {
                         subMapHandle: subMap.handle,
                         nestedObj: {
@@ -218,7 +220,9 @@ describe("Routerlicious", () => {
                     });
 
                     const services = new MockSharedObjectServices({ header: content });
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
+                    const map2 = await factory.load(
+                        componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    );
                     assert(map2.get("key") === "value");
                 });
 
@@ -240,7 +244,9 @@ describe("Routerlicious", () => {
                     assert((tree.entries[0].value as IBlob).contents === content);
 
                     const services = new MockSharedObjectServices({ header: content });
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
+                    const map2 = await factory.load(
+                        componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    );
                     assert(map2.get("key") === "value");
                 });
 
@@ -288,7 +294,9 @@ describe("Routerlicious", () => {
                         header: content1,
                         blob0: content2,
                     });
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
+                    const map2 = await factory.load(
+                        componentRuntime, "mapId", services, "branchId", factory.attributes,
+                    );
                     assert(map2.get("key") === "value");
                     assert(map2.get("longValue") === longString);
                     assert(map2.get("zzz") === "the end");

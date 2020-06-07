@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -22,17 +22,17 @@ import {
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
-} from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/merge-tree";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import {
     SharedString,
     SharedStringSegment,
     SequenceMaintenanceEvent,
     SequenceDeltaEvent,
-} from "@microsoft/fluid-sequence";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+} from "@fluidframework/sequence";
+import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IComponentHTMLOptions } from "@fluidframework/view-interfaces";
+import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";

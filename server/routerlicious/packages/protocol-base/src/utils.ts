@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType } from "@microsoft/fluid-protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 
 /**
  * Check if the string is a system message type, which includes
@@ -15,8 +15,8 @@ import { MessageType } from "@microsoft/fluid-protocol-definitions";
  */
 export const isSystemType = (type: string) => (
     type === MessageType.RemoteHelp ||
-        type === MessageType.Integrate ||
-        type === MessageType.ClientJoin ||
-        type === MessageType.ClientLeave ||
-        type === MessageType.Fork ||
-        type === MessageType.Control);
+    type === MessageType.Integrate ||
+    type === MessageType.ClientJoin ||
+    type === MessageType.ClientLeave ||
+    type === MessageType.Fork ||
+    type === MessageType.Control);

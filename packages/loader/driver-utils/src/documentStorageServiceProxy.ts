@@ -6,7 +6,7 @@
 import {
     IDocumentStorageService,
     ISummaryContext,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -14,14 +14,14 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public get repositoryUrl(): string {
         return this.internalStorageService.repositoryUrl;
     }
 
-    constructor(protected readonly internalStorageService: IDocumentStorageService) {}
+    constructor(protected readonly internalStorageService: IDocumentStorageService) { }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         return this.internalStorageService.getSnapshotTree(version);

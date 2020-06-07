@@ -1,0 +1,37 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-eslint-config-fluid pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - common/build/eslint-config-fluid
+    - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - common/build/eslint-config-fluid
+    - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    buildDirectory: common/build/eslint-config-fluid
+    taskBuild: false
+    taskBuildDocs: false
+    taskLint: false
+    taskTest: false

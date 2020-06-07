@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
-import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -191,7 +191,7 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
     getWorkingDirectory(relativePath: string): IDirectory;
 }
 
-export interface ISharedDirectoryEvents extends ISharedObjectEvents{
+export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
@@ -216,7 +216,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-export interface ISharedMapEvents extends ISharedObjectEvents{
+export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,

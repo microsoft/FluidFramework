@@ -5,8 +5,8 @@
 
 /* eslint-disable no-shadow */
 
-import * as assert from "assert";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
+import assert from "assert";
+import { TestHost } from "@fluidframework/local-test-utils";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
 import { TableDocumentType } from "../componentTypes";

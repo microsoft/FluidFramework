@@ -2,7 +2,7 @@
 
 # Auspkn
 
-Provides REST API access to npm package contents
+Provides REST API access to npm package contents, targeting the internal Azure DevOps (VSTS) feed endpoint today.
 
 ## NPM Repositories
 

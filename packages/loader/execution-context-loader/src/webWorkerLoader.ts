@@ -8,10 +8,10 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import * as Comlink from "comlink";
+} from "@fluidframework/component-core-interfaces";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
 interface IProxyLoader extends ILoader, IComponentRunnable {

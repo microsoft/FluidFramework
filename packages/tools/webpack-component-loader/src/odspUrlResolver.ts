@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
+import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { OdspDriverUrlResolver, createOdspUrl } from "@fluidframework/odsp-driver";
 import {
     IOdspAuthRequestInfo,
     getDriveItemByRootFileName,
-} from "@microsoft/fluid-odsp-utils";
+} from "@fluidframework/odsp-utils";
 
 export class OdspUrlResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
@@ -18,13 +18,13 @@ export class OdspUrlResolver implements IUrlResolver {
     constructor(
         private readonly server: string,
         private readonly authRequestInfo: IOdspAuthRequestInfo,
-    ) {}
+    ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         try {
             const resolvedUrl = await this.driverUrlResolver.resolve(request);
             return resolvedUrl;
-        } catch (error) {}
+        } catch (error) { }
 
         const url = new URL(request.url);
 
@@ -44,7 +44,7 @@ export class OdspUrlResolver implements IUrlResolver {
             item,
             "");
 
-        return this.driverUrlResolver.resolve({ url: odspUrl });
+        return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
 
     private formFilePath(documentId: string): string {
@@ -52,8 +52,8 @@ export class OdspUrlResolver implements IUrlResolver {
         return `/r11s/${encoded}`;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        return this.driverUrlResolver.requestUrl(resolvedUrl, request);
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

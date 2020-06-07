@@ -6,7 +6,7 @@
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -29,10 +29,9 @@ export function create(
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any): Router {
-
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(new WhiteList());
+    const codeResolver = new SemVerCdnCodeResolver();
 
     router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
@@ -74,13 +73,13 @@ export function create(
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (fullTree && fullTree.code) {
-                return webLoader.resolve(fullTree.code);
+                return codeResolver.resolveCodeDetails(fullTree.code);
             }
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
 
-            const details = extractDetails(chaincode);
+            const details = extractPackageIdentifierDetails(chaincode);
             const codeDetails = {
                 config: {
                     [`@${details.scope}:cdn`]: cdn,
@@ -88,7 +87,7 @@ export function create(
                 package: chaincode,
             };
 
-            return webLoader.resolve(codeDetails);
+            return codeResolver.resolveCodeDetails(codeDetails);
         });
 
         const scriptsP = pkgP.then((pkg) => {
@@ -97,8 +96,7 @@ export function create(
                 return [];
             }
 
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
+            const umd = pkg.resolvedPackage?.fluid?.browser?.umd;
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!umd) {
                 return [];
@@ -109,8 +107,8 @@ export function create(
                 scripts: umd.files.map(
                     (script, index) => {
                         return {
-                            id: `${pkg.parsed.name}-${index}`,
-                            url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
+                            id: `${pkg.resolvedPackageCacheId}-${index}`,
+                            url: script,
                         };
                     }),
             };

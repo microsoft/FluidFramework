@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory } from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
-} from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
-import * as nconf from "nconf";
+} from "@fluidframework/server-test-utils";
+import assert from "assert";
+import nconf from "nconf";
 import * as plugin from "../../document-router";
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
@@ -119,6 +119,12 @@ describe("document-router", () => {
             });
 
             it("Should skip future messages after lambda exception (in future will dead letter queue)", async () => {
+                let contextErrored = false;
+
+                context.on("error", () => {
+                    contextErrored = true;
+                });
+
                 const totalMessages = 10;
 
                 for (let i = 0; i < totalMessages; i++) {
@@ -138,6 +144,8 @@ describe("document-router", () => {
                 }
                 await context.waitForOffset(kafkaMessageFactory.getHeadOffset("test"));
                 assert.equal(testModule.factories[0].lambdas[0].handleCalls, totalMessages + 1);
+
+                assert.ok(contextErrored);
             });
 
             it("Should emit an error on lambda creation exception", async () => {

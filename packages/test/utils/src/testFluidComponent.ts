@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { SharedMap, ISharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IRequest, IResponse, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
+import { SharedMap, ISharedMap } from "@fluidframework/map";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { ITestFluidComponent } from "./interfaces";
 
 /**
@@ -129,7 +129,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
      * ISharedObjectFactory. Entries with string ids are passed to the component so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: Iterable<[string | undefined, ISharedObjectFactory]>) {}
+    constructor(private readonly factoryEntries: Iterable<[string | undefined, ISharedObjectFactory]>) { }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();

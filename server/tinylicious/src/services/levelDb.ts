@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
 import * as level from "level";
 import * as sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
@@ -12,7 +12,6 @@ import { Collection, ICollectionProperty } from "./levelDbCollection";
 const MaxFetchSize = 2000;
 
 export class LevelDb extends EventEmitter implements IDb {
-
     private readonly db: any;
 
     constructor(private readonly path: string) {

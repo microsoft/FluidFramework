@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     MapKernel,
-} from "@microsoft/fluid-map";
+} from "@fluidframework/map";
 import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@microsoft/fluid-component-runtime-definitions";
+} from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObjectFactory, SharedObject,
-} from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/shared-object-base";
 import { debug } from "./debug";
 import {
     Interval,
@@ -116,7 +116,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel = new MapKernel(
             runtime,
             this.handle,
-            (op) => this.submitLocalMessage(op),
+            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             [new IntervalCollectionValueType()],
         );
     }
@@ -163,11 +163,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    protected onConnect(pending: any[]) {
-        debug(`${this.id} is now connected`);
-        for (const message of pending) {
-            this.intervalMapKernel.trySubmitMessage(message);
-        }
+    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
     protected onDisconnect() {
@@ -183,9 +180,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel.populate(data);
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local);
+            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
         }
     }
 

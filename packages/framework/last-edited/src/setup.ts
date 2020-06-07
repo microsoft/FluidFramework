@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { ISequencedDocumentMessage, MessageType, IQuorum } from "@microsoft/fluid-protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ISequencedDocumentMessage, MessageType, IQuorum } from "@fluidframework/protocol-definitions";
+import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 const schedulerId = "_schdeuler";

@@ -12,7 +12,7 @@ import {
     MongoManager,
     ILogger,
     IWebSocket,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     ITestDbFactory,
     TestDbFactory,
@@ -23,8 +23,8 @@ import {
     DebugLogger,
     TestHistorian,
     TestTaskMessageSender,
-} from "@microsoft/fluid-server-test-utils";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+} from "@fluidframework/server-test-utils";
+import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import {
     IClient,
     IConnected,
@@ -32,7 +32,7 @@ import {
     ISequencedDocumentMessage,
     IContentMessage,
     ISignalMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
@@ -142,7 +142,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             versions: protocolVersions,
         };
 
-        const connectedP =  new Promise<IConnected>((resolve, reject) => {
+        const connectedP = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];

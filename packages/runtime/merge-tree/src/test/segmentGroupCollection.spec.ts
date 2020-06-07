@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { ISegment } from "../mergeTree";
 import { TextSegment } from "../textSegment";
 
@@ -21,7 +21,7 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".enqueue", () => {
-        const  segmentGroup = { segments: [] };
+        const segmentGroup = { segments: [] };
         segment.segmentGroups.enqueue(segmentGroup);
 
         assert(!segment.segmentGroups.empty);
@@ -47,7 +47,7 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".clear", () => {
-        const  segmentGroup = { segments: [] };
+        const segmentGroup = { segments: [] };
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {

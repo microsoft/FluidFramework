@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     createInsertSegmentOp,
-    IMergeTreeOp,
+    IMergeTreeDeltaOp,
     Marker,
     MergeTreeDeltaType,
     ReferenceType,
     reservedRangeLabelsKey,
     TextSegment,
     ISegment,
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 import {
     SharedString,
     // ISequenceDeltaRange,
     SequenceDeltaEvent,
     ISequenceDeltaRange,
-} from "@microsoft/fluid-sequence";
+} from "@fluidframework/sequence";
 import {
     Schema, Fragment, Slice,
     // Slice,
@@ -372,8 +372,8 @@ export function sliceToGroupOps(
     schema: Schema,
     insert?: number,
     gapDistance?: number,
-): IMergeTreeOp[] {
-    const ops = new Array<IMergeTreeOp>();
+): IMergeTreeDeltaOp[] {
+    const ops = new Array<IMergeTreeDeltaOp>();
 
     const sliceOpenStart = slice.openStart || 0;
     const sliceOpenEnd = slice.openEnd || 0;
@@ -401,7 +401,7 @@ function sliceToGroupOpsInternal(
     openStart: number,
     openEnd: number,
     from: number,
-    ops: IMergeTreeOp[],
+    ops: IMergeTreeDeltaOp[],
     insert?: number,
     gapDistance?: number,
 ) {

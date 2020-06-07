@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
@@ -18,7 +18,7 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
      * Creates a LastEditedTracker object.
      * @param sharedSummaryBlock - The shared summary block where the details will be stored.
      */
-    constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) {}
+    constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) { }
 
     public get IComponentLastEditedTracker() {
         return this;

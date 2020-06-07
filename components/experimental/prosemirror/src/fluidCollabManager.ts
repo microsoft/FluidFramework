@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { ILoader } from "@microsoft/fluid-container-definitions";
+import { ILoader } from "@fluidframework/container-definitions";
 import {
     createGroupOp,
     createRemoveRangeOp,
-    IMergeTreeOp,
     Marker,
     ReferenceType,
     TextSegment,
-} from "@microsoft/fluid-merge-tree";
-import { SharedString } from "@microsoft/fluid-sequence";
+    IMergeTreeDeltaOp,
+} from "@fluidframework/merge-tree";
+import { SharedString } from "@fluidframework/sequence";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
 import { MenuItem } from "prosemirror-menu";
 import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
@@ -32,7 +32,7 @@ import { create as createSelection } from "./selection";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import OrderedMap = require("orderedmap");
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideRichTextEditor>> { }
 }
@@ -332,7 +332,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;
 
-                    let operations = new Array<IMergeTreeOp>();
+                    let operations = new Array<IMergeTreeDeltaOp>();
 
                     if (from !== to) {
                         const removeOp = createRemoveRangeOp(from, to);
@@ -354,7 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
                 }
 
                 case "replaceAround": {
-                    let operations = new Array<IMergeTreeOp>();
+                    let operations = new Array<IMergeTreeDeltaOp>();
 
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;

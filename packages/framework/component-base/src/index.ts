@@ -6,4 +6,3 @@
 export * from "./sharedcomponent";
 export * from "./sharedcomponentfactory";
 export * from "./runtimefactory";
-export * from "./lazycomponentfactory";

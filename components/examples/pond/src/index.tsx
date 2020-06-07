@@ -7,11 +7,11 @@ import {
     ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SharedDirectory } from "@microsoft/fluid-map";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedDirectory } from "@fluidframework/map";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     Clicker,
@@ -89,7 +89,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
         const index = document.createElement("h4");
         index.innerText =
-      `dotted borders denote different component boundaries`;
+            `dotted borders denote different component boundaries`;
 
         div.appendChild(title);
         div.appendChild(index);

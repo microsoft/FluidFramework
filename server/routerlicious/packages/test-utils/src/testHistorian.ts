@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile } from "@microsoft/fluid-common-utils";
-import * as git from "@microsoft/fluid-gitresources";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
-import * as uuid from "uuid";
+import { gitHashFile } from "@fluidframework/common-utils";
+import * as git from "@fluidframework/gitresources";
+import { IHistorian } from "@fluidframework/server-services-client";
+import { ICollection, IDb } from "@fluidframework/server-services-core";
+import uuid from "uuid";
 import { TestDb } from "./testCollection";
 
 export class TestHistorian implements IHistorian {
@@ -136,9 +136,11 @@ export class TestHistorian implements IHistorian {
             return {
                 ref: val.value.ref,
                 url: "",
-                object: { sha: val.value.sha,
+                object: {
+                    sha: val.value.sha,
                     url: "",
-                    type: "" },
+                    type: "",
+                },
             };
         }
     }
@@ -195,7 +197,7 @@ export class TestHistorian implements IHistorian {
                 tree: [],
             };
             for (const entry of tree.value.tree) {
-                const entryPath: string = path  === "" ? entry.path : `${path}/${entry.path}`;
+                const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
                 const treeEntry: git.ITreeEntry = {
                     mode: entry.mode,
                     path: entryPath,

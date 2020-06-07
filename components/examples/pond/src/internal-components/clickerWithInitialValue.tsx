@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { Counter, CounterValueType, ISharedDirectory } from "@fluidframework/map";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import React from "react";
+import ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -42,7 +42,7 @@ export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitial
         // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
-            <CounterReactView directory={this.root}counter={counter} />,
+            <CounterReactView directory={this.root} counter={counter} />,
             div,
         );
     }

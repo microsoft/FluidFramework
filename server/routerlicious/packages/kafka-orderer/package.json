@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-server-kafka-orderer",
-  "version": "0.1006.0",
+  "name": "@fluidframework/server-kafka-orderer",
+  "version": "0.1007.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -15,21 +15,23 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.1006.0",
-    "@microsoft/fluid-server-services-core": "^0.1006.0",
-    "@types/node": "^10.14.6"
+    "@fluidframework/protocol-definitions": "^0.1007.0",
+    "@fluidframework/server-services-core": "^0.1007.0",
+    "@types/node": "^10.17.24"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -39,6 +41,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

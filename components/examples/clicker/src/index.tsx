@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { ITask } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedCounter } from "@fluidframework/counter";
+import { ITask } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import React from "react";
+import ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
+
+const counterKey = "counter";
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -21,18 +24,19 @@ export const ClickerName = pkg.name as string;
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    private _counter: SharedCounter | undefined;
+
     /**
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("clicks", CounterValueType.Name, 0);
-        if (!this.runtime.connected) {
-            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
-        }
-        this.setupAgent();
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(counterKey, counter.handle);
     }
 
-    protected async componentInitializingFromExisting() {
+    protected async componentHasInitialized() {
+        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        this._counter = await counterHandle.get();
         this.setupAgent();
     }
 
@@ -42,10 +46,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-    // Get our counter object that we set in initialize and pass it in to the view.
-        const counter = this.root.get("clicks");
+        // Get our counter object that we set in initialize and pass it in to the view.
         ReactDOM.render(
-            <CounterReactView counter={counter} />,
+            <CounterReactView counter={this.counter} />,
             div,
         );
         return div;
@@ -54,10 +57,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     // #endregion IComponentHTMLView
 
     public setupAgent() {
-        const counter: Counter = this.root.get("clicks");
         const agentTask: ITask = {
             id: "agent",
-            instance: new ClickerAgent(counter),
+            instance: new ClickerAgent(this.counter),
         };
         this.taskManager.register(agentTask);
         this.taskManager.pick(this.url, "agent", true).then(() => {
@@ -66,12 +68,19 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
             console.log(err);
         });
     }
+
+    private get counter() {
+        if (this._counter === undefined) {
+            throw new Error("Counter not initialized");
+        }
+        return this._counter;
+    }
 }
 
 // ----- REACT STUFF -----
 
 interface CounterProps {
-    counter: Counter;
+    counter: SharedCounter;
 }
 
 interface CounterState {
@@ -110,7 +119,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
     ClickerName,
     Clicker,
-    [],
+    [SharedCounter.getFactory()],
     {},
 );
 

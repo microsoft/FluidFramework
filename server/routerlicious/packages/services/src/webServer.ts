@@ -6,7 +6,7 @@
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import * as socketIo from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;

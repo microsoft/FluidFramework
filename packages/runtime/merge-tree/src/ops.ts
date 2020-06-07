@@ -102,11 +102,13 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.GROUP;
-    ops: IMergeTreeOp[];
+    ops: IMergeTreeDeltaOp[];
 }
 
 export interface IJSONSegment {
     props?: Record<string, any>;
 }
 
-export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
+
+export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

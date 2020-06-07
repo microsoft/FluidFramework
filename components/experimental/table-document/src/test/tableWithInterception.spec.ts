@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
-import { PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import assert from "assert";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
+import { PropertySet } from "@fluidframework/merge-tree";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableDocumentType } from "../componentTypes";
@@ -72,7 +72,7 @@ describe("Table Document with Interception", () => {
             );
 
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             const container = await initializeLocalContainer(id, loader, codeDetails);
 
             const response = await container.request({ url: "default" });

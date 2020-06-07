@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { SharedString } from "@fluidframework/sequence";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedString.

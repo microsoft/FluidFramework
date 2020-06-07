@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaMessageFactory, TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { Provider } from "nconf";
 import { Partition } from "../../kafka-service/partition";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
@@ -21,7 +21,7 @@ function verifyClose(
         partition.on("error", (error, restart) => {
             // Clients can either send an explicit value for the error or a boolean indicating whether
             // or not there should have been an error
-            if (typeof(expectedError) === "boolean") {
+            if (typeof (expectedError) === "boolean") {
                 assert(expectedError ? error : !error);
             } else {
                 assert.equal(error, expectedError);

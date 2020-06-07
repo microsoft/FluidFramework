@@ -11,21 +11,21 @@ import {
     IProvideComponentHandle,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-component-runtime-definitions";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IDirectory } from "@microsoft/fluid-map";
+} from "@fluidframework/component-core-interfaces";
+import { AsyncComponentProvider, ComponentKey } from "@fluidframework/synthesize";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IDirectory } from "@fluidframework/map";
 import { v4 as uuid } from "uuid";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
-import { IEvent } from "@microsoft/fluid-common-definitions";
+import { EventForwarder } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<P extends IComponent = object> {
     readonly runtime: IComponentRuntime,
     readonly context: IComponentContext,
-    readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>,
+    readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>,
 }
 
 /**
@@ -37,10 +37,9 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
-export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent= IEvent>
+export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends EventForwarder<E>
-    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
-{
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -61,7 +60,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      *
      * To define providers set IComponent interfaces in the generic O type for your Component
      */
-    protected readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>;
+    protected readonly providers: AsyncComponentProvider<ComponentKey<P>, ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }
 

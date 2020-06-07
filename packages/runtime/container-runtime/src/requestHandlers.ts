@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentLoadable, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
+import { IComponent, IComponentLoadable, IResponse } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser } from "./requestParser";
 
 /**
@@ -13,7 +13,7 @@ import { RequestParser } from "./requestParser";
  * the route, or fulling the specific request.
  */
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
-=> Promise<IResponse | undefined>;
+    => Promise<IResponse | undefined>;
 
 export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {

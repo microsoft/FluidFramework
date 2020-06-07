@@ -9,9 +9,9 @@ import {
     IMergeTreeAnnotateMsg,
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
-    IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
+    IMergeTreeDeltaOp,
 } from "./ops";
 import { PropertySet } from "./properties";
 
@@ -98,7 +98,7 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
  * @param pos - The position to insert the register contents at
  * @param register - The name of the register to insert the value of
  */
-export function createInsertFromRegisterOp(pos: number,  register: string): IMergeTreeInsertMsg {
+export function createInsertFromRegisterOp(pos: number, register: string): IMergeTreeInsertMsg {
     return {
         pos1: pos,
         register,
@@ -126,7 +126,7 @@ export function createInsertToRegisterOp(start: number, end: number, register: s
  * @param ops - The ops to group
  */
 export function createGroupOp(
-    ... ops: IMergeTreeOp[]): IMergeTreeGroupMsg {
+    ...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
     return {
         ops,
         type: MergeTreeDeltaType.GROUP,

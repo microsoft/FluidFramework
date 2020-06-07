@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { CreateNewHeader, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import assert from "assert";
+import { CreateNewHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IUser } from "@fluidframework/protocol-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
@@ -45,11 +45,9 @@ describe("Insecure Url Resolver Test", () => {
     it("Test RequestUrl for a component", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const componentId = "component";
-        const response = await resolver.requestUrl(resolvedUrl, { url: componentId });
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, componentId);
 
-        assert.equal(response.status, "200", "Status code should ve 200");
-        assert.equal(response.mimeType, "text/plain", "Mime type should be text/plain");
         const compUrl = `${hostUrl}/${tenantId}/${fileName}/${componentId}`;
-        assert.equal(response.value, compUrl, "Url should match");
+        assert.equal(response, compUrl, "Url should match");
     });
 });

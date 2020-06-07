@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IObjectStorageService } from "@microsoft/fluid-component-runtime-definitions";
-import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
-import { IBlob, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
+import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private readonly tree: ITree) {
@@ -14,6 +15,15 @@ export class LocalChannelStorageService implements IObjectStorageService {
     public async read(path: string): Promise<string> {
         const contents = this.readSync(path);
         return contents !== undefined ? Promise.resolve(contents) : Promise.reject("Not found");
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        const contents = this.readSync(path);
+        return contents !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        return listBlobsAtTreePath(this.tree, path);
     }
 
     /**

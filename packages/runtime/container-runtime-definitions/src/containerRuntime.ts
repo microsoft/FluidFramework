@@ -5,14 +5,15 @@
 
 import {
     IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -20,16 +21,16 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
     IContainerRuntimeBase,
     IComponentRuntimeChannel,
     IComponentContext,
     IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideContainerRuntime>> { }
 }
@@ -60,7 +61,7 @@ export interface IContainerRuntime extends
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly submitFn: (type: MessageType, contents: any) => number;
+    readonly submitFn: (type: MessageType, contents: any, localOpMetadata: unknown) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
@@ -110,7 +111,7 @@ export interface IContainerRuntime extends
     /**
      * Used to raise an unrecoverable error on the runtime.
      */
-    error(err: any): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
@@ -133,4 +134,10 @@ export interface IContainerRuntime extends
      * False if the container is attached to storage.
      */
     isLocal(): boolean;
+
+    /**
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     */
+    getAbsoluteUrl(relativeUrl: string): Promise<string>;
 }

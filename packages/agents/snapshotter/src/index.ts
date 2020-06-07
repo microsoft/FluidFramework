@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { Snapshotter } from "./snapshotter";
 
 export function run(runtime: ContainerRuntime) {

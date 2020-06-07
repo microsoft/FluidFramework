@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     createOdspUrl,
     OdspDriverUrlResolver,
     isSpoUrl,
     isOdcUrl,
     getOdspUrlParts,
-} from "@microsoft/fluid-odsp-driver";
+} from "@fluidframework/odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
@@ -23,15 +23,15 @@ export class OdspUrlResolver implements IUrlResolver {
             }
             const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
             const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
-            return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
+            return odspDriverUrlResolver.resolve({ url: urlToBeResolved, headers: request.headers });
         }
         return undefined;
     }
 
-    public async requestUrl(
+    public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
-        request: IRequest,
-    ): Promise<IResponse> {
+        relativeUrl: string,
+    ): Promise<string> {
         throw new Error("Not implmented");
     }
 }

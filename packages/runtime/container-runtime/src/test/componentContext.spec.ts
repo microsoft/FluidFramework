@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { BlobCacheStorageService } from "@fluidframework/driver-utils";
+import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IComponentRuntimeChannel,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-} from "@microsoft/fluid-runtime-definitions";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { SummaryTracker } from "@fluidframework/runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { BlobCacheStorageService } from "../blobCacheStorageService";
 
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
@@ -43,7 +43,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
         });
 
@@ -59,7 +59,7 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockRuntime());
+            localComponentContext.bindRuntime(new MockComponentRuntime());
             const attachMessage = localComponentContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -106,7 +106,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registryWithSubRegistries,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
@@ -119,7 +119,7 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockRuntime());
+            localComponentContext.bindRuntime(new MockComponentRuntime());
 
             const attachMessage = localComponentContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -147,7 +147,8 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
             factory.IComponentFactory = factory;
-            factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
+            factory.instantiateComponent =
+                (context: IComponentContext) => { context.bindRuntime(new MockComponentRuntime()); };
             const registry: { [key: string]: any } = {};
             registry.IComponentRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
@@ -155,7 +156,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
         });
 
@@ -175,9 +176,9 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                snapshotTree,
+                Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );
@@ -207,9 +208,9 @@ describe("Component Context Tests", () => {
 
             remotedComponentContext = new RemotedComponentContext(
                 "Test1",
-                snapshotTree,
+                Promise.resolve(snapshotTree),
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
             );

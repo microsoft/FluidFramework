@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IAgentUploader } from "@microsoft/fluid-server-services-core";
+import { IAgentUploader } from "@fluidframework/server-services-core";
 import * as minio from "minio";
 
 async function bucketExists(minioClient, bucket: string) {

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { PropertySet } from "@microsoft/fluid-merge-tree";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { PropertySet } from "@fluidframework/merge-tree";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
 
 describe("Shared String with Interception", () => {
@@ -19,7 +19,6 @@ describe("Shared String with Interception", () => {
     describe("Simple User Attribution", () => {
         const userAttributes = { userId: "Fake User" };
         const documentId = "fakeId";
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
         let componentContext: IComponentContext;
 
@@ -44,14 +43,9 @@ describe("Shared String with Interception", () => {
         }
 
         beforeEach(() => {
-            const runtime = new MockRuntime();
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-            runtime.services = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-                objectStorage: new MockStorage(undefined),
-            };
-            runtime.attach();
+            const componentRuntime = new MockComponentRuntime();
+            sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
+            componentRuntime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
@@ -76,7 +70,7 @@ describe("Shared String with Interception", () => {
             // Annotate the shared string.
             const colorProps = { color: "green" };
             sharedStringWithInterception.annotateRange(0, 5, colorProps);
-            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps,...userAttributes }, 2);
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps, ...userAttributes }, 2);
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared string", async () => {

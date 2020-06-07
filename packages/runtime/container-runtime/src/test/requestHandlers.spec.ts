@@ -4,9 +4,9 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-import * as assert from "assert";
-import { IContainerRuntime } from "@microsoft/fluid-container-runtime-definitions";
-import { IComponentRuntimeChannel } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { componentRuntimeRequestHandler, createComponentResponse } from "../requestHandlers";
 import { RequestParser } from "../requestParser";
 
@@ -14,7 +14,7 @@ describe("RequestParser", () => {
     describe("componentRuntimeRequestHandler", () => {
         it("Empty request", async () => {
             const requestParser = new RequestParser({ url: "/" });
-            const runtime: IContainerRuntime = { } as IContainerRuntime;
+            const runtime: IContainerRuntime = {} as IContainerRuntime;
             const response = await componentRuntimeRequestHandler(requestParser, runtime);
             assert.equal(response, undefined);
         });

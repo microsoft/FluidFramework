@@ -9,7 +9,7 @@
  */
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import * as React from "react";
+import React from "react";
 
 import { EmbeddedComponentWrapper } from "../library";
 import { ITabsDataModel } from "./dataModel";
@@ -77,7 +77,9 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 <TabList>
                     {tabs}
                     <li className="react-tabs__tab">
-                        <NewTabButton createTab={this.createNewTab} components={this.props.dataModel.getNewTabTypes()}/>
+                        <NewTabButton
+                            createTab={this.createNewTab}
+                            components={this.props.dataModel.getNewTabTypes()} />
                     </li>
                 </TabList>
                 <div style={{ position: "relative" }}>

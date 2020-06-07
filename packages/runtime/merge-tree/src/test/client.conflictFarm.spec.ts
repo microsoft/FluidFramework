@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as random from "random-js";
+import random from "random-js";
 import {
     annotateRange,
     doOverRange,
@@ -59,8 +59,8 @@ describe("MergeTree.Client", () => {
     // tslint:disable: mocha-no-side-effect-code
     const opts =
         defaultOptions;
-        // debugOptions;
-        // longOptions;
+    // debugOptions;
+    // longOptions;
 
     // Generate a list of single character client names, support up to 69 clients
     const clientNames: string[] = [];
@@ -105,7 +105,7 @@ describe("MergeTree.Client", () => {
                     opts);
             }
         })
-        // tslint:disable-next-line: mocha-no-side-effect-code
+            // tslint:disable-next-line: mocha-no-side-effect-code
             .timeout(30 * 1000);
     });
 });

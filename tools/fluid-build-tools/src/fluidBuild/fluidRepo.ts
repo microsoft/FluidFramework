@@ -21,8 +21,8 @@ export interface IPackageMatchedOptions {
 };
 
 export class FluidRepo extends FluidRepoBase {
-    constructor(resolvedRoot: string) {
-        super(resolvedRoot);
+    constructor(resolvedRoot: string, services: boolean) {
+        super(resolvedRoot, services);
     }
 
     public async clean() {

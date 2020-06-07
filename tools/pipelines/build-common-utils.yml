@@ -1,0 +1,33 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-common-utils pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - common/lib/common-utils
+    - tools/pipelines/build-common-utils.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - common/lib/common-utils
+    - tools/pipelines/build-common-utils.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    buildDirectory: common/lib/common-utils

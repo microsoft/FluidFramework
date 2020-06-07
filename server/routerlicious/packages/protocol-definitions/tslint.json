@@ -1,8 +1,0 @@
-{
-    "extends": ["@microsoft/fluid-build-common/tslint.json"],
-    "rules": {
-        "no-console": false,
-        "no-suspicious-comment": false,
-        "prefer-method-signature": false
-    }
-}

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -14,16 +14,16 @@ import {
     IFluidResolvedUrl,
     IUrlResolver,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     IVersion,
     ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import * as Comlink from "comlink";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/protocol-definitions";
+import { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import Comlink from "comlink";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -199,10 +199,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
         const pendingOps: { type: string, args: any[] }[] = [];
+        // we downcast here to remove typing, which make generically
+        // forwarding all events easier
+        const deltaStreamEventProvider = deltaStream as IEventProvider<IEvent>;
 
         for (const event of socketIOEvents) {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            deltaStream.on(event, async (...args: any[]) => pendingOps.push({ type: event, args }));
+            deltaStreamEventProvider.on(event, (...args: any[]) => pendingOps.push({ type: event, args }));
         }
 
         const connection = {
@@ -243,8 +245,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
                 deltaStream.removeAllListeners();
 
                 for (const event of socketIOEvents) {
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    deltaStream.on(event, async (...args: any[]) => { await innerProxy.forwardEvent(event, args); });
+                    deltaStreamEventProvider.on(
+                        event,
+                        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                        async (...args: any[]) => { await innerProxy.forwardEvent(event, args); });
                 }
             });
 

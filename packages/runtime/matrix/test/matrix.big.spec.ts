@@ -6,9 +6,9 @@
 import "mocha";
 
 import { v4 as uuid } from "uuid";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { Serializable } from "@microsoft/fluid-runtime-definitions";
-import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { TestHost } from "@fluidframework/local-test-utils";
+import { Serializable } from "@fluidframework/component-runtime-definitions";
+import { MockEmptyDeltaConnection, MockComponentRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { expectSize, setCorners, checkCorners } from "./utils";
 
@@ -25,15 +25,17 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
-    const runtime = new MockRuntime();
-    const matrix2 = new SharedMatrix<T>(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+    const componentRuntime = new MockComponentRuntime();
+    // We only want to test local state of the DDS.
+    componentRuntime.local = true;
+    const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage
     });
 
     // Vet that the 2nd matrix is equivalent to the original.
-    expectSize(matrix2, matrix.numRows, matrix.numCols);
+    expectSize(matrix2, matrix.rowCount, matrix.colCount);
 
     return matrix2;
 }
@@ -99,8 +101,8 @@ describe("Big Matrix", function () {
             await sync();
             checkCorners(matrix2);
 
-            matrix1.removeRows(0, matrix1.numRows);
-            matrix1.removeCols(0, matrix1.numCols);
+            matrix1.removeRows(0, matrix1.rowCount);
+            matrix1.removeCols(0, matrix1.colCount);
             expectSize(matrix1, 0, 0);
 
             await sync();

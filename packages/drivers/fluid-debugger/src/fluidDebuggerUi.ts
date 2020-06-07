@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ISequencedDocumentMessage, IVersion } from "@microsoft/fluid-protocol-definitions";
+import assert from "assert";
+import { ISequencedDocumentMessage, IVersion } from "@fluidframework/protocol-definitions";
 
 export interface IDebuggerUI {
     /**
@@ -262,7 +262,7 @@ export class DebuggerUI {
 
     public disableNextOpButton(disable: boolean) {
         assert(this.buttonOps);
-        this.buttonOps!.disabled = disable;
+        this.buttonOps.disabled = disable;
     }
 
     public updateNextOpText(ops: ISequencedDocumentMessage[]) {

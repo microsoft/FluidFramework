@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IKafkaResources, KafkaRunnerFactory } from "@microsoft/fluid-server-lambdas-driver";
-import * as utils from "@microsoft/fluid-server-services-utils";
-import * as commander from "commander";
+import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
+import * as utils from "@fluidframework/server-services-utils";
+import commander from "commander";
+import nconf from "nconf";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => utils.IResourcesFactory<IKafkaResources>,
-    configFile: string) {
+    configOrPath: nconf.Provider | string) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const packageDetails = require("../../package.json");
 
@@ -23,7 +24,7 @@ export function execute(
                 factoryFn(name, lambda),
                 new KafkaRunnerFactory(),
                 name,
-                configFile);
+                configOrPath);
         })
         .parse(process.argv);
 

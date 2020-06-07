@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { SharedCell } from "@microsoft/fluid-cell";
-import { SharedMap } from "@microsoft/fluid-map";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
+import { SharedMap } from "@fluidframework/map";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
 import { TodoItem } from "../TodoItem";
 
 import { TodoName } from "./Todo";

@@ -10,14 +10,14 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+} from "@fluidframework/component-core-interfaces";
+import { ComponentHandle } from "@fluidframework/component-runtime";
+import { IComponentLayout } from "@fluidframework/framework-experimental";
+import { IComponentCollection } from "@fluidframework/framework-interfaces";
+import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
+import { SharedComponent, SharedComponentFactory } from "@fluidframework/component-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
@@ -54,8 +54,7 @@ export class ImageComponent implements
 }
 
 export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection
-{
+    IComponentLoadable, IComponentRouter, IComponentCollection {
     private static readonly factory = new SharedComponentFactory(
         "@fluid-example/image-collection",
         ImageCollection,
