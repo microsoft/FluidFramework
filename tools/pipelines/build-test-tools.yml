@@ -9,7 +9,6 @@ trigger:
   branches:
     include:
     - master
-    - release/*
   paths:
     include:
     - tools/test-tools
@@ -20,7 +19,6 @@ pr:
   branches:
     include:
     - master
-    - release/*
   paths:
     include:
     - tools/test-tools
