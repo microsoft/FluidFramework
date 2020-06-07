@@ -12,13 +12,13 @@ describe("Snapshots", function() {
 
     it("Stress Test", async () => {
         await processContent(Mode.Stress).catch((error) => {
-            assert.fail("Stress test fails with error");
+            assert.fail(`Stress test fails with error + ${error}`);
         });
     });
 
     it("Backward Compat", async () => {
         await processContent(Mode.Compare).catch((error) => {
-            assert.fail("Back compat test fails with error");
+            assert.fail(`Back compat test fails with error + ${error}`);
         });
     });
 });

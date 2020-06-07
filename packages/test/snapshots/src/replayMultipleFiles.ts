@@ -39,12 +39,8 @@ export async function processOneFile(args: IWorkerArgs) {
     await new ReplayTool(replayArgs).Go()
         .then((success) => {
             if (!success) {
-                process.exit(1);
+                throw new Error("Error count was greater than 0");
             }
-        })
-        .catch((error) => {
-            console.error(`ERRORS: ${error}`);
-            process.exit(2);
         });
 }
 
