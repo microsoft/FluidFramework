@@ -16,7 +16,9 @@ describe("Snapshots", function() {
         });
     });
 
-    it.skip("Backward Compat", async () => {
-        return processContent(Mode.Compare);
+    it("Backward Compat", async () => {
+        await processContent(Mode.Compare).catch((error) => {
+            assert.fail("Back compat test fails with error");
+        });
     });
 });
