@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# build-common-definitions pipeline
+# build-generator-fluid pipeline
 
 name: $(Build.BuildId)
 
@@ -12,8 +12,8 @@ trigger:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
-    - tools/pipelines/build-common-definitions.yml
+    - tools/generator-fluid
+    - tools/pipelines/build-generator-fluid.yml
     - tools/pipelines/templates/build-npm-package.yml
 
 pr:
@@ -23,12 +23,15 @@ pr:
     - release/*
   paths:
     include:
-    - common/lib/common-definitions
-    - tools/pipelines/build-common-definitions.yml
+    - tools/generator-fluid
+    - tools/pipelines/build-generator-fluid.yml
     - tools/pipelines/templates/build-npm-package.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
-    buildDirectory: common/lib/common-definitions
-    taskTest: false
+    buildDirectory: tools/generator-fluid
+    taskBuild: false
+    taskBuildDocs: false
+    taskLint: false
+    taskTest: test
