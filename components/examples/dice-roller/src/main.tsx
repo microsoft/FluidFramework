@@ -30,13 +30,9 @@ interface IDiceRollerModelProps {
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
 export class DiceRoller extends PrimedComponent implements IDiceRollerModelProps, IComponentHTMLView {
-    public static get ComponentName() {
-        return "@fluid-example/dice-roller";
-    }
+    public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
-    public get IComponentHTMLView() {
-        return this;
-    }
+    public get IComponentHTMLView() { return this; }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -51,7 +47,6 @@ export class DiceRoller extends PrimedComponent implements IDiceRollerModelProps
     /**
      * Render the dice.
      */
-
     public render(div: HTMLElement) {
         ReactDOM.render(
             React.createElement(() => {
