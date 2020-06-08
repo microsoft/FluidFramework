@@ -23,9 +23,9 @@ import { isEquivalent } from "./utils";
  * @param runtime - The component runtime used to create the SharedMap objects
  * @param viewState - A representative view state object
  * @param fluidState - A representative Fluid state object
- * @param viewToFluid - The view to fluid conversion state mapping
  * @param fluidToView - The fluid to view state conversion mapping
- */
+ * @param viewToFluid - The view to fluid conversion state mapping
+ * */
 export function generateComponentSchema<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,

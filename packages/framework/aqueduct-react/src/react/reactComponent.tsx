@@ -16,7 +16,6 @@ import {
 } from "./interface";
 import {
     syncStateAndRoot,
-    getFluidStateFromRoot,
     initializeState,
 } from "./helpers";
 
@@ -84,15 +83,6 @@ export abstract class FluidReactComponent<
         if (isLocal) {
             super.setState(newState);
         } else if (fromRootUpdate) {
-            const fluidState = getFluidStateFromRoot(
-                this._syncedStateId,
-                this._root,
-                this._dataProps.fluidComponentMap,
-                this._fluidToView,
-            );
-            if (fluidState === undefined) {
-                throw Error("Attempted to set state before fluid state was initialized");
-            }
             syncStateAndRoot(
                 true,
                 this._syncedStateId,
@@ -101,7 +91,6 @@ export abstract class FluidReactComponent<
                 newState,
                 this._setStateFromRoot.bind(this),
                 this._dataProps.fluidComponentMap,
-                fluidState,
                 this._fluidToView,
                 this._viewToFluid,
             );
@@ -119,15 +108,6 @@ export abstract class FluidReactComponent<
             this._initQueue = this._initQueue.then(() => this.setState(newState));
             return;
         }
-        const fluidState = getFluidStateFromRoot(
-            this._syncedStateId,
-            this._root,
-            this._dataProps.fluidComponentMap,
-            this._fluidToView,
-        );
-        if (fluidState === undefined) {
-            throw Error("Attempted to set state before fluid state was initialized");
-        }
         syncStateAndRoot(
             false,
             this._syncedStateId,
@@ -136,7 +116,6 @@ export abstract class FluidReactComponent<
             newState,
             this._setStateFromRoot.bind(this),
             this._dataProps.fluidComponentMap,
-            fluidState,
             this._fluidToView,
             this._viewToFluid,
         );

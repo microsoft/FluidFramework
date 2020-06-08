@@ -24,15 +24,15 @@ import { syncStateAndRoot } from "./syncStateAndRoot";
  * @param fromRootUpdate - Is the update from a local state update or from one triggered by the root
  * @param syncedStateId - Unique ID for this synced component's state
  * @param root - The shared directory this component shared state is stored on
+ * @param runtime - The component runtime
  * @param viewState - The current view state
  * @param setState - Callback to update the react view state
  * @param rootCallback - The callback that will be triggered when the root value for the components passed in changes
- * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
- * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param fluidState - The Fluid state to store on to the root, after converting components to their handles
- */
+ * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
+ * respective converters
+  */
 export const updateStateAndComponentMap = async <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
@@ -62,7 +62,6 @@ export const updateStateAndComponentMap = async <
         viewState,
         setState,
         fluidComponentMap,
-        fluidState,
         fluidToView,
         viewToFluid,
     ),
@@ -74,7 +73,6 @@ export const updateStateAndComponentMap = async <
     viewState,
     setState,
     fluidComponentMap,
-    fluidState,
     fluidToView,
     viewToFluid,
 ));

@@ -125,7 +125,6 @@ export function useReducerFluid<
                     result.state.viewState,
                     setState,
                     combinedDispatchDataProps.fluidComponentMap,
-                    result.state.fluidState,
                     fluidToView,
                     viewToFluid,
                 );
@@ -172,7 +171,6 @@ export function useReducerFluid<
                         result.state.viewState,
                         setState,
                         combinedDispatchDataProps.fluidComponentMap,
-                        result.state.fluidState || combinedDispatchState.fluidState,
                         fluidToView,
                         viewToFluid,
                     );
@@ -190,7 +188,6 @@ export function useReducerFluid<
                 combinedDispatchState.viewState,
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
-                combinedDispatchState.fluidState,
                 fluidToView,
                 viewToFluid,
             ));
@@ -207,7 +204,6 @@ export function useReducerFluid<
                 combinedDispatchState.viewState,
                 setState,
                 combinedDispatchDataProps.fluidComponentMap,
-                combinedDispatchState.fluidState,
                 fluidToView,
                 viewToFluid,
             );

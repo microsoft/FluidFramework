@@ -14,7 +14,6 @@ import {
 import {
     initializeState,
     syncStateAndRoot,
-    getFluidStateFromRoot,
 } from "./helpers";
 
 /**
@@ -59,15 +58,6 @@ export function useStateFluid<
         if (isLocal) {
             reactSetState(newCombinedState);
         } else {
-            const fluidState = getFluidStateFromRoot(
-                syncedStateId,
-                root,
-                dataProps.fluidComponentMap,
-                fluidToView,
-            );
-            if (fluidState === undefined) {
-                throw Error("Attempted to set state before fluid state was initialized");
-            }
             syncStateAndRoot(
                 fromRootUpdate,
                 syncedStateId,
@@ -76,7 +66,6 @@ export function useStateFluid<
                 newCombinedState,
                 reactSetState,
                 dataProps.fluidComponentMap,
-                fluidState,
                 fluidToView,
                 viewToFluid,
             );

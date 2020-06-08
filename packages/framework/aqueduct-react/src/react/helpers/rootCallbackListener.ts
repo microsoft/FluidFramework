@@ -23,11 +23,12 @@ import { getFluidStateFromRoot } from ".";
  * @param fluidComponentMap - A map of component handle paths to their respective components
  * @param syncedStateId - Unique ID for this synced component's state
  * @param root - The shared directory this component shared state is stored on
+ * @param runtime - The component runtime
  * @param state - The current view state
  * @param setState - Callback to update the react view state
- * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
- * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
 export const rootCallbackListener = <
@@ -66,7 +67,6 @@ export const rootCallbackListener = <
             state,
             setState,
             fluidComponentMap,
-            currentFluidState,
             fluidToView,
             viewToFluid,
         );

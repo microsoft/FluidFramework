@@ -21,7 +21,8 @@ export interface ICombinedState<
      */
     viewState: SV,
     /**
-     * The fluid state that will be used to update the synced values in the state
+     * The fluid state that will be used to update the synced values in the state. This will no longer
+     * be undefined after initialization
      */
     fluidState?: SF,
     /**
@@ -154,6 +155,9 @@ export interface IViewConverter<
      * If this is a special fluid DDS object type (i.e. counter) on the root, specify that here
      */
     sharedObjectCreate?: (runtime: IComponentRuntime) => SharedObject
+    /**
+     * List of events fired on this component that will trigger a state update
+     */
     listenedEvents?: string[];
     /**
      * If this Fluid object is stored on the root under a different key than the name of this Fluid state

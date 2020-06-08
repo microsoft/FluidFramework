@@ -22,6 +22,20 @@ import {
 } from ".";
 import { IFluidSchema, IFluidComponent } from "..";
 
+/**
+ * Initialize the stored state on the root and dynamically generate the schemas
+ * that will be used for all future operations
+ * @param syncedStateId - Unique ID for this synced component's state
+ * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ * @param dataProps - Contains the runtime and fluidComponentMap to create and store DDS'
+ * @param state - Current view state
+ * @param setState - Callback to update view state
+ * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
+ * respective converters
+ * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ */
 export async function initializeState<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState

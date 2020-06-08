@@ -12,7 +12,11 @@ import { FluidComponentMap, IViewConverter } from "../interface";
  * Store the Fluid state onto the shared root
  * @param syncedStateId - Unique ID to use for storing the component's synced state in the root
  * @param root - The root shared directory that will be used to store the synced state
- * @param fluidState - The Fluid state to store on to the root, after converting components to their handles
+ * @param runtime - The component runtime
+ * @param componentMap - A map of component handle paths to their respective components
+ * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
+ * respective converters
+ * @param newFluidState - The Fluid state to store on to the root, after converting components to their handles
  */
 export function setFluidStateToRoot<SV,SF>(
     syncedStateId: string,

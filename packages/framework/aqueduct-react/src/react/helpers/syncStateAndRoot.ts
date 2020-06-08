@@ -34,7 +34,6 @@ import { getComponentSchemaFromRoot } from "./getComponentSchemaFromRoot";
  * respective converters
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param fluidState - The Fluid state to store on to the root, after converting components to their handles
  */
 export function syncStateAndRoot<
     SV extends IFluidFunctionalComponentViewState,
@@ -47,7 +46,6 @@ export function syncStateAndRoot<
     viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
     fluidComponentMap: FluidComponentMap,
-    fluidState: SF,
     fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,
 ) {
