@@ -58,9 +58,10 @@ export function generateComponentSchema<
             if (viewValue !== Object(viewValue)) {
                 // This value is a primitive
                 if (viewType !== fluidType) {
-                    throw new Error(
-                        "Unmatched primitive view keys found with no root converter",
-                    );
+                    console.warn(
+                        "Unmatched primitive view keys found with no root converter. Be careful with" +
+                        "this usage as some Fluid values might be undefined when the schema is generated." + 
+                        "Supply a root converter here for deterministic behavior");
                 } else {
                     // It is an object but the types match
                     viewMatchingMap.set(viewKey, false);
