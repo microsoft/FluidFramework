@@ -19,10 +19,8 @@ import { syncStateAndRoot, initializeState } from "./helpers";
 /**
  * A react component with a root, initial props, and a root to state mapping
  */
-export abstract class FluidReactComponent<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
-> extends React.Component<IFluidProps<SV, SF>, SV> {
+export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
     private readonly _dataProps: IFluidDataProps;

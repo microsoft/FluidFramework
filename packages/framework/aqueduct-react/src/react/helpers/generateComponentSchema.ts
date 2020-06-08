@@ -151,7 +151,7 @@ export function generateComponentSchema<
                             } else {
                                 throw new Error(
                                     "Unmatched handle fluid keys found with no view converter," +
-                                        "yet corresponding view key has a component",
+                                    "yet corresponding view key has a component",
                                 );
                             }
                         } else {

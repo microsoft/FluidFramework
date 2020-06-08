@@ -19,7 +19,7 @@ export interface ICombinedState<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The react view state that will be used for all view renders
      */
@@ -78,7 +78,7 @@ export interface IFluidReducer<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     [key: string]:
     | FluidAsyncStateUpdateFunction<SV, SF, C>
     | FluidStateUpdateFunction<SV, SF, C>
@@ -98,7 +98,7 @@ export interface IFluidSelector<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     [key: string]:
     | FluidSelectorFunction<SV, SF, C>
     | FluidComponentSelectorFunction<SV, SF, C>;
@@ -110,7 +110,7 @@ export interface IFluidSelector<
 export interface IFluidProps<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> {
+    > {
     /**
      *  Unique ID to use for storing the component's synced state in the root
      */
@@ -147,7 +147,7 @@ export interface IFluidProps<
 export interface IViewConverter<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> {
+    > {
     /**
      * The corresponding value key within the view state type, only needs to be provided if different
      * from the fluidKey
@@ -185,7 +185,7 @@ export interface IViewConverter<
 export interface IFluidConverter<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> {
+    > {
     /**
      * The corresponding value within the Fluid state
      */
@@ -288,7 +288,7 @@ export interface FluidEffectFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The function defined here will take the combined state and apply some
      * logic that does not cause any state update changes
@@ -312,7 +312,7 @@ export interface FluidAsyncEffectFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      *  The function defined here will take the combined state and apply some
      * async logic that does not cause any state update changes
@@ -339,7 +339,7 @@ export interface FluidStateUpdateFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The function defined here will take the combined state and update either
      * the fluid state, the view state, or both. The new combined state and any new component handles
@@ -367,7 +367,7 @@ export interface FluidAsyncStateUpdateFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The function defined here will take the combined state and update either
      * the fluid state, the view state, or both in an async manner. The new combined state and any new
@@ -386,7 +386,7 @@ export interface IStateUpdateResult<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The new view and fluid states that were updated by the function
      */
@@ -414,7 +414,7 @@ export interface FluidSelectorFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * The function defined here will take the combined state and return
      * to the view any values that it needs  from other values/components that were passed
@@ -436,7 +436,7 @@ export interface FluidComponentSelectorFunction<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * Similar to the FluidSelectorFunction's function but this also takes in a
      * handle if we need to fetch a component from the fluidComponentMap
@@ -477,7 +477,7 @@ export interface IFluidReducerProps<
     A extends IFluidReducer<SV, SF, C>,
     B,
     C extends IFluidDataProps
-> {
+    > {
     /**
      * Unique ID to use for storing the component's synced state in the root
      */
@@ -536,7 +536,7 @@ export interface IFluidContextProps<SV, SF, C> extends IFluidProps<SV, SF> {
 export interface FluidContextState<
     SV extends IFluidFunctionalComponentViewState,
     C
-> {
+    > {
     /**
      * The view state
      */
@@ -557,13 +557,13 @@ export interface FluidContextState<
 export interface FluidContext<
     SV extends IFluidFunctionalComponentViewState,
     C
-> {
+    > {
     /**
      * The context provider component that will give the FluidContextState to
      * its children
      */
     Provider: React.ProviderExoticComponent<
-    React.ProviderProps<FluidContextState<SV, C>>
+        React.ProviderProps<FluidContextState<SV, C>>
     >;
     /**
      * The context consumer that allows children to use the FluidContextState

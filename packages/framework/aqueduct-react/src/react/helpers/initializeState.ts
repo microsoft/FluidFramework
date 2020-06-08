@@ -41,21 +41,19 @@ import { IFluidSchema, IFluidComponent } from "..";
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  */
-export async function initializeState<
-    SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState
->(
-    syncedStateId,
-    root: ISharedDirectory,
-    dataProps: IFluidDataProps,
-    state: SV,
-    setState: (
-        newState: SV,
-        fromRootUpdate?: boolean,
-        isLocal?: boolean
-    ) => void,
-    fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid?: ViewToFluidMap<SV, SF>,
+export async function initializeState<SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState>(
+        syncedStateId,
+        root: ISharedDirectory,
+        dataProps: IFluidDataProps,
+        state: SV,
+        setState: (
+            newState: SV,
+            fromRootUpdate?: boolean,
+            isLocal?: boolean
+        ) => void,
+        fluidToView: FluidToViewMap<SV, SF>,
+        viewToFluid?: ViewToFluidMap<SV, SF>,
 ): Promise<void> {
     let unlistenedComponentHandles: IComponentHandle[] = [];
     let storedFluidStateHandle = root.get<IComponentHandle>(
