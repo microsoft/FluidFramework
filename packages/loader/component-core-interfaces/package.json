@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/component-core-interfaces",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Fluid component interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/framework-experimental",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "Experimental definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.4",
-    "@fluidframework/runtime-definitions": "^0.19.4"
+    "@fluidframework/component-core-interfaces": "^0.19.5",
+    "@fluidframework/runtime-definitions": "^0.19.5"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",

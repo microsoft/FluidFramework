@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/experimental-creation-driver";
-export const pkgVersion = "0.19.4";
+export const pkgVersion = "0.19.5";

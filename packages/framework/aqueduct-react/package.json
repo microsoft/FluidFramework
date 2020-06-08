@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/aqueduct-react",
-  "version": "0.19.4",
+  "version": "0.19.5",
   "description": "React support for the Aqueduct framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.19.4",
-    "@fluidframework/sequence": "^0.19.4",
+    "@fluidframework/map": "^0.19.5",
+    "@fluidframework/sequence": "^0.19.5",
     "react": "^16.10.2"
   },
   "devDependencies": {
