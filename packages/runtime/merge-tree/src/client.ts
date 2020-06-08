@@ -665,6 +665,53 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
+    /**
+     * During reconnect, we must find the positions to pending segments
+     * relative to other pending segments. This methonds computes that
+     * position relative to a localSeq. Pending segments above the localSeq
+     * will be ignored.
+     *
+     * @param segment - The segment to find the position for
+     * @param localSeq - The localSeq to find the position of the segment at
+     */
+    public findReconnectionPostition(segment: ISegment, localSeq: number) {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        let segmentPosition = 0;
+        /*
+            Walk the segments up to the current segment, and calculate it's
+            position taking into account local segments that were modified,
+            after the current segment.
+
+            TODO: Consider embeding this infomation into the tree for
+            more efficent look up of pending segment positions.
+        */
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            if (seg !== segment) {
+                // segment isn't local, so count it
+                if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
+                    if (seg.removedSeq === undefined) {
+                        segmentPosition += seg.cachedLength;
+                        return true;
+                    }
+                }
+                // segment is remove locally before this op, so skip it
+                if (seg.localRemovedSeq !== undefined) {
+                    if (seg.localRemovedSeq <= localSeq) {
+                        return true;
+                    }
+                }
+                // segment is inserted locally before this op, so count it
+                if (seg.localSeq <= localSeq) {
+                    segmentPosition += seg.cachedLength;
+                    return true;
+                }
+                return true;
+            }
+            return false;
+        });
+        return segmentPosition;
+    }
+
     private resetPendingDeltaToOps(
         resetOp: ops.IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
@@ -674,42 +721,11 @@ export class Client {
 
         const opList = [];
         for (const segment of segmentGroup.segments) {
-            assert(segmentGroup === segment.segmentGroups.dequeue(),
+            const segmentSeg = segment.segmentGroups.dequeue();
+            assert(segmentGroup === segmentSeg,
                 "Segment group not at head of segment pending queue");
+            const segmentPosition = this.findReconnectionPostition(segment, segmentGroup.localSeq);
             let newOp: ops.IMergeTreeDeltaOp;
-            let segmentPosition = 0;
-            /*
-                Walk the segments up to the current segment, and calculate it's
-                position taking into account local segments that were modified,
-                after the current segment.
-
-                TODO: Consider embeding this infomation into the tree for
-                more efficent look up of pending segment positions.
-            */
-            this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-                if (seg !== segment) {
-                    // segment isn't local, so count it
-                    if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
-                        if (seg.removedSeq === undefined) {
-                            segmentPosition += seg.cachedLength;
-                            return true;
-                        }
-                    }
-                    // segment is remove locally before this op, so skip it
-                    if (seg.localRemovedSeq !== undefined) {
-                        if (seg.localRemovedSeq <= segmentGroup.localSeq) {
-                            return true;
-                        }
-                    }
-                    // segment is inserted locally before this op, so count it
-                    if (seg.localSeq <= segmentGroup.localSeq) {
-                        segmentPosition += seg.cachedLength;
-                        return true;
-                    }
-                    return true;
-                }
-                return false;
-            });
             switch (resetOp.type) {
                 case ops.MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager.hasPendingProperties(), "Segment has no pending properties");
