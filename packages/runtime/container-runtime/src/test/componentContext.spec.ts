@@ -43,7 +43,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
         });
 
@@ -106,7 +106,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registryWithSubRegistries,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
             localComponentContext = new LocalComponentContext(
                 "Test1",
@@ -156,7 +156,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IComponentRegistry: registry,
-                notifyComponentInstantiated: (c) => {},
+                notifyComponentInstantiated: (c) => { },
             } as ContainerRuntime;
         });
 

@@ -65,7 +65,6 @@ export class SnapshotLegacy {
     logger: ITelemetryLogger;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
-        // eslint-disable-next-line @typescript-eslint/indent
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }

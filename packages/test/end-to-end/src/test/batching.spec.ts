@@ -41,11 +41,11 @@ describe("Batching", () => {
     async function createContainer(): Promise<Container> {
         const factory = new TestFluidComponentFactory(
             [
-                [ map1Id, SharedMap.getFactory() ],
-                [ map2Id, SharedMap.getFactory() ],
+                [map1Id, SharedMap.getFactory()],
+                [map2Id, SharedMap.getFactory()],
             ],
         );
-        const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 

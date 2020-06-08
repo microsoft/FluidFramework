@@ -44,12 +44,12 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentInternalRegistry,
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
-        (pkg: string, props?: any) => Promise<T>,
+            (pkg: string, props?: any) => Promise<T>,
         private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
             id: string,
             directory: IDirectory,
             getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
-        Promise<T | undefined>,
+            Promise<T | undefined>,
     ) {
         super();
 

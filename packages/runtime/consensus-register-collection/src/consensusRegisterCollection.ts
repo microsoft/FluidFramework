@@ -224,7 +224,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected registerCore() {}
+    protected registerCore() { }
 
     protected onDisconnect() {
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);

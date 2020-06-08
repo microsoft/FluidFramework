@@ -75,7 +75,7 @@
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@types/compression": "0.0.35",
     "@types/connect-ensure-login": "^0.1.4",
     "@types/connect-redis": "0.0.7",

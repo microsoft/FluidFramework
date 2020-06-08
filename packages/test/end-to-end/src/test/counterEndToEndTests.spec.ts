@@ -32,8 +32,8 @@ describe("SharedCounter", () => {
     let sharedCounter3: ISharedCounter;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[ counterId, SharedCounter.getFactory() ]]);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const factory = new TestFluidComponentFactory([[counterId, SharedCounter.getFactory()]]);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -107,7 +107,7 @@ describe("SharedCounter", () => {
         });
 
         it("fires incremented events in 3 containers correctly", async () => {
-            const incrementSteps: {incrementer: ISharedCounter, incrementAmount: number}[] = [
+            const incrementSteps: { incrementer: ISharedCounter, incrementAmount: number }[] = [
                 { incrementer: sharedCounter3, incrementAmount: -1 },
                 { incrementer: sharedCounter1, incrementAmount: 3 },
                 { incrementer: sharedCounter2, incrementAmount: 10 },

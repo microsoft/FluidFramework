@@ -111,8 +111,8 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 export class DeltaManager
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
-        IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        IEventProvider<IDeltaManagerInternalEvents>
+    IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    IEventProvider<IDeltaManagerInternalEvents>
 {
     public get disposed() { return this.isDisposed; }
 

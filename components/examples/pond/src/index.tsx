@@ -76,7 +76,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
         const index = document.createElement("h4");
         index.innerText =
-      `dotted borders denote different component boundaries`;
+            `dotted borders denote different component boundaries`;
 
         div.appendChild(title);
         div.appendChild(index);

@@ -191,7 +191,7 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
     getWorkingDirectory(relativePath: string): IDirectory;
 }
 
-export interface ISharedDirectoryEvents extends ISharedObjectEvents{
+export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
@@ -216,7 +216,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-export interface ISharedMapEvents extends ISharedObjectEvents{
+export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,

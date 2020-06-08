@@ -188,7 +188,7 @@ export class ReplayControllerStatic extends ReplayController {
 
 export class ReplayDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     /**
      * Creates a new delta connection and mimics the delta connection to replay ops on it.
      * @param documentService - The document service to be used to get underlying endpoints.

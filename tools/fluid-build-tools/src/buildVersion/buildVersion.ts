@@ -217,7 +217,7 @@ function main() {
     if (!arg_build_branch) {
         arg_build_branch = process.env["VERSION_BUILDBRANCH"];
         if (!arg_build_branch) {
-            console.error("ERROR: Missing VERSION_BUILD_BRANCH environment variable");
+            console.error("ERROR: Missing VERSION_BUILDBRANCH environment variable");
             process.exit(4);
         }
     }

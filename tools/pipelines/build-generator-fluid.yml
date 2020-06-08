@@ -1,0 +1,38 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# build-generator-fluid pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - refs/tags/generator-fluid_v*
+  paths:
+    include:
+    - tools/generator-fluid
+    - tools/pipelines/build-generator-fluid.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - tools/generator-fluid
+    - tools/pipelines/build-generator-fluid.yml
+    - tools/pipelines/templates/build-npm-package.yml
+
+extends:
+  template: templates/build-npm-package.yml
+  parameters:
+    buildDirectory: tools/generator-fluid
+    taskBuild: false
+    taskBuildDocs: false
+    taskLint: false
+    taskTest: test

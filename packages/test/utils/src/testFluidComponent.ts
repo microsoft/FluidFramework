@@ -129,7 +129,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
      * ISharedObjectFactory. Entries with string ids are passed to the component so that it can create a shared object
      * for it.
      */
-    constructor(private readonly factoryEntries: Iterable<[string | undefined, ISharedObjectFactory]>) {}
+    constructor(private readonly factoryEntries: Iterable<[string | undefined, ISharedObjectFactory]>) { }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();

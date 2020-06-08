@@ -96,7 +96,7 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <DiceRollerView model={ this } />,
+            <DiceRollerView model={this} />,
             div,
         );
     }

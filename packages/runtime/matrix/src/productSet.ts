@@ -225,7 +225,7 @@ const unsafe = {
         return res as UntypedProduct<T>;
     },
 
-    restrict<T extends object, Props extends(keyof T)[]>(object: T, ...props: Props) {
+    restrict<T extends object, Props extends (keyof T)[]>(object: T, ...props: Props) {
         const res: Partial<Restrict<T, Props>> = {};
         for (const key of props) {
             if (Object.prototype.hasOwnProperty.call(object, key)) {
@@ -237,7 +237,7 @@ const unsafe = {
         return res as Restrict<T, Props>;
     },
 
-    fromUntypedProduct<T, Props extends(keyof T)[]>(
+    fromUntypedProduct<T, Props extends (keyof T)[]>(
         productOperations: ProductOperations<Restrict<T, Props>>,
         bounds: UntypedProduct<Restrict<T, Props>>,
         dims: Props,
@@ -250,7 +250,7 @@ const unsafe = {
         return product as Product<Restrict<T, Props>>;
     },
 
-    denseProduct<T, Props extends(keyof T)[]>(dims: Props): Product<Restrict<T, Props>> {
+    denseProduct<T, Props extends (keyof T)[]>(dims: Props): Product<Restrict<T, Props>> {
         const top_inner: { [dim in Props[number]]?: Dense } = {};
         for (const dim of dims) {
             top_inner[dim] = dense;
@@ -392,7 +392,7 @@ function combineChildren<T>(
     return union(left, right, joinBounds(productOperations, left.bounds, right.bounds));
 }
 
-function projectUntyped<T, Props extends(keyof T)[]>(
+function projectUntyped<T, Props extends (keyof T)[]>(
     productOperations: ProductOperations<T>,
     set: UntypedSparseProduct<T>,
     ...dims: Props
@@ -410,7 +410,7 @@ function projectUntyped<T, Props extends(keyof T)[]>(
     return combineChildren(productOperations, lChild, rChild);
 }
 
-export function project<T, Props extends(keyof T)[]>(
+export function project<T, Props extends (keyof T)[]>(
     set: ProductSet<T>,
     ...dims: Props
 ): ProductSet<Restrict<T, Props>> {
@@ -426,7 +426,7 @@ export function project<T, Props extends(keyof T)[]>(
 }
 
 function splitBox<T>(productOperations: ProductOperations<T>, currentBox: Box<T>): Pair<Box<T>> {
-    if (currentBox.children !== undefined) {return currentBox.children;}
+    if (currentBox.children !== undefined) { return currentBox.children; }
     const { box, probabilities } = currentBox;
     let biggestDim: keyof T | undefined;
     let biggestDimKey;
@@ -942,7 +942,7 @@ export function getSubspaces<T>(set: ProductSet<T>) {
     return res;
 }
 
-export function forEachProduct<T, Props extends(keyof T)[]>(
+export function forEachProduct<T, Props extends (keyof T)[]>(
     set: ProductSet<T>,
     f: (product: Product<Restrict<T, Props>>) => boolean,
     ...dims: Props

@@ -13,7 +13,7 @@ export class Lazy<T> {
      * Instantiates an instance of Lazy<T>
      * @param valueGenerator - the function that will generate the value when value is accessed the first time
      */
-    constructor(private readonly valueGenerator: () => T) {}
+    constructor(private readonly valueGenerator: () => T) { }
 
     /**
      * Return true if the value as been generated, otherwise false

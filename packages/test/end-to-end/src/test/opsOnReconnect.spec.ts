@@ -54,10 +54,10 @@ describe("Ops on Reconnect", () => {
     async function createContainer(): Promise<Container> {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
             [
-                [ map1Id, SharedMap.getFactory() ],
-                [ map2Id, SharedMap.getFactory() ],
-                [ directoryId, SharedDirectory.getFactory() ],
-                [ stringId, SharedString.getFactory() ],
+                [map1Id, SharedMap.getFactory()],
+                [map2Id, SharedMap.getFactory()],
+                [directoryId, SharedDirectory.getFactory()],
+                [stringId, SharedString.getFactory()],
             ],
         );
 
@@ -71,7 +71,7 @@ describe("Ops on Reconnect", () => {
             );
 
         const urlResolver = new TestResolver();
-        const codeLoader = new LocalCodeLoader([[ codeDetails, runtimeFactory ]]);
+        const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
             urlResolver,
@@ -85,7 +85,7 @@ describe("Ops on Reconnect", () => {
     }
 
     async function getComponent(componentId: string, fromContainer: Container):
-    Promise<ITestFluidComponent & IComponentLoadable> {
+        Promise<ITestFluidComponent & IComponentLoadable> {
         const response = await fromContainer.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -116,7 +116,7 @@ describe("Ops on Reconnect", () => {
                         value1 = content.key;
                         value2 = content.value.value;
                     }
-                    receivedValues.push([ value1, value2, batch ]);
+                    receivedValues.push([value1, value2, batch]);
                 }
             }
         });
@@ -171,11 +171,11 @@ describe("Ops on Reconnect", () => {
             await containerDeltaEventManager.process();
 
             const expectedValues = [
-                [ "key1", "value1", undefined /* batch */ ],
-                [ "key2", "value2", undefined /* batch */ ],
-                [ "key3", "value3", undefined /* batch */ ],
-                [ "key4", "value4", undefined /* batch */ ],
-                [ 0, "value5", undefined /* batch */ ], // This is for the SharedString
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
+                [0, "value5", undefined /* batch */], // This is for the SharedString
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
@@ -206,10 +206,10 @@ describe("Ops on Reconnect", () => {
             await containerDeltaEventManager.process();
 
             const expectedValues = [
-                [ "key1", "value1", undefined /* batch */ ],
-                [ "key2", "value2", undefined /* batch */ ],
-                [ "key3", "value3", undefined /* batch */ ],
-                [ "key4", "value4", undefined /* batch */ ],
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in Nack'd state");
@@ -244,12 +244,12 @@ describe("Ops on Reconnect", () => {
             await containerDeltaEventManager.process();
 
             const expectedValues = [
-                [ "key1", "value1", undefined /* batch */ ],
-                [ "key2", "value2", undefined /* batch */ ],
-                [ "key3", "value3", undefined /* batch */ ],
-                [ "key4", "value4", undefined /* batch */ ],
-                [ "key5", "value5", undefined /* batch */ ],
-                [ "key6", "value6", undefined /* batch */ ],
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", undefined /* batch */],
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
@@ -277,7 +277,7 @@ describe("Ops on Reconnect", () => {
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
             const secondContainerComp2 =
                 await secondContainerComp1Map1.get<
-                IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
+                    IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
             containerDeltaEventManager.registerDocuments(secondContainerComp2.runtime);
 
             // Disconnect the client.
@@ -303,14 +303,14 @@ describe("Ops on Reconnect", () => {
             await containerDeltaEventManager.process();
 
             const expectedValues = [
-                [ "key1", "value1", undefined /* batch */ ],
-                [ "key2", "value2", undefined /* batch */ ],
-                [ "key3", "value3", undefined /* batch */ ],
-                [ "key4", "value4", undefined /* batch */ ],
-                [ "key5", "value5", undefined /* batch */ ],
-                [ "key6", "value6", undefined /* batch */ ],
-                [ "key7", "value7", undefined /* batch */ ],
-                [ "key8", "value8", undefined /* batch */ ],
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", undefined /* batch */],
+                ["key7", "value7", undefined /* batch */],
+                ["key8", "value8", undefined /* batch */],
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
@@ -350,12 +350,12 @@ describe("Ops on Reconnect", () => {
             await containerDeltaEventManager.process();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                [ "key1", "value1", true /* batch */ ],
-                [ "key2", "value2", undefined /* batch */ ],
-                [ "key3", "value3", false /* batch */ ],
-                [ "key4", "value4", true /* batch */ ],
-                [ "key5", "value5", undefined /* batch */ ],
-                [ "key6", "value6", false /* batch */ ],
+                ["key1", "value1", true /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", false /* batch */],
+                ["key4", "value4", true /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", false /* batch */],
             ];
             assert.deepStrictEqual(
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
