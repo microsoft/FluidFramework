@@ -8,7 +8,7 @@ import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedCounter, SharedCounter } from "..";
 
-describe("Counter", () => {
+describe("SharedCounter", () => {
     let factory: ISharedObjectFactory;
 
     describe("constructor", () => {

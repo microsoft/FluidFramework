@@ -152,7 +152,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Call back on disconnect
      */
     protected onDisconnect() {
-        debug(`Counter ${this.id} is now disconnected`);
+        debug(`SharedCounter ${this.id} is now disconnected`);
     }
 
     /**
