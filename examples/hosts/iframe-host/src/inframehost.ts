@@ -48,7 +48,7 @@ class ProxyRuntime implements IRuntime {
         throw new Error("Method not implemented.");
     }
 
-    startCollaboration(): void {}
+    didGoLive(): void {}
 }
 
 class ProxyChaincode implements IRuntimeFactory {
