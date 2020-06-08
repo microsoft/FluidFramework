@@ -372,7 +372,7 @@ export class MockRuntime extends EventEmitter
         return true;
     }
 
-    public startCollaboration(): void {
+    public didGoLive(): void {
         return;
     }
 

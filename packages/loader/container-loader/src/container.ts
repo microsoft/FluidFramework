@@ -475,9 +475,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
         this.attached = true;
-        // This will tell the components/dds that we are live now and that they can do any custom processing on this action
-        // like start generating ops because all upto this point was included in the app summary and from now on we need to
-        // generate ops for changes so that they can be sent over wire once we are connected.
+        // This will tell the components/dds that we are live now and that they can do any custom processing on this
+        // action like start generating ops because all upto this point was included in the app summary and from now
+        // on we need to generate ops for changes so that they can be sent over wire once we are connected.
         this.context.didGoLive();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
