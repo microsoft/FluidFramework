@@ -15,8 +15,8 @@ import { MessageType } from "@fluidframework/protocol-definitions";
  */
 export const isSystemType = (type: string) => (
     type === MessageType.RemoteHelp ||
-        type === MessageType.Integrate ||
-        type === MessageType.ClientJoin ||
-        type === MessageType.ClientLeave ||
-        type === MessageType.Fork ||
-        type === MessageType.Control);
+    type === MessageType.Integrate ||
+    type === MessageType.ClientJoin ||
+    type === MessageType.ClientLeave ||
+    type === MessageType.Fork ||
+    type === MessageType.Control);

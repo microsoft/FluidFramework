@@ -91,7 +91,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
     public render(div: HTMLElement) {
         ReactDOM.render(
             React.createElement(FluidReactClient, { model: this }),
-            div
+            div,
         );
     }
 
@@ -113,5 +113,5 @@ export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller.ComponentName,
     DiceRoller,
     [],
-    {}
+    {},
 );

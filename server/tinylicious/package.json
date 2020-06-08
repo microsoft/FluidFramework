@@ -17,8 +17,6 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "docker:build": "docker build -t tinylicious .",
-    "docker:start": "docker run --rm -t -p 3000:3000 tinylicious",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
@@ -81,7 +79,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@microsoft/api-extractor": "^7.7.7",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",

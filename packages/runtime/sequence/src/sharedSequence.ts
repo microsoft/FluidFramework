@@ -4,7 +4,8 @@
  */
 
 import {
-    BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection } from "@fluidframework/merge-tree";
+    BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection,
+} from "@fluidframework/merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 

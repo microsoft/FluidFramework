@@ -25,8 +25,7 @@ class ConnectionTelemetry {
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly logger: ITelemetryLogger)
-    {
+        private readonly logger: ITelemetryLogger) {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
@@ -59,8 +58,7 @@ class ConnectionTelemetry {
     private beforeProcessingOp(message: ISequencedDocumentMessage) {
         // Record collab window max size after every 1000th op.
         if (message.sequenceNumber % 1000 === 0) {
-            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined)
-            {
+            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MsnStatistics",
                     sequenceNumber: message.sequenceNumber,
@@ -72,7 +70,7 @@ class ConnectionTelemetry {
         }
 
         if (this.clientId === message.clientId &&
-                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
+            this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
             assert(this.opSendTimeForLatencyStatistics);
             this.logger.sendTelemetryEvent({
                 eventName: "OpRoundtripTime",
@@ -88,7 +86,6 @@ class ConnectionTelemetry {
 export function ReportConnectionTelemetry(
     clientId: string | undefined,
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger)
-{
+    logger: ITelemetryLogger) {
     new ConnectionTelemetry(clientId, deltaManager, logger);
 }

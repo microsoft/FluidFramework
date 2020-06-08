@@ -11,17 +11,17 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-
 import "./style.less";
 
 const colorPickerColors: IColor[] = [
-    { r: 253, g:   0, b:  12, a: 1 },
-    { r: 134, g:   0, b:  56, a: 1 },
-    { r: 253, g: 187, b:  48, a: 1 },
-    { r: 255, g: 255, b:  81, a: 1 },
-    { r:   0, g:  45, b:  98, a: 1 },
+    { r: 253, g: 0, b: 12, a: 1 },
+    { r: 134, g: 0, b: 56, a: 1 },
+    { r: 253, g: 187, b: 48, a: 1 },
+    { r: 255, g: 255, b: 81, a: 1 },
+    { r: 0, g: 45, b: 98, a: 1 },
     { r: 255, g: 255, b: 255, a: 1 },
-    { r: 246, g:  83, b:  20, a: 1 },
-    { r:   0, g: 161, b: 241, a: 1 },
-    { r: 124, g: 187, b:   0, a: 1 },
-    { r:   8, g: 170, b:  51, a: 1 },
-    { r:   0, g:   0, b:   0, a: 1 },
+    { r: 246, g: 83, b: 20, a: 1 },
+    { r: 0, g: 161, b: 241, a: 1 },
+    { r: 124, g: 187, b: 0, a: 1 },
+    { r: 8, g: 170, b: 51, a: 1 },
+    { r: 0, g: 0, b: 0, a: 1 },
 ];
 
 export class Canvas extends PrimedComponent implements IComponentHTMLView {

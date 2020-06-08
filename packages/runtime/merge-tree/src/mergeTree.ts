@@ -1252,7 +1252,7 @@ export class MergeTree {
                 // and update the block's info.
                 for (let childIndex = 0;
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
-                    childIndex++, nodeIndex++                               // Advance to next child & node
+                    childIndex++ , nodeIndex++                               // Advance to next child & node
                 ) {
                     // Insert the next node into the current block
                     this.addNode(block, nodes[nodeIndex]);
@@ -1551,11 +1551,11 @@ export class MergeTree {
         return rootStats;
     }
 
-    tardisPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
-        return this.tardisPositionFromClient(pos, fromSeq, toSeq, clientId);
+    findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+        return this.findHistorialPositionFromClient(pos, fromSeq, toSeq, clientId);
     }
 
-    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+    findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
         assert(fromSeq < toSeq);
         if (pos < this.getLength(fromSeq, clientId)) {
             assert(toSeq <= this.collabWindow.currentSeq);
@@ -1570,7 +1570,7 @@ export class MergeTree {
         }
     }
 
-    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
+    findHistorialRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
         const ranges: Base.IIntegerRange[] = [];
         const recordRange = (
             segment: ISegment,
@@ -1595,8 +1595,8 @@ export class MergeTree {
         return ranges;
     }
 
-    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
-        return this.tardisRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, clientId);
+    findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
+        return this.findHistorialRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, clientId);
     }
 
     getLength(refSeq: number, clientId: number) {
@@ -1973,7 +1973,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker> this.getMarkerFromId(relativePos.id);
+            marker = <Marker>this.getMarkerFromId(relativePos.id);
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);

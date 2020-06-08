@@ -30,7 +30,7 @@ describe("TestSignals", () => {
 
     async function createContainer(): Promise<Container> {
         const factory = new TestFluidComponentFactory([]);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 

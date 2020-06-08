@@ -67,7 +67,7 @@ export class LocalCodeLoader implements ICodeLoader {
             entryPoint.fluidExport ?? entryPoint;
         const runtimeFactory: IProvideRuntimeFactory =
             factory.IRuntimeFactory ??
-                new ContainerRuntimeFactoryWithDefaultComponent("default", [["default", Promise.resolve(factory)]]);
+            new ContainerRuntimeFactoryWithDefaultComponent("default", [["default", Promise.resolve(factory)]]);
 
         const fluidModule: IFluidModule = { fluidExport: runtimeFactory };
         return fluidModule;

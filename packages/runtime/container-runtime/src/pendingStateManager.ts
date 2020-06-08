@@ -77,7 +77,7 @@ export class PendingStateManager {
         return !this.pendingStates.isEmpty();
     }
 
-    constructor(private readonly containerRuntime: ContainerRuntime) {}
+    constructor(private readonly containerRuntime: ContainerRuntime) { }
 
     public onFlushModeUpdated(flushMode: FlushMode) {
         // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
@@ -119,7 +119,7 @@ export class PendingStateManager {
         // Process "flush" type messages first, if any.
         while (pendingState.type !== "message") {
             // Process the pending "flush" state and verify that we get correct batch metadata.
-            this.processFlushState(message, pendingState);
+            this.processFlushState(pendingState);
 
             // Get the next message from the pending queue.
             this.pendingStates.shift();
@@ -157,7 +157,7 @@ export class PendingStateManager {
      * @param message - The message we are currently processing.
      * @param pendingState - The "flush" state to process.
      */
-    private processFlushState(message: ISequencedDocumentMessage, pendingState: IPendingState) {
+    private processFlushState(pendingState: IPendingState) {
         strongAssert(pendingState.type === "flush", "Invalid pending state type");
 
         const pendingFlushMode = pendingState.flushMode;
@@ -176,6 +176,9 @@ export class PendingStateManager {
             strongAssert(this.isProcessingBatch, "Did not receive batch messages as expected");
 
             const batchCount = this.pendingBatchMessages.length;
+            // There should be at least one batch message.
+            strongAssert(batchCount > 0, "Did not receive any batch message in the batch");
+
             const batchBeginMetadata = this.pendingBatchMessages[0].metadata?.batch;
             const batchEndMetadata = this.pendingBatchMessages[batchCount - 1].metadata?.batch;
 
@@ -183,6 +186,7 @@ export class PendingStateManager {
             if (batchCount === 1) {
                 strongAssert(batchBeginMetadata === undefined,
                     "Batch with single message should not have batch metadata");
+                return;
             }
 
             // Assert that we got batch begin and end metadata.

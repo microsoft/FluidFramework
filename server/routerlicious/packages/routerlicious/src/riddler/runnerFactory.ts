@@ -14,7 +14,7 @@ import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerResources implements utils.IResources {
     constructor(
-        public readonly tenantsCollectionName: string ,
+        public readonly tenantsCollectionName: string,
         public readonly mongoManager: MongoManager,
         public readonly port: any,
         public readonly loggerFormat: string,

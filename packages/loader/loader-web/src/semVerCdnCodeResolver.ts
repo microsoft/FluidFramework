@@ -12,7 +12,7 @@ import { extractPackageIdentifierDetails } from "./utils";
 class FluidPackage {
     private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
-    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) {}
+    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) { }
 
     public async resolve(): Promise<IResolvedFluidCodeDetails> {
         if (this.resolveP === undefined) {

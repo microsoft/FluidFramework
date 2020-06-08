@@ -80,7 +80,7 @@ describe("Container", () => {
                 const service = await serviceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
                 // eslint-disable-next-line @typescript-eslint/unbound-method
-                service.connectToStorage = async ()=> Promise.reject(false);
+                service.connectToStorage = async () => Promise.reject(false);
                 return service;
             };
 

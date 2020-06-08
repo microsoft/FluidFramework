@@ -40,7 +40,7 @@ describe("Detached Container", () => {
 
     function createTestLoader(urlResolver: IUrlResolver): Loader {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory([]);
-        const codeLoader = new LocalCodeLoader([[ pkg, factory ]]);
+        const codeLoader = new LocalCodeLoader([[pkg, factory]]);
         const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         return new Loader(
             urlResolver,

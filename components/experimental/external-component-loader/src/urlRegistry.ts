@@ -48,7 +48,7 @@ export class UrlRegistry implements IComponentRegistry {
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntrypoint(name: string): Promise<IComponent| undefined> {
+    private async loadEntrypoint(name: string): Promise<IComponent | undefined> {
         if (this.isUrl(name)) {
             if (!this.loadingPackages.has(name)) {
                 this.loadingPackages.set(name, this.loadPackage(name));
@@ -57,8 +57,8 @@ export class UrlRegistry implements IComponentRegistry {
         const fluidPackage = await this.loadingPackages.get(name) ?? name;
         const codeDetails: IFluidCodeDetails = {
             package: fluidPackage,
-            config:{
-                cdn:"https://pragueauspkn-3873244262.azureedge.net",
+            config: {
+                cdn: "https://pragueauspkn.azureedge.net",
             },
         };
         const fluidModule = await this.webloader.load(codeDetails);

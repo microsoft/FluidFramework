@@ -644,8 +644,8 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
-        let op: ops.IMergeTreeOp;
+    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeDeltaOp {
+        let op: ops.IMergeTreeDeltaOp;
         if (!segment.segmentGroups.empty) {
             segment.segmentGroups.clear();
 
@@ -782,7 +782,7 @@ export class Client {
             }
         }
 
-        const opList: ops.IMergeTreeOp[] = [];
+        const opList: ops.IMergeTreeDeltaOp[] = [];
         for (const segment of orderedSegments.items) {
             const op = this.resetPendingSegmentToOp(segment);
             if (op) {
@@ -799,9 +799,9 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager
             ? deltaManager.minimumSequenceNumber
@@ -826,7 +826,7 @@ export class Client {
 
         snap.extractSync();
         return snap.emit(
-            tardisMsgs,
+            catchUpMsgs,
             runtime.IComponentSerializer,
             runtime.IComponentHandleContext,
             handle);
