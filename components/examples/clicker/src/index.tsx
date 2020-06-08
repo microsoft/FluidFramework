@@ -21,32 +21,6 @@ import * as ReactDOM from "react-dom";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
-const CounterKey = "counter";
-
-// ----- REACT STUFF -----
-
-// ---- React Class Component ----
-
-interface CounterState {
-    counter?: SharedCounter;
-}
-
-interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
-
-interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
-
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
-    render() {
-        return (
-            <div>
-                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.counter?.value}
-                </span>
-                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
-            </div>
-        );
-    }
-}
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -65,7 +39,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         // We also mark the "incremented" event as we want to update the React state when the counter
         // is incremented to display the new value
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set(CounterKey, {
+        fluidToView.set("counter", {
             sharedObjectCreate: SharedCounter.create,
             listenedEvents: ["incremented"],
         });
@@ -87,6 +61,29 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     }
 
     // #endregion IComponentHTMLView
+}
+
+// ----- REACT STUFF -----
+
+interface CounterState {
+    counter?: SharedCounter;
+}
+
+interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
+
+interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
+
+class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+    render() {
+        return (
+            <div>
+                <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
+                    {this.state.counter?.value}
+                </span>
+                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
+            </div>
+        );
+    }
 }
 
 // ----- FACTORY SETUP -----
