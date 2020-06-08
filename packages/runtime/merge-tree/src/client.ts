@@ -97,9 +97,9 @@ export class Client {
             return this.mergeTree.pendingSegments?.last();
         }
         let taken = 0;
-        return this.mergeTree.pendingSegments?.some(()=> {
+        return this.mergeTree.pendingSegments?.some(() => {
             if (taken < count) {
-                taken ++;
+                taken++;
                 return true;
             }
             return false;
@@ -686,7 +686,7 @@ export class Client {
                 TODO: Consider embeding this infomation into the tree for
                 more efficent look up of pending segment positions.
             */
-            this.mergeTree.walkAllSegments(this.mergeTree.root, (seg)=>{
+            this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
                 if (seg !== segment) {
                     // segment isn't local, so count it
                     if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
@@ -871,9 +871,9 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager
             ? deltaManager.minimumSequenceNumber
@@ -898,7 +898,7 @@ export class Client {
 
         snap.extractSync();
         return snap.emit(
-            tardisMsgs,
+            catchUpMsgs,
             runtime.IComponentSerializer,
             runtime.IComponentHandleContext,
             handle);

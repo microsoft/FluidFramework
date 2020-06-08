@@ -98,8 +98,7 @@ export function throwOdspNetworkError(
  */
 export function errorObjectFromSocketError(
     socketError: IOdspSocketError,
-    retryFilter?: RetryFilter)
-{
+    retryFilter?: RetryFilter) {
     return createOdspNetworkError(
         socketError.message,
         retryFilter?.(socketError.code) ?? true,

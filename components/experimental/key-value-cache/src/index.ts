@@ -128,7 +128,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const componentId = requestUrl
             ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
             : ComponentName;
-        console.log(componentId);
+
         const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: pathForComponent });

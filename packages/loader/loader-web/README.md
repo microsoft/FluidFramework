@@ -4,7 +4,7 @@
 import { IFluidPackage, IPackageConfig } from "@fluidframework/container-definitions";
 import { IResolvedPackage } from "@fluidframework/web-code-loader";
 
-const cdnLink = "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/clicker@0.9.11445/dist/main.bundle.js";
+const cdnLink = "https://pragueauspkn.azureedge.net/@fluid-example/clicker@0.9.11445/dist/main.bundle.js";
 const linkedLibraryName = "main";
 const scope = "@random";
 

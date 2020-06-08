@@ -11,23 +11,23 @@ import {
     MessageType,
     ISequencedDocumentSystemMessage,
     IClient,
-} from  "@fluidframework/protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { Deferred } from "@fluidframework/common-utils";
 import { LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
-describe("LocalDeltaConnectionServer", ()=>{
-    it("connectWebSocket and validate join", async ()=>{
+describe("LocalDeltaConnectionServer", () => {
+    it("connectWebSocket and validate join", async () => {
         const lts = LocalDeltaConnectionServer.create();
         const user: IUser = { id: "id" };
         const client: IClient = {
-            details: { capabilities:{ interactive: true } },
+            details: { capabilities: { interactive: true } },
             mode: "write",
             permission: [],
             scopes: [],
             user,
         };
 
-        const joinHandler = (joinP: Deferred<any>, msgs: ISequencedDocumentSystemMessage[])=>{
+        const joinHandler = (joinP: Deferred<any>, msgs: ISequencedDocumentSystemMessage[]) => {
             for (const msg of msgs) {
                 if (joinP.isCompleted === false) {
                     if (msg.type !== MessageType.ClientJoin) {

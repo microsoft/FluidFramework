@@ -184,11 +184,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     perfEvent.end(props);
                     res(container);
                 },
-                (error) => {
-                    perfEvent.cancel(undefined, error);
-                    const err = CreateContainerError(error);
-                    onClosed(err);
-                });
+                    (error) => {
+                        perfEvent.cancel(undefined, error);
+                        const err = CreateContainerError(error);
+                        onClosed(err);
+                    });
         });
     }
 

@@ -73,7 +73,7 @@ describe("Container Runtime", () => {
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
             const processingDelay = DeltaScheduler.processingTime + 10;
             const startTime = Date.now();
-            while (Date.now() - startTime < processingDelay) {}
+            while (Date.now() - startTime < processingDelay) { }
 
             scheduleManager.endOperation(undefined, message);
         }
@@ -122,7 +122,7 @@ describe("Container Runtime", () => {
                     processOp(message);
                     return {};
                 },
-                processSignal() {},
+                processSignal() { },
             });
         });
 

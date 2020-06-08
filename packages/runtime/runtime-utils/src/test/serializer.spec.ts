@@ -101,7 +101,7 @@ describe("ComponentSerializer", () => {
             const input: any = makeJson(
                 /* breadth: */ 4,
                 /* depth: */ 4,
-                /* createLeaf: */ () => ({ a: 0, b: handle, c: [handle, handle], d: false, e: handle }));
+                /* createLeaf: */() => ({ a: 0, b: handle, c: [handle, handle], d: false, e: handle }));
 
             // Add some handles to intermediate objects.
             input.h = handle;

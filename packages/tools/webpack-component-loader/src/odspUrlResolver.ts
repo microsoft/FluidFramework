@@ -18,13 +18,13 @@ export class OdspUrlResolver implements IUrlResolver {
     constructor(
         private readonly server: string,
         private readonly authRequestInfo: IOdspAuthRequestInfo,
-    ) {}
+    ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         try {
             const resolvedUrl = await this.driverUrlResolver.resolve(request);
             return resolvedUrl;
-        } catch (error) {}
+        } catch (error) { }
 
         const url = new URL(request.url);
 
@@ -44,7 +44,7 @@ export class OdspUrlResolver implements IUrlResolver {
             item,
             "");
 
-        return this.driverUrlResolver.resolve({ url: odspUrl });
+        return this.driverUrlResolver.resolve({ url: odspUrl, headers: request.headers });
     }
 
     private formFilePath(documentId: string): string {

@@ -142,7 +142,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             versions: protocolVersions,
         };
 
-        const connectedP =  new Promise<IConnected>((resolve, reject) => {
+        const connectedP = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];

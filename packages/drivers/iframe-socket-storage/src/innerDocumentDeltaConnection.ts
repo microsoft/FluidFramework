@@ -31,7 +31,7 @@ export interface IOuterDocumentDeltaConnectionProxy {
  */
 export class InnerDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -42,8 +42,8 @@ export class InnerDocumentDeltaConnection
         outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
         const tempEmitter = new EventEmitter();
 
-        const forwardEvent = (event: string, args: any[]) =>{
-            tempEmitter.emit(event, ... args);
+        const forwardEvent = (event: string, args: any[]) => {
+            tempEmitter.emit(event, ...args);
             return;
         };
 
@@ -173,7 +173,7 @@ export class InnerDocumentDeltaConnection
         tempEmitter: EventEmitter) {
         super();
 
-        this.on("newListener",(event, listener)=>{
+        this.on("newListener", (event, listener) => {
             tempEmitter.on(
                 event,
                 (...args: any[]) => {

@@ -33,7 +33,7 @@ export class MockDocumentService implements IDocumentService {
     constructor(
         private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
         private readonly deltaConnectionFactory?: () => IDocumentDeltaConnection,
-    ) {}
+    ) { }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public get resolvedUrl(): IResolvedUrl {

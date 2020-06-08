@@ -37,7 +37,7 @@ describe("document-router", () => {
 
             offset0 = TestKafka.createdQueuedMessage(0);
             offset5 = TestKafka.createdQueuedMessage(5);
-            offset10 =  TestKafka.createdQueuedMessage(10);
+            offset10 = TestKafka.createdQueuedMessage(10);
             offset12 = TestKafka.createdQueuedMessage(12);
             offset15 = TestKafka.createdQueuedMessage(15);
             offset20 = TestKafka.createdQueuedMessage(20);
