@@ -69,9 +69,9 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState {}
+interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState { }
 
-interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState {}
+interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState { }
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     render() {

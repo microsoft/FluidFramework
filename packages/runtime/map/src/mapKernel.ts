@@ -499,14 +499,8 @@ export class MapKernel {
      * @param value - The value being set
      * @param local - Whether the message originated from the local client
      * @param op - The message if from a remote set, or null if from a local set
-     * @param keyPrefix - Added to event emitted to allow listeners to batch changes
      */
-    private setCore(
-        key: string,
-        value: ILocalValue,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-    ): void {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
