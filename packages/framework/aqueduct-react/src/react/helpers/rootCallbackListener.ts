@@ -70,8 +70,7 @@ export const rootCallbackListener = <
             viewToFluid,
         );
     } else if (viewToFluid !== undefined
-        && ((viewToFluidKeys).includes(change.key)
-        || (change.keyPrefix !== undefined && viewToFluidKeys.includes(change.keyPrefix)))) {
+        && ((viewToFluidKeys).includes(change.key))) {
         // If the update is to a child component, trigger only a view update as the child itself will
         // update its Fluid update
         const stateKey = getByFluidKey(change.key, viewToFluid);

@@ -60,9 +60,7 @@ export const addComponent = async <
     value.isListened = false;
     fluidComponentMap.set(handle.path, value);
     return handle.get().then((component) => {
-        if (component.IComponentListened) {
-            component.IComponentListened.addListenerToRootValueChanged(rootCallback);
-        } else if (value.isRuntimeMap) {
+        if (value.isRuntimeMap) {
             (component as SharedMap).on("valueChanged", rootCallback);
         } else if (value.listenedEvents) {
             for (const event of value.listenedEvents) {

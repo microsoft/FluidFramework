@@ -217,8 +217,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
    * {@inheritDoc ISharedMap.set}
    */
-    public set(key: string, value: any, keyPrefix?: string): this {
-        this.kernel.set(key, value, keyPrefix);
+    public set(key: string, value: any): this {
+        this.kernel.set(key, value);
         return this;
     }
 

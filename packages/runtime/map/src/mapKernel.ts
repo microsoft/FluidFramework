@@ -317,7 +317,7 @@ export class MapKernel {
     /**
      * {@inheritDoc ISharedMap.set}
      */
-    public set(key: string, value: any, keyPrefix?: string) {
+    public set(key: string, value: any) {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
@@ -335,7 +335,6 @@ export class MapKernel {
             localValue,
             true,
             null,
-            keyPrefix,
         );
 
         const op: IMapSetOperation = {
@@ -507,11 +506,10 @@ export class MapKernel {
         value: ILocalValue,
         local: boolean,
         op: ISequencedDocumentMessage,
-        keyPrefix?: string,
     ): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
-        const event: IValueChanged = { key, previousValue, keyPrefix };
+        const event: IValueChanged = { key, previousValue };
         this.eventEmitter.emit("valueChanged", event, local, op, this);
     }
 

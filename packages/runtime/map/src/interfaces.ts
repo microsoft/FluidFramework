@@ -20,11 +20,6 @@ export interface IValueChanged {
      * The value that was stored at the key prior to the change.
      */
     previousValue: any;
-
-    /**
-     * An additional element to allow changes to multiple keys be batched together by their prefix
-     */
-    keyPrefix?: string;
 }
 
 /**
@@ -150,10 +145,9 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
      * Sets the value stored at key to the provided value.
      * @param key - Key to set at
      * @param value - Value to set
-     * @param keyPrefix - Added to event emitted to allow listeners to batch changes
      * @returns The IDirectory itself
      */
-    set<T = any>(key: string, value: T, keyPrefix?: string): this;
+    set<T = any>(key: string, value: T): this;
 
     /**
      * Creates an IDirectory child of this IDirectory.
