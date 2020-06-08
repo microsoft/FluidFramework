@@ -16,8 +16,8 @@ export function createContextFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
     C
->(props: IFluidContextProps<SV, SF, C>): FluidContext<SV, C> {
-    const [state, setState] = useStateFluid(props);
+>(props: IFluidContextProps<SV, SF, C>, initialViewState: SV): FluidContext<SV, C> {
+    const [state, setState] = useStateFluid(props, initialViewState);
     const PrimedFluidContext = React.createContext({
         state,
         setState,

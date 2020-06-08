@@ -37,6 +37,7 @@ export function useReducerFluid<
     C extends IFluidDataProps
 >(
     props: IFluidReducerProps<SV, SF, A, B, C>,
+    initialViewState: SV,
 ): [ICombinedState<SV, SF, C>, A, B] {
     const {
         syncedStateId,
@@ -45,18 +46,16 @@ export function useReducerFluid<
         root,
         viewToFluid,
         fluidToView,
-        initialViewState,
         dataProps,
     } = props;
     // Get our combined synced state and setState callbacks from the useStateFluid function
     const [viewState, setState] = useStateFluid<SV, SF>({
         syncedStateId,
         root,
-        initialViewState,
         dataProps,
         fluidToView,
         viewToFluid,
-    });
+    }, initialViewState);
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and

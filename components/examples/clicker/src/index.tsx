@@ -48,7 +48,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
             <CounterReactView
                 syncedStateId={"clicker"}
                 root={this.root}
-                initialViewState={{}}
                 dataProps={{
                     fluidComponentMap: new Map(),
                     runtime: this.runtime,
@@ -70,10 +69,14 @@ interface CounterState {
 }
 
 interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState { }
-
 interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState { }
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+    constructor(props) {
+        super(props);
+        this.state = {};
+    }
+
     render() {
         return (
             <div>

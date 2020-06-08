@@ -18,12 +18,11 @@ export function useStateFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    props: IFluidProps<SV, SF>,
+    props: IFluidProps<SV, SF>, initialViewState: SV,
 ): [SV, (newState: SV, fromRootUpdate?: boolean) => void] {
     const {
         syncedStateId,
         root,
-        initialViewState,
         fluidToView,
         viewToFluid,
         dataProps,

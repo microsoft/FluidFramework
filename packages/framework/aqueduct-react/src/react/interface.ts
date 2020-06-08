@@ -120,10 +120,6 @@ export interface IFluidProps<
      */
     root: ISharedDirectory;
     /**
-     * The React initial state to use for the first render
-     */
-    initialViewState: SV;
-    /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map
      */
@@ -486,10 +482,6 @@ export interface IFluidReducerProps<
      * The root shared directory that will be used to store the synced state
      */
     root: ISharedDirectory;
-    /**
-     * The React initial state to use for the first render
-     */
-    initialViewState: SV;
     /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
      * Any mutations to the state, or effects outside of the component involving the state should be done here.

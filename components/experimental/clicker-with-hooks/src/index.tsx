@@ -56,7 +56,7 @@ function CounterReactFunctional(
     const [state, setState] = useStateFluid<
     ICounterFunctionalViewState,
     ICounterFunctionalFluidState
-    >(props);
+    >(props, { value: 0 });
 
     return (
         <div>
@@ -123,7 +123,7 @@ function CounterReactFunctionalReducer(
     IFluidDataProps
     >,
 ) {
-    const [state, dispatch] = useReducerFluid(props);
+    const [state, dispatch] = useReducerFluid(props, { value: 0 });
 
     return (
         <div>
@@ -158,7 +158,7 @@ function CounterReactFunctionalContext(
     IFluidDataProps
     >,
 ) {
-    const { Provider, Consumer, state, setState } = createContextFluid(props);
+    const { Provider, Consumer, state, setState } = createContextFluid(props, { value: 0 });
     // The following is wrapped in some extra divs to show how the context is being passed from
     // a parent to a child layer without prop drilling being required.
     return (
@@ -270,7 +270,6 @@ export class ClickerWithHooks extends PrimedComponent
                         fluidComponentMap: new Map(),
                         runtime: this.runtime,
                     }}
-                    initialViewState={{ value: 0 }}
                     fluidToView={functionalFluidToView}
                     viewToFluid={functionalViewToFluid}
                 />
@@ -281,7 +280,6 @@ export class ClickerWithHooks extends PrimedComponent
                         fluidComponentMap: new Map(),
                         runtime: this.runtime,
                     }}
-                    initialViewState={{ value: 0 }}
                     fluidToView={reducerFluidToViewMap}
                     viewToFluid={reducerViewToFluidMap}
                     reducer={ActionReducer}
@@ -295,7 +293,6 @@ export class ClickerWithHooks extends PrimedComponent
                         runtime: this.runtime,
                     }}
                     reactContext={{}}
-                    initialViewState={{ value: 0 }}
                     fluidToView={functionalFluidToView}
                     viewToFluid={functionalViewToFluid}
                 />

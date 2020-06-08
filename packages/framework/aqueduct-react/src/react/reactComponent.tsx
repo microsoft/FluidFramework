@@ -35,11 +35,9 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
             fluidToView,
             viewToFluid,
             root,
-            initialViewState,
             dataProps,
         } = props;
 
-        this.state = initialViewState;
         this._viewToFluid = viewToFluid;
         this._fluidToView = fluidToView;
         this._syncedStateId = syncedStateId;
