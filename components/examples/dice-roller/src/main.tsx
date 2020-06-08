@@ -20,17 +20,29 @@ const diceValueKey = "diceValue";
  */
 interface IDiceRollerViewProps {
     /**
-     * Get the dice value as a number.
+     * The current value of the dice as a number
      */
-    readonly value: number;
+    value: number;
 
     /**
-     * Roll the dice.
+     * Callback to roll the dice
      */
     roll: () => void;
 }
 
-const DiceRollerView: React.FC<IDiceRollerViewProps> = props => {
+interface IDiceRollerModelProps extends PrimedComponent{
+    /**
+     * Get the dice value from the model as a number.
+     */
+    getValue: () => number;
+
+    /**
+     * Update the model to have a new dice value
+     */
+    roll: () => void;
+}
+
+const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
     // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
     const diceChar = String.fromCodePoint(0x267f + props.value);
 
@@ -42,22 +54,26 @@ const DiceRollerView: React.FC<IDiceRollerViewProps> = props => {
     );
 };
 
-const FluidReactClient = (props: { model: any }): JSX.Element => {
-    const [value, setValue] = React.useState(props.model.value);
-    const updateValue = () => setValue(props.model.value);
+/**
+ * FluidReactClient is in charge of maintaining the React application state and updating app state on model change.
+ * This component allows the view to be unaware of the model and keeps app rendering/rerendering within React.
+ */
+const FluidReactClient = ({ model }: {model: IDiceRollerModelProps}): JSX.Element => {
+    const [value, setValue] = React.useState(model.getValue());
+    const updateValue = () => setValue(model.getValue());
     React.useEffect(() => {
-        props.model.on("diceRolled", updateValue);
+        model.on("diceRolled", updateValue);
         return () => {
-            props.model.off("diceRolled", updateValue);
+            model.off("diceRolled", updateValue);
         };
-    }, [props.model]);
-    return <DiceRollerView value={value} roll={props.model.roll} />;
+    }, [model]);
+    return <DiceRollerView value={value} roll={model.roll} />;
 };
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+export class DiceRoller extends PrimedComponent implements IDiceRollerModelProps, IComponentHTMLView {
     public static get ComponentName() {
         return "@fluid-example/dice-roller";
     }
@@ -95,9 +111,9 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
         );
     }
 
-    public get value() {
+    public getValue = () => {
         return this.root.get(diceValueKey);
-    }
+    };
 
     public readonly roll = () => {
         const rollValue = Math.floor(Math.random() * 6) + 1;
