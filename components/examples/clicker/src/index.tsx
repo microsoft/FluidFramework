@@ -21,7 +21,7 @@ import * as ReactDOM from "react-dom";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
-const CounterRootKey = "counter";
+const CounterKey = "counter";
 
 // ----- REACT STUFF -----
 
@@ -60,10 +60,12 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
      * Will return a new Clicker view
      */
     public render(element: HTMLElement) {
-        // Mark the counter as the CounterValueType so that changes to it update the React view
-        // when we increment it and the key it is stored under in the root
+        // Mark the counter value in the state as a SharedCounter type and pass in its create function
+        // so that it will be created on the first run and be available on our React state
+        // We also mark the "incremented" event as we want to update the React state when the counter
+        // is incremented to display the new value
         const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set(CounterRootKey, {
+        fluidToView.set(CounterKey, {
             sharedObjectCreate: SharedCounter.create,
             listenedEvents: ["incremented"],
         });
