@@ -44,18 +44,32 @@ export function syncStateAndRoot<
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     viewState: SV,
-    setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
+    setState: (
+        newState: SV,
+        fromRootUpdate?: boolean,
+        isLocal?: boolean
+    ) => void,
     fluidComponentMap: FluidComponentMap,
-    fluidToView: FluidToViewMap<SV,SF>,
-    viewToFluid?: ViewToFluidMap<SV,SF>,
+    fluidToView: FluidToViewMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the root
-    const currentRootState = getFluidStateFromRoot(syncedStateId, root, fluidComponentMap, fluidToView);
+    const currentRootState = getFluidStateFromRoot(
+        syncedStateId,
+        root,
+        fluidComponentMap,
+        fluidToView,
+    );
     if (currentRootState === undefined) {
-        throw Error("Attempted to sync view and fluid states before fluid state was initialized");
+        throw Error(
+            "Attempted to sync view and fluid states before fluid state was initialized",
+        );
     }
     // Fetch the component schema
-    const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, root);
+    const componentSchemaHandles = getComponentSchemaFromRoot(
+        syncedStateId,
+        root,
+    );
     if (componentSchemaHandles === undefined) {
         throw Error("No schema found stored on the root");
     }
@@ -66,19 +80,24 @@ export function syncStateAndRoot<
     } = componentSchemaHandles;
 
     if (
-        componentKeyMapHandle === undefined
-        || viewMatchingMapHandle === undefined
-        || fluidMatchingMapHandle === undefined) {
+        componentKeyMapHandle === undefined ||
+        viewMatchingMapHandle === undefined ||
+        fluidMatchingMapHandle === undefined
+    ) {
         throw Error("No schema handles found stored on the root");
     }
-    const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)?.component as SharedMap;
-    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)?.component as SharedMap;
-    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)?.component as SharedMap;
+    const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)
+        ?.component as SharedMap;
+    const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)
+        ?.component as SharedMap;
+    const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)
+        ?.component as SharedMap;
 
     if (
-        componentKeyMap === undefined
-                || viewMatchingMap === undefined
-                || fluidMatchingMap === undefined) {
+        componentKeyMap === undefined ||
+        viewMatchingMap === undefined ||
+        fluidMatchingMap === undefined
+    ) {
         throw Error("Failed to fetch shared map DDS' from the schema handles");
     }
 
@@ -128,7 +147,7 @@ export function syncStateAndRoot<
         // If it is from a root update, the values converted from the root overwrite those
         // created here. Otherwise, the new view values overwrite those from the root.
         if (fromRootUpdate) {
-            combinedViewState = { ...combinedViewState, ...partialViewState  };
+            combinedViewState = { ...combinedViewState, ...partialViewState };
         } else {
             combinedViewState = { ...partialViewState, ...combinedViewState };
         }
@@ -137,7 +156,14 @@ export function syncStateAndRoot<
     // If it is a local update, broadcast it by setting it on the root and updating locally
     // Otherwise, only update locally as the root update has already been broadcasted
     if (!fromRootUpdate) {
-        setFluidStateToRoot(syncedStateId, root, runtime, fluidComponentMap, fluidToView, combinedRootState);
+        setFluidStateToRoot(
+            syncedStateId,
+            root,
+            runtime,
+            fluidComponentMap,
+            fluidToView,
+            combinedRootState,
+        );
     }
     setState(combinedViewState, fromRootUpdate, true);
 }

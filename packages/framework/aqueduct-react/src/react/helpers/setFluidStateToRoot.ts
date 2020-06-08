@@ -18,16 +18,19 @@ import { FluidComponentMap, IViewConverter } from "../interface";
  * respective converters
  * @param newFluidState - The Fluid state to store on to the root, after converting components to their handles
  */
-export function setFluidStateToRoot<SV,SF>(
+export function setFluidStateToRoot<SV, SF>(
     syncedStateId: string,
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     componentMap: FluidComponentMap,
-    fluidToView: Map<keyof SF, IViewConverter<SV,SF>>,
+    fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
     newFluidState?: SF,
 ): IComponentHandle {
-    const storedStateHandle = root.get<IComponentHandle>(`syncedState-${syncedStateId}`);
-    let storedState = componentMap.get(storedStateHandle?.path)?.component as SharedMap;
+    const storedStateHandle = root.get<IComponentHandle>(
+        `syncedState-${syncedStateId}`,
+    );
+    let storedState = componentMap.get(storedStateHandle?.path)
+        ?.component as SharedMap;
     if (storedStateHandle === undefined || storedState === undefined) {
         const newState = SharedMap.create(runtime);
         componentMap.set(newState.handle.path, {
@@ -42,13 +45,15 @@ export function setFluidStateToRoot<SV,SF>(
     for (const key of fluidToView.keys()) {
         const fluidKey = key as string;
         const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
-        const createCallback = fluidToView?.get(fluidKey as keyof SF)?.sharedObjectCreate;
+        const createCallback = fluidToView?.get(fluidKey as keyof SF)
+            ?.sharedObjectCreate;
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
                 componentMap.set(sharedObject.handle.path, {
                     component: sharedObject,
-                    listenedEvents: fluidToView?.get(fluidKey as keyof SF)?.listenedEvents || ["valueChanged"],
+                    listenedEvents: fluidToView?.get(fluidKey as keyof SF)
+                        ?.listenedEvents || ["valueChanged"],
                 });
                 storedState.set(fluidKey, sharedObject.handle);
                 if (rootKey) {
@@ -61,11 +66,15 @@ export function setFluidStateToRoot<SV,SF>(
                 }
             }
         } else if (rootKey) {
-            const value = newFluidState ? newFluidState[fluidKey] : root.get(rootKey);
+            const value = newFluidState
+                ? newFluidState[fluidKey]
+                : root.get(rootKey);
             root.set(rootKey, value);
             storedState.set(fluidKey, value);
         } else {
-            const value = newFluidState ? newFluidState[fluidKey] : storedState.get(fluidKey);
+            const value = newFluidState
+                ? newFluidState[fluidKey]
+                : storedState.get(fluidKey);
             storedState.set(fluidKey, value);
         }
     }

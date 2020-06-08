@@ -40,10 +40,14 @@ export const rootCallbackListener = <
     root: ISharedDirectory,
     runtime: IComponentRuntime,
     state: SV,
-    setState: (newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) => void,
-    fluidToView: FluidToViewMap<SV,SF>,
-    viewToFluid?: ViewToFluidMap<SV,SF>,
-) => ((change: IDirectoryValueChanged, local: boolean) => {
+    setState: (
+        newState: SV,
+        fromRootUpdate?: boolean,
+        isLocal?: boolean
+    ) => void,
+    fluidToView: FluidToViewMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
+) => (change: IDirectoryValueChanged, local: boolean) => {
     const currentFluidState = getFluidStateFromRoot(
         syncedStateId,
         root,
@@ -69,8 +73,10 @@ export const rootCallbackListener = <
             fluidToView,
             viewToFluid,
         );
-    } else if (viewToFluid !== undefined
-        && ((viewToFluidKeys).includes(change.key))) {
+    } else if (
+        viewToFluid !== undefined &&
+        viewToFluidKeys.includes(change.key)
+    ) {
         // If the update is to a child component, trigger only a view update as the child itself will
         // update its Fluid update
         const stateKey = getByFluidKey(change.key, viewToFluid);
@@ -86,7 +92,9 @@ export const rootCallbackListener = <
             state.fluidComponentMap = fluidComponentMap;
             setState(state, true, local);
         } else {
-            throw Error(`Unable to extract view state from root change key: ${change.key}`);
+            throw Error(
+                `Unable to extract view state from root change key: ${change.key}`,
+            );
         }
     }
-});
+};

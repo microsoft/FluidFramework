@@ -15,11 +15,14 @@ import { useStateFluid } from "./useStateFluid";
 export function createContextFluid<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
-    C,
->(props: IFluidContextProps<SV,SF,C>):
-FluidContext<SV,C> {
+    C
+>(props: IFluidContextProps<SV, SF, C>): FluidContext<SV, C> {
     const [state, setState] = useStateFluid(props);
-    const PrimedFluidContext = React.createContext({ state, setState, reactContext: props.reactContext });
+    const PrimedFluidContext = React.createContext({
+        state,
+        setState,
+        reactContext: props.reactContext,
+    });
     return {
         Provider: PrimedFluidContext.Provider,
         Consumer: PrimedFluidContext.Consumer,

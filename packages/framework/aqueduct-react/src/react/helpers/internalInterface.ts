@@ -10,7 +10,7 @@ import { ISharedMap } from "@fluidframework/map";
  * The respective handles for the fluid schema params listed above
  */
 export interface IFluidSchemaHandles {
-    componentKeyMapHandle?: IComponentHandle<ISharedMap>,
-    viewMatchingMapHandle?: IComponentHandle<ISharedMap>,
-    fluidMatchingMapHandle?: IComponentHandle<ISharedMap>,
+    componentKeyMapHandle?: IComponentHandle<ISharedMap>;
+    viewMatchingMapHandle?: IComponentHandle<ISharedMap>;
+    fluidMatchingMapHandle?: IComponentHandle<ISharedMap>;
 }

@@ -14,4 +14,5 @@ import { IFluidSchemaHandles } from "./internalInterface";
 export const getComponentSchemaFromRoot = (
     syncedStateId: string,
     root: ISharedDirectory,
-): IFluidSchemaHandles | undefined => root.get<IFluidSchemaHandles>(`componentSchema-${syncedStateId}`);
+): IFluidSchemaHandles | undefined =>
+    root.get<IFluidSchemaHandles>(`componentSchema-${syncedStateId}`);

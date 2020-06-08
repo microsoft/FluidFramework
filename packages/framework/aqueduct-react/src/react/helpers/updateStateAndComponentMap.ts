@@ -32,12 +32,12 @@ import { syncStateAndRoot } from "./syncStateAndRoot";
  * respective converters
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
-  */
+ */
 export const updateStateAndComponentMap = async <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
-    newHandleList: (IComponentHandle)[],
+    newHandleList: IComponentHandle[],
     fluidComponentMap: FluidComponentMap,
     fromRootUpdate: boolean,
     syncedStateId: string,
@@ -46,32 +46,36 @@ export const updateStateAndComponentMap = async <
     viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
-    fluidToView: FluidToViewMap<SV,SF>,
-    viewToFluid?: ViewToFluidMap<SV,SF>,
-) => asyncForEach(
-    newHandleList,
-    addComponent,
-    fluidComponentMap,
-    rootCallback,
-    () => syncStateAndRoot(
-        true,
-        syncedStateId,
-        root,
-        runtime,
-        viewState,
-        setState,
+    fluidToView: FluidToViewMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
+) =>
+    asyncForEach(
+        newHandleList,
+        addComponent,
         fluidComponentMap,
-        fluidToView,
-        viewToFluid,
-    ),
-).then(() => syncStateAndRoot(
-    fromRootUpdate,
-    syncedStateId,
-    root,
-    runtime,
-    viewState,
-    setState,
-    fluidComponentMap,
-    fluidToView,
-    viewToFluid,
-));
+        rootCallback,
+        () =>
+            syncStateAndRoot(
+                true,
+                syncedStateId,
+                root,
+                runtime,
+                viewState,
+                setState,
+                fluidComponentMap,
+                fluidToView,
+                viewToFluid,
+            ),
+    ).then(() =>
+        syncStateAndRoot(
+            fromRootUpdate,
+            syncedStateId,
+            root,
+            runtime,
+            viewState,
+            setState,
+            fluidComponentMap,
+            fluidToView,
+            viewToFluid,
+        ),
+    );

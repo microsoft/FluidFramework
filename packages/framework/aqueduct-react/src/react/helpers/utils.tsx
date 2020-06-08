@@ -15,11 +15,10 @@ import {
 
 export function getByFluidKey<
     SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState,
->(searchValue: string, map: Map<keyof SV, IFluidConverter<SV,SF>>) {
+    SF extends IFluidFunctionalComponentFluidState
+>(searchValue: string, map: Map<keyof SV, IFluidConverter<SV, SF>>) {
     for (const [key, value] of map.entries()) {
-        if (value.fluidKey === searchValue)
-        {
+        if (value.fluidKey === searchValue) {
             return key;
         }
     }
@@ -31,7 +30,7 @@ export async function asyncForEach(
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
         rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
-        refreshView: () => void,
+        refreshView: () => void
     ) => Promise<void>,
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
@@ -39,7 +38,9 @@ export async function asyncForEach(
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
-        promises.push(callback(value, fluidComponentMap, rootCallback, refreshView));
+        promises.push(
+            callback(value, fluidComponentMap, rootCallback, refreshView),
+        );
     }
     await Promise.all(promises);
 }
@@ -47,7 +48,7 @@ export async function asyncForEach(
 export const addComponent = async <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> (
+>(
     handle: IComponentHandle,
     fluidComponentMap: FluidComponentMap,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
@@ -55,7 +56,9 @@ export const addComponent = async <
 ): Promise<void> => {
     const value = fluidComponentMap.get(handle.path);
     if (!value) {
-        throw Error("Tried fetch a component that wasn't present on the fluid component map");
+        throw Error(
+            "Tried fetch a component that wasn't present on the fluid component map",
+        );
     }
     value.isListened = false;
     fluidComponentMap.set(handle.path, value);

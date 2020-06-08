@@ -5,10 +5,7 @@
 
 import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
-import {
-    IFluidConverter,
-    instanceOfIComponentLoadable,
-} from "../interface";
+import { IFluidConverter, instanceOfIComponentLoadable } from "../interface";
 
 /**
  * Return a partial Fluid state containing the view state key identified converted into its
@@ -23,11 +20,14 @@ export function getFluidFromView<SV, SF>(
     state: SV,
     stateKey: keyof SV,
     componentKeyMap: ISharedMap,
-    viewToFluid?: Map<keyof SV, IFluidConverter<SV,SF>>,
+    viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
 ): Partial<SF> {
     const value = state[stateKey];
-    const fluidConverter = viewToFluid && viewToFluid.get(stateKey)?.fluidConverter;
-    const possibleHandle = componentKeyMap.get(stateKey as string || `stateKeyHandle-${stateKey}`);
+    const fluidConverter =
+        viewToFluid && viewToFluid.get(stateKey)?.fluidConverter;
+    const possibleHandle = componentKeyMap.get(
+        (stateKey as string) || `stateKeyHandle-${stateKey}`,
+    );
     if (possibleHandle) {
         return possibleHandle;
     } else if (fluidConverter) {

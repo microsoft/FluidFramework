@@ -14,10 +14,7 @@ import {
     IViewConverter,
     IFluidDataProps,
 } from "./interface";
-import {
-    syncStateAndRoot,
-    initializeState,
-} from "./helpers";
+import { syncStateAndRoot, initializeState } from "./helpers";
 
 /**
  * A react component with a root, initial props, and a root to state mapping
@@ -25,17 +22,15 @@ import {
 export abstract class FluidReactComponent<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
-> extends React.Component<IFluidProps<SV,SF>, SV> {
+> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
     private readonly _root: ISharedDirectory;
     private readonly _dataProps: IFluidDataProps;
-    private readonly _viewToFluid?: Map<keyof SV, IFluidConverter<SV,SF>>;
-    private readonly _fluidToView: Map<keyof SF, IViewConverter<SV,SF>>;
+    private readonly _viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>;
+    private readonly _fluidToView: Map<keyof SF, IViewConverter<SV, SF>>;
     private readonly _deferredInitP: Deferred<void>;
     private _initQueue: Promise<void>;
-    constructor(
-        props: IFluidProps<SV,SF>,
-    ) {
+    constructor(props: IFluidProps<SV, SF>) {
         super(props);
         const {
             syncedStateId,
@@ -74,10 +69,17 @@ export abstract class FluidReactComponent<
      * on local updates
      * @param newState - the new state to be set
      * @param fromRootUpdate - is this update coming locally or from a synced root value change
+     * @param isLocal - should this update be applied only locally
      */
-    private _setStateFromRoot(newState: SV, fromRootUpdate?: boolean, isLocal?: boolean) {
+    private _setStateFromRoot(
+        newState: SV,
+        fromRootUpdate?: boolean,
+        isLocal?: boolean,
+    ) {
         if (!this._deferredInitP.isCompleted) {
-            this._initQueue = this._initQueue.then(() => this._setStateFromRoot(newState, fromRootUpdate, isLocal));
+            this._initQueue = this._initQueue.then(() =>
+                this._setStateFromRoot(newState, fromRootUpdate, isLocal),
+            );
             return;
         }
         if (isLocal) {
@@ -105,7 +107,9 @@ export abstract class FluidReactComponent<
      */
     public setState(newState: SV) {
         if (!this._deferredInitP.isCompleted) {
-            this._initQueue = this._initQueue.then(() => this.setState(newState));
+            this._initQueue = this._initQueue.then(() =>
+                this.setState(newState),
+            );
             return;
         }
         syncStateAndRoot(
