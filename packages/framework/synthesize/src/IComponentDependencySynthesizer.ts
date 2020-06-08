@@ -58,9 +58,9 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
     synthesize<
         O extends IComponent,
         R extends IComponent,>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>;
+            optionalTypes: ComponentSymbolProvider<O>,
+            requiredTypes: ComponentSymbolProvider<R>,
+    ): AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>;
 
     /**
      * Check if a given type is registered

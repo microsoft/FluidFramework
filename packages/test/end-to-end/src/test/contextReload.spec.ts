@@ -83,8 +83,8 @@ describe("Context Reload", () => {
 
     async function createContainer(): Promise<Container> {
         const loader: ILoader = createLocalLoader([
-            [ codeDetailsV1, TestComponentV1.getFactory() ],
-            [ codeDetailsV2, TestComponentV2.getFactory() ],
+            [codeDetailsV1, TestComponentV1.getFactory()],
+            [codeDetailsV2, TestComponentV2.getFactory()],
         ], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetailsV1);
     }

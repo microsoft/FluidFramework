@@ -723,9 +723,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         parentHandle: summary.parentHandle,
                         tree: summaryObject,
                     } : {
-                        useContext: false,
-                        tree: summaryObject,
-                    };
+                            useContext: false,
+                            tree: summaryObject,
+                        };
 
                     value = await this.convertSummaryToSnapshotTree(
                         subtree,

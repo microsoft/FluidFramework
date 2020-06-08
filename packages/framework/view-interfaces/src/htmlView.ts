@@ -54,10 +54,10 @@ export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+    /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IComponent extends
-    Readonly<Partial<
-        IProvideComponentHTMLView
-        & IProvideComponentHTMLVisual>> { }
-    /* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+        Readonly<Partial<
+            IProvideComponentHTMLView
+            & IProvideComponentHTMLVisual>> { }
+    /* eslint-enable @typescript-eslint/no-empty-interface */
 }

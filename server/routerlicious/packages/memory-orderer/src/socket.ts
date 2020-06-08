@@ -74,7 +74,7 @@ export class Socket<T> extends EventEmitter {
     public on(event: "close", listener: (code: number, reason: string) => void): this;
     public on(event: "error", listener: (err: Error) => void): this;
     public on(event: "message", listener: (data: T) => void): this;
-    public on(event: "open" , listener: () => void): this;
+    public on(event: "open", listener: () => void): this;
     public on(event: "ping" | "pong", listener: (data: Buffer) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         super.on(event, listener);

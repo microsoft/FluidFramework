@@ -20,14 +20,16 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "testfarm": "node dist/test/testFarm.js",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -64,7 +66,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@fluidframework/gitresources": "^0.1006.1",
     "@fluidframework/server-services-client": "^0.1006.1",
     "@fluidframework/test-runtime-utils": "^0.20.0",
@@ -94,6 +96,7 @@
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "xmldoc": "^1.1.2"
   }
 }

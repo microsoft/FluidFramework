@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/indent */
-
 import * as SearchMenu from "@fluid-example/search-menu";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import * as MergeTree from "@fluidframework/merge-tree";

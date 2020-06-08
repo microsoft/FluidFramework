@@ -55,7 +55,7 @@ export class SnapshotLoader {
         const blobs = await blobsP;
         if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
-                (md) => blobs.splice(blobs.indexOf(md.id),1));
+                (md) => blobs.splice(blobs.indexOf(md.id), 1));
             assert(blobs.length === 1, `There should be only one blob with catch up ops: ${blobs.length}`);
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
@@ -136,7 +136,7 @@ export class SnapshotLoader {
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
                 ? chunk.headerMetadata.minSequenceNumber
-                : chunk.headerMetadata.sequenceNumber ,
+                : chunk.headerMetadata.sequenceNumber,
             /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
             branching);
 

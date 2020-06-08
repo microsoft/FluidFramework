@@ -30,7 +30,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     headerMetadata?: MergeTreeHeaderMetadata;
 }
 
-export interface MergeTreeHeaderChunkMetadata{
+export interface MergeTreeHeaderChunkMetadata {
     id: string,
 }
 
@@ -45,7 +45,7 @@ export interface MergeTreeHeaderMetadata {
     hasTardis?: boolean,
 }
 
-export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk{
+export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
     version: "1",
     startIndex: number;
     segmentCount: number;
@@ -87,7 +87,7 @@ export function serializeAsMinSupportedVersion(
 
     if (chunk.version !== undefined) {
         logger.send({
-            eventName:"MergeTreeChunk:serializeAsMinSupportedVersion",
+            eventName: "MergeTreeChunk:serializeAsMinSupportedVersion",
             category: "generic",
             fromChunkVersion: chunk.version,
             toChunkVersion: undefined,
@@ -142,7 +142,7 @@ export function toLatestVersion(
     options: PropertySet | undefined): MergeTreeChunkV1 {
     if (chunk.version !== "1") {
         logger.send({
-            eventName:"MergeTreeChunk:toLatestVersion",
+            eventName: "MergeTreeChunk:toLatestVersion",
             category: "generic",
             fromChunkVersion: chunk.version,
             toChunkVersion: "1",
@@ -174,7 +174,7 @@ function buildHeaderMetadataForLegecyChunk(
         if (chunk.headerMetadata !== undefined) {
             return chunk.headerMetadata;
         }
-        const chunkIds: MergeTreeHeaderChunkMetadata[] = [ { id: SnapshotLegacy.header } ];
+        const chunkIds: MergeTreeHeaderChunkMetadata[] = [{ id: SnapshotLegacy.header }];
         if (chunk.chunkLengthChars < chunk.totalLengthChars) {
             chunkIds.push({ id: SnapshotLegacy.body });
         }

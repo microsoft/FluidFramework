@@ -58,10 +58,10 @@ function generate(
 
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
-                [ mapId, SharedMap.getFactory() ],
-                [ undefined, ConsensusQueue.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [undefined, ConsensusQueue.getFactory()],
             ]);
-            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }
 

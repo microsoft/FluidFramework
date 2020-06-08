@@ -28,6 +28,8 @@ COPY package*.json ./
 COPY lerna.json .
 COPY lerna-package-lock.json .
 COPY .npmrc .
+COPY .editorconfig .
+COPY tsfmt.json .
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/gitresources/package*.json packages/gitresources/

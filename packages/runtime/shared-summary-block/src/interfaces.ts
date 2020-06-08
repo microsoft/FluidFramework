@@ -25,5 +25,5 @@ export interface ISharedSummaryBlock extends ISharedObject {
      * @param key - Key to set at.
      * @param value - Jsonable type value to set.
      */
-    set<T>(key: string, value: AsJsonable<T>): void ;
+    set<T>(key: string, value: AsJsonable<T>): void;
 }

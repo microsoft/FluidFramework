@@ -82,7 +82,7 @@ export class MemoryOrdererManager implements IOrdererManager {
             orderer.scribeLambda,
             orderer.scriptoriumLambda,
         ];
-        await Promise.all(lambdas.map(async (l)=>{
+        await Promise.all(lambdas.map(async (l) => {
             if (l.state === "created") {
                 return new Promise((resolve) => l.once("started", () => resolve()));
             }

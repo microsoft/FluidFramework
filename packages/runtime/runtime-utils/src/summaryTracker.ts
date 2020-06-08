@@ -103,7 +103,7 @@ export class SummaryTracker implements ISummaryTracker {
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
         private _latestSequenceNumber: number,
-        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
+        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) { }
 
     private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
         return async () => (await this._getSnapshotTree())?.trees[key];

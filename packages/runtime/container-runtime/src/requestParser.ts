@@ -18,13 +18,13 @@ export class RequestParser implements IRequest {
             .substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
             .split("/")
             .reduce<string[]>(
-            (pv, cv) => {
-                if (cv !== undefined && cv.length > 0) {
-                    pv.push(decodeURIComponent(cv));
-                }
-                return pv;
-            },
-            []);
+                (pv, cv) => {
+                    if (cv !== undefined && cv.length > 0) {
+                        pv.push(decodeURIComponent(cv));
+                    }
+                    return pv;
+                },
+                []);
     }
 
     private requestPathParts: readonly string[] | undefined;

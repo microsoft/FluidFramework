@@ -6,7 +6,7 @@
 import { IContext, ILogger, IQueuedMessage } from "@fluidframework/server-services-core";
 
 export class LocalContext implements IContext {
-    constructor(public readonly log: ILogger) {}
+    constructor(public readonly log: ILogger) { }
 
     public checkpoint(queuedMessage: IQueuedMessage) {
         return;

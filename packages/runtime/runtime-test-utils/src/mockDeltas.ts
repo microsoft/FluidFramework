@@ -40,7 +40,7 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return;
     }
 
-    public resume(): void {}
+    public resume(): void { }
 
     public peek(): T | undefined {
         return undefined;
@@ -58,7 +58,7 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return undefined;
     }
 
-    public dispose() {}
+    public dispose() { }
 
     constructor() {
         super();
@@ -121,17 +121,17 @@ export class MockDeltaManager extends EventEmitter
         return true;
     }
 
-    public close(): void {}
+    public close(): void { }
 
-    public submitSignal(content: any): void {}
+    public submitSignal(content: any): void { }
 
-    public flush() {}
+    public flush() { }
 
     public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
         return 0;
     }
 
-    public dispose() {}
+    public dispose() { }
 
     constructor() {
         super();

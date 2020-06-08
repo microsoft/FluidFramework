@@ -9,7 +9,6 @@ trigger:
   branches:
     include:
     - master
-    - release/*
   paths:
     include:
     - tools/fluid-build-tools

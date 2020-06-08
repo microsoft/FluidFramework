@@ -122,7 +122,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             url = url.substr(1);
         }
 
-        return  `${this.hostUrl}/${encodeURIComponent(
+        return `${this.hostUrl}/${encodeURIComponent(
             this.tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 
