@@ -45,6 +45,8 @@ let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
 
+const generatorFluidPackageName = "generator-fluid";
+
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
     let extra = false;
@@ -253,10 +255,10 @@ class ReferenceVersionBag extends VersionBag {
     /**
      * Add package and version to the version bag, with option reference to indicate where the reference comes from
      * Will error if there is a conflicting dependency versions, if the references are from the local repo, other wise warn.
-     * 
-     * @param pkg 
-     * @param version 
-     * @param newReference 
+     *
+     * @param pkg
+     * @param version
+     * @param newReference
      */
     public add(pkg: Package, version: string, newReference?: string, published: boolean = false) {
         const existing = this.internalAdd(pkg, version);
@@ -317,7 +319,7 @@ class ReferenceVersionBag extends VersionBag {
      * Given a package a version range, ask NPM for a list of version that satisfies it, and find the latest version.
      * That version is added to the version bag, and will error on conflict.
      * It then ask NPM for the list of dependency for the matched version, and collect the version as well.
-     * 
+     *
      * @param pkg - the package to begin collection information
      * @param versionRange - the version range to match
      * @param repoRoot - where the repo root is
@@ -428,15 +430,15 @@ class BumpVersion {
         this.fullPackageMap = this.repo.createPackageMap();
 
         // TODO: Is there a way to generate this automatically?
-        const generatorPackage = this.fullPackageMap.get("@microsoft/generator-fluid");
-        if (!generatorPackage) { fatal("Unable to find @microsoft/generator-fluid package") };
+        const generatorPackage = this.fullPackageMap.get(generatorFluidPackageName);
+        if (!generatorPackage) { fatal(`Unable to find ${generatorFluidPackageName} package`) };
         this.generatorPackage = generatorPackage;
         this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
     }
 
     /**
      * Bump the dependencies of a package based on the what's in the packageMap, and save the package.json
-     * 
+     *
      * @param pkg the package to bump dependency versions
      * @param bumpPackageMap the map of package that needs to bump
      * @param release if we are releasing, only patch the pre-release dependencies
@@ -498,7 +500,7 @@ class BumpVersion {
     }
 
     /**
-     * Determine either we want to bump minor on master or patch version on release/* based on branch name 
+     * Determine either we want to bump minor on master or patch version on release/* based on branch name
      */
     private async getVersionBumpKind(): Promise<VersionBumpType> {
         if (paramReleaseVersion !== undefined) {
@@ -583,7 +585,7 @@ class BumpVersion {
     }
 
     /**
-     * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages 
+     * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages
      * has the same version to the current version in the repo and needs to be bumped as well
      */
     private async collectBumpInfo(releaseName: string) {
@@ -622,7 +624,7 @@ class BumpVersion {
 
     /**
      * Bump version of packages in the repo
-     * 
+     *
      * @param versionBump the kind of version bump
      */
     private async bumpRepo(versionBump: VersionChangeType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
@@ -705,8 +707,8 @@ class BumpVersion {
     }
 
     /**
-     * Create a commit with the version bump and return the repo transition state 
-     * 
+     * Create a commit with the version bump and return the repo transition state
+     *
      * @param versionBump the kind of version Bump
      * @param serverNeedBump whether server version needs to be bump
      * @param packageNeedBump the set of packages that needs to be bump
@@ -840,7 +842,7 @@ class BumpVersion {
 
     /**
      * Prompt the user for a yes/no answer.
-     * 
+     *
      * @param message the message for the prompt
      */
     private async prompt(message: string) {
@@ -882,7 +884,7 @@ class BumpVersion {
 
     /**
      * Release a set of packages if needed
-     * 
+     *
      * @param packageNeedBump all the package that needs to be release in this session
      * @param packages the package that to be released now if needed
      */
@@ -967,7 +969,7 @@ class BumpVersion {
     /**
      * Bump package version of the client monorepo
      * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
-     * 
+     *
      * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
      */
     public async releaseVersion(releaseName: string) {
@@ -1035,7 +1037,7 @@ class BumpVersion {
         await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releasePackage(depVersions, ["@microsoft/generator-fluid", "tinylicious"]);
+        await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1114,9 +1116,9 @@ class BumpVersion {
 
     /**
      * Bump cross package/monorepo dependencies
-     * 
+     *
      * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
-     * 
+     *
      * @param repo the repo to operate one
      * @param bumpDepPackages update dependencies to these set of packages to current in repo version
      * @param updateLock whether to update the lock file (by npm i) or not
