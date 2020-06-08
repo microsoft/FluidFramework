@@ -14,14 +14,14 @@ import ReactDOM from "react-dom";
 
 const diceValueKey = "diceValue";
 
-interface IDiceRollerModelProps {
+interface IDiceRoller {
     /**
-     * Get the dice value from the model as a number.
+     * Get the dice value as a number.
      */
     getValue: () => number;
 
     /**
-     * Update the model to have a new dice value
+     * Roll the dice
      */
     roll: () => void;
 }
@@ -29,7 +29,7 @@ interface IDiceRollerModelProps {
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
  */
-export class DiceRoller extends PrimedComponent implements IDiceRollerModelProps, IComponentHTMLView {
+export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
     public static get ComponentName() { return "@fluid-example/dice-roller"; }
 
     public get IComponentHTMLView() { return this; }
