@@ -13,7 +13,7 @@ import {
     IFluidConverter,
 } from "../interface";
 
-export function getByValue<
+export function getByFluidKey<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState,
 >(searchValue: string, map: Map<keyof SV, IFluidConverter<SV,SF>>) {

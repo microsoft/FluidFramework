@@ -45,7 +45,6 @@ export const updateStateAndComponentMap = async <
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
-    fluidState: SF,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     fluidToView: FluidToViewMap<SV,SF>,
     viewToFluid?: ViewToFluidMap<SV,SF>,

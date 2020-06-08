@@ -21,8 +21,8 @@ export interface ICombinedState<
      */
     viewState: SV,
     /**
-     * The fluid state that will be used to update the synced values in the state. This will no longer
-     * be undefined after initialization
+     * The fluid state that will be used to update the synced values in the state. This will be
+     * undefined until it is initialized, after which the state will update with the defined values
      */
     fluidState?: SF,
     /**
@@ -122,15 +122,15 @@ export interface IFluidProps<
      */
     dataProps: IFluidDataProps,
     /**
-     * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters
-     */
-    viewToFluid?: ViewToFluidMap<SV,SF>,
-    /**
      * A map of the Fluid state values that need conversion to their view state counterparts and the
      * respective converters
      */
     fluidToView: FluidToViewMap<SV,SF>,
+    /**
+     * A map of the view state values that need conversion to their Fluid state counterparts and the
+     * respective converters
+     */
+    viewToFluid?: ViewToFluidMap<SV,SF>,
 }
 
 /**
@@ -152,7 +152,8 @@ export interface IViewConverter<
      */
     viewConverter?: (syncedState: Partial<SF>, fluidComponentMap: FluidComponentMap) => Partial<SV>,
     /**
-     * If this is a special fluid DDS object type (i.e. counter) on the root, specify that here
+     * If this is a fluid DDS SharedObject type (i.e. SharedCounter, SharedMap), supply its create function
+     * here and add any events that it will fire to the listenedEvents param below to trigger state updates
      */
     sharedObjectCreate?: (runtime: IComponentRuntime) => SharedObject
     /**
@@ -161,7 +162,8 @@ export interface IViewConverter<
     listenedEvents?: string[];
     /**
      * If this Fluid object is stored on the root under a different key than the name of this Fluid state
-     * key within the synced state map, provide the key on the root for this object here
+     * key within the synced state map, provide the key on the root for this object here. The changes will also
+     * reflect under that key if the data needs to be used elsewhere
      */
     rootKey?: string;
 }
@@ -512,7 +514,7 @@ export interface FluidContextState<SV extends IFluidFunctionalComponentViewState
     /**
      * Callback to update the state
      */
-    setState: (state: SV, fromRootUpdate?: boolean) => void,
+    setState: (state: SV) => void,
     /**
      * The context passed in from the props
      */

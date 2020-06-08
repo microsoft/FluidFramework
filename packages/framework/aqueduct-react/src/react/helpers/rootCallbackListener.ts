@@ -13,7 +13,7 @@ import {
     IFluidFunctionalComponentFluidState,
 } from "../interface";
 import { syncStateAndRoot } from "./syncStateAndRoot";
-import { getByValue } from "./utils";
+import { getByFluidKey } from "./utils";
 import { getViewFromFluid } from "./getViewFromFluid";
 import { getFluidStateFromRoot } from ".";
 
@@ -53,7 +53,6 @@ export const rootCallbackListener = <
     if (!currentFluidState) {
         throw Error("Root update triggered before fluid state was initialized");
     }
-    const rootKey = change.key;
     const viewToFluidKeys: string[] = viewToFluid
         ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
         : [];
@@ -71,16 +70,16 @@ export const rootCallbackListener = <
             viewToFluid,
         );
     } else if (viewToFluid !== undefined
-        && ((viewToFluidKeys).includes(rootKey)
+        && ((viewToFluidKeys).includes(change.key)
         || (change.keyPrefix !== undefined && viewToFluidKeys.includes(change.keyPrefix)))) {
         // If the update is to a child component, trigger only a view update as the child itself will
         // update its Fluid update
-        const stateKey = getByValue(rootKey, viewToFluid);
+        const stateKey = getByFluidKey(change.key, viewToFluid);
         if (stateKey) {
             const newPartialState = getViewFromFluid(
                 syncedStateId,
                 root,
-                rootKey as keyof SF,
+                change.key as keyof SF,
                 fluidComponentMap,
                 fluidToView,
             );
@@ -88,7 +87,7 @@ export const rootCallbackListener = <
             state.fluidComponentMap = fluidComponentMap;
             setState(state, true, local);
         } else {
-            throw Error(`Unable to extract view state from root change key: ${rootKey}`);
+            throw Error(`Unable to extract view state from root change key: ${change.key}`);
         }
     }
 });

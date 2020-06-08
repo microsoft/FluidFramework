@@ -189,7 +189,6 @@ export async function initializeState<
         dataProps.runtime,
         state,
         setState,
-        initFluidState,
         initRootCallback,
         fluidToView,
         viewToFluid,
