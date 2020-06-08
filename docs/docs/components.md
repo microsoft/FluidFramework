@@ -142,22 +142,22 @@ export interface IComponentHTMLOptions {
 
 For an introduction to the Fluid Data model, please read [What is Fluid?](../what-is-fluid.md)
 
-The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing the
-`IComponentLoadable` interface.
+The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing
+the `IComponentLoadable` interface.
 
 However, we expect most component developers to access the data model via the base classes in Fluid's Aqueduct package
 (this package contains implementations of the Fluid Framework interfaces that help developers to quickly get started),
 specifically [PrimedComponent][], and then use distributed data structures via their APIs (SharedDirectory, SharedMap,
 SharedString, etc).
 
-[PrimedComponent][] ensures that a root distributed data structure is created and ready for the developer to use. The root
-is a SharedDirectory, which is a Map-like data structure. Additional distributed data structures can be added easily.
-[PrimedComponent][] is the recommended starting point for building a component.
+[PrimedComponent][] ensures that a root distributed data structure is created and ready for the developer to use. The
+root is a SharedDirectory, which is a Map-like data structure. Additional distributed data structures can be added
+easily. [PrimedComponent][] is the recommended starting point for building a component.
 
-[PrimedComponent][] exposes some component lifecycle functions that components can override. For example, a component might
-override the componentInitializingFirstTime function to set up any state that should be configured only once during a
-components life, or override the componentHasInitialized method which will be called every time the component has
-initialized.
+[PrimedComponent][] exposes some component lifecycle functions that components can override. For example, a component
+might override the `componentInitializingFirstTime` function to set up any state that should be configured only once
+during a components life, or override the `componentHasInitialized` method which will be called every time the component
+has initialized.
 
 ### Fluid Experience Interfaces
 
