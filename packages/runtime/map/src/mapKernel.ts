@@ -325,8 +325,15 @@ export class MapKernel {
             throw new Error("Undefined and null keys are not supported");
         }
 
-        // Set the value locally first.
+        // Create a local value and serialize it.
         const localValue = this.localValueMaker.fromInMemory(value);
+        const serializableValue = makeSerializable(
+            localValue,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
@@ -338,12 +345,6 @@ export class MapKernel {
         if (this.isLocal()) {
             return;
         }
-
-        const serializableValue = makeSerializable(
-            localValue,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.handle);
 
         const op: IMapSetOperation = {
             key,
@@ -357,8 +358,19 @@ export class MapKernel {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any) {
-        // Set the value locally first.
+        // Create a local value and serialize it.
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+
+        // TODO ideally we could use makeSerialized in this case as well. But the interval
+        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // may be possible to remove custom value type serialization entirely.
+        const transformedValue = makeHandlesSerializable(
+            params,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
@@ -371,19 +383,9 @@ export class MapKernel {
             return;
         }
 
-        // TODO ideally we could use makeSerialized in this case as well. But the interval
-        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
-        // may be possible to remove custom value type serialization entirely.
-        const transformedValue = makeHandlesSerializable(
-            params,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.handle);
-
         // This is a special form of serialized valuetype only used for set, containing info for initialization.
         // After initialization, the serialized form will need to come from the .store of the value type's factory.
         const serializableValue = { type, value: transformedValue };
-
         const op: IMapSetOperation = {
             key,
             type: "set",
