@@ -5,7 +5,7 @@
 
 import {
     PrimedComponent,
-    PrimedComponentFactory
+    PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
@@ -44,7 +44,7 @@ interface IDiceRollerModelProps extends PrimedComponent{
 
 const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
     // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267f + props.value);
+    const diceChar = String.fromCodePoint(0x267F + props.value);
 
     return (
         <div>
