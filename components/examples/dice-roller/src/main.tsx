@@ -30,7 +30,7 @@ interface IDiceRollerViewProps {
     roll: () => void;
 }
 
-interface IDiceRollerModelProps extends PrimedComponent{
+interface IDiceRollerModelProps extends PrimedComponent {
     /**
      * Get the dice value from the model as a number.
      */
@@ -58,7 +58,7 @@ const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewPr
  * FluidReactClient is in charge of maintaining the React application state and updating app state on model change.
  * This component allows the view to be unaware of the model and keeps app rendering/rerendering within React.
  */
-const FluidReactClient = ({ model }: {model: IDiceRollerModelProps}): JSX.Element => {
+const FluidReactClient = ({ model }: { model: IDiceRollerModelProps }): JSX.Element => {
     const [value, setValue] = React.useState(model.getValue());
     const updateValue = () => setValue(model.getValue());
     React.useEffect(() => {
