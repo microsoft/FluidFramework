@@ -24,7 +24,7 @@ const myMap = SharedMap.create(this.runtime, id);
 ## Usage
 
 Unlike JavaScript Maps, a SharedMap's keys must be strings. The value must only be plain JS objects, `SharedObject`
-handles, or value types., including another distributed data structure. Thus, you can use nested SharedMaps and other
+handles, or value types, including another distributed data structure. Thus, you can use nested SharedMaps and other
 distributed data structures to construct a Fluid data model.
 
 !!!include(object-serialization.md)!!!
