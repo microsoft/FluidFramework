@@ -7,7 +7,6 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IValueChanged } from "@fluidframework/map";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import React from "react";
@@ -15,22 +14,7 @@ import ReactDOM from "react-dom";
 
 const diceValueKey = "diceValue";
 
-/**
- * IDiceRoller describes the public API surface for our dice roller component.
- */
-interface IDiceRollerViewProps {
-    /**
-     * The current value of the dice as a number
-     */
-    value: number;
-
-    /**
-     * Callback to roll the dice
-     */
-    roll: () => void;
-}
-
-interface IDiceRollerModelProps extends PrimedComponent {
+interface IDiceRollerModelProps {
     /**
      * Get the dice value from the model as a number.
      */
@@ -41,34 +25,6 @@ interface IDiceRollerModelProps extends PrimedComponent {
      */
     roll: () => void;
 }
-
-const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
-    // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267F + props.value);
-
-    return (
-        <div>
-            <span style={{ fontSize: 50 }}>{diceChar}</span>
-            <button onClick={props.roll}>Roll</button>
-        </div>
-    );
-};
-
-/**
- * FluidReactClient is in charge of maintaining the React application state and updating app state on model change.
- * This component allows the view to be unaware of the model and keeps app rendering/rerendering within React.
- */
-const FluidReactClient = ({ model }: { model: IDiceRollerModelProps }): JSX.Element => {
-    const [value, setValue] = React.useState(model.getValue());
-    const updateValue = () => setValue(model.getValue());
-    React.useEffect(() => {
-        model.on("diceRolled", updateValue);
-        return () => {
-            model.off("diceRolled", updateValue);
-        };
-    }, [model]);
-    return <DiceRollerView value={value} roll={model.roll} />;
-};
 
 /**
  * The DiceRoller is our implementation of the IDiceRoller interface.
@@ -92,21 +48,29 @@ export class DiceRoller extends PrimedComponent implements IDiceRollerModelProps
         this.root.set(diceValueKey, 1);
     }
 
-    protected async componentHasInitialized() {
-        this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === diceValueKey) {
-                this.emit("diceRolled");
-            }
-        });
-    }
-
     /**
      * Render the dice.
      */
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            React.createElement(FluidReactClient, { model: this }),
+            React.createElement(() => {
+                // Store model state in React state
+                const [value, setValue] = React.useState<number>(this.getValue());
+                // Update React state each time that the model changes
+                React.useEffect(() => {
+                    this.root.on("valueChanged", () => setValue(this.getValue()));
+                });
+
+                // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+                const diceChar = String.fromCodePoint(0x267F + value);
+                return (
+                    <div>
+                        <span style={{ fontSize: 50 }}>{diceChar}</span>
+                        <button onClick={this.roll}>Roll</button>
+                    </div>
+                    );
+            }),
             div,
         );
     }
