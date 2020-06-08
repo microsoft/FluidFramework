@@ -131,7 +131,7 @@ const treeFactories: ITestTreeFactory[] = [
                 initialText += text;
             }
 
-            const remove = Math.round(initialText.length  / 4);
+            const remove = Math.round(initialText.length / 4);
             // remove from start
             mergeTree.markRangeRemoved(
                 0,

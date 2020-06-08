@@ -23,8 +23,8 @@ export async function runInner(divId: string) {
 
     const pkg: IFluidCodeDetails = {
         package: "@fluid-example/todo@^0.15.0",
-        config:{
-            "@fluid-example:cdn":"https://pragueauspkn.azureedge.net",
+        config: {
+            "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
         },
     };
 

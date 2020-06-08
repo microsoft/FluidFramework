@@ -80,7 +80,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
                 <div className="spaces-embedded-component-wrapper">
                     {
                         component &&
-                        <ReactViewAdapter component={ component } />
+                        <ReactViewAdapter component={component} />
                     }
                 </div>
             </div>
@@ -146,7 +146,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
 
         return (
             <ReactGridLayout
-                className={`spaces-storage-view${ props.editable ? " editable" : "" }`}
+                className={`spaces-storage-view${props.editable ? " editable" : ""}`}
                 cols={36}
                 rowHeight={50}
                 width={1800}

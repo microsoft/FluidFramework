@@ -18,7 +18,7 @@ export interface IProvideSharedObject {
     readonly ISharedObject: ISharedObject;
 }
 
-export interface ISharedObjectEvents extends IErrorEvent  {
+export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
 }

@@ -11,13 +11,13 @@ interface ICursorTransition {
 
 class Cursor {
     /* eslint-disable max-len */
-    private static readonly first    = { suffix: "f", property: "firstElementChild",       fn: (element: Element) => element.firstElementChild };
-    private static readonly last     = { suffix: "l", property: "lastElementChild",        fn: (element: Element) => element.lastElementChild };
-    private static readonly next     = { suffix: "n", property: "nextElementSibling",      fn: (element: Element) => element.nextElementSibling };
-    private static readonly previous = { suffix: "p", property: "previousElementSibling",  fn: (element: Element) => element.previousElementSibling };
+    private static readonly first = { suffix: "f", property: "firstElementChild", fn: (element: Element) => element.firstElementChild };
+    private static readonly last = { suffix: "l", property: "lastElementChild", fn: (element: Element) => element.lastElementChild };
+    private static readonly next = { suffix: "n", property: "nextElementSibling", fn: (element: Element) => element.nextElementSibling };
+    private static readonly previous = { suffix: "p", property: "previousElementSibling", fn: (element: Element) => element.previousElementSibling };
     /* eslint-enable max-len */
 
-    public readonly pathFns = new Map<string,(element: Element) => Element>();
+    public readonly pathFns = new Map<string, (element: Element) => Element>();
     // eslint-disable-next-line no-null/no-null
     private element: Element | null = null;
     private path: string = "";
@@ -29,10 +29,10 @@ class Cursor {
         this.element = root;
     }
 
-    public first()      { this.moveTo(Cursor.first); }
-    public last()       { this.moveTo(Cursor.last); }
-    public next()       { this.moveTo(Cursor.next); }
-    public previous()   { this.moveTo(Cursor.previous); }
+    public first() { this.moveTo(Cursor.first); }
+    public last() { this.moveTo(Cursor.last); }
+    public next() { this.moveTo(Cursor.next); }
+    public previous() { this.moveTo(Cursor.previous); }
 
     public child(index: number) {
         // Calculate the distance to the child from the last child.
@@ -109,7 +109,7 @@ export class Template {
     }
 
     private readonly content: Element;
-    private readonly refs = new Map<string,(root: Element) => Element>();
+    private readonly refs = new Map<string, (root: Element) => Element>();
 
     constructor(content: ITemplateNode) {
         const refToPath = new Map<string, number[]>();

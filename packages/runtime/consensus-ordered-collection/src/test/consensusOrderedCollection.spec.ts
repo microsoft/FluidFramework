@@ -93,7 +93,7 @@ describe("ConsensusOrderedCollection", () => {
             it("Can wait for data", async () => {
                 let added = false;
                 let res: any;
-                const p = testCollection.waitAndAcquire(async (value) =>{
+                const p = testCollection.waitAndAcquire(async (value) => {
                     assert(added, "Wait resolved before value is added");
                     res = value;
                     return ConsensusResult.Complete;
@@ -165,7 +165,7 @@ describe("ConsensusOrderedCollection", () => {
         generate([1, 2], [1, 2], () => {
             return factory.create(new MockComponentRuntime(), "consensus-ordered-collection");
         },
-        () => {});
+            () => { });
     });
 
     describe("Attached, connected", () => {
@@ -208,7 +208,6 @@ describe("ConsensusOrderedCollection", () => {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };
-            componentRuntime.attach();
 
             const consensusOrderedCollection = factory.create(componentRuntime, id);
             consensusOrderedCollection.connect(services);
@@ -219,18 +218,24 @@ describe("ConsensusOrderedCollection", () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
             // Create first ConsensusOrderedCollection
-            const runtime1 = new MockComponentRuntime();
-            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(runtime1);
+            const componentRuntime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
             const deltaConnection1 = containerRuntime1.createDeltaConnection();
-            testCollection1 =
-                await createConsensusOrderedCollection("consenses-ordered-collection1", runtime1, deltaConnection1);
+            testCollection1 = await createConsensusOrderedCollection(
+                "consensus-ordered-collection1",
+                componentRuntime1,
+                deltaConnection1,
+            );
 
             // Create second ConsensusOrderedCollection
-            const runtime2 = new MockComponentRuntime();
-            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+            const componentRuntime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
             const deltaConnection2 = containerRuntime2.createDeltaConnection();
-            testCollection2 =
-                await createConsensusOrderedCollection("consenses-ordered-collection2", runtime2, deltaConnection2);
+            testCollection2 = await createConsensusOrderedCollection(
+                "consensus-ordered-collection2",
+                componentRuntime2,
+                deltaConnection2,
+            );
         });
 
         it("can resend unacked ops on reconnection", async () => {

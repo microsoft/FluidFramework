@@ -77,7 +77,9 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 <TabList>
                     {tabs}
                     <li className="react-tabs__tab">
-                        <NewTabButton createTab={this.createNewTab} components={this.props.dataModel.getNewTabTypes()}/>
+                        <NewTabButton
+                            createTab={this.createNewTab}
+                            components={this.props.dataModel.getNewTabTypes()} />
                     </li>
                 </TabList>
                 <div style={{ position: "relative" }}>

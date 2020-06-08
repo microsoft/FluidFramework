@@ -42,7 +42,7 @@ export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitial
         // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
-            <CounterReactView directory={this.root}counter={counter} />,
+            <CounterReactView directory={this.root} counter={counter} />,
             div,
         );
     }
