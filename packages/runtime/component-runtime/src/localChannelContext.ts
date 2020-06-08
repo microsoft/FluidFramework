@@ -53,8 +53,8 @@ export class LocalChannelContext implements IChannelContext {
         return this.channel.isRegistered();
     }
 
-    public startCollaboration(): void {
-        this.channel.startCollaboration();
+    public didGoLive(): void {
+        this.channel.didGoLive();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -78,7 +78,7 @@ export class LocalChannelContext implements IChannelContext {
         strongAssert(this.attached, "Local channel must be attached when resubmitting op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.connection!.reSubmit(content, localOpMetadata);
+    this.connection!.reSubmit(content, localOpMetadata)
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {

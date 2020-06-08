@@ -193,8 +193,8 @@ export interface IComponentRuntimeChannel extends
      */
     reSubmit(type: MessageType, content: any, localOpMetadata: unknown);
 
-    // Tells the layers below to start collaboration.
-    startCollaboration(): void;
+    // Tells the layers below that we are live now.
+    didGoLive(): void;
 }
 
 export interface ISummaryTracker {

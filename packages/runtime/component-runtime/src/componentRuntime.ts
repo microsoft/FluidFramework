@@ -212,9 +212,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.emit("dispose");
     }
 
-    public startCollaboration(): void {
+    public didGoLive(): void {
         for (const [, channelContext] of this.contexts) {
-            channelContext.startCollaboration();
+            channelContext.didGoLive();
         }
     }
 

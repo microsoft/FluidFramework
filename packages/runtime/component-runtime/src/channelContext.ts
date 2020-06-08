@@ -29,7 +29,8 @@ export interface IChannelContext {
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
-    startCollaboration(): void;
+    // Tells the layers below we are live now.
+    didGoLive(): void;
 }
 
 export function createServiceEndpoints(

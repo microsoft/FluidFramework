@@ -50,8 +50,9 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve(null);
     }
 
-    public startCollaboration(): void {
-        return;
+    public didGoLive(): void {
+        throw new Error("Should never come here for null runtime " +
+            "because we always have code for detached container!!");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

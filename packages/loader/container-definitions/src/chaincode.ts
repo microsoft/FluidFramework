@@ -174,8 +174,8 @@ export interface IRuntime extends IDisposable {
 
     createSummary(): ISummaryTree;
 
-    // Tells the layers below to start collaboration.
-    startCollaboration(): void;
+    // Tells the layers below we are live now.
+    didGoLive(): void;
 }
 
 export interface IMessageScheduler {

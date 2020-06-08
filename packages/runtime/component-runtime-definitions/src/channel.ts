@@ -50,8 +50,8 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
      */
     connect(services: ISharedObjectServices): void;
 
-    // Tells the shared object to start collaboration.
-    startCollaboration(): void;
+    // Tells the shared object that we are live now.
+    didGoLive(): void;
 }
 
 /**

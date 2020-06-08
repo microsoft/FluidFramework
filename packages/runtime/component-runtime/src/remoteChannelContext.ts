@@ -75,8 +75,8 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
-    public startCollaboration(): void {
-        this.channel?.startCollaboration();
+    public didGoLive(): void {
+        this.channel?.didGoLive();
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

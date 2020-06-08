@@ -186,9 +186,9 @@ export class ContainerContext implements IContainerContext {
         this.logger = container.subLogger;
     }
 
-    public startCollaboration(): void {
-        if (this.runtime?.startCollaboration !== undefined) {
-            this.runtime.startCollaboration();
+    public didGoLive(): void {
+        if (this.runtime?.didGoLive !== undefined) {
+            this.runtime.didGoLive();
         }
     }
 

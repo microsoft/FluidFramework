@@ -226,9 +226,9 @@ export abstract class ComponentContext extends EventEmitter implements
         return this.containerRuntime._createComponentWithProps(packagePath, props, id);
     }
 
-    public startCollaboration(): void {
-        if (this.componentRuntime?.startCollaboration !== undefined) {
-            this.componentRuntime?.startCollaboration();
+    public didGoLive(): void {
+        if (this.componentRuntime?.didGoLive !== undefined) {
+            this.componentRuntime?.didGoLive();
         }
     }
 

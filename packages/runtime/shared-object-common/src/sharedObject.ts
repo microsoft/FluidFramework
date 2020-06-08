@@ -229,7 +229,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
      * Also called after non-local data type get loaded.
      */
-    public startCollaboration() {
+    public didGoLive() {
         return;
     }
 
@@ -335,7 +335,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     private attachDeltaHandler() {
         // Allows objects to start listening for events if the container is not local.
         if (!this.isLocal()) {
-            this.startCollaboration();
+            this.didGoLive();
         }
 
         // attachDeltaHandler is only called after services is assigned
