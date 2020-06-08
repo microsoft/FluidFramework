@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/diceroller",
+  "name": "@fluid-example/multiview",
   "version": "0.20.0",
-  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
+  "description": "Example of attaching multiple views to a Fluid component as a model",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

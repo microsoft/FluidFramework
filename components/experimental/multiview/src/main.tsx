@@ -15,61 +15,58 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
-const diceValueKey = "diceValue";
+const optionValueKey = "optionValue";
 
 /**
- * IDiceRoller describes the public API surface for our dice roller component.
+ * IOptionPicker describes the public API surface for our option picker component.
  */
-interface IDiceRoller extends EventEmitter {
+interface IOptionPicker extends EventEmitter {
     /**
-     * Get the dice value as a number.
+     * Get the option value.
      */
-    readonly value: number;
+    readonly value: string;
 
     /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+     * Set the option value.  Will cause a "optionChanged" event to be emitted.
      */
-    roll: () => void;
+    setOptionValue: () => void;
 
     /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+     * The optionChanged event will fire whenever someone changes the option, either locally or remotely.
      */
-    on(event: "diceRolled", listener: () => void): this;
+    on(event: "optionChanged", listener: () => void): this;
 }
 
-interface IDiceRollerViewProps {
-    model: IDiceRoller;
+interface IOptionPickerViewProps {
+    model: IOptionPicker;
 }
 
-const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
-    const [diceValue, setDiceValue] = React.useState(props.model.value);
+const OptionPickerView: React.FC<IOptionPickerViewProps> = (props: IOptionPickerViewProps) => {
+    const [optionValue, setOptionValue] = React.useState(props.model.value);
 
     React.useEffect(() => {
-        const onDiceRolled = () => {
-            setDiceValue(props.model.value);
+        const onOptionChanged = () => {
+            setOptionValue(props.model.value);
         };
-        props.model.on("diceRolled", onDiceRolled);
+        props.model.on("optionChanged", onOptionChanged);
         return () => {
-            props.model.off("diceRolled", onDiceRolled);
+            props.model.off("optionChanged", onOptionChanged);
         };
     }, [props.model]);
 
-    // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-    const diceChar = String.fromCodePoint(0x267F + diceValue);
-
     return (
         <div>
-            <span style={{ fontSize: 50 }}>{diceChar}</span>
-            <button onClick={props.model.roll}>Roll</button>
+            <span style={{ fontSize: 50 }}>{optionValue}</span>
+            <button onClick={props.model.setOptionValue}>Set Value</button>
         </div>
     );
 };
 
 /**
- * The DiceRoller is our implementation of the IDiceRoller interface.
+ * The OptionPicker is our implementation of the IOptionPicker interface.
  */
-export class DiceRoller extends PrimedComponent implements IDiceRoller, IComponentHTMLView {
-    public static get ComponentName() { return "@fluid-example/dice-roller"; }
+export class OptionPicker extends PrimedComponent implements IOptionPicker, IComponentHTMLView {
+    public static get ComponentName() { return "@fluid-example/option-picker"; }
 
     public get IComponentHTMLView() { return this; }
 
@@ -80,34 +77,33 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
-        this.root.set(diceValueKey, 1);
+        this.root.set(optionValueKey, "First");
     }
 
     protected async componentHasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === diceValueKey) {
-                this.emit("diceRolled");
+            if (changed.key === optionValueKey) {
+                this.emit("optionChanged");
             }
         });
     }
 
     /**
-     * Render the dice.
+     * Render the option picker.
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <DiceRollerView model={this} />,
+            <OptionPickerView model={this} />,
             div,
         );
     }
 
     public get value() {
-        return this.root.get(diceValueKey);
+        return this.root.get(optionValueKey);
     }
 
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
+    public readonly setOptionValue = () => {
+        this.root.set(optionValueKey, "Second");
     };
 }
 
@@ -115,9 +111,9 @@ export class DiceRoller extends PrimedComponent implements IDiceRoller, ICompone
  * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
-    DiceRoller.ComponentName,
-    DiceRoller,
+export const OptionPickerInstantiationFactory = new PrimedComponentFactory(
+    OptionPicker.ComponentName,
+    OptionPicker,
     [],
     {},
 );
