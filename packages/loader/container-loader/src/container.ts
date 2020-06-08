@@ -395,6 +395,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             {
                 docId: () => this.id,
+                isAttached: () => this.attached,
             });
 
         // Prefix all events in this file with container-loader
