@@ -1,6 +1,6 @@
-# Primitives Component
+# Primitives Container
 
-This is a basic example component giving a UI to different distributed data structures.
+This is a basic example container giving a UI to different distributed data structures.
 
 ## Getting Started
 
