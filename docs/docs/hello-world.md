@@ -6,6 +6,8 @@ The Dice roller is a fully-functional Fluid component; its code looks like this:
 
 It displays a die and a button to roll it. You can try it below.
 
+---
+
 **Try the Dice roller [Doesn't work yet]**
 
 <style>
@@ -17,6 +19,7 @@ It displays a die and a button to roll it. You can try it below.
 
 <iframe id="diceroller" src="/fluid/diceroller.html"></iframe>
 
+---
 
 ## How to read this guide
 
@@ -26,8 +29,7 @@ state.
 
 Every section in this guide builds on the knowledge introduced in earlier sections. You can learn most of Fluid
 Framework by reading the sections in the guide in the order they appear in the sidebar. For example, "Introducing
-distributed data structures"
-is the next chapter after this one.
+distributed data structures" is the next section after this one.
 
 ::: tip
 
@@ -45,7 +47,7 @@ knowledge level and enable you to follow along this guide without getting lost. 
 an hour, but as a result you won't have to feel like you're learning both Fluid Framework and JavaScript at the same
 time.
 
-The [TypeScript handbook][ts-handbook] is another good reasource.
+The [TypeScript handbook][ts-handbook] is another good resource.
 
 
 ::: tip

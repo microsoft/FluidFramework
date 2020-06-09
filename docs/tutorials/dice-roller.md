@@ -69,9 +69,9 @@ behavior as well as additional helpers to make component development easier.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
-   - `componentInitializingFirstTime()` - only called the first time a component is initialized
-   - `existing()` - called every time except the first time a component is initialized
-   - `opened()` - called every time a component is initialized. After `create` and `existing`.
+   * `componentInitializingFirstTime()` - only called the first time a component is initialized
+   * `existing()` - called every time except the first time a component is initialized
+   * `opened()` - called every time a component is initialized. After `create` and `existing`.
 
 #### IComponentHTMLView
 

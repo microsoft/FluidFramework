@@ -71,8 +71,8 @@ npm run build:fast
 
 ## Testing
 
-You can run all of our tests from root, or you can run a scoped set of tests by running the `test` command
-from the package you're interested in.
+You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
+command from the package you're interested in.
 
 Note: Some of the tests depend on test collateral that lives in a submodule here:
 <https://github.com/microsoft/FluidFrameworkTestData>.  You may choose to fetch that collateral into your local
