@@ -240,8 +240,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 
         // TODO: Resend pending ops on reconnect
-        assert(this.rows.resetPendingSegmentsToOp() === undefined);
-        assert(this.cols.resetPendingSegmentsToOp() === undefined);
+        assert(this.rows.peekPendingSegmentGroups() === undefined);
+        assert(this.cols.peekPendingSegmentGroups() === undefined);
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) { }

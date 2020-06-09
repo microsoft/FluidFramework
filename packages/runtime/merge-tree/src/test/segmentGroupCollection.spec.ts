@@ -21,7 +21,7 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".enqueue", () => {
-        const segmentGroup = { segments: [] };
+        const segmentGroup = { segments: [], localSeq: 1 };
         segment.segmentGroups.enqueue(segmentGroup);
 
         assert(!segment.segmentGroups.empty);
@@ -31,11 +31,11 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".dequeue", () => {
-        const segmentGroup = { segments: [] };
+        const segmentGroup = { segments: [], localSeq: 1 };
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [] });
+            segment.segmentGroups.enqueue({ segments: [], localSeq: 1 });
         }
 
         const dequeuedSegmentGroup = segment.segmentGroups.dequeue();
@@ -47,11 +47,11 @@ describe("segmentGroupCollection", () => {
     });
 
     it(".clear", () => {
-        const segmentGroup = { segments: [] };
+        const segmentGroup = { segments: [], localSeq: 1 };
         segment.segmentGroups.enqueue(segmentGroup);
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [] });
+            segment.segmentGroups.enqueue({ segments: [], localSeq: 1 });
         }
 
         segment.segmentGroups.clear();
@@ -66,7 +66,7 @@ describe("segmentGroupCollection", () => {
     it(".copyTo", () => {
         const segmentGroupCount = 6;
         while (segment.segmentGroups.size < segmentGroupCount) {
-            segment.segmentGroups.enqueue({ segments: [] });
+            segment.segmentGroups.enqueue({ segments: [], localSeq: 1 });
         }
 
         const segmentCopy = TextSegment.make("");

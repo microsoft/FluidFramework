@@ -31,7 +31,7 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [ScopeType.DocWrite],
+    scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
     tenantId: "",
     user: {
         id: "",
