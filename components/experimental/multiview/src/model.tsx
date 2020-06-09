@@ -8,23 +8,16 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-
-import React from "react";
-import ReactDOM from "react-dom";
 
 import { IOptionPicker } from "./interface";
-import { OptionPickerView } from "./view";
 
 const optionValueKey = "optionValue";
 
 /**
  * The OptionPicker is our implementation of the IOptionPicker interface.
  */
-export class OptionPicker extends PrimedComponent implements IOptionPicker, IComponentHTMLView {
+export class OptionPicker extends PrimedComponent implements IOptionPicker {
     public static get ComponentName() { return "@fluid-example/option-picker"; }
-
-    public get IComponentHTMLView() { return this; }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -42,16 +35,6 @@ export class OptionPicker extends PrimedComponent implements IOptionPicker, ICom
                 this.emit("optionChanged");
             }
         });
-    }
-
-    /**
-     * Render the option picker.
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <OptionPickerView model={this} />,
-            div,
-        );
     }
 
     public get value() {
