@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { IOptionPicker } from "../interface";
+import { IOptionPicker } from "@fluid-example/multiview-option-picker-interface";
 
 interface IOptionPickerViewProps {
     model: IOptionPicker;

@@ -1,13 +1,3 @@
-# Multiview
+# Multiview Interface
 
-The **Multiview** package is an example of a variety of techniques around rendering Fluid components.
-
-Although it is presented as a single package, note that each subdirectory could be packaged separately.
-
-## Getting Started
-
-If you want to run this component follow the following steps:
-
-1. Run `npm install` from the `FluidFramework` root directory
-2. Navigate to this directory
-3. Run `npm run start`
+This package contains an interface that a Fluid component might implement in order to be used as an option picker.  It's not strictly necessary to split it to its own package, but this illustrates that it doesn't necessarily have to ship with either the model or the view.
