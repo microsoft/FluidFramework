@@ -86,14 +86,14 @@ const getNav = () => {
         //         }),
         //     ]
         // },
-        internalOnly({
+        {
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
                 { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        }),
+        },
     ];
 
     function filterFalsy(item) {
