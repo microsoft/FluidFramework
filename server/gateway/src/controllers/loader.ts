@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { BaseHost, IBaseHostConfig } from "@fluidframework/base-host";
+import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/driver-definitions";
+import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { IGitCache } from "@fluidframework/server-services-client";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";

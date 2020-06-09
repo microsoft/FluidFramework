@@ -4,24 +4,24 @@
  */
 
 import { parse } from "url";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import { BaseTelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+} from "@fluidframework/component-core-interfaces";
+import { IContainer, ILoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IUrlResolver,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/driver-definitions";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import * as Comlink from "comlink";
 
 // Container load requires a URL resolver although it does not make use of it.

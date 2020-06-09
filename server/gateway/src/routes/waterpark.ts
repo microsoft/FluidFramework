@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@microsoft/fluid-container-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+import { IPackage } from "@fluidframework/container-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -22,7 +22,7 @@ import { defaultPartials } from "./partials";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkgJson = require("../../package.json") as IPackage;
 const defaultChaincode =
-    `@microsoft/fluid-external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
+    `@fluidframework/external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 
 export function create(
     config: Provider,

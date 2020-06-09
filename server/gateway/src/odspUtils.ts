@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import {
     getDriveItemByRootFileName,
     getOdspRefreshTokenFn,
     IClientConfig,
     IOdspTokens,
-} from "@microsoft/fluid-odsp-utils";
+} from "@fluidframework/odsp-utils";
 
 const spoTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],

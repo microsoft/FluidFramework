@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
-import { TenantManager } from "@microsoft/fluid-server-services";
-import { GitManager, Historian, IGitCache } from "@microsoft/fluid-server-services-client";
-import { ITenantManager } from "@microsoft/fluid-server-services-core";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
+import { TenantManager } from "@fluidframework/server-services";
+import { GitManager, Historian, IGitCache } from "@fluidframework/server-services-client";
+import { ITenantManager } from "@fluidframework/server-services-core";
 import Axios from "axios";
 import { IAlfred } from "./interfaces";
 

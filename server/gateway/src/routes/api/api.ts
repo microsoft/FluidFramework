@@ -4,10 +4,10 @@
  */
 
 import { parse, UrlWithStringQuery } from "url";
-import { IResolvedUrl, IWebResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IResolvedUrl, IWebResolvedUrl } from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { getR11sToken, IAlfredUser } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";

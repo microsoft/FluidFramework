@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
+import { ICollection, MongoManager } from "@fluidframework/server-services-core";
 import * as moment from "moment";
 
 /**

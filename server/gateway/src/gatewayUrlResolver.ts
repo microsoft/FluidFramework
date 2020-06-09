@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
-import { IClientConfig } from "@microsoft/fluid-odsp-utils";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredUser, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { IAlfredTenant, IGitCache } from "@microsoft/fluid-server-services-client";
-import { chooseCelaName } from "@microsoft/fluid-server-services-core";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { configurableUrlResolver } from "@fluidframework/driver-utils";
+import { IClientConfig } from "@fluidframework/odsp-utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredUser, RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
+import { IAlfredTenant, IGitCache } from "@fluidframework/server-services-client";
+import { chooseCelaName } from "@fluidframework/server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";

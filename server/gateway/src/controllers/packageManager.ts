@@ -4,14 +4,14 @@
  */
 
 import * as query from "querystring";
-import { IPackage } from "@microsoft/fluid-container-definitions";
+import { IPackage } from "@fluidframework/container-definitions";
 import {
     IPackageList,
     IPackageManager,
     IPackument,
     ISearchParams,
     ISearchResult,
-} from "@microsoft/fluid-host-service-interfaces";
+} from "@fluidframework/host-service-interfaces";
 import Axios from "axios";
 
 export class PackageManager implements IPackageManager {

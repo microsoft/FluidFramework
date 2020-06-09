@@ -6,7 +6,7 @@
 import {
     IResolvedFluidCodeDetails,
     IFluidModule,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 
 export function seedFromScriptIds(
     pkg: IResolvedFluidCodeDetails | undefined,

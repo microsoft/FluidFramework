@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { runService } from "@microsoft/fluid-server-services-utils";
+import { runService } from "@fluidframework/server-services-utils";
 import { GatewayResourcesFactory, GatewayRunnerFactory } from "./runnerFactory";
 
 runService(

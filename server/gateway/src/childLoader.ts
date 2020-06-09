@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
-import { promiseTimeout } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
+import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";

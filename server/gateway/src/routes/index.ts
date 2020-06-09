@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { ICache } from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { ICache } from "@fluidframework/server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";

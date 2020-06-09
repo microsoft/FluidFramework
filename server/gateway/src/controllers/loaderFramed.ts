@@ -6,17 +6,17 @@
 import {
     BaseHost,
     IBaseHostConfig,
-} from "@microsoft/fluid-base-host";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
+} from "@fluidframework/base-host";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { WebWorkerLoaderFactory } from "@fluidframework/execution-context-loader";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
-} from "@microsoft/fluid-iframe-driver";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+} from "@fluidframework/iframe-driver";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { DocumentFactory } from "./documentFactory";
 import { seedFromScriptIds } from "./helpers";
 

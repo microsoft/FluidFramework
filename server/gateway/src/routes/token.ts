@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTokenClaims, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
-import { canSummarize } from "@microsoft/fluid-server-services-client";
+import { ISummaryTokenClaims, ITokenClaims } from "@fluidframework/protocol-definitions";
+import { canSummarize } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

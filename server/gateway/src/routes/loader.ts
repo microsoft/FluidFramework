@@ -4,10 +4,10 @@
  */
 
 import { parse } from "url";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
