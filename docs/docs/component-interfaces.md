@@ -6,10 +6,18 @@ We break these set of interfaces into three categories:
 * Fluid **Data** interfaces
 * Fluid **Experience integration** interfaces
 
-Note that these interfaces are all optional and can be used in various combinations.
+Note that these interfaces will be optional in many contexts and can be used in various combinations. However, they
+could be required by certain applications. For example, an application may refuse to load components that don't
+implement certain interfaces.
 
 
 ## Fluid rendering interfaces
+
+::: warning TODO
+
+Needs review.
+
+:::
 
 The Fluid Component model is built on top of Web technologies, where core rendering uses the DOM and HTML, CSS,
 JavaScript, etc. Fluid does not and will not attempt to abstract or replace HTML. Rather, it provides a framework for
@@ -19,7 +27,13 @@ Fluid does provide a set of core interfaces on how components can be placed into
 
 ### Core rendering (IComponentHTMLView):
 
-The base interface for a Fluid component that wants to draw on the screen is IComponentHTMLView. It supports a single
+::: warning TODO
+
+Needs review.
+
+:::
+
+The base interface for a Fluid component that wants to draw on the screen is `IComponentHTMLView`. It supports a single
 method `render`, where HTML is written to output the display for the component.
 
 Here is the interface definition:
@@ -57,7 +71,11 @@ export interface IComponentHTMLOptions {
 
 ## Fluid data interfaces
 
-For an introduction to the Fluid Data model, please read [What is Fluid?](../what-is-fluid.md)
+::: warning TODO
+
+Needs review.
+
+:::
 
 The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing
 the `IComponentLoadable` interface.
@@ -77,6 +95,12 @@ during a components life, or override the `componentHasInitialized` method which
 has initialized.
 
 ## Fluid experience interfaces
+
+::: warning TODO
+
+Needs review.
+
+:::
 
 Fluid will also support a set of interfaces to allow for consistent experiences and application integration. For
 instance, components will want to participate in larger concepts such as presence, search, clipboard, cursoring, etc.

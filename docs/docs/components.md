@@ -33,7 +33,7 @@ One of the primary design principles in the Fluid component design is to support
 patterns. **Feature detection** is a technique to dynamically determine the capabilities of another component, while
 **delegation** means that the implementation of an interface can be delegated to another object.
 
-Using these features, within the Fluid Framework itself we define several interfaces, such as `IComponentLoadable`, and
+Using these features within the Fluid Framework itself we define several interfaces, such as `IComponentLoadable`, and
 use the feature detection mechanism to find JavaScript objects that implement that interface. These patterns are
 described in more detail below.
 
@@ -66,7 +66,7 @@ In addition to the feature detection mechanism, Fluid also supports a delegation
 `IProvideComponent*` interfaces. This requires the component to implement a property that returns the appropriate
 `IComponent*` interface.
 
-For example, consider the `IProvideComponentLoadable` interface.
+For example, consider the `IProvideComponentLoadable` interface:
 
 ```typescript
 export interface IProvideComponentLoadable {
@@ -97,16 +97,18 @@ cross-component communication, shared commanding UX, copy/paste, etc.
 
 ::: danger TODO
 
-We are experimenting with a variety of additional interfaces for specific purposes; see the <need link> for more info.
+We are experimenting with a variety of additional interfaces for specific purposes; see the [need link] for more info.
 
 :::
 
-These interfaces will be optional in many contexts but could be required by certain applications. For example an
+These interfaces will be optional in many contexts but could be required by certain applications. For example, an
 application may refuse to load components that don't implement certain interfaces. This could include supporting
 capabilities such as search, cursoring, clipboard support, and much more.
 
 ## Next: a ride on the Aqueduct
 
+We'll return to interfaces shortly, when we discuss how Fluid components can render UI. But first, we'll dive into how
+the `@fluidframework/aqueduct` package makes it easy to create Fluid components.
 
 
 [IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md

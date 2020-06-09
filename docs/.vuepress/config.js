@@ -246,9 +246,8 @@ const getDocsSidebar = () => {
             children: [
                 "getting-started.md",
                 "dev-env.md",
-                "create-a-new-fluid-component",
                 "hello-world.md",
-                "release-process.md",
+                "create-a-new-fluid-component",
             ]
         },
         {
@@ -298,12 +297,21 @@ const getDocsSidebar = () => {
         },
         {
             title: "Advanced guides",
-            collapsable: false,
+            collapsable: true,
             children: [
                 "dds-anatomy",
                 "container-and-component-loading",
             ]
         },
+        {
+            title: "Misc",
+            collapsable: false,
+            // path: "",
+            children: [
+                "release-process.md",
+            ]
+        },
+
     ];
 }
 
