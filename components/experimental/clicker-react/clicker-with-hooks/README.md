@@ -1,4 +1,4 @@
-# Clicker with Hooks
+# @fluidframework/clicker-with-hooks
 
 **Clicker** is a Fluid Component that displays a number with a button. Pressing the button
 increments the counter. This is a basic example component using the interface model and stock

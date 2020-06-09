@@ -1,4 +1,4 @@
-# Clicker-React
+# clicker-react
 
 **Clicker-React** contains two Fluid components that use the new experimental Fluid React component and hooks. These can be found in the @fluidframeworks/react package.
 

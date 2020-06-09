@@ -1,10 +1,10 @@
-# React
+# @fluidframework/react
 
 The Fluid Frameworks React package provides the base hooks and component class for building React components that uses a synced state provided by Fluid. Its goal is to make it very easy for a React developer to build large, scalable React apps with synced Fluid components.
 
-## Fluid React Component
+## FluidReactComponent
 
-This is the base level Fluid React Component that offers a synced view state and a mapping between the view and synced state stored in the root. This should be used for creating small-scale React apps that don't involve complex nested Fluid components or data management systems. All values that are set in the state of this component are automatically also set on the root and passed to other clients rendering this component in the same session.
+This is the base level FluidReactComponent that offers a synced view state and a mapping between the view and synced state stored in the root. This should be used for creating small-scale React apps that don't involve complex nested Fluid components or data management systems. All values that are set in the state of this component are automatically also set on the root and passed to other clients rendering this component in the same session.
 
 ## useStateFluid
 

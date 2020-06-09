@@ -1,4 +1,4 @@
-# Local Server
+# @fluidframework/server-local-server
 
 This is a basic implementation of an in-memory fluid server. This has simple implementations for op storage and ordering,
 code loading for simple components, and stubs for document storage and other functionality.

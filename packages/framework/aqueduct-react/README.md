@@ -1,4 +1,4 @@
-# Aqueduct-React
+# @fluidframework/aqueduct-react
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
