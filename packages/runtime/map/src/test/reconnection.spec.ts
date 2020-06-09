@@ -98,13 +98,13 @@ describe("Reconnection", () => {
             assert.equal(map1.get(key), value, "The local client did not process the set");
             assert.equal(map2.get(key), value, "The remote client did not process the set");
 
-            // Disconnect the first client.
+            // Disconnect the second client.
             containerRuntime2.connected = false;
 
             // Delete the value from the second SharedMap.
             map2.delete(key);
 
-            // Reconnect the first client.
+            // Reconnect the second client.
             containerRuntime2.connected = true;
 
             // Process the messages.
