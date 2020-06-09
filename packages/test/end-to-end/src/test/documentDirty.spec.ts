@@ -196,10 +196,6 @@ describe("Document Dirty", () => {
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
                 "Document is marked dirty on edit");
 
-            // Document should have been marked dirty again due to pending DDS ops
-            assert.equal(wasMarkedDirtyCount, 1,
-                "Document should have been marked dirty again due to pending DDS ops");
-
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
