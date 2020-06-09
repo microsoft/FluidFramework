@@ -103,8 +103,7 @@ export class PendingStateManager {
         type: ContainerMessageType,
         clientSequenceNumber: number,
         content: any,
-        localOpMetadata: unknown)
-    {
+        localOpMetadata: unknown) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,

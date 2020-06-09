@@ -578,8 +578,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private submit(
         type: ComponentMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number
-    {
+        localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content, localOpMetadata);
     }
@@ -596,14 +595,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         switch (type) {
             case ComponentMessageType.ChannelOp:
-            {
-                // For Operations, find the right channel and trigger resubmission on it.
-                const envelope = content as IEnvelope;
-                const channelContext = this.contexts.get(envelope.address);
-                strongAssert(channelContext, "There should be a channel context for the op");
-                channelContext.reSubmit(envelope.contents, localOpMetadata);
-                break;
-            }
+                {
+                    // For Operations, find the right channel and trigger resubmission on it.
+                    const envelope = content as IEnvelope;
+                    const channelContext = this.contexts.get(envelope.address);
+                    strongAssert(channelContext, "There should be a channel context for the op");
+                    channelContext.reSubmit(envelope.contents, localOpMetadata);
+                    break;
+                }
             case ComponentMessageType.Attach:
                 // For Attach messages, just submit them again.
                 this.submit(type, content, localOpMetadata);

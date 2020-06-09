@@ -612,7 +612,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
     // Mapping from alias to component ID
-    private readonly aliases = new Map<string, {id: string; deferred?: Deferred<string>}>();
+    private readonly aliases = new Map<string, { id: string; deferred?: Deferred<string> }>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1561,8 +1561,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public submitComponentOp(
         id: string,
         contents: any,
-        localOpMetadata: unknown = undefined): number
-    {
+        localOpMetadata: unknown = undefined): number {
         const envelope: IEnvelope = {
             address: id,
             contents,
@@ -1573,8 +1572,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private submit(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown = undefined): number
-    {
+        localOpMetadata: unknown = undefined): number {
         this.verifyNotClosed();
 
         let clientSequenceNumber: number = -1;
@@ -1644,8 +1642,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     private submitSystemMessage(
         type: MessageType,
-        contents: any)
-    {
+        contents: any) {
         this.verifyNotClosed();
         assert(this.connected);
 
@@ -1667,8 +1664,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any)
-    {
+        appData?: any) {
         // Switch in next release
         const legacyFormat = true;
 
