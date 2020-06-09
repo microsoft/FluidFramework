@@ -20,7 +20,9 @@ All of these are documented at <https://aka.ms/fluid>.
 
 ## Code Structure
 
-The core code is built into several large chunks ("minirepos", managed using [Lerna](https://lerna.js.org/)) which are versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the minirepos there are plenty of packages which are versioned independently.
+The core code is built into several large chunks ("minirepos", managed using [Lerna](https://lerna.js.org/)) which are
+versioned separately from one another, but internally all packages in a minirepo are versioned together. And outside the
+minirepos there are plenty of packages which are versioned independently.
 
 Here's the breakdown of the repo:
 
