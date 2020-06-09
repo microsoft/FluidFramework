@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -15,52 +13,10 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { IOptionPicker } from "./interface";
+import { OptionPickerView } from "./view";
+
 const optionValueKey = "optionValue";
-
-/**
- * IOptionPicker describes the public API surface for our option picker component.
- */
-interface IOptionPicker extends EventEmitter {
-    /**
-     * Get the option value.
-     */
-    readonly value: string;
-
-    /**
-     * Set the option value.  Will cause a "optionChanged" event to be emitted.
-     */
-    setOptionValue: () => void;
-
-    /**
-     * The optionChanged event will fire whenever someone changes the option, either locally or remotely.
-     */
-    on(event: "optionChanged", listener: () => void): this;
-}
-
-interface IOptionPickerViewProps {
-    model: IOptionPicker;
-}
-
-const OptionPickerView: React.FC<IOptionPickerViewProps> = (props: IOptionPickerViewProps) => {
-    const [optionValue, setOptionValue] = React.useState(props.model.value);
-
-    React.useEffect(() => {
-        const onOptionChanged = () => {
-            setOptionValue(props.model.value);
-        };
-        props.model.on("optionChanged", onOptionChanged);
-        return () => {
-            props.model.off("optionChanged", onOptionChanged);
-        };
-    }, [props.model]);
-
-    return (
-        <div>
-            <span style={{ fontSize: 50 }}>{optionValue}</span>
-            <button onClick={props.model.setOptionValue}>Set Value</button>
-        </div>
-    );
-};
 
 /**
  * The OptionPicker is our implementation of the IOptionPicker interface.
