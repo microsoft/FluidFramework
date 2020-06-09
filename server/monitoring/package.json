@@ -1,5 +1,5 @@
 {
-  "name": "fluid-service-monitor",
+  "name": "@fluid-internal/service-monitor",
   "version": "0.0.1",
   "private": true,
   "description": "Node.js script that tests Fluid ordering service",
