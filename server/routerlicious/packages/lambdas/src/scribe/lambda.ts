@@ -26,6 +26,7 @@ import {
     TreeEntry,
     FileMode,
     ISequencedDocumentAugmentedMessage,
+    IProtocolState,
 } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -121,7 +122,7 @@ export class ScribeLambda extends SequencedLambda {
                         this.term = lastSummary.term;
                         const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
                         this.protocolHead = lastSummary.protocolHead;
-                        this.protocolHandler = initializeProtocol(this.documentId, lastScribe, this.term);
+                        this.protocolHandler = initializeProtocol(this.documentId, lastScribe.protocolState, this.term);
                         this.setStateFromCheckpoint(lastScribe);
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
                             lastSummary.messages.filter(
@@ -156,25 +157,36 @@ export class ScribeLambda extends SequencedLambda {
 
                 if (value.operation.type === MessageType.Summarize) {
                     const summarySequenceNumber = value.operation.sequenceNumber;
+                    const summaryRefSeqNumber = value.operation.referenceSequenceNumber;
 
                     // Process up to the summary op value to get the protocol state at the summary op.
-                    // TODO: We should vaidate that we can actually make a summary prior to this call.
-                    this.processFromPending(value.operation.referenceSequenceNumber);
-
+                    // Capture state first in case the summary is nacked.
+                    const prevState = {
+                        protocolState: this.protocolHandler.getProtocolState(),
+                        pendingOps: this.pendingMessages.toArray(),
+                    };
+                    this.processFromPending(summaryRefSeqNumber);
                     try {
                         const scribeCheckpoint = this.generateCheckpoint(this.lastOffset);
-                        await this.summarize(
+                        const success = await this.summarize(
                             value.operation as ISequencedDocumentAugmentedMessage,
                             this.protocolHandler.minimumSequenceNumber,
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber,
+                            summaryRefSeqNumber,
                             value.operation.term ?? 1,
                             scribeCheckpoint);
-                        this.protocolHead = this.protocolHandler.sequenceNumber;
-                        this.context.log.info(
-                            `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+
+                        if (success === false) {
+                            this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
+                        } else {
+                            this.protocolHead = this.protocolHandler.sequenceNumber;
+                            this.context.log.info(
+                                `Client summary @seq${summarySequenceNumber} for ${this.tenantId}/${this.documentId}`);
+                        }
                     } catch (ex) {
+                        this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                         if (this.nackOnSummarizeException) {
                             // SPO wants to nack when summarize fails
                             // In SPOs implementation of gitManager, we have built in retry logic for retryable errors.
@@ -233,6 +245,11 @@ export class ScribeLambda extends SequencedLambda {
                 this.protocolHandler.processMessage(message, false);
             }
         }
+    }
+
+    private revertProtocolState(protocolState: IProtocolState, pendingOps: ISequencedDocumentMessage[]) {
+        this.protocolHandler = initializeProtocol(this.documentId, protocolState, this.term);
+        this.pendingMessages = new Deque(pendingOps);
     }
 
     private generateCheckpoint(logOffset: number): IScribe {
@@ -364,7 +381,7 @@ export class ScribeLambda extends SequencedLambda {
     /**
      * Helper function that performs the final summary. After first doing some basic validation against the
      * parameters of the summary then goes and writes it by appending the protocol data to the tree specified
-     * by the summary.
+     * by the summary. Returns true for ack, false for nack, undefined for no action (skip).
      */
     private async summarize(
         op: ISequencedDocumentAugmentedMessage,
@@ -372,14 +389,15 @@ export class ScribeLambda extends SequencedLambda {
         sequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
+        summaryRefSeqNumber: number,
         summaryTerm: number,
         checkpoint: IScribe,
-    ): Promise<void> {
+    ): Promise<boolean | undefined> {
         // If the sequence number for the protocol head is greater than current sequence number then we
         // have already captured this summary and are processing this message due to a replay of the stream.
         // As such we can skip it.
         if (this.protocolHead >= sequenceNumber) {
-            return;
+            return undefined;
         }
 
         const content = JSON.parse(op.contents) as ISummaryContent;
@@ -399,7 +417,7 @@ export class ScribeLambda extends SequencedLambda {
                     // eslint-disable-next-line max-len
                     `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
                 );
-                return;
+                return false;
             }
         } else if (existingRef) {
             await this.sendSummaryNack(
@@ -407,7 +425,7 @@ export class ScribeLambda extends SequencedLambda {
                 // eslint-disable-next-line max-len
                 `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
             );
-            return;
+            return false;
         }
 
         // We also validate that the parent summary is valid
@@ -419,7 +437,17 @@ export class ScribeLambda extends SequencedLambda {
                 summarySequenceNumber,
                 "One or more parent summaries are invalid.",
             );
-            return;
+            return false;
+        }
+
+        // We should not accept a summary earlier than our current protocol state
+        if (summaryRefSeqNumber < sequenceNumber) {
+            await this.sendSummaryNack(
+                summarySequenceNumber,
+                // eslint-disable-next-line max-len
+                `Proposed summary reference sequence number ${summaryRefSeqNumber} is less than current sequence number ${sequenceNumber}`,
+            );
+            return false;
         }
 
         // At this point the summary op and its data are all valid and we can perform the write to history
@@ -480,6 +508,7 @@ export class ScribeLambda extends SequencedLambda {
 
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
         await this.sendSummaryConfirmationMessage(summarySequenceNumber, false);
+        return true;
     }
 
     private async createServiceSummary(
