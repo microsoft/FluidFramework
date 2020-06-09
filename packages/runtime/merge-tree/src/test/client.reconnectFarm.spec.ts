@@ -18,7 +18,7 @@ import {
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
-export function applyMessagesWithReconnect(
+function applyMessagesWithReconnect(
     startingSeq: number,
     messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
@@ -57,7 +57,7 @@ export const defaultOptions = {
     minLength: 16,
     clients: { min: 2, max: 8 },
     opsPerRoundRange: { min: 200, max: 800 },
-    rounds: 100,
+    rounds: 3,
     operations: [annotateRange, removeRange],
     growthFunc: (input: number) => input * 2,
 };
