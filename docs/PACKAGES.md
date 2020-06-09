@@ -1,6 +1,6 @@
 # All Packages
 
-_This file is generated, please don't edit it manually._
+[//]: <> (This file is generated, please don't edit it manually!)
 
 | Package Name | Published? |
 | --- | --- |
