@@ -15,7 +15,7 @@ import { IFluidPackage } from "@fluidframework/container-definitions";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
-import { dockerUrls, tinyliciousUrls } from "./multiResolver";
+import { tinyliciousUrls } from "./multiResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
