@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/iframe-driver",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "description": "Connection Fluid service API that crosses iframe boundary",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,9 +27,9 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.19.5",
-    "@fluidframework/driver-definitions": "^0.19.5",
-    "@fluidframework/driver-utils": "^0.19.5",
+    "@fluidframework/component-core-interfaces": "^0.19.6",
+    "@fluidframework/driver-definitions": "^0.19.6",
+    "@fluidframework/driver-utils": "^0.19.6",
     "@fluidframework/protocol-definitions": "^0.1006.1",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"

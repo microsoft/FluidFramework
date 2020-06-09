@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-loader-utils",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/driver-definitions": "^0.19.5",
+    "@fluidframework/driver-definitions": "^0.19.6",
     "@fluidframework/protocol-definitions": "^0.1006.1"
   },
   "devDependencies": {

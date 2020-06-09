@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/shared-summary-block",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "description": "A DDS that does not generate ops but is part of summary",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -51,14 +51,14 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-runtime-definitions": "^0.19.5",
+    "@fluidframework/component-runtime-definitions": "^0.19.6",
     "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/shared-object-base": "^0.19.5"
+    "@fluidframework/shared-object-base": "^0.19.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.17.0",
-    "@fluidframework/test-runtime-utils": "^0.19.5",
+    "@fluidframework/test-runtime-utils": "^0.19.6",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
