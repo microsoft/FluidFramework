@@ -1,4 +1,4 @@
-# View adapters
+# @fluidframework/view-adapters
 
 Component views may be written using a variety of UI frameworks.  The view adapters module provides helpful tools for composing these view components, intended for use when either:
 1. The component being composed is from a different framework than its visual host.

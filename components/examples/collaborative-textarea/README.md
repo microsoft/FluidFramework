@@ -1,4 +1,4 @@
-# Collaborative TextArea
+# @fluid-example/collaborative-textarea
 
 **Collaborative TextArea** is a basic example that creates a SharedString and uses the react CollaborativeTextArea
 component to launch a basic collaborative HTML `<textarea>`

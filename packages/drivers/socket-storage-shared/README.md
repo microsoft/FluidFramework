@@ -1,2 +1,3 @@
-# Socket Storage Shared
+# @fluidframework/driver-base
+
 This package contains an implementation of IDocumentDeltaConnection using websockets. This code is shared by multiple socket-based storage drivers.

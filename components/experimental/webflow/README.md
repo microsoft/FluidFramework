@@ -1,4 +1,4 @@
-# WebFlow
+# @fluid-example/webflow
 
 WebFlow is an experimental collaborative rich text editor built on top of the Fluid SharedString distributed data structure.
 
