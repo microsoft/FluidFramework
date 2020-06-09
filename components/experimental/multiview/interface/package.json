@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/multiview",
+  "name": "@fluid-example/multiview-option-picker-interface",
   "version": "0.20.0",
   "description": "Example of attaching multiple views to a Fluid component as a model",
   "repository": "microsoft/FluidFramework",
