@@ -135,7 +135,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc ISharedObject.register}
+     * {@inheritDoc (ISharedObject:interface).register}
      */
     public register(): void {
         if (this.isRegistered()) {
@@ -153,7 +153,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc ISharedObject.connect}
+     * {@inheritDoc (ISharedObject:interface).connect}
      */
     public connect(services: ISharedObjectServices) {
         this.services = services;
@@ -161,14 +161,14 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc ISharedObject.isLocal}
+     * {@inheritDoc (ISharedObject:interface).isLocal}
      */
     public isLocal(): boolean {
         return this.services === undefined || this.runtime.isLocal();
     }
 
     /**
-     * {@inheritDoc ISharedObject.isRegistered}
+     * {@inheritDoc (ISharedObject:interface).isRegistered}
      */
     public isRegistered(): boolean {
         // If the dds is attached to the component then it should be registered irrespective of
@@ -183,7 +183,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc ISharedObject.isAttached}
+     * {@inheritDoc (ISharedObject:interface).isAttached}
      */
     public isAttached(): boolean {
         const isAttached = this.services !== undefined;
@@ -192,7 +192,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc ISharedObject.snapshot}
+     * {@inheritDoc (ISharedObject:interface).snapshot}
      */
     public abstract snapshot(): ITree;
 
