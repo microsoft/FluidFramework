@@ -278,7 +278,6 @@ const getDocsSidebar = () => {
                         "SharedNumberSequence.md",
                         "SharedObjectSequence.md",
                         "SharedString.md",
-                        "SparseMatrix.md",
                     ],
                 },
                 "SharedMatrix",
