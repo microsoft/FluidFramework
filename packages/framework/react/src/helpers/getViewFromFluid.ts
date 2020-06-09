@@ -5,7 +5,12 @@
 
 import { ISharedDirectory } from "@fluidframework/map";
 import { IComponent } from "@fluidframework/component-core-interfaces";
-import { FluidComponentMap, IViewConverter } from "../interface";
+import {
+    FluidComponentMap,
+    IViewConverter,
+    IFluidFunctionalComponentViewState,
+    IFluidFunctionalComponentFluidState,
+} from "../interface";
 import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
 
 /**
@@ -20,7 +25,10 @@ import { getFluidStateFromRoot } from "./getFluidStateFromRoot";
  * @param combinedRootState - Optional param containing the combined root state so far to fetch from, instead of getting
  * the current value on the root
  */
-export function getViewFromFluid<SV, SF>(
+export function getViewFromFluid<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(
     syncedStateId: string,
     root: ISharedDirectory,
     rootKey: keyof SF,

@@ -12,7 +12,7 @@ import {
     IFluidFunctionalComponentFluidState,
     IFluidFunctionalComponentViewState,
     FluidToViewMap,
-} from "@fluidframework/aqueduct-react";
+} from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
@@ -68,8 +68,8 @@ interface CounterState {
     counter?: SharedCounter;
 }
 
-interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState { }
-interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState { }
+type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
+type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
 
 class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
     constructor(props) {

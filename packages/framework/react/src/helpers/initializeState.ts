@@ -41,19 +41,21 @@ import { IFluidSchema, IFluidComponent } from "..";
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  */
-export async function initializeState<SV extends IFluidFunctionalComponentViewState,
-    SF extends IFluidFunctionalComponentFluidState>(
-        syncedStateId,
-        root: ISharedDirectory,
-        dataProps: IFluidDataProps,
-        state: SV,
-        setState: (
-            newState: SV,
-            fromRootUpdate?: boolean,
-            isLocal?: boolean
-        ) => void,
-        fluidToView: FluidToViewMap<SV, SF>,
-        viewToFluid?: ViewToFluidMap<SV, SF>,
+export async function initializeState<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(
+    syncedStateId,
+    root: ISharedDirectory,
+    dataProps: IFluidDataProps,
+    state: SV,
+    setState: (
+        newState: SV,
+        fromRootUpdate?: boolean,
+        isLocal?: boolean
+    ) => void,
+    fluidToView: FluidToViewMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ): Promise<void> {
     let unlistenedComponentHandles: IComponentHandle[] = [];
     let storedFluidStateHandle = root.get<IComponentHandle>(
@@ -142,14 +144,6 @@ export async function initializeState<SV extends IFluidFunctionalComponentViewSt
                 .handle as IComponentHandle<ISharedMap>,
         };
         setComponentSchemaToRoot(syncedStateId, root, componentSchemaHandles);
-    }
-    // We should have component schemas now, either freshly generated or from the root
-    if (
-        componentSchemaHandles.componentKeyMapHandle === undefined ||
-        componentSchemaHandles.viewMatchingMapHandle === undefined ||
-        componentSchemaHandles.fluidMatchingMapHandle === undefined
-    ) {
-        throw Error("Failed to generate schema handles for the component");
     }
 
     state.isInitialized = true;

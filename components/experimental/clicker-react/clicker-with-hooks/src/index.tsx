@@ -21,7 +21,7 @@ import {
     FluidToViewMap,
     ViewToFluidMap,
     IFluidContextProps,
-} from "@fluidframework/aqueduct-react";
+} from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";

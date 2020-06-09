@@ -5,7 +5,12 @@
 
 import { IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
-import { IFluidConverter, instanceOfIComponentLoadable } from "../interface";
+import {
+    IFluidConverter,
+    instanceOfIComponentLoadable,
+    IFluidFunctionalComponentViewState,
+    IFluidFunctionalComponentFluidState,
+} from "../interface";
 
 /**
  * Return a partial Fluid state containing the view state key identified converted into its
@@ -16,7 +21,10 @@ import { IFluidConverter, instanceOfIComponentLoadable } from "../interface";
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
-export function getFluidFromView<SV, SF>(
+export function getFluidFromView<
+    SV extends IFluidFunctionalComponentViewState,
+    SF extends IFluidFunctionalComponentFluidState
+>(
     state: SV,
     stateKey: keyof SV,
     componentKeyMap: ISharedMap,

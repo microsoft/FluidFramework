@@ -79,13 +79,6 @@ export function syncStateAndRoot<
         fluidMatchingMapHandle,
     } = componentSchemaHandles;
 
-    if (
-        componentKeyMapHandle === undefined ||
-        viewMatchingMapHandle === undefined ||
-        fluidMatchingMapHandle === undefined
-    ) {
-        throw Error("No schema handles found stored on the root");
-    }
     const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)
         ?.component as SharedMap;
     const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)
