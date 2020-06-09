@@ -3,24 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@fluidframework/aqueduct";
-import {
-    FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
-    FluidToViewMap,
-} from "@fluidframework/aqueduct-react";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { ITask } from "@fluidframework/runtime-definitions";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
+import { ClickerAgent } from "./agent";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
+
+const counterKey = "counter";
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -28,72 +24,103 @@ export const ClickerName = pkg.name as string;
 export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    private _counter: SharedCounter | undefined;
+
+    /**
+     * Do setup work here
+     */
+    protected async componentInitializingFirstTime() {
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(counterKey, counter.handle);
+    }
+
+    protected async componentHasInitialized() {
+        const counterHandle = this.root.get<IComponentHandle<SharedCounter>>(counterKey);
+        this._counter = await counterHandle.get();
+        this.setupAgent();
+    }
+
     // #region IComponentHTMLView
 
     /**
      * Will return a new Clicker view
      */
-    public render(element: HTMLElement) {
-        // Mark the counter value in the state as a SharedCounter type and pass in its create function
-        // so that it will be created on the first run and be available on our React state
-        // We also mark the "incremented" event as we want to update the React state when the counter
-        // is incremented to display the new value
-        const fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map();
-        fluidToView.set("counter", {
-            sharedObjectCreate: SharedCounter.create,
-            listenedEvents: ["incremented"],
-        });
-
+    public render(div: HTMLElement) {
+        // Get our counter object that we set in initialize and pass it in to the view.
         ReactDOM.render(
-            <CounterReactView
-                syncedStateId={"clicker"}
-                root={this.root}
-                dataProps={{
-                    fluidComponentMap: new Map(),
-                    runtime: this.runtime,
-                }}
-                fluidToView={fluidToView}
-            />,
-            element,
+            <CounterReactView counter={this.counter} />,
+            div,
         );
-        return element;
+        return div;
     }
 
     // #endregion IComponentHTMLView
+
+    public setupAgent() {
+        const agentTask: ITask = {
+            id: "agent",
+            instance: new ClickerAgent(this.counter),
+        };
+        this.taskManager.register(agentTask);
+        this.taskManager.pick(this.url, "agent", true).then(() => {
+            console.log(`Picked`);
+        }, (err) => {
+            console.log(err);
+        });
+    }
+
+    private get counter() {
+        if (this._counter === undefined) {
+            throw new Error("SharedCounter not initialized");
+        }
+        return this._counter;
+    }
 }
 
 // ----- REACT STUFF -----
 
-interface CounterState {
-    counter?: SharedCounter;
+interface CounterProps {
+    counter: SharedCounter;
 }
 
-interface CounterViewState extends IFluidFunctionalComponentViewState, CounterState { }
-interface CounterFluidState extends IFluidFunctionalComponentFluidState, CounterState { }
+interface CounterState {
+    value: number;
+}
 
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
-    constructor(props) {
+class CounterReactView extends React.Component<CounterProps, CounterState> {
+    constructor(props: CounterProps) {
         super(props);
-        this.state = {};
+
+        this.state = {
+            value: this.props.counter.value,
+        };
+    }
+
+    componentDidMount() {
+        this.props.counter.on("incremented", (incrementValue: number, currentValue: number) => {
+            this.setState({ value: currentValue });
+        });
     }
 
     render() {
         return (
             <div>
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
-                    {this.state.counter?.value}
+                    {this.state.value}
                 </span>
-                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
+                <button onClick={() => { this.props.counter.increment(1); }}>+</button>
             </div>
         );
     }
 }
 
 // ----- FACTORY SETUP -----
+
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
     ClickerName,
     Clicker,
     [SharedCounter.getFactory()],
     {},
 );
+
 export const fluidExport = ClickerInstantiationFactory;
