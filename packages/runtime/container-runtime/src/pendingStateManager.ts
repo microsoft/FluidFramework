@@ -6,13 +6,12 @@
 import { ErrorType, IDataCorruptionError } from "@fluidframework/container-definitions";
 import { ErrorWithProps } from "@fluidframework/driver-utils";
 import {
-    MessageType,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { strongAssert } from "@fluidframework/runtime-utils";
 import Deque from "double-ended-queue";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
 
 export class DataCorruptionError extends ErrorWithProps implements IDataCorruptionError {
     readonly errorType = ErrorType.dataCorruptionError;
@@ -31,7 +30,7 @@ export class DataCorruptionError extends ErrorWithProps implements IDataCorrupti
 
 interface IPendingMessage {
     type: "message";
-    messageType: MessageType;
+    messageType: ContainerMessageType;
     clientSequenceNumber: number;
     content: any;
     localOpMetadata: unknown;
@@ -100,7 +99,12 @@ export class PendingStateManager {
         this.pendingStates.push(pendingFlushMode);
     }
 
-    public onSubmitMessage(type: MessageType, clientSequenceNumber: number, content: any, localOpMetadata: unknown) {
+    public onSubmitMessage(
+        type: ContainerMessageType,
+        clientSequenceNumber: number,
+        content: any,
+        localOpMetadata: unknown)
+    {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,

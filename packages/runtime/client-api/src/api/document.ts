@@ -185,11 +185,6 @@ export class Document extends EventEmitter {
         return this.runtime.snapshot(tagMessage);
     }
 
-    // eslint-disable-next-line no-null/no-null
-    public save(tag: string = null) {
-        this.runtime.save(tag);
-    }
-
     /**
      * Closes the document and detaches all listeners
      */

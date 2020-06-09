@@ -7,7 +7,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
     ITree,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentContext } from "@fluidframework/runtime-definitions";
@@ -32,7 +31,7 @@ export class LocalChannelContext implements IChannelContext {
         runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
+        private readonly submitFn: (content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);

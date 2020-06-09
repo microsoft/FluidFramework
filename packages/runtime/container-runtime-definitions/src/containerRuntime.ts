@@ -60,7 +60,6 @@ export interface IContainerRuntime extends
     readonly branch: string;
     readonly loader: ILoader;
     readonly flushMode: FlushMode;
-    readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
 

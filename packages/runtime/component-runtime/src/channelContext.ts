@@ -9,9 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IEnvelope } from "@fluidframework/runtime-definitions";
 import { IChannel } from "@fluidframework/component-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
@@ -33,7 +31,7 @@ export interface IChannelContext {
 export function createServiceEndpoints(
     id: string,
     connected: boolean,
-    submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
+    submitFn: (content: any, localOpMetadata: unknown) => number,
     dirtyFn: () => void,
     storageService: IDocumentStorageService,
     tree?: Promise<ISnapshotTree>,
@@ -43,8 +41,7 @@ export function createServiceEndpoints(
         id,
         connected,
         (message, localOpMetadata) => {
-            const envelope: IEnvelope = { address: id, contents: message };
-            return submitFn(MessageType.Operation, envelope, localOpMetadata);
+            return submitFn(message, localOpMetadata);
         },
         dirtyFn);
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);

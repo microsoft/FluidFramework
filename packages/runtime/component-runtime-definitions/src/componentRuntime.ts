@@ -93,11 +93,6 @@ export interface IComponentRuntime extends
      */
     snapshot(message: string): Promise<void>;
 
-    /**
-     * Triggers a message to force a snapshot
-     */
-    save(message: string);
-
     // Blob related calls
     /**
      * Api to upload a blob of data.

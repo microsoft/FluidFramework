@@ -37,7 +37,6 @@ import {
     IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
@@ -60,6 +59,11 @@ export interface IComponentAttributes {
 interface ISnapshotDetails {
     pkg: readonly string[];
     snapshot?: ISnapshotTree;
+}
+
+interface ComponentMessage {
+    content: any;
+    type: string;
 }
 
 /**
@@ -118,10 +122,6 @@ export abstract class ComponentContext extends EventEmitter implements
     // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
         return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
-    }
-
-    public get submitSignalFn(): (contents: any) => void {
-        return this._containerRuntime.submitSignalFn;
     }
 
     public get snapshotFn(): (message: string) => Promise<void> {
@@ -331,8 +331,15 @@ export abstract class ComponentContext extends EventEmitter implements
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
+    public process(messageArg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
+
+        const innerContents = messageArg.contents as ComponentMessage;
+        const message = {
+            ...messageArg,
+            type: innerContents.type,
+            contents: innerContents.content,
+        };
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
@@ -406,10 +413,17 @@ export abstract class ComponentContext extends EventEmitter implements
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
+    public submitMessage(type: string, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content, localOpMetadata);
+        const componentContent: ComponentMessage = {
+            content,
+            type,
+        };
+        return this._containerRuntime.submitComponentOp(
+            this.id,
+            componentContent,
+            localOpMetadata);
     }
 
     /**
@@ -439,14 +453,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        const envelope: IEnvelope = {
-            address: this.id,
-            contents: {
-                content,
-                type,
-            },
-        };
-        return this._containerRuntime.submitSignalFn(envelope);
+        return this._containerRuntime.submitComponentSignal(this.id, type, content);
     }
 
     public raiseContainerWarning(warning: ContainerWarning): void {
@@ -547,18 +554,6 @@ export abstract class ComponentContext extends EventEmitter implements
     public abstract generateAttachMessage(): IAttachMessage;
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
-
-    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
-        this.verifyNotClosed();
-        const envelope: IEnvelope = {
-            address: this.id,
-            contents: {
-                content,
-                type,
-            },
-        };
-        return this._containerRuntime.submit(MessageType.Operation, envelope, localOpMetadata);
-    }
 
     public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
         strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");

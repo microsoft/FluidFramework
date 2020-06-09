@@ -30,7 +30,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IProvideComponentRegistry } from "./componentRegistry";
 import { IInboundSignalMessage } from "./protocol";
@@ -191,7 +190,7 @@ export interface IComponentRuntimeChannel extends
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    reSubmit(type: MessageType, content: any, localOpMetadata: unknown);
+    reSubmit(type: string, content: any, localOpMetadata: unknown);
 }
 
 export interface ISummaryTracker {
