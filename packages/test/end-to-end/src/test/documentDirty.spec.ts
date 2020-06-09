@@ -159,7 +159,6 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(container),
-                containerDeltaEventManager.resumeProcessing(),
             ]);
 
             // Document will have been marked clean on reconnection
