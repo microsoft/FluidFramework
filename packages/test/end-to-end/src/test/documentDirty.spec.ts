@@ -66,7 +66,7 @@ describe("Document Dirty", () => {
     async function createContainer(): Promise<Container> {
         const factory: TestFluidComponentFactory = new TestFluidComponentFactory(
             [
-                [ mapId, SharedMap.getFactory() ],
+                [mapId, SharedMap.getFactory()],
             ],
         );
 
@@ -79,7 +79,7 @@ describe("Document Dirty", () => {
             );
 
         const urlResolver = new TestResolver();
-        const codeLoader = new LocalCodeLoader([[ codeDetails, runtimeFactory ]]);
+        const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
         const loader = new Loader(
             urlResolver,
@@ -93,7 +93,7 @@ describe("Document Dirty", () => {
     }
 
     async function getComponent(componentId: string, fromContainer: Container):
-    Promise<ITestFluidComponent> {
+        Promise<ITestFluidComponent> {
         const response = await fromContainer.request({ url: componentId });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error(`Component with id: ${componentId} not found`);
@@ -182,7 +182,7 @@ describe("Document Dirty", () => {
                 "Document is cleaned after all ops have been acked");
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 3,
-                "Document will have been marked clean on reconnection after all ops have been processed, including" + 
+                "Document will have been marked clean on reconnection after all ops have been processed, including" +
                 "those pending on nested objects");
         });
 
