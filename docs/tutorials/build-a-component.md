@@ -30,19 +30,19 @@ For the purpose of this Doc I'm going to use the `Dice roller - React` repo as o
 2. Clone the repo in a folder with a new name. Ideally the name of your new Component.
 
 
-   ```script
+   ```shell
    git clone {URL FOR TUTORIAL REPO} {NEW FOLDER NAME}
    ```
 
 3. Navigate into your new folder
 
-   ````script
+   ````shell
    cd {NEW FOLDER NAME}
    ````
 
 4. Install dependencies
 
-   ```script
+   ```shell
    npm i
    ```
 
@@ -54,7 +54,7 @@ For the purpose of this Doc I'm going to use the `Dice roller - React` repo as o
    You can run setup at anytime to change the Name/Icon.
    :::
 
-   ```script
+   ```shell
    npm run setup
    ...
    ...
@@ -75,13 +75,13 @@ For the purpose of this Doc I'm going to use the `Dice roller - React` repo as o
    new empty repo. Follow the instructions of *Push an existing repository from command line* which should look
    something like:
 
-   ```script
+   ```shell
    git remote add origin {repo link}
    git push -u origin --all
    ```
 
    If you're using **GitHub** create a new empty repo. You can then run this:
 
-   ```script
+   ```shell
    git push url:///new/repo.git master
    ```

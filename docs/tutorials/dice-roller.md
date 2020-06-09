@@ -10,6 +10,11 @@ The Dice roller is a simple Fluid component that uses Fluid's distributed data s
 If you haven't already, [set up your Fluid Framework development
 environment](../guide/README.md#set-up-your-development-environment).
 
+::: danger TODO
+
+Update these instructions.
+
+:::
 
 First, clone one of the tutorial repositories below. One repository uses React for rendering, and the other uses
 JavaScript directly.
@@ -64,9 +69,9 @@ behavior as well as additional helpers to make component development easier.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
-   - `componentInitializingFirstTime()` - only called the first time a component is initialized
-   - `existing()` - called every time except the first time a component is initialized
-   - `opened()` - called every time a component is initialized. After `create` and `existing`.
+   * `componentInitializingFirstTime()` - only called the first time a component is initialized
+   * `existing()` - called every time except the first time a component is initialized
+   * `opened()` - called every time a component is initialized. After `create` and `existing`.
 
 #### IComponentHTMLView
 

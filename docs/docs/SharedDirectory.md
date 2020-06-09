@@ -1,8 +1,4 @@
----
-uid: SharedDirectory
----
-
-# SharedDirectory and IDirectory
+# SharedDirectory
 
 - Package: [@fluidframework/map](../api/fluid-map.md)
 - API documentation:

@@ -6,6 +6,14 @@ sidebarDepth: 0
 
 # Tutorials
 
+::: tip
+
+These tutorials are designed for people who prefer to **learn by doing**. If you prefer learning concepts from the
+ground up, check out [our step-by-step guide](../docs/getting-started.md). You might find these tutorials and the guide
+complementary to each other.
+
+:::
+
 ## Dice roller
 
 **Distributed data structures:**

@@ -11,9 +11,11 @@ npm run build:docs
 npm run build:gendocs
 ```
 
-The `build:docs` script will generate a JSON representation of all the TSDoc comments, and then `build:gendocs` will convert that to a tree of markdown files, under `docs/api/`. These files should *not* be committed to git.
+The `build:docs` script will generate a JSON representation of all the TSDoc comments, and then `build:gendocs` will
+convert that to a tree of markdown files, under `docs/api/`. These files should _not_ be committed to git.
 
-You may run the `build` and `build:docs` scripts from a particular package directory, but `build:gendocs` can only be run from the root.
+You may run the `build` and `build:docs` scripts from a particular package directory, but `build:gendocs` can only be
+run from the root.
 
 ## Building documentation site with Vuepress
 

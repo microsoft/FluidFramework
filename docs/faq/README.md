@@ -2,7 +2,7 @@
 
 ## How do I get started?
 
-Check out our [getting started guide](../guide/README.md).
+Check out our [getting started guide](../docs/README.md).
 
 ## Can I run Routerlicious locally?
 
@@ -34,7 +34,7 @@ You may need to upgrade Node.js.
 
 If you need to read, check out our [architecture documents](../how/README.md).
 
-But it's more fun to [start hacking](../guide/yo-fluid.md)!
+But it's more fun to [start hacking](../docs/create-a-new-fluid-component.md)!
 
 ## Can I contribute to Fluid?
 
