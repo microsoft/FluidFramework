@@ -5,4 +5,4 @@
 
 import { OptionPickerContainerRuntimeFactory } from "./container";
 
-export const fluidExport = OptionPickerContainerRuntimeFactory;
+export const fluidExport = new OptionPickerContainerRuntimeFactory();
