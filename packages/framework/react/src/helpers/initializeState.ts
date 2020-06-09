@@ -61,6 +61,7 @@ export async function initializeState<
     let storedFluidStateHandle = root.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
     );
+    // TODO #2457 - Move synced state initializing into component lifecycle, expose API for update
     if (storedFluidStateHandle === undefined) {
         const storedFluidState = SharedMap.create(dataProps.runtime);
         dataProps.fluidComponentMap.set(storedFluidState.handle.path, {
