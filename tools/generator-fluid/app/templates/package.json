@@ -16,14 +16,14 @@
     "webpack": "npm run build"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.18.5",
-    "@microsoft/fluid-map": "^0.18.5",
-    "@microsoft/fluid-view-interfaces": "^0.18.5",
+    "@fluidframework/aqueduct": "^0.19.5",
+    "@fluidframework/map": "^0.19.5",
+    "@fluidframework/view-interfaces": "^0.19.5",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.18.5",
+    "@fluidframework/webpack-component-loader": "^0.19.5",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",
