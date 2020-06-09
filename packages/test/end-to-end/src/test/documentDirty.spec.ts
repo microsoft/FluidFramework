@@ -44,7 +44,7 @@ describe("Document Dirty", () => {
     }
 
     /**
-     * Waits for the "savedDocument" event on the runtime
+     * Increments clean count when the "savedDocument" event is fired
      */
     function onMarkedClean(runtime: IContainerRuntime): void {
         runtime.on("savedDocument", () => {
@@ -54,7 +54,7 @@ describe("Document Dirty", () => {
     }
 
     /**
-     * Waits for the "dirtyDocument" event on the runtime
+     * Increments dirty count when the "dirtyDocument" event is fired
      */
     function onMarkedDirty(runtime: IContainerRuntime): void {
         runtime.on("dirtyDocument", () => {
