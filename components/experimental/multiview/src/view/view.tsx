@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { IOptionPicker } from "./interface";
+import { IOptionPicker } from "../interface";
 
 interface IOptionPickerViewProps {
     model: IOptionPicker;

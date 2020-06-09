@@ -10,8 +10,8 @@ import { MountableView } from "@fluidframework/view-adapters";
 
 import * as React from "react";
 
-import { OptionPicker, OptionPickerInstantiationFactory } from "./model";
-import { OptionPickerView } from "./view";
+import { OptionPicker, OptionPickerInstantiationFactory } from "../model";
+import { OptionPickerView } from "../view";
 
 const optionPickerComponentId = "optionPicker";
 

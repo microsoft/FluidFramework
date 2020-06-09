@@ -2,6 +2,8 @@
 
 The **Multiview** package is an example of a variety of techniques around rendering Fluid components.
 
+Although it is presented as a single package, note that each subdirectory could be packaged separately.
+
 ## Getting Started
 
 If you want to run this component follow the following steps:
