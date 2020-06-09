@@ -11,7 +11,6 @@ import {
     IDocumentStorage,
     IScribe,
     ITenantManager,
-    IExperimentalDocumentStorage,
 } from "@fluidframework/server-services-core";
 import {
     ISummaryTree,
@@ -33,8 +32,7 @@ import { gitHashFile } from "@fluidframework/common-utils";
 const StartingSequenceNumber = 0;
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other components.
-export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
-    public readonly isExperimentalDocumentStorage = true;
+export class TestDocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager) {

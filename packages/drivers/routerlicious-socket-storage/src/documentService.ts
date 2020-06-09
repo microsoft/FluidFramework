@@ -20,7 +20,6 @@ import { TokenProvider } from "./tokens";
  * clients
  */
 export class DocumentService implements api.IDocumentService {
-    public readonly isExperimentalDocumentService = true;
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,

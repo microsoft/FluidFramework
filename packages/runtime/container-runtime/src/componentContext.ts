@@ -68,8 +68,6 @@ export abstract class ComponentContext extends EventEmitter implements
     IComponentContext,
     IComponentContextLegacy,
     IDisposable {
-    public readonly isExperimentalComponentContext = true;
-
     public isLocal(): boolean {
         return this.containerRuntime.isLocal() || !this.isAttached;
     }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage, IExperimentalDocumentStorage } from "@fluidframework/server-services-core";
+import { IDocumentStorage } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { getParam } from "../../utils";
@@ -71,11 +71,7 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
         const sequenceNumber = request.body.sequenceNumber;
         const values = request.body.values;
 
-        const expDocumentStorage = (storage as IExperimentalDocumentStorage);
-        if (!expDocumentStorage.isExperimentalDocumentStorage) {
-            return response.status(400).json("No experimental features!!");
-        }
-        const createP = expDocumentStorage.createDocument(
+        const createP = storage.createDocument(
             tenantId,
             id,
             summary,

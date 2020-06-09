@@ -28,7 +28,6 @@ import {
     IScribe,
     ITenantManager,
     RawOperationType,
-    IExperimentalDocumentStorage,
 } from "@fluidframework/server-services-core";
 import {
     getQuorumTreeEntries,
@@ -43,8 +42,7 @@ import { gitHashFile } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
-export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
-    public readonly isExperimentalDocumentStorage = true;
+export class DocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,

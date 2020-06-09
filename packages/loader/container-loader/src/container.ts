@@ -126,7 +126,6 @@ export enum ConnectionState {
 }
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    public readonly isExperimentalContainer = true;
     public static version = "^0.1.0";
 
     /**

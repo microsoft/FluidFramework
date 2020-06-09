@@ -44,7 +44,6 @@ import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
 export class ContainerContext implements IContainerContext {
-    public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
         scope: IComponent,

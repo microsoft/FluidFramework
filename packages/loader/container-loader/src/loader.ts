@@ -134,7 +134,6 @@ function createCachedResolver(resolver: IUrlResolver) {
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
-    public readonly isExperimentalLoader = true;
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;

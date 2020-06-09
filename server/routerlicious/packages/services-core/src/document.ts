@@ -29,10 +29,6 @@ export interface IDocumentStorage {
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 
     createFork(tenantId: string, id: string): Promise<string>;
-}
-
-export interface IExperimentalDocumentStorage extends IDocumentStorage {
-    isExperimentalDocumentStorage: true;
 
     createDocument(
         tenantId: string,

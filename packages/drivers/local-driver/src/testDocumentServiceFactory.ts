@@ -26,7 +26,6 @@ import { createTestDocumentService } from "./testDocumentService";
  * Implementation of document service factory for testing.
  */
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
-    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-test:";
 
     // A map of clientId to TestDocumentService.
