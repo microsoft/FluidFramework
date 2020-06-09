@@ -33,6 +33,14 @@ export async function processOneFile(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
 
+    // Worker threads does not listen to unhandled promise rejections. So set a listener and
+    // throw error so that worker thread could pass the message to parent thread.
+    const listener = (error) => {
+        process.removeListener("unhandledRejection", listener);
+        throw new Error(error);
+    };
+    process.on("unhandledRejection", listener);
+
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
 

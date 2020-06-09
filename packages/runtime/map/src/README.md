@@ -38,6 +38,7 @@ To "navigate" the subdirectory structure, `IDirectory` provides a `getWorkingDir
 `valueChanged` events additionally provide the absolute path to the subdirectory storing the value that changed.
 
 # Value types
+**Value types on `SharedMap` and `SharedDirectory` have been deprecated.  Please use `SharedCounter` if you need counter functionality.**
 Value types are values stored on `SharedMap` and `SharedDirectory` that have special behaviors beyond what a plain JS object supports.
 
 ## Counter
