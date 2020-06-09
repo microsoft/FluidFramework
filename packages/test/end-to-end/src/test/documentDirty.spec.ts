@@ -144,6 +144,7 @@ describe("Document Dirty", () => {
     describe("Dirty state is updated correctly while in disconnected state", () => {
         it(`marks document as clean when disconnected, dirty when ops are sent, and clean again after
             the ops are processed after reconnecting`, async () => {
+            await containerDeltaEventManager.pauseProcessing();
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
 
@@ -158,6 +159,7 @@ describe("Document Dirty", () => {
             // Wait for the Container to get reconnected.
             await Promise.all([
                 waitForContainerReconnection(container),
+                containerDeltaEventManager.resumeProcessing(),
             ]);
 
             // Document will have been marked clean on reconnection
