@@ -26,6 +26,10 @@ describe("Map", () => {
     });
 
     describe("SharedMap in local state", () => {
+        beforeEach(() => {
+            componentRuntime.local = true;
+        });
+
         it("Can create a new map", () => {
             assert.ok(map, "could not create a new map");
         });
@@ -59,6 +63,215 @@ describe("Map", () => {
             assert.throws(() => {
                 map.set(null, "two");
             }, "Should throw for key of null");
+        });
+
+        describe(".serialize", () => {
+            it("Should serialize the map as a JSON object", () => {
+                map.set("first", "second");
+                map.set("third", "fourth");
+                map.set("fifth", "sixth");
+                const subMap = factory.create(componentRuntime, "subMap");
+                map.set("object", subMap.handle);
+
+                const parsed = map.getSerializableStorage();
+
+                map.forEach((value, key) => {
+                    if (!value.IComponentHandle) {
+                        assert.equal(parsed[key].type, "Plain");
+                        assert.equal(parsed[key].value, value);
+                    } else {
+                        assert.equal(parsed[key].type, "Plain");
+                        assert.equal(parsed[key].value.url, subMap.id);
+                    }
+                });
+            });
+
+            it("Should serialize an undefined value", () => {
+                map.set("first", "second");
+                map.set("third", "fourth");
+                map.set("fifth", undefined);
+                assert.ok(map.has("fifth"));
+                const subMap = factory.create(componentRuntime, "subMap");
+                map.set("object", subMap.handle);
+
+                const parsed = map.getSerializableStorage();
+
+                map.forEach((value, key) => {
+                    if (!value || !value.IComponentHandle) {
+                        assert.equal(parsed[key].type, "Plain");
+                        assert.equal(parsed[key].value, value);
+                    } else {
+                        assert.equal(parsed[key].type, "Plain");
+                        assert.equal(parsed[key].value.url, subMap.id);
+                    }
+                });
+            });
+
+            it("Should serialize an object with nested handles", async () => {
+                const subMap = factory.create(componentRuntime, "subMap");
+                const subMap2 = factory.create(componentRuntime, "subMap2");
+                const containingObject = {
+                    subMapHandle: subMap.handle,
+                    nestedObj: {
+                        subMap2Handle: subMap2.handle,
+                    },
+                };
+                map.set("object", containingObject);
+
+                const serialized = JSON.stringify(map.getSerializableStorage());
+                // eslint-disable-next-line max-len
+                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
+            });
+
+            it("can load old serialization format", async () => {
+                map.set("key", "value");
+
+                const content = JSON.stringify({
+                    key: {
+                        type: "Plain",
+                        value: "value",
+                    },
+                });
+
+                const services = new MockSharedObjectServices({ header: content });
+                const loadedMap = await factory.load(
+                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                );
+                assert(loadedMap.get("key") === "value");
+            });
+
+            it("new serialization format for small maps", async () => {
+                map.set("key", "value");
+
+                const tree = map.snapshot();
+                assert(tree.entries.length === 1);
+                const content = JSON.stringify({
+                    blobs: [],
+                    content: {
+                        key: {
+                            type: "Plain",
+                            value: "value",
+                        },
+                    },
+                });
+                assert(tree.entries.length === 1);
+                assert((tree.entries[0].value as IBlob).contents === content);
+
+                const services = new MockSharedObjectServices({ header: content });
+                const loadedMap = await factory.load(
+                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                );
+                assert(loadedMap.get("key") === "value");
+            });
+
+            it("new serialization format for big maps", async () => {
+                map.set("key", "value");
+
+                // 40K char string
+                let longString = "01234567890";
+                for (let i = 0; i < 12; i++) {
+                    longString = longString + longString;
+                }
+                map.set("longValue", longString);
+                map.set("zzz", "the end");
+
+                const tree = map.snapshot();
+                assert(tree.entries.length === 2);
+                const content1 = JSON.stringify({
+                    blobs: ["blob0"],
+                    content: {
+                        key: {
+                            type: "Plain",
+                            value: "value",
+                        },
+                        zzz: {
+                            type: "Plain",
+                            value: "the end",
+                        },
+                    },
+                });
+                const content2 = JSON.stringify({
+                    longValue: {
+                        type: "Plain",
+                        value: longString,
+                    },
+                });
+
+                assert(tree.entries.length === 2);
+                assert(tree.entries[1].path === "header");
+                assert((tree.entries[1].value as IBlob).contents === content1);
+
+                assert(tree.entries[0].path === "blob0");
+                assert((tree.entries[0].value as IBlob).contents === content2);
+
+                const services = new MockSharedObjectServices({
+                    header: content1,
+                    blob0: content2,
+                });
+                const loadedMap = await factory.load(
+                    componentRuntime, "mapId", services, "branchId", factory.attributes,
+                );
+                assert(loadedMap.get("key") === "value");
+                assert(loadedMap.get("longValue") === longString);
+                assert(loadedMap.get("zzz") === "the end");
+            });
+        });
+    });
+
+    describe("SharedMap op processing in local state", () => {
+        /**
+         * These tests test the scenario found in the following bug:
+         * https://github.com/microsoft/FluidFramework/issues/2400
+         *
+         * - A SharedMap in local state set a key.
+         * - A second SharedMap is then created from the snapshot of the first one.
+         * - The second SharedMap sets a new value to the same key.
+         * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
+         *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+         *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+         */
+        it("should correctly process a set operation sent in local state", async () => {
+            // Set the component runtime to local.
+            componentRuntime.local = true;
+
+            // Set a key in local state.
+            const key = "testKey";
+            const value = "testValue";
+            map.set(key, value);
+
+            // Load a new SharedMap in connected state from the snapshot of the first one.
+            const containerRuntimeFactory = new MockContainerRuntimeFactory();
+            const componentRuntime2 = new MockComponentRuntime();
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const services2 = MockSharedObjectServices.createFromTree(map.snapshot());
+            services2.deltaConnection = containerRuntime2.createDeltaConnection();
+
+            const map2 = new SharedMap("testMap2", componentRuntime2, MapFactory.Attributes);
+            await map2.load("branchId", services2);
+
+            // Now connect the first SharedMap
+            componentRuntime.local = false;
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+            const services1 = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(undefined),
+            };
+            map.connect(services1);
+
+            // Verify that both the maps have the key.
+            assert.equal(map.get(key), value, "The first map does not have the key");
+            assert.equal(map2.get(key), value, "The second map does not have the key");
+
+            // Set a new value for the same key in the second SharedMap.
+            const newValue = "newvalue";
+            map2.set(key, newValue);
+
+            // Process the message.
+            containerRuntimeFactory.processAllMessages();
+
+            // Verify that both the map get the new value.
+            assert.equal(map.get(key), newValue, "The first map did not get the new value");
+            assert.equal(map2.get(key), newValue, "The second map did not get the new value");
         });
     });
 
@@ -240,163 +453,6 @@ describe("Map", () => {
 
                 // Verify the remote SharedMap
                 assert.equal(await waitP2, "resolved", "promise not resolved after key is available in remote map");
-            });
-        });
-
-        describe(".serialize", () => {
-            beforeEach(() => {
-                // We are only testing local state for snapshot / load
-                componentRuntime.local = true;
-            });
-
-            it("Should serialize the map as a JSON object", () => {
-                map.set("first", "second");
-                map.set("third", "fourth");
-                map.set("fifth", "sixth");
-                const subMap = factory.create(componentRuntime, "subMap");
-                map.set("object", subMap.handle);
-
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value.IComponentHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
-                    }
-                });
-            });
-
-            it("Should serialize an undefined value", () => {
-                map.set("first", "second");
-                map.set("third", "fourth");
-                map.set("fifth", undefined);
-                assert.ok(map.has("fifth"));
-                const subMap = factory.create(componentRuntime, "subMap");
-                map.set("object", subMap.handle);
-
-                const parsed = map.getSerializableStorage();
-
-                map.forEach((value, key) => {
-                    if (!value || !value.IComponentHandle) {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value, value);
-                    } else {
-                        assert.equal(parsed[key].type, "Plain");
-                        assert.equal(parsed[key].value.url, subMap.id);
-                    }
-                });
-            });
-
-            it("Should serialize an object with nested handles", async () => {
-                const subMap = factory.create(componentRuntime, "subMap");
-                const subMap2 = factory.create(componentRuntime, "subMap2");
-                const containingObject = {
-                    subMapHandle: subMap.handle,
-                    nestedObj: {
-                        subMap2Handle: subMap2.handle,
-                    },
-                };
-                map.set("object", containingObject);
-
-                const serialized = JSON.stringify(map.getSerializableStorage());
-                // eslint-disable-next-line max-len
-                assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
-            });
-
-            it("can load old serialization format", async () => {
-                map.set("key", "value");
-
-                const content = JSON.stringify({
-                    key: {
-                        type: "Plain",
-                        value: "value",
-                    },
-                });
-
-                const services = new MockSharedObjectServices({ header: content });
-                const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
-                );
-                assert(loadedMap.get("key") === "value");
-            });
-
-            it("new serialization format for small maps", async () => {
-                map.set("key", "value");
-
-                const tree = map.snapshot();
-                assert(tree.entries.length === 1);
-                const content = JSON.stringify({
-                    blobs: [],
-                    content: {
-                        key: {
-                            type: "Plain",
-                            value: "value",
-                        },
-                    },
-                });
-                assert(tree.entries.length === 1);
-                assert((tree.entries[0].value as IBlob).contents === content);
-
-                const services = new MockSharedObjectServices({ header: content });
-                const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
-                );
-                assert(loadedMap.get("key") === "value");
-            });
-
-            it("new serialization format for big maps", async () => {
-                map.set("key", "value");
-
-                // 40K char string
-                let longString = "01234567890";
-                for (let i = 0; i < 12; i++) {
-                    longString = longString + longString;
-                }
-                map.set("longValue", longString);
-                map.set("zzz", "the end");
-
-                const tree = map.snapshot();
-                assert(tree.entries.length === 2);
-                const content1 = JSON.stringify({
-                    blobs: ["blob0"],
-                    content: {
-                        key: {
-                            type: "Plain",
-                            value: "value",
-                        },
-                        zzz: {
-                            type: "Plain",
-                            value: "the end",
-                        },
-                    },
-                });
-                const content2 = JSON.stringify({
-                    longValue: {
-                        type: "Plain",
-                        value: longString,
-                    },
-                });
-
-                assert(tree.entries.length === 2);
-                assert(tree.entries[1].path === "header");
-                assert((tree.entries[1].value as IBlob).contents === content1);
-
-                assert(tree.entries[0].path === "blob0");
-                assert((tree.entries[0].value as IBlob).contents === content2);
-
-                const services = new MockSharedObjectServices({
-                    header: content1,
-                    blob0: content2,
-                });
-                const loadedMap = await factory.load(
-                    componentRuntime, "mapId", services, "branchId", factory.attributes,
-                );
-                assert(loadedMap.get("key") === "value");
-                assert(loadedMap.get("longValue") === longString);
-                assert(loadedMap.get("zzz") === "the end");
             });
         });
     });
