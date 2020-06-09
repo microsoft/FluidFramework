@@ -186,7 +186,7 @@ describe("Document Dirty", () => {
                 "those pending on nested objects");
         });
 
-        it(`marks document dirty when ops are sent while connected and doesn't set ot clean until 
+        it(`marks document dirty when ops are sent while connected and doesn't set it clean until 
             they are acked after reconnection`, async () => {
             onMarkedClean(containerCompContainerRuntime);
             onMarkedDirty(containerCompContainerRuntime);
@@ -195,6 +195,10 @@ describe("Document Dirty", () => {
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
                 "Document is marked dirty on edit");
+
+            // Document should have been marked dirty again due to pending DDS ops
+            assert.equal(wasMarkedDirtyCount, 1,
+                "Document should have been marked dirty again due to pending DDS ops");
 
             // Disconnect the client.
             documentServiceFactory.disconnectClient(container.clientId, "Disconnected for testing");
@@ -210,10 +214,6 @@ describe("Document Dirty", () => {
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 1,
                 "Document will have been marked clean on reconnection");
-
-            // Document should have been marked dirty again due to pending DDS ops
-            assert.equal(wasMarkedDirtyCount, 2,
-                "Document should have been marked dirty again due to pending DDS ops");
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
