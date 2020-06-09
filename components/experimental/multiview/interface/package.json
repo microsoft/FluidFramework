@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/multiview-option-picker-interface",
   "version": "0.20.0",
-  "description": "Example of attaching multiple views to a Fluid component as a model",
+  "description": "Interface for multiview sample",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -20,23 +20,16 @@
     "lint": "npm run tsfmt && npm run eslint",
     "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "prepack": "npm run webpack",
-    "test": "npm run test:jest",
-    "test:jest": "jest",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
-  "dependencies": {
-  },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0-0",
-    "@fluidframework/test-tools": "^0.1.0",
     "@types/expect-puppeteer": "2.2.1",
-    "@types/jest": "22.2.3",
-    "@types/jest-environment-puppeteer": "2.2.0",
     "@types/node": "^10.17.24",
     "@types/puppeteer": "1.3.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
@@ -50,12 +43,8 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
-    "jest": "^24.9.0",
-    "jest-junit": "^10.0.0",
-    "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
-    "ts-jest": "24.1.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
     "typescript-formatter": "7.1.0",
@@ -73,9 +62,5 @@
         "library": "main"
       }
     }
-  },
-  "jest-junit": {
-    "outputDirectory": "nyc",
-    "outputName": "jest-junit-report.xml"
   }
 }

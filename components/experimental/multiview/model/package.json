@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/multiview-option-picker-model",
   "version": "0.20.0",
-  "description": "Example of attaching multiple views to a Fluid component as a model",
+  "description": "Model for multiview sample",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
