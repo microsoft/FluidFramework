@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/primitives",
   "version": "0.20.0",
-  "description": "Minimal Fluid component sample to showcase some of the distributed data structures.",
+  "description": "Minimal Fluid container sample to showcase some of the distributed data structures.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
