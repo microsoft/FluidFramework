@@ -8,6 +8,7 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { performanceNow } from "@fluidframework/common-utils";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -31,7 +32,6 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import {
@@ -83,6 +83,27 @@ export class Client {
         this.mergeTree = new MergeTree(options);
         this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
+    }
+
+    /**
+     * The merge tree maintains a queue of segment groups for each local operation.
+     * These segment groups track segments modified by an operation.
+     * This method peeks the tail of that queue, and returns the segments groups there.
+     * It is used to get the segment group(s) for the previous operations.
+     * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
+     */
+    public peekPendingSegmentGroups(count: number = 1) {
+        if (count === 1) {
+            return this.mergeTree.pendingSegments?.last();
+        }
+        let taken = 0;
+        return this.mergeTree.pendingSegments?.some(() => {
+            if (taken < count) {
+                taken++;
+                return true;
+            }
+            return false;
+        }, true);
     }
 
     /**
@@ -391,7 +412,7 @@ export class Client {
                 // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({ segments: [] });
+                    this.mergeTree.pendingSegments.enqueue({ segments: [], localSeq: this.getCollabWindow().localSeq });
                 }
                 return true;
             }
@@ -644,52 +665,104 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
-        let op: ops.IMergeTreeOp;
-        if (!segment.segmentGroups.empty) {
-            segment.segmentGroups.clear();
+    /**
+     * During reconnect, we must find the positions to pending segments
+     * relative to other pending segments. This methods computes that
+     * position relative to a localSeq. Pending segments above the localSeq
+     * will be ignored.
+     *
+     * @param segment - The segment to find the position for
+     * @param localSeq - The localSeq to find the position of the segment at
+     */
+    public findReconnectionPostition(segment: ISegment, localSeq: number) {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        let segmentPosition = 0;
+        /*
+            Walk the segments up to the current segment, and calculate it's
+            position taking into account local segments that were modified,
+            after the current segment.
 
-            // The segment was added and removed, so we don't need to send any ops for it
-            if (segment.seq === UnassignedSequenceNumber && segment.removedSeq === UnassignedSequenceNumber) {
-                // Set to the universal sequence number so it can be zambonied
-                segment.removedSeq = UniversalSequenceNumber;
-                segment.seq = UniversalSequenceNumber;
-                return undefined;
-            }
-
-            const segmentPosition = this.getPosition(segment);
-
-            // If removed we only need to send a remove op
-            // if inserted, we only need to send insert, as that will contain props
-            // if pending properties send annotate
-            if (segment.removedSeq === UnassignedSequenceNumber) {
-                op = OpBuilder.createRemoveRangeOp(
-                    segmentPosition,
-                    segmentPosition + segment.cachedLength);
-            } else if (segment.seq === UnassignedSequenceNumber) {
-                op = OpBuilder.createInsertSegmentOp(
-                    segmentPosition,
-                    segment);
-
-                if (segment.propertyManager) {
-                    segment.propertyManager.clearPendingProperties();
+            TODO: Consider embeding this infomation into the tree for
+            more efficent look up of pending segment positions.
+        */
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            if (seg !== segment) {
+                // segment isn't local, so count it
+                if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
+                    if (seg.removedSeq === undefined) {
+                        segmentPosition += seg.cachedLength;
+                        return true;
+                    }
                 }
-            } else if (segment.propertyManager && segment.propertyManager.hasPendingProperties()) {
-                const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
-                op = OpBuilder.createAnnotateRangeOp(
-                    segmentPosition,
-                    segmentPosition + segment.cachedLength,
-                    annotateInfo.props,
-                    annotateInfo.combiningOp);
+                // segment is remove locally before this op, so skip it
+                if (seg.localRemovedSeq !== undefined) {
+                    if (seg.localRemovedSeq <= localSeq) {
+                        return true;
+                    }
+                }
+                // segment is inserted locally before this op, so count it
+                if (seg.localSeq <= localSeq) {
+                    segmentPosition += seg.cachedLength;
+                    return true;
+                }
+                return true;
+            }
+            return false;
+        });
+        return segmentPosition;
+    }
+
+    private resetPendingDeltaToOps(
+        resetOp: ops.IMergeTreeDeltaOp,
+        segmentGroup: SegmentGroup): ops.IMergeTreeDeltaOp[] {
+        assert(segmentGroup, "Segment group undefined");
+        const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
+        assert(segmentGroup === NACKedSegmentGroup, "Segment group not at head of merge tree pending queue");
+
+        const opList = [];
+        for (const segment of segmentGroup.segments) {
+            const segmentSegGroup = segment.segmentGroups.dequeue();
+            assert(segmentGroup === segmentSegGroup,
+                "Segment group not at head of segment pending queue");
+            const segmentPosition = this.findReconnectionPostition(segment, segmentGroup.localSeq);
+            let newOp: ops.IMergeTreeDeltaOp;
+            switch (resetOp.type) {
+                case ops.MergeTreeDeltaType.ANNOTATE:
+                    assert(segment.propertyManager.hasPendingProperties(), "Segment has no pending properties");
+                    newOp = OpBuilder.createAnnotateRangeOp(
+                        segmentPosition,
+                        segmentPosition + segment.cachedLength,
+                        resetOp.props,
+                        resetOp.combiningOp);
+                    break;
+
+                case ops.MergeTreeDeltaType.INSERT:
+                    assert(segment.seq === UnassignedSequenceNumber);
+                    newOp = OpBuilder.createInsertSegmentOp(
+                        segmentPosition,
+                        segment);
+                    break;
+
+                case ops.MergeTreeDeltaType.REMOVE:
+                    assert(segment.removedSeq === UnassignedSequenceNumber);
+                    newOp = OpBuilder.createRemoveRangeOp(
+                        segmentPosition,
+                        segmentPosition + segment.cachedLength);
+                    break;
+
+                default:
+                    throw new Error(`Invalid op type`);
             }
 
-            if (op) {
-                const segmentGroup: SegmentGroup = { segments: [] };
-                segment.segmentGroups.enqueue(segmentGroup);
-                this.mergeTree.pendingSegments.enqueue(segmentGroup);
+            if (newOp) {
+                const newSegmentGroup: SegmentGroup = { segments: [], localSeq: segmentGroup.localSeq };
+                segment.segmentGroups.enqueue(newSegmentGroup);
+                this.mergeTree.pendingSegments.enqueue(newSegmentGroup);
+                opList.push(newOp);
             }
         }
-        return op;
+
+        return opList;
     }
 
     private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
@@ -773,25 +846,40 @@ export class Client {
             shortRemoteClientId);
     }
 
-    public resetPendingSegmentsToOp(): ops.IMergeTreeOp {
-        const orderedSegments = new SortedSegmentSet();
-        while (!this.mergeTree.pendingSegments.empty()) {
-            const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
-            for (const segment of NACKedSegmentGroup.segments) {
-                orderedSegments.addOrUpdate(segment);
-            }
-        }
+    /**
+     *  Given an pending operation and segment group, regenerate the op, so it
+     *  can be resubmitted
+     * @param resetOp - The op to reset
+     * @param segmentGroup - The segment group associated with the op
+     */
+    public regeneratePendingOp(
+        resetOp: ops.IMergeTreeOp,
+        segmentGroup: SegmentGroup | SegmentGroup[],
+    ): ops.IMergeTreeOp {
+        const start = performanceNow();
+        try {
+            const opList: ops.IMergeTreeDeltaOp[] = [];
 
-        const opList: ops.IMergeTreeOp[] = [];
-        for (const segment of orderedSegments.items) {
-            const op = this.resetPendingSegmentToOp(segment);
-            if (op) {
-                opList.push(op);
+            if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
+                assert(Array.isArray(segmentGroup));
+                assert.equal(resetOp.ops.length, segmentGroup.length);
+                for (let i = 0; i < resetOp.ops.length; i++) {
+                    opList.push(
+                        ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+                }
+            } else {
+                assert.notEqual(resetOp.type, ops.MergeTreeDeltaType.GROUP);
+                assert(!Array.isArray(segmentGroup));
+                opList.push(
+                    ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
             }
-        }
-
-        if (opList.length > 0) {
             return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
+        } finally {
+            this.logger.sendPerformanceEvent({
+                eventName: "MergeTree:RegeneratePendingOp",
+                category: "performance",
+                duration: performanceNow() - start,
+            });
         }
     }
 
@@ -799,9 +887,9 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    // TODO: Remove `catchUpMsgs` once new snapshot format is adopted as default.
     //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, catchUpMsgs: ISequencedDocumentMessage[]) {
         const deltaManager = runtime.deltaManager;
         const minSeq = deltaManager
             ? deltaManager.minimumSequenceNumber
@@ -826,7 +914,7 @@ export class Client {
 
         snap.extractSync();
         return snap.emit(
-            tardisMsgs,
+            catchUpMsgs,
             runtime.IComponentSerializer,
             runtime.IComponentHandleContext,
             handle);

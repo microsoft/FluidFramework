@@ -30,6 +30,10 @@ import { IDeltaManager } from "./deltas";
 import { CriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
 
+// Issue #2375
+// TODO: remove, replace all usage with version from protocol-definitions
+export const summarizerClientType = "summarizer";
+
 /**
  * Person definition in a npm script
  */
@@ -265,10 +269,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+    /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
         IProvideMessageScheduler>> { }
 }
-    /* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+    /* eslint-enable @typescript-eslint/no-empty-interface */

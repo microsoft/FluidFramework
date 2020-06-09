@@ -22,7 +22,7 @@ endpoints:
   alfred: http://fierce-cat-alfred
   riddler: http://fierce-cat-riddler
   alfredUrl: https://alfred.we.prague.office-int.com
-  packageUrl: https://pragueauspkn-3873244262.azureedge.net
+  packageUrl: https://pragueauspkn.azureedge.net
   historianUrl: https://historian.we.prague.office-int.com
   internalGatewayUrl: http://fierce-dog-gateway:3000
   rabbitmq: ""

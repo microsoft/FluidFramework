@@ -29,7 +29,7 @@ import {
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervals: IntervalCollectionView<SequenceInterval>,
-    expected: readonly {start: number; end: number}[],
+    expected: readonly { start: number; end: number }[],
 ) => {
     const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -73,7 +73,7 @@ describe("SharedInterval", () => {
 
     async function createContainer(factoryEntries: Iterable<[string, ISharedObjectFactory]>): Promise<Container> {
         const factory = new TestFluidComponentFactory(factoryEntries);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -83,14 +83,14 @@ describe("SharedInterval", () => {
         let sharedString: SharedString;
         let intervals: IntervalCollectionView<SequenceInterval>;
 
-        const assertIntervals = (expected: readonly {start: number; end: number}[]) => {
+        const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
             assertIntervalsHelper(sharedString, intervals, expected);
         };
 
         beforeEach(async () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-            const container = await createContainer([[ stringId, SharedString.getFactory() ]]);
+            const container = await createContainer([[stringId, SharedString.getFactory()]]);
             const component = await getComponent("default", container);
             sharedString = await component.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
@@ -217,7 +217,7 @@ describe("SharedInterval", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
             containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
 
-            const container1 = await createContainer([[ stringId, SharedString.getFactory() ]]);
+            const container1 = await createContainer([[stringId, SharedString.getFactory()]]);
             const component1 = await getComponent("default", container1);
             const sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
@@ -226,7 +226,7 @@ describe("SharedInterval", () => {
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
-            const container2 = await createContainer([[ stringId, SharedString.getFactory() ]]);
+            const container2 = await createContainer([[stringId, SharedString.getFactory()]]);
             const component2 = await getComponent("default", container2);
             containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
 
@@ -260,22 +260,22 @@ describe("SharedInterval", () => {
             deltaConnectionServer = LocalDeltaConnectionServer.create();
 
             const container1 = await createContainer([
-                [ mapId, SharedMap.getFactory() ],
-                [ stringId, SharedString.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [stringId, SharedString.getFactory()],
             ]);
             component1 = await getComponent("default", container1);
             sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer([
-                [ mapId, SharedMap.getFactory() ],
-                [ stringId, SharedString.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [stringId, SharedString.getFactory()],
             ]);
             const component2 = await getComponent("default", container2);
             sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer([
-                [ mapId, SharedMap.getFactory() ],
-                [ stringId, SharedString.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [stringId, SharedString.getFactory()],
             ]);
             const component3 = await getComponent("default", container3);
             sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);

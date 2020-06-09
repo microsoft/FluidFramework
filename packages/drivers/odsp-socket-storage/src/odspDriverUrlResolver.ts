@@ -10,6 +10,7 @@ import {
     IResolvedUrl,
     CreateNewHeader,
 } from "@fluidframework/driver-definitions";
+import { summarizerClientType, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId, INewFileInfoHeader } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -62,6 +63,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     driveId: "",
                     itemId: "",
                     fileName: "",
+                    summarizer: false,
                 };
             } else if (request.headers[CreateNewHeader.createNew]) {
                 const [siteURL, queryString] = request.url.split("?");
@@ -70,7 +72,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 const fileName = request.headers[CreateNewHeader.createNew].fileName;
                 const driveID = searchParams.get("driveId");
                 const filePath = searchParams.get("path");
-                if (!(fileName && siteURL && driveID && filePath)) {
+                if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
                     throw new Error("Proper new file params should be there!!");
                 }
                 return {
@@ -85,6 +87,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     driveId: driveID,
                     itemId: "",
                     fileName,
+                    summarizer: false,
                 };
             }
         }
@@ -102,6 +105,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 documentUrl += searchParams;
             }
         }
+
+        const clientDetails = request.headers?.[LoaderHeader.clientDetails];
+
         return {
             type: "fluid",
             endpoints: {
@@ -114,6 +120,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
             fileName: "",
+            summarizer: clientDetails?.type === summarizerClientType,
         };
     }
 
@@ -125,8 +132,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         return `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
             odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-            odspResolvedUrl.itemId,
-        )}&path=${encodeURIComponent("/")}`;
+                odspResolvedUrl.itemId,
+            )}&path=${encodeURIComponent("/")}`;
     }
 
     public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {

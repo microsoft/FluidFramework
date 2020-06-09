@@ -54,8 +54,7 @@ export class ImageComponent implements
 }
 
 export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection
-{
+    IComponentLoadable, IComponentRouter, IComponentCollection {
     private static readonly factory = new SharedComponentFactory(
         "@fluid-example/image-collection",
         ImageCollection,

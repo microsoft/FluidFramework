@@ -18,10 +18,10 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
         if (Array.isArray(documentServiceFactory)) {
             const factories: IDocumentServiceFactory[] = [];
-            documentServiceFactory.forEach((factory)=>{
+            documentServiceFactory.forEach((factory) => {
                 const maybeMulti = factory as MultiDocumentServiceFactory;
                 if (maybeMulti.protocolToDocumentFactoryMap !== undefined) {
-                    factories.push(... maybeMulti.protocolToDocumentFactoryMap.values());
+                    factories.push(...maybeMulti.protocolToDocumentFactoryMap.values());
                 } else {
                     factories.push(factory);
                 }

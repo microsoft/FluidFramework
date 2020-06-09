@@ -72,7 +72,7 @@ describe("Table Document with Interception", () => {
             );
 
             const deltaConnectionServer = LocalDeltaConnectionServer.create();
-            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             const container = await initializeLocalContainer(id, loader, codeDetails);
 
             const response = await container.request({ url: "default" });

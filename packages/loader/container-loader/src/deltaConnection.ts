@@ -85,19 +85,21 @@ export class DeltaConnection
             this.close();
         });
 
-        this.on("newListener", (event: string, listener: (...args: any[]) => void)=>{
+        this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
             // Register for the event on connection
             // A number of events that are pass-through.
             // Note that we delay subscribing to op / op-content / signal on purpose, as
             // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
             // to these events, and thus stop accumulating ops / signals in early handlers.
+            // See DocumentDeltaConnection.initialMessages() implementation for details.
             if (this.forwardEvents.includes(event)) {
-                assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
-                this.connection.on(
-                    event as any,
-                    (...args: any[]) => {
-                        this.emit(event, ...args);
-                    });
+                if (this.listeners(event).length === 0) {
+                    this.connection.on(
+                        event as any,
+                        (...args: any[]) => {
+                            this.emit(event, ...args);
+                        });
+                }
             } else {
                 // These are events that we already subscribed to and already emit on object.
                 assert(this.nonForwardEvents.includes(event));

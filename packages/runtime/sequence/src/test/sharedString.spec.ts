@@ -13,6 +13,7 @@ import {
     MockComponentRuntime,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { SnapshotLegacy } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
@@ -46,7 +47,7 @@ describe("SharedString", () => {
             let subTree = tree.entries[1].value as ITree;
             assert(subTree.entries.length === 2);
             assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "tardis");
+            assert(subTree.entries[1].path === SnapshotLegacy.oldCatchupOps);
 
             await CreateStringAndCompare(tree);
 
@@ -63,7 +64,7 @@ describe("SharedString", () => {
             subTree = tree.entries[1].value as ITree;
             assert(subTree.entries.length === 2);
             assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "tardis");
+            assert(subTree.entries[1].path === SnapshotLegacy.oldCatchupOps);
 
             await CreateStringAndCompare(tree);
         });
@@ -142,9 +143,11 @@ describe("SharedString", () => {
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
-            // Disconnect and reconnect the first collection.
-            containerRuntime1.connected = false;
-            containerRuntime1.connected = true;
+            for (let i = 0; i < 10; i++) {
+                // Disconnect and reconnect the first collection.
+                containerRuntime1.connected = false;
+                containerRuntime1.connected = true;
+            }
 
             // Process the messages.
             containerRuntimeFactory.processAllMessages();

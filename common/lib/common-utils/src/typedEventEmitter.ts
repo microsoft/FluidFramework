@@ -8,7 +8,7 @@ import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fl
 // the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number
 // this allow us to correctly handle either type
-export type EventEmitterEventType = EventEmitter extends {on(event: infer E, listener: any)} ? E : never;
+export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) } ? E : never;
 
 export type TypedEventTransform<TThis, TEvent extends IEvent> =
     // Event emitter supports some special events for the emitter itself to use
@@ -16,7 +16,7 @@ export type TypedEventTransform<TThis, TEvent extends IEvent> =
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
     // which easier than trying to extend TEvent directly
     // eslint-disable-next-line max-len
-    TransformedEvent<TThis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
+    TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
     // Expose all the events provides by TEvent
     IEventTransformer<TThis, TEvent> &
     // Add the default overload so this is covertable to EventEmitter regardless of environment
@@ -29,12 +29,12 @@ export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter imple
     constructor() {
         super();
         this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
-        this.on = super.on.bind(this) as  TypedEventTransform<this, TEvent>;
-        this.once = super.once.bind(this) as  TypedEventTransform<this, TEvent>;
-        this.prependListener = super.prependListener.bind(this) as  TypedEventTransform<this, TEvent>;
-        this.prependOnceListener = super.prependOnceListener.bind(this) as  TypedEventTransform<this, TEvent>;
-        this.removeListener = super.removeListener.bind(this) as  TypedEventTransform<this, TEvent>;
-        this.off = super.off.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.on = super.on.bind(this) as TypedEventTransform<this, TEvent>;
+        this.once = super.once.bind(this) as TypedEventTransform<this, TEvent>;
+        this.prependListener = super.prependListener.bind(this) as TypedEventTransform<this, TEvent>;
+        this.prependOnceListener = super.prependOnceListener.bind(this) as TypedEventTransform<this, TEvent>;
+        this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
+        this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
     }
     readonly addListener: TypedEventTransform<this, TEvent>;
     readonly on: TypedEventTransform<this, TEvent>;

@@ -8,12 +8,12 @@ import { DocSegmentKind } from "../document";
 
 const segmentKindToIdPrefix = {
     [DocSegmentKind.beginTags]: "b:",
-    [DocSegmentKind.endTags]:   "e:",
+    [DocSegmentKind.endTags]: "e:",
 };
 
 const segmentKindToOppositeIdPrefix = {
     [DocSegmentKind.beginTags]: "e:",
-    [DocSegmentKind.endTags]:   "b:",
+    [DocSegmentKind.endTags]: "b:",
 };
 
 export function createTags(tags: TagName[]) {

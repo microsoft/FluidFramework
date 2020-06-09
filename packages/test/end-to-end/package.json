@@ -19,12 +19,14 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "nyc": {
     "all": true,
@@ -58,10 +60,11 @@
     "@fluidframework/container-definitions": "^0.20.0",
     "@fluidframework/container-loader": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",
+    "@fluidframework/counter": "^0.20.0",
     "@fluidframework/driver-base": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/driver-utils": "^0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@fluidframework/experimental-creation-driver": "^0.20.0",
     "@fluidframework/local-driver": "^0.20.0",
     "@fluidframework/local-test-utils": "^0.20.0",
@@ -105,6 +108,7 @@
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0",
     "uuid": "^3.3.2",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"

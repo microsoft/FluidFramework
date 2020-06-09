@@ -31,7 +31,7 @@ const replayDocumentId = "replayDocId";
 
 const Claims: ITokenClaims = {
     documentId: replayDocumentId,
-    scopes: [ScopeType.DocWrite],
+    scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
     tenantId: "",
     user: {
         id: "",
@@ -104,7 +104,7 @@ export class Replayer {
 
 export class ReplayFileDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     /**
      * Mimic the delta connection to replay ops on it.
      *
@@ -127,7 +127,7 @@ export class ReplayFileDeltaConnection
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
-                maxMessageSize:  16 * 1024,
+                maxMessageSize: 16 * 1024,
                 summary: {
                     idleTime: 5000,
                     maxOps: 1000,

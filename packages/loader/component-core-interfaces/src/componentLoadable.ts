@@ -17,9 +17,8 @@ export interface IComponentLoadable extends IProvideComponentLoadable {
     // Absolute URL to the component within the document
     readonly url: string;
 
-    // Handle to the loadable component. Will eventually replace the url property. But currently marked optional while
-    // handles are integrated into the system.
-    handle?: IComponentHandle;
+    // Handle to the loadable component
+    handle: IComponentHandle;
 }
 
 export const IComponentRunnable: keyof IProvideComponentRunnable = "IComponentRunnable";

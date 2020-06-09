@@ -32,10 +32,6 @@ import {
 import { ContainerMessageType, IChunkedOp } from "@fluidframework/container-runtime";
 import { ReplayArgs } from "./replayArgs";
 
-// eslint-disable-next-line max-len
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
-const cloneDeep = require("lodash/cloneDeep");
-
 interface IFullPathTreeEntry extends ITreeEntry {
     fullPath?: string;
 }
@@ -212,32 +208,6 @@ export class ClientReplayTool {
                 for (const message of mergeTreeMessages) {
                     if (message.clientId !== clientId) {
                         pendingMessages.push(message);
-                    } else {
-                        // We found an op from this client
-                        // that means we know this clients reference sequence number
-                        // when the op was created, so apply all ops up to this ops
-                        // reference sequence number before we apply this op
-                        if (this.args.testReconnet) {
-                            const reconnectPaths = new Set<string>();
-                            const reconnectMessages: IFullPathSequencedDocumentMessage[] = [];
-                            while (pendingMessages.length > 0
-                                && pendingMessages[0].clientId === clientId
-                                && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
-                                const reconnectMessage =
-                                    cloneDeep(pendingMessages.shift()) as IFullPathSequencedDocumentMessage;
-                                if (!reconnectPaths.has(reconnectMessage.fullPath)) {
-                                    const reconnectOp =
-                                        client.get(reconnectMessage.fullPath).resetPendingSegmentsToOp();
-                                    reconnectMessage.contents = reconnectOp;
-                                    reconnectMessages.push(reconnectMessage);
-                                    reconnectPaths.add(reconnectMessage.fullPath);
-                                } else {
-                                    reconnectMessage.contents = createGroupOp();
-                                    reconnectMessages.push(reconnectMessage);
-                                }
-                            }
-                            pendingMessages.unshift(...reconnectMessages);
-                        }
                         while (pendingMessages.length > 0
                             && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
                             const pendingMessage = pendingMessages.shift();

@@ -8,7 +8,9 @@ import {
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IJSONSegment, SnapshotLegacy } from ".";
+import { PropertySet } from "./properties";
+import { SnapshotLegacy } from "./snapshotlegacy";
+import { IJSONSegment } from "./ops";
 
 export interface VersionedMergeTreeChunk {
     version: undefined | "1";
@@ -29,7 +31,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     headerMetadata?: MergeTreeHeaderMetadata;
 }
 
-export interface MergeTreeHeaderChunkMetadata{
+export interface MergeTreeHeaderChunkMetadata {
     id: string,
 }
 
@@ -39,10 +41,12 @@ export interface MergeTreeHeaderMetadata {
     orderedChunkMetadata: MergeTreeHeaderChunkMetadata[],
     sequenceNumber: number,
     minSequenceNumber: number,
-    hasTardis: boolean,
+    // TODO: No longer necessary, as we check the blobs directly, but existing clients may need this
+    // remove once all clients are updated.
+    hasTardis?: boolean,
 }
 
-export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk{
+export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
     version: "1",
     startIndex: number;
     segmentCount: number;
@@ -76,6 +80,7 @@ export function serializeAsMinSupportedVersion(
     path: string,
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
+    options: PropertySet | undefined,
     serializer?: IComponentSerializer,
     context?: IComponentHandleContext,
     bind?: IComponentHandle) {
@@ -83,7 +88,7 @@ export function serializeAsMinSupportedVersion(
 
     if (chunk.version !== undefined) {
         logger.send({
-            eventName:"MergeTreeChunk:serializeAsMinSupportedVersion",
+            eventName: "MergeTreeChunk:serializeAsMinSupportedVersion",
             category: "generic",
             fromChunkVersion: chunk.version,
             toChunkVersion: undefined,
@@ -93,7 +98,7 @@ export function serializeAsMinSupportedVersion(
     switch (chunk.version) {
         case undefined:
             targetChuck = chunk as MergeTreeChunkLegacy;
-            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck);
+            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck, options);
             break;
 
         case "1":
@@ -123,20 +128,22 @@ export function serializeAsMaxSupportedVersion(
     path: string,
     chunk: VersionedMergeTreeChunk,
     logger: ITelemetryLogger,
+    options: PropertySet | undefined,
     serializer?: IComponentSerializer,
     context?: IComponentHandleContext,
     bind?: IComponentHandle) {
-    const targetChuck = toLatestVersion(path, chunk, logger);
+    const targetChuck = toLatestVersion(path, chunk, logger, options);
     return serializer !== undefined ? serializer.stringify(targetChuck, context, bind) : JSON.stringify(targetChuck);
 }
 
 export function toLatestVersion(
     path: string,
     chunk: VersionedMergeTreeChunk,
-    logger: ITelemetryLogger): MergeTreeChunkV1 {
+    logger: ITelemetryLogger,
+    options: PropertySet | undefined): MergeTreeChunkV1 {
     if (chunk.version !== "1") {
         logger.send({
-            eventName:"MergeTreeChunk:toLatestVersion",
+            eventName: "MergeTreeChunk:toLatestVersion",
             category: "generic",
             fromChunkVersion: chunk.version,
             toChunkVersion: "1",
@@ -149,7 +156,7 @@ export function toLatestVersion(
                 version: "1",
                 length: chunkLegacy.chunkLengthChars,
                 segmentCount: chunkLegacy.chunkSegmentCount,
-                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy),
+                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy, options),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
@@ -163,12 +170,12 @@ export function toLatestVersion(
 }
 
 function buildHeaderMetadataForLegecyChunk(
-    path: string, chunk: MergeTreeChunkLegacy): MergeTreeHeaderMetadata | undefined {
+    path: string, chunk: MergeTreeChunkLegacy, options: PropertySet | undefined): MergeTreeHeaderMetadata | undefined {
     if (path === SnapshotLegacy.header) {
         if (chunk.headerMetadata !== undefined) {
             return chunk.headerMetadata;
         }
-        const chunkIds: MergeTreeHeaderChunkMetadata[] = [ { id: SnapshotLegacy.header } ];
+        const chunkIds: MergeTreeHeaderChunkMetadata[] = [{ id: SnapshotLegacy.header }];
         if (chunk.chunkLengthChars < chunk.totalLengthChars) {
             chunkIds.push({ id: SnapshotLegacy.body });
         }
@@ -178,7 +185,7 @@ function buildHeaderMetadataForLegecyChunk(
             sequenceNumber: chunk.chunkSequenceNumber,
             totalLength: chunk.totalLengthChars,
             totalSegmentCount: chunk.totalSegmentCount,
-            hasTardis: true,
+            hasTardis: options?.useNewCatchUpBlobName === true ? undefined : true,
         };
     }
     return undefined;

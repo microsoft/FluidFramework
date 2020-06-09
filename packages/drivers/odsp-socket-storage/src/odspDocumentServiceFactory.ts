@@ -16,8 +16,7 @@ import { getSocketIo } from "./getSocketIo";
  */
 export class OdspDocumentServiceFactory
     extends OdspDocumentServiceFactoryCore
-    implements IDocumentServiceFactory
-{
+    implements IDocumentServiceFactory {
     constructor(
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh: boolean) => Promise<string | null>,

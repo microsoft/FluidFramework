@@ -45,7 +45,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@fluidframework/component-runtime-definitions";
-import { ComponentSerializer } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 import { IComponentRuntimeChannel } from "@fluidframework/runtime-definitions";
 import { IHistorian } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
@@ -65,7 +65,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     constructor(
         private readonly submitFn: (messageContent: any, localOpMetadata: unknown) => number,
         private readonly dirtyFn: () => void,
-    ) {}
+    ) { }
 
     public attach(handler: IDeltaHandler): void {
         this.handler = handler;
@@ -151,7 +151,7 @@ export class MockContainerRuntime {
         return clientSequenceNumber;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 
     public process(message: ISequencedDocumentMessage) {
         this.referenceSequenceNumber = message.sequenceNumber;
@@ -242,7 +242,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
 
-    constructor(... members: [string, Partial<ISequencedClient>][]) {
+    constructor(...members: [string, Partial<ISequencedClient>][]) {
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
@@ -659,7 +659,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         return 0;
     }
 
-    public dirty(): void {}
+    public dirty(): void { }
 }
 
 /**
@@ -668,12 +668,23 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 export class MockObjectStorageService implements IObjectStorageService {
     public constructor(private readonly contents: { [key: string]: string }) {
     }
-
     public async read(path: string): Promise<string> {
         const content = this.contents[path];
         // Do we have such blob?
         assert(content !== undefined);
         return fromUtf8ToBase64(content);
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return this.contents[path] !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
+        return Object.keys(this.contents)
+            .filter((key) => key.startsWith(path)
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+                && key.split("/").length === pathPartsLength + 1);
     }
 }
 

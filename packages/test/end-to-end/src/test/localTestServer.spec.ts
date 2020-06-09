@@ -33,8 +33,8 @@ describe("LocalTestServer", () => {
     let sharedString2: SharedString;
 
     async function createContainer(): Promise<Container> {
-        const factory = new TestFluidComponentFactory([[ stringId, SharedString.getFactory() ]]);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const factory = new TestFluidComponentFactory([[stringId, SharedString.getFactory()]]);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
