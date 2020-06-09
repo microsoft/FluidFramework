@@ -187,9 +187,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public didGoLive(): void {
-        if (this.runtime?.didGoLive !== undefined) {
-            this.runtime.didGoLive();
-        }
+        this.runtime?.didGoLive();
     }
 
     public dispose(error?: Error): void {
@@ -278,5 +276,10 @@ export class ContainerContext implements IContainerContext {
 
     private async load() {
         this.runtime = await this.runtimeFactory.instantiateRuntime(this);
+        // Check for didGoLive api on runtime for detach flow because we need this api
+        // for detach flow to work properly.
+        if (this.container.isLocal() && this.runtime.didGoLive === undefined) {
+            throw new Error("Container Runtime for detached flow should contain didGoLive api!!");
+        }
     }
 }

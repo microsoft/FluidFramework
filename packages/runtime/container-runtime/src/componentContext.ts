@@ -229,7 +229,9 @@ export abstract class ComponentContext extends EventEmitter implements
     public didGoLive(): void {
         if (this.componentRuntime?.didGoLive !== undefined) {
             this.componentRuntime?.didGoLive();
+            return;
         }
+        throw new Error("ComponentRuntime should contain didGoLive api!!");
     }
 
     public async createComponentWithRealizationFn(
