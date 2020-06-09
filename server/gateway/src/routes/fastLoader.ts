@@ -10,7 +10,7 @@ import { getR11sToken, IAlfredUser } from "@fluidframework/routerlicious-urlreso
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache } from "@fluidframework/server-services-core";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as winston from "winston";

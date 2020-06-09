@@ -4,7 +4,7 @@
  */
 
 import { ICollection, MongoManager } from "@fluidframework/server-services-core";
-import * as moment from "moment";
+import moment from "moment";
 
 /**
  * Interface representing information about a logged in user

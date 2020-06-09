@@ -33,6 +33,10 @@ class NotUsedUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         throw new Error("Method not implemented.");
     }
+
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        throw new Error("Method not implemented.");
+    }
 }
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
@@ -80,7 +84,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         this.container = container;
 
         // TODO: referenceSequenceNumber -> lastSequenceNumber (when latest loader is picked up)
-        if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
+        if (this.container.deltaManager.lastSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {

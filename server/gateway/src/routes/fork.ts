@@ -4,7 +4,7 @@
  */
 
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import { IAlfred } from "../interfaces";
 
 export function create(alfred: IAlfred, ensureLoggedIn: any): Router {

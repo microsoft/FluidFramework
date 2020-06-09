@@ -6,7 +6,7 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as winston from "winston";

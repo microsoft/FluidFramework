@@ -10,7 +10,7 @@ import { getR11sToken, IAlfredUser } from "@fluidframework/routerlicious-urlreso
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as passport from "passport";

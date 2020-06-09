@@ -6,7 +6,7 @@
 import { ISummaryTokenClaims, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
+import safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { IAlfred } from "../interfaces";
 

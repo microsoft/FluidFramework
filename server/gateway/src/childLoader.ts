@@ -22,7 +22,6 @@ import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 
-const packageUrl = "https://packages.wu2.prague.office-int.com";
 const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;
 
@@ -98,7 +97,7 @@ class KeyValueLoader {
         const loader = new Loader(
             resolver,
             documentServiceFactories,
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
+            new NodeCodeLoader(installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
             new Map<string, IProxyLoaderFactory>(),
