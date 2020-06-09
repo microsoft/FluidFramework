@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("diceRoller", () => {
+describe("OptionPickerContainerRuntimeFactory", () => {
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
@@ -17,8 +17,8 @@ describe("diceRoller", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it("The page loads and there's a button with Roll", async () => {
+    it("The page loads and there's a button with Set Value", async () => {
         // Validate there is a button that can be clicked
-        await expect(page).toClick("button", { text: "Roll" });
+        await expect(page).toClick("button", { text: "Set Value" });
     });
 });
