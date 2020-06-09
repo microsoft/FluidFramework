@@ -98,7 +98,8 @@ export class List<T> {
 
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
         const rtn = [];
-        for (let entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
+        const start = rev ? this.prev : this.next;
+        for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
                 if (rev) {
                     // preserve list order when in reverse
