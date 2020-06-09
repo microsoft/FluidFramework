@@ -75,7 +75,16 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     private data: any;
 
+    /**
+     * This is used to assign a unique id to outgoing messages. It is used to track messages until
+     * they are ack'd.
+     */
     private messageId: number = -1;
+
+    /**
+     * This keeps track of the messageId of messages that have been ack'd. It is updated every time
+     * we a message is ack'd with it's messageId.
+     */
     private messageIdObserved: number = -1;
 
     /**
