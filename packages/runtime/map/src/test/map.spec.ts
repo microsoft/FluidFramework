@@ -269,13 +269,13 @@ describe("Map", () => {
             // Process the message.
             containerRuntimeFactory.processAllMessages();
 
-            // Verify that both the map get the new value.
+            // Verify that both the maps have the new value.
             assert.equal(map.get(key), newValue, "The first map did not get the new value");
             assert.equal(map2.get(key), newValue, "The second map did not get the new value");
         });
     });
 
-    describe("SharedMap in connected state with a remote map", () => {
+    describe("SharedMap in connected state with a remote SharedMap", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactory;
         let map2: SharedMap;
 

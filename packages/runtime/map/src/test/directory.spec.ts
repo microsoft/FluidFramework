@@ -358,7 +358,7 @@ describe("Directory", () => {
             // Process the message.
             containerRuntimeFactory.processAllMessages();
 
-            // Verify that both the directory get the new value.
+            // Verify that both the directories get the new value.
             assert.equal(directory.get(key), newValue, "The first directory did not get the new value");
             assert.equal(directory2.get(key), newValue, "The second directory did not get the new value");
         });
@@ -408,7 +408,7 @@ describe("Directory", () => {
         });
     });
 
-    describe("SharedDirectory in connected state with a remote directory", () => {
+    describe("SharedDirectory in connected state with a remote SharedDirectory", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactory;
         let directory2: SharedDirectory;
 
