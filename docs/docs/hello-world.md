@@ -1,12 +1,12 @@
 # Hello World - the Dice Roller
 
-The Dice roller is a fully-functional Fluid component; it's code looks like this:
+The Dice roller is a fully-functional Fluid component; its code looks like this:
 
 <<< @/tutorials/dice-roller.tsx
 
 It displays a die and a button to roll it. You can try it below.
 
-**Try the Dice roller**
+**Try the Dice roller [Doesn't work yet]**
 
 <style>
   iframe#diceroller {

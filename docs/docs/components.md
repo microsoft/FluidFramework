@@ -103,7 +103,7 @@ Fluid does provide a set of core interfaces on how components can be placed into
 ### Core Rendering (IComponentHTMLView):
 
 The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLView. It supports a single
-method 'render', where HTML is written to output the display for the control.
+method `render`, where HTML is written to output the display for the control.
 
 Here is the interface definition:
 
