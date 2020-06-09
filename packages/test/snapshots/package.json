@@ -18,10 +18,11 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run tsfmt && npm run eslint",
     "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
-    "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test -r make-promises-safe",
+    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
-    "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
+    "test:mocha": "mocha --experimental-worker --recursive dist/test --exit -r make-promises-safe",
+    "test:sequential": "mocha --recursive dist/test --exit -r make-promises-safe",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
