@@ -1,7 +1,3 @@
----
-uid: dds-anatomy
----
-
 # Anatomy of a distributed data structure
 
 ## Intent
@@ -121,10 +117,3 @@ index).
    - SharedMap will raise a different number of valueChanged events across clients when simultaneous sets occur. the
      client that set last will get a single valueChanged event, while earlier setters will get an additional event for
      each set after their own.
-
-<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
-
-***
-
-_[source document](https://microsoft.sharepoint.com/:w:/t/Prague/EWmlaHdM0D9Ki-lBPwej9SkBeaNsvRD2wGVaDniqgHV7tQ?e=KTzFgw)_
-</vue-markdown>
