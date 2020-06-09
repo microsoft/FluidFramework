@@ -428,8 +428,8 @@ class BumpVersion {
         this.fullPackageMap = this.repo.createPackageMap();
 
         // TODO: Is there a way to generate this automatically?
-        const generatorPackage = this.fullPackageMap.get("@microsoft/generator-fluid");
-        if (!generatorPackage) { fatal("Unable to find @microsoft/generator-fluid package") };
+        const generatorPackage = this.fullPackageMap.get("generator-fluid");
+        if (!generatorPackage) { fatal("Unable to find generator-fluid package") };
         this.generatorPackage = generatorPackage;
         this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
     }
@@ -1036,7 +1036,7 @@ class BumpVersion {
         await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releasePackage(depVersions, ["@microsoft/generator-fluid", "tinylicious"]);
+        await this.releasePackage(depVersions, ["generator-fluid", "tinylicious"]);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
