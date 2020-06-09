@@ -54,6 +54,7 @@
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/component-runtime-definitions": "^0.20.0",
     "@fluidframework/protocol-definitions": "^0.1006.1",
+    "@fluidframework/runtime-utils": "^0.20.0",
     "@fluidframework/shared-object-base": "^0.20.0",
     "debug": "^4.1.1"
   },

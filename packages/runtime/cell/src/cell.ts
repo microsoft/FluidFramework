@@ -17,6 +17,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@fluidframework/component-runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -74,10 +75,8 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     private data: any;
 
-    /**
-     * Tracks the most recent clientSequenceNumber of any pending op, or -1 if there is no pending op.
-     */
-    private pendingClientSequenceNumber: number;
+    private messageId: number = -1;
+    private messageIdObserved: number = -1;
 
     /**
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
@@ -88,7 +87,6 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      */
     constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
-        this.pendingClientSequenceNumber = -1;
     }
 
     /**
@@ -106,17 +104,24 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
+        // Serialize the value if required.
         const operationValue: ICellValue = {
             type: ValueType[ValueType.Plain],
             value: this.toSerializable(value),
         };
 
+        // Set the value locally.
+        this.setCore(value);
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
         const op: ISetCellOperation = {
             type: "setCell",
             value: operationValue,
         };
-
-        this.setCore(value);
         this.submitCellMessage(op);
     }
 
@@ -124,11 +129,17 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * {@inheritDoc ISharedCell.delete}
      */
     public delete() {
+        // Delete the value locally.
+        this.deleteCore();
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
         const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
-
-        this.deleteCore();
         this.submitCellMessage(op);
     }
 
@@ -222,11 +233,15 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      * For messages from a remote client, this will be undefined.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        if (this.pendingClientSequenceNumber !== -1) {
+        if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
-            if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {
-                // This is the ACK, so clear pending
-                this.pendingClientSequenceNumber = -1;
+            if (local) {
+                const messageIdReceived = localOpMetadata as number;
+                strongAssert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
+                    "messageId is incorrect from from the local client's ACK");
+
+                // We got an ACK. Update messageIdObserved.
+                this.messageIdObserved = localOpMetadata as number;
             }
             return;
         }
@@ -260,8 +275,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     }
 
     private submitCellMessage(op: ICellOperation): void {
-        // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
-        this.pendingClientSequenceNumber = this.submitLocalMessage(op);
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     private toSerializable(value: any) {
