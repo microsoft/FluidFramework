@@ -30,4 +30,3 @@ You can use any code editor or IDE that supports TypeScript to build with Fluid,
 ## Install a modern browser
 
 !!!include(browsers.md)!!!
-

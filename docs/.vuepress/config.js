@@ -269,6 +269,7 @@ const getDocsSidebar = () => {
                 // "overview",
                 "SharedDirectory",
                 "SharedMap",
+                "SharedCounter",
                 "SharedCell",
                 {
                     title: "Sequences",
@@ -280,6 +281,7 @@ const getDocsSidebar = () => {
                         "SparseMatrix.md",
                     ],
                 },
+                "SharedMatrix",
                 "consensus.md",
             ]
         },

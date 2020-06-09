@@ -2,7 +2,7 @@
 
 The Dice roller is a fully-functional Fluid component; it's code looks like this:
 
-<<< @/tutorials/dice-roller.tsx_
+<<< @/tutorials/dice-roller.tsx
 
 It displays a die and a button to roll it. You can try it below.
 

@@ -24,11 +24,35 @@ There are cases, however, where the eventually consistent guarantee is insuffici
 structures are useful. These types of data structures defer applying operations until they're acknowledged by the
 server. This ensures that each client `.pop`s a different value from a stack, for example.
 
+## Events
+
+## Merge behavior
+
+::: danger TODO
+
+Merge behavior of each DDS is relevant to their usage.
+
+:::
+
 ## Picking the right data structure
 
-### Merge behavior
+### Granularity of collaboration
+
+::: danger TODO
+
+This is important because it influences the data model.
+
+:::
+
 
 ## Map-like data structures
+
+::: danger TODO
+
+Map, Directory
+
+:::
+
 
 ## Sequence-like data structures
 

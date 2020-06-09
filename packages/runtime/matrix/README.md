@@ -1,8 +1,11 @@
 # SharedMatrix
+
 SharedMatrix is a rectangular 2D array of values.  Matrix values are a superset of JSON serializable types that includes embedded IComponentHandle references to Fluid components.
 
 ## Operations
+
 The SharedMatrix currently supports the following operations:
+
 * `insertCols(col, numCols)` / `removeCols(col, numCols)`
 * `insertRows(row, numRows)` / `removeRows(row, numRows)`
 * `setCells(row, col, numCols, values)` (values is a 1D array in row-major order)
@@ -10,15 +13,19 @@ The SharedMatrix currently supports the following operations:
 Insertion / removal operations are reconciled using Fluid sequence semantics, while setCells() uses Fluid map semantics.
 
 ## Implementation
+
 The SharedMatrix data structure is comprised of:
+
 * Two 'PermutationVectors', which are used to process row/col insertion and removal ops
 * A sparse quadtree-like "physical store" for holding the cell values
 
 ### Permutation Vectors
+
 The 'PermutationVectors' provide a layer of indirection between the current logical row/col (e.g., `R2`) and the `[x,y]`
 coordinate in the physical store where the cell value is stored.
 
 For example, to store the following matrix:
+
 ```
                         A B C D <- logical col
                       +--------
@@ -27,7 +34,9 @@ For example, to store the following matrix:
                     3 | 8 . . .
                     4 | C . . F
 ```
+
 The SparseMatrix allocates 3 rows and 2 columns from the physical storage:
+
 ```
                      0 . . 1 <- column allocs
                    +--------
@@ -36,7 +45,9 @@ The SparseMatrix allocates 3 rows and 2 columns from the physical storage:
    row allocs -> 1 | 8 . . .
                  2 | C . . F
 ```
+
 And writes the cell values to these locations:
+
 ```
                     0 1 <- physical col
                   +----
@@ -44,21 +55,25 @@ And writes the cell values to these locations:
 physical row -> 1 | 8 .
                 2 | C F
 ```
+
 The next row/column to be inserted is assigned the next available physical address, regardless of
 where the row/col was logically inserted.  Deleted rows/cols are recycled after clearing the physical store.
 
 This indirection between logical row/col and storage row/col provides three functions:
 
 1. It is used to elide empty rows & cols, increasing the storage density.
-2. It avoids copying cell values when rows/cols are inserted and removed (just the logical -> storage vector is updated).
+2. It avoids copying cell values when rows/cols are inserted and removed (just the logical -> storage vector is
+   updated).
 3. It enables us to "time-travel" to previous matrix versions when reconciling ops from remote clients.
 
-To support reconciliation, we use a MergeTree for each PermutationVector.  MergeTree is a B-Tree of order 7 that temporarily
-maintains some extra metadata to reconcile ops while they are within the current collab window.
+To support reconciliation, we use a MergeTree for each PermutationVector.  MergeTree is a B-Tree of order 7 that
+temporarily maintains some extra metadata to reconcile ops while they are within the current collab window.
 
 ### Physical Storage
-Cell data is stored in a quadtree-like data structure that is a recursive subdivision of 16x16 tiles.  The implementation
-leverages [Morton coding](https://en.wikipedia.org/wiki/Z-order_curve) to implement this as a cascade of fast 1D array accesses.
+
+Cell data is stored in a quadtree-like data structure that is a recursive subdivision of 16x16 tiles.  The
+implementation leverages [Morton coding](https://en.wikipedia.org/wiki/Z-order_curve) to implement this as a cascade of
+fast 1D array accesses.
 
 ```ts
 const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
@@ -79,5 +94,7 @@ if (level0 !== undefined) {
 }
 return undefined;   // Empty region
 ```
-A benefit of storing the cell data in [Z-order](https://en.wikipedia.org/wiki/Z-order_curve) is that both row-major and col-major
-traversal benefit from prefetching and cache coherence.  Reading/writing to the physical storage along either axis is typically within an order of magnitude compared to sequentially accessing a cache hot native JavaScript array.
+
+A benefit of storing the cell data in [Z-order](https://en.wikipedia.org/wiki/Z-order_curve) is that both row-major and
+col-major traversal benefit from prefetching and cache coherence.  Reading/writing to the physical storage along either
+axis is typically within an order of magnitude compared to sequentially accessing a cache hot native JavaScript array.
