@@ -9,7 +9,8 @@ import {
 } from "@fluidframework/component-core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
-import { IJSONSegment, SnapshotLegacy } from ".";
+import { SnapshotLegacy } from "./snapshotlegacy";
+import { IJSONSegment } from "./ops";
 
 export interface VersionedMergeTreeChunk {
     version: undefined | "1";
