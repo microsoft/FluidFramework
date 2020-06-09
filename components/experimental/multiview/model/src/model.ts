@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
-import { IOptionPicker } from "../interface";
+import { IOptionPicker } from "@fluid-example/multiview-option-picker-interface";
 
 const optionValueKey = "optionValue";
 
