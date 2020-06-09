@@ -15,9 +15,7 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     Clicker,
-    ClickerWithInitialValue,
     ExampleUsingProviders,
-    IClickerInitialState,
 } from "./internal-components";
 import { IComponentUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
@@ -36,7 +34,6 @@ export const PondName = pkg.name as string;
  */
 export class Pond extends PrimedComponent implements IComponentHTMLView {
     private clickerView: HTMLViewAdapter | undefined;
-    private clickerWithInitialStateView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
     public get IComponentHTMLView() { return this; }
@@ -48,11 +45,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         const clickerComponent = await Clicker.getFactory().createComponent(this.context);
         this.root.set(Clicker.ComponentName, clickerComponent.handle);
 
-        const initialState: IClickerInitialState = { initialValue: 100 };
-        const clickerWithInitialValueComponent =
-            await ClickerWithInitialValue.getFactory().createComponent(this.context, initialState);
-        this.root.set(ClickerWithInitialValue.ComponentName, clickerWithInitialValueComponent.handle);
-
         const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createComponent(this.context);
         this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
@@ -60,10 +52,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     protected async componentHasInitialized() {
         const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
         this.clickerView = new HTMLViewAdapter(clicker);
-
-        const clickerWithInitialState
-            = await this.root.get<IComponentHandle>(ClickerWithInitialValue.ComponentName).get();
-        this.clickerWithInitialStateView = new HTMLViewAdapter(clickerWithInitialState);
 
         const clickerUsingProviders
             = await this.root.get<IComponentHandle>(ExampleUsingProviders.ComponentName).get();
@@ -74,7 +62,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
     public render(div: HTMLElement) {
         if (!this.clickerView ||
-            !this.clickerWithInitialStateView ||
             !this.clickerUsingProvidersView) {
             throw new Error(`Pond not initialized correctly`);
         }
@@ -97,14 +84,11 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         // Sub-Component setup
         const clicker2Div = document.createElement("div");
         const clicker3Div = document.createElement("div");
-        const clicker4Div = document.createElement("div");
         div.appendChild(clicker2Div);
         div.appendChild(clicker3Div);
-        div.appendChild(clicker4Div);
 
         this.clickerView.render(clicker2Div);
-        this.clickerWithInitialStateView.render(clicker3Div);
-        this.clickerUsingProvidersView.render(clicker4Div);
+        this.clickerUsingProvidersView.render(clicker3Div);
 
         return div;
     }
@@ -122,7 +106,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         {},
         new Map([
             Clicker.getFactory().registryEntry,
-            ClickerWithInitialValue.getFactory().registryEntry,
             ExampleUsingProviders.getFactory().registryEntry,
         ]),
     );
