@@ -1,4 +1,4 @@
-# Pond
+# @fluid-example/pond
 
 The pond is a collection of simple fluid scenarios used primarily for testing.
 

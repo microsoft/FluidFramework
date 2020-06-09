@@ -1,4 +1,4 @@
-# GIT Resources
+# @fluidframework/gitresources
 
 [![Build Status](https://offnet.visualstudio.com/officenet/_apis/build/status/routerlicious?branchName=master)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=9)
 

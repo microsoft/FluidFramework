@@ -1,4 +1,4 @@
-# Aqueduct
+# @fluidframework/aqueduct-react
 
 An Aqueduct is a way to transport water from a source to another location.
 

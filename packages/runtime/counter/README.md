@@ -1,4 +1,4 @@
-# `SharedCounter`
+# @fluidframework/counter
 
 A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
 

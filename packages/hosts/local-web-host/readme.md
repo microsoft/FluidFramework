@@ -1,4 +1,4 @@
-# Local Web Host
+# @fluidframework/local-web-host
 
 This package allows hosting a container, or component on a webpage running against a local in-memory server.
 

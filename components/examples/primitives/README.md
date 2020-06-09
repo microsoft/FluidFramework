@@ -1,4 +1,4 @@
-# Primitives Component
+# @fluid-example/primitives
 
 This is a basic example component giving a UI to different distributed data structures.
 

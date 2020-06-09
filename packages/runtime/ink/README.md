@@ -1,4 +1,4 @@
-# `Ink`
+# @fluidframework/ink
 
 `Ink` is a shared object which holds a collection of ink strokes.
 

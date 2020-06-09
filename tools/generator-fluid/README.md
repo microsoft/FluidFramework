@@ -1,4 +1,4 @@
-# Fluid Generator
+# generator-fluid
 
 Use this tool to quickly bootstrap a new Fluid component package based on the example [Dice Roller](//TODO:Add-Link) Fluid component.
 

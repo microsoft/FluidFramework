@@ -1,4 +1,4 @@
-# Component Runtime Definitions
+# @fluidframework/component-runtime-definitions
 
 Interface `IComponentRuntime` specify the component developer API.
 

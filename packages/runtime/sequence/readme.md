@@ -1,4 +1,4 @@
-# Shared Segment Sequence
+# @fluidframework/sequence
 
 Every item in a SharedSegmentSequence is at a specific position starting at 0, kind of like an array. However, it differs from an array in that the positions can move as local and remote collaborators make modifications to the sequence. There are a number of different sequence types:
 - SharedString for storing and collaborating on a sequence of text

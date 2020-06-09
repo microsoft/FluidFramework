@@ -1,4 +1,4 @@
-# Runtime Definitions
+# @fluidframework/runtime-definitions
 
 Contains handshake interfaces for communication between the container runtime layer and the component runtime layer.
 

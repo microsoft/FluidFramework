@@ -1,4 +1,4 @@
-# Aqueduct
+# @fluidframework/aqueduct
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 

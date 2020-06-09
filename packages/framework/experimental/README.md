@@ -1,4 +1,4 @@
-# Framework Experimental
+# @fluidframework/framework-experimental
 
 This package contains experimental portions of the framework, primarily interface definitions for the framework's component model.
 

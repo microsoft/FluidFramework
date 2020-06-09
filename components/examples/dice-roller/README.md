@@ -1,4 +1,4 @@
-# Dice Roller
+# @fluid-example/diceroller
 
 **Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and 
 persists the value in the root SharedDirectory.

@@ -1,3 +1,5 @@
+# fluid-service-monitor
+
 A Node.js client that tests liveness of Fluid ordering service. The script creates a new Fluid document and checks whether the client join message is sequenced and received.
 
 Optionally, the script can also load a Node compatible component. The parameters for loading document and component are tunable using config.json file.
@@ -23,8 +25,8 @@ Optionally, the script can also load a Node compatible component. The parameters
 
 Note that the component loader uses 'npm install' to load the package in 'installPath' directory. Node requires a minimal package.json file to install the component. An example is provided in the 'component' folder. To install from a private registry, a '.npmrc' file is also required.
 
-
 # Monitoring in Kubernetes
+
 For continuous service liveness monitoring, it is possible to deploy the script as a kubernetes cronjob. Instructions are listed below: 
 
 To build and run/test locally using docker

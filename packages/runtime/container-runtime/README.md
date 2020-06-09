@@ -1,4 +1,4 @@
-# Fluid Loader
+# @fluidframework/container-runtime
 
 The loader makes up the minimal kernel of the Fluid runtime. This kernel is responsible for providing access to
 Fluid storage as well as consensus over a quorum of clients.

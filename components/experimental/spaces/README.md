@@ -1,4 +1,4 @@
-# Spaces
+# @fluid-example/spaces
 
 **Spaces** is a Fluid component that provides a grid layout for users to compose their own experiences by adding and re-arranging components. This example explores how modular document types could work in Fluid.
 

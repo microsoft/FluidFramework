@@ -1,4 +1,4 @@
-# Last Edited Tracker
+# @fluidframework/last-edited-experimental
 
 LastEditedTracker tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 

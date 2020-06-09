@@ -1,4 +1,4 @@
-# Canvas
+# @fluid-example/canvas
 
 **Canvas** is a Fluid Component that displays a collaborative canvas you can draw on.
 

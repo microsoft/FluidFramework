@@ -1,4 +1,4 @@
-# ProseMirror
+# @fluid-example/prosemirror
 
 An experimental implementation of how to take the open source [ProseMirror](https://prosemirror.net/) rich text editor and
 enable real-time coauthoring using the Fluid Framework.

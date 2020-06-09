@@ -1,4 +1,4 @@
-# Table View
+# @fluid-example/table-view
 
 **Table View** is a basic table/grid view built on top of the `@fluid-example/table-document` data component.
 Since Table View uses the data model provided by Table Document it only uses it's DDS to store a reference

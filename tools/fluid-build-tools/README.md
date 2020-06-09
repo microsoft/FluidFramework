@@ -1,4 +1,4 @@
-# Fluid Build script
+# @fluidframework/build-tools
 
 This package contains scripts and tools for Fluid Framework repo maintainance.  The main tool is `fluid-build` which is a node script written specifically for building the Fluid Framework packages and mono repo. While repo is set up officially to support building with lerna, this script tries to use the information to speed up build time by maximizing concurrent task and incremental build.
 

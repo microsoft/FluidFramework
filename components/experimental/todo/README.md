@@ -1,4 +1,4 @@
-# Todo
+# @fluid-example/todo
 
 **Todo** is a more advanced Component that covers more complicated scenarios. The Todo app uses React as it's view rendering platform.
 

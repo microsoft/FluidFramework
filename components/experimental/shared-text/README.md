@@ -1,4 +1,4 @@
-# Shared Text
+# @fluid-example/shared-text
 
 An experimental implementation of writing a Rich Text Editor.
 

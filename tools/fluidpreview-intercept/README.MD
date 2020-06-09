@@ -1,4 +1,4 @@
-# Bohemia Intercept
+# @microsoft/fluidpreview-intercept
 
 
 
