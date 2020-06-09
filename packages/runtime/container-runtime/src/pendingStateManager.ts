@@ -77,7 +77,7 @@ export class PendingStateManager {
         return !this.pendingStates.isEmpty();
     }
 
-    constructor(private readonly containerRuntime: ContainerRuntime) {}
+    constructor(private readonly containerRuntime: ContainerRuntime) { }
 
     public onFlushModeUpdated(flushMode: FlushMode) {
         // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track

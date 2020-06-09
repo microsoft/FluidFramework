@@ -34,7 +34,7 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
  */
 export class MockDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection  {
+    implements IDocumentDeltaConnection {
     public claims: ITokenClaims = {
         documentId: "documentId",
         scopes: ["doc:read", "doc:write", "summary:write"],

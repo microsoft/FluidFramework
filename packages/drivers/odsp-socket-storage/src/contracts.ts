@@ -179,7 +179,7 @@ export interface ITree {
     sequenceNumber: number;
 }
 
-export function idFromSpoEntry(tree: { id?: string; sha?: string;}) {
+export function idFromSpoEntry(tree: { id?: string; sha?: string; }) {
     return (tree.sha ?? tree.id) as string;
 }
 

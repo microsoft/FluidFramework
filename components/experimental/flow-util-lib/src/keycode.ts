@@ -23,10 +23,10 @@ export const enum KeyCode {
     pageDown = "PageDown",          // 34
     // End = 35,
     // Home = 36,
-    arrowLeft   = "ArrowLeft",      // 37
-    arrowUp     = "ArrowUp",        // 38
-    arrowRight  = "ArrowRight",     // 39
-    arrowDown   = "ArrowDown",      // 40
+    arrowLeft = "ArrowLeft",      // 37
+    arrowUp = "ArrowUp",        // 38
+    arrowRight = "ArrowRight",     // 39
+    arrowDown = "ArrowDown",      // 40
 
     // PrintScreen = 44
     insert = "Insert",              // 45

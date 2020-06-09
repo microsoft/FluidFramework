@@ -130,7 +130,7 @@ class GarbageCollector<TKey> {
 
     constructor(
         private readonly cleanup: (key: TKey) => void,
-    ) {}
+    ) { }
 
     /**
      * Schedule GC for the given key, as applicable
@@ -264,8 +264,7 @@ export class NonPersistentCache implements INonPersistentCache {
 export function createOdspCache(
     persistedCache: IPersistedCache,
     nonpersistentCache: INonPersistentCache,
-    logger: ITelemetryLogger): IOdspCache
-{
+    logger: ITelemetryLogger): IOdspCache {
     return {
         ...nonpersistentCache,
         persistedCache: new PersistedCacheWithErrorHandling(persistedCache, logger),

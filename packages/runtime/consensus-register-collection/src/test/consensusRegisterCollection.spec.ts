@@ -91,15 +91,15 @@ describe("ConsensusRegisterCollection", () => {
         describe("Summary", () => {
             const snapshotFileName = "header";
             const expectedSerialization = JSON.stringify({
-                key1:{
-                    atomic:{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } },
-                    versions:[{ sequenceNumber:0,value:{ type:"Plain",value:"val1.1" } }],
+                key1: {
+                    atomic: { sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } },
+                    versions: [{ sequenceNumber: 0, value: { type: "Plain", value: "val1.1" } }],
                 },
             });
             const legacySharedObjectSerialization = JSON.stringify({
-                key1:{
-                    atomic:{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } },
-                    versions:[{ sequenceNumber:0,value:{ type:"Shared",value:"sharedObjId" } }],
+                key1: {
+                    atomic: { sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } },
+                    versions: [{ sequenceNumber: 0, value: { type: "Shared", value: "sharedObjId" } }],
                 },
             });
             const buildTree = (serialized: string) => ({

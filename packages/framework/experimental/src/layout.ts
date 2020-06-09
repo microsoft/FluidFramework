@@ -4,14 +4,12 @@
  */
 
 declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/indent */
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<
         IProvideComponentLayout
         & IProvideComponentCursor
         & IProvideComponentKeyHandlers>> {
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 export const IComponentLayout: keyof IProvideComponentLayout = "IComponentLayout";

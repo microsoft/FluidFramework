@@ -8,7 +8,7 @@ declare module "@fluidframework/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentUserInformation>> { }
 }
 
-export const IComponentUserInformation: keyof IProvideComponentUserInformation  = "IComponentUserInformation";
+export const IComponentUserInformation: keyof IProvideComponentUserInformation = "IComponentUserInformation";
 
 export interface IProvideComponentUserInformation {
     readonly IComponentUserInformation: IComponentUserInformation;

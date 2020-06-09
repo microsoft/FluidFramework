@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import assert from "assert";
 import { describe } from "mocha";
 import { Mode, processContent } from "../replayMultipleFiles";
 
@@ -11,10 +10,10 @@ describe("Snapshots", function() {
     this.timeout(300000);
 
     it("Stress Test", async () => {
-        return processContent(Mode.Stress);
+        await processContent(Mode.Stress);
     });
 
     it("Backward Compat", async () => {
-        return processContent(Mode.Compare);
+        await processContent(Mode.Compare);
     });
 });

@@ -36,7 +36,7 @@ class GarbageCollector<TKey> {
     constructor(
         private readonly expiry: PromiseCacheExpiry,
         private readonly cleanup: (key: TKey) => void,
-    ) {}
+    ) { }
 
     /**
      * Schedule GC for the given key, as applicable
@@ -174,7 +174,7 @@ export class PromiseCache<TKey, TResult> {
         // We are blindly adding the Promise to the cache here, which introduces a Promise in this scope.
         // Swallow Promise rejections here, since whoever gets this out of the cache to use it will await/catch.
         this.addOrGet(key, asyncFn)
-            .catch(() => {});
+            .catch(() => { });
 
         return !alreadyPresent;
     }

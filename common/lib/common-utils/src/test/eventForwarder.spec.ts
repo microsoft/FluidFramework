@@ -8,7 +8,7 @@ import { EventEmitter } from "events";
 import { IErrorEvent } from "@fluidframework/common-definitions";
 import { EventForwarder } from "../eventForwarder";
 
-interface ITestEvents extends IErrorEvent{
+interface ITestEvents extends IErrorEvent {
     (event: "testEvent", listener: (name: string, count: number) => void);
 }
 

@@ -38,7 +38,7 @@ describe("PrimedComponent", () => {
 
         async function createContainer(): Promise<Container> {
             const factory = new PrimedComponentFactory(PrimedType, Component, [], {});
-            const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }
 

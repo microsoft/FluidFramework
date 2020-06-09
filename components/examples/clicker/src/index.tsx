@@ -71,7 +71,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private get counter() {
         if (this._counter === undefined) {
-            throw new Error("Counter not initialized");
+            throw new Error("SharedCounter not initialized");
         }
         return this._counter;
     }

@@ -309,12 +309,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
+        if (this.isLocal()) {
+            return;
+        }
         const translated = makeHandlesSerializable(
             message,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
-        this.submitLocalMessage(translated);
+        const metadata = this.client.peekPendingSegmentGroups(
+            message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
+        this.submitLocalMessage(translated, metadata);
     }
 
     public addLocalReference(lref) {
@@ -449,10 +454,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
-        const groupOp = this.client.resetPendingSegmentsToOp();
-        if (groupOp) {
-            this.submitSequenceMessage(groupOp);
-        }
     }
 
     protected onDisconnect() {
@@ -460,7 +461,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
+        if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {
+            this.submitSequenceMessage(
+                this.client.regeneratePendingOp(
+                    content as MergeTree.IMergeTreeOp,
+                    localOpMetadata as MergeTree.SegmentGroup | MergeTree.SegmentGroup[]));
+        }
     }
 
     protected async loadCore(
@@ -526,7 +532,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
     }
 
-    private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
+    private processMergeTreeMsg(
+        rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
