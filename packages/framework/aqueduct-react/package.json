@@ -26,15 +26,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/cell": "^0.20.0",
-    "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.20.0",
-    "@fluidframework/component-runtime-definitions": "^0.20.0",
-    "@fluidframework/map": "^0.20.0",
     "@fluidframework/sequence": "^0.20.0",
-    "@fluidframework/shared-object-base": "^0.20.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
