@@ -18,20 +18,20 @@ import {
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
-export function applyReconnectWithReconnect(
+export function applyMessagesWithReconnect(
     startingSeq: number,
     messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
-    ) {
-let seq = startingSeq;
+) {
+    let seq = startingSeq;
     const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // log and apply all the ops created in the round
     while (messageDatas.length > 0) {
         const [message, sg] = messageDatas.shift();
-        if(message.clientId === clients[1].longClientId) {
+        if (message.clientId === clients[1].longClientId) {
             reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
-        }else{
+        } else {
             message.sequenceNumber = ++seq;
             logger.log(message, (c) => {
                 c.applyMsg(message);
@@ -40,12 +40,12 @@ let seq = startingSeq;
     }
 
     const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
-    reconnectClientMsgs.forEach((opData)=>{
+    reconnectClientMsgs.forEach((opData) => {
         const newMsg = clients[1].makeOpMessage(
             clients[1].regeneratePendingOp(
                 opData[0],
                 opData[1],
-        ));
+            ));
         // apply message doesn't use the segment group, so just pass undefined
         reconnectMsgs.push([newMsg, undefined]);
     });
@@ -57,7 +57,7 @@ export const defaultOptions = {
     minLength: 16,
     clients: { min: 2, max: 8 },
     opsPerRoundRange: { min: 200, max: 800 },
-    rounds: 3,
+    rounds: 100,
     operations: [annotateRange, removeRange],
     growthFunc: (input: number) => input * 2,
 };
@@ -95,9 +95,9 @@ describe("MergeTree.Client", () => {
                 clients,
                 opts.minLength,
                 opts,
-                applyReconnectWithReconnect);
+                applyMessagesWithReconnect);
         })
-        // tslint:disable-next-line: mocha-no-side-effect-code
-        .timeout(30 * 1000);
+            // tslint:disable-next-line: mocha-no-side-effect-code
+            .timeout(30 * 1000);
     });
 });

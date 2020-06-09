@@ -667,7 +667,7 @@ export class Client {
 
     /**
      * During reconnect, we must find the positions to pending segments
-     * relative to other pending segments. This methonds computes that
+     * relative to other pending segments. This methods computes that
      * position relative to a localSeq. Pending segments above the localSeq
      * will be ignored.
      *
@@ -721,8 +721,8 @@ export class Client {
 
         const opList = [];
         for (const segment of segmentGroup.segments) {
-            const segmentSeg = segment.segmentGroups.dequeue();
-            assert(segmentGroup === segmentSeg,
+            const segmentSegGroup = segment.segmentGroups.dequeue();
+            assert(segmentGroup === segmentSegGroup,
                 "Segment group not at head of segment pending queue");
             const segmentPosition = this.findReconnectionPostition(segment, segmentGroup.localSeq);
             let newOp: ops.IMergeTreeDeltaOp;

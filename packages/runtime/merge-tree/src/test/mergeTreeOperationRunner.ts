@@ -103,7 +103,7 @@ export function generateOperationMessagesForClients(
     operations: readonly TestOperation[]) {
     const minimumSequenceNumber = startingSeq;
     let tempSeq = startingSeq * -1;
-    const messages: [ISequencedDocumentMessage,SegmentGroup | SegmentGroup[]][] = [];
+    const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops
         // and is our baseline
@@ -165,7 +165,7 @@ export function applyMessages(
     messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
-    ) {
+) {
     let seq = startingSeq;
     // log and apply all the ops created in the round
     while (messageData.length > 0) {
