@@ -1,7 +1,7 @@
 {
   "name": "tinylicious",
   "version": "0.1.0",
-  "description": "Tiny routerlicious",
+  "description": "Tiny, test implementation of the routerlicious reference service",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git"
@@ -79,7 +79,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.17.0-0",
     "@microsoft/api-extractor": "^7.7.7",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",

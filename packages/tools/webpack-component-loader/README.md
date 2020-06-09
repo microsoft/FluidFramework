@@ -17,10 +17,10 @@ The following environment variables can be defined when running webpack-dev-serv
 
 | modes | description |
 | ---------| ----------- |
-| `docker` | Use docker running routerlicious server for ordering, etc. |
+| `docker` | Use docker running routerlicious server for ordering, etc. You'll need to start this service locally |
 | `r11s`   | Use remote routerlicious server for ordering, etc. |
 | `local`  | Load component in two side-by-side divs using test-driver (default option) |
-| `tinylicous` | Run against a local instance of tinylicious |
+| `tinylicous` | Run against a local instance of tinylicious. You'll need to start this service locally |
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 

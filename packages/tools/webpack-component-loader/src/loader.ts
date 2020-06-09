@@ -196,6 +196,7 @@ export async function start(
 
     const reqParser = new RequestParser({ url });
     const componentUrl = `/${reqParser.createSubRequest(3).url}`;
+
     // Side-by-side mode
     if (options.mode === "local" && !options.single) {
         div.style.display = "flex";

@@ -12,8 +12,10 @@ import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@fluidframework/tool-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
+import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
+import { dockerUrls, tinyliciousUrls } from "./multiResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -29,6 +31,24 @@ export const before = async (app: express.Application) => {
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+
+    // Check that tinylicious is running when it is selected
+    switch (options.mode) {
+        case "docker": {
+            // Include Docker Check
+            break;
+        }
+        case "tinylicious": {
+            Axios.get(tinyliciousUrls.hostUrl).then().catch((err) => {
+                throw new Error("Tinylicious isn't running. Start the Fluid Framework Tinylicious server");
+            });
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
     if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
@@ -138,6 +158,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             true,
         );
     });
+
     app.get("/pushLogin", async (req, res) => {
         if (options.mode !== "spo-df" && options.mode !== "spo") {
             res.write("Mode must be spo or spo-df to login to Push.");
@@ -153,10 +174,12 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             true,
         )).accessToken;
     });
+
     app.get("/file*", (req, res) => {
         const buffer = fs.readFileSync(req.params[0].substr(1));
         res.end(buffer);
     });
+
     app.get("/:id*", async (req, res) => {
         if (readyP !== undefined) {
             let canContinue = false;

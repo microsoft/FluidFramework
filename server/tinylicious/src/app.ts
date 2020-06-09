@@ -11,7 +11,7 @@ import * as bodyParser from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express from "express";
+import express, { Router } from "express";
 import safeStringify from "json-stringify-safe";
 import morgan from "morgan";
 import { Provider } from "nconf";
@@ -59,6 +59,12 @@ export function create(
     app.use(routes.storage);
     app.use(routes.ordering);
 
+    // Basic Help Message
+    app.use(Router().get("/", (req, res) => {
+        // eslint-disable-next-line max-len
+        res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/master/server/tinylicious");
+    }));
+
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {
         const err = new Error("Not Found");
@@ -67,7 +73,6 @@ export function create(
     });
 
     // Error handlers
-
     app.use((err, req, res, next) => {
         res.status(err.status || 500);
         res.json({ error: safeStringify(err), message: err.message });

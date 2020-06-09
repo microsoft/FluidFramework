@@ -72,6 +72,7 @@
     "@fluidframework/view-adapters": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0",
     "@fluidframework/web-code-loader": "^0.20.0",
+    "axios": "^0.18.0",
     "express": "^4.16.3",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
