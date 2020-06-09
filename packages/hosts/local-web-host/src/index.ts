@@ -13,7 +13,7 @@ import {
     IFluidModule,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import {  Loader, Container } from "@fluidframework/container-loader";
+import { Loader, Container } from "@fluidframework/container-loader";
 import { IProvideComponentFactory } from "@fluidframework/runtime-definitions";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@fluidframework/aqueduct";
@@ -43,7 +43,7 @@ export async function createLocalContainerFactory(
         load: async <T>() => ({ fluidExport: runtimeFactory } as unknown as T),
     };
 
-    const loader =  new Loader(
+    const loader = new Loader(
         urlResolver,
         documentServiceFactory,
         codeLoader,
@@ -70,7 +70,7 @@ export async function createLocalContainerFactory(
 }
 
 export async function renderDefaultComponent(container: Container, div: HTMLElement) {
-    const response = await container.request({ url:"" });
+    const response = await container.request({ url: "" });
 
     if (response.status !== 200 ||
         !(

@@ -1,4 +1,4 @@
-import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import { IDiceRoller } from "./interface";
 

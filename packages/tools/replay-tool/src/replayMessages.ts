@@ -161,7 +161,7 @@ class ContainerUrlResolver implements IUrlResolver {
 /**
  * Helper class holding container and providing load / snapshot capabilities
  */
-class Document  {
+class Document {
     private container: Container;
     private replayer: Replayer;
     private documentSeqNumber = 0;
@@ -217,7 +217,7 @@ class Document  {
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
         this.originalSummarySeqs = [];
-        this.replayer.ops.forEach((op)=>{
+        this.replayer.ops.forEach((op) => {
             if (op?.type === MessageType.Summarize) {
                 const seq = op.referenceSequenceNumber;
                 if (seq !== undefined) {
@@ -505,7 +505,7 @@ export class ReplayTool {
         const originalSummaries =
             this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
         let nextSnapPoint;
-        do  {
+        do {
             nextSnapPoint = originalSummaries.shift() ?? this.args.from;
         } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
@@ -755,8 +755,8 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.12.0", "g"), `${packageJson.version}`)) {
+        if (snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)
+            !== content.snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }

@@ -50,7 +50,7 @@ export interface IDeltaHandlerStrategy {
 
 declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
+    interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 
 export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
@@ -137,7 +137,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-export interface IDeltaQueueEvents<T> extends IErrorEvent{
+export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
     (event: "idle", listener: () => void);
 }

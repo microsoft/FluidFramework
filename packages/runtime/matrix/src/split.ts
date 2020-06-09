@@ -83,11 +83,11 @@ export function boundedPareto(alpha: number, L: number, H: number): Distribution
     const negAlphaInv = -1 / alpha;
 
     const cdf =
-    alpha === 1 ? (x: number) => (1 - lAlpha / x) / cdfDenom : (x: number) => (1 - lAlpha * x ** -alpha) / cdfDenom;
+        alpha === 1 ? (x: number) => (1 - lAlpha / x) / cdfDenom : (x: number) => (1 - lAlpha * x ** -alpha) / cdfDenom;
     const invCdf =
-    alpha === 1
-        ? (y: number) => 1 / ((hAlpha - y * hAlphaSubLAlpha) / hlAlpha)
-        : (y: number) => ((hAlpha - y * hAlphaSubLAlpha) / hlAlpha) ** negAlphaInv;
+        alpha === 1
+            ? (y: number) => 1 / ((hAlpha - y * hAlphaSubLAlpha) / hlAlpha)
+            : (y: number) => ((hAlpha - y * hAlphaSubLAlpha) / hlAlpha) ** negAlphaInv;
 
     return { cdf, invCdf };
 }

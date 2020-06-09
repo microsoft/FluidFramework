@@ -36,8 +36,8 @@ const enum SnapshotPath {
 export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
-        IMatrixReader<T | undefined | null>,
-        IMatrixWriter<T | undefined>
+    IMatrixReader<T | undefined | null>,
+    IMatrixWriter<T | undefined>
 {
     private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
@@ -240,11 +240,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 
         // TODO: Resend pending ops on reconnect
-        assert(this.rows.resetPendingSegmentsToOp() === undefined);
-        assert(this.cols.resetPendingSegmentsToOp() === undefined);
+        assert(this.rows.peekPendingSegmentGroups() === undefined);
+        assert(this.cols.peekPendingSegmentGroups() === undefined);
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {}
+    protected reSubmitCore(content: any, localOpMetadata: unknown) { }
 
     protected onDisconnect() {
         debug(`${this.id} is now disconnected`);

@@ -32,8 +32,7 @@ export interface IComponentRuntime extends
     IComponentRouter,
     EventEmitter,
     IDisposable,
-    Partial<IProvideComponentRegistry>
-{
+    Partial<IProvideComponentRegistry> {
 
     readonly id: string;
 

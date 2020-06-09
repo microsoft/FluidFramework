@@ -89,9 +89,10 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
 
         // Get the new caret position and use that to get the text that was inserted
         const newPosition = ev.currentTarget.selectionStart ? ev.currentTarget.selectionStart : 0;
-        const insertedText = newText.substring(this.state.selectionStart, newPosition);
-        const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
-        if (insertedText) {
+        const isTextInserted = newPosition - this.state.selectionStart > 0;
+        if (isTextInserted) {
+            const insertedText = newText.substring(this.state.selectionStart, newPosition);
+            const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
             if (changeRangeLength === 0) {
                 this.props.sharedString.insertText(this.state.selectionStart, insertedText);
             } else {

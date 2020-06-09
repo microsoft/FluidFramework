@@ -42,7 +42,7 @@ export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
 export class OdspTokenManager {
     constructor(
         private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
-    ) {}
+    ) { }
 
     public async getOdspTokens(
         server: string,

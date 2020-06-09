@@ -12,5 +12,5 @@ export * from "./storage";
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Spaces.ComponentName,
-    [[ Spaces.ComponentName, Promise.resolve(Spaces.getFactory()) ]],
+    [[Spaces.ComponentName, Promise.resolve(Spaces.getFactory())]],
 );

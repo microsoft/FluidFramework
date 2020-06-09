@@ -51,7 +51,6 @@ export class TestDataStore {
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""
-            // eslint-disable-next-line @typescript-eslint/indent
             }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);

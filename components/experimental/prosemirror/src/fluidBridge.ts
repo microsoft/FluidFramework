@@ -6,13 +6,13 @@
 import assert from "assert";
 import {
     createInsertSegmentOp,
-    IMergeTreeDeltaOp,
     Marker,
     MergeTreeDeltaType,
     ReferenceType,
     reservedRangeLabelsKey,
     TextSegment,
     ISegment,
+    IMergeTreeDeltaOp,
 } from "@fluidframework/merge-tree";
 import {
     SharedString,

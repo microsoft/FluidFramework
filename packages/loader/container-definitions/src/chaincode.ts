@@ -269,10 +269,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 declare module "@fluidframework/component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+    /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
         IProvideMessageScheduler>> { }
 }
-    /* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+    /* eslint-enable @typescript-eslint/no-empty-interface */

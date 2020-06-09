@@ -13,6 +13,7 @@ import {
     removeRange,
     runMergeTreeOperationRunner,
     TestOperation,
+    generateClientNames,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 
@@ -59,21 +60,11 @@ describe("MergeTree.Client", () => {
     // tslint:disable: mocha-no-side-effect-code
     const opts =
         defaultOptions;
-        // debugOptions;
-        // longOptions;
+    // debugOptions;
+    // longOptions;
 
     // Generate a list of single character client names, support up to 69 clients
-    const clientNames: string[] = [];
-    function addClientNames(startChar: string, count: number) {
-        const startCode = startChar.charCodeAt(0);
-        for (let i = 0; i < count; i++) {
-            clientNames.push(String.fromCharCode(startCode + i));
-        }
-    }
-
-    addClientNames("A", 26);
-    addClientNames("a", 26);
-    addClientNames("0", 17);
+    const clientNames = generateClientNames();
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
@@ -105,7 +96,7 @@ describe("MergeTree.Client", () => {
                     opts);
             }
         })
-        // tslint:disable-next-line: mocha-no-side-effect-code
+            // tslint:disable-next-line: mocha-no-side-effect-code
             .timeout(30 * 1000);
     });
 });

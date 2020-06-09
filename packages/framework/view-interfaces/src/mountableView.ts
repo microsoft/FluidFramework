@@ -12,7 +12,7 @@ export interface IProvideComponentMountableView {
 }
 
 export interface IComponentMountableViewClass {
-    new (viewProvider: IComponent): IComponentMountableView;
+    new(viewProvider: IComponent): IComponentMountableView;
     canMount(viewProvider: IComponent): boolean;
 }
 
