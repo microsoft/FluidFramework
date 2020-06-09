@@ -23,7 +23,7 @@ Optionally, the script can also load a Node compatible component. The parameters
     }
 ```
 
-Note that the component loader uses 'npm install' to load the package in 'installPath' directory. Node requires a minimal package.json file to install the component. An example is provided in the 'component' folder. To install from a private registry, a '.npmrc' file is also required.
+Note that the component loader uses 'npm install' to load the package in 'installPath' directory. To install from a private registry, a '.npmrc' file is also required to be present in that directory.
 
 # Monitoring in Kubernetes
 

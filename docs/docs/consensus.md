@@ -1,9 +1,17 @@
 # Consensus data structures
 
+::: danger TODO
+
+Summarize differences of consensus data structures vs. eventually consistent ones.
+
+:::
+
+
 ## ConsensusQueue
 
 - Package: [@fluidframework/ordered-collection](../api/fluid-ordered-collection.md)
 - API documentation: [ConsensusQueue](../api/fluid-ordered-collection.consensusqueue.md)
+
 
 ## ConsensusRegisterCollection
 
