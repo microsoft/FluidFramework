@@ -22,7 +22,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "npm run postinstall:lerna",
+    "postinstall": "increase-memory-limit && npm run postinstall:lerna",
     "layer-check": "fluid-layer-check",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
