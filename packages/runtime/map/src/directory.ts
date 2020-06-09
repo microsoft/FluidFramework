@@ -1022,6 +1022,7 @@ class SubDirectory implements IDirectory {
             throw new Error("Undefined and null keys are not supported");
         }
 
+        // Create a local value and serialize it.
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
@@ -1029,12 +1030,18 @@ class SubDirectory implements IDirectory {
             this.runtime.IComponentHandleContext,
             this.directory.handle);
 
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
             true,
             null,
         );
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return this;
+        }
 
         const op: IDirectorySetOperation = {
             key,
@@ -1050,6 +1057,7 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any): this {
+        // Create a local value and serialize it.
         const localValue = this.directory.localValueMaker.makeValueType(
             type,
             this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
@@ -1066,16 +1074,22 @@ class SubDirectory implements IDirectory {
                 this.directory.handle))
             : params;
 
-        // This is a special form of serialized valuetype only used for set, containing info for initialization.
-        // After initialization, the serialized form will need to come from the .store of the value type's factory.
-        const serializableValue = { type, value: transformedValue };
-
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
             true,
             null,
         );
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return this;
+        }
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
 
         const op: IDirectorySetOperation = {
             key,
@@ -1100,7 +1114,15 @@ class SubDirectory implements IDirectory {
             throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
+        // Create the sub directory locally first.
         this.createSubDirectoryCore(subdirName, true, null);
+
+        const subDir: IDirectory = this._subdirectories.get(subdirName);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return subDir;
+        }
 
         const op: IDirectoryCreateSubDirectoryOperation = {
             path: this.absolutePath,
@@ -1109,7 +1131,7 @@ class SubDirectory implements IDirectory {
         };
         this.submitSubDirectoryMessage(op);
 
-        return this._subdirectories.get(subdirName);
+        return subDir;
     }
 
     /**
@@ -1130,13 +1152,20 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
+        // Delete the sub directory locally first.
+        const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IDirectoryDeleteSubDirectoryOperation = {
             path: this.absolutePath,
             subdirName,
             type: "deleteSubDirectory",
         };
 
-        const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
         this.submitSubDirectoryMessage(op);
         return successfullyRemoved;
     }
@@ -1161,13 +1190,20 @@ class SubDirectory implements IDirectory {
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
+        // Delete the key locally first.
+        const successfullyRemoved = this.deleteCore(key, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IDirectoryDeleteOperation = {
             key,
             path: this.absolutePath,
             type: "delete",
         };
 
-        const successfullyRemoved = this.deleteCore(op.key, true, null);
         this.submitKeyMessage(op);
         return successfullyRemoved;
     }
@@ -1176,12 +1212,18 @@ class SubDirectory implements IDirectory {
      * Deletes all keys from within this IDirectory.
      */
     public clear(): void {
+        // Clear the data locally first.
+        this.clearCore(true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.directory.isLocal()) {
+            return;
+        }
+
         const op: IDirectoryClearOperation = {
             path: this.absolutePath,
             type: "clear",
         };
-
-        this.clearCore(true, null);
         this.submitClearMessage(op);
     }
 
