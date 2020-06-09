@@ -1,4 +1,4 @@
-# `@microsoft/fluid-webpack-component-loader`
+# `@fluidframework/webpack-component-loader`
 This folder contains the webpack-component-loader. This package is meant to be used with the webpack-dev-server and is used by yo fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
@@ -13,7 +13,6 @@ The following environment variables can be defined when running webpack-dev-serv
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
 | `bearerSecret` | Secret for your bearer |
-| `openMode` | Mode to start the container(Detached container flow/attached container flow) |
 
 
 | modes | description |
@@ -25,12 +24,16 @@ The following environment variables can be defined when running webpack-dev-serv
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 
-| openMode | description |
-| ---------| ----------- |
-| `detached` | Start the container in detached mode. Attach the container when user clicks on attach button |
-| `attached`   | Starts container in attached mode |
+### Detached Container
+In all modes you can start with a detached container by appending #manualAttach to the url.
+
+If in side by side mode, only one side will be visable until attached.
+
+Clicking the attach buttom will attach the container, and remove #manualAttach from the url.
 
 To use the detach flow for spo-df, you need to provide driveId also. eg. --env.driveId value
+
+## Connecting to a remote server
 
 To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be
 provided in the following ways (looked for in the following order):

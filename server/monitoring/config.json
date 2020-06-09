@@ -8,20 +8,23 @@
         "label": "winston"
     },
     "notification": {
-        "endpoint" : "https://0e9099b28ce94f1786b68d720fdab936@sentry.wu2.prague.office-int.com/3"
+        "enabled": false,
+        "endpoint" : "sentry_endpoint_for_logging_error"
     },
     "loader": {
-        "orderer": "https://alfred.wu2.prague.office-int.com",
-        "storage": "https://historian.wu2.prague.office-int.com",
-        "tenant": "frosty-proskuriakova",
-        "secret": "25d17e1a692f8d0ae6effae515d8ce2b",
-        "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-        "user": "fluid-monitor",
+        "orderer": "<url_for_fluid_orderer>",
+        "storage": "<url_for_fluid_storage>",
+        "tenant": "<tenant_id>",
+        "secret": "<tenant_secret>",
+        "jwtKey": "<bearer_jwt_key>",
+        "user": "<user_name>",
         "waitMSec": 20000,
-        "docId": "",
-        "proposal": {
-            "propose": false,
-            "package": "@fluid-example/key-value-cache@0.14.20262"
+        "docId": "<optional_doc_id>",
+        "component": {
+            "load": false,
+            "packageName": "@fluid-example/key-value-cache@0.18.0-25965",
+            "installPath": "/tmp/components",
+            "timeoutMS": 60000
         }
     }
 }

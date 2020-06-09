@@ -4,8 +4,8 @@
  */
 
 import * as util from "util";
-import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
-import { IClientManager } from "@microsoft/fluid-server-services-core";
+import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
+import { IClientManager } from "@fluidframework/server-services-core";
 import { RedisClient } from "redis";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.

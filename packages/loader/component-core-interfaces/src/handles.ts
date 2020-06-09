@@ -35,12 +35,13 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     isAttached: boolean;
 
     /**
-     * Attaches the context and any bound handles to the document.
+     * Attaches the context and any bound handles to the container. It means they are reachable from the container.
      */
     attach(): void;
 
     /**
-     * Binds the given handle to this one. A bound handle will also be attached once this handle is attached.
+     * Binds the given handle to this one or attach the given handle if this handle is attached.
+     * A bound handle will also be attached once this handle is attached.
      */
     bind(handle: IComponentHandle): void;
 }
@@ -57,7 +58,7 @@ export interface IProvideComponentHandle {
 export interface IComponentHandle<
     // REVIEW: Constrain `T` to `IComponent & IComponentLoadable`?
     T = IComponent & IComponentLoadable
-> extends IComponentHandleContext, IProvideComponentHandle {
+    > extends IComponentHandleContext, IProvideComponentHandle {
     /**
      * Returns a promise to the component referenced by the handle.
      */

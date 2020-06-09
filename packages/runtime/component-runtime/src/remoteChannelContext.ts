@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse, CreateContainerError } from "@fluidframework/driver-utils";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IChannel,
     IChannelAttributes,
-    IComponentContext,
     IComponentRuntime,
+} from "@fluidframework/component-runtime-definitions";
+import {
+    IComponentContext,
     ISummaryTracker,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/runtime-definitions";
+import { strongAssert } from "@fluidframework/runtime-utils";
+import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -40,23 +41,23 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
-        submitFn: (type: MessageType, content: any) => number,
+        submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        baseSnapshot: Promise<ISnapshotTree> | ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        extraBlobs: Map<string, string>,
+        extraBlobs: Promise<Map<string, string>> | undefined,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
     ) {
         this.services = createServiceEndpoints(
             this.id,
-            this.componentContext.connectionState,
+            this.componentContext.connected,
             submitFn,
             () => dirtyFn(this.id),
             storageService,
-            baseSnapshot,
+            Promise.resolve(baseSnapshot),
             extraBlobs);
     }
 
@@ -74,25 +75,31 @@ export class RemoteChannelContext implements IChannelContext {
         return true;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet loaded
         if (!this.isLoaded) {
             return;
         }
 
-        this.services.deltaConnection.setConnectionState(value);
+        this.services.deltaConnection.setConnectionState(connected);
     }
 
-    public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
-            this.services.deltaConnection.process(message, local);
+            this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
-            assert(!local);
+            strongAssert(!local, "Remote channel must not be local when processing op");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
+    }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        strongAssert(this.isLoaded, "Remote channel must be loaded when resubmitting op");
+
+        this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
@@ -108,10 +115,10 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private async loadChannel(): Promise<IChannel> {
-        assert(!this.isLoaded);
+        strongAssert(!this.isLoaded, "Remote channel must not already be loaded when loading");
 
         let attributes: IChannelAttributes | undefined;
-        if (this.services.objectStorage.contains(".attributes")) {
+        if (await this.services.objectStorage.contains(".attributes")) {
             attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
                 ".attributes");
@@ -151,7 +158,7 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line max-len
         debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
-        this.channel = await factory.load(
+        const channel = await factory.load(
             this.runtime,
             this.id,
             this.services,
@@ -161,14 +168,24 @@ export class RemoteChannelContext implements IChannelContext {
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            this.services.deltaConnection.process(message, false);
+            try {
+                this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
+            } catch (err) {
+                // record sequence number for easier debugging
+                const error = CreateContainerError(err);
+                error.sequenceNumber = message.sequenceNumber;
+                throw error;
+            }
         }
+
+        // Commit changes.
+        this.channel = channel;
         this.pending = undefined;
         this.isLoaded = true;
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-        this.services.deltaConnection.setConnectionState(this.componentContext.connectionState);
+        this.services.deltaConnection.setConnectionState(this.componentContext.connected);
         return this.channel;
     }
 }

@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-fetch",
-  "version": "0.16.5",
+  "name": "@fluidframework/fetch-tool",
+  "version": "0.20.0",
   "description": "",
   "license": "MIT",
   "author": "Microsoft",
@@ -16,31 +16,33 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-driver-definitions": "^0.16.5",
-    "@microsoft/fluid-driver-utils": "^0.16.5",
-    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.16.5",
-    "@microsoft/fluid-odsp-driver": "^0.16.5",
-    "@microsoft/fluid-odsp-urlresolver": "^0.16.5",
-    "@microsoft/fluid-odsp-utils": "^0.16.5",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2",
-    "@microsoft/fluid-routerlicious-driver": "^0.16.5",
-    "@microsoft/fluid-routerlicious-urlresolver": "^0.16.5",
-    "@microsoft/fluid-runtime-definitions": "^0.16.5",
-    "@microsoft/fluid-tool-utils": "^0.16.5"
+    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/driver-definitions": "^0.20.0",
+    "@fluidframework/driver-utils": "^0.20.0",
+    "@fluidframework/fluidapp-odsp-urlresolver": "^0.20.0",
+    "@fluidframework/odsp-driver": "^0.20.0",
+    "@fluidframework/odsp-urlresolver": "^0.20.0",
+    "@fluidframework/odsp-utils": "^0.20.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1",
+    "@fluidframework/routerlicious-driver": "^0.20.0",
+    "@fluidframework/routerlicious-urlresolver": "^0.20.0",
+    "@fluidframework/runtime-definitions": "^0.20.0",
+    "@fluidframework/tool-utils": "^0.20.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/node": "^10.14.6",
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -50,6 +52,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 describe("TestSignals", () => {
     const id = "fluid-test://localhost/localSignalsTest";
@@ -30,7 +30,7 @@ describe("TestSignals", () => {
 
     async function createContainer(): Promise<Container> {
         const factory = new TestFluidComponentFactory([]);
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -86,27 +86,27 @@ describe("TestSignals", () => {
         it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
-            const user1HostRuntime = component1.context.hostRuntime;
-            const user2HostRuntime = component2.context.hostRuntime;
+            const user1ContainerRuntime = component1.context.containerRuntime;
+            const user2ContainerRuntime = component2.context.containerRuntime;
 
-            user1HostRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user1SignalReceivedCount += 1;
                 }
             });
 
-            user2HostRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user2SignalReceivedCount += 1;
                 }
             });
 
-            user1HostRuntime.submitSignal("TestSignal", true);
+            user1ContainerRuntime.submitSignal("TestSignal", true);
             await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 
-            user2HostRuntime.submitSignal("TestSignal", true);
+            user2ContainerRuntime.submitSignal("TestSignal", true);
             await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
@@ -118,8 +118,8 @@ describe("TestSignals", () => {
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
         let user2CompSignalReceivedCount = 0;
-        const user1HostRuntime = component1.context.hostRuntime;
-        const user2HostRuntime = component2.context.hostRuntime;
+        const user1ContainerRuntime = component1.context.containerRuntime;
+        const user2ContainerRuntime = component2.context.containerRuntime;
         const user1ComponentRuntime = component1.runtime;
         const user2ComponentRuntime = component2.runtime;
 
@@ -135,19 +135,19 @@ describe("TestSignals", () => {
             }
         });
 
-        user1HostRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user1HostSignalReceivedCount += 1;
             }
         });
 
-        user2HostRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user2HostSignalReceivedCount += 1;
             }
         });
 
-        user1HostRuntime.submitSignal("TestSignal", true);
+        user1ContainerRuntime.submitSignal("TestSignal", true);
         await containerDeltaEventManager.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");

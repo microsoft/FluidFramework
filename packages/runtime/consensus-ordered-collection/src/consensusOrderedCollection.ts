@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { SharedObject } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/protocol-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+} from "@fluidframework/component-runtime-definitions";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
@@ -71,42 +76,32 @@ type IConsensusOrderedCollectionOperation =
     IConsensusOrderedCollectionCompleteOperation |
     IConsensusOrderedCollectionReleaseOperation;
 
+/** The type of the resolve function to call after the local operation is ack'd */
+type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
+
 /**
- * A record of the pending operation
+ * For job tracking, we need to keep track of which client "owns" a given value.
+ * Key is the acquireId from when it was acquired
+ * Value is the acquired value, and the id of the client who acquired it, or undefined for unattached client
  */
-interface IPendingRecord<T> {
-    /**
-     * The resolve function to call after the operation is ack'ed
-     */
-    resolve: (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
-
-    /**
-     * The client sequence number of the operation. For assert only.
-     */
-    clientSequenceNumber: number;
-
-    /**
-     * The original operation message. For assert only.
-     */
-    message: IConsensusOrderedCollectionOperation;
-}
-
-type jobTrackingType<T> = Map<string, {value: T, clientId: string | undefined}>;
-const belongsToUnattached = undefined;
+type JobTrackingInfo<T> = Map<string, { value: T, clientId: string | undefined }>;
+const idForLocalUnattachedClient = undefined;
 
 /**
  * Implementation of a consensus collection shared object
  *
+ * Implements the shared object's communication, and the semantics around the
+ * release/complete mechanism following acquire.
+ *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * Implements the shared object's communication, handles the sending/processing
- * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any>
     extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
-    private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
-
-    private jobTracking: jobTrackingType<T> = new Map();
+    /**
+     * The set of values that have been acquired but not yet completed or released
+     */
+    private jobTracking: JobTrackingInfo<T> = new Map();
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -120,17 +115,10 @@ export class ConsensusOrderedCollection<T = any>
     ) {
         super(id, runtime, attributes);
 
-        // It's likely not safe to call this.removeClient(this.runtime.clientId) in here
-        // The fact that client recorded disconnect does not mean much in terms of the order
-        // server will record disconnects from multiple clients. And order matters because
-        // it defines the order items go back to the queue.
+        // We can't simply call this.removeClient(this.runtime.clientId) in on runtime disconnected,
+        // because other clients may disconnect concurrently.
+        // Disconnect order matters because it defines the order items go back to the queue.
         // So we put items back to queue only when we process our own removeMember event.
-        /*
-        runtime.on("disconnected", () => {
-            this.removeClient(this.runtime.clientId);
-        });
-        */
-
         runtime.getQuorum().on("removeMember", (clientId: string) => {
             assert(clientId);
             this.removeClient(clientId);
@@ -148,14 +136,13 @@ export class ConsensusOrderedCollection<T = any>
             // clone the value to match the behavior of going thru the wire.
             const addValue = this.deserializeValue(valueSer) as T;
             this.addCore(addValue);
-            return Promise.resolve();
+            return;
         }
 
-        const op: IConsensusOrderedCollectionAddOperation = {
+        await this.submit<IConsensusOrderedCollectionAddOperation>({
             opName: "add",
             value: valueSer,
-        };
-        await this.submit(op);
+        });
     }
 
     /**
@@ -178,8 +165,7 @@ export class ConsensusOrderedCollection<T = any>
                 this.release(result.acquireId);
                 this.emit("localRelease", result.value, true /* intentional */);
                 break;
-            default:
-                assert(false);
+            default: unreachableCase(res);
         }
 
         return true;
@@ -189,26 +175,20 @@ export class ConsensusOrderedCollection<T = any>
      * Wait for a value to be available and acquire it from the consensus collection
      */
     public async waitAndAcquire(callback: ConsensusCallback<T>): Promise<void> {
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
+        do {
             if (this.data.size() === 0) {
                 // Wait for new entry before trying to acquire again
-                await new Promise((resolve) => {
+                await this.newAckBasedPromise((resolve) => {
                     this.once("add", resolve);
                 });
             }
-
-            const res = await this.acquire(callback);
-            if (res) {
-                return;
-            }
-        }
+        } while (!(await this.acquire(callback)));
     }
 
     public snapshot(): ITree {
-        // If we are transitioning from unattached to attached mode, then we are loosing
-        // all checked out work!
-        this.removeClient(belongsToUnattached);
+        // If we are transitioning from unattached to attached mode,
+        // then we are losing all checked out work!
+        this.removeClient(idForLocalUnattachedClient);
 
         const tree: ITree = {
             entries: [
@@ -233,7 +213,8 @@ export class ConsensusOrderedCollection<T = any>
             value: {
                 contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",
-            } });
+            },
+        });
         return tree;
     }
 
@@ -249,11 +230,10 @@ export class ConsensusOrderedCollection<T = any>
 
         // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            const work: IConsensusOrderedCollectionCompleteOperation = {
+            await this.submit<IConsensusOrderedCollectionCompleteOperation>({
                 opName: "complete",
                 acquireId,
-            };
-            await this.submit(work);
+            });
         }
     }
 
@@ -274,11 +254,10 @@ export class ConsensusOrderedCollection<T = any>
 
         // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            const work: IConsensusOrderedCollectionReleaseOperation = {
+            this.submit<IConsensusOrderedCollectionReleaseOperation>({
                 opName: "release",
                 acquireId,
-            };
-            this.submit(work).catch((error) => {
+            }).catch((error) => {
                 this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
             });
         }
@@ -294,13 +273,6 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected onConnect(pending: any[]) {
-        // resubmit non-acked messages
-        for (const record of this.promiseResolveQueue) {
-            record.clientSequenceNumber = this.submitLocalMessage(record.message);
-        }
-    }
-
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
@@ -308,7 +280,7 @@ export class ConsensusOrderedCollection<T = any>
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
             const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
-            this.jobTracking = new Map(content) as jobTrackingType<T>;
+            this.jobTracking = new Map(content) as JobTrackingInfo<T>;
         }
 
         assert(this.data.size() === 0);
@@ -331,7 +303,7 @@ export class ConsensusOrderedCollection<T = any>
         }
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value: IConsensusOrderedCollectionValue<T> | undefined;
@@ -352,42 +324,27 @@ export class ConsensusOrderedCollection<T = any>
                     this.releaseCore(op.acquireId);
                     break;
 
-                default:
-                    throw new Error("Unknown operation");
+                default: unreachableCase(op);
             }
-            // If it is local operation, resolve the promise.
             if (local) {
-                this.processLocalMessage(message, value);
+                strongAssert(
+                    localOpMetadata, `localOpMetadata is missing from the local client's ${op.opName} operation`);
+                // Resolve the pending promise for this operation now that we have received an ack for it.
+                const resolve = localOpMetadata as PendingResolve<T>;
+                resolve(value);
             }
         }
     }
 
-    /**
-     * Resolve the promise of a local operation
-     *
-     * @param message - the message of the operation
-     * @param value - the value related to the operation
-     */
-    private processLocalMessage(
-        message: ISequencedDocumentMessage,
-        value: IConsensusOrderedCollectionValue<T> | undefined)
-    {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pending = this.promiseResolveQueue.shift()!;
-        assert(pending);
-        assert(message.contents.opName === pending.message.opName);
-        assert(message.clientSequenceNumber === pending.clientSequenceNumber);
-        pending.resolve(value);
-    }
-
-    private async submit(
-        message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
+    private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
+        message: TMessage,
+    ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(!this.isLocal());
 
-        const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve) => {
-            // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
+        return this.newAckBasedPromise((resolve) => {
+            // Send the resolve function as the localOpMetadata. This will be provided back to us when the
+            // op is ack'd.
+            this.submitLocalMessage(message, resolve);
         });
     }
 
@@ -415,15 +372,13 @@ export class ConsensusOrderedCollection<T = any>
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         if (this.isLocal()) {
             // can be undefined if queue is empty
-            const value = this.acquireCore(uuid(), belongsToUnattached);
-            return Promise.resolve(value);
+            return this.acquireCore(uuid(), idForLocalUnattachedClient);
         }
 
-        const op: IConsensusOrderedCollectionOperation = {
+        return this.submit<IConsensusOrderedCollectionAcquireOperation>({
             opName: "acquire",
             acquireId: uuid(),
-        };
-        return this.submit(op);
+        });
     }
 
     private removeClient(clientIdToRemove?: string) {

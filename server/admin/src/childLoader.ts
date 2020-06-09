@@ -2,19 +2,23 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createLoader, IHostConfig } from "@microsoft/fluid-base-host";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
-import { promiseTimeout } from "@microsoft/fluid-server-services-client";
+import { parse } from "url";
+import { IComponent } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { Deferred } from "@fluidframework/common-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
+import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
-import { parse } from "url";
 import * as winston from "winston";
 import { IKeyValue as IKV } from "./definitions";
 
@@ -72,13 +76,6 @@ class KeyValueLoader {
             });
 
         const documentServiceFactories: IDocumentServiceFactory[] = [];
-        // TODO: figure out how to pass clientId and token here
-        documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Fake app-id",
-            (siteUrl: string) => Promise.resolve("fake token"),
-            () => Promise.resolve("fake token"),
-            new BaseTelemetryNullLogger()));
-
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,
             new DefaultErrorTracking(),
@@ -91,13 +88,15 @@ class KeyValueLoader {
             hostToken,
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
-        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
-        const loader = createLoader(
-            result.data,
+        config.tokens = (result.data as IFluidResolvedUrl).tokens;
+
+        const loader = new Loader(
+            resolver,
+            documentServiceFactories,
+            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            hostConf,
+            new Map<string, IProxyLoaderFactory>(),
         );
 
         const container = await loader.resolve({ url: documentUrl });
@@ -116,8 +115,10 @@ class KeyValueLoader {
     }
 
     private registerAttach(loader: Loader, container: Container, uri: string) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.attach(loader, uri);
         container.on("contextChanged", (value) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.attach(loader, uri);
         });
     }
@@ -136,12 +137,13 @@ class KeyValueLoader {
 
 let cache: IKeyValue;
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));
-        const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
+        const cacheP = keyValueLoaderP.then(async (keyValueLoader: KeyValueLoader) => {
             return keyValueLoader.cache;
-        }, (err) => {
+        }, async (err) => {
             return Promise.reject(err);
         });
         cacheP.then((resolvedCache) => {
@@ -170,7 +172,7 @@ process.on("message", async (message: IIncomingMessage) => {
         } else {
             const keyValues: IKV[] = [];
             for (const [key, value] of cache.entries()) {
-                keyValues.push({key, value});
+                keyValues.push({ key, value });
             }
             const getSuccessMessage: IOutgoingMessage = {
                 status: true,

@@ -1,8 +1,8 @@
 {
   "packages": [
-    "examples/components/**",
-    "examples/hosts/iframe-host",
+    "components/**",
+    "examples/**",
     "packages/**"
   ],
-  "version": "0.16.5"
+  "version": "0.20.0"
 }

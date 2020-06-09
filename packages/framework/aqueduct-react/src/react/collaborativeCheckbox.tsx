@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Counter } from "@microsoft/fluid-map";
-import * as React from "react";
+import { SharedCell } from "@fluidframework/cell";
+import React from "react";
 
 interface IProps {
-    counter: Counter;
+    data: SharedCell;
     id: string;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 interface IState {
@@ -33,10 +35,9 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
         this.isChecked = this.isChecked.bind(this);
     }
 
-    // eslint-disable-next-line react/no-deprecated
-    public componentWillMount() {
-        // Register a callback for when an increment happens
-        this.props.counter.on("incremented", () => {
+    public componentDidMount() {
+        // Register a callback for when the value changes
+        this.props.data.on("valueChanged", () => {
             const checked = this.isChecked();
             this.setState({ checked });
         });
@@ -46,19 +47,20 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
         return (
             <input
                 type="checkbox"
+                className={this.props.className}
+                style={this.props.style}
                 aria-checked={this.state.checked}
-                name= {this.props.id}
-                checked = {this.state.checked}
+                name={this.props.id}
+                checked={this.state.checked}
                 onChange={this.updateCheckbox} />
         );
     }
 
     private updateCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
-        this.props.counter.increment(1);
+        this.props.data.set(e.target.checked);
     }
 
     private isChecked(): boolean {
-        // Odd is true, even is false
-        return this.props.counter.value % 2 !== 0;
+        return this.props.data.get();
     }
 }

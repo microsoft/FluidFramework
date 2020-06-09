@@ -4,12 +4,25 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
-import { ISummarizer, Summarizer } from "./summarizer";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    ChildLogger,
+    Heap,
+    IComparer,
+    IHeapNode,
+    PerformanceEvent,
+    PromiseTimer,
+    IPromiseTimerResult,
+} from "@fluidframework/common-utils";
+import { IComponent, IRequest } from "@fluidframework/component-core-interfaces";
+import {
+    IContainerContext,
+    LoaderHeader,
+    ISummarizingWarning,
+    summarizerClientType,
+} from "@fluidframework/container-definitions";
+import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ISummarizer, Summarizer, createSummarizingWarning } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -36,7 +49,7 @@ class QuorumHeap {
 
     public addClient(clientId: string, client: ISequencedClient) {
         // Have to undefined-check client.details for backwards compatibility
-        const isSummarizer = client.client.details?.type === "summarizer";
+        const isSummarizer = client.client.details?.type === summarizerClientType;
         const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
         this.heapMembers.set(clientId, heapNode);
         if (isSummarizer) {
@@ -75,6 +88,9 @@ enum SummaryManagerState {
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
 
+// Please note that all reasons  in this list are not errors,
+// and thus they are not raised today to parent container as error.
+// If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = "parentNotConnected" | "parentShouldNotSummarize" | "disposed";
 type ShouldSummarizeState = {
     shouldSummarize: true;
@@ -124,7 +140,7 @@ class Throttler {
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
-    private readonly initialDelayP: Promise<void>;
+    private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
@@ -160,7 +176,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     ) {
         super();
 
-        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+        this.logger = ChildLogger.create(
+            parentLogger,
+            "SummaryManager",
+            undefined,
+            { clientId: () => this.latestClientId });
 
         this.connected = context.connected;
         if (this.connected) {
@@ -186,7 +206,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
 
         this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
-        this.initialDelayP = this.initialDelayTimer?.start().catch(() => { }) ?? Promise.resolve();
+        this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
 
         this.refreshSummarizer();
     }
@@ -289,13 +309,24 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
+    private raiseContainerWarning(warning: ISummarizingWarning) {
+        // back-compat: <= 0.18 loader:
+        const errorFn = (this.context as any).error;
+        if (errorFn !== undefined) {
+            errorFn(warning);
+        } else {
+            this.context.raiseContainerWarning(warning);
+        }
+    }
+
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
             this.state = SummaryManagerState.Disabled;
             return;
         }
-        if (this.context.clientDetails.type === "summarizer") {
+        if (this.context.clientDetails.type === summarizerClientType) {
             // Make sure that the summarizer client does not load another summarizer.
             this.state = SummaryManagerState.Disabled;
             return;
@@ -305,8 +336,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
+        if (delayMs >= defaultThrottleMaxDelayMs) {
+            // we can't create a summarizer for some reason; raise error on container
+            this.raiseContainerWarning(
+                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false));
+        }
+
         this.createSummarizer(delayMs).then((summarizer) => {
             this.setNextSummarizer(summarizer.setSummarizer());
+            summarizer.on("summarizingError",
+                (warning: ISummarizingWarning) => this.raiseContainerWarning(warning));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({
@@ -395,10 +434,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 [LoaderHeader.cache]: false,
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
-                    type: "summarizer",
+                    type: summarizerClientType,
                 },
                 [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",

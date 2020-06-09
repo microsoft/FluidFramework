@@ -11,7 +11,7 @@ import {
     pushScope,
     refreshAccessToken,
     getSharepointTenant,
-} from "@microsoft/fluid-odsp-utils";
+} from "@fluidframework/odsp-utils";
 import { IAsyncCache, loadRC, saveRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
@@ -42,7 +42,7 @@ export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
 export class OdspTokenManager {
     constructor(
         private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
-    ) {}
+    ) { }
 
     public async getOdspTokens(
         server: string,

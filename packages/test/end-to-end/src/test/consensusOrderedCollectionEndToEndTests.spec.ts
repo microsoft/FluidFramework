@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import assert from "assert";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     acquireAndComplete,
     ConsensusQueue,
     ConsensusResult,
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
-} from "@microsoft/fluid-ordered-collection";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+} from "@fluidframework/ordered-collection";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
@@ -43,6 +43,7 @@ function generate(
         let deltaConnectionServer: ILocalDeltaConnectionServer;
         let containerDeltaEventManager: DocumentDeltaEventManager;
         let component1: ITestFluidComponent;
+        let component2: ITestFluidComponent;
         let sharedMap1: ISharedMap;
         let sharedMap2: ISharedMap;
         let sharedMap3: ISharedMap;
@@ -57,10 +58,10 @@ function generate(
 
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
-                [ mapId, SharedMap.getFactory() ],
-                [ undefined, ConsensusQueue.getFactory() ],
+                [mapId, SharedMap.getFactory()],
+                [undefined, ConsensusQueue.getFactory()],
             ]);
-            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
         }
 
@@ -72,7 +73,7 @@ function generate(
             sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
             const container2 = await createContainer();
-            const component2 = await getComponent("default", container2);
+            component2 = await getComponent("default", container2);
             sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
 
             const container3 = await createContainer();
@@ -210,19 +211,21 @@ function generate(
         });
 
         it("Can store handles", async () => {
+            // Set up the collection with two handles and add it to the map so other containers can find it
             const collection1 = ctor.create(component1.runtime);
             sharedMap1.set("test", "sampleValue");
             sharedMap1.set("collection", collection1.handle);
             await collection1.add(sharedMap1.handle);
             await collection1.add(sharedMap1.handle);
 
+            // Pull the collection off of the 2nd container
             const collection2Handle =
                 await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
             const collection2 = await collection2Handle.get();
 
+            // acquire one handle in each container
             const sharedMap1Handle = await acquireAndComplete(collection1) as IComponentHandle<ISharedMap>;
             const sharedMap1Prime = await sharedMap1Handle.get();
-
             const sharedMap2Handle = await acquireAndComplete(collection2) as IComponentHandle<ISharedMap>;
             const sharedMap2Prime = await sharedMap2Handle.get();
 
@@ -239,14 +242,37 @@ function generate(
             const collection2 = await collection2Handle.get();
 
             await collection1.add("testValue");
-            await collection1.acquire(async (value) => {
+            const acquireReleaseP = collection1.acquire(async (value) => {
                 assert.strictEqual(value, "testValue");
                 return ConsensusResult.Release;
             });
+            const waitAcquireCompleteP = waitAcquireAndComplete(collection2);
 
-            assert.equal(await waitAcquireAndComplete(collection2), "testValue");
+            assert.equal(await acquireReleaseP, true);
+            assert.equal(await waitAcquireCompleteP, "testValue");
             assert.equal(await acquireAndComplete(collection1), undefined);
             assert.equal(await acquireAndComplete(collection2), undefined);
+        });
+
+        it("cancel on close", async () => {
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
+
+            const collection2Handle =
+                await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+            const collection2 = await collection2Handle.get();
+
+            let waitRejected = false;
+            waitAcquireAndComplete(collection2)
+                .catch(() => { waitRejected = true; });
+            component2.runtime.deltaManager.close();
+
+            await collection1.add("testValue");
+
+            assert(waitRejected, "Closing the runtime while waiting should cause promise reject");
+            await assert.rejects(acquireAndComplete(collection2), "Acquiring when the runtime is disposed should fail");
+            await assert.rejects(collection2.add("anotherValue"), "Adding when the runtime is disposed should fail");
+            assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 
         it("Events", async () => {

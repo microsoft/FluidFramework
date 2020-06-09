@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda } from "@fluidframework/server-services-core";
 import {
     IEvent,
     KafkaMessageFactory,
     MessageFactory,
     TestContext,
     TestPublisher,
-} from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+} from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { BroadcasterLambda } from "../../broadcaster/lambda";
 
 describe("Routerlicious", () => {

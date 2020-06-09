@@ -4,33 +4,33 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import uuid from "uuid";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     ICodeLoader,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
-    IExperimentalLoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/container-definitions";
+import { ChildLogger, DebugLogger, Deferred, PerformanceEvent } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     MultiUrlResolver,
     MultiDocumentServiceFactory,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
@@ -100,6 +100,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Relative loader should not create a detached container");
+    }
+
     public resolveContainer(container: Container) {
         this.containerDeferred.resolve(container);
     }
@@ -129,12 +133,13 @@ function createCachedResolver(resolver: IUrlResolver) {
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
+export class Loader extends EventEmitter implements ILoader {
+    public readonly isExperimentalLoader = true;
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
-
-    public readonly isExperimentalLoader = true;
+    private readonly subLogger: ITelemetryLogger;
+    private readonly logger: ITelemetryLogger;
 
     constructor(
         resolver: IUrlResolver | IUrlResolver[],
@@ -143,9 +148,12 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         private readonly options: any,
         private readonly scope: IComponent,
         private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-        private readonly logger?: ITelemetryBaseLogger,
+        logger?: ITelemetryBaseLogger,
     ) {
         super();
+
+        this.subLogger = DebugLogger.mixinDebugLogger("fluid:telemetry", logger, { loaderId: uuid() });
+        this.logger = ChildLogger.create(this.subLogger, "Loader");
 
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
@@ -173,26 +181,26 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             source,
             this.documentServiceFactory,
             this.resolver,
-            this.logger);
+            this.subLogger);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        debug(`Container resolve: ${now()} `);
-
-        const resolved = await this.resolveCore(request);
-        return resolved.container;
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Resolve" }, async () => {
+            const resolved = await this.resolveCore(request);
+            return resolved.container;
+        });
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        debug(`Container loading: ${now()} `);
-
-        const resolved = await this.resolveCore(request);
-        return resolved.container.request({ url: resolved.parsed.path });
+        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
+            const resolved = await this.resolveCore(request);
+            return resolved.container.request({ url: resolved.parsed.path });
+        });
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         // Currently the loader only supports web worker environment. Eventually we will
-        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        // detect environment and bring appropriate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
         const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
 
@@ -249,8 +257,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                     this.loadContainer(
                         parsed.id,
                         request,
-                        resolvedAsFluid,
-                        this.logger);
+                        resolvedAsFluid);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
             }
@@ -259,11 +266,10 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                 await this.loadContainer(
                     parsed.id,
                     request,
-                    resolvedAsFluid,
-                    this.logger);
+                    resolvedAsFluid);
         }
 
-        if (container.deltaManager.referenceSequenceNumber <= fromSequenceNumber) {
+        if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {
@@ -319,9 +325,8 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         id: string,
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
-        const container = Container.load(
+        return Container.load(
             id,
             this.documentServiceFactory,
             this.codeLoader,
@@ -331,8 +336,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             request,
             resolved,
             this.resolver,
-            logger);
-
-        return container;
+            this.subLogger);
     }
 }

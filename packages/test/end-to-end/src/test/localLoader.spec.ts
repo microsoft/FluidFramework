@@ -4,26 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { SharedCounter } from "@fluidframework/counter";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IComponentFactory } from "@fluidframework/runtime-definitions";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createLocalLoader,
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@microsoft/fluid-test-utils";
+} from "@fluidframework/test-utils";
+
+const counterKey = "count";
 
 /**
  * Implementation of counter component for testing.
  */
 export class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
 
     public static getFactory() { return TestComponent.factory; }
 
@@ -34,7 +38,7 @@ export class TestComponent extends PrimedComponent {
         {},
     );
 
-    private counter!: Counter;
+    private counter!: SharedCounter;
 
     /**
      * Expose the runtime for testing purposes.
@@ -60,18 +64,23 @@ export class TestComponent extends PrimedComponent {
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("count", CounterValueType.Name, 0);
+        const counter = SharedCounter.create(this.runtime);
+        this.root.set(counterKey, counter.handle);
     }
 
     protected async componentHasInitialized() {
-        this.counter = await this.root.wait("count");
+        const counterHandle = await this.root.wait<IComponentHandle<SharedCounter>>(counterKey);
+        this.counter = await counterHandle.get();
     }
 }
 
 const testComponentFactory = new PrimedComponentFactory(
     TestComponent.type,
     TestComponent,
-    [ SharedString.getFactory() ],
+    [
+        SharedCounter.getFactory(),
+        SharedString.getFactory(),
+    ],
     {},
 );
 
@@ -86,7 +95,7 @@ describe("LocalLoader", () => {
     let containerDeltaEventManager: DocumentDeltaEventManager;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -189,7 +198,7 @@ describe("LocalLoader", () => {
             beforeEach(async () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-                const factory = new TestFluidComponentFactory([[ "text", SharedString.getFactory() ]]);
+                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
                 const container = await createContainer(factory);
                 const component = await getComponent<ITestFluidComponent>("default", container);
                 text = await component.getSharedObject("text");
@@ -214,7 +223,7 @@ describe("LocalLoader", () => {
                 deltaConnectionServer = LocalDeltaConnectionServer.create();
                 containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
 
-                const factory = new TestFluidComponentFactory([[ "text", SharedString.getFactory() ]]);
+                const factory = new TestFluidComponentFactory([["text", SharedString.getFactory()]]);
 
                 const container1 = await createContainer(factory);
                 component1 = await getComponent<ITestFluidComponent>("default", container1);

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/indent, no-bitwise */
+/* eslint-disable no-bitwise */
 
 import { EventEmitter } from "events";
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@fluidframework/map";
+import * as MergeTree from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 export interface ISerializedInterval {
     sequenceNumber: number;

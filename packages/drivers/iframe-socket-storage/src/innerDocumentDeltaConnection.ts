@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IConnected,
@@ -16,8 +16,8 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
+} from "@fluidframework/protocol-definitions";
+import Comlink from "comlink";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
@@ -29,7 +29,9 @@ export interface IOuterDocumentDeltaConnectionProxy {
 /**
  * Represents a connection to a stream of delta updates
  */
-export class InnerDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class InnerDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -37,11 +39,11 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public static async create(
         connection: IConnected,
-        outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>): Promise<IDocumentDeltaConnection> {
+        outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
         const tempEmitter = new EventEmitter();
 
-        const forwardEvent = (event: string, args: any[]) =>{
-            tempEmitter.emit(event, ... args);
+        const forwardEvent = (event: string, args: any[]) => {
+            tempEmitter.emit(event, ...args);
             return;
         };
 
@@ -49,7 +51,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
             forwardEvent,
         };
 
-        await outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
+        outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
 
         const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy, tempEmitter);
 
@@ -167,27 +169,18 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     private constructor(
         public details: IConnected,
-        public outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>,
-        private readonly tempEmitter: EventEmitter) {
+        public outerProxy: IOuterDocumentDeltaConnectionProxy,
+        tempEmitter: EventEmitter) {
         super();
-    }
 
-    /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.tempEmitter.on(
-            event,
-            (...args: any[]) => {
-                this.emit(event, ...args);
-                listener(...args);
-            });
-        super.on(event, listener);
-
-        return this;
+        this.on("newListener", (event, listener) => {
+            tempEmitter.on(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                    listener(...args);
+                });
+        });
     }
 
     /**

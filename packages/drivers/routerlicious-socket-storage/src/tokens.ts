@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ITokenProvider, ITokenService } from "@microsoft/fluid-protocol-definitions";
-import * as jwtDecode from "jwt-decode";
+import { ITokenClaims, ITokenProvider, ITokenService } from "@fluidframework/protocol-definitions";
+import jwtDecode from "jwt-decode";
 
 /**
  * Extracts the claims contained within a token.

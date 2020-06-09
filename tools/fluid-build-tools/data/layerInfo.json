@@ -1,0 +1,253 @@
+{
+    "Definitions": {
+        "dotGroup": false,
+        "layers": {
+            "Base-Definitions": {
+                "dotSameRank": true,
+                "packages": [
+                    "@fluidframework/common-definitions",
+                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/gitresources"
+                ]
+            },
+            "Protocol-Definitions": {
+                "packages": [
+                    "@fluidframework/protocol-definitions"
+                ],
+                "deps": [
+                    "@fluidframework/common-definitions"
+                ]
+            },
+            "Driver-Definitions": {
+                "packages": [
+                    "@fluidframework/driver-definitions"
+                ],
+                "deps": [
+                    "Protocol-Definitions",
+                    "@fluidframework/component-core-interfaces"
+                ]
+            },
+            "Container-Definitions": {
+                "packages": [
+                    "@fluidframework/container-definitions"
+                ],
+                "deps": [
+                    "Driver-Definitions",
+                    "@fluidframework/component-core-interfaces"
+                ]
+            }
+        }
+    },
+    "Utils": {
+        "layers": {
+            "Base-Utils": {
+                "packages": [
+                    "@fluidframework/common-utils"
+                ],
+                "deps": [
+                    "Base-Definitions"
+                ]
+            },
+            "Protocol-Utils": {
+                "packages": [
+                    "@fluidframework/protocol-base"
+                ],
+                "deps": [
+                    "Base-Utils",
+                    "Protocol-Definitions"
+                ]
+            },
+            "Driver-Utils": {
+                "packages": [
+                    "@fluidframework/driver-utils"
+                ],
+                "deps": [
+                    "Protocol-Utils",
+                    "Driver-Definitions",
+                    "@fluidframework/container-definitions"
+                ]
+            },
+            "Framework-Utils": {
+                "packages": [
+                    "@fluidframework/view-adapters",
+                    "@fluidframework/view-interfaces"
+                ],
+                "deps": [
+                    "Base-Definitions"
+                ]
+            },
+            "Other-Utils": {
+                "dot": false,
+                "packages": [
+                    "@fluidframework/odsp-utils"
+                ]
+            },
+            "Tool-Utils": {
+                "dot": false,
+                "packages": [
+                    "@fluidframework/tool-utils"
+                ],
+                "deps": [
+                    "Other-Utils"
+                ]
+            }
+        }
+    },
+    "Server": {
+        "layers": {
+            "Server-Shared-Utils": {
+                "packages": [
+                    "@fluidframework/server-services-client"
+                ],
+                "deps": [
+                    "Protocol-Utils"
+                ]
+            },
+            "Server-Libs": {
+                "dirs": [
+                    "server/routerlicious/packages/"
+                ],
+                "deps": [
+                    "Protocol-Utils",
+                    "Server-Shared-Utils"
+                ]
+            },
+            "Server-Tools": {
+                "packages": [
+                    "tinylicious"
+                ],
+                "deps": [
+                    "Server-Libs"
+                ]
+            }
+        }
+    },
+    "Client": {
+        "dotGroup": false,
+        "layers": {
+            "Driver": {
+                "dirs": [
+                    "packages/drivers/"
+                ],
+                "deps": [
+                    "Driver-Utils",
+                    "@fluidframework/component-core-interfaces",
+                    "@fluidframework/container-definitions"
+                ]
+            },
+            "Loader": {
+                "dirs": [
+                    "packages/loader/"
+                ],
+                "deps": [
+                    "Container-Definitions",
+                    "Driver-Utils"
+                ]
+            },
+            "Hosts": {
+                "packages": [
+                    "@fluidframework/base-host",
+                    "@fluidframework/host-service-interfaces"
+                ],
+                "deps": [
+                    "Loader",
+                    "Framework-Utils"
+                ]
+            },
+            "Runtime": {
+                "packages": [
+                    "@fluidframework/agent-scheduler"
+                ],
+                "dirs": [
+                    "packages/runtime/"
+                ],
+                "deps": [
+                    "Container-Definitions",
+                    "Driver-Utils"
+                ]
+            },
+            "Framework": {
+                "packages": [
+                    "@fluid-internal/client-api"
+                ],
+                "dirs": [
+                    "packages/framework/"
+                ],
+                "deps": [
+                    "Hosts",
+                    "Runtime"
+                ]
+            },
+            "Component": {
+                "dot": false,
+                "dirs": [
+                    "packages/components/",
+                    "components/",
+                    "packages/agent/",
+                    "packages/server/tools-core"
+                ],
+                "deps": [
+                    "Framework"
+                ]
+            },
+            "Build": {
+                "dev": true,
+                "packages": [
+                    "@fluidframework/build-common",
+                    "@fluidframework/eslint-config-fluid"
+                ]
+            },
+            "Tools": {
+                "dot": false,
+                "dirs": [
+                    "packages/tools/",
+                    "tools/generator-fluid"
+                ],
+                "deps": [
+                    "Framework",
+                    "Routerlicious-Driver",
+                    "Other-Utils",
+                    "Tool-Utils"
+                ]
+            },
+            "Test": {
+                "dev": true,
+                "packages": [
+                    "@fluidframework/local-web-host",
+                    "@fluidframework/local-driver",
+                    "@fluidframework/test-runtime-utils",
+                    "@fluidframework/local-test-utils",
+                    "@fluidframework/webpack-component-loader"
+                ],
+                "dirs": [
+                    "packages/test/",
+                    "examples/hosts/"
+                ]
+            }
+        }
+    },
+    "Routerlicious": {
+        "dot": false,
+        "layers": {
+            "Routerlicious-Driver": {
+                "packages": [
+                    "@fluidframework/routerlicious-driver",
+                    "@fluidframework/routerlicious-urlresolver"
+                ],
+                "deps": [
+                    "Driver",
+                    "Server-Shared-Utils",
+                    "@fluidframework/container-definitions"
+                ]
+            },
+            "Routerlicious-Server": {
+                "packages": [
+                    "@fluidframework/server-routerlicious"
+                ],
+                "deps": [
+                    "Server-Libs"
+                ]
+            }
+        }
+    }
+}

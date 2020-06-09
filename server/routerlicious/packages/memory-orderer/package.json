@@ -1,13 +1,13 @@
 {
-  "name": "@microsoft/fluid-server-memory-orderer",
-  "version": "0.1004.3",
+  "name": "@fluidframework/server-memory-orderer",
+  "version": "0.1007.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@microsoft/fluid-server-services-client/dist/dockerNames.js"
+    "moniker": "@fluidframework/server-services-client/dist/dockerNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
@@ -19,38 +19,38 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.16.0",
-    "@microsoft/fluid-protocol-base": "^0.1004.3",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.3",
-    "@microsoft/fluid-server-lambdas": "^0.1004.3",
-    "@microsoft/fluid-server-services-client": "^0.1004.3",
-    "@microsoft/fluid-server-services-core": "^0.1004.3",
-    "@microsoft/fluid-server-test-utils": "^0.1004.3",
-    "@types/debug": "^0.0.31",
+    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/protocol-base": "^0.1007.0",
+    "@fluidframework/protocol-definitions": "^0.1007.0",
+    "@fluidframework/server-lambdas": "^0.1007.0",
+    "@fluidframework/server-services-client": "^0.1007.0",
+    "@fluidframework/server-services-core": "^0.1007.0",
+    "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@types/ws": "^6.0.1",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
-    "performance-now": "^2.1.0",
     "uuid": "^3.3.2",
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -60,6 +60,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

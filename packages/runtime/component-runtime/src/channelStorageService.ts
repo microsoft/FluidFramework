@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
 
 export class ChannelStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -20,30 +21,54 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
-    private readonly flattenedTree: { [path: string]: string } = {};
+    private readonly flattenedTreeP: Promise<{ [path: string]: string }>;
 
     constructor(
-        tree: ISnapshotTree | undefined,
-        private readonly storage: IDocumentStorageService,
-        private readonly extraBlobs?: Map<string, string>,
+        private readonly tree: Promise<ISnapshotTree> | undefined,
+        private readonly storage: Pick<IDocumentStorageService, "read">,
+        private readonly extraBlobs?: Promise<Map<string, string>>,
     ) {
         // Create a map from paths to blobs
         if (tree !== undefined) {
-            ChannelStorageService.flattenTree("", tree, this.flattenedTree);
+            this.flattenedTreeP = tree.then((snapshotTree) => {
+                const flattenedTree: { [path: string]: string } = {};
+                ChannelStorageService.flattenTree("", snapshotTree, flattenedTree);
+                return flattenedTree;
+            });
+        } else {
+            this.flattenedTreeP = Promise.resolve({});
         }
     }
 
-    public contains(path: string) {
-        return this.flattenedTree[path] !== undefined;
+    public async contains(path: string): Promise<boolean> {
+        return (await this.flattenedTreeP)[path] !== undefined;
     }
 
     public async read(path: string): Promise<string> {
-        const id = this.getIdForPath(path);
+        const id = await this.getIdForPath(path);
+        const blob = this.extraBlobs !== undefined
+            ? (await this.extraBlobs).get(id)
+            : undefined;
 
-        return this.extraBlobs?.get(id) ?? this.storage.read(id);
+        return blob ?? this.storage.read(id);
     }
 
-    private getIdForPath(path: string): string {
-        return this.flattenedTree[path];
+    public async list(path: string): Promise<string[]> {
+        let tree = await this.tree;
+        const pathParts = getNormalizedObjectStoragePathParts(path);
+        while (tree !== undefined && pathParts.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const part = pathParts.shift()!;
+            tree = tree.trees[part];
+        }
+        if (tree === undefined || pathParts.length !== 0) {
+            throw new Error("path does not exist");
+        }
+
+        return Object.keys(tree?.blobs ?? {});
+    }
+
+    private async getIdForPath(path: string): Promise<string> {
+        return (await this.flattenedTreeP)[path];
     }
 }

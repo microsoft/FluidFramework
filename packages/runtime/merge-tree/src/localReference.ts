@@ -138,7 +138,7 @@ export class LocalReferenceCollection {
 
     constructor(
         private readonly segment: ISegment,
-        initialRefsByfOffset =  new Array<IRefsAtOffest>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffest>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.
@@ -184,9 +184,9 @@ export class LocalReferenceCollection {
     public clear() {
         this.refCount = 0;
         this.hierRefCount = 0;
-        const detachSegments = (refs: LocalReference[]) =>{
+        const detachSegments = (refs: LocalReference[]) => {
             if (refs) {
-                refs.forEach((r)=>{
+                refs.forEach((r) => {
                     if (r.segment === this.segment) {
                         r.segment = undefined;
                     }
@@ -275,15 +275,15 @@ export class LocalReferenceCollection {
             lref.offset += this.refsByOffset.length;
         }
 
-        this.refsByOffset.push(... other.refsByOffset);
+        this.refsByOffset.push(...other.refsByOffset);
     }
 
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
             splitSeg.localRefs =
-            new LocalReferenceCollection(
-                splitSeg,
-                this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
+                new LocalReferenceCollection(
+                    splitSeg,
+                    this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
 
             for (const lref of splitSeg.localRefs) {
                 lref.segment = splitSeg;
@@ -292,7 +292,7 @@ export class LocalReferenceCollection {
                     this.hierRefCount--;
                     splitSeg.localRefs.hierRefCount++;
                 }
-                this.refCount --;
+                this.refCount--;
                 splitSeg.localRefs.refCount++;
             }
         }
@@ -311,7 +311,7 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount++;
                     }
-                    this.refCount ++;
+                    this.refCount++;
                 } else {
                     lref.segment = undefined;
                 }

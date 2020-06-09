@@ -4,14 +4,14 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as core from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/protocol-definitions";
+import * as core from "@fluidframework/server-services-core";
 
 export interface IMapSetOperation {
     op: string;

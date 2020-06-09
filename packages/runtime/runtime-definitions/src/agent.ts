@@ -7,7 +7,7 @@ import {
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 
 /**
  * Definition of a Task.
@@ -108,7 +108,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
     on(event: "picked" | "released" | "lost", listener: (taskId: string) => void): this;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }

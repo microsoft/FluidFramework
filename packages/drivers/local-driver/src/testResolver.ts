@@ -3,29 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { parse } from "url";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
     CreateNewHeader,
-} from "@microsoft/fluid-driver-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { generateToken } from "@fluidframework/server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related test classes.
  */
-export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class TestResolver implements IUrlResolver {
     public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 
-    constructor() {}
+    constructor() { }
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated
@@ -35,12 +34,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        let documentId;
-        if (request.headers?.[CreateNewHeader.createNew]) {
-            documentId = parsedUrl.pathname.substr(1).split("/")[1];
-            return this.resolveHelper(documentId);
-        }
-        documentId = parsedUrl.pathname.substr(1).split("/")[0];
+        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
         return this.resolveHelper(documentId);
     }
 
@@ -60,8 +54,8 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         return resolved;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
-        let url = request.url;
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+        let url = relativeUrl;
         if (url.startsWith("/")) {
             url = url.substr(1);
         }
@@ -72,18 +66,14 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
             throw new Error("Url should contain tenant and docId!!");
         }
         const [, , documentId] = parsedUrl.pathname.split("/");
-        assert(documentId);
-        const response: IResponse = {
-            mimeType: "text/plain",
-            value: `https://localhost:3000/${this.tenantId}/${documentId}/${url}`,
-            status: 200,
-        };
-        return response;
+        assert(documentId, "The resolvedUrl must have a documentId");
+
+        return `http://localhost:3000/${documentId}/${url}`;
     }
 
-    public createCreateNewRequest(id: string): IRequest {
+    public createCreateNewRequest(documentId: string): IRequest {
         const createNewRequest: IRequest = {
-            url: `http://localhost:3000/${this.tenantId}/${id}`,
+            url: `http://localhost:3000/${documentId}`,
             headers: {
                 [CreateNewHeader.createNew]: true,
             },

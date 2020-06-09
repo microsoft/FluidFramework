@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
 
 /**
  * Returns a new IObjectStorageService that resolves the given `path` as root.
@@ -17,5 +17,13 @@ export class ObjectStoragePartition implements IObjectStorageService {
 
     public async read(path: string): Promise<string> {
         return this.storage.read(`${this.path}/${path}`);
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return this.storage.contains(`${this.path}/${path}`);
+    }
+
+    public async list(path: string): Promise<string[]> {
+        return this.storage.list(`${this.path}/${path}`);
     }
 }

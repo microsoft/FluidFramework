@@ -11,12 +11,12 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 import {
     IDeltaManager,
     IDeltaQueue,
-} from "@microsoft/fluid-container-definitions";
+} from "@fluidframework/container-definitions";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
@@ -40,7 +40,7 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return;
     }
 
-    public resume(): void {}
+    public resume(): void { }
 
     public peek(): T | undefined {
         return undefined;
@@ -58,7 +58,7 @@ class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return undefined;
     }
 
-    public dispose() {}
+    public dispose() { }
 
     constructor() {
         super();
@@ -97,7 +97,7 @@ export class MockDeltaManager extends EventEmitter
         return 0;
     }
 
-    public get referenceSequenceNumber(): number {
+    public get lastSequenceNumber(): number {
         return 0;
     }
 
@@ -121,17 +121,17 @@ export class MockDeltaManager extends EventEmitter
         return true;
     }
 
-    public close(): void {}
+    public close(): void { }
 
-    public submitSignal(content: any): void {}
+    public submitSignal(content: any): void { }
 
-    public flush() {}
+    public flush() { }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
+    public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
         return 0;
     }
 
-    public dispose() {}
+    public dispose() { }
 
     constructor() {
         super();

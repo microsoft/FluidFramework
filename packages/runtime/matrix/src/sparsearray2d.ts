@@ -5,11 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { IMatrixReader } from "@tiny-calc/nano";
+import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 
-export interface IArray2D<T> extends IMatrixReader<T | undefined | null> {
-    setCell(row: number, col: number, value: T | undefined): void;
-}
+export interface IArray2D<T> extends IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> { }
 
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
@@ -24,7 +22,7 @@ const x8ToInterlacedX16 =
         i = (i | (i << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
         return i;
     });
-    /* eslint-enable no-param-reassign */
+/* eslint-enable no-param-reassign */
 
 // Selects individual bytes from a given 32b integer.  The left shift are used to
 // clear upper bits (faster than using masks on Node 10 x64).
@@ -59,12 +57,12 @@ type UA<T> = (T | undefined)[];
  * A sparse 4 billion x 4 billion array stored as 16x16 tiles.
  */
 export class SparseArray2D<T> implements IArray2D<T> {
-    constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) {}
+    constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) { }
 
-    public get numRows() { return 0xFFFFFFFF; }
-    public get numCols() { return 0xFFFFFFFF; }
+    public get rowCount() { return 0xFFFFFFFF; }
+    public get colCount() { return 0xFFFFFFFF; }
 
-    read(row: number, col: number): T | undefined | null {
+    getCell(row: number, col: number): T | undefined | null {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {
@@ -83,6 +81,8 @@ export class SparseArray2D<T> implements IArray2D<T> {
 
         return undefined;
     }
+
+    public get matrixProducer() { return undefined as any; }
 
     setCell(row: number, col: number, value: T | undefined) {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);

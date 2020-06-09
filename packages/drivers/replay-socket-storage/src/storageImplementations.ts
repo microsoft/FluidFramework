@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -11,14 +11,16 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-driver-definitions";
-import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/driver-definitions";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISnapshotTree,
     ITree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+    ISummaryTree,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -35,15 +37,18 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected docTree: ISnapshotTree;
-    protected readonly blobs = new Map<string, string>();
+    protected docTreeP: Promise<ISnapshotTree>;
+    protected blobsP: Promise<Map<string, string>>;
     protected readonly commits: { [key: string]: ITree } = {};
     protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
     public constructor(json: IFileSnapshot) {
         super();
         this.commits = json.commits;
-        this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
+
+        const blobs = new Map<string, string>();
+        this.docTreeP = buildSnapshotTree(json.tree.entries, blobs);
+        this.blobsP = this.docTreeP.then((docTree) => { return blobs; });
     }
 
     public async getVersions(
@@ -62,7 +67,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
         if (!versionRequested || versionRequested.id === "latest") {
-            return this.docTree;
+            return this.docTreeP;
         }
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
@@ -75,13 +80,15 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            this.trees[versionRequested.id] = snapshotTree = buildSnapshotTree(tree.entries, this.blobs);
+            const blobMap = await this.blobsP;
+            this.trees[versionRequested.id] = snapshotTree = await buildSnapshotTree(tree.entries, blobMap);
+            this.blobsP = Promise.resolve(blobMap);
         }
         return snapshotTree;
     }
 
     public async read(blobId: string): Promise<string> {
-        const blob = this.blobs.get(blobId);
+        const blob = (await this.blobsP).get(blobId);
         if (blob !== undefined) {
             return blob;
         }
@@ -137,6 +144,11 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 export class StaticStorageDocumentService implements IDocumentService {
     constructor(private readonly storage: IDocumentStorageService) { }
 
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public get resolvedUrl(): IResolvedUrl {
+        throw new Error("Not implemented");
+    }
+
     public async connectToStorage(): Promise<IDocumentStorageService> {
         return this.storage;
     }
@@ -165,5 +177,14 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
+    }
+
+    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        throw new Error("Not implemented");
     }
 }

@@ -5,20 +5,16 @@
 
 /* eslint-disable prefer-template */
 import * as url from "url";
-import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
-
-const packageManagerUrl = "https://packages.wu2.prague.office-int.com";
-const installLocation = "/tmp/chaincode";
-const waitTimeoutMS = 60000;
 
 interface ILoadParams {
     jwtKey: string;
@@ -29,9 +25,11 @@ interface ILoadParams {
     user: string;
     waitMSec: number;
     docId: string;
-    proposal: {
-        propose: boolean,
-        package: string,
+    component: {
+        load: boolean,
+        packageName: string,
+        installPath: string,
+        timeoutMS: number,
     }
 }
 
@@ -48,25 +46,38 @@ async function waitForFullConnection(container: Container): Promise<void> {
     }
 }
 
+// Initializes the component.
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
+    if (pkg === undefined) {
+        return;
+    }
+
+    const quorum = container.getQuorum();
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+    }
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
+    }
+}
+
 async function runInternal(loader: Loader, docUrl: string, params: ILoadParams): Promise<void> {
     winston.info(`Resolving ${docUrl}`);
     const container = await loader.resolve({ url: docUrl });
     winston.info(`Resolved ${docUrl}`);
     await waitForFullConnection(container);
     winston.info(`Fully connected to ${docUrl}`);
-    if (params.proposal.propose) {
+    if (params.component.load) {
         const codePackage: IFluidCodeDetails = {
-            config: {
-                "@fluid-example:cdn": packageManagerUrl,
-            },
-            package: params.proposal.package,
+            config: undefined,
+            package: params.component.packageName,
         };
         await initializeChaincode(container, codePackage);
         winston.info(`Proposed code`);
     }
 }
 
-async function run(loader: Loader, docUrl: string, params: ILoadParams) {
+const run = async (loader: Loader, docUrl: string, params: ILoadParams) => {
     return new Promise<void>((resolve, reject) => {
         const waitTimer = setTimeout(() => {
             clearTimeout(waitTimer);
@@ -81,11 +92,11 @@ async function run(loader: Loader, docUrl: string, params: ILoadParams) {
             reject(err);
         });
     });
-}
+};
 
 export async function testFluidService(config: Provider): Promise<void> {
     const params = config.get("loader") as ILoadParams;
-    const documentId = params.docId.length > 0 ? params.docId : uuid();
+    const documentId = (params.docId !== undefined && params.docId.length > 0) ? params.docId : uuid();
     const hostToken = jwt.sign(
         {
             user: params.user,
@@ -96,7 +107,7 @@ export async function testFluidService(config: Provider): Promise<void> {
             documentId,
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: params.tenant,
-            user: {id: "node-chatter"},
+            user: { id: "node-user" },
         },
         params.secret);
 
@@ -131,27 +142,14 @@ export async function testFluidService(config: Provider): Promise<void> {
     const loader = new Loader(
         resolver,
         new RouterliciousDocumentServiceFactory(),
-        new NodeCodeLoader(packageManagerUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
+        new NodeCodeLoader(
+            params.component.installPath,
+            params.component.timeoutMS,
+            new NodeWhiteList()),
         config,
         {},
         new Map<string, IProxyLoaderFactory>(),
     );
 
     return run(loader, documentUrl, params);
-}
-
-async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (!pkg) {
-        return;
-    }
-
-    const quorum = container.getQuorum();
-    if (!container.connected) {
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-    }
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
-    }
-
-    winston.info(`Code is ${quorum.get("code")}`);
 }

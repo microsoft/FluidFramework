@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { IBlob, ITree } from "@fluidframework/protocol-definitions";
+import { IObjectStorageService } from "@fluidframework/component-runtime-definitions";
+import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 /**
  * Mock implementation of IObjectStorageService based on ITree input.
@@ -16,7 +17,8 @@ export class MockStorage implements IObjectStorageService {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
                     if (entry.type === "Blob") {
-                        assert(paths.length === 1);
+                        // eslint-disable-next-line prefer-rest-params
+                        assert(paths.length === 1, JSON.stringify({ ...arguments }));
                         const blob = entry.value as IBlob;
                         return Buffer.from(blob.contents, blob.encoding)
                             .toString("base64");
@@ -24,10 +26,10 @@ export class MockStorage implements IObjectStorageService {
                     if (entry.type === "Tree") {
                         return MockStorage.readCore(entry.value as ITree, paths.slice(1));
                     }
-                    assert(false);
+                    return undefined;
                 }
             }
-            assert(false);
+            return undefined;
         }
     }
 
@@ -35,6 +37,16 @@ export class MockStorage implements IObjectStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        return MockStorage.readCore(this.tree, path.split("/"));
+        const blob = MockStorage.readCore(this.tree, path.split("/"));
+        assert(blob !== undefined, `Blob does not exist: ${path}`);
+        return blob;
+    }
+
+    public async contains(path: string): Promise<boolean> {
+        return MockStorage.readCore(this.tree, path.split("/")) !== undefined;
+    }
+
+    public async list(path: string): Promise<string[]> {
+        return listBlobsAtTreePath(this.tree, path);
     }
 }

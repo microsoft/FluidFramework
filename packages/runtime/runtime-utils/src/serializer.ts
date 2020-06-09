@@ -7,7 +7,7 @@ import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import { ComponentHandle } from "./componentHandle";
 import { isSerializedHandle } from "./utils";
 
@@ -138,13 +138,7 @@ export class ComponentSerializer implements IComponentSerializer {
     }
 
     private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
-        // If the context that is now referencing the component is already attached then we immediately
-        // attach the component. If it is not yet attached then we bind the reference to mark the dependency.
-        if (bind.isAttached) {
-            handle.attach();
-        } else {
-            bind.bind(handle);
-        }
+        bind.bind(handle);
 
         // If the handle contexts match then we can store a relative path. Otherwise we convert to an
         // absolute path.

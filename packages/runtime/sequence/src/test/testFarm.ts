@@ -13,33 +13,33 @@
 /* eslint-disable no-shadow */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 // eslint-disable-next-line import/no-duplicates
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import * as MergeTree from "@fluidframework/merge-tree";
 // eslint-disable-next-line no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
     PropertySet,
-    IMergeTreeOp,
     MergeTreeTextHelper,
+    IMergeTreeDeltaOp,
     // eslint-disable-next-line import/no-duplicates
-} from "@microsoft/fluid-merge-tree";
+} from "@fluidframework/merge-tree";
 import {
     LocalClientId,
     NonCollabClient,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
     // eslint-disable-next-line import/no-internal-modules
-} from "@microsoft/fluid-merge-tree/dist/constants";
+} from "@fluidframework/merge-tree/dist/constants";
 // eslint-disable-next-line import/no-internal-modules
-import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@microsoft/fluid-merge-tree/dist/overlayTree";
+import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@fluidframework/merge-tree/dist/overlayTree";
 // eslint-disable-next-line import/no-internal-modules
-import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge-tree/dist/test/";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import * as JsDiff from "diff";
-import * as random from "random-js";
+import { loadTextFromFile, TestClient, TestServer } from "@fluidframework/merge-tree/dist/test/";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import JsDiff from "diff";
+import random from "random-js";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 
@@ -419,7 +419,7 @@ export function TestPack(verbose = true) {
             if (word1) {
                 const removeStart = word1.pos;
                 const removeEnd = removeStart + word1.text.length;
-                const ops: IMergeTreeOp[] = [];
+                const ops: IMergeTreeDeltaOp[] = [];
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(client.makeOpMessage(removeOp));
@@ -1300,14 +1300,14 @@ export function TestPack(verbose = true) {
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2, cli.getClientId());
+        let fwdRanges = cli.mergeTree.findHistorialRange(0, 5, 1, 2, cli.getClientId());
         if (verbose) {
             console.log(`fwd range 0 5 on 1 => 2`);
             for (const r of fwdRanges) {
                 console.log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        const fwdPos = cli.mergeTree.tardisPosition(2, 1, 2, cli.getClientId());
+        const fwdPos = cli.mergeTree.findHistorialPosition(2, 1, 2, cli.getClientId());
         if (verbose) {
             console.log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1380,7 +1380,7 @@ export function TestPack(verbose = true) {
             }
         }
         const localRemoveOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.tardisRangeFromClient(3, 6, 9, 10, 2);
+        fwdRanges = cli.mergeTree.findHistorialRangeFromClient(3, 6, 9, 10, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             console.log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
@@ -1439,23 +1439,6 @@ function checkInsertMergeTree(
     const result = (checkText === updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${checkText}`);
-        console.log(`mismatch(u): ${updatedText}`);
-    }
-    return result;
-}
-
-function checkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    const helper = new MergeTreeTextHelper(mergeTree);
-    const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const checkText = editFlat(origText, start, end - start);
-    const clockStart = clock();
-    mergeTree.removeRange(start, end, UniversalSequenceNumber, LocalClientId);
-    accumTime += elapsedMicroseconds(clockStart);
-    const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText === updatedText);
-    if ((!result) && verbose) {
-        console.log(`mismatch(o): ${origText}`);
-        console.log(`mismatch(c): ${checkText}`);
         console.log(`mismatch(u): ${updatedText}`);
     }
     return result;
@@ -1532,7 +1515,7 @@ export function mergeTreeCheckedTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         // Console.log(itree.toString());
-        if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+        if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
             console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
             console.log(mergeTree.toString());
             break;
@@ -1562,7 +1545,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
                 errorCount++;
@@ -1616,7 +1599,7 @@ export function mergeTreeCheckedTest() {
             }
         }
         else {
-            if (!checkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
+            if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 console.log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 console.log(mergeTree.toString());
                 errorCount++;

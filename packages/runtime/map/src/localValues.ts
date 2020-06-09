@@ -8,15 +8,15 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     ISerializedHandle,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     ISharedObject,
     parseHandles,
     serializeHandles,
     SharedObject,
     ValueType,
-} from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/shared-object-base";
 import { CounterValueType } from "./counter";
 import {
     ISerializableValue,

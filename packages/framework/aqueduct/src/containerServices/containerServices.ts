@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse, IComponent, IComponentRouter, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
-import { RequestParser, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
+import { IResponse, IComponent, IComponentRouter, IRequest } from "@fluidframework/component-core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
 
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
-export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IHostRuntime) => Promise<IComponent>]>;
+export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IContainerRuntime) => Promise<IComponent>]>;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
@@ -18,7 +18,7 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IHostR
 export abstract class BaseContainerService implements IComponentRouter {
     public get IComponentRouter() { return this; }
 
-    constructor(protected readonly runtime: IHostRuntime) {
+    constructor(protected readonly runtime: IContainerRuntime) {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -37,12 +37,12 @@ class SingletonContainerServiceFactory {
     private service: Promise<IComponent> | undefined;
 
     public constructor(
-        private readonly serviceFn: (runtime: IHostRuntime) => Promise<IComponent>,
+        private readonly serviceFn: (runtime: IContainerRuntime) => Promise<IComponent>,
     ) { }
 
-    public async getService(runtime: IHostRuntime): Promise<IComponent> {
+    public async getService(runtime: IContainerRuntime): Promise<IComponent> {
         if (!this.service) {
-            this.service =  this.serviceFn(runtime);
+            this.service = this.serviceFn(runtime);
         }
         return this.service;
     }
@@ -59,7 +59,7 @@ export const generateContainerServicesRequestHandler =
             factories.set(id, new SingletonContainerServiceFactory(fn));
         });
 
-        return async (request: RequestParser, runtime: IHostRuntime) => {
+        return async (request: RequestParser, runtime: IContainerRuntime) => {
             if (request.pathParts[0] !== serviceRoutePathRoot) {
                 // If the request is not for a service we return undefined so the next handler can use it
                 return undefined;

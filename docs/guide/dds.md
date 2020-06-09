@@ -5,9 +5,9 @@ uid: dds
 # Distributed Data Structures
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
-as such as [SharedMap](./SharedMap.md) and the various types in the @microsoft/fluid-sequence package, are eventually
-consistent. The Fluid runtime manages these data structures; as changes are made locally and remotely, they are merged
-in seamlessly by the runtime.
+as [SharedMap](./SharedMap.md) and the various types in the @fluidframework/sequence package, are eventually consistent.
+The Fluid runtime manages these data structures; as changes are made locally and remotely, they are merged in seamlessly
+by the runtime.
 
 When you're working with a DDS, you can largely treat it as a local object. You can make changes to it as needed.
 However, this local object can be changed not only by your local code, but also by the Fluid runtime. The Fluid runtime

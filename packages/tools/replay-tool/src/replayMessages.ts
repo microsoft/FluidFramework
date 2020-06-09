@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import * as child_process from "child_process";
-import * as fs from "fs";
+import assert from "assert";
+import child_process from "child_process";
+import fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-common-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -27,17 +27,18 @@ import {
     ISnapshotWriterStorage,
     Replayer,
     ReplayFileDeltaConnection,
-} from "@microsoft/fluid-file-driver";
+} from "@fluidframework/file-driver";
 import {
     IBlob,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
+    MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
-} from "@microsoft/fluid-replay-driver";
+} from "@fluidframework/replay-driver";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -45,7 +46,6 @@ try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
-
 import { ReplayArgs } from "./replayArgs";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -149,6 +149,13 @@ class ContainerUrlResolver implements IUrlResolver {
         }
         return this.cache.get(request.url);
     }
+
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+    ): Promise<string> {
+        throw new Error("Not implemented");
+    }
 }
 
 /**
@@ -161,6 +168,7 @@ class Document {
     private from = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
+    private originalSummarySeqs: number[];
 
     public constructor(
         protected readonly args: ReplayArgs,
@@ -178,6 +186,10 @@ class Document {
 
     public get logger() {
         return this.docLogger;
+    }
+
+    public get originalSummarySequenceNumbers(): readonly number[] {
+        return this.originalSummarySeqs;
     }
 
     public getFileName() {
@@ -202,8 +214,17 @@ class Document {
             this.containerDescription,
             errorHandler);
 
-        this.from = this.container.deltaManager.referenceSequenceNumber;
+        this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
+        this.originalSummarySeqs = [];
+        this.replayer.ops.forEach((op) => {
+            if (op?.type === MessageType.Summarize) {
+                const seq = op.referenceSequenceNumber;
+                if (seq !== undefined) {
+                    this.originalSummarySeqs.push(seq);
+                }
+            }
+        });
 
         this.replayer.currentReplayedOp = this.from;
 
@@ -228,8 +249,7 @@ class Document {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public snapshot() {
+    public async snapshot() {
         return this.container.snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
             !this.args.incremental /* generateFullTreeNoOtimizations */);
@@ -287,6 +307,11 @@ class Document {
                 ["@ms/undo-stack", Promise.resolve(chaincode)],
                 ["@ms/commanding-surface", Promise.resolve(chaincode)],
                 ["@ms/dias", Promise.resolve(chaincode)],
+                ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
+                ["@fluidx/tasks", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
+                ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
+                ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
@@ -429,7 +454,7 @@ export class ReplayTool {
 
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
-        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
+        if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
             description = this.args.version ? this.args.version : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
@@ -477,13 +502,21 @@ export class ReplayTool {
     }
 
     private async mainCycle() {
-        let nextSnapPoint = this.args.from;
-
+        const originalSummaries =
+            this.args.snapFreq === undefined ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
+        let nextSnapPoint;
+        do {
+            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
+        } while (nextSnapPoint < this.args.from);
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                nextSnapPoint = currentOp + this.args.snapFreq;
+                if (this.args.snapFreq !== undefined) {
+                    nextSnapPoint = currentOp + this.args.snapFreq;
+                } else {
+                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
+                }
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -551,7 +584,10 @@ export class ReplayTool {
         const op = content.op;
 
         // Add extra container
-        if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
+        if (!final && (
+            this.args.snapFreq !== undefined
+            && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0)
+        ) {
             const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
             const storage = new storageClass(content.snapshot);
             const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
@@ -594,7 +630,7 @@ export class ReplayTool {
         const op = content.op;
 
         // Keep doc from previous iteration and validate here - this gives us shortest
-        // distance between load & save, and finds bugs in tardis.
+        // distance between load & save, and finds bugs in catchup ops.
         // No need to do it if overlappingContainers === 1 - there is container like that
         // in validateSlidingSnapshots()!
         if (this.documentPriorWindow && this.args.overlappingContainers !== 1) {
@@ -719,8 +755,8 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)) {
+        if (snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)
+            !== content.snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }

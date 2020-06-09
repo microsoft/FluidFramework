@@ -6,14 +6,14 @@
 import { parse } from "url";
 import {
     IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import { generateToken, IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 
 const r11sServers = [
@@ -96,7 +96,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         let ordererUrl = "";
         let deltaStorageUrl = "";
 
-        // There is no provider when using debugging tooling and tiny-web-host
+        // There is no provider when using debugging tooling
         if (provider && isInternalRequest) {
             storageUrl = provider.get("worker:internalBlobStorageUrl");
             ordererUrl = provider.get("worker:alfredUrl");
@@ -133,6 +133,13 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             url: fluidUrl,
         };
         return resolved;
+    }
+
+    public async getAbsoluteUrl(
+        resolvedUrl: IResolvedUrl,
+        relativeUrl: string,
+    ): Promise<string> {
+        throw new Error("Not implmented");
     }
 }
 

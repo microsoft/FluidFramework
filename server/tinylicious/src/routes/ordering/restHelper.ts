@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@microsoft/fluid-gitresources";
+import * as git from "@fluidframework/gitresources";
 import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 export interface IMapSetOperation {
     op: string;

@@ -11,7 +11,7 @@ import {
     MongoManager,
     NackOperationType,
     SequencedOperationType,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     KafkaMessageFactory,
     MessageFactory,
@@ -19,10 +19,10 @@ import {
     TestDbFactory,
     TestKafka,
     TestTenantManager,
-} from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+} from "@fluidframework/server-test-utils";
+import assert from "assert";
 import * as _ from "lodash";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import { ClientSequenceTimeout, DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -74,7 +74,7 @@ describe("Routerlicious", () => {
                 const database = await mongoManager.getDatabase();
                 testCollection = database.collection("documents");
 
-                testKafka =  new TestKafka();
+                testKafka = new TestKafka();
                 testTenantManager = new TestTenantManager();
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
@@ -174,18 +174,18 @@ describe("Routerlicious", () => {
                         kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(2), testId));
                     await lambda.handler(
                         kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 10),
-                        testId));
+                            testId));
                     await quiesce();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
 
                     await lambda.handler(
                         kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(20, 1 + ClientSequenceTimeout),
-                        testId));
-                    await lambda.handler(kafkaMessageFactory.sequenceMessage(
-                            secondMessageFactory.create(
-                                20,
-                                ClientSequenceTimeout + 2 * MinSequenceNumberWindow),
                             testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(
+                        secondMessageFactory.create(
+                            20,
+                            ClientSequenceTimeout + 2 * MinSequenceNumberWindow),
+                        testId));
                     await quiesce();
                     // assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
                 });

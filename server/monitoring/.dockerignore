@@ -1,4 +1,3 @@
-node_modules
-dist
-nyc
+node_modules/*
+dist/*
 *.tsbuildinfo

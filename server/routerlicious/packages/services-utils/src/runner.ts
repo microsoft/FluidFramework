@@ -5,7 +5,7 @@
 
 import { AssertionError } from "assert";
 import { inspect } from "util";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as winston from "winston";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
@@ -93,8 +93,9 @@ export function runService<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
     group: string,
-    configFile: string) {
-    const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
+    configOrPath: nconf.Provider | string) {
+    // eslint-disable-next-line max-len
+    const config = typeof configOrPath === "string" ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory") : configOrPath;
     configureLogging(config.get("logger"));
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;

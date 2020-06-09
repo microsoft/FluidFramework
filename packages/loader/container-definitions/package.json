@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-container-definitions",
-  "version": "0.16.5",
+  "name": "@fluidframework/container-definitions",
+  "version": "0.20.0",
   "description": "Fluid container definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -19,25 +19,27 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
     "tsc": "tsc",
-    "tsc:watch": "tsc --watch"
+    "tsc:watch": "tsc --watch",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.5",
-    "@microsoft/fluid-driver-definitions": "^0.16.5",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.2"
+    "@fluidframework/common-definitions": "^0.18.1",
+    "@fluidframework/component-core-interfaces": "^0.20.0",
+    "@fluidframework/driver-definitions": "^0.20.0",
+    "@fluidframework/protocol-definitions": "^0.1006.1"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/node": "^10.14.6",
+    "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
@@ -48,6 +50,7 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

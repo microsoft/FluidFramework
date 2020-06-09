@@ -1,0 +1,16 @@
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "module": "esnext",
+        "outDir": "dist",
+        "jsx": "react",
+        "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react", "react-dom"],
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ISerializedHandle } from "@fluidframework/component-core-interfaces";
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+} from "@fluidframework/protocol-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+} from "@fluidframework/component-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
@@ -214,8 +218,10 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
+     * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
+     * For messages from a remote client, this will be undefined.
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (this.pendingClientSequenceNumber !== -1) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {

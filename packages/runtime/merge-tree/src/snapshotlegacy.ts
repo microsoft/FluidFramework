@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { ChildLogger } from "@fluidframework/common-utils";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { SnapshotHeader } from "./snapshot";
+import {
+    MergeTreeChunkLegacy,
+    serializeAsMinSupportedVersion,
+} from "./snapshotChunks";
 
 // first three are index entry
 export interface SnapChunk {
@@ -29,10 +31,22 @@ export interface SnapChunk {
     buffer?: Buffer;
 }
 
+export interface SnapshotHeader {
+    chunkCount?: number;
+    segmentsTotalLength: number;
+    indexOffset?: number;
+    segmentsOffset?: number;
+    seq: number;
+    // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    minSeq?: number;
+}
+
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly tardis = "tardis";
+    public static readonly oldCatchupOps = "tardis";
+    public static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -51,7 +65,6 @@ export class SnapshotLegacy {
     logger: ITelemetryLogger;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
-        // eslint-disable-next-line @typescript-eslint/indent
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }
@@ -60,7 +73,7 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex = 0): ops.MergeTreeChunk {
+        startIndex = 0): MergeTreeChunkLegacy {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
@@ -71,6 +84,7 @@ export class SnapshotLegacy {
             segCount++;
         }
         return {
+            version: undefined,
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
@@ -86,7 +100,7 @@ export class SnapshotLegacy {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        tardisMsgs: ISequencedDocumentMessage[],
+        catchUpMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
@@ -101,7 +115,14 @@ export class SnapshotLegacy {
                     path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializer ? serializer.stringify(chunk1, context, bind) : JSON.stringify(chunk1),
+                        contents: serializeAsMinSupportedVersion(
+                            SnapshotLegacy.header,
+                            chunk1,
+                            this.logger,
+                            this.mergeTree.options,
+                            serializer,
+                            context,
+                            bind),
                         encoding: "utf-8",
                     },
                 },
@@ -119,7 +140,14 @@ export class SnapshotLegacy {
                 path: SnapshotLegacy.body,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: serializer ? serializer.stringify(chunk2, context, bind) : JSON.stringify(chunk2),
+                    contents: serializeAsMinSupportedVersion(
+                        SnapshotLegacy.body,
+                        chunk2,
+                        this.logger,
+                        this.mergeTree.options,
+                        serializer,
+                        context,
+                        bind),
                     encoding: "utf-8",
                 },
             });
@@ -135,10 +163,11 @@ export class SnapshotLegacy {
 
         tree.entries.push({
             mode: FileMode.File,
-            path: SnapshotLegacy.tardis,
+            path: this.mergeTree.options?.useNewCatchUpBlobName === true ?
+                SnapshotLegacy.catchupOps : SnapshotLegacy.oldCatchupOps,
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),
+                contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
                 encoding: "utf-8",
             },
         });
@@ -209,24 +238,5 @@ export class SnapshotLegacy {
         }
 
         return this.segments;
-    }
-
-    public static async loadChunk(
-        storage: IObjectStorageService,
-        path: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): Promise<ops.MergeTreeChunk> {
-        const chunkAsString: string = await storage.read(path);
-        return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
-    }
-
-    public static processChunk(
-        chunk: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): ops.MergeTreeChunk {
-        const utf8 = fromBase64ToUtf8(chunk);
-        return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }
 }

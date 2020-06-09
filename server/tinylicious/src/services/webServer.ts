@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { HttpServer } from "@microsoft/fluid-server-services";
-import { IWebServer, IWebSocketServer } from "@microsoft/fluid-server-services-core";
+import { HttpServer } from "@fluidframework/server-services";
+import { IWebServer, IWebSocketServer } from "@fluidframework/server-services-core";
 
 export class WebServer implements IWebServer {
     constructor(public httpServer: HttpServer, public webSocketServer: IWebSocketServer) {
@@ -13,5 +13,4 @@ export class WebServer implements IWebServer {
     public async close(): Promise<void> {
         await Promise.all([this.httpServer.close(), this.webSocketServer.close()]);
     }
-
 }

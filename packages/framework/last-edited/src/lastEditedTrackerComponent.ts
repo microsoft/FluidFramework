@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
+import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
@@ -23,7 +23,7 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
     private static readonly factory = new PrimedComponentFactory(
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
-        [ SharedSummaryBlock.getFactory() ],
+        [SharedSummaryBlock.getFactory()],
         {},
     );
 
@@ -44,7 +44,7 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
 
     public get IComponentLastEditedTracker() { return this.lastEditedTracker; }
 
-    protected async componentInitializingFirstTime(props: any) {
+    protected async componentInitializingFirstTime() {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }

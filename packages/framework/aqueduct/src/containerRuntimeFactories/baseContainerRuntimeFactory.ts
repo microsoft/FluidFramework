@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     componentRuntimeRequestHandler,
     ComponentRegistry,
     ContainerRuntime,
     RuntimeRequestHandler,
-} from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-runtime";
+import {
+    IContainerRuntime,
+} from "@fluidframework/container-runtime-definitions";
 import {
     IComponentRegistry,
-    IHostRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
+} from "@fluidframework/runtime-definitions";
+import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
@@ -44,7 +46,7 @@ export class BaseContainerRuntimeFactory implements
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-container-definitions#IRuntimeFactory.instantiateRuntime}
+     * {@inheritDoc @fluidframework/container-definitions#IRuntimeFactory.instantiateRuntime}
      */
     public async instantiateRuntime(
         context: IContainerContext,
@@ -55,6 +57,11 @@ export class BaseContainerRuntimeFactory implements
             dc.register(entry.type, entry.provider);
         }
 
+        // Create a scope object that passes through everything except for IComponentDependencySynthesizer
+        // which we will replace with the new one we just created.
+        const scope: any = context.scope;
+        scope.IComponentDependencySynthesizer = dc;
+
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
@@ -63,23 +70,33 @@ export class BaseContainerRuntimeFactory implements
                 componentRuntimeRequestHandler,
             ],
             undefined,
-            dc);
+            scope);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IHostRuntime, runtime);
+        dc.register(IContainerRuntime, runtime);
 
-        // On first boot create the base component
         if (!runtime.existing) {
+            // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
         }
+
+        // This always gets called at the end of initialize on first time or from existing.
+        await this.containerHasInitialized(runtime);
 
         return runtime;
     }
 
     /**
      * Subclasses may override containerInitializingFirstTime to perform any setup steps at the time the container
-     * is created.  This likely includes creating any initial components that are expected to be there at the outset.
+     * is created. This likely includes creating any initial components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
+
+    /**
+     * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
+     * This likely includes loading any components that are expected to be there at the outset.
+     * @param runtime - The container runtime for the container being initialized
+     */
+    protected async containerHasInitialized(runtime: IContainerRuntime) { }
 }

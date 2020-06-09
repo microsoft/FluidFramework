@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -17,6 +17,7 @@ export class DocumentPartition extends EventEmitter {
     private lambda: IPartitionLambda;
     private corrupt = false;
     private activityTimer: NodeJS.Timeout | undefined;
+    private closed = false;
 
     constructor(
         factory: IPartitionLambdaFactory,
@@ -47,6 +48,7 @@ export class DocumentPartition extends EventEmitter {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
                     winston.error("Error processing partition message", error);
+                    context.error(error, false);
                     this.corrupt = true;
                 }
 
@@ -55,6 +57,14 @@ export class DocumentPartition extends EventEmitter {
             },
             1);
         this.q.pause();
+
+        this.context.on("error", (error: any, restart: boolean) => {
+            if (restart) {
+                // ensure no more messages are processed by this partition
+                // while the process is restarting / closing
+                this.close();
+            }
+        });
 
         // Create the lambda to handle the document messages
         this.lambdaP = factory.create(documentConfig, context);
@@ -70,11 +80,21 @@ export class DocumentPartition extends EventEmitter {
     }
 
     public process(message: IQueuedMessage) {
+        if (this.closed) {
+            return;
+        }
+
         this.q.push(message);
         this.updateActivityTimer();
     }
 
     public close() {
+        if (this.closed) {
+            return;
+        }
+
+        this.closed = true;
+
         this.clearActivityTimer();
 
         this.removeAllListeners();
@@ -82,13 +102,17 @@ export class DocumentPartition extends EventEmitter {
         // Stop any future processing
         this.q.kill();
 
-        this.lambdaP.then(
-            (lambda) => {
-                lambda.close();
-            },
-            (error) => {
-                // Lambda was never created - ignoring
-            });
+        if (this.lambda) {
+            this.lambda.close();
+        } else {
+            this.lambdaP.then(
+                (lambda) => {
+                    lambda.close();
+                },
+                (error) => {
+                    // Lambda was never created - ignoring
+                });
+        }
     }
 
     private updateActivityTimer() {

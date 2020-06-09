@@ -18,6 +18,11 @@ export interface IDocumentAttributes {
      * Minimum sequence number when the snapshot was taken
      */
     minimumSequenceNumber: number;
+
+    /**
+     * Term number at which the snapshot was taken
+     */
+    term: number | undefined;
 }
 
 export enum FileMode {
@@ -89,7 +94,7 @@ export interface ISnapshotTree {
 /**
  * Represents a version of the snapshot of a component
  */
-export interface IVersion  {
+export interface IVersion {
     // Version ID
     id: string;
 

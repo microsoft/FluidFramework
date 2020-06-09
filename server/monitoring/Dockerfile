@@ -1,7 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:12.13.1-slim
+FROM node:12.16.3-slim
+
+# To auth against private VSTS
+ARG NPM_TOKEN
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -10,25 +13,25 @@ RUN chmod +x /tini
 
 # Copy over and build the server
 WORKDIR /usr/src/server
-
-# Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY .npmrc .
-COPY package-lock.json .
 COPY package.json .
+COPY package-lock.json .
 RUN npm install
 
-# Copy over chaincode npmrc and package.json to dynamically install packages.
-COPY chaincode/* /tmp/chaincode/
+# Copy over chaincode npmrc and package.json to dynamically install packages
+# from a private registry. Currently we are not supporting private regstries
+# COPY chaincode/* /tmp/components/
 
-# Give write permission to node user.
-RUN chown -R node:node /tmp/chaincode/
-RUN chmod -R 755 /tmp/chaincode/*
+# Give write permission to node user for installing dynamic packages
+# RUN chown -R node:node /tmp/components/
+# RUN chmod -R 755 /tmp/components/*
 
-# And now copy over our actual code and build
 COPY . .
-RUN npm run tsc
+RUN npm run build
 
-# Don't run as root user
+# Remove the npmrc following the build
+RUN rm -f .npmrc
+
 USER node
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than

@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
-import { IData } from "../definitions";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IData, IKeyValueWrapper, ITenant, IKeyValue } from "../definitions";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -18,16 +17,17 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueWrapper): Router {
-
+    cache: IKeyValueWrapper): Router {
     const router: Router = Router();
 
     /**
      * Route to retrieve the home page for the app
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const oid = request.user ? request.user.oid : "local";
-        const user = request.user ? request.user : {displayName: "local"};
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const user = request.user ? request.user : { displayName: "local" };
         const tenantsP = tenantManager.getTenantsforUser(oid);
         // Return empty result if the key-value document was not loaded properly.
         const keyValuesP = cache.getKeyValues().then((keyValues) => {
@@ -36,7 +36,9 @@ export function create(
             return [];
         });
 
-        Promise.all([tenantsP, keyValuesP]).then(([tenants, keyValues]) => {
+        const tuple: [Promise<ITenant[]>, Promise<any | IKeyValue[]>] = [tenantsP, keyValuesP];
+
+        Promise.all(tuple).then(([tenants, keyValues]) => {
             const data: IData = {
                 keyValues,
                 tenants,
@@ -67,7 +69,7 @@ export function create(
                 "email",
             ],
         },
-    ));
+        ));
 
     router.get(
         "/auth/callback",
@@ -75,7 +77,7 @@ export function create(
             failureRedirect: "/login",
             successReturnToOrRedirect: "/",
         },
-    ));
+        ));
 
     return router;
 }

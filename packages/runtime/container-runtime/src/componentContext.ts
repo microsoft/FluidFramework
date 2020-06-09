@@ -3,51 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import assert from "assert";
+import EventEmitter from "events";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@fluidframework/component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
+    ContainerWarning,
     ILoader,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
+} from "@fluidframework/container-definitions";
+import { Deferred } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
-    ConnectionState,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+    ConnectionState,
+} from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     ComponentRegistryEntry,
+    IComponentRuntimeChannel,
     IAttachMessage,
     IComponentContext,
+    IComponentContextLegacy,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     IEnvelope,
-    IHostRuntime,
     IInboundSignalMessage,
-    IExperimentalHostRuntime,
-    IExperimentalComponentContext,
-} from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+} from "@fluidframework/runtime-definitions";
+import { SummaryTracker, strongAssert } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
 
 /**
- * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * Added IComponentAttributes similar to IChannelAttributes which will tell
  * the attributes of a component like the package, snapshotFormatVersion to
  * take different decisions based on a particular snapshotForamtVersion.
  */
@@ -64,19 +64,18 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
-    IExperimentalComponentContext
-{
+export abstract class ComponentContext extends EventEmitter implements
+    IComponentContext,
+    IComponentContextLegacy,
+    IDisposable {
     public readonly isExperimentalComponentContext = true;
 
     public isLocal(): boolean {
-        const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
-        assert(expHostRuntime?.isExperimentalHostRuntime);
-        return expHostRuntime.isLocal() || !this.isAttached;
+        return this.containerRuntime.isLocal() || !this.isAttached;
     }
 
     public get documentId(): string {
-        return this._hostRuntime.id;
+        return this._containerRuntime.id;
     }
 
     public get packagePath(): readonly string[] {
@@ -87,59 +86,68 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public get parentBranch(): string | null {
-        return this._hostRuntime.parentBranch;
+        return this._containerRuntime.parentBranch;
     }
 
     public get options(): any {
-        return this._hostRuntime.options;
+        return this._containerRuntime.options;
     }
 
     public get clientId(): string | undefined {
-        return this._hostRuntime.clientId;
+        return this._containerRuntime.clientId;
     }
 
     public get blobManager(): IBlobManager {
-        return this._hostRuntime.blobManager;
+        return this._containerRuntime.blobManager;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this._hostRuntime.deltaManager;
+        return this._containerRuntime.deltaManager;
     }
 
     public get connected(): boolean {
-        return this._hostRuntime.connected;
+        return this._containerRuntime.connected;
     }
 
     public get leader(): boolean {
-        return this._hostRuntime.leader;
+        return this._containerRuntime.leader;
     }
 
+    // Back-compat: supporting <= 0.16 components
     public get connectionState(): ConnectionState {
-        return this._hostRuntime.connectionState;
+        return this.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
     }
 
-    public get submitFn(): (type: MessageType, contents: any) => void {
-        return this._hostRuntime.submitFn;
+    public get submitFn(): (type: MessageType, contents: any, localOpMetadata: unknown) => void {
+        return this._containerRuntime.submitFn;
     }
 
     public get submitSignalFn(): (contents: any) => void {
-        return this._hostRuntime.submitSignalFn;
+        return this._containerRuntime.submitSignalFn;
     }
 
     public get snapshotFn(): (message: string) => Promise<void> {
-        return this._hostRuntime.snapshotFn;
+        return this._containerRuntime.snapshotFn;
     }
 
     public get branch(): string {
-        return this._hostRuntime.branch;
+        return this._containerRuntime.branch;
     }
 
     public get loader(): ILoader {
-        return this._hostRuntime.loader;
+        return this._containerRuntime.loader;
     }
 
-    public get hostRuntime(): IHostRuntime {
-        return this._hostRuntime;
+    public get containerRuntime(): IContainerRuntime {
+        return this._containerRuntime;
+    }
+
+    /**
+     * @deprecated 0.17 Issue #1888 Rename IHostRuntime to IContainerRuntime and refactor usages
+     * Use containerRuntime instead of hostRuntime
+     */
+    public get hostRuntime(): IContainerRuntime {
+        return this._containerRuntime;
     }
 
     public get baseSnapshot(): ISnapshotTree | undefined {
@@ -153,44 +161,30 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._isAttached;
     }
 
-    public readonly attach: (componentRuntime: IComponentRuntime) => void;
-    protected componentRuntime: IComponentRuntime | undefined;
+    public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private componentRuntimeDeferred: Deferred<IComponentRuntimeChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
-        private readonly _hostRuntime: IHostRuntime,
+        private readonly _containerRuntime: IContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntime) => void,
+        attach: (componentRuntime: IComponentRuntimeChannel) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
-        this.attach = (componentRuntime: IComponentRuntime) => {
+        this.attach = (componentRuntime: IComponentRuntimeChannel) => {
             attach(componentRuntime);
             this._isAttached = true;
         };
-        // back-compat: 0.14 uploadSummary
-        this.summaryTracker.addRefreshHandler(async () => {
-            // We do not want to get the snapshot unless we have to.
-            // If the component runtime is listening on refreshBaseSummary
-            // event, then that means it is older version and requires the
-            // component context to emit this event.
-            if (this.listeners("refreshBaseSummary")?.length > 0) {
-                const subtree = await this.summaryTracker.getSnapshotTree();
-                if (subtree) {
-                    // This subtree may not yet exist in acked summary, so only emit if found.
-                    this.emit("refreshBaseSummary", subtree);
-                }
-            }
-        });
     }
 
     public dispose(): void {
@@ -204,7 +198,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.hostRuntime.logger.sendErrorEvent(
+                this._containerRuntime.logger.sendErrorEvent(
                     { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
@@ -215,7 +209,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @deprecated
      * Remove once issue #1756 is closed
      */
-    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any,
+    ): Promise<IComponentRuntimeChannel> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pkgName = pkg ?? pkgOrId!;
@@ -224,7 +222,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
-        return this.hostRuntime._createComponentWithProps(packagePath, props, id);
+        return this.containerRuntime._createComponentWithProps(packagePath, props, id);
     }
 
     public async createComponentWithRealizationFn(
@@ -233,7 +231,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     ): Promise<IComponent & IComponentLoadable> {
         const packagePath = await this.composeSubpackagePath(pkg);
 
-        const componentRuntime = await this.hostRuntime.createComponentWithRealizationFn(
+        const componentRuntime = await this.containerRuntime.createComponentWithRealizationFn(
             packagePath,
             realizationFn,
         );
@@ -258,9 +256,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return deferred.promise;
     }
 
-    public async realize(): Promise<IComponentRuntime> {
+    public async realize(): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -268,7 +266,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
             let entry: ComponentRegistryEntry | undefined;
-            let registry: IComponentRegistry | undefined = this._hostRuntime.IComponentRegistry;
+            let registry: IComponentRegistry | undefined = this._containerRuntime.IComponentRegistry;
             let factory: IComponentFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
@@ -295,9 +293,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+    public async realizeWithFn(
+        realizationFn: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntimeChannel> {
         if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntimeChannel>();
             realizationFn(this);
         }
 
@@ -310,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -318,20 +318,29 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.componentRuntime!.changeConnectionState(value, clientId);
+        assert(this.connected === connected);
 
-        raiseConnectedEvent(this, value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runtime: IComponentRuntimeChannel = this.componentRuntime!;
+
+        // Back-compat: supporting <= 0.16 components
+        if (runtime.setConnectionState) {
+            runtime.setConnectionState(connected, clientId);
+        } else if (runtime.changeConnectionState) {
+            runtime.changeConnectionState(this.connectionState, clientId);
+        } else {
+            assert(false);
+        }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean): void {
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         this.verifyNotClosed();
 
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.componentRuntime!.process(message, local);
+            return this.componentRuntime!.process(message, local, localOpMetadata);
         } else {
             assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -352,13 +361,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public getQuorum(): IQuorum {
-        this.verifyNotClosed();
-        return this._hostRuntime.getQuorum();
+        return this._containerRuntime.getQuorum();
     }
 
     public getAudience(): IAudience {
-        this.verifyNotClosed();
-        return this._hostRuntime.getAudience();
+        return this._containerRuntime.getAudience();
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -393,15 +400,18 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return { entries, id: null };
     }
 
+    /**
+     * @deprecated 0.18.Should call request on the runtime directly
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const runtime = await this.realize();
         return runtime.request(request);
     }
 
-    public submitMessage(type: MessageType, content: any): number {
+    public submitMessage(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         assert(this.componentRuntime);
-        return this.submitOp(type, content);
+        return this.submitOp(type, content, localOpMetadata);
     }
 
     /**
@@ -416,7 +426,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.verifyNotClosed();
 
         // Get the latest sequence number.
-        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+        const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
 
         // Update our summary tracker's latestSequenceNumber.
         this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
@@ -438,11 +448,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 type,
             },
         };
-        return this._hostRuntime.submitSignalFn(envelope);
+        return this._containerRuntime.submitSignalFn(envelope);
     }
 
-    public error(err: any): void {
-        this.hostRuntime.error(err);
+    public raiseContainerWarning(warning: ContainerWarning): void {
+        this.containerRuntime.raiseContainerWarning(warning);
     }
 
     /**
@@ -455,18 +465,18 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
         if (leadership) {
-            this.emit("leader", this.clientId);
+            this.emit("leader");
         } else {
-            this.emit("notleader", this.clientId);
+            this.emit("notleader");
         }
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime) {
+    public bindRuntime(componentRuntime: IComponentRuntimeChannel) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
 
-        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // If this ComponentContext was created via `IContainerRuntime.createComponentContext`, the
         // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred();
@@ -478,7 +488,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (pending.length > 0) {
             // Apply all pending ops
             for (const op of pending) {
-                componentRuntime.process(op, false);
+                componentRuntime.process(op, false, undefined /* localOpMetadata */);
             }
         }
 
@@ -494,6 +504,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+
+        // notify the runtime if they want to propagate up. Used for logging.
+        this.containerRuntime.notifyComponentInstantiated(this);
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string> {
+        return this._containerRuntime.getAbsoluteUrl(relativeUrl);
     }
 
     /**
@@ -519,7 +536,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
             packagePath.push(subpackage);
         } else {
-            if (!(await this._hostRuntime.IComponentRegistry.get(subpackage))) {
+            if (!(await this._containerRuntime.IComponentRegistry.get(subpackage))) {
                 throw new Error(`Registry does not contain entry for package '${subpackage}'`);
             }
 
@@ -533,7 +550,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    private submitOp(type: MessageType, content: any): number {
+    private submitOp(type: MessageType, content: any, localOpMetadata: unknown): number {
         this.verifyNotClosed();
         const envelope: IEnvelope = {
             address: this.id,
@@ -542,12 +559,21 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 type,
             },
         };
-        return this._hostRuntime.submitFn(MessageType.Operation, envelope);
+        return this._containerRuntime.submitFn(MessageType.Operation, envelope, localOpMetadata);
+    }
+
+    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+        strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+
+        // back-compat: 0.18 components
+        if (this.componentRuntime.reSubmit) {
+            this.componentRuntime.reSubmit(type, content, localOpMetadata);
+        }
     }
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new Error("Context is closed");
         }
     }
 }
@@ -557,8 +583,8 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | null,
-        runtime: IHostRuntime,
+        private readonly initSnapshotValue: Promise<ISnapshotTree> | string | null,
+        runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
@@ -593,7 +619,7 @@ export class RemotedComponentContext extends ComponentContext {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.initSnapshotValue;
+                tree = await this.initSnapshotValue;
             }
 
             if (tree !== null && tree.blobs[".component"] !== undefined) {
@@ -635,11 +661,11 @@ export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
         pkg: string[],
-        runtime: IHostRuntime,
+        runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        attachCb: (componentRuntime: IComponentRuntime) => void,
+        attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */

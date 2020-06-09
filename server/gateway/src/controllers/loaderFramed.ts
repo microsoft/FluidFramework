@@ -8,7 +8,7 @@ import {
     IBaseHostConfig,
 } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import { IProxyLoaderFactory, IResolvedFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import {
@@ -16,8 +16,9 @@ import {
     InnerUrlResolver,
 } from "@microsoft/fluid-iframe-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { DocumentFactory } from "./documentFactory";
+import { seedFromScriptIds } from "./helpers";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
@@ -33,7 +34,7 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
 export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
-    pkg: IResolvedPackage | undefined,
+    pkg: IResolvedFluidCodeDetails | undefined,
     scriptIds: string[],
     config: any,
     clientId: string,
@@ -47,11 +48,12 @@ export async function initialize(
         documentServiceFactory: await InnerDocumentServiceFactory.create(),
         urlResolver: new InnerUrlResolver(resolved),
         config,
+        codeResolver: new SemVerCdnCodeResolver(),
         scope,
         proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
     };
 
-    const baseHost = new BaseHost(hostConf, pkg, scriptIds);
+    const baseHost = new BaseHost(hostConf, seedFromScriptIds(pkg, scriptIds));
     const loader = await baseHost.getLoader();
 
     const documentFactory = new DocumentFactory(config.tenantId,
@@ -60,7 +62,7 @@ export async function initialize(
 
     documentFactory.resolveLoader(loader);
 
-    const container = await baseHost.initializeContainer(url, pkg?.details);
+    const container = await baseHost.initializeContainer(url, pkg);
 
     // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
     // scenario.  In the next version of base-host it will only be for the upgrade scenario.

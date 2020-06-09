@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda } from "@microsoft/fluid-server-services-core";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { IPartitionLambda } from "@fluidframework/server-services-core";
+import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { ScriptoriumLambda } from "../../scriptorium/lambda";
 
 describe("Routerlicious", () => {

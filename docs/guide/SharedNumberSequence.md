@@ -4,7 +4,7 @@ uid: SharedNumberSequence
 
 # SharedNumberSequence
 
-- Package: [@microsoft/fluid-sequence](../api/fluid-sequence.md)
+- Package: [@fluidframework/sequence](../api/fluid-sequence.md)
 - API documentation: [SharedNumberSequence](../api/fluid-sequence.sharednumbersequence.md)
 
 The SharedNumberSequence distributed data structure can be used to store sequences of numbers.

@@ -1,0 +1,36 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# repo-policy-check pipeline to ensure repo conventions
+
+trigger:
+- master
+- release/*
+
+pr:
+- master
+- release/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Npm@1
+  displayName: npm ci
+  inputs:
+    command: 'custom'
+    customCommand: 'ci --ignore-scripts'
+    customRegistry: 'useFeed'
+    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+
+- task: Npm@1
+  displayName: Policy Check
+  inputs:
+    command: 'custom'
+    customCommand: 'run policy-check'
+
+- task: Npm@1
+  displayName: Layer Check
+  inputs:
+    command: 'custom'
+    customCommand: 'run layer-check'

@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/fluid-web-code-loader",
-  "version": "0.16.5",
+  "name": "@fluidframework/web-code-loader",
+  "version": "0.20.0",
   "description": "Loader client app",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -19,23 +19,25 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc"
+    "lint": "npm run tsfmt && npm run eslint",
+    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "tsc": "tsc",
+    "tsfmt": "tsfmt --verify",
+    "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.16.5",
-    "@types/node": "^10.14.6",
+    "@fluidframework/container-definitions": "^0.20.0",
+    "@types/node": "^10.17.24",
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0",
-    "@microsoft/fluid-build-common": "^0.14.0",
     "@types/isomorphic-fetch": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
-    "concurrently": "^4.1.0",
+    "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
@@ -47,6 +49,7 @@
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "typescript-formatter": "7.1.0"
   }
 }

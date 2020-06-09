@@ -1,0 +1,80 @@
+## Fluid image version
+image: prague.azurecr.io/prague-server:latest
+
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+
+name: routerlicious
+
+alfred:
+  name: alfred
+  replicas: 4
+  externalUrl: alfred_external_url
+  host: alfred_host
+  cert: cert
+  tenants: []
+  key: jwt_key
+  maxNumberOfClientsPerDocument: 1000000
+
+deli:
+  name: deli
+  replicas: 8
+
+scriptorium:
+  name: scriptorium
+  replicas: 8
+
+scribe:
+  name: scribe
+  replicas: 8
+
+routemaster:
+  name: routemaster
+  replicas: 8
+
+foreman:
+  name: foreman
+  replicas: 8
+
+riddler:
+  name: riddler
+  replicas: 2
+  tenants: []
+
+historian:
+  externalUrl: historian_external_url
+  internalUrl: historian_internal_url
+
+zookeeper:
+  local: false
+  url: zookeeper_url:port
+
+mongodb:
+  url: mongodb_url
+
+rabbitmq:
+  connectionString: "connection_string"
+
+redis:
+  url: redis_url
+  port: 6379
+  tls: false
+
+redis2:
+  url: redis_url
+  port: 6379
+  tls: false
+
+kafka:
+  topics:
+    rawdeltas: rawdeltas
+    deltas: deltas
+  url: kafka_url:port
+
+ingress:
+  class: nginx-prod
+
+error:
+  track: true
+  endpoint: "error_tracking_endpoint"

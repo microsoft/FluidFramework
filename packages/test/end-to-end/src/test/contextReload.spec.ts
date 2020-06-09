@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
-import { IFluidCodeDetails, IFluidPackage, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import assert from "assert";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@fluidframework/aqueduct";
+import { IFluidCodeDetails, IFluidPackage, ILoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
 abstract class TestComponent extends PrimedComponent {
-    public static readonly type = "@chaincode/test-component";
+    public static readonly type = "@fluid-example/test-component";
     public readonly version: number;
 
     public get _root() {
@@ -83,8 +83,8 @@ describe("Context Reload", () => {
 
     async function createContainer(): Promise<Container> {
         const loader: ILoader = createLocalLoader([
-            [ codeDetailsV1, TestComponentV1.getFactory() ],
-            [ codeDetailsV2, TestComponentV2.getFactory() ],
+            [codeDetailsV1, TestComponentV1.getFactory()],
+            [codeDetailsV2, TestComponentV2.getFactory()],
         ], deltaConnectionServer);
         return initializeLocalContainer(id, loader, codeDetailsV1);
     }

@@ -4,7 +4,7 @@
  */
 
 // TODO: Move this in a seperate package.
-// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -27,7 +27,6 @@ export class NodeWhiteList {
 
 export class NodeCodeLoader {
     constructor(
-        private readonly registry: string,
         private readonly packageDirectory: string,
         private readonly waitTimeoutMSec: number,
         private readonly whiteList: any) {
@@ -79,7 +78,7 @@ export class NodeCodeLoader {
             fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
 
             // Run npm install
-            await asyncExec(`npm install ${pkg} --registry ${this.registry}`, { cwd: packageDirectory });
+            await asyncExec(`npm install ${pkg}`, { cwd: packageDirectory });
 
             // Write dummy signal file to indicate package installation success.
             fs.closeSync(fs.openSync(signalPath, "w"));

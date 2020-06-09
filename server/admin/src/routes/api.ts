@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import * as core from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
-import { IKeyValue, ITenantInput } from "../definitions";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IKeyValue, IKeyValueWrapper, ITenantInput } from "../definitions";
 import { TenantManager } from "../tenantManager";
 
 export function create(
@@ -15,7 +14,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueWrapper): Router {
+    cache: IKeyValueWrapper): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
@@ -28,6 +27,7 @@ export function create(
      * Creates a new tenant
      */
     router.post("/tenants", ensureLoggedIn(), (request, response) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const oid = request.user ? request.user.oid : "local";
         const tenantInput = request.body as ITenantInput;
         const tenantP = tenantManager.addTenant(oid, tenantInput);
@@ -55,7 +55,7 @@ export function create(
      * Deletes an existing Key-Value
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
-        const key = request.params[0] as string;
+        const key = request.params[0];
         const delP = cache.removeKeyValue(key);
         returnResponse(delP, response);
     });

@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ConnectionState, IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/component-runtime-definitions";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
     private _handler: IDeltaHandler | undefined;
 
     private get handler(): IDeltaHandler {
         assert(this._handler);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this._handler!;
+        return this._handler;
     }
-    public get state(): ConnectionState {
-        return this._state;
+    public get connected(): boolean {
+        return this._connected;
     }
 
     constructor(
         public objectId: string,
-        private _state: ConnectionState,
-        private readonly submitFn: (message: IDocumentMessage) => number,
+        private _connected: boolean,
+        private readonly submitFn: (message: IDocumentMessage, localOpMetadata: unknown) => number,
         private readonly dirtyFn: () => void) {
     }
 
@@ -31,20 +30,24 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this._handler = handler;
     }
 
-    public setConnectionState(state: ConnectionState) {
-        this._state = state;
-        this.handler.setConnectionState(state);
+    public setConnectionState(connected: boolean) {
+        this._connected = connected;
+        this.handler.setConnectionState(connected);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean) {
-        this.handler.process(message, local);
+    public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        this.handler.process(message, local, localOpMetadata);
+    }
+
+    public reSubmit(content: any, localOpMetadata: unknown) {
+        this.handler.reSubmit(content, localOpMetadata);
     }
 
     /**
      * Send new messages to the server
      */
-    public submit(message: IDocumentMessage): number {
-        return this.submitFn(message);
+    public submit(message: IDocumentMessage, localOpMetadata: unknown): number {
+        return this.submitFn(message, localOpMetadata);
     }
 
     /**

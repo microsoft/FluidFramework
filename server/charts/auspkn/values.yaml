@@ -16,7 +16,7 @@ logger:
   label: "winston"
 
 npm:
-  url: https://packages.wu2.prague.office-int.com
+  url: http://localhost:4873
   username: prague
   password: 8Fxttu_A
 

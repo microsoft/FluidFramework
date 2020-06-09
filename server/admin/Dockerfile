@@ -1,7 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim
+FROM node:12.16.3-slim
+
+# To auth against private VSTS
+ARG NPM_TOKEN
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -12,7 +15,6 @@ RUN chmod +x /tini
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-ARG NPM_TOKEN
 COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .

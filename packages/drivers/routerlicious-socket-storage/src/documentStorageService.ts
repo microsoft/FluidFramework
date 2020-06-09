@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy } from "@microsoft/fluid-protocol-base";
+import assert from "assert";
+import { gitHashFile } from "@fluidframework/common-utils";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import * as resources from "@fluidframework/gitresources";
+import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,
@@ -18,8 +18,8 @@ import {
     IVersion,
     SummaryObject,
     SummaryType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/protocol-definitions";
+import * as gitStorage from "@fluidframework/server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -88,7 +88,12 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
         const snapshot = context.ackHandle
-            ? await this.getVersions(context.ackHandle, 1).then(async (versions) => this.getSnapshotTree(versions[0]))
+            ? await this.getVersions(context.ackHandle, 1)
+                .then(async (versions) => {
+                    // Clear the cache as the getSnapshotTree call will fill the cache.
+                    this.blobsShaCache.clear();
+                    return this.getSnapshotTree(versions[0]);
+                })
             : undefined;
         return this.writeSummaryTree(summary, snapshot ?? undefined);
     }
@@ -255,9 +260,9 @@ export class DocumentStorageService implements IDocumentStorageService {
         // The gitHashFile would return the same hash as returned by the server as blob.sha
         const hash = gitHashFile(Buffer.from(parsedContent, encoding));
         if (!this.blobsShaCache.has(hash)) {
+            this.blobsShaCache.set(hash, "");
             const blob = await this.manager.createBlob(parsedContent, encoding);
             assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
-            this.blobsShaCache.set(blob.sha, "");
         }
         return hash;
     }

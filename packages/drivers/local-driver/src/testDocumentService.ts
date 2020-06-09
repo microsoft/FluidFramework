@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-driver-definitions";
-import { IClient } from "@microsoft/fluid-protocol-definitions";
-import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
-import { GitManager } from "@microsoft/fluid-server-services-client";
-import { TestHistorian } from "@microsoft/fluid-server-test-utils";
-import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import * as api from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
+import * as socketStorage from "@fluidframework/routerlicious-driver";
+import { GitManager } from "@fluidframework/server-services-client";
+import { TestHistorian } from "@fluidframework/server-test-utils";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
 
 /**
  * Basic implementation of a document service for testing.
  */
-export class TestDocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+export class TestDocumentService implements api.IDocumentService {
     public readonly isExperimentalDocumentService = true;
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -28,6 +28,7 @@ export class TestDocumentService implements api.IDocumentService, api.IExperimen
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
+        private readonly documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection>,
     ) { }
 
     /**
@@ -54,12 +55,24 @@ export class TestDocumentService implements api.IDocumentService, api.IExperimen
      */
     public async connectToDeltaStream(
         client: IClient): Promise<api.IDocumentDeltaConnection> {
-        return TestDocumentDeltaConnection.create(
+        const documentDeltaConnection = await TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
             this.localDeltaConnectionServer.webSocketServer);
+
+        const clientId = documentDeltaConnection.clientId;
+
+        // Add this document service for the clientId in the document service factory.
+        this.documentDeltaConnectionsMap.set(clientId, documentDeltaConnection);
+
+        // Add a listener to remove this document service when the client is diconnected.
+        documentDeltaConnection.on("disconnect", () => {
+            this.documentDeltaConnectionsMap.delete(clientId);
+        });
+
+        return documentDeltaConnection;
     }
 
     /**
@@ -91,6 +104,8 @@ export function createTestDocumentService(
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
-    documentId: string): api.IDocumentService {
-    return new TestDocumentService(resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    documentId: string,
+    documentDeltaConnectionsMap: Map<string, TestDocumentDeltaConnection>): api.IDocumentService {
+    return new TestDocumentService(
+        resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId, documentDeltaConnectionsMap);
 }

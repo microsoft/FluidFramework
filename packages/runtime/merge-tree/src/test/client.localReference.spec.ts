@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
 import { TestClient } from "./";

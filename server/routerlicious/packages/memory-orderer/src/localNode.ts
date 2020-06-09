@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentMessage, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -16,7 +16,7 @@ import {
     ITenantManager,
     IWebSocketServer,
     ILogger,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
 import { v4 as uuid } from "uuid";
@@ -190,6 +190,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             moniker.choose(),
                             connectMessage.client);
 
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        connection.connect();
+
                         // Need to subscribe to both channels. Then broadcast subscription across pipe
                         // on receiving a message
                         this.connectionMap.set(message.cid, connection);
@@ -210,6 +213,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                     case "disconnect": {
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.disconnect();
                         this.connectionMap.delete(message.cid);
 
@@ -220,6 +224,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         const orderMessage = message.payload as IDocumentMessage;
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         connection.order([orderMessage]);
                         break;
                     }

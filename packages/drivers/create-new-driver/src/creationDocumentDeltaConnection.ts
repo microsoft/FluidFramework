@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -17,7 +16,8 @@ import {
     ISignalMessage,
     ITokenClaims,
     IConnect,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { CreationServerMessagesHandler } from "./creationDriverServer";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -26,7 +26,9 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
  * Represents a connection to a stream of delta updates. This also provides functionality to stamp
  * ops and then emit them.
  */
-export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class CreationDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
     private _details: IConnected | undefined;
 
     private get details(): IConnected {
@@ -165,7 +167,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - message to submit
      */
     public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
             this.serverMessagesHandler.submitMessage(messages, this.clientId);
             resolve();
         });
@@ -190,7 +192,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
     }
 
     /**
-     * Initialize the details for the connction and send the join op.
+     * Initialize the details for the connection and send the join op.
      * @param client - Client who initiated the connection.
      * @param mode - Mode of the connection.
      */

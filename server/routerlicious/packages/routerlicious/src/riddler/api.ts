@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
+import { MongoManager } from "@fluidframework/server-services-core";
 import { Response, Router } from "express";
 // eslint-disable-next-line import/no-internal-modules
 import { getParam } from "../alfred/utils";
@@ -74,8 +74,9 @@ export function create(
     /**
      * Creates a new tenant
      */
-    router.post("/tenants", (request, response) => {
-        const tenantP = manager.createTenant();
+    router.post("/tenants/:id?", (request, response) => {
+        const tenantId = getParam(request.params, "id");
+        const tenantP = manager.createTenant(tenantId);
         returnResponse(tenantP, response);
     });
 

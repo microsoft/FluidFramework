@@ -1,5 +1,5 @@
 {{- if .Values.eventHub }}
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "deli.fullname" . }}-eventhub
@@ -10,6 +10,9 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "routerlicious.name" . }}
   replicas: {{ .Values.deli.replicas }}
   template:
     metadata:
@@ -26,9 +29,9 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - 'dist/event-hub-service/index.js'
+          - 'packages/routerlicious/dist/event-hub-service/index.js'
           - 'deli'
-          - '/usr/src/server/server/routerlicious/packages/routerlicious/dist/event-hub/deli/index.js'
+          - '/usr/src/server/packages/routerlicious/dist/event-hub/deli/index.js'
         env:
         - name: DEBUG
           value: "fluid:*"
@@ -36,7 +39,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/server/routerlicious/packages/routerlicious/config/config.json
+          mountPath: /usr/src/server/packages/routerlicious/config/config.json
           subPath: config.json
       dnsConfig:
         options:

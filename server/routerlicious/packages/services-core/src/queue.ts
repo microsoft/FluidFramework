@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 
 export interface IQueuedMessage {
     topic: string;
@@ -72,7 +72,7 @@ export interface IProducer {
     /**
      * Sends the message to a queue
      */
-    send(messages: object[], tenantId: string, documentId: string): Promise<any>;
+    send(messages: object[], tenantId: string, documentId: string): Promise<void>;
 
     /**
      * Closes the underlying connection

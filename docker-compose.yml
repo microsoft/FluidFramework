@@ -10,62 +10,62 @@ services:
             - NODE_ENV=development
         restart: always
     alfred:
-        image: prague.azurecr.io/prague-server:latest
+        image: prague.azurecr.io/prague-server:26869
         ports:
             - "3003:3000"
-        command: node dist/alfred/www.js
+        command: node packages/routerlicious/dist/alfred/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     deli:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js deli /usr/src/server/server/routerlicious/packages/routerlicious/dist/deli/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scriptorium:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js scriptorium /usr/src/server/server/routerlicious/packages/routerlicious/dist/scriptorium/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     copier:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js copier /usr/src/server/server/routerlicious/packages/routerlicious/dist/copier/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scribe:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js scribe /usr/src/server/server/routerlicious/packages/routerlicious/dist/scribe/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     foreman:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js foreman /usr/src/server/server/routerlicious/packages/routerlicious/dist/foreman/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js foreman /usr/src/server/packages/routerlicious/dist/foreman/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     routemaster:
-        image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js routemaster /usr/src/server/server/routerlicious/packages/lambdas-driver/dist/document-router/index.js
+        image: prague.azurecr.io/prague-server:26869
+        command: node packages/routerlicious/dist/kafka-service/index.js routemaster /usr/src/server/packages/lambdas-driver/dist/document-router/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
-            - documentLambda=/usr/src/server/server/routerlicious/packages/routerlicious/dist/routemaster/index.js
+            - documentLambda=/usr/src/server/packages/routerlicious/dist/routemaster/index.js
         restart: always
     riddler:
-        image: prague.azurecr.io/prague-server:latest
+        image: prague.azurecr.io/prague-server:26869
         ports:
             - "5000:5000"
-        command: node dist/riddler/www.js
+        command: node packages/routerlicious/dist/riddler/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development

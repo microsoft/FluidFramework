@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
-import { TestKafka, DebugLogger } from "@microsoft/fluid-server-test-utils";
-import * as assert from "assert";
+import { IContext, IQueuedMessage, ILogger } from "@fluidframework/server-services-core";
+import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
+import assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
 
 class TestContext implements IContext {
@@ -37,7 +37,7 @@ describe("document-router", () => {
 
             offset0 = TestKafka.createdQueuedMessage(0);
             offset5 = TestKafka.createdQueuedMessage(5);
-            offset10 =  TestKafka.createdQueuedMessage(10);
+            offset10 = TestKafka.createdQueuedMessage(10);
             offset12 = TestKafka.createdQueuedMessage(12);
             offset15 = TestKafka.createdQueuedMessage(15);
             offset20 = TestKafka.createdQueuedMessage(20);

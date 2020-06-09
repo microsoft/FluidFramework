@@ -7,7 +7,7 @@
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
 export class ScriptManager {
-    private static readonly loadingEntrypoints = new  Map<string, Promise<unknown>>();
+    private static readonly loadingEntrypoints = new Map<string, Promise<unknown>>();
     private static readonly loadCache = new Map<string, Promise<unknown>>();
 
     // Check whether the script is loaded inside a worker.
@@ -66,6 +66,27 @@ export class ScriptManager {
         return this.loadCache.get(scriptUrl);
     }
 
+    public async preCacheFiles(files: string[], tryPreload: boolean): Promise<void> {
+        await Promise.all(
+            files.map(async (url) => {
+                const cacheLink = document.createElement("link");
+                cacheLink.href = url;
+                cacheLink.as = "script";
+
+                if (tryPreload && cacheLink.relList?.supports("preload") === true) {
+                    cacheLink.rel = "preload";
+                } else {
+                    cacheLink.rel = "prefetch";
+                }
+                const loadP = new Promise<void>((resolve, reject) => {
+                    cacheLink.onload = () => resolve();
+                    cacheLink.onerror = (...args: any[]) => reject({ ...args });
+                });
+                document.head.appendChild(cacheLink);
+                return loadP;
+            }));
+    }
+
     public async loadScript(scriptUrl: string, entryPoint: string): Promise<unknown> {
         return ScriptManager.protectEntrypoint(
             entryPoint,
@@ -74,11 +95,11 @@ export class ScriptManager {
 
     public async loadLibrary(
         libraryDetails: { files: string[]; library: string },
-    ): Promise<{file: string, entryPoint: unknown}[]> {
-        return ScriptManager.protectEntrypoint(libraryDetails.library, async ()=>{
+    ): Promise<{ file: string, entryPoint: unknown }[]> {
+        return ScriptManager.protectEntrypoint(libraryDetails.library, async () => {
             return Promise.all(
                 libraryDetails.files.map(
-                    async (file)=>({
+                    async (file) => ({
                         file,
                         entryPoint: await ScriptManager.internalLoadScript(file, libraryDetails.library),
                     })));

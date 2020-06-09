@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { IDirectory, SharedDirectory, DirectoryFactory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { MockComponentRuntime } from "@fluidframework/test-runtime-utils";
+import { IDirectory, SharedDirectory, DirectoryFactory } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 import { createDirectoryWithInterception } from "../map";
 
 describe("Shared Directory with Interception", () => {
@@ -15,7 +15,6 @@ describe("Shared Directory with Interception", () => {
         const documentId = "fakeId";
         const attributionDirectoryName = "attribution";
         const attributionKey = (key: string) => `${key}.attribution`;
-        let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedDirectory: SharedDirectory;
         let componentContext: IComponentContext;
 
@@ -88,17 +87,12 @@ describe("Shared Directory with Interception", () => {
         }
 
         beforeEach(() => {
-            const runtime = new MockRuntime();
-            deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedDirectory = new SharedDirectory(documentId, runtime, DirectoryFactory.Attributes);
-            runtime.services = {
-                deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
-                objectStorage: new MockStorage(undefined),
-            };
-            runtime.attach();
+            const componentRuntime = new MockComponentRuntime();
+            sharedDirectory = new SharedDirectory(documentId, componentRuntime, DirectoryFactory.Attributes);
+            componentRuntime.attach();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            componentContext = { containerRuntime: { orderSequentially } } as IComponentContext;
         });
 
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory

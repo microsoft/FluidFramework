@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import fs from "fs";
 import { URL } from "url";
 
 export let dumpMessages = false;
@@ -14,7 +14,14 @@ export let dumpSnapshotVersions = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
-export let paramForceTokenReauth = false;
+let paramForceTokenReauth = false;
+
+// Only return true once, to reauth on first call.
+export function getForceTokenReauth() {
+    const result = paramForceTokenReauth;
+    paramForceTokenReauth = false;
+    return result;
+}
 
 export let paramSaveDir: string | undefined;
 export const messageTypeFilter = new Set<string>();

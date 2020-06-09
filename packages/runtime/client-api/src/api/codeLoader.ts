@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@microsoft/fluid-cell";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import * as cell from "@fluidframework/cell";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { ComponentRuntime } from "@fluidframework/component-runtime";
 import {
     ICodeLoader,
     IContainerContext,
@@ -13,20 +13,19 @@ import {
     IRuntime,
     IRuntimeFactory,
     IFluidModule,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import * as ink from "@microsoft/fluid-ink";
-import * as map from "@microsoft/fluid-map";
-import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
-import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
+} from "@fluidframework/container-definitions";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import * as ink from "@fluidframework/ink";
+import * as map from "@fluidframework/map";
+import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import {
     IComponentContext,
     IComponentFactory,
-    IHostRuntime,
     NamedComponentRegistryEntries,
-} from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
-import { createIError } from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/runtime-definitions";
+import { CreateContainerError } from "@fluidframework/driver-utils";
+import * as sequence from "@fluidframework/sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -37,7 +36,7 @@ export class Chaincode implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public constructor(private readonly closeFn: () => void) {}
+    public constructor(private readonly closeFn: () => void) { }
 
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories
@@ -48,7 +47,6 @@ export class Chaincode implements IComponentFactory {
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
         const consensusQueueFactory = ConsensusQueue.getFactory();
-        const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
         const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
@@ -62,7 +60,6 @@ export class Chaincode implements IComponentFactory {
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);
         modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
@@ -106,7 +103,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
      * @param request - The request
      * @param runtime - Container Runtime instance
      */
-    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IContainerRuntime) {
         const trimmed = request.url
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
@@ -141,7 +138,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                     componentRuntime.attach();
                 })
                 .catch((error: any) => {
-                    context.error(createIError(error));
+                    context.closeFn(CreateContainerError(error));
                 });
         }
 

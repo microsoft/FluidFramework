@@ -1,6 +1,6 @@
 {
-  "name": "@microsoft/generator-fluid",
-  "version": "0.16.5",
+  "name": "generator-fluid",
+  "version": "0.2.0",
   "description": "A yeoman project generator for fluid components",
   "keywords": [
     "yeoman-generator"
@@ -8,10 +8,15 @@
   "license": "MIT",
   "author": "Microsoft",
   "main": "app/index.js",
+  "files": [
+    "app"
+  ],
   "scripts": {
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link",
-    "test": "mocha --recursive test",
+    "test": "npm run test:unit",
+    "test:end-to-end": "mocha test/endToEnd.js -r make-promises-safe",
+    "test:unit": "mocha test/testApp.js -r make-promises-safe",
     "unlink": "npm rm --global generator-fluid"
   },
   "dependencies": {
@@ -21,7 +26,9 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^7.1.1",
+    "shelljs": "^0.8.4",
     "yeoman-assert": "^3.1.1",
     "yeoman-test": "^2.4.1"
   }

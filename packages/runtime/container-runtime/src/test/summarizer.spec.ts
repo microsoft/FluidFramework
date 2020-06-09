@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
+import assert from "assert";
+import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryConfiguration,
     ISummaryProposal,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import * as sinon from "sinon";
+} from "@fluidframework/protocol-definitions";
+import sinon from "sinon";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
@@ -125,6 +125,7 @@ describe("Runtime", () => {
                         0,
                         { refSequenceNumber: 0, summaryTime: Date.now() },
                         false,
+                        () => { },
                     );
                 });
 

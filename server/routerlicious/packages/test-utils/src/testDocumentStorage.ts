@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
-import { IGitCache, IGitManager } from "@microsoft/fluid-server-services-client";
+import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
+import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDocumentDetails,
@@ -12,7 +12,7 @@ import {
     IScribe,
     ITenantManager,
     IExperimentalDocumentStorage,
-} from "@microsoft/fluid-server-services-core";
+} from "@fluidframework/server-services-core";
 import {
     ISummaryTree,
     ICommittedProposal,
@@ -20,15 +20,15 @@ import {
     SummaryType,
     ISnapshotTree,
     SummaryObject,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import {
     IQuorumSnapshot,
     getQuorumTreeEntries,
     mergeAppAndProtocolTree,
     getGitMode,
     getGitType,
-} from "@microsoft/fluid-protocol-base";
-import { gitHashFile } from "@microsoft/fluid-common-utils";
+} from "@fluidframework/protocol-base";
+import { gitHashFile } from "@fluidframework/common-utils";
 
 const StartingSequenceNumber = 0;
 
@@ -59,6 +59,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
         documentId: string,
         summary: ISummaryTree,
         sequenceNumber: number,
+        term: number,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId);
@@ -74,7 +75,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
             values,
         };
         const entries: ITreeEntry[] =
-            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, quorumSnapshot);
+            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             gitManager.createTree({ entries, id: null }),

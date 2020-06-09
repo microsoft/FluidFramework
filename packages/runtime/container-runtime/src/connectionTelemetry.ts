@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import assert from "assert";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 class ConnectionTelemetry {
     private pongCount: number = 0;
@@ -25,8 +25,7 @@ class ConnectionTelemetry {
     public constructor(
         private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly logger: ITelemetryLogger)
-    {
+        private readonly logger: ITelemetryLogger) {
         this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
         this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
         this.deltaManager.on("beforeOpProcessing", (message) => this.beforeProcessingOp(message));
@@ -59,12 +58,11 @@ class ConnectionTelemetry {
     private beforeProcessingOp(message: ISequencedDocumentMessage) {
         // Record collab window max size after every 1000th op.
         if (message.sequenceNumber % 1000 === 0) {
-            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined)
-            {
+            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MsnStatistics",
                     sequenceNumber: message.sequenceNumber,
-                    msnDistance: this.deltaManager.referenceSequenceNumber - this.deltaManager.minimumSequenceNumber,
+                    msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
                     timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
@@ -72,14 +70,13 @@ class ConnectionTelemetry {
         }
 
         if (this.clientId === message.clientId &&
-                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
+            this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
             assert(this.opSendTimeForLatencyStatistics);
             this.logger.sendTelemetryEvent({
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                value: Date.now() - this.opSendTimeForLatencyStatistics!,
+                value: Date.now() - this.opSendTimeForLatencyStatistics,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }
@@ -89,7 +86,6 @@ class ConnectionTelemetry {
 export function ReportConnectionTelemetry(
     clientId: string | undefined,
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger)
-{
+    logger: ITelemetryLogger) {
     new ConnectionTelemetry(clientId, deltaManager, logger);
 }

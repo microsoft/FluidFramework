@@ -5,14 +5,9 @@
 
 module.exports = {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
-        "@typescript-eslint/no-use-before-define":"off",
-        "@typescript-eslint/promise-function-async":"off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "import/no-internal-modules":"off",
-        "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

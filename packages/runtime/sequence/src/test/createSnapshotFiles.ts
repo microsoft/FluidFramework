@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import { generateStrings } from "./generateSharedStrings";
+import fs from "fs";
+import { generateStrings, LocationBase } from "./generateSharedStrings";
 
-const filename: string = "src/test/sequenceTestSnapshot";
-let i = 1;
 for (const s of generateStrings()) {
-    fs.writeFileSync(`${filename}${i++}.json`, JSON.stringify(s.snapshot(), undefined, 1));
+    fs.writeFileSync(`${LocationBase}${s[0]}.json`, JSON.stringify(s[1].snapshot(), undefined, 1));
 }

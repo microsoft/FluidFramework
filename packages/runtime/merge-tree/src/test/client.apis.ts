@@ -5,7 +5,7 @@
 
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
-import * as assert from "assert";
+import assert from "assert";
 import * as MergeTree from "../";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";
@@ -47,7 +47,7 @@ export function clientGetPropertiesAtPositionTest() {
 }
 
 function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posStart: number,
-                                     posAfterEnd: number, verbose = false) {
+    posAfterEnd: number, verbose = false) {
     const segExtents = client.getRangeExtentsOfPosition(pos);
     const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
     if ((!result) && verbose) {

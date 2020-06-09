@@ -8,11 +8,11 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@microsoft/fluid-server-services-core";
-import * as cors from "cors";
+} from "@fluidframework/server-services-core";
+import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
@@ -25,7 +25,7 @@ export function create(
     producer: IProducer,
     appTenants: IAlfredTenant[]): Router {
     const router: Router = Router();
-    const deltasRoute = deltas.create(config, mongoManager, appTenants);
+    const deltasRoute = deltas.create(config, tenantManager, mongoManager, appTenants);
     const documentsRoute = documents.create(storage, appTenants);
     const apiRoute = api.create(config, producer, tenantManager, storage);
 

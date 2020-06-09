@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import assert from "assert";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IComponentContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedMap.
@@ -34,7 +34,7 @@ export function createSharedMapWithInterception(
         // infinite recursion.
         assert(executingCallback === false, "set called recursively from the interception callback");
 
-        context.hostRuntime.orderSequentially(() => {
+        context.containerRuntime.orderSequentially(() => {
             map = sharedMap.set(key, value);
             executingCallback = true;
             try {

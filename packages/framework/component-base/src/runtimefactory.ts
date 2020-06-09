@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     RuntimeRequestHandler,
     ContainerRuntime,
-} from "@microsoft/fluid-container-runtime";
+} from "@fluidframework/container-runtime";
 import {
     NamedComponentRegistryEntries,
     IComponentFactory,
     FlushMode,
-} from "@microsoft/fluid-runtime-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+} from "@fluidframework/runtime-definitions";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+
+const defaultComponentId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
     private readonly registry: NamedComponentRegistryEntries;
@@ -70,9 +72,8 @@ export class RuntimeFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
             await runtime
-                ._createComponentWithProps(this.defaultComponent.type)
-                .then((componentRuntime) => { componentRuntime.attach(); })
-                .catch((error) => { context.error(error); });
+                .createComponent(defaultComponentId, this.defaultComponent.type)
+                .then((componentRuntime) => { componentRuntime.attach(); });
         }
 
         return runtime;

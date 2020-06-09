@@ -28,7 +28,7 @@ The [`SharedComponent`](./src/components/sharedComponent.ts) provides the follow
 
 - Basic set of interface implementations to be loadable in a Fluid Container.
 - Functions for managing component lifecycle.
-  - `componentInitializingFirstTime(props: any)` - called only the first time a component is initialized
+  - `componentInitializingFirstTime(props: S)` - called only the first time a component is initialized
   - `componentInitializingFromExisting()` - called every time except the first time a component is initialized
   - `componentHasInitialized()` - called every time after `componentInitializingFirstTime` or `componentInitializingFromExisting` executes
 - Helper functions for creating and getting other Component Objects in the same Container.
@@ -74,12 +74,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
 ### Component Factory Object Development
 
-The Component Factory Object is used to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
+The Component Factory Object is used to create a component and to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
 
 The Aqueduct offers a factory for each of the Component Objects provided.
 
 > [`SharedComponentFactory`](./src/componentFactories/sharedComponentFactory.ts) for the `SharedComponent`
-> [`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
+
+>[`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
 
 #### Component Factory Object Example
 
@@ -92,6 +93,37 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
     [], // Distributed Data Structures
     {}, // Provider Symbols see below
 );
+```
+This factory can then create Clickers when provided a creating component context.
+```typescript
+const myClicker = ClickerInstantiationFactory.createComponent(this.context) as Clicker;
+```
+
+#### Component Object/Factory with Initial State Example
+
+If we want to be able to create a component and provide an initial state, we amend our component example as follows to define an initial state type and to define this type as a generic on PrimedComponentFactory. We then allow `componentInitializingFirstTime` to take an initial state object.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+
+export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitialState> implements IComponentHTMLView {
+    protected async componentInitializingFirstTime(initialState?: IClickerInitialState) {
+        let startingValue = 0;
+        if (initialState) {
+            startingValue = initialState.initialValue;
+        }
+
+        this.root.createValueType("clicks", CounterValueType.Name, startingValue);
+    }
+
+    ...
+
+}
+```
+No changes are needed to the factory definition.  The same generics are defined in the factory, but are inferred from constructor arguments.  When creating a component this way, initial state may be optionally provided in the creation call.
+```typescript
+const myClickerWithValue = ClickerWithInitialValueFactory.createComponent(this.context, { initialValue: 2020 })
 ```
 
 #### Providers in Components
@@ -122,7 +154,7 @@ export class MyExample extends PrimedComponent<IComponentUserInfo> {
 }
 
 // Note: we have to define the symbol to the IComponentUserInfo that we declared above. This is compile time checked.
-export const MyExampleFactory = new PrimedComponentFactory(
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
     Clicker.ComponentName
     Clicker,
     [], // Distributed Data Structures
@@ -147,8 +179,8 @@ In the below example we will write a Container that exposes the above [`Clicker`
 
 ```typescript
 export fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
-  "clicker", // Default Component Type
-  ["clicker", Promise.resolve(ClickerInstantiationFactory)], // Component Registry
+  ClickerInstantiationFactory.type, // Default Component Type
+  ClickerInstantiationFactory.registryEntry, // Component Registry
   [], // Provider Entries
   [], // Request Handler Routes
 );
@@ -165,7 +197,7 @@ interface ProviderEntry<T extends keyof IComponent> {
 }
 ```
 
-The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@microsoft/fluid-synthisize`
+The `type` must be a keyof `IComponent`. This basically means that it needs to be the name of an interfaces that extends off of `IComponent`. The `provider` must be something that provides the interface defined in `type`. The `DependencyContainer` we use in the `@fluidframework/synthesize`
 package defines the follow `ComponentProvider` types:
 
 ```typescript

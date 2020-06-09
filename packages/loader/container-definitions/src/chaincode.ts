@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
+} from "@fluidframework/component-core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -24,11 +23,16 @@ import {
     MessageType,
     ISummaryTree,
     IVersion,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
+import { CriticalContainerError, ContainerWarning } from "./error";
 import { ICodeLoader, ILoader } from "./loader";
+
+// Issue #2375
+// TODO: remove, replace all usage with version from protocol-definitions
+export const summarizerClientType = "summarizer";
 
 /**
  * Person definition in a npm script
@@ -144,7 +148,10 @@ export interface IRuntime extends IDisposable {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId?: string);
+    setConnectionState(connected: boolean, clientId?: string);
+
+    // Back-compat: supporting <= 0.16 components
+    changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
      * @deprecated in 0.14 async stop()
@@ -164,11 +171,6 @@ export interface IRuntime extends IDisposable {
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
-}
-
-export interface IExperimentalRuntime extends IRuntime {
-
-    isExperimentalRuntime: true;
 
     createSummary(): ISummaryTree;
 }
@@ -183,7 +185,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
+export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -193,14 +195,13 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly parentBranch: string | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
-    readonly connectionState: ConnectionState;
     readonly connected: boolean;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | null;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
+    readonly closeFn: (error?: CriticalContainerError) => void;
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
@@ -215,30 +216,23 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      */
     readonly scope: IComponent;
 
-    error(err: IError): void;
+    raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
 
     /**
-     * DEPRECATED
-     * back-compat: 0.14 uploadSummary
+     * Get an absolute url for a provided container-relative request.
+     * @param relativeUrl - A relative request within the container
+     *
+     * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
      */
-    refreshBaseSummary(snapshot: ISnapshotTree): void;
-}
-
-export interface IExperimentalContainerContext extends IContainerContext {
-    isExperimentalContainerContext: true;
+    getAbsoluteUrl?(relativeUrl: string): Promise<string>;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
+     * False if the container is attached to storage.
      */
     isLocal(): boolean;
-
-    /**
-     * Flag indicating if the given container has been attached to a host service.
-     * @deprecated - It will be replaced with isLocal.
-     */
-    isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 
@@ -274,11 +268,11 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+declare module "@fluidframework/component-core-interfaces" {
+    /* eslint-disable @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
         IProvideMessageScheduler>> { }
 }
-    /* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
+    /* eslint-enable @typescript-eslint/no-empty-interface */

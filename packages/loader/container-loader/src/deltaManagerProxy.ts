@@ -5,10 +5,12 @@
 
 import {
     IDeltaManager,
+    IDeltaManagerEvents,
     IDeltaQueue,
     IDeltaSender,
-} from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-common-utils";
+    IDeltaQueueEvents,
+} from "@fluidframework/container-definitions";
+import { EventForwarder } from "@fluidframework/common-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -16,12 +18,12 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@fluidframework/protocol-definitions";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
  */
-export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T> {
+export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
     public get paused(): boolean {
         return this.queue.paused;
     }
@@ -80,7 +82,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
  * Proxy to the real IDeltaManager - used to restrict access
  */
 export class DeltaManagerProxy
-    extends EventForwarder
+    extends EventForwarder<IDeltaManagerEvents>
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
@@ -94,8 +96,13 @@ export class DeltaManagerProxy
         return this.deltaManager.minimumSequenceNumber;
     }
 
+    public get lastSequenceNumber(): number {
+        return this.deltaManager.lastSequenceNumber;
+    }
+
+    // Back-compat: <= 0.18
     public get referenceSequenceNumber(): number {
-        return this.deltaManager.referenceSequenceNumber;
+        return this.lastSequenceNumber;
     }
 
     public get initialSequenceNumber(): number {
@@ -114,7 +121,7 @@ export class DeltaManagerProxy
         return this.deltaManager.maxMessageSize;
     }
 
-    public get serviceConfiguration(): IServiceConfiguration {
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
         return this.deltaManager.serviceConfiguration;
     }
 

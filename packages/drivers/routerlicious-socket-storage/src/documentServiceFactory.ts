@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IExperimentalDocumentServiceFactory,
-} from "@microsoft/fluid-driver-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
+} from "@fluidframework/driver-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IErrorTrackingService, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ICredentials, IGitCache } from "@fluidframework/server-services-client";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
+} from "@fluidframework/driver-utils";
 import Axios from "axios";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
@@ -29,9 +28,7 @@ import { TokenProvider } from "./tokens";
  * Factory for creating the routerlicious document service. Use this if you want to
  * use the routerlicious implementation.
  */
-export class RouterliciousDocumentServiceFactory implements
-    IDocumentServiceFactory, IExperimentalDocumentServiceFactory
-{
+export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid:";
     constructor(
@@ -47,7 +44,7 @@ export class RouterliciousDocumentServiceFactory implements
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
-        logger: ITelemetryLogger,
+        logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(resolvedUrl.endpoints.ordererUrl);
@@ -71,7 +68,7 @@ export class RouterliciousDocumentServiceFactory implements
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             });
-        return this.createDocumentService(resolvedUrl);
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**
@@ -80,8 +77,10 @@ export class RouterliciousDocumentServiceFactory implements
      * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;

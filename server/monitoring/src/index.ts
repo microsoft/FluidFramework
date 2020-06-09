@@ -4,52 +4,53 @@
  */
 
 import * as path from "path";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as Sentry from "@sentry/node";
 import * as winston from "winston";
-import { configureLogging } from "./logger";
+import { configureLogging } from "@fluidframework/server-services-utils";
 import { testFluidService } from "./testService";
 
-function getConfig(configFile: string): nconf.Provider {
-    return nconf.argv().env("__" as any).file(configFile).use("memory");
-}
+const provider = nconf.argv().env("__" as any).file(path.join(__dirname, "../config.json")).use("memory");
 
-function setup(): nconf.Provider {
-    const config = getConfig(path.join(__dirname, "../config.json"));
-    Sentry.init({ dsn: config.get("notification:endpoint") });
-    configureLogging(config.get("logger"));
-    return config;
-}
-
-async function runInternal(config: nconf.Provider, retry: number, error: string): Promise<void> {
+async function runInternal(config: nconf.Provider, retry: number, error?: string): Promise<void> {
     winston.info(`Retry left: ${retry}`);
     if (retry === 0) {
         return Promise.reject(error);
     }
     const testP = testFluidService(config).then(() => {
         return;
-    }, (err: string) => {
+    }, async (err: string) => {
         return runInternal(config, retry - 1, err);
     });
     return testP;
 }
 
 async function run() {
+    configureLogging(provider.get("logger"));
+
+    // Setup notification if available
+    const notify: boolean = provider.get("notification:enabled");
+    if (notify) {
+        Sentry.init({ dsn: provider.get("notification:endpoint") });
+    }
+
     const maxRetry = 5;
-    const config = setup();
-    winston.info("Test started");
     try {
-        await runInternal(config, maxRetry, null);
+        await runInternal(provider, maxRetry);
         winston.info("Success running test");
         process.exit(0);
     } catch (err) {
-        Sentry.captureMessage(err);
+        winston.error("Error running test");
         winston.error(err);
-        // Wait to make sure that the exception is logged in sentry.
-        setTimeout(() => {
-            winston.error("Error running test. Shutting down!");
+        if (notify) {
+            Sentry.captureMessage(err);
+            // Wait to make sure that the exception is logged in sentry.
+            setTimeout(() => {
+                process.exit(0);
+            }, 30000);
+        } else {
             process.exit(0);
-        }, 30000);
+        }
     }
 }
 

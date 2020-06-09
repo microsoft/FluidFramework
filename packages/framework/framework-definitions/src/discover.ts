@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@fluidframework/component-core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
@@ -23,14 +23,12 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 
-declare module "@microsoft/fluid-component-core-interfaces" {
-    /* eslint-disable @typescript-eslint/indent */
+declare module "@fluidframework/component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
         & IProvideComponentInterfacesRegistry>> { }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 export const IComponentDiscoverableInterfaces: keyof IProvideComponentDiscoverableInterfaces

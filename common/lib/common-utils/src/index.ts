@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+export * from "./indexNode";
 export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./disposal";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./eventForwarder";
+export * from "./events";
 export * from "./hashFile";
 export * from "./heap";
 export * from "./logger";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTracker } from "@fluidframework/runtime-definitions";
 
 /**
  * SummaryTracker is a tree node which allows for deferred
@@ -59,9 +59,6 @@ export class SummaryTracker implements ISummaryTracker {
 
     private readonly children = new Map<string, SummaryTracker>();
 
-    // back-compat: 0.14 uploadSummary
-    private readonly refreshHandlers: (() => Promise<void>)[] = [];
-
     // only async for back-compat: 0.14 uploadSummary
     public async refreshLatestSummary(
         referenceSequenceNumber: number,
@@ -69,11 +66,6 @@ export class SummaryTracker implements ISummaryTracker {
     ) {
         this._referenceSequenceNumber = referenceSequenceNumber;
         this._getSnapshotTree = getSnapshot;
-
-        // back-compat: 0.14 uploadSummary
-        for (const handler of this.refreshHandlers) {
-            await handler();
-        }
 
         // Propagate update to all child nodes
         for (const [key, value] of this.children.entries()) {
@@ -111,12 +103,7 @@ export class SummaryTracker implements ISummaryTracker {
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
         private _latestSequenceNumber: number,
-        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
-
-    // back-compat: 0.14 uploadSummary
-    public addRefreshHandler(handler: () => Promise<void>): void {
-        this.refreshHandlers.push(handler);
-    }
+        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) { }
 
     private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
         return async () => (await this._getSnapshotTree())?.trees[key];

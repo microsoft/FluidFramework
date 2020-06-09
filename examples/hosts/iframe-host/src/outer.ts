@@ -5,13 +5,13 @@
 import {
     DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
-} from "@microsoft/fluid-routerlicious-driver";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
-import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+} from "@fluidframework/routerlicious-driver";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { BaseHost } from "@fluidframework/base-host";
+import { IRequest } from "@fluidframework/component-core-interfaces";
+import { InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
+import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
 const createRequest = (): IRequest => ({
@@ -54,16 +54,16 @@ export async function loadFrame(iframeId: string, logId: string) {
     const quorum = proxyContainer.getQuorum();
 
     const log =
-        (emitter: {on(event: string, listener: (...args: any[]) => void)}, name: string, ...events: string[]) => {
-            events.forEach((event)=>
-                emitter.on(event, (...args)=>{
+        (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
+            events.forEach((event) =>
+                emitter.on(event, (...args) => {
                     text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
                 }));
         };
 
-    quorum.getMembers().forEach((client)=>text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    quorum.getMembers().forEach((client) => text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
     log(quorum, "Quorum", "error", "addMember", "removeMember");
-    log(proxyContainer, "Container", "error", "connected","disconnected");
+    log(proxyContainer, "Container", "error", "connected", "disconnected");
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
@@ -85,8 +85,8 @@ export async function loadDiv(divId: string) {
 
     const pkg: IFluidCodeDetails = {
         package: "@fluid-example/todo@^0.15.0",
-        config:{
-            "@fluid-example:cdn":"https://pragueauspkn-3873244262.azureedge.net",
+        config: {
+            "@fluid-example:cdn": "https://pragueauspkn.azureedge.net",
         },
     };
 

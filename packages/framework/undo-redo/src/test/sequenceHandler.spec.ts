@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import assert from "assert";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import {
+    MockContainerRuntimeFactory,
+    MockComponentRuntime,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
 import { UndoRedoStackManager } from "../undoRedoStackManager";
 
@@ -38,21 +42,25 @@ function deleteTextByChunk(sharedString: SharedString, targetLength = 0) {
 
 describe("SharedSegmentSequenceUndoRedoHandler", () => {
     const documentId = "fakeId";
-    let deltaConnectionFactory: MockDeltaConnectionFactory;
+    let containerRuntimeFactory: MockContainerRuntimeFactory;
     let sharedString: SharedString;
     let undoRedoStack: UndoRedoStackManager;
 
     beforeEach(() => {
-        const runtime = new MockRuntime();
-        deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-        runtime.services = {
-            deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
+        const componentRuntime = new MockComponentRuntime();
+        componentRuntime.attach();
+
+        containerRuntimeFactory = new MockContainerRuntimeFactory();
+        const containerRuntime = containerRuntimeFactory.createContainerRuntime(componentRuntime);
+        const services = {
+            deltaConnection: containerRuntime.createDeltaConnection(),
             objectStorage: new MockStorage(undefined),
         };
-        runtime.attach();
+
+        sharedString = new SharedString(componentRuntime, documentId, SharedStringFactory.Attributes);
         sharedString.initializeLocal();
         sharedString.register();
+        sharedString.connect(services);
 
         undoRedoStack = new UndoRedoStackManager();
     });
@@ -118,7 +126,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         // insert all text as a single segment
         sharedString.insertText(0, text);
 
-        deltaConnectionFactory.processAllMessages();
+        containerRuntimeFactory.processAllMessages();
 
         // this will split that into three segment
         sharedString.walkSegments(

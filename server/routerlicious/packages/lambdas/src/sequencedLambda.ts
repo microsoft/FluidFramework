@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/server-services-core";
 import { AsyncQueue, queue } from "async";
 
 /**
