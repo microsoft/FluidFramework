@@ -1,6 +1,6 @@
-# @fluidframework/react-lib
+# @fluidframework/react-inputs
 
-Simple examples of React Components integrated with the FluidFramework.
+Simple examples of React Input Components integrated with the FluidFramework.
 
 ## collabarativeCheckbox
 Fluid enabled checkbox
