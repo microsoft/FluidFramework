@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/aqueduct-react",
+  "name": "@fluidframework/react-lib",
   "version": "0.20.0",
   "description": "React support for the Aqueduct framework.",
   "repository": "microsoft/FluidFramework",

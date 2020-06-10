@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { PrimedComponent } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
+import { CollaborativeTextArea } from "@fluidframework/react-lib";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@fluidframework/view-interfaces";
