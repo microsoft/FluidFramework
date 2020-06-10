@@ -697,7 +697,7 @@ export class MockSharedObjectServices implements ISharedObjectServices {
         return new MockSharedObjectServices(contents);
     }
 
-    public deltaConnection = new MockEmptyDeltaConnection();
+    public deltaConnection: IDeltaConnection = new MockEmptyDeltaConnection();
     public objectStorage: MockObjectStorageService;
 
     public constructor(contents: { [key: string]: string }) {
