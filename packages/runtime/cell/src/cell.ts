@@ -131,7 +131,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
             type: "setCell",
             value: operationValue,
         };
-        this.submitCellMessage(op);
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     /**
@@ -149,7 +149,7 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
         const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
-        this.submitCellMessage(op);
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     /**
@@ -281,10 +281,6 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     private deleteCore() {
         this.data = undefined;
         this.emit("delete");
-    }
-
-    private submitCellMessage(op: ICellOperation): void {
-        this.submitLocalMessage(op, ++this.messageId);
     }
 
     private toSerializable(value: any) {
