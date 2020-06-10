@@ -117,6 +117,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+            () => this.isLocal(),
             [new IntervalCollectionValueType()],
         );
     }
