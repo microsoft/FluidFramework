@@ -12,8 +12,12 @@ import { SharedStringFactory } from "../sequenceFactory";
 export const LocationBase: string = "src/test/snapshots/";
 
 export const supportedVersions = new Map<string, any>([
-    ["legacy", {}],
-    ["legacyWithCatchUp", { useNewCatchUpBlobName: true }],
+    // the catchUpBlob had to be renamed.
+    // We are now support to any name for this blob.
+    // so for legacy set it to another name to ensure
+    // keep support
+    ["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
+    ["legacyWithCatchUp", {} ],
     ["v1", { newMergeTreeSnapshotFormat: true }],
 ]);
 
