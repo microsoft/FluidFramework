@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { CollaborativeCheckbox } from "./collaborativeCheckbox";
-export { CollaborativeInput } from "./collaborativeInput";
-export { CollaborativeTextArea } from "./collaborativeTextArea";
+export { CollaborativeCheckbox } from "./CollaborativeCheckbox";
+export { CollaborativeInput } from "./CollaborativeInput";
+export { CollaborativeTextArea } from "./CollaborativeTextArea";
