@@ -1,7 +1,7 @@
 {
   "packages": [
     "components/**",
-    "examples/**",
+    "examples/hosts/**",
     "packages/**"
   ],
   "version": "0.20.0"

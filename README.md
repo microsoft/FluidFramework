@@ -30,22 +30,22 @@ Here's the breakdown of the repo:
   * [Packages](./packages)
   * [Example Components](./components/examples)
   * [Experimental Components](./components/experimental)
-  * [Example host](./examples/hosts/iframe-host)
+  * [Example Hosts](./examples/hosts)
 * Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
   * [Common Definitions](./common/lib/common-definitions)
   * [Common Utils](./common/lib/common-utils)
-* Auxiliary Microservices supporting Routerlicious
+* Auxiliary Microservice Packages (supporting Routerlicious)
   * [Server dir](./server) (excluding [Routerlicious](./server/routerlicious) itself)
 * Internal/Misc Packages
   * [Build Common](./common/build/build-common)
   * [ESlint Config](./common/build/eslint-config-fluid)
-  * Other Example Hosts
-    * [Electron Host](./examples/hosts/electron-host)
-    * [Literate](./examples/hosts/literate)
   * [Docs](./docs)
   * [Tools](./tools)
+
+You'll find other files and folders at the root, which may be familiar to you from other web-based OSS git projects.
+They're named according to convention and are well-documented on the web.
 
 ## Building
 
