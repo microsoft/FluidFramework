@@ -605,7 +605,7 @@ describe("Directory", () => {
                     "The new value is not updated in directory 1");
             });
 
-            it("can process sub directory op in local state", async () => {
+            it("can process sub directory ops in local state", async () => {
                 // Create a new directory in local (detached) state.
                 const newDirectory1 = SharedDirectory.create(component1.runtime);
 
