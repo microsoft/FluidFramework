@@ -1,5 +1,16 @@
 # @fluidframework/aqueduct-react
 
-An Aqueduct is a way to transport water from a source to another location.
+![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
-This package contains implementations of the Fluid Framework interfaces that allows developers to quickly get started.
+The Aqueduct-React package is a library for building React Components within the Fluid Framework.
+
+## collabarativeCheckbox
+Fluid enabled checkbox
+The checkbox uses the counter to ensure consistency if two people both hit the button.
+
+## collaborativeInput
+Given a SharedString will produce a collaborative input element.
+
+## collaborativeTextArea
+Given a cell will provide an editable component
+
