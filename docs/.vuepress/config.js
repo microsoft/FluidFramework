@@ -10,10 +10,10 @@ const process = require("process");
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
 const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "internal";
-const THIS_VERSION = process.env.THIS_VERSION || "0.16";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.16";
-const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.15";
-const N1_VERSION = process.env.N1_VERSION || "0.14";
+const THIS_VERSION = process.env.THIS_VERSION || "0.19";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
+const N1_VERSION = process.env.N1_VERSION || "0.17";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
@@ -52,65 +52,60 @@ const listPages = (dirPath, includeIndex = false) => {
 
 const getNav = () => {
     const nav = [
-        { text: "What is Fluid?", link: "/what-is-fluid" },
-        { text: "Guide", link: "/guide/" },
-        { text: "Tutorials", link: "/examples/" },
-        internalOnly({ text: "Patterns", link: "/patterns/" }),
+        { text: "What is Fluid?", link: "/what-is-fluid.md" },
+        { text: "Docs", link: "/docs/getting-started.md" },
+        { text: "Tutorials", link: "/tutorials/" },
+        { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/overview" },
+        // {
+        //     text: "🤿 Dive Deeper",
+        //     items: [
+        //         { text: "How Fluid works", link: "/how/" },
+        //         internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
+        //         internalOnly({ text: "FAQ", link: "/faq/" }),
+        //         internalOnly({ text: "Terminology", link: "/misc/terminology" }),
+        //         internalOnly({ text: "Concepts", link: "/misc/concepts" }),
+        //         internalOnly({
+        //             text: "Contributing",
+        //             items: [
+        //                 { text: "Release process", link: "/contributing/release-process" },
+        //                 { text: "Breaking changes", link: "/contributing/breaking-changes" },
+        //                 { text: "Compatibility", link: "/contributing/compatibility" },
+        //                 { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+        //                 { text: "Documentation system", link: "/contributing/doc-system" },
+        //                 { text: "Building documentation locally", link: "/contributing/building-documentation" },
+        //                 { text: "Miscellaneous", link: "/contributing/misc" },
+        //             ]
+        //         }),
+        //         internalOnly({
+        //             text: "Team",
+        //             items: [
+        //                 { text: "Updates", link: "/team/" },
+        //                 { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+        //             ]
+        //         }),
+        //     ]
+        // },
         {
-            text: "🤿 Dive Deeper",
-            items: [
-                { text: "How Fluid works", link: "/how/" },
-                internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
-                internalOnly({ text: "FAQ", link: "/faq/" }),
-                internalOnly({ text: "Terminology", link: "/misc/terminology" }),
-                internalOnly({ text: "Concepts", link: "/misc/concepts" }),
-                internalOnly({
-                    text: "Contributing",
-                    items: [
-                        { text: "Release process", link: "/contributing/release-process" },
-                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
-                        { text: "Compatibility", link: "/contributing/compatibility" },
-                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                        { text: "Documentation system", link: "/contributing/doc-system" },
-                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                        { text: "Miscellaneous", link: "/contributing/misc" },
-                    ]
-                }),
-                internalOnly({
-                    text: "Team",
-                    items: [
-                        { text: "Updates", link: "/team/" },
-                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                    ]
-                }),
-            ]
-        },
-        internalOnly({
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
                 { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        }),
+        },
     ];
 
     function filterFalsy(item) {
-        // console.log(`item: ${item}`);
         if (item) {
             if (item.items) {
-                // console.log("about to recurse!");
                 item.items = item.items.filter(filterFalsy);
             }
         }
         return item;
     }
 
-    // console.log(JSON.stringify(nav));
     const filtered = nav.filter(filterFalsy);
-    // console.log(JSON.stringify(filtered));
-
     return filtered;
 }
 
@@ -242,62 +237,85 @@ const getApiSidebar = () => {
     return apiSidebar;
 };
 
-const getGuideSidebar = () => {
+const getDocsSidebar = () => {
     return [
         {
-            title: "Guide",
+            title: "Installation",
             collapsable: false,
-            path: "./",
-            children: compact([
-                "",
-                "package-feed.md",
-                "spfx.md",
-                "upload.md",
-                internalOnly("yo-fluid"),
-                internalOnly("water-park"),
-            ])
+            // path: "",
+            children: [
+                "getting-started.md",
+                "dev-env.md",
+                "hello-world.md",
+                "create-a-new-fluid-component",
+            ]
         },
         {
-            title: "Distributed Data Structures",
+            title: "Main concepts",
             collapsable: false,
-            path: "dds",
             children: [
+                "dds.md",
+                "components.md",
+                "aqueduct.md",
+                "component-interfaces.md",
+            ]
+        },
+        {
+            title: "DDS reference",
+            collapsable: false,
+            // path: "dds",
+            children: [
+                // "overview",
                 "SharedDirectory",
                 "SharedMap",
+                "SharedCounter",
                 "SharedCell",
                 {
                     title: "Sequences",
                     path: "sequences",
                     children: [
-                        "SharedNumberSequence",
-                        "SharedObjectSequence",
-                        "SharedString",
-                        "SparseMatrix",
+                        "SharedNumberSequence.md",
+                        "SharedObjectSequence.md",
+                        "SharedString.md",
                     ],
                 },
-                "consensus",
+                "SharedMatrix",
+                "consensus.md",
             ]
         },
+        // {
+        //     title: "API",
+        //     path: "../",
+        //     children: getApiSidebar(),
+        // },
         {
             title: "Component model",
             collapsable: false,
             children: [
-                "components.md",
                 "component-design-principles.md",
             ]
         },
         {
-            title: "Advanced",
-            collapsable: false,
+            title: "Advanced guides",
+            collapsable: true,
             children: [
                 "dds-anatomy",
                 "container-and-component-loading",
             ]
         },
+        {
+            title: "Misc",
+            collapsable: false,
+            // path: "",
+            children: [
+                "release-process.md",
+            ]
+        },
+
     ];
 }
 
-const getExamplesSidebar = () => {
+const getTutorialsSidebar = () => {
     return compact([
         "",
         "dice-roller",
@@ -379,8 +397,8 @@ const getAllSidebars = () => {
             "/team/": getTeamSidebar(),
         },
         all: {
-            "/guide/": getGuideSidebar(),
-            "/examples/": getExamplesSidebar(),
+            "/docs/": getDocsSidebar(),
+            "/tutorials/": getTutorialsSidebar(),
             "/api/": getApiSidebar(),
             "/how/": getHowSidebar(),
         }
@@ -485,6 +503,7 @@ module.exports = {
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
+        toc: { includeLevel: [2, 3, 4] },
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins

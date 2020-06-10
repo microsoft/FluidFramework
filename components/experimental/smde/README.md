@@ -1,4 +1,4 @@
-# SimpleMDE Markdown Editor (SMDE)
+# @fluid-example/smde
 
 An experimental implementation of how to take the open source [SimpleMDE](https://simplemde.com/) markdown editor and
 enable real-time coauthoring using the Fluid Framework.
