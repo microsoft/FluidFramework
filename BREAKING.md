@@ -2,9 +2,14 @@
 
 ## 0.20 Breaking Changes
 - [Value types deprecated on SharedMap and SharedDirectory](#Value-types-deprecated-on-sharedmap-and-shareddirectory)
+- [rename @fluidframework/aqueduct-react to @fluidframework/react-lib](#rename-@fluidframework/aqueduct-react-to-@fluidframework/react-lib)
 
 ### Value types deprecated on SharedMap and SharedDirectory
 The `Counter` value type and `createValueType()` method on `SharedMap` and `SharedDirectory` are now deprecated and will be removed in an upcoming release.  Instead, the `@fluidframework/counter` DDS can be used for counter functionality.
+
+### rename @fluidframework/aqueduct-react to @fluidframework/react-lib
+
+aqueduct-react is actually just a react library and renamed it to reflect such.
 
 ## 0.19 Breaking Changes
 - [Container's "error" event](#Container-Error-Event)
