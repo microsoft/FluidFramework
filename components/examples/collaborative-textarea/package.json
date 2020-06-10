@@ -37,7 +37,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
-    "@@fluidframework/react-inputs": "^0.20.0",
+    "@fluidframework/react-inputs": "^0.20.0",
     "@fluidframework/runtime-definitions": "^0.20.0",
     "@fluidframework/sequence": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0",
