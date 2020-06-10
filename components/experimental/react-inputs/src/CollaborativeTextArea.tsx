@@ -5,31 +5,29 @@
 import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
-interface IProps {
+export interface ICollaborativeTextAreaProps {
     sharedString: SharedString;
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
 }
 
-interface IState {
+export interface ICollaborativeTextAreaState {
     selectionEnd: number;
     selectionStart: number;
     text: string;
 }
-
-export { IProps as ICollaborativeTextAreaProps };
-export { IState as ICollaborativeTextAreaState };
 
 /**
  * Given a cell will provide an editable component
  * This produces a single line content editable box. It's single line because doing
  * multiple lines means you have to manage line breaks which is hard.
  */
-export class CollaborativeTextArea extends React.Component<IProps, IState> {
+export class CollaborativeTextArea
+    extends React.Component<ICollaborativeTextAreaProps, ICollaborativeTextAreaState> {
     private readonly ref: React.RefObject<HTMLTextAreaElement>;
 
-    constructor(props: IProps) {
+    constructor(props: ICollaborativeTextAreaProps) {
         super(props);
 
         this.ref = React.createRef<HTMLTextAreaElement>();
