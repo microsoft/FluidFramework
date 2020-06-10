@@ -13,6 +13,18 @@ import { getRandomName } from "@fluidframework/server-services-client";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
+export const dockerUrls = {
+    hostUrl: "http://localhost:3000",
+    ordererUrl: "http://localhost:3003",
+    storageUrl: "http://localhost:3001",
+};
+
+export const tinyliciousUrls = {
+    hostUrl: "http://localhost:3000",
+    ordererUrl: "http://localhost:3000",
+    storageUrl: "http://localhost:3000",
+};
+
 function getUrlResolver(
     documentId: string,
     options: RouteOptions,
@@ -20,9 +32,9 @@ function getUrlResolver(
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3003",
-                "http://localhost:3001",
+                dockerUrls.hostUrl,
+                dockerUrls.ordererUrl,
+                dockerUrls.storageUrl,
                 options.tenantId,
                 options.tenantSecret,
                 getUser(),
@@ -37,12 +49,11 @@ function getUrlResolver(
                 options.tenantSecret,
                 getUser(),
                 options.bearerSecret);
-
         case "tinylicious":
             return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3000",
-                "http://localhost:3000",
+                tinyliciousUrls.hostUrl,
+                tinyliciousUrls.ordererUrl,
+                tinyliciousUrls.storageUrl,
                 "tinylicious",
                 "12345",
                 getUser(),
