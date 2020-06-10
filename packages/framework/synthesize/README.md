@@ -1,4 +1,4 @@
-# Fluid Synthesize
+# @fluidframework/synthesize
 
 An Ioc type library for synthesizing a fluid IComponent object based on registered IComponent providers.
 
