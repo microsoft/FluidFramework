@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-utils",
-  "version": "0.19.5",
+  "version": "0.19.6",
   "description": "Utilities for fluid tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -46,18 +46,18 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.19.5",
-    "@fluidframework/base-host": "^0.19.5",
-    "@fluidframework/component-core-interfaces": "^0.19.5",
-    "@fluidframework/component-runtime": "^0.19.5",
-    "@fluidframework/component-runtime-definitions": "^0.19.5",
-    "@fluidframework/container-definitions": "^0.19.5",
-    "@fluidframework/container-loader": "^0.19.5",
-    "@fluidframework/local-driver": "^0.19.5",
-    "@fluidframework/map": "^0.19.5",
-    "@fluidframework/runtime-definitions": "^0.19.5",
+    "@fluidframework/aqueduct": "^0.19.6",
+    "@fluidframework/base-host": "^0.19.6",
+    "@fluidframework/component-core-interfaces": "^0.19.6",
+    "@fluidframework/component-runtime": "^0.19.6",
+    "@fluidframework/component-runtime-definitions": "^0.19.6",
+    "@fluidframework/container-definitions": "^0.19.6",
+    "@fluidframework/container-loader": "^0.19.6",
+    "@fluidframework/local-driver": "^0.19.6",
+    "@fluidframework/map": "^0.19.6",
+    "@fluidframework/runtime-definitions": "^0.19.6",
     "@fluidframework/server-local-server": "^0.1006.1",
-    "@fluidframework/shared-object-base": "^0.19.5"
+    "@fluidframework/shared-object-base": "^0.19.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
