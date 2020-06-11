@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import * as cors from "cors";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "./api";
