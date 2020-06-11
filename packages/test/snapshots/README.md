@@ -1,1 +1,1 @@
-# @fluidframework/test-snapshots
+# @fluid-internal/test-snapshots
