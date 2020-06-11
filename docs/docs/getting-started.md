@@ -14,12 +14,10 @@ environment](dev-env.md).
 
 ## Learn the Fluid Framework
 
-People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer
-a more theoretical or a practical approach, we hope you'll find this section helpful.
+People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer a more theoretical or a practical approach, we hope you'll find this section helpful.
 
-* If you prefer to **learn by doing**, start with one of our [step-by-step tutorials](../tutorials/README.md).
-* If you prefer to **learn concepts step by step**, start with [our guide to Fluid Framework concepts](hello-world.md).
-
+[<img src="button-docs.png" height="50"/>](../tutorials/README.md)
+[<img src="button-tutorials.png" height="50"/>](hello-world.md)
 ### TypeScript and JavaScript resources
 
 The Fluid Framework documentation assumes some familiarity with programming in the [TypeScript][] language. TypeScript
