@@ -20,7 +20,7 @@ The important thing to note is that the Fluid component represents the data mode
 
 #### `./src/component<%= extension %>`
 
-The `component<%= extension %>` file contains the Fluid component and the logic for our data model.
+The `component<%= extension %>` file contains the Fluid component as well as the view logic.
 
 #### `./src/index.ts`
 
@@ -29,14 +29,6 @@ The `index.ts` file is not very interesting and simply defines our exports. We a
 **The Fluid component itself** which allows other packages to consume the Fluid component object directly.
 
 **The `fluidExport`** which points to our Fluid component factory is used for dynamic Fluid component loading. Our `webpack-component-loader` uses this to find the Fluid component entry point when running `npm start`.
-
-#### `./src/interface.ts`
-
-The `interface.ts` file defines the interface between our Fluid component and our view. This abstraction is important to ensure we are building reusable and scalable components.
-
-#### `./src/view<%= extension %>`
-
-The `view<%= extension %>` file contains all the view logic.
 
 ### Directory Anatomy
 

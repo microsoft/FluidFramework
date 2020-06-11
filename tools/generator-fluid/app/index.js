@@ -58,14 +58,14 @@ module.exports = class extends Generator {
     
     // Adding two options to specify the scaffolding inline
     this.option(
-      "s-beginner",
+      scaffoldingBeginner,
       {
-        description: "Sets beginner as scaffolding",
+        description: `Sets ${scaffoldingBeginner} as scaffolding`,
       });
     this.option(
-      "s-production",
+      scaffoldingAdvanced,
       {
-        description: "Sets production as scaffolding",
+        description: `Sets ${scaffoldingAdvanced} as scaffolding`,
       });
 
     // Adding argument to specify the component name inline
@@ -100,13 +100,13 @@ module.exports = class extends Generator {
       questionsCollection.push(questions.viewFramework);
     }
 
-    if (this.options["s-beginner"] && this.options["s-production"]) {
-      this.log(chalk.red("Both --s-beginner and --s-production options have been included. Prompting question."));
-      delete this.options["s-beginner"];
-      delete this.options["s-production"];
+    if (this.options[scaffoldingBeginner] && this.options[scaffoldingAdvanced]) {
+      this.log(chalk.red(`Both --${scaffoldingBeginner} and --${scaffoldingAdvanced} options have been included. Prompting question.`));
+      delete this.options[scaffoldingBeginner];
+      delete this.options[scaffoldingAdvanced];
     }
 
-    if (this.options["s-beginner"] || this.options["s-production"]) {
+    if (this.options[scaffoldingBeginner] || this.options[scaffoldingAdvanced]) {
       this.log(`${chalk.green("?")} ${questions.scaffolding.message} ${chalk.blue(this._isBeginnerScaffolding ? scaffoldingBeginner : scaffoldingAdvanced)}`)
     } else {
       questionsCollection.push(questions.scaffolding);
