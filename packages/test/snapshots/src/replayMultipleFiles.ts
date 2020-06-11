@@ -12,6 +12,7 @@ export enum Mode {
     Write,   // Write out files
     Compare, // Compare to files stored on disk
     Stress,  // Do stress testing without writing or comparing out files.
+    Validate,
 }
 
 export interface IWorkerArgs {
@@ -32,21 +33,34 @@ export async function processOneFile(args: IWorkerArgs) {
     replayArgs.compare = args.mode === Mode.Compare;
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
-
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
+
+    if (args.mode === Mode.Validate) {
+        const path = `${replayArgs.inDirName}/original_snapshots`;
+        if (fs.existsSync(path)) {
+            replayArgs.initalizeFromSnapshotsDir = path;
+        } else {
+            return;
+        }
+    }
+
     const listener = (error) => {
         process.removeListener("unhandledRejection", listener);
-        throw new Error(error);
+        throw new Error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
     };
     process.on("unhandledRejection", listener);
 
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
 
-    const res = await new ReplayTool(replayArgs).Go();
-    if (!res) {
-        throw new Error(`Error processing ${args.folder}`);
+    try {
+        const res = await new ReplayTool(replayArgs).Go();
+        if (!res) {
+            throw new Error(`Error processing\n ${JSON.stringify(args)}`);
+        }
+    } catch (error) {
+        throw new Error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
     }
 }
 
@@ -93,7 +107,8 @@ export async function processContent(mode: Mode, concurrently = true) {
         }
 
         const work = new Promise((resolve, reject) => {
-            const worker = new threads.Worker("./dist/replayWorker.js", { workerData });
+            const worker =
+                new threads.Worker("D:\\code\\fluid\\packages\\test\\snapshots\\dist\\replayWorker.js", { workerData });
 
             worker.on("message", (error: string) => {
                 if (mode === Mode.Compare) {

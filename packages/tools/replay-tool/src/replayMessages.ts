@@ -47,6 +47,7 @@ try {
     threads = require("worker_threads");
 } catch (error) { }
 import { ReplayArgs } from "./replayArgs";
+import { ReplaySnapshotReaderFileSnapshotWriter } from "./replaySnapshotStorage";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
 
@@ -239,9 +240,9 @@ class Document {
     }
 
     public async replay(replayTo: number) {
-        this.replayer.replay(replayTo);
+        const fetched = this.replayer.replay(replayTo);
 
-        if (this.documentSeqNumber !== this.currentOp) {
+        if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
             await new Promise((resolve) => {
                 this.resolveC = resolve;
             });
@@ -452,6 +453,49 @@ export class ReplayTool {
             }
         }
 
+        if (this.args.initalizeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+                let storage;
+                if (node.isDirectory()) {
+                    // Did we load it already as main doc?
+                    if (node.name === this.args.version) {
+                        continue;
+                    }
+
+                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    if (!fs.existsSync(file)) {
+                        console.error(`${file} does not exist, skipping ${node.name} snapshot`);
+                        continue;
+                    }
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                } else {
+                    if (node.name.startsWith("snapshot_")) {
+                        storage = new ReplaySnapshotReaderFileSnapshotWriter(
+                            `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+
+                const doc = new Document(this.args, storage, node.name);
+                try {
+                    await this.loadDoc(doc);
+                    doc.appendToFileName(`_storage_${node.name}`);
+
+                    if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
+                        console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                    } else {
+                        console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                        // this.documentsFromStorageSnapshots.push(doc);
+                        this.documents.push(doc);
+                    }
+                } catch (error) {
+                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                }
+            }
+        }
+
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== undefined || this.args.validateStorageSnapshots) {
@@ -523,7 +567,7 @@ export class ReplayTool {
             if (this.documentsFromStorageSnapshots.length > 0) {
                 const op = this.documentsFromStorageSnapshots[0].fromOp;
                 replayTo = Math.min(replayTo, op);
-            }
+             }
 
             assert(replayTo > currentOp);
             for (const doc of this.documents) {
