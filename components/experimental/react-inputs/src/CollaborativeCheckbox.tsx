@@ -5,26 +5,24 @@
 import { SharedCell } from "@fluidframework/cell";
 import React from "react";
 
-interface IProps {
+export interface ICollaborativeCheckboxProps {
     data: SharedCell;
     id: string;
     className?: string;
     style?: React.CSSProperties;
 }
 
-interface IState {
+export interface ICollaborativeCheckboxState {
     checked: boolean;
 }
-
-export { IProps as ICollaborativeCheckboxProps };
-export { IState as ICollaborativeCheckboxState };
 
 /**
  * Fluid enabled checkbox
  * The checkbox uses the counter to ensure consistency if two people both hit the button.
  */
-export class CollaborativeCheckbox extends React.Component<IProps, IState> {
-    constructor(props: IProps) {
+export class CollaborativeCheckbox
+    extends React.Component<ICollaborativeCheckboxProps, ICollaborativeCheckboxState> {
+    constructor(props: ICollaborativeCheckboxProps) {
         super(props);
 
         this.state = {

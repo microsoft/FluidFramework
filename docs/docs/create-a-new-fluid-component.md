@@ -42,13 +42,6 @@ This will install yo fluid along with its dependency, [Yeoman](https://yeoman.io
 
 Yo fluid is now ready. Use it to scaffold a new component by typing `yo @microsoft/fluid` and following the instructions.
 
-::: tip
-
-For yo fluid setup issues see [this question on Microsoft Stack
-Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
-
-:::
-
 ## Next steps
 
 Now that you've used yo fluid to scaffold a new component, you should examine the contents of the yo fluid output, which
