@@ -10,7 +10,7 @@ import { Deferred } from "@fluidframework/common-utils";
 
 const fileLocation: string = "content/snapshotTestContent";
 
-const numberOfThreads = 2;
+const numberOfThreads = 4;
 
 process.setMaxListeners(20);
 
