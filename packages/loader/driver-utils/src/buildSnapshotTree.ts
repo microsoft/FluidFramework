@@ -16,6 +16,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 
+let versionsLogged = false;
+
 async function flattenCore(
     path: string,
     treeEntries: ITreeEntry[],
@@ -28,6 +30,12 @@ async function flattenCore(
         if (treeEntry.type === TreeEntry[TreeEntry.Blob]) {
             const blob = treeEntry.value as IBlob;
             const buffer = Buffer.from(blob.contents, blob.encoding);
+            if (!versionsLogged && treeEntry.path === ".attributes") {
+                if (blob.contents.includes("packageVersion")) {
+                    console.log(blob.contents);
+                    versionsLogged = true;
+                }
+            }
             const sha = await gitHashFileAsync(buffer);
             blobMap.set(sha, buffer.toString("base64"));
 
