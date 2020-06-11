@@ -20,7 +20,7 @@ import {
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
+import { errorObjectFromSocketError } from "./odspUtils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -119,7 +119,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromSocketError(socketError, socketErrorRetryFilter);
+                    throw errorObjectFromSocketError(socketError);
                 }
             }
             throw errorObject;
@@ -181,12 +181,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 });
 
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-                // We get 403 / TokenExpired here. We cannot treat it as unrecoverable error!
-                // So we treat all errors as recoverable, and rely on joinSession / reconnection flow to
+                // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
                 // filter out retryable vs. non-retryable cases.
-                // Specifically, it will have one retry for 403 - see
-                // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
+                //
+                // Some examples:
+                //    400:
+                //       Invalid tenant or document id. The WebSocket is connected to a different document
+                //       Document is full (with retryAfter)
+                //    401, 403 (TokenExpired): Need to refresh token and retry. They will become fatal on reconnection.
+                //    404: Invalid document. The document \"local/w1-...\" does not exist
+                // Not-retryable:
+                //    406: Unsupported client protocol. Should never get it here, but code recovers correctly if
+                //         it happens.
                 const error = errorObjectFromSocketError(socketError);
+                error.canRetry = true;
 
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now

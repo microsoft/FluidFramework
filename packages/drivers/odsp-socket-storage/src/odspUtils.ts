@@ -26,6 +26,8 @@ export const offlineFetchFailureStatusCode: number = 709;
 export const fetchFailureStatusCode: number = 710;
 // Status code for invalid file name error in odsp driver.
 export const invalidFileNameStatusCode: number = 711;
+// no response, or can't parse response
+export const fetchIncorrectResponse = 712;
 
 export function createOdspNetworkError(
     errorMessage: string,
@@ -36,12 +38,18 @@ export function createOdspNetworkError(
     let error: CriticalContainerError;
 
     switch (statusCode) {
+        case 400:
+            error = new GenericNetworkError(errorMessage, false, statusCode);
+            break;
         case 401:
         case 403:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.authorizationError, false);
             break;
         case 404:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, canRetry);
+            error = new NetworkErrorBasic(errorMessage, ErrorType.fileNotFoundOrAccessDeniedError, false);
+            break;
+        case 406:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.unsupportedClientProtocolVersion, false);
             break;
         case 500:
             error = new GenericNetworkError(errorMessage, canRetry);
@@ -67,7 +75,7 @@ export function createOdspNetworkError(
             error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
     }
 
-    (error as any).online = OnlineStatus[isOnline()];
+    error.online = OnlineStatus[isOnline()];
     return error;
 }
 
@@ -99,55 +107,16 @@ export function throwOdspNetworkError(
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(
-    socketError: IOdspSocketError,
-    retryFilter?: RetryFilter) {
+export function errorObjectFromSocketError(socketError: IOdspSocketError) {
     return createOdspNetworkError(
         socketError.message,
-        retryFilter?.(socketError.code) ?? true,
+        true,
         socketError.code,
         socketError.retryAfter);
 }
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
-
-/**
- * Returns true when the request should/can be retried
- */
-export type RetryFilter = (code: number) => boolean;
-
-export const noRetry = (): RetryFilter => () => false;
-
-/**
- * Creates a filter that will allow retries for the whitelisted status codes
- * @param retriableCodes - Cannot be null/undefined
- */
-export const allowList = (retriableCodes: number[]): RetryFilter => (code: number) => retriableCodes.includes(code);
-
-// eslint-disable-next-line max-len
-export const blockList = (nonRetriableCodes: number[]): RetryFilter => (code: number) => !nonRetriableCodes.includes(code);
-
-// Non-retryable errors on joinSession / getLatest / get ops / storage requests (blobs) / summary paths.
-// Basically all SPO communication.
-// PUSH (delta oedering service) errors use socketErrorRetryFilter below.
-// 401, 403: fatal errors, but driver will retry once with new token (see usage of getWithRetryForTokenRefresh)
-export const defaultRetryFilter = blockList([400, 401, 403, 404]);
-
-//
-// Socket error filter for socket errors
-//
-// These errors are retryable in a sense that we rely on fetching new joinSession and it failing if needed
-// (see defaultRetryFilter list above), otherwise continuing with new connection (to potentially different server)
-//    400:
-//       Invalid tenant or document id. The WebSocket is connected to a different document
-//       Document is full (with retryAfter)
-//    404: Invalid document. The document \"local/w1-645289b2-568e-4097-9ef8-3253a04d6209\" does not exist
-// Not-retryable:
-//    401, 403: These are fatal, but runtime will retry once with new token (see usage of getWithRetryForTokenRefresh)
-//    406: Unsupported client protocol
-//
-export const socketErrorRetryFilter = blockList([401, 403, 406]);
 
 export interface IOdspResponse<T> {
     content: T;
@@ -161,7 +130,8 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
         // If the error is 401 or 403 refresh the token and try once more.
-        if (e.statusCode === 401 || e.statusCode === 403) {
+        // fetchIncorrectResponse indicates some error on the wire, retry once.
+        if (e.statusCode === 401 || e.statusCode === 403 || e.statusCode === fetchIncorrectResponse) {
             return get(true);
         }
 
@@ -183,7 +153,6 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
 export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-    retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<IOdspResponse<any>> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
@@ -191,11 +160,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, 400, true, response);
+            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
+                `Error ${response.status} from the server`, response.status, true, response);
         }
 
         // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
@@ -215,7 +184,7 @@ export async function fetchHelper(
             };
             return res;
         } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, 400, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, true, response);
         }
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and

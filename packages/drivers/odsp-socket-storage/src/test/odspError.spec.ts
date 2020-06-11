@@ -52,7 +52,7 @@ describe("Odsp Error", () => {
                 "message should contain Response.statusText");
             assert.notEqual(-1, networkError.message.indexOf("default"),
                 "message should contain Response.type");
-            assert.equal(true, networkError.canRetry, "canRetry should be true");
+            assert.equal(false, networkError.canRetry, "canRetry should be false");
         }
     });
 
@@ -68,7 +68,7 @@ describe("Odsp Error", () => {
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
 
-    it("errorObjectFromSocketError no retryFilter, no retryAfter", async () => {
+    it("errorObjectFromSocketError no retryAfter", async () => {
         const socketError: IOdspSocketError = {
             message: "testMessage",
             code: 400,
@@ -79,7 +79,7 @@ describe("Odsp Error", () => {
         }
         else {
             assert.equal(networkError.message, "testMessage");
-            assert.equal(networkError.canRetry, true);
+            assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
     });
@@ -89,8 +89,7 @@ describe("Odsp Error", () => {
             message: "testMessage",
             code: 400,
         };
-        const retryFilter = (code: number) => false;
-        const networkError = errorObjectFromSocketError(socketError, retryFilter);
+        const networkError = errorObjectFromSocketError(socketError);
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         }
@@ -104,7 +103,7 @@ describe("Odsp Error", () => {
     it("errorObjectFromSocketError with retryAfter", async () => {
         const socketError: IOdspSocketError = {
             message: "testMessage",
-            code: 400,
+            code: 429,
             retryAfter: 10,
         };
         const networkError = errorObjectFromSocketError(socketError);
