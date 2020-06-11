@@ -182,7 +182,7 @@ describe("Document Dirty", () => {
                 "those pending on nested objects");
         });
 
-        it(`marks document dirty when ops are sent while connected and doesn't set it clean until 
+        it(`marks document dirty when ops are sent while connected and doesn't set it clean until
             they are acked after reconnection`, async () => {
             onMarkedClean(containerCompContainerRuntime);
             onMarkedDirty(containerCompContainerRuntime);
@@ -216,7 +216,7 @@ describe("Document Dirty", () => {
 
             // Document will have been marked clean again on reconnection
             assert.equal(wasMarkedCleanCount, 2,
-                "Document will have been marked clean on reconnection");
+                `Document will have been marked clean on reconnection. Clean count: ${wasMarkedCleanCount}`);
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
