@@ -12,11 +12,7 @@ You may be here because you want to...
 
 All of these are documented at <https://aka.ms/fluid>.
 
-### Coming soon...
-
-* Engage with other Fluid users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
-* Help each other in the [Fluid Community Discord]() **(community channel not yet created)**
-* Join the discussion on Twitter **(hashtag not established yet)**
+Got questions? Engage with other Fluid users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Code Structure
 
@@ -43,9 +39,6 @@ Here's the breakdown of the repo:
   * [ESlint Config](./common/build/eslint-config-fluid)
   * [Docs](./docs)
   * [Tools](./tools)
-
-You'll find other files and folders at the root, which may be familiar to you from other web-based OSS git projects.
-They're named according to convention and are well-documented on the web.
 
 ## Building
 
