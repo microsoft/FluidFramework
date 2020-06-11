@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/hosts-sample",
+  "name": "@fluid-internal/hosts-sample",
   "version": "0.20.0",
   "private": true,
   "description": "Sample Fluid container host",
