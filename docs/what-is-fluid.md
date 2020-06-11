@@ -16,7 +16,7 @@ interactive experiences on the Web. It will change the way people work through t
 3. Enabling intelligent agents to work alongside humans in ways that will dramatically increase productivity and what
    people can accomplish
 
-If you'd like to learn more about the scenarios Fluid addresses and how the architecture is built, please continue reading below. If you'd like to start using the Fluid Framework yourself, please take a look at [Getting Stated](./docs/getting-started.md)
+If you'd like to learn more about the scenarios Fluid addresses and how the architecture is built, please continue reading below. If you'd like to start using the Fluid Framework yourself, please take a look at [Getting Started](./docs/getting-started.md)
 
 ## What problems does the Fluid Framework address?
 
