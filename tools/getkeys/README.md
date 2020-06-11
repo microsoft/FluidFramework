@@ -1,4 +1,4 @@
-# getkeys
+# @fluid-internal/getkeys
 
 This folder contains a script that will get secret values from the prague keyvault and store them as environment variables. In order to have access to the prague keyvault you must be a member of the prague-secrets or WAC Bohemia security group.
 
