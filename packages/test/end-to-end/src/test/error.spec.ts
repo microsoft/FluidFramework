@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/odsp-driver";
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { LocalCodeLoader } from "@fluid-internal/test-utils";
 
 describe("Errors Types", () => {
     const id = "fluid-test://localhost/errorTest";
