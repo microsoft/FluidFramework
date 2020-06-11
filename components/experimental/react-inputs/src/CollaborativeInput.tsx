@@ -5,28 +5,26 @@
 import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
-interface IProps {
+export interface ICollaborativeInputProps {
     sharedString: SharedString;
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
 }
 
-interface IState {
+export interface ICollaborativeInputState {
     selectionEnd: number;
     selectionStart: number;
 }
 
-export { IProps as ICollaborativeInputProps };
-export { IState as ICollaborativeInputState };
-
 /**
  * Given a SharedString will produce a collaborative input element.
  */
-export class CollaborativeInput extends React.Component<IProps, IState> {
+export class CollaborativeInput
+    extends React.Component<ICollaborativeInputProps, ICollaborativeInputState> {
     private readonly inputElementRef: React.RefObject<HTMLInputElement>;
 
-    constructor(props: IProps) {
+    constructor(props: ICollaborativeInputProps) {
         super(props);
 
         this.inputElementRef = React.createRef<HTMLInputElement>();
@@ -50,7 +48,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
         this.updateInputFromSharedString();
     }
 
-    public componentDidUpdate(prevProps: IProps) {
+    public componentDidUpdate(prevProps: ICollaborativeInputProps) {
         // If the component gets a new sharedString props it needs to re-fetch the sharedString text
         if (prevProps.sharedString !== this.props.sharedString) {
             this.updateInputFromSharedString();
