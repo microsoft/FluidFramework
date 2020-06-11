@@ -1,4 +1,6 @@
-## Table Document / Table Slice With Interception
+# @fluid-example/table-document
+
+## Table Slice With Interception
 
 It provides `createTableWithInterception` that accepts an ITable object, the component context and a callback, and returns an ITable object:
 

@@ -1,4 +1,4 @@
-# Example IResolvedPackage
+# @fluidframework/web-code-loader
 
 ``` TypeScript
 import { IFluidPackage, IPackageConfig } from "@fluidframework/container-definitions";

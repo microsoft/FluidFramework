@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { ChildProcess, fork } from "child_process";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
 import { IKeyValueWrapper } from "./interfaces";
 

@@ -71,7 +71,6 @@ function assertNever(messageType: never): never {
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntimeChannel,
     IComponentRuntime, IComponentHandleContext {
-    public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
      * @param context - The component context

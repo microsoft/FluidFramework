@@ -1,4 +1,4 @@
-# Musica
+# @fluid-example/musica
 
 An example of taking the open source [react-piano](https://github.com/kevinsqi/react-piano)
 and making it collaborative using the Fluid Framework.
