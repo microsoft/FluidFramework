@@ -1,6 +1,7 @@
 {
   "name": "@fluid-internal/functional-tests",
   "version": "0.20.0",
+  "private": true,
   "description": "Functional tests",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
