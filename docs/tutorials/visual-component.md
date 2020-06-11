@@ -28,9 +28,9 @@ export interface IProvideComponentHTMLView {
 }
 ```
 
-As we can see, the only mandatory functions necessary are the `IComponentHTMLView` identifier and a `render(elm: HTMLElement)` function. `remove()` is not mandatory and only necessary for clean up operations when the view is being removed.
+As we can see, the two functions that we must implement are the `IComponentHTMLView` identifier and a `render(elm: HTMLElement)` function. `remove()` is not mandatory and only necessary for clean up operations when the view is being removed.
 
-- `IComponentHTMLView` can simply provide itself as `this` to identify that this component itself is indeed a view provider. With Fluid, each component uses the identifiers to expose their capabilities and are anonymous interface otherwise. As such, another component (`componentB`) that does not know if this component (`componentA`) provides a view but can check by seeing if `componentA.IComponentHTMLView` is defined or not. If it is defined, it is guaranteed to return a `IComponentHTMLView` object. At this point, it can render it by calling `componentA.IComponentHTMLView.render()`. This may seem initially confusing but the example below should demonstrate its ease of implementation and you can read [here](https://fluid-docs.azurewebsites.net/versions/new/docs/components.html#feature-detection-and-delegation) for more reference.
+- `IComponentHTMLView` can simply provide itself as `this` to identify that this component itself is a view provider. With Fluid, each component uses the identifiers to expose their capabilities and are anonymous interface otherwise. As such, another component (`componentB`) that does not know if this component (`componentA`) provides a view but can check by seeing if `componentA.IComponentHTMLView` is defined or not. If `componentA.IComponentHTMLView` is defined, it is guaranteed to return a `IComponentHTMLView` object. At this point, it can render `componentA` by calling `componentA.IComponentHTMLView.render()`. This may seem initially confusing but the example below should demonstrate its ease of implementation and you can read [here](../docs/components.md#feature-detection-and-delegation) for more reference.
 
 - `render` is a function that takes in the parent HTML document element and allows children to inject their views into it. The `elm` parameter passed in here can be modified and returned. If you are using React as your view framework, this is where you would pass the `elm` to the `ReactDOM.render` function to start rendering React components
 
@@ -69,7 +69,7 @@ export class Clicker extends PrimedComponent {
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
     ClickerName,
     Clicker,
-    [],
+    [/* SharedObject dependencies will go here */],
     {},
 );
 export const fluidExport = ClickerInstantiationFactory;
@@ -83,7 +83,7 @@ export class Clicker extends PrimedComponent
 
 By extending the abstract `PrimedComponent` class, we have actually let it do a lot of the necessary set up work for us through its constructor. Specifically, the `PrimedComponent` class gives us access to two items
 
-- `root`: The `root` is a `SharedDirectory` [object](https://fluid-docs.azurewebsites.net/versions/new/docs/SharedDirectory.html) which, as the name implies, is a directory that is shared amongst all users that are rendering this component in the same session. Any items that are placed here on a key will be accessible to other users using the same key on their respective client's root. The stored values can be primitives or the handles of other `SharedObject` items. If you don't know what handles are, don't worry! We'll take a look at them in the next section.
+- `root`: The `root` is a `SharedDirectory` [object](../docs/SharedDirectory.md) which, as the name implies, is a directory that is shared amongst all users that are rendering this component in the same session. Any items that are set here on a key will be accessible to other users using the same key on their respective client's root. The stored values can be primitives or the handles of other `SharedObject` items. If you don't know what handles are, don't worry! We'll take a look at them in the next section.
 
 - `runtime`: The `runtime` is a `ComponentRuntime` object that manages the Fluid component lifecycle. The key thing to note here is that it will be used for the creation of other Fluid components and DDS'.
 
@@ -91,7 +91,7 @@ By extending the abstract `PrimedComponent` class, we have actually let it do a 
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
     ClickerName,
     Clicker,
-    [],
+    [/* SharedObject dependencies will go here */],
     {},
 );
 export const fluidExport = ClickerInstantiationFactory;
@@ -136,11 +136,11 @@ export const fluidExport = ClickerInstantiationFactory;
 
 ```
 
-Now, our clicker has a `SharedCounter` DDS available and can provide a simple empty view. Although a little light on functionality, by just adding those few lines, our `Clicker` is now a compiling, visual component! We will add in our business logic in a second but first, let's see what these few lines achieved.
+Now, our clicker has a `SharedCounter` available, which is an extension of `SharedObject` and can provide a simple empty view. Although a little light on functionality, by just adding those few lines, our `Clicker` is now a compiling, visual component! We will add in our business logic in a second but first, let's see what these few lines achieved.
 
-As discussed above, the `PrimedComponent` already gives us a `SharedObject` in the form of the `SharedDirectory` root. Any primitive we set to a key of the root, i.e. `root.set("key", 1)`, can be fetched by another user, i.e. `root.get("key")` will give you 1. However, different `SharedObject` classes have different ways of dictating merge logic, so you should pick the one that best suits your needs given the scenario.
+As discussed above, the `PrimedComponent` already gives us a `SharedObject` in the form of the `SharedDirectory` root. Any primitive we set to a key of the root, i.e. `root.set("key", 1)`, can be fetched by another user, i.e. `root.get("key")` will return 1. However, different `SharedObject` classes have different ways of dictating merge logic, so you should pick the one that best suits your needs given the scenario.
 
-Although we can simply set a number on the `root` and increment it on `Clicker` clicks, we will use a `SharedCounter` [object](https://fluid-docs.azurewebsites.net/versions/new/docs/SharedCounter.html#creation) instead, as it handles scenarios where multiple users click at the same time. We add that `SharedObject` to our `Clicker` by passing it as the third dependency in the factory constructor. We only need to add it to this list once, even if we use multiple `SharedCounter` instances.
+Although we can simply set a number on the `root` and increment it on `Clicker` clicks, we will use a `SharedCounter` [object](../docs/SharedCounter.md#creation) instead, as it handles scenarios where multiple users click at the same time. We add that `SharedObject` to our `Clicker` by passing it as the third dependency in the factory constructor. We only need to add it to this list once, even if we use multiple `SharedCounter` instances.
 
 ```typescript
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
@@ -376,7 +376,7 @@ public render(div: HTMLElement) {
     return div;
 }
 ```
-By the time any client reaches the render function, they should have either created a `SharedCounter` and fetched it from the root, or fetched an existing one from the root. As such, we will error if it's not available. Then we pass the counter as a prop to our new React component `CounterReactView` inside `ReactDOM.render`. This will be your main entrypoint into the React view lifecycle. Let's take a look at the `CounterReactView` component next.
+By the time any client reaches the render function, they should have either created a `SharedCounter` and fetched it from the root, or fetched an existing one from the root. As such, we will error if it's not available. Then we pass the counter as a prop to our new React component `CounterReactView` inside `ReactDOM.render`. This will be your main entry point into the React view lifecycle. Let's take a look at the `CounterReactView` component next.
 
 ```typescript
 interface CounterProps {
@@ -426,7 +426,7 @@ componentDidMount() {
 ```
 When we fire the `counter.increment` function, the `SharedCounter` emits a `"incremented"` event on all instances of it, i.e. any client that is rendering it will receive this. The event carries the new counter value, and the callback simply sets that value to the `state`. And there you have it! A synced counter! Any users who are rendering this `Clicker` will be able to increment the counter together, and they can refresh their page and see that their count is persistent.
 
-While this may seem trivial, the patterns of listening to events emitted on DDS updates can be extended to any `SharedObject` including [SharedString](https://fluid-docs.azurewebsites.net/versions/new/docs/SharedString.html), [SharedMap](https://fluid-docs.azurewebsites.net/versions/new/docs/SharedMap.html), etc. These can then be hooked up to different React views, and UI callbacks on these views can then be piped into actions on Fluid DDS'.
+While this may seem trivial, the patterns of listening to events emitted on DDS updates can be extended to any `SharedObject` including [SharedString](../docs/SharedString.md), [SharedMap](../docs/SharedMap.md), etc. These can then be hooked up to different React views, and UI callbacks on these views can then be piped into actions on Fluid DDS'.
 
 ### OPTION B: React Views
 
