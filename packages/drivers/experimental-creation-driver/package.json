@@ -1,6 +1,7 @@
 {
-  "name": "@fluidframework/experimental-creation-driver",
+  "name": "@fluid-internal/experimental-creation-driver",
   "version": "0.20.0",
+  "private": true,
   "description": "A driver that imitates actual driver but stores everthing in memory.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

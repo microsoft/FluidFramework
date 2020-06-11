@@ -13,7 +13,7 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import {
     CreationDocumentServiceFactory,
     CreationDriverUrlResolver,
-} from "@fluidframework/experimental-creation-driver";
+} from "@fluid-internal/experimental-creation-driver";
 import {
     ITestFluidComponent,
     initializeLocalContainer,

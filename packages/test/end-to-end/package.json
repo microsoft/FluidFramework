@@ -49,6 +49,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
+    "@fluid-internal/experimental-creation-driver": "^0.20.0",
     "@fluidframework/agent-scheduler": "^0.20.0",
     "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/base-host": "^0.20.0",
@@ -65,7 +66,6 @@
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/driver-utils": "^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0-0",
-    "@fluidframework/experimental-creation-driver": "^0.20.0",
     "@fluidframework/local-driver": "^0.20.0",
     "@fluidframework/local-test-utils": "^0.20.0",
     "@fluidframework/map": "^0.20.0",
