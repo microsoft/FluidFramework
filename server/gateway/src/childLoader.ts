@@ -19,8 +19,8 @@ import { ContainerUrlResolver } from "@fluidframework/routerlicious-host";
 import { NodeCodeLoader, NodeWhiteList } from "@fluidframework/server-services";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import Axios from "axios";
-import * as jwt from "jsonwebtoken";
-import * as winston from "winston";
+import jwt from "jsonwebtoken";
+import winston from "winston";
 
 const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;

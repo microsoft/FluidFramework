@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 // tslint:disable-next-line: ordered-imports
 import { getRandomName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache, MongoManager } from "@fluidframework/server-services-core";
-import * as bodyParser from "body-parser";
+import bodyParser from "body-parser";
 import compression from "compression";
 import connectRedis from "connect-redis";
 import cookieParser from "cookie-parser";
@@ -17,15 +17,15 @@ import express from "express";
 import expressSession from "express-session";
 import morgan from "morgan";
 import { Provider } from "nconf";
-import * as passport from "passport";
-import * as passportJWT from "passport-jwt";
-import * as passportLocal from "passport-local";
-import * as passportOpenIdConnect from "passport-openidconnect";
-import * as redis from "redis";
+import passport from "passport";
+import passportJWT from "passport-jwt";
+import passportLocal from "passport-local";
+import passportOpenIdConnect from "passport-openidconnect";
+import redis from "redis";
 import favicon from "serve-favicon";
-import * as expiry from "static-expiry";
+import expiry from "static-expiry";
 import { v4 } from "uuid";
-import * as winston from "winston";
+import winston from "winston";
 import { AccountManager } from "./accounts";
 import { saveSpoTokens } from "./gatewayOdspUtils";
 import { IAlfred } from "./interfaces";

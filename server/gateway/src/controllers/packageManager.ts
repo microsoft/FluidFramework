@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as query from "querystring";
+import query from "querystring";
 import { IPackage } from "@fluidframework/container-definitions";
 import {
     IPackageList,

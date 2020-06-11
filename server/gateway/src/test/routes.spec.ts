@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as nconf from "nconf";
-import * as path from "path";
-import * as supertest from "supertest";
+import nconf from "nconf";
+import path from "path";
+import supertest from "supertest";
 import { ICache, MongoManager } from "@fluidframework/server-services-core";
 import { Alfred } from "../alfred";
 import * as app from "../app";
@@ -36,6 +36,7 @@ describe("Gateway", () => {
         describe("Routes", () => {
             describe("Templates", () => {
                 it("Should return page", () => {
+                    console.log("return page");
                     return testServer.get("/templates/list").expect(200);
                 });
             });

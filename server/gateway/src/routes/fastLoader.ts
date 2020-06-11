@@ -11,9 +11,9 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 

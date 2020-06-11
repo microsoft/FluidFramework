@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
+import winston from "winston";
 import * as app from "./app";
 import { IAlfred } from "./interfaces";
 

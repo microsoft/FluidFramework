@@ -7,7 +7,7 @@ import { ISummaryTokenClaims, ITokenClaims } from "@fluidframework/protocol-defi
 import { canSummarize } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { IAlfred } from "../interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports

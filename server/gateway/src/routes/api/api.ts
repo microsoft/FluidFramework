@@ -11,10 +11,10 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
 import safeStringify from "json-stringify-safe";
-import * as moniker from "moniker";
+import moniker from "moniker";
 import { Provider } from "nconf";
-import * as passport from "passport";
-import * as winston from "winston";
+import passport from "passport";
+import winston from "winston";
 import { IJWTClaims } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?

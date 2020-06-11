@@ -22,7 +22,7 @@ import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { WebCodeLoader, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
-import * as Comlink from "comlink";
+import Comlink from "comlink";
 
 // Container load requires a URL resolver although it does not make use of it.
 class NotUsedUrlResolver implements IUrlResolver {

@@ -4,7 +4,7 @@
  */
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ICache } from "@fluidframework/server-services-core";
-import * as ensureAuth from "connect-ensure-login";
+import ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";
 import { KeyValueWrapper, LocalKeyValueWrapper } from "../keyValueWrapper";
