@@ -39,10 +39,13 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
      * Render the dice.
      */
     public render(div: HTMLElement) {
+        const getDiceChar = (): string => {
+            return String.fromCodePoint(0x267F + this.root.get(diceValueKey));
+        };
         const diceSpan = document.createElement("span");
         diceSpan.classList.add("diceSpan");
         diceSpan.style.fontSize = "50px";
-        diceSpan.textContent = this.root.get(diceValueKey);
+        diceSpan.textContent = getDiceChar();
         div.appendChild(diceSpan);
 
         const rollButton = document.createElement("button");
@@ -57,7 +60,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
         // When the value of the dice changes we will re-render the
         // value in the dice span
         this.root.on("valueChanged", () => {
-            diceSpan.textContent = this.root.get(diceValueKey);
+            diceSpan.textContent = getDiceChar();
         });
     }
 }

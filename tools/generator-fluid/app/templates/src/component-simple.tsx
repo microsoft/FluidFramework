@@ -76,10 +76,14 @@ class DiceRollerView extends React.Component<IProps, IState>{
         this.props.root.set(diceValueKey, rollValue);
     };
 
+    getDiceChar = (): string => {
+        return String.fromCodePoint(0x267F + this.state.value)
+    };
+
     render() {
         return (
             <div>
-                <span style={{ fontSize: 50 }}>{this.state.value}</span>
+                <span style={{ fontSize: 50 }}>{this.getDiceChar()}</span>
                 <button onClick={this.roll}>Roll</button>
             </div>
         );
