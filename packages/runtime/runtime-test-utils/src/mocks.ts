@@ -508,10 +508,6 @@ export class MockComponentRuntime extends EventEmitter
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;
     }
-
-    public async createAlias(alias: string): Promise<string> {
-        throw new Error("Not implemented");
-    }
 }
 
 /**

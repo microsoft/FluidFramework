@@ -49,8 +49,3 @@ export interface IAttachMessage {
     // Initial snapshot of the document (contains ownership)
     snapshot: ITree;
 }
-
-export interface IAliasProposalMessage {
-    componentId: string;
-    alias: string;
-}

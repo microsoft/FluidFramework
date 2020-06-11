@@ -64,7 +64,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
-    IAliasProposalMessage,
     IAttachMessage,
     IComponentContext,
     IComponentRegistry,
@@ -98,7 +97,6 @@ import { PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 
 const chunksBlobName = ".chunks";
-const aliasesBlobName = ".aliases";
 
 export enum ContainerMessageType {
     // An op to be delivered to component
@@ -109,9 +107,6 @@ export enum ContainerMessageType {
 
     // Chunked operation.
     ChunkedOp = "chunkedOp",
-
-    // Proposes an alias to a component
-    AliasProposal = "aliasProposal",
 }
 
 export interface IChunkedOp {
@@ -200,7 +195,6 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
         case MessageType.Operation:
-        case ContainerMessageType.AliasProposal:
             return true;
         default:
             return false;
@@ -436,17 +430,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
             : [];
 
-        const aliasesId = context.baseSnapshot?.blobs[aliasesBlobName];
-        const aliases = aliasesId
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? await readAndParse<[string, string][]>(context.storage!, aliasesId)
-            : [];
-
         const runtime = new ContainerRuntime(
             context,
             componentRegistry,
             chunks,
-            aliases,
             runtimeOptions,
             containerScope);
 
@@ -609,14 +596,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    // Mapping from alias to component ID
-    private readonly aliases = new Map<string, { id: string; deferred?: Deferred<string> }>();
-
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         chunks: [string, string[]][],
-        aliases: [string, string][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
         private readonly containerScope: IComponent,
     ) {
@@ -663,11 +646,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             this.setNewContext(key, componentContext);
-        }
-
-        for (const [alias, id] of aliases) {
-            this.aliases.set(alias, { id });
-            this.setNewContext(alias, this.contexts.get(id));
         }
 
         this.logger = ChildLogger.create(context.logger, undefined, {
@@ -804,36 +782,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             root.entries.push(new BlobTreeEntry(chunksBlobName, JSON.stringify([...this.chunkMap])));
         }
 
-        const result = this.serializeAliases();
-        if (result.length > 0) {
-            root.entries.push(new BlobTreeEntry(aliasesBlobName, JSON.stringify(result)));
-        }
-
         return root;
-    }
-
-    protected serializeAliases() {
-        const result: [string, string][] = [];
-        for (const [alias, value] of this.aliases.entries()) {
-            if (value.deferred === undefined) {
-                result.push([alias, value.id]);
-            }
-        }
-        return result;
     }
 
     protected serializeContainerBlobs(summaryTree: ISummaryTree) {
         if (this.chunkMap.size > 0) {
             summaryTree.tree[chunksBlobName] = {
                 content: JSON.stringify([...this.chunkMap]),
-                type: SummaryType.Blob,
-            };
-        }
-
-        const result = this.serializeAliases();
-        if (result.length > 0) {
-            summaryTree.tree[aliasesBlobName] = {
-                content: JSON.stringify(result),
                 type: SummaryType.Blob,
             };
         }
@@ -941,9 +896,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     break;
                 case ContainerMessageType.ComponentOp:
                     this.processComponentOp(message, local, localMessageMetadata);
-                    break;
-                case ContainerMessageType.AliasProposal:
-                    this.processAliasProposal(message, local, localMessageMetadata);
                     break;
                 default:
             }
@@ -1080,50 +1032,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this._createComponentContext(pkg, props);
     }
 
-    public async createComponentAlias(componentId: string, alias: string): Promise<string> {
-        assert(this.contexts.has(componentId), "component ID is not valid");
-
-        // Legacy files can run into this assert, when moving from creating named components
-        // to leveraging aliases. There are two solutions to avoid running into it:
-        // 1) Wait long enough before starting to use aliases, to reduce chances of having old clients on the wire.
-        // 2) Continue to leverage existing flow of creating alias only when connected, with realization
-        //    that such flow has a race condition
-        assert(!this.contexts.has(alias), "Creating alias that matches existing component ID");
-
-        let result = this.aliases.get(alias);
-        if (result !== undefined) {
-            if (result.id !== componentId) {
-                throw new Error(`Alias is taken by another component! (${componentId}, ${result.id})`);
-            }
-            // It's undefined if already resolved
-            // Otherwise we have promise that will resolve in some future.
-            if (result.deferred === undefined) {
-                return result.id;
-            }
-            return result.deferred.promise;
-        }
-
-        const deferred = new Deferred<string>();
-        result = {
-            id: componentId,
-            deferred,
-        };
-        this.aliases.set(alias, result);
-
-        const proposal: IAliasProposalMessage = {
-            componentId,
-            alias,
-        };
-        this.submit(ContainerMessageType.AliasProposal, proposal);
-
-        return deferred.promise;
-    }
-
     private _createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), "Creating component with existing ID");
-        assert(!this.aliases.has(id), "Creating component with existing alias ID");
 
         const context = new LocalComponentContext(
             id,
@@ -1299,7 +1211,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         assert(!this.contexts.has(attachMessage.id), "Component attached with existing ID");
-        assert(!this.aliases.has(attachMessage.id), "Component attached with existing alias ID");
 
         // Resolve pending gets and store off any new ones
         this.setNewContext(attachMessage.id, remotedComponentContext);
@@ -1314,22 +1225,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         const transformed = { ...message, contents: envelope.contents };
         const componentContext = this.getContext(envelope.address);
         componentContext.process(transformed, local, localMessageMetadata);
-    }
-
-    private processAliasProposal(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
-        const runtimeMessage = message.contents as IAliasProposalMessage;
-        const finalState = { id: runtimeMessage.componentId };
-        const pendingProposal = this.aliases.get(runtimeMessage.alias);
-
-        // Previous request is already resolved. Ignore incoming op.
-        if (pendingProposal !== undefined && pendingProposal.deferred === undefined) {
-            return;
-        }
-
-        // Incoming op wins the race (if any)
-        this.aliases.set(runtimeMessage.alias, finalState);
-        this.setNewContext(runtimeMessage.alias, this.contexts.get(runtimeMessage.componentId));
-        pendingProposal?.deferred?.resolve(runtimeMessage.componentId);
     }
 
     private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
@@ -1726,7 +1621,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.reSubmitOperation(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-            case ContainerMessageType.AliasProposal:
                 this.submit(type, content, localOpMetadata);
                 break;
             default:

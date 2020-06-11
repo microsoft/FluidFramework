@@ -566,10 +566,6 @@ export abstract class ComponentContext extends EventEmitter implements
             throw new Error("Context is closed");
         }
     }
-
-    public async createAlias(alias: string): Promise<string> {
-        return this._containerRuntime.createComponentAlias(this.id, alias);
-    }
 }
 
 export class RemotedComponentContext extends ComponentContext {
