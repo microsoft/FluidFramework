@@ -567,7 +567,7 @@ export class ReplayTool {
             if (this.documentsFromStorageSnapshots.length > 0) {
                 const op = this.documentsFromStorageSnapshots[0].fromOp;
                 replayTo = Math.min(replayTo, op);
-             }
+            }
 
             assert(replayTo > currentOp);
             for (const doc of this.documents) {

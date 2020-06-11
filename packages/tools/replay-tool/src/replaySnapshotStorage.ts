@@ -25,7 +25,7 @@ export class ReplaySnapshotReader extends ReadDocumentStorageServiceBase {
             trees: {},
         };
 
-        tree.entries.forEach((e)=>{
+        tree.entries.forEach((e) => {
             switch (e.type) {
                 case TreeEntry[TreeEntry.Blob]:
                     const blob = e.value as IBlob;

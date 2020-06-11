@@ -119,13 +119,13 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.expandFiles = false;
                     break;
                 case "--initialSnapshots":
-                if (process.argv[i + 1] && !process.argv[i + 1].startsWith("-")) {
-                    i += 1;
-                    this.initalizeFromSnapshotsDir = this.parseStrArg(i);
-                } else {
-                    this.initalizeFromSnapshotsDir = this.inDirName;
-                }
-                break;
+                    if (process.argv[i + 1] && !process.argv[i + 1].startsWith("-")) {
+                        i += 1;
+                        this.initalizeFromSnapshotsDir = this.parseStrArg(i);
+                    } else {
+                        this.initalizeFromSnapshotsDir = this.inDirName;
+                    }
+                    break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);
                     this.printUsage();
