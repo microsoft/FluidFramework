@@ -5,29 +5,39 @@
 
 import React from "react";
 
-import { IOptionPicker } from "@fluid-example/multiview-coordinate-interface";
+import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
-interface IOptionPickerViewProps {
-    model: IOptionPicker;
+interface ICoordinateViewProps {
+    model: ICoordinate;
 }
 
-export const OptionPickerView: React.FC<IOptionPickerViewProps> = (props: IOptionPickerViewProps) => {
-    const [optionValue, setOptionValue] = React.useState(props.model.value);
+export const CoordinateView: React.FC<ICoordinateViewProps> = (props: ICoordinateViewProps) => {
+    const [x, setX] = React.useState(props.model.x);
+    const [y, setY] = React.useState(props.model.y);
 
     React.useEffect(() => {
-        const onOptionChanged = () => {
-            setOptionValue(props.model.value);
+        const onCoordinateChanged = () => {
+            setX(props.model.x);
+            setY(props.model.y);
         };
-        props.model.on("optionChanged", onOptionChanged);
+        props.model.on("coordinateChanged", onCoordinateChanged);
         return () => {
-            props.model.off("optionChanged", onOptionChanged);
+            props.model.off("coordinateChanged", onCoordinateChanged);
         };
     }, [props.model]);
 
     return (
         <div>
-            <span style={{ fontSize: 50 }}>{optionValue}</span>
-            <button onClick={props.model.setOptionValue}>Set Value</button>
+            X: <input
+                type="range"
+                onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
+                value={x}
+            />
+            Y: <input
+                type="range"
+                onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
+                value={y}
+            />
         </div>
     );
 };
