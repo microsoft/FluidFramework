@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { ReplayArgs, ReplayTool } from "@fluidframework/replay-tool";
+import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 
 const fileLocation: string = "content/snapshotTestContent";
 
