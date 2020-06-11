@@ -12,6 +12,8 @@ const fileLocation: string = "content/snapshotTestContent";
 
 const numberOfThreads = 3;
 
+process.setMaxListeners(20);
+
 export enum Mode {
     Write,   // Write out files
     Compare, // Compare to files stored on disk
@@ -72,10 +74,9 @@ export async function processOneFile(args: IWorkerArgs) {
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
     const listener = (error) => {
-        process.removeListener("unhandledRejection", listener);
         throw new Error(error);
     };
-    process.on("unhandledRejection", listener);
+    process.once("unhandledRejection", listener);
 
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
@@ -130,7 +131,8 @@ export async function processContent(mode: Mode, concurrently = true) {
             const worker = new threads.Worker("./dist/replayWorker.js", { workerData });
             worker.setMaxListeners(20);
 
-            worker.on("message", (error: string) => {
+            worker.once("message", (error: string) => {
+                worker.removeAllListeners();
                 if (mode === Mode.Compare) {
                     // eslint-disable-next-line max-len
                     const extra = "If you changed snapshot representation and validated new format is backward compatible, you can run `npm run test:generate` to regenerate baseline snapshots";
@@ -140,11 +142,13 @@ export async function processContent(mode: Mode, concurrently = true) {
                 }
             });
 
-            worker.on("error", (error) => {
+            worker.once("error", (error) => {
+                worker.removeAllListeners();
                 reject(error);
             });
 
-            worker.on("exit", (code) => {
+            worker.once("exit", (code) => {
+                worker.removeAllListeners();
                 if (code !== 0) {
                     reject(new Error(`Worker stopped with exit code ${code}`));
                 }
