@@ -96,7 +96,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 );
 export const fluidExport = ClickerInstantiationFactory;
 ```
-These two lines in combination allow the Clicker component to be consumed as a Fluid component. While the first two parameters that `PrimedComponentFactory` takes in simply define `Clicker`'s name and pass the class itself, the third parameter is important to keep in mind for later as it will list the Fluid DDS' that `Clicker` utilizes.
+These two lines in combination allow the Clicker component to be consumed as a Fluid component. While the first two parameters that `PrimedComponentFactory` takes in simply define `Clicker`'s name and pass the class itself, the third parameter is important to keep in mind for later as it will list the Fluid DDS' (Distributed Data Structures) that `Clicker` utilizes.
 
 Finally, the last line consisting of an exported `fluidExport` variable is what Fluid containers look for in order to instantiate this component using the factory it provides.
 
@@ -136,7 +136,7 @@ export const fluidExport = ClickerInstantiationFactory;
 
 ```
 
-Now, our clicker has a `SharedCounter` DDS (Distributed Data Structure) available and can provide a simple empty view. Although a little light on functionality, by just adding those few lines, our `Clicker` is now a compiling, visual component! We will add in our business logic in a second but first, let's see what these few lines achieved.
+Now, our clicker has a `SharedCounter` DDS available and can provide a simple empty view. Although a little light on functionality, by just adding those few lines, our `Clicker` is now a compiling, visual component! We will add in our business logic in a second but first, let's see what these few lines achieved.
 
 As discussed above, the `PrimedComponent` already gives us a `SharedObject` in the form of the `SharedDirectory` root. Any primitive we set to a key of the root, i.e. `root.set("key", 1)`, can be fetched by another user, i.e. `root.get("key")` will give you 1. However, different `SharedObject` classes have different ways of dictating merge logic, so you should pick the one that best suits your needs given the scenario.
 
@@ -178,7 +178,7 @@ Now, we have two choices for crafting our view.
 
 The recommended choice currently is to use event-driven views. This ties events that are fired on `SharedObject` changes to trigger re-renders for any view framework. When using React, instead of needing to re-render, we can simply call `setState` with the new value.
 
-There is a also a new, experimental Fluid React library for React developers that abstracts much of the event-ing logic but it is a still a WiP for scenarios such as cross-component relationships. However, we can use it for standalone components such as this. It is still recommended to read the event-driven case even if you choose to apply the Fluid React libraries to understand the logic that is happening beneath the abstraction the libraries provide.
+There is a also a new, experimental Fluid React library that React developers may find easier to use since it abstracts much of the event-driven state update logic, but it is a still a WiP for scenarios such as cross-component relationships and may be unstable. However, we can use it for standalone components such as this. It is still recommended to read the event-driven case even if you choose to apply the Fluid React libraries to understand the logic that is happening beneath the abstraction the libraries provide.
 
 ### OPTION A: Event-Driven Views
 
@@ -274,11 +274,11 @@ As we can see here, every client, whether its the first one or one joining an ex
 
 In a nutshell, this means that `this._counter` is the same instance of `SharedCounter` for all of the clients that share the same `root`.
 
-####Creating the View
+#### Creating the View
 
 Alright, now for the moment you've been waiting for, connecting the counter to the view.
 
-#####Final Code:
+##### Final Code:
 ```typescript
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
@@ -434,7 +434,7 @@ While this may seem trivial, the patterns of listening to events emitted on DDS 
 
 Now we are going to take the scaffolding that we set up earlier and add in our React libraries to tie our synced state update to our local React state update. If you read through Option A, you will see that the Fluid React libraries will now handle much of the event-listening logic that we wrote earlier.
 
-#####Final Code:
+##### Final Code:
 ```typescript
 import {
     PrimedComponent,
@@ -557,14 +557,13 @@ We also pass in the `listenedEvents` parameter to indicate which events on this 
 This also optionally takes in `stateKey`,
 `viewConverter`, and `rootKey` parameters to handle cases where the view and fluid states do not match, but they are not needed here.
 
-If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the component lifecycle and that we only have the `render` function now. This is because this initialization is happening within the React lifecycle, and the `SharedCounter` instance will be available to us in our state. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of `{counter: SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
+If you read Option A above, you will notice that we no longer need to set up the `SharedCounter` in the component lifecycle and that we only have the `render` function now. This is because this initialization is happening within the React lifecycle, and the `SharedCounter` instance will be made available through a state update after it finishes initializing. This is why you see that `CounterState` is defined as `{counter?: SharedCounter}` instead of `{counter: SharedCounter}`. Prior to initialization, `state.counter` will return undefined.
 
 Okay, now we have everything necessary to pass in as props to our `CounterReactView`.
 - `syncedStateId` - This should be unique for each component that shares the same root, i.e. if there was another clicker being render alongside this one in this component, it should receive its own ID to prevent one from interfering in the updates of the other
 - `root` - The same `SharedDirectory` provided by `this.root` from `PrimedComponent`
-- `dataProps`
--- `fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are stored after being fetched from their handles, and it used to make the corresponding component synchronously available in the view.
--- `runtime` - The same `ComponentRuntime` provided by `this.runtime` from `PrimedComponent`
+- `dataProps.fluidComponentMap` - This can just take a new `Map` instance for now but will need to be filled when establishing multi-component relationships in more complex cases. This map is where all the DDS' that we use are stored after being fetched from their handles, and it used to make the corresponding component synchronously available in the view.
+- `dataProps.runtime` - The same `ComponentRuntime` provided by `this.runtime` from `PrimedComponent`
 - `fluidToView` - The fluidToView relationship map we set up above.
 
 We're ready to go through our view, which is now super simple due to the setup we did in the Fluid component itself.
@@ -588,8 +587,8 @@ class CounterReactView extends FluidReactComponent<CounterViewState, CounterFlui
     }
 }
 ```
-We can see that the state is initially empty as it only consists of the `SharedCounter` DDS and the `FluidReactComponent` will handling loading that for us.
+We can see that the state is initially empty as it only consists of the `SharedCounter` DDS, and we know the `FluidReactComponent` will be handling the loading of that since we passed it as a key in the `fluidToView` map.
 
-The view itself can now directly use the `this.state.counter.value` and we can update it by simply using `this.state.counter.increment(1)`. This will directly update the `state.counter.value` without needing any event listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to directly use IComponentHandles or set up event listeners.
+The view itself can now directly use the `this.state.counter.value` and we can update it by simply using `this.state.counter.increment(1)`. This will directly update the `this.state.counter.value` without needing any event listeners to be additionally set up. And there you have it, a synced clicker with persistent state without needing to directly use IComponentHandles or set up event listeners!
 
 We can extend this example to other DDS' by passing in their corresponding `create` functions in and listening to their respective events.
