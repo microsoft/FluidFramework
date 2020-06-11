@@ -115,8 +115,6 @@ describe("Document Dirty", () => {
 
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
-
-        await containerDeltaEventManager.process();
     });
 
     describe("Dirty state is updated correctly while in connected state", () => {
