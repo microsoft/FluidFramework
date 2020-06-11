@@ -28,9 +28,6 @@ export enum MessageType {
     // Summary op write failure
     SummaryNack = "summaryNack",
 
-    // Blob uploaded
-    BlobUploaded = "blobUploaded",
-
     // Channel operation.
     Operation = "op",
 
