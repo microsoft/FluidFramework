@@ -164,7 +164,8 @@ describe("Document Dirty", () => {
 
             // Document should have been marked dirty again due to pending DDS ops
             assert.equal(wasMarkedDirtyCount, 2,
-                "Document should have been marked dirty again due to pending DDS ops");
+                `Document should have been marked dirty again due to pending DDS ops.
+                Dirty count: ${wasMarkedDirtyCount}`);
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
@@ -221,5 +222,10 @@ describe("Document Dirty", () => {
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
         });
+    });
+
+    afterEach(async () => {
+        container.close();
+        await deltaConnectionServer.webSocketServer.close();
     });
 });
