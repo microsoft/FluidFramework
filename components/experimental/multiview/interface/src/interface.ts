@@ -6,21 +6,14 @@
 import { EventEmitter } from "events";
 
 /**
- * IOptionPicker describes the public API surface for our option picker component.
+ * ICoordinate describes the public API surface for our 2d coordinate component.
  */
-export interface IOptionPicker extends EventEmitter {
-    /**
-     * Get the option value.
-     */
-    readonly value: string;
+export interface ICoordinate extends EventEmitter {
+    x: number;
+    y: number;
 
     /**
-     * Set the option value.  Will cause a "optionChanged" event to be emitted.
+     * The coordinateChanged event will fire whenever someone changes the coordinate, either locally or remotely.
      */
-    setOptionValue: () => void;
-
-    /**
-     * The optionChanged event will fire whenever someone changes the option, either locally or remotely.
-     */
-    on(event: "optionChanged", listener: () => void): this;
+    on(event: "coordinateChanged", listener: () => void): this;
 }

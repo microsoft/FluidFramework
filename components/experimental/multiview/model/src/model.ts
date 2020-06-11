@@ -9,40 +9,50 @@ import {
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
-import { IOptionPicker } from "@fluid-example/multiview-coordinate-interface";
+import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
-const optionValueKey = "optionValue";
+const xKey = "x";
+const yKey = "y";
 
 /**
- * The OptionPicker is our implementation of the IOptionPicker interface.
+ * The Coordinate is our implementation of the ICoordinate interface.
  */
-export class OptionPicker extends PrimedComponent implements IOptionPicker {
+export class Coordinate extends PrimedComponent implements ICoordinate {
     public static get ComponentName() { return "@fluid-example/coordinate"; }
 
     protected async componentInitializingFirstTime() {
-        this.root.set(optionValueKey, "First");
+        this.root.set(xKey, 0);
+        this.root.set(yKey, 0);
     }
 
     protected async componentHasInitialized() {
         this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === optionValueKey) {
-                this.emit("optionChanged");
+            if (changed.key === xKey || changed.key === yKey) {
+                this.emit("coordinateChanged");
             }
         });
     }
 
-    public get value() {
-        return this.root.get(optionValueKey);
+    public get x() {
+        return this.root.get(xKey);
     }
 
-    public readonly setOptionValue = () => {
-        this.root.set(optionValueKey, "Second");
-    };
+    public set x(newX: number) {
+        this.root.set(xKey, newX);
+    }
+
+    public get y() {
+        return this.root.get(yKey);
+    }
+
+    public set y(newY: number) {
+        this.root.set(yKey, newY);
+    }
 }
 
 export const OptionPickerInstantiationFactory = new PrimedComponentFactory(
-    OptionPicker.ComponentName,
-    OptionPicker,
+    Coordinate.ComponentName,
+    Coordinate,
     [],
     {},
 );
