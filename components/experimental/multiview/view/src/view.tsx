@@ -7,11 +7,11 @@ import React from "react";
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
-interface ICoordinateViewProps {
+interface ISliderCoordinateViewProps {
     model: ICoordinate;
 }
 
-export const CoordinateView: React.FC<ICoordinateViewProps> = (props: ICoordinateViewProps) => {
+export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props: ISliderCoordinateViewProps) => {
     const [x, setX] = React.useState(props.model.x);
     const [y, setY] = React.useState(props.model.y);
 

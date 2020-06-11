@@ -40,7 +40,7 @@
     "@fluidframework/container-runtime-definitions": "^0.20.0",
     "@fluidframework/view-adapters": "^0.20.0",
     "@fluid-example/multiview-coordinate-model": "^0.20.0",
-    "@fluid-example/multiview-coordinate-view": "^0.20.0",
+    "@fluid-example/multiview-slider-coordinate-view": "^0.20.0",
     "react": "^16.10.2"
   },
   "devDependencies": {

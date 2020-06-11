@@ -8,7 +8,7 @@ import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
-import { CoordinateView } from "@fluid-example/multiview-coordinate-view";
+import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
 import * as React from "react";
 
@@ -26,7 +26,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
                 headers: request.headers,
             });
             const model = (await runtime.request(modelRequest)).value as Coordinate;
-            return { status: 200, mimeType: "fluid/view", value: <CoordinateView model={model} /> };
+            return { status: 200, mimeType: "fluid/view", value: <SliderCoordinateView model={model} /> };
         }
     };
 
