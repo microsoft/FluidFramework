@@ -47,7 +47,6 @@ try {
     threads = require("worker_threads");
 } catch (error) { }
 import { ReplayArgs } from "./replayArgs";
-import { ReplaySnapshotReaderFileSnapshotWriter } from "./replaySnapshotStorage";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
 
@@ -470,7 +469,7 @@ export class ReplayTool {
                     storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
                 } else {
                     if (node.name.startsWith("snapshot_")) {
-                        storage = new ReplaySnapshotReaderFileSnapshotWriter(
+                        storage = FileSnapshotReader.createFromPath(
                             `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
                     }
                     else {

@@ -83,7 +83,8 @@ export async function processOneFile(args: IWorkerArgs) {
 
     const listener = (error) => {
         process.removeListener("unhandledRejection", listener);
-        throw new Error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
+        console.error(`unhandledRejection\n ${JSON.stringify(args)}\n ${error}`);
+        throw error;
     };
     process.on("unhandledRejection", listener);
 
@@ -93,10 +94,11 @@ export async function processOneFile(args: IWorkerArgs) {
     try {
         const res = await new ReplayTool(replayArgs).Go();
         if (!res) {
-            throw new Error(`Error processing\n ${JSON.stringify(args)}`);
+            throw new Error(`Error processing`);
         }
     } catch (error) {
-        throw new Error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
+        console.error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);
+        throw error;
     }
 }
 
