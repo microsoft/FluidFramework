@@ -68,9 +68,9 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@fluid-internal/test-loader-utils": "^0.20.0",
     "@fluidframework/build-common": "^0.16.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0-0",
-    "@fluid-internal/test-loader-utils": "^0.20.0",
     "@microsoft/api-extractor": "^7.7.2",
     "@types/debug": "^4.1.5",
     "@types/jwt-decode": "^2.2.1",

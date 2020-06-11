@@ -10,7 +10,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:lint",
     "build-v2": "cd @fluid-internal/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
