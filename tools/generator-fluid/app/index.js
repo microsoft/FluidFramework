@@ -402,7 +402,7 @@ module.exports = class extends Generator {
     const project = new Project({});
 
     return project.createSourceFile(
-      this.destinationPath(currentFilePath),
+      this.destinationPath(destinationPath),
       fileString,
     );
   }
