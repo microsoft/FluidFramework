@@ -1,6 +1,7 @@
 {
-  "name": "@fluidframework/fetch-tool",
+  "name": "@fluid-internal/fetch-tool",
   "version": "0.20.0",
+  "private": true,
   "description": "",
   "license": "MIT",
   "author": "Microsoft",
