@@ -48,7 +48,7 @@ To see an example of how a Fluid component can implement this interface, we will
 
 Over the course of this example, we will incrementally build out our entire component in one file. The final two versions of the code can be found at the bottom of each section. Each of these files define an entire, self-sufficient Fluid component that can be exported in its own package.
 
-First, we will look at how `Clicker` is set up such that it defines itself as a Fluid Component and has a shared state. Then, we will take a look at two different ways of generating a view that responds to changes on that shared state when a user presses a button:
+First, we will look at how `Clicker` is set up such that it defines itself as a Fluid Component and uses a shared state. Then, we will take a look at two different ways of generating a view that responds to changes on that shared state when a user presses a button:
 
 - Option A: Using a robust, event-driven pattern that can be emulated for different view frameworks.
 - Option B: Using a React adapter that React developers may find more familiar but uses experimental code that is still being developed.
