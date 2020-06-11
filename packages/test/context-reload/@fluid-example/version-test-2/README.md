@@ -1,1 +1,1 @@
-# @fluid-example/version-test-2
+# @fluid-internal/version-test-2
