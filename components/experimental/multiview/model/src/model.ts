@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
 
-import { IOptionPicker } from "@fluid-example/multiview-option-picker-interface";
+import { IOptionPicker } from "@fluid-example/multiview-coordinate-interface";
 
 const optionValueKey = "optionValue";
 
@@ -17,7 +17,7 @@ const optionValueKey = "optionValue";
  * The OptionPicker is our implementation of the IOptionPicker interface.
  */
 export class OptionPicker extends PrimedComponent implements IOptionPicker {
-    public static get ComponentName() { return "@fluid-example/option-picker"; }
+    public static get ComponentName() { return "@fluid-example/coordinate"; }
 
     protected async componentInitializingFirstTime() {
         this.root.set(optionValueKey, "First");

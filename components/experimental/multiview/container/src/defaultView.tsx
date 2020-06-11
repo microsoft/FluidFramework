@@ -8,6 +8,7 @@ import * as React from "react";
 interface IDefaultViewProps {
 }
 
+// x/y coordinate manipulation?
 export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
     return (
         <div>
@@ -15,11 +16,15 @@ export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProp
                 Simple linking of a single model/view
             </div>
             <div>
+                Swapping out an alternative model/view
+            </div>
+            <div>
                 Sharing a model between views
             </div>
             <div>
                 A view with two models
             </div>
+
             <div>
                 A nested scenario
             </div>
@@ -28,4 +33,4 @@ export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProp
             </div>
         </div>
     );
-}
+};

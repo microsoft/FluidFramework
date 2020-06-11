@@ -7,8 +7,8 @@ import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluid
 import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
-import { OptionPicker, OptionPickerInstantiationFactory } from "@fluid-example/multiview-option-picker-model";
-import { OptionPickerView } from "@fluid-example/multiview-option-picker-view";
+import { OptionPicker, OptionPickerInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { OptionPickerView } from "@fluid-example/multiview-coordinate-view";
 
 import * as React from "react";
 

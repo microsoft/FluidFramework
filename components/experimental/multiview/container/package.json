@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/multiview-option-picker-container",
+  "name": "@fluid-example/multiview-container",
   "version": "0.20.0",
   "description": "Container for multiview sample",
   "repository": "microsoft/FluidFramework",
@@ -39,8 +39,8 @@
     "@fluidframework/container-runtime": "^0.20.0",
     "@fluidframework/container-runtime-definitions": "^0.20.0",
     "@fluidframework/view-adapters": "^0.20.0",
-    "@fluid-example/multiview-option-picker-model": "^0.20.0",
-    "@fluid-example/multiview-option-picker-view": "^0.20.0",
+    "@fluid-example/multiview-coordinate-model": "^0.20.0",
+    "@fluid-example/multiview-coordinate-view": "^0.20.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
