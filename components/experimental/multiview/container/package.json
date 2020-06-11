@@ -41,6 +41,7 @@
     "@fluidframework/view-adapters": "^0.20.0",
     "@fluid-example/multiview-coordinate-interface": "^0.20.0",
     "@fluid-example/multiview-coordinate-model": "^0.20.0",
+    "@fluid-example/multiview-plot-coordinate-view": "^0.20.0",
     "@fluid-example/multiview-slider-coordinate-view": "^0.20.0",
     "react": "^16.10.2"
   },

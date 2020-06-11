@@ -7,11 +7,11 @@ import React from "react";
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
-interface ISliderCoordinateViewProps {
+interface IPlotCoordinateViewProps {
     model: ICoordinate;
 }
 
-export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props: ISliderCoordinateViewProps) => {
+export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IPlotCoordinateViewProps) => {
     const [x, setX] = React.useState(props.model.x);
     const [y, setY] = React.useState(props.model.y);
 
@@ -27,25 +27,16 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
     }, [props.model]);
 
     return (
-        <div>
-            <div>
-                X:
-                <input
-                    type="range"
-                    onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
-                    defaultValue={x}
-                />
-                { x }
-            </div>
-            <div>
-                Y:
-                <input
-                    type="range"
-                    onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
-                    defaultValue={y}
-                />
-                { y }
-            </div>
+        <div style={{ width: 100, height: 100, position: "relative", border: "1px solid black" }}>
+            <div style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                position: "absolute",
+                left: x - 2.5,
+                top: y - 2.5,
+                backgroundColor: "#f00",
+            }}></div>
         </div>
     );
 };

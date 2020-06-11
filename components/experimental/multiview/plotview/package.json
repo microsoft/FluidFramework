@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/multiview-slider-coordinate-view",
+  "name": "@fluid-example/multiview-plot-coordinate-view",
   "version": "0.20.0",
   "description": "View for multiview sample",
   "repository": "microsoft/FluidFramework",

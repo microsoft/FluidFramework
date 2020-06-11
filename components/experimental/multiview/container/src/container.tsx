@@ -9,6 +9,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { MountableView } from "@fluidframework/view-adapters";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
 import * as React from "react";
@@ -32,6 +33,7 @@ const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
             </div>
             <div>
                 Swapping out an alternative model/view
+                <PlotCoordinateView model={props.model} />
             </div>
             <div>
                 Sharing a model between views
