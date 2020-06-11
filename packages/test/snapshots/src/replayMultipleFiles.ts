@@ -10,7 +10,7 @@ import { Deferred } from "@fluidframework/common-utils";
 
 const fileLocation: string = "content/snapshotTestContent";
 
-const numberOfThreads = 4;
+const numberOfThreads = 3;
 
 export enum Mode {
     Write,   // Write out files
