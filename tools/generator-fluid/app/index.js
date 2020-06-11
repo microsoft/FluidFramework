@@ -17,6 +17,12 @@ const questions = {
         type: "input",
         name: "componentName",
         message: "What is the name of your new component?",
+        filter: (input) => {
+          // only use the first word
+          const firstWord = input.split(" ")[0];
+          // remove non-word characters
+          return firstWord.replace(/\W/g, "");
+        },
     },
     viewFramework : {
         type: "list",
@@ -76,6 +82,11 @@ module.exports = class extends Generator {
         required: false,
         description: "Defines the Component Name"
       });
+
+    if (this.options["componentName"]) {
+      // if there is a componentName option we need to strip our non-word characters
+      this.options["componentName"] = this.options["componentName"].replace(/\W/g, "");
+    }
   }
 
   async prompting() {
