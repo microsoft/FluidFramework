@@ -37,7 +37,7 @@ const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
                 Sharing a model between views
             </div>
             <div>
-                A view with two models
+                A view with three models (triangle)
             </div>
 
             <div>
