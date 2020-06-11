@@ -7,6 +7,7 @@ import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluid
 import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
+import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
@@ -18,6 +19,37 @@ const registryEntries = new Map([
     CoordinateInstantiationFactory.registryEntry,
 ]);
 
+interface IDefaultViewProps {
+    model: ICoordinate;
+}
+
+const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
+    return (
+        <div>
+            <div>
+                Simple linking of a single model/view
+                <SliderCoordinateView model={props.model} />
+            </div>
+            <div>
+                Swapping out an alternative model/view
+            </div>
+            <div>
+                Sharing a model between views
+            </div>
+            <div>
+                A view with two models
+            </div>
+
+            <div>
+                A nested scenario
+            </div>
+            <div>
+                An anonymous (nested?) scenario
+            </div>
+        </div>
+    );
+};
+
 const defaultViewRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
@@ -26,7 +58,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
                 headers: request.headers,
             });
             const model = (await runtime.request(modelRequest)).value as Coordinate;
-            return { status: 200, mimeType: "fluid/view", value: <SliderCoordinateView model={model} /> };
+            return { status: 200, mimeType: "fluid/view", value: <DefaultView model={model} /> };
         }
     };
 
