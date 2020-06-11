@@ -91,7 +91,6 @@ export async function processContent(mode: Mode, concurrently = true) {
     let threads: typeof import("worker_threads");
     try {
         threads = await import("worker_threads");
-        threads.Worker.EventEmitter.defaultMaxListeners = 20;
     } catch (err) {
     }
 
@@ -129,6 +128,7 @@ export async function processContent(mode: Mode, concurrently = true) {
 
         await (async (workerData: IWorkerArgs) => limiter.addWork(async () => new Promise((resolve, reject) => {
             const worker = new threads.Worker("./dist/replayWorker.js", { workerData });
+            worker.setMaxListeners(20);
 
             worker.on("message", (error: string) => {
                 if (mode === Mode.Compare) {
