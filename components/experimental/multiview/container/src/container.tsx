@@ -7,26 +7,26 @@ import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluid
 import { RequestParser, RuntimeRequestHandler } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
-import { OptionPicker, OptionPickerInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
-import { OptionPickerView } from "@fluid-example/multiview-coordinate-view";
+import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { CoordinateView } from "@fluid-example/multiview-coordinate-view";
 
 import * as React from "react";
 
-const optionPickerComponentId = "optionPicker";
+const coordinateComponentId = "coordinate";
 
 const registryEntries = new Map([
-    OptionPickerInstantiationFactory.registryEntry,
+    CoordinateInstantiationFactory.registryEntry,
 ]);
 
 const defaultViewRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
             const modelRequest = new RequestParser({
-                url: `${optionPickerComponentId}`,
+                url: `${coordinateComponentId}`,
                 headers: request.headers,
             });
-            const model = (await runtime.request(modelRequest)).value as OptionPicker;
-            return { status: 200, mimeType: "fluid/view", value: <OptionPickerView model={model} /> };
+            const model = (await runtime.request(modelRequest)).value as Coordinate;
+            return { status: 200, mimeType: "fluid/view", value: <CoordinateView model={model} /> };
         }
     };
 
@@ -35,14 +35,14 @@ const viewRequestHandlers = [
     defaultViewRequestHandler,
 ];
 
-export class OptionPickerContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
         super(registryEntries, [], viewRequestHandlers);
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const componentRuntime = await runtime.createComponent(optionPickerComponentId, OptionPicker.ComponentName);
-        const result = await componentRuntime.request({ url: optionPickerComponentId });
+        const componentRuntime = await runtime.createComponent(coordinateComponentId, Coordinate.ComponentName);
+        const result = await componentRuntime.request({ url: coordinateComponentId });
         if (result.status !== 200 || result.mimeType !== "fluid/component") {
             throw new Error("Error in creating the default option picker model.");
         }

@@ -50,7 +50,7 @@ export class Coordinate extends PrimedComponent implements ICoordinate {
     }
 }
 
-export const OptionPickerInstantiationFactory = new PrimedComponentFactory(
+export const CoordinateInstantiationFactory = new PrimedComponentFactory(
     Coordinate.ComponentName,
     Coordinate,
     [],

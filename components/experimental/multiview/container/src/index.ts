@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { OptionPickerContainerRuntimeFactory } from "./container";
+import { CoordinateContainerRuntimeFactory } from "./container";
 
-export const fluidExport = new OptionPickerContainerRuntimeFactory();
+export const fluidExport = new CoordinateContainerRuntimeFactory();

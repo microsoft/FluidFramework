@@ -28,16 +28,22 @@ export const CoordinateView: React.FC<ICoordinateViewProps> = (props: ICoordinat
 
     return (
         <div>
-            X: <input
-                type="range"
-                onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
-                value={x}
-            />
-            Y: <input
-                type="range"
-                onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
-                value={y}
-            />
+            <div>
+                X: {x}
+                <input
+                    type="range"
+                    onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
+                    value={x}
+                />
+            </div>
+            <div>
+                Y: {y}
+                <input
+                    type="range"
+                    onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
+                    value={y}
+                />
+            </div>
         </div>
     );
 };
