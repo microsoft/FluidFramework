@@ -14,6 +14,17 @@ complementary to each other.
 
 :::
 
+## Table of Contents
+* Examples
+  * [DiceRoller](./dice-roller.md)
+  * [Sudoku](./sudoku.md)
+  * [Badge](./badge.md)
+* How-To Tutorials
+  * [Write a Visual Component](./visual-component.md)
+  * [Write a Non-Visual Component](./data-component.md)
+  * [Embed a Component Within Another](./embed-components.md)
+  * [Interact Across Components](./cross-component.md)
+
 ## Dice roller
 
 **Distributed data structures:**
