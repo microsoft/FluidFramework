@@ -10,9 +10,7 @@ import { Deferred } from "@fluidframework/common-utils";
 
 const fileLocation: string = "content/snapshotTestContent";
 
-const numberOfThreads = 2;
-
-process.setMaxListeners(20);
+const numberOfThreads = 4;
 
 export enum Mode {
     Write,   // Write out files
@@ -76,7 +74,7 @@ export async function processOneFile(args: IWorkerArgs) {
     const listener = (error) => {
         throw new Error(error);
     };
-    process.once("unhandledRejection", listener);
+    process.on("unhandledRejection", listener);
 
     // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
@@ -92,6 +90,7 @@ export async function processContent(mode: Mode, concurrently = true) {
     let threads: typeof import("worker_threads");
     try {
         threads = await import("worker_threads");
+        threads.Worker.EventEmitter.defaultMaxListeners = 20;
     } catch (err) {
     }
 
@@ -129,10 +128,8 @@ export async function processContent(mode: Mode, concurrently = true) {
 
         await (async (workerData: IWorkerArgs) => limiter.addWork(async () => new Promise((resolve, reject) => {
             const worker = new threads.Worker("./dist/replayWorker.js", { workerData });
-            worker.setMaxListeners(20);
 
-            worker.once("message", (error: string) => {
-                worker.removeAllListeners();
+            worker.on("message", (error: string) => {
                 if (mode === Mode.Compare) {
                     // eslint-disable-next-line max-len
                     const extra = "If you changed snapshot representation and validated new format is backward compatible, you can run `npm run test:generate` to regenerate baseline snapshots";
@@ -142,13 +139,11 @@ export async function processContent(mode: Mode, concurrently = true) {
                 }
             });
 
-            worker.once("error", (error) => {
-                worker.removeAllListeners();
+            worker.on("error", (error) => {
                 reject(error);
             });
 
-            worker.once("exit", (code) => {
-                worker.removeAllListeners();
+            worker.on("exit", (code) => {
                 if (code !== 0) {
                     reject(new Error(`Worker stopped with exit code ${code}`));
                 }
