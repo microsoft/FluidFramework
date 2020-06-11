@@ -9,6 +9,8 @@ var chalk = require("chalk");
 
 const none = "none";
 const react = "react";
+const scaffoldingBeginner = "beginner";
+const scaffoldingAdvanced = "advanced";
 
 const questions = {
     componentName: {
@@ -22,7 +24,14 @@ const questions = {
         message: "Which view framework would you like to start with?",
         default: react,
         choices: [react, none],
-      }
+    },
+    scaffolding: {
+      type: "list",
+      name: "scaffolding",
+      message: "Which type of scaffolding would you like?",
+      default: scaffoldingBeginner,
+      choices: [scaffoldingBeginner, scaffoldingAdvanced],
+    }
 };
 
 /**
@@ -45,7 +54,18 @@ module.exports = class extends Generator {
       "view-none",
       {
         description: "Sets None as Default View",
-        type: Boolean,
+      });
+    
+    // Adding two options to specify the scaffolding inline
+    this.option(
+      "s-beginner",
+      {
+        description: "Sets beginner as scaffolding",
+      });
+    this.option(
+      "s-production",
+      {
+        description: "Sets production as scaffolding",
       });
 
     // Adding argument to specify the component name inline
@@ -80,6 +100,18 @@ module.exports = class extends Generator {
       questionsCollection.push(questions.viewFramework);
     }
 
+    if (this.options["s-beginner"] && this.options["s-production"]) {
+      this.log(chalk.red("Both --s-beginner and --s-production options have been included. Prompting question."));
+      delete this.options["s-beginner"];
+      delete this.options["s-production"];
+    }
+
+    if (this.options["s-beginner"] || this.options["s-production"]) {
+      this.log(`${chalk.green("?")} ${questions.scaffolding.message} ${chalk.blue(this._isBeginnerScaffolding ? scaffoldingBeginner : scaffoldingAdvanced)}`)
+    } else {
+      questionsCollection.push(questions.scaffolding);
+    }
+
     if (questionsCollection) {
       this.answers = await this.prompt(questionsCollection);
     }
@@ -89,12 +121,27 @@ module.exports = class extends Generator {
 
   moveAndModifyTemplateFiles() {
 
-    // Copy and Modify Files
+    if (this._isBeginnerScaffolding()) {
+      this._copyAndModifySimpleComponentFile();
+      this.fs.copyTpl(
+        this.templatePath("README-Simple.md"), // FROM
+        this.destinationPath("./README.md"), // TO Root Folder,
+        { extension: this._getFileExtension() },
+      );
+    } else {
+      // Copy and Modify Advanced Files
+      this._copyAndModifyComponentFile();
+      this._copyAndModifyInterfaceFile();
+      this._copyAndModifyViewFile();
+      this.fs.copyTpl(
+        this.templatePath("README.md"), // FROM
+        this.destinationPath("./README.md"), // TO Root Folder,
+        { extension: this._getFileExtension() },
+      );
+    }
+
     this._copyAndModifyPackageJsonFile();
-    this._copyAndModifyComponentFile();
     this._copyAndModifyIndexFile();
-    this._copyAndModifyInterfaceFile();
-    this._copyAndModifyViewFile();
     this._copyAndModifyTsconfigFile();
 
     this.fs.copy(
@@ -103,12 +150,6 @@ module.exports = class extends Generator {
     );
 
     // Copy Remaining Files
-    this.fs.copyTpl(
-      this.templatePath("README.md"), // FROM
-      this.destinationPath("./README.md"), // TO Root Folder,
-      { extension: this._getFileExtension() },
-    );
-
     this.fs.copy(
       this.templatePath("webpack.config.js"), // FROM
       this.destinationPath("./webpack.config.js"), // TO Root Folder
@@ -149,6 +190,26 @@ module.exports = class extends Generator {
       this.destinationPath("package.json"), // TO
       packageJson, // contents
     );
+  }
+
+  _copyAndModifySimpleComponentFile() {
+    const file = this._generateNewProjectFile(
+      `src/component-simple${this._getFileExtension()}`,
+      `src/component${this._getFileExtension()}`);
+    const classObj = file.getClass("DiceRoller");
+    // Rename the class name with the component name provided
+    classObj.rename(this._componentClassName());
+
+    // Replace ComponentName response with package name
+    const accessor = classObj.getGetAccessor("ComponentName");
+    accessor.setBodyText(`return "${this._componentPkgName()}";`);
+
+    if(this._isReact()) {
+      const viewClassObj = file.getClass("DiceRollerView");
+      viewClassObj.rename(`${this._componentClassName()}View`);
+    }
+
+    file.save();
   }
 
   _copyAndModifyComponentFile() {
@@ -300,6 +361,10 @@ module.exports = class extends Generator {
    * Below here are helper functions.
    */
 
+  _isBeginnerScaffolding() {
+    return this.options["s-beginner"] || (this.answers && this.answers.scaffolding === scaffoldingBeginner);
+  }
+
   _isReact() {
     return this.options["view-react"] || (this.answers && this.answers.viewFramework === react);
   }
@@ -330,7 +395,8 @@ module.exports = class extends Generator {
     return `${this._componentClassName()}InstantiationFactory`;
   }
 
-  _generateNewProjectFile(currentFilePath) {
+  _generateNewProjectFile(currentFilePath, destinationPath) {
+    destinationPath = destinationPath ? destinationPath : currentFilePath;
     const fileString = this.fs.read(this.templatePath(currentFilePath));
 
     const project = new Project({});
