@@ -139,13 +139,13 @@ export interface IViewConverter<
     /**
      * The corresponding value key within the view state type
      */
-    stateKey: keyof SV;
+    viewKey: keyof SV;
     /**
      * A callback that takes in the partial view state containing the value that
      * this converter maps to, and returns the corresponding partial fluid state
      */
     viewConverter?: (
-        syncedState: Partial<SF>,
+        fluidState: Partial<SF>,
         fluidComponentMap: FluidComponentMap
     ) => Partial<SV>;
     /**

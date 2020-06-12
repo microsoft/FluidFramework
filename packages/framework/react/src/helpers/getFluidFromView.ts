@@ -13,7 +13,7 @@ import {
  * Return a partial Fluid state containing the view state key identified converted into its
  * corresponding Fluid state value in the partial Fluid state returned
  * @param state - The current view state
- * @param stateKey - The view state key that needs to converted to its Fluid state
+ * @param viewKey - The view state key that needs to converted to its Fluid state
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
@@ -22,19 +22,19 @@ export function getFluidFromView<
     SF extends IFluidFunctionalComponentFluidState
 >(
     state: SV,
-    stateKey: keyof SV,
+    viewKey: keyof SV,
     viewToFluid: Map<keyof SV, IFluidConverter<SV, SF>>,
 ): Partial<SF> {
-    const value = state[stateKey];
+    const value = state[viewKey];
     const fluidConverter =
-        viewToFluid && viewToFluid.get(stateKey)?.fluidConverter;
+        viewToFluid && viewToFluid.get(viewKey)?.fluidConverter;
     if (fluidConverter) {
         const partialViewState: Partial<SV> = {};
-        partialViewState[stateKey] = value;
+        partialViewState[viewKey] = value;
         return fluidConverter(partialViewState);
     } else {
         const partialFluidState: Partial<SF> = {};
-        partialFluidState[stateKey as string] = value;
+        partialFluidState[viewKey as string] = value;
         return partialFluidState;
     }
 }

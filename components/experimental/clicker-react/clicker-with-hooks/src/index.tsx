@@ -274,7 +274,7 @@ export class ClickerWithHooks extends SyncedComponent
         [
             "value", {
                 type: "number",
-                stateKey: "value",
+                viewKey: "value",
             },
         ],
     ]);
@@ -297,7 +297,7 @@ export class ClickerWithHooks extends SyncedComponent
         [
             "counter", {
                 type: SharedCounter.name,
-                stateKey: "value",
+                viewKey: "value",
                 viewConverter: (
                     syncedState: Partial<ICounterReducerFluidState>,
                 ) => {

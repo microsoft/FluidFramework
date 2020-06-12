@@ -41,12 +41,12 @@ export function generateComponentSchema<
         }
         const {
             type,
-            stateKey,
+            viewKey,
             viewConverter,
         } = value;
-        const fluidConverter = viewToFluid.get(stateKey);
+        const fluidConverter = viewToFluid.get(viewKey);
         if (fluidConverter === undefined) {
-            throw Error(`Failed to find fluid converter for key ${stateKey}`);
+            throw Error(`Failed to find fluid converter for key ${viewKey}`);
         }
         if (type === fluidConverter.type) {
             fluidMatchingMap.set(fluidStateKey as string, false);

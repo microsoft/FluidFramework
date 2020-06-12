@@ -65,7 +65,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
         [
             "counter", {
                 type: SharedCounter.name,
-                stateKey: "counter",
+                viewKey: "counter",
                 sharedObjectCreate: SharedCounter.create,
                 listenedEvents: ["incremented"],
             },
