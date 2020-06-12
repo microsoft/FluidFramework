@@ -123,7 +123,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
     /**
      * Since we're letting the container define the default view it will respond with, it must do whatever setup
-     * it requires to produce that default view.
+     * it requires to produce that default view.  We'll create a few Coordinates and give them starting values.
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const simpleCoordinate = await createAndAttachCoordinate(runtime, simpleCoordinateComponentId);
