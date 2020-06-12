@@ -125,7 +125,7 @@ describe("loader/runtime compatibility", () => {
 
             // wait for summary ack/nack
             await new Promise((resolve, reject) => this.container.on("op", (op) => {
-                switch(op.type) {
+                switch (op.type) {
                     case "summaryAck": resolve(); break;
                     case "summaryNack": reject(Error("summaryNack")); break;
                 }
