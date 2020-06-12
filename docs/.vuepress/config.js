@@ -9,7 +9,7 @@ const process = require("process");
 
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
-const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "internal";
+const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
 const THIS_VERSION = process.env.THIS_VERSION || "0.19";
 const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
 const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
@@ -18,13 +18,6 @@ const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
-
-const internalOnly = (obj) => {
-    if (DOCS_AUDIENCE !== "internal") {
-        return null;
-    }
-    return obj;
-};
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -58,7 +51,7 @@ const getNav = () => {
         { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/overview" },
         // {
-        //     text: "🤿 Dive Deeper",
+        //     text: "🤿 Dive Deeper",z
         //     items: [
         //         { text: "How Fluid works", link: "/how/" },
         //         internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
@@ -245,7 +238,6 @@ const getDocsSidebar = () => {
             // path: "",
             children: [
                 "getting-started.md",
-                "dev-env.md",
                 "hello-world.md",
                 "create-a-new-fluid-component",
             ]
@@ -266,20 +258,20 @@ const getDocsSidebar = () => {
             // path: "dds",
             children: [
                 // "overview",
-                "SharedDirectory",
-                "SharedMap",
-                "SharedCounter",
-                "SharedCell",
+                "SharedDirectory.md",
+                "SharedMap.md",
+                "SharedCounter.md",
+                "SharedCell.md",
                 {
                     title: "Sequences",
-                    path: "sequences",
+                    path: "sequences.md",
                     children: [
                         "SharedNumberSequence.md",
                         "SharedObjectSequence.md",
                         "SharedString.md",
                     ],
                 },
-                "SharedMatrix",
+                "SharedMatrix.md",
                 "consensus.md",
             ]
         },
@@ -296,11 +288,26 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Advanced guides",
+            title: "Guides",
             collapsable: true,
             children: [
-                "dds-anatomy",
-                "container-and-component-loading",
+                "visual-component.md",
+                "data-component.md",
+                "embed-components.md",
+                "cross-component.md",
+                "component-patterns.md",
+                "component-collections.md",
+                "bots.md",
+                "component-best-practices.md",
+            ]
+        },
+        {
+            title: "Advanced",
+            collapsable: true,
+            children: [
+                "tob.md",
+                "dds-anatomy.md",
+                "container-and-component-loading.md",
             ]
         },
         {
@@ -309,109 +316,55 @@ const getDocsSidebar = () => {
             // path: "",
             children: [
                 "release-process.md",
+                "breaking-changes.md",
+                "compatibility.md",
+                "doc-system.md",
             ]
         },
-
     ];
 }
 
 const getTutorialsSidebar = () => {
-    return compact([
-        "",
-        "dice-roller",
-        "sudoku",
-        "badge",
-        internalOnly({
-            title: "Components",
-            collapsable: true,
-            children: [
-                "visual-component",
-                "data-component",
-                "embed-components",
-                "cross-component",
-                "component-patterns",
-                "component-collections",
-                "bots",
-                "component-best-practices",
-            ]
-        }),
-        internalOnly({
-            title: "Containers",
-            collapsable: true,
-            children: [
-                "singletons",
-            ]
-        }),
-    ]);
-}
-
-const getTeamSidebar = () => {
     return [
         {
-            title: "Team",
+            title: "Tutorials",
             collapsable: false,
+            // path: "",
             children: [
-                ""
+                "",
+                "dice-roller.md",
+                "sudoku.md",
             ]
         },
         {
-            title: "Updates",
+            title: "Examples",
             collapsable: false,
-            children: listPages("../team/")
+            // path: "",
+            children: [
+                "badge.md",
+            ]
         },
+
     ];
 }
 
 const getHowSidebar = () => {
-    return compact([
-        "",
-        "tob",
-        internalOnly("developer-guide"),
-    ]);
-}
-
-const getAdvancedSidebar = () => {
     return [
         "",
-        "loading-deep-dive",
-    ];
-}
-
-const getPatternsSidebar = () => {
-    return [
-        {
-            title: "Patterns",
-            collapsable: false,
-            children: [
-                "leader-election",
-            ]
-        },
     ];
 }
 
 const getAllSidebars = () => {
-    const sidebars = {
-        internal: {
-            "/patterns/": getPatternsSidebar(),
-            "/advanced/": getAdvancedSidebar(),
-            "/team/": getTeamSidebar(),
-        },
-        all: {
-            "/docs/": getDocsSidebar(),
-            "/tutorials/": getTutorialsSidebar(),
-            "/api/": getApiSidebar(),
-            "/how/": getHowSidebar(),
-        }
+    return {
+        "/docs/": getDocsSidebar(),
+        "/tutorials/": getTutorialsSidebar(),
+        "/api/": getApiSidebar(),
+        "/how/": getHowSidebar(),
     };
-
-    return Object.assign({},
-        sidebars.all,
-        DOCS_AUDIENCE === "internal" ? sidebars.internal : {}
-    );
 }
 
 const getThemeConfig = () => {
-    let config = {
+    const config = {
         DOCS_AUDIENCE: DOCS_AUDIENCE,
         THIS_VERSION: THIS_VERSION,
         MASTER_BRANCH_VERSION: MASTER_BRANCH_VERSION,
@@ -424,24 +377,17 @@ const getThemeConfig = () => {
         lastUpdated: false, // "Last Updated",
         docsDir: "docs",
         heroSymbol: permalinkSymbol(),
+        repo: "microsoft/FluidFramework",
         smoothScroll: true,
         sidebarDepth: 1,
         nav: getNav(),
         sidebar: getAllSidebars(),
     };
-    if (DOCS_AUDIENCE === "internal") {
-        config.repo = "microsoft/FluidFramework";
-    }
     return config;
 }
 
 function permalinkSymbol() {
-    const now = new Date(new Date().getTime());
-    const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
-    const end = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 18));
-    const inRange = start < now && now < end;
-    // console.log(`${inRange}: ${start} < ${now} < ${end}`);
-    const symbol = inRange ? "🍀" : "💧";
+    const symbol = "💧";
     return symbol;
 }
 
@@ -461,6 +407,7 @@ module.exports = {
         // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
+        ["alias"],
         ["tabs"],
         ["vuepress-plugin-check-md"],
         // [
@@ -516,35 +463,4 @@ module.exports = {
         }
     },
     themeConfig: getThemeConfig(),
-
-    // The below is basically a clone of the vuepress build command, but supports overridding the "base" parameter in a
-    // kind of hacky way.
-    // extendCli: (cli, options) => {
-    //     cli
-    //         .command("buildbase [targetDir]", "build dir as static site")
-    //         .option("-b, --base <base>", "override the base config option")
-    //         .option("-d, --dest <dest>", "specify build output dir (default: .vuepress/dist)")
-    //         .option("-t, --temp <temp>", "set the directory of the temporary file")
-    //         .option("-c, --cache [cache]", "set the directory of cache")
-    //         .option("-w, --workers <#>", "set the number of worker threads")
-    //         .option("--no-cache", "clean the cache before build")
-    //         .option("--debug", "build in development mode for debugging")
-    //         .option("--silent", "build static site in silent mode")
-    //         .action((sourceDir = ".", commandOptions) => {
-    //             const { debug, silent, workers } = commandOptions
-
-    //             logger.setOptions({ logLevel: silent ? 1 : debug ? 4 : 3 })
-    //             env.setOptions({ isDebug: debug, isTest: process.env.NODE_ENV === "test", workerThreads: workers || 1 })
-
-    //             let buildOptions = {
-    //                 sourceDir: path.resolve(sourceDir),
-    //                 ...options,
-    //                 ...commandOptions
-    //             };
-    //             buildOptions.siteConfig.base = buildOptions.options.base;
-    //             logger.debug("siteConfig", buildOptions.siteConfig);
-
-    //             wrapCommand(build(buildOptions));
-    //         })
-    // },
 }

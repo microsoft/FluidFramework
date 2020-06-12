@@ -1,19 +1,8 @@
+---
+aliases:
+ - docs/index.html
+---
 
-<style type="text/css" rel="stylesheet">
-  .doc-button {
-      background-color: #6fa8dc;
-      border-color: transparent;
-      border-radius: 11px;
-      color:         #ffffff;
-      display:       inline-block;
-      font:          normal bold 18px "Open Sans", sans-serif;
-      text-align:    center;
-      padding: 2vh;
-      margin: .5vh;
-      height: 8vh;
-      align-content: center;
-  }
-</style>
 # Getting started
 
 Fluid Framework is a TypeScript library for building collaborative web applications.
@@ -29,10 +18,12 @@ environment](dev-env.md).
 
 ## Learn the Fluid Framework
 
-People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer a more theoretical or a practical approach, we hope you'll find this section helpful.
+People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer
+a step by step conceptual approach or a practical one, we hope you'll find this documentation helpful.
 
-[<button class="doc-button">Learn by Reading: Docs</button>](../tutorials/README.md)
-[<button class="doc-button">Learn by Doing: Tutorials</button>](hello-world.md)
+[<span class="doc-button">Learn by Reading: Docs</span>](./hello-world.md)
+[<span class="doc-button">Learn by Doing: Tutorials</span>](../tutorials/README.md)
+
 ### TypeScript and JavaScript resources
 
 The Fluid Framework documentation assumes some familiarity with programming in the [TypeScript][] language. TypeScript

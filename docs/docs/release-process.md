@@ -1,7 +1,3 @@
----
-# sidebar: auto
----
-
 # Fluid releases
 
 ## Compatibility and supportability
