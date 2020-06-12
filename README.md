@@ -7,12 +7,12 @@ applications.
 
 You may be here because you want to...
 
-- [Learn more about what Fluid is]()
-- [Build a Fluid component]()
+- Learn more about the Fluid Framework
+- Build a Fluid component
 
-All of these are documented at <https://aka.ms/fluid>.
+Relevant documentation and guides can be found at <https://aka.ms/fluid>.
 
-Got questions? Engage with other Fluid users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
+Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Code Structure
 
