@@ -531,7 +531,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.propagateConnectionState();
             this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
-            this.attached = false;
             this.close(CreateContainerError(error));
             throw error;
         }
