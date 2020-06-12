@@ -33,8 +33,8 @@ export function getFluidFromView<
         partialViewState[stateKey] = value;
         return fluidConverter(partialViewState);
     } else {
-        const partialRootState: Partial<SF> = {};
-        partialRootState[stateKey as string] = value;
-        return partialRootState;
+        const partialFluidState: Partial<SF> = {};
+        partialFluidState[stateKey as string] = value;
+        return partialFluidState;
     }
 }

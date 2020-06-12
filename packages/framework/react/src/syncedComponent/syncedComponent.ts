@@ -18,7 +18,7 @@ import {
     ViewToFluidMap,
     FluidComponentMap,
 } from "../interface";
-import { generateComponentSchema, setComponentSchemaToRoot, getComponentSchemaFromRoot } from "../helpers";
+import { generateComponentSchema, setComponentSchema, getComponentSchema } from "../helpers";
 import { IComponentSynced } from "./componentSynced";
 
 export interface ISyncedStateConfig<SV, SF> {
@@ -111,14 +111,19 @@ export abstract class SyncedComponent<
             const { syncedStateId, fluidToView, viewToFluid } = stateConfig;
             // Add the SharedMap to store the fluid state
             const storedFluidState = SharedMap.create(this.runtime);
+            // Add it to the fluid component map so that it will have a listener added to it once
+            // we enter the render lifecycle
             this.fluidComponentMap.set(storedFluidState.handle.path, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
+            // Add the state to our map of synced states so that we can load it later for persistence
             this.syncedState.set(
                 `syncedState-${syncedStateId}`,
                 storedFluidState.handle,
             );
+            // Initialize any DDS' needed for the state or fetch any values from the root if they are stored
+            // on the root under a different key
             for (const key of fluidToView.keys()) {
                 const fluidKey = key as string;
                 const rootKey = fluidToView.get(fluidKey)?.rootKey;
@@ -139,6 +144,8 @@ export abstract class SyncedComponent<
                     storedFluidState.set(fluidKey, this.root.get(rootKey));
                 }
             }
+
+            // Generate our schema and store it, so that we don't need to parse our maps each time
             const componentSchema = generateComponentSchema(
                 this.runtime,
                 fluidToView,
@@ -164,7 +171,7 @@ export abstract class SyncedComponent<
                     isRuntimeMap: true,
                 },
             );
-            setComponentSchemaToRoot(
+            setComponentSchema(
                 syncedStateId,
                 this.syncedState,
                 componentSchemaHandles,
@@ -173,23 +180,29 @@ export abstract class SyncedComponent<
     }
 
     private async initializeStateFromExisting() {
+        // Fetch our synced state handle which is guaranteed to have been created by now
         const internalSyncedStateHandle = this.root.get("syncedState");
         if (internalSyncedStateHandle === undefined) {
             throw new Error(this.getUninitializedErrorString(`syncedState`));
         }
         this.internalSyncedState = await internalSyncedStateHandle.get();
+        // Reload the stored state for each config provided
         for (const stateConfig of this.syncedStateConfig.values()) {
             const { syncedStateId, fluidToView } = stateConfig;
-            // Add the SharedMap to store the fluid state
+            // Fetch this specific view's state using the syncedStateId
             const storedFluidStateHandle = this.syncedState.get(`syncedState-${syncedStateId}`);
             if (storedFluidStateHandle === undefined) {
                 throw new Error(this.getUninitializedErrorString(`syncedState-${syncedStateId}`));
             }
             const storedFluidState = await storedFluidStateHandle.get();
+            // Add it to the fluid component map so that it will have a listener added to it once
+            // we enter the render lifecycle
             this.fluidComponentMap.set(storedFluidStateHandle.path, {
                 component: storedFluidState,
                 isRuntimeMap: true,
             });
+            // If the view is using any Fluid Components or SharedObjects, asynchronously fetch them
+            // from their stored handles
             for (const key of fluidToView.keys()) {
                 const fluidKey = key as string;
                 const rootKey = fluidToView.get(fluidKey)?.rootKey;
@@ -218,7 +231,7 @@ export abstract class SyncedComponent<
                     }
                 }
             }
-            const componentSchemaHandles = getComponentSchemaFromRoot(syncedStateId, this.syncedState);
+            const componentSchemaHandles = getComponentSchema(syncedStateId, this.syncedState);
             if (componentSchemaHandles === undefined) {
                 throw new Error(this.getUninitializedErrorString(`componentSchema-${syncedStateId}`));
             }

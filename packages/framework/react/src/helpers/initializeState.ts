@@ -17,8 +17,8 @@ import {
     IFluidFunctionalComponentFluidState,
 } from "../interface";
 import {
-    rootCallbackListener,
-    syncStateAndRoot,
+    syncedStateCallbackListener,
+    syncState,
     updateStateAndComponentMap,
 } from ".";
 
@@ -26,7 +26,7 @@ import {
  * Fetch the synced state for this view from the SyncedComponent sharedState and add
  * listeners for all state updates
  * @param syncedStateId - Unique ID for this synced component's state
- * @param root - The component's shared state map
+ * @param syncedState - The component's shared state map
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
  * @param dataProps - Contains the runtime and fluidComponentMap to create and store DDS'
@@ -42,7 +42,7 @@ export async function initializeState<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    root: ISharedMap,
+    syncedState: ISharedMap,
     dataProps: IFluidDataProps,
     state: SV,
     setState: (
@@ -55,15 +55,16 @@ export async function initializeState<
 ): Promise<void> {
     state.isInitialized = true;
     state.syncedStateId = syncedStateId;
-    // Define the root callback listener that will be responsible for triggering state updates on root value changes
-    const rootCallback = (
+    // Define the synced state callback listener that will be responsible for triggering state updates on synced state
+    // value changes
+    const syncedStateCallback = (
         change: IDirectoryValueChanged,
         local: boolean,
     ) => {
-        const callback = rootCallbackListener(
+        const callback = syncedStateCallbackListener(
             dataProps.fluidComponentMap,
             syncedStateId,
-            root,
+            syncedState,
             dataProps.runtime,
             state,
             setState,
@@ -85,14 +86,14 @@ export async function initializeState<
             }
 
             if (value.isRuntimeMap) {
-                (component as SharedMap).on("valueChanged", rootCallback);
+                (component as SharedMap).on("valueChanged", syncedStateCallback);
             } else if (value.listenedEvents) {
                 for (const event of value.listenedEvents) {
                     (component as SharedObject).on(event, () =>
-                        syncStateAndRoot(
+                        syncState(
                             true,
                             syncedStateId,
-                            root,
+                            syncedState,
                             dataProps.runtime,
                             state,
                             setState,
@@ -107,19 +108,19 @@ export async function initializeState<
         }
     }
 
-    // Add the callback to the component's own root
-    root.on("valueChanged", rootCallback);
+    // Add the callback to the component's own synced state
+    syncedState.on("valueChanged", syncedStateCallback);
 
     return updateStateAndComponentMap<SV, SF>(
         [],
         dataProps.fluidComponentMap,
         true,
         syncedStateId,
-        root,
+        syncedState,
         dataProps.runtime,
         state,
         setState,
-        rootCallback,
+        syncedStateCallback,
         fluidToView,
         viewToFluid,
     );

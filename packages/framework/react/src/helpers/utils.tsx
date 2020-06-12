@@ -29,17 +29,17 @@ export async function asyncForEach(
     callback: (
         handle: IComponentHandle,
         fluidComponentMap: FluidComponentMap,
-        rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+        syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
         refreshView: () => void
     ) => Promise<void>,
     fluidComponentMap: FluidComponentMap,
-    rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
 ): Promise<void> {
     const promises: Promise<void>[] = [];
     for (const value of array) {
         promises.push(
-            callback(value, fluidComponentMap, rootCallback, refreshView),
+            callback(value, fluidComponentMap, syncedStateCallback, refreshView),
         );
     }
     await Promise.all(promises);
@@ -51,7 +51,7 @@ export const addComponent = async <
 >(
     handle: IComponentHandle,
     fluidComponentMap: FluidComponentMap,
-    rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
+    syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     refreshView: () => void,
 ): Promise<void> => {
     const value = fluidComponentMap.get(handle.path);
@@ -64,7 +64,7 @@ export const addComponent = async <
     fluidComponentMap.set(handle.path, value);
     return handle.get().then((component) => {
         if (value.isRuntimeMap) {
-            (component as SharedMap).on("valueChanged", rootCallback);
+            (component as SharedMap).on("valueChanged", syncedStateCallback);
         } else if (value.listenedEvents) {
             for (const event of value.listenedEvents) {
                 (component as SharedObject).on(event, refreshView);

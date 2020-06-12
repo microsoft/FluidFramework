@@ -13,15 +13,15 @@ import {
     IViewConverter,
     IFluidDataProps,
 } from "./interface";
-import { syncStateAndRoot, initializeState } from "./helpers";
+import { syncState, initializeState } from "./helpers";
 
 /**
- * A react component with a root, initial props, and a root to state mapping
+ * A react component with a synced state, initial props, and a Fluid-to-view state two-way mapping
  */
 export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
-    private readonly _root: ISharedMap;
+    private readonly _syncedState: ISharedMap;
     private readonly _dataProps: IFluidDataProps;
     private readonly _viewToFluid: Map<keyof SV, IFluidConverter<SV, SF>>;
     private readonly _fluidToView: Map<keyof SF, IViewConverter<SV, SF>>;
@@ -38,30 +38,30 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
         this._viewToFluid = config.viewToFluid as any;
         this._fluidToView = config.fluidToView as any;
         this._syncedStateId = syncedStateId;
-        this._root = syncedComponent.syncedState;
+        this._syncedState = syncedComponent.syncedState;
         this._dataProps = syncedComponent.dataProps;
     }
 
     public async componentDidMount() {
         await initializeState(
             this._syncedStateId,
-            this._root,
+            this._syncedState,
             this._dataProps,
             this.state,
-            this._setStateFromRoot.bind(this),
+            this._setState.bind(this),
             this._fluidToView,
             this._viewToFluid,
         );
     }
 
     /**
-     * Function to update the state from both root updates or local ones. Only updates the root
+     * Function to update the state from both synced state updates or local ones. Only updates the synced state
      * on local updates
      * @param newState - the new state to be set
-     * @param fromRootUpdate - is this update coming locally or from a synced root value change
+     * @param fromRootUpdate - is this update coming locally or from a synced state value change
      * @param isLocal - should this update be applied only locally
      */
-    private _setStateFromRoot(
+    private _setState(
         newState: SV,
         fromRootUpdate?: boolean,
         isLocal?: boolean,
@@ -69,13 +69,13 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
         if (isLocal) {
             super.setState(newState);
         } else if (fromRootUpdate) {
-            syncStateAndRoot(
+            syncState(
                 true,
                 this._syncedStateId,
-                this._root,
+                this._syncedState,
                 this._dataProps.runtime,
                 newState,
-                this._setStateFromRoot.bind(this),
+                this._setState.bind(this),
                 this._dataProps.fluidComponentMap,
                 this._fluidToView,
                 this._viewToFluid,
@@ -87,16 +87,16 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
 
     /**
      * Function to update the current state. It overloads the React component setState function
-     * @param newState - New state to be set both locally and on the synced root
+     * @param newState - New state to be set both locally and on the synced state
      */
     public setState(newState: SV) {
-        syncStateAndRoot(
+        syncState(
             false,
             this._syncedStateId,
-            this._root,
+            this._syncedState,
             this._dataProps.runtime,
             newState,
-            this._setStateFromRoot.bind(this),
+            this._setState.bind(this),
             this._dataProps.fluidComponentMap,
             this._fluidToView,
             this._viewToFluid,

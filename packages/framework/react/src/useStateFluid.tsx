@@ -9,7 +9,7 @@ import {
     IFluidProps,
     IFluidFunctionalComponentFluidState,
 } from "./interface";
-import { initializeState, syncStateAndRoot } from "./helpers";
+import { initializeState, syncState } from "./helpers";
 import { ISyncedStateConfig } from "./syncedComponent";
 
 /**
@@ -20,7 +20,7 @@ export function useStateFluid<
     SF extends IFluidFunctionalComponentFluidState
 >(
     props: IFluidProps<SV, SF>, initialViewState: SV,
-): [SV, (newState: SV, fromRootUpdate?: boolean) => void] {
+): [SV, (newState: SV, isSyncedStateUpdate?: boolean) => void] {
     const {
         syncedStateId,
         syncedComponent,
@@ -29,7 +29,7 @@ export function useStateFluid<
     if (config === undefined) {
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }
-    const root = syncedComponent.syncedState;
+    const syncedState = syncedComponent.syncedState;
     const dataProps = props.dataProps || syncedComponent.dataProps;
     const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
@@ -42,7 +42,7 @@ export function useStateFluid<
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         initializeState<SV, SF>(
             syncedStateId,
-            root,
+            syncedState,
             dataProps,
             reactState,
             reactSetState,
@@ -64,10 +64,10 @@ export function useStateFluid<
             if (isLocal) {
                 reactSetState(newCombinedState);
             } else {
-                syncStateAndRoot(
+                syncState(
                     fromRootUpdate,
                     syncedStateId,
-                    root,
+                    syncedState,
                     dataProps.runtime,
                     newCombinedState,
                     reactSetState,
@@ -77,7 +77,7 @@ export function useStateFluid<
                 );
             }
         },
-        [root, viewToFluid, reactState, reactSetState, dataProps],
+        [syncedState, viewToFluid, reactState, reactSetState, dataProps],
     );
     return [reactState, fluidSetState];
 }

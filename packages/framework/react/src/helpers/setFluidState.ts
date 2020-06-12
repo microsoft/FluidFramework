@@ -9,24 +9,24 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { FluidComponentMap, IViewConverter } from "../interface";
 
 /**
- * Store the Fluid state onto the shared root
- * @param syncedStateId - Unique ID to use for storing the component's synced state in the root
- * @param root - The root shared directory that will be used to store the synced state
+ * Store the Fluid state onto the shared synced state
+ * @param syncedStateId - Unique ID to use for storing the component's synced state in the map
+ * @param syncedState - The shared map that will be used to store the synced state
  * @param runtime - The component runtime
  * @param componentMap - A map of component handle paths to their respective components
  * @param fluidToView - A map of the Fluid state values that need conversion to their view state counterparts and the
  * respective converters
- * @param newFluidState - The Fluid state to store on to the root, after converting components to their handles
+ * @param newFluidState - The Fluid state to store on to the syncedState, after converting components to their handles
  */
-export function setFluidStateToRoot<SV, SF>(
+export function setFluidState<SV, SF>(
     syncedStateId: string,
-    root: ISharedMap,
+    syncedState: ISharedMap,
     runtime: IComponentRuntime,
     componentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
     newFluidState?: SF,
 ): IComponentHandle {
-    const storedStateHandle = root.get<IComponentHandle>(
+    const storedStateHandle = syncedState.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
     );
     let storedState = componentMap.get(storedStateHandle?.path)
@@ -44,7 +44,7 @@ export function setFluidStateToRoot<SV, SF>(
     }
     for (const key of fluidToView.keys()) {
         const fluidKey = key as string;
-        const rootKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
+        const syncedStateKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
         const createCallback = fluidToView?.get(fluidKey as keyof SF)
             ?.sharedObjectCreate;
         if (createCallback) {
@@ -56,20 +56,20 @@ export function setFluidStateToRoot<SV, SF>(
                         ?.listenedEvents || ["valueChanged"],
                 });
                 storedState.set(fluidKey, sharedObject.handle);
-                if (rootKey) {
-                    root.set(rootKey, sharedObject.handle);
+                if (syncedStateKey) {
+                    syncedState.set(syncedStateKey, sharedObject.handle);
                 }
             } else {
                 storedState.set(fluidKey, storedState.get(fluidKey));
-                if (rootKey) {
-                    root.set(rootKey, root.get(rootKey));
+                if (syncedStateKey) {
+                    syncedState.set(syncedStateKey, syncedState.get(syncedStateKey));
                 }
             }
-        } else if (rootKey) {
+        } else if (syncedStateKey) {
             const value = newFluidState
                 ? newFluidState[fluidKey]
-                : root.get(rootKey);
-            root.set(rootKey, value);
+                : syncedState.get(syncedStateKey);
+            syncedState.set(syncedStateKey, value);
             storedState.set(fluidKey, value);
         } else {
             const value = newFluidState
@@ -78,6 +78,6 @@ export function setFluidStateToRoot<SV, SF>(
             storedState.set(fluidKey, value);
         }
     }
-    root.set(`syncedState-${syncedStateId}`, storedState.handle);
+    syncedState.set(`syncedState-${syncedStateId}`, storedState.handle);
     return storedState.handle;
 }

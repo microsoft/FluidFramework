@@ -17,7 +17,7 @@ export interface IProvideComponentSynced {
 }
 
 /**
- * Provides functionality to retrieve subsets of an internal registry.
+ * Exposes its syncedState SharedMap for others to listen on
  */
 export interface IComponentSynced extends IProvideComponentSynced {
     syncedState: ISharedMap;

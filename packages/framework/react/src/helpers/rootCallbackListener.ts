@@ -12,17 +12,17 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidFunctionalComponentFluidState,
 } from "../interface";
-import { syncStateAndRoot } from "./syncStateAndRoot";
+import { syncState } from "./syncState";
 import { getByFluidKey } from "./utils";
 import { getViewFromFluid } from "./getViewFromFluid";
-import { getFluidStateFromRoot } from ".";
+import { getFluidState } from ".";
 
 /**
  * The callback that is added to the "valueChanged" event on the IComponentListened this
- * is passed in to. This will trigger state updates when the root synced state value is updated
+ * is passed in to. This will trigger state updates when the synced state value is updated
  * @param fluidComponentMap - A map of component handle paths to their respective components
  * @param syncedStateId - Unique ID for this synced component's state
- * @param root - The shared directory this component shared state is stored on
+ * @param syncedState - The shared map this component's synced state is stored on
  * @param runtime - The component runtime
  * @param state - The current view state
  * @param setState - Callback to update the react view state
@@ -31,13 +31,13 @@ import { getFluidStateFromRoot } from ".";
  * @param viewToFluid - A map of the view state values that need conversion to their Fluid state counterparts and the
  * respective converters
  */
-export const rootCallbackListener = <
+export const syncedStateCallbackListener = <
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
 >(
     fluidComponentMap: FluidComponentMap,
     syncedStateId,
-    root: ISharedMap,
+    syncedState: ISharedMap,
     runtime: IComponentRuntime,
     state: SV,
     setState: (
@@ -48,24 +48,24 @@ export const rootCallbackListener = <
     fluidToView: FluidToViewMap<SV, SF>,
     viewToFluid: ViewToFluidMap<SV, SF>,
 ) => (change: IDirectoryValueChanged, local: boolean) => {
-    const currentFluidState = getFluidStateFromRoot(
+    const currentFluidState = getFluidState(
         syncedStateId,
-        root,
+        syncedState,
         fluidComponentMap,
         fluidToView,
     );
     if (!currentFluidState) {
-        throw Error("Root update triggered before fluid state was initialized");
+        throw Error("Synced state update triggered before fluid state was initialized");
     }
     const viewToFluidKeys: string[] = viewToFluid
         ? Array.from(viewToFluid.values()).map((item) => item.fluidKey as string)
         : [];
     if (!local && change.key === `syncedState-${syncedStateId}`) {
         // If the update is to the synced Fluid state, update both the Fluid and view states
-        syncStateAndRoot(
+        syncState(
             true,
             syncedStateId,
-            root,
+            syncedState,
             runtime,
             state,
             setState,
@@ -83,7 +83,7 @@ export const rootCallbackListener = <
         if (stateKey) {
             const newPartialState = getViewFromFluid(
                 syncedStateId,
-                root,
+                syncedState,
                 change.key as keyof SF,
                 fluidComponentMap,
                 fluidToView,
@@ -93,7 +93,7 @@ export const rootCallbackListener = <
             setState(state, true, local);
         } else {
             throw Error(
-                `Unable to extract view state from root change key: ${change.key}`,
+                `Unable to extract view state from synced state change key: ${change.key}`,
             );
         }
     }

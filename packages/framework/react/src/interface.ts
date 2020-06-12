@@ -39,7 +39,7 @@ export interface ICombinedState<
 }
 
 /**
- * The fluid schema that is generated on load and will be stored in the root
+ * The fluid schema that is generated on load and will be stored in the synced state
  */
 export interface IFluidSchema {
     /**
@@ -109,7 +109,7 @@ export interface IFluidProps<
     SF extends IFluidFunctionalComponentFluidState
     > {
     /**
-     *  Unique ID to use for storing the component's synced state in the root
+     *  Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
      */
     syncedStateId: string;
     /**
@@ -158,7 +158,7 @@ export interface IViewConverter<
      */
     listenedEvents?: string[];
     /**
-     * If this Fluid object is stored on the root under a different key than the name of this Fluid state
+     * If this Fluid object is stored on the component root under a different key than the name of this Fluid state
      * key within the synced state map, provide the key on the root for this object here. The changes will also
      * reflect under that key if the data needs to be used elsewhere
      */
@@ -166,7 +166,7 @@ export interface IViewConverter<
 }
 
 /**
- * Root converters to take the view state value that they are keyed against in the ViewToFluid map
+ * Fluid converters to take the view state value that they are keyed against in the ViewToFluid map
  * and convert them into their synced Fluid state counterparts
  */
 export interface IFluidConverter<
@@ -199,7 +199,7 @@ export interface IFluidFunctionalComponentFluidState {
     syncedStateId?: string;
     /**
      * Boolean indicating if any components on this state are being listened on
-     * for root updates to trigger React state updates
+     * for synced state updates to trigger React state updates
      */
     isInitialized?: boolean;
 }
@@ -234,7 +234,7 @@ export interface IFluidComponent {
      */
     component?: IComponent & IComponentLoadable;
     /**
-     * Boolean indicating if we are listening to changes on this component's root to trigger React
+     * Boolean indicating if we are listening to changes on this component's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
      */
     isListened?: boolean;
@@ -470,7 +470,7 @@ export interface IFluidReducerProps<
     C extends IFluidDataProps
     > {
     /**
-     * Unique ID to use for storing the component's synced state in the root
+     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
      */
     syncedStateId: string;
     /**
