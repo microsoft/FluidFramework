@@ -40,6 +40,7 @@ COPY packages/routerlicious/package*.json packages/routerlicious/
 COPY packages/services/package*.json packages/services/
 COPY packages/services-client/package*.json packages/services-client/
 COPY packages/services-core/package*.json packages/services-core/
+COPY packages/services-shared/package*.json packages/services-shared/
 COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
