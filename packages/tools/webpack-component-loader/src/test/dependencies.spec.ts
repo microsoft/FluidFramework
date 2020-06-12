@@ -10,7 +10,7 @@ import fs from "fs-extra";
 describe("Check Dependencies", () => {
     it("verify no @fluid-internal packages in dependencies", async () => {
         // tslint:disable-next-line: non-literal-fs-path
-        await verifyNoFluidPackages(path.join(__dirname, "\\..\\..\\node_modules"));
+        await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules"));
     });
 });
 
@@ -24,7 +24,7 @@ const verifyNoFluidPackages = async (dir: string) => {
     for await (const entry of entries) {
         // If there is a package.json we will look through it to extract information.
         if (entry.isFile() && entry.name === "package.json") {
-            const fullPath = `${dir}\\${entry.name}`;
+            const fullPath = `${dir}/${entry.name}`;
             console.log(fullPath);
             const json = await fs.readJson(fullPath);
             if (json && json.dependencies) {
@@ -34,8 +34,8 @@ const verifyNoFluidPackages = async (dir: string) => {
                 }
             }
         } else if (entry.isDirectory() && !visitedPkgDirs.includes(entry.name)) {
-                visitedPkgDirs.push(entry.name);
-                searches.push(verifyNoFluidPackages(`${dir}\\${entry.name}`));
+            visitedPkgDirs.push(entry.name);
+            searches.push(verifyNoFluidPackages(`${dir}/${entry.name}`));
         }
     }
     await Promise.all(searches);
