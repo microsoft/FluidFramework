@@ -34,9 +34,9 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/multiview-coordinate-interface": "^0.20.0",
     "@fluidframework/aqueduct": "^0.20.0",
-    "@fluidframework/map": "^0.20.0",
-    "@fluid-example/multiview-coordinate-interface": "^0.20.0"
+    "@fluidframework/map": "^0.20.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
