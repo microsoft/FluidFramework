@@ -52,6 +52,7 @@ export function createOdspNetworkError(
             break;
         case 413:
             error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, false);
+            break;
         case 414:
         case invalidFileNameStatusCode:
             error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, false);
