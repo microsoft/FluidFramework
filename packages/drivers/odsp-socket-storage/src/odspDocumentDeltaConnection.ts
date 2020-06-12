@@ -20,7 +20,7 @@ import {
 import uuid from "uuid/v4";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
+import { errorObjectFromSocketError } from "./odspUtils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -119,7 +119,22 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromSocketError(socketError, socketErrorRetryFilter);
+                    // We have to special-case error types here in terms of what is retrayable.
+                    // These errors have to re retried, we just need new joinSession result to connect to right server:
+                    //    400: Invalid tenant or document id. The WebSocket is connected to a different document
+                    //         Document is full (with retryAfter)
+                    //    404: Invalid document. The document \"local/w1-...\" does not exist
+                    // But this has to stay not-retryable:
+                    //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+                    // This one is fine either way
+                    //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
+                    //         and on join Session path.
+                    //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
+                    const error = errorObjectFromSocketError(socketError);
+                    if (socketError.code === 400 || socketError.code === 404) {
+                        error.canRetry = true;
+                    }
+                    throw error;
                 }
             }
             throw errorObject;
@@ -181,12 +196,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 });
 
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-                // We get 403 / TokenExpired here. We cannot treat it as unrecoverable error!
-                // So we treat all errors as recoverable, and rely on joinSession / reconnection flow to
+                // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
                 // filter out retryable vs. non-retryable cases.
-                // Specifically, it will have one retry for 403 - see
-                // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
                 const error = errorObjectFromSocketError(socketError);
+                error.canRetry = true;
 
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now

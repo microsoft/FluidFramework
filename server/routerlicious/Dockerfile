@@ -23,13 +23,10 @@ RUN chmod +x /tini
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY LICENSE.txt .
 COPY package*.json ./
 COPY lerna.json .
 COPY lerna-package-lock.json .
 COPY .npmrc .
-COPY .editorconfig .
-COPY tsfmt.json .
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/gitresources/package*.json packages/gitresources/
@@ -47,13 +44,6 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 
-# Copy over chaincode npmrc and package.json to dynamically install packages.
-COPY chaincode/* /tmp/chaincode/
-
-# Give write permission to node user.
-RUN chown -R node:node /tmp/chaincode/
-RUN chmod -R 755 /tmp/chaincode/*
-
 # Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
 # as well as the root
 RUN for d in ./*/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
@@ -68,7 +58,7 @@ EXPOSE 3000
 RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
-COPY packages/ packages/
+COPY . .
 
 # Switch to the server folder and build
 WORKDIR /usr/src/server
