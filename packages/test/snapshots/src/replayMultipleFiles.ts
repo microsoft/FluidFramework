@@ -92,9 +92,9 @@ export async function processOneFile(args: IWorkerArgs) {
     // replayArgs.overlappingContainers = 1;
 
     try {
-        const res = await new ReplayTool(replayArgs).Go();
-        if (!res) {
-            throw new Error(`Error processing`);
+        const errors = await new ReplayTool(replayArgs).Go();
+        if (errors.length !== 0) {
+            throw new Error(`Errors\n ${errors.join("\n")}`);
         }
     } catch (error) {
         console.error(`Unhandled Error processing \n ${JSON.stringify(args)}\n ${error}`);

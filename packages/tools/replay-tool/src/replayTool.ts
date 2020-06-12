@@ -188,11 +188,11 @@ process.on("exit", (code) => {
 
 new ReplayTool(new ReplayProcessArgs())
     .Go()
-    .then((success) => {
+    .then((errors) => {
         // If we failed, exit with non-zero code
         // If we succeeded, do not exit process - that will hide errors about unhandled promise rejections!
         // Node will eventually exit when there is no code to run, and will validate all hanging promises
-        if (!success) {
+        if (errors.length !== 0) {
             process.exit(1);
         }
         finished = true;

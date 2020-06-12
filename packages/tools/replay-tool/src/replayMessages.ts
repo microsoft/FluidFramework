@@ -47,8 +47,6 @@ try {
     threads = require("worker_threads");
 } catch (error) { }
 import { ReplayArgs } from "./replayArgs";
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const packageJson = require("../package.json");
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -346,11 +344,11 @@ export class ReplayTool {
     private readonly documentsFromStorageSnapshots: Document[] = [];
     private windiffCount = 0;
     private deltaStorageService: FileDeltaStorageService;
-    private errorCount = 0;
+    private readonly errors: string[] = [];
 
     public constructor(private readonly args: ReplayArgs) { }
 
-    public async Go(): Promise<boolean> {
+    public async Go(): Promise<string[]> {
         this.args.checkArgs();
 
         // Make unhandled exceptions errors, not just warnings
@@ -377,46 +375,49 @@ export class ReplayTool {
 
         process.removeListener("unhandledRejection", listener);
 
-        return this.errorCount === 0;
+        return this.errors;
     }
 
-    private shouldReportError() {
+    private shouldReportError(errorString: string) {
         // Report only first 5 errors
-        this.errorCount++;
+        this.errors.push(errorString);
         const errorsToReport = 5;
-        if (this.errorCount <= errorsToReport) {
+        if (this.errors.length <= errorsToReport) {
             return true;
         }
-        if (this.errorCount === errorsToReport + 1) {
+        if (this.errors.length === errorsToReport + 1) {
             console.error("\n!!! Too many errors - stopped reporting errors !!!");
         }
         return false;
     }
 
     private reportError(description: string, error?: any) {
-        if (this.shouldReportError()) {
-            if (error === undefined) {
-                console.error(description);
-            } else if (error instanceof Error) {
-                console.error(`${description}\n${error.stack}`);
-            } else {
-                console.error(`${description} ${error}`);
-            }
+        let errorString: string;
+        if (error === undefined) {
+            errorString = description;
+        } else if (error instanceof Error) {
+            errorString = `${description}\n${error.stack}`;
+        } else {
+            errorString = `${description} ${error}`;
+        }
+        if (this.shouldReportError(errorString)) {
+            console.error(errorString);
         }
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
+        const errorString = JSON.stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
         // still fails even if error is not propagated / reported properly.
         if (event.eventName === "fluid:telemetry:Container:SnapshotExceptionError") {
-            if (this.errorCount === 0) {
-                this.errorCount++;
+            if (this.errors.length === 0) {
+                this.errors.push(errorString);
             }
             return false;
         }
-        return this.shouldReportError();
+        return this.shouldReportError(errorString);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -485,8 +486,9 @@ export class ReplayTool {
                     if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
                         console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
                     } else {
-                        console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
-                        // this.documentsFromStorageSnapshots.push(doc);
+                        if (this.args.verbose) {
+                            console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                        }
                         this.documents.push(doc);
                     }
                 } catch (error) {
@@ -798,9 +800,14 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)) {
-            this.reportError(`Mismatch in snapshot ${filename}.json`);
+        if (snapshotAsString !== content.snapshotAsString) {
+            const fileLines = snapshotAsString.split("\n");
+            const contentLines = content.snapshotAsString;
+            let i = 0;
+            while (fileLines[i] === contentLines[i]) {
+                i++;
+            }
+            this.reportError(`Mismatch in snapshot ${filename}.json @ ${i}\n+${fileLines}\n-${contentLines}`);
         }
     }
 }
