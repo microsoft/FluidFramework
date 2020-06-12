@@ -15,6 +15,7 @@ import { TriangleView } from "@fluid-example/multiview-triangle-view";
 
 import * as React from "react";
 
+// eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
 const simpleCoordinateComponentId = "simpleCoordinate";
@@ -46,46 +47,23 @@ const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
         <div>
             <div>
                 <h2 className="scenario-header">Scenario 1: Linking a single model to multiple views</h2>
-                <SliderCoordinateView model={ props.simpleCoordinate } label="Simple Coordinate" />
-                <PlotCoordinateView model={ props.simpleCoordinate } />
+                <SliderCoordinateView model={props.simpleCoordinate} label="Simple Coordinate" />
+                <PlotCoordinateView model={props.simpleCoordinate} />
             </div>
             <div>
                 <h2 className="scenario-header">Scenario 2: Using multiple models in a single view</h2>
-                <SliderCoordinateView model={ props.triangleCoordinate1 } label="Triangle pt1" />
-                <SliderCoordinateView model={ props.triangleCoordinate2 } label="Triangle pt2" />
-                <SliderCoordinateView model={ props.triangleCoordinate3 } label="Triangle pt3" />
+                <SliderCoordinateView model={props.triangleCoordinate1} label="Triangle pt1" />
+                <SliderCoordinateView model={props.triangleCoordinate2} label="Triangle pt2" />
+                <SliderCoordinateView model={props.triangleCoordinate3} label="Triangle pt3" />
                 <TriangleView
-                    coordinate1={ props.triangleCoordinate1 }
-                    coordinate2={ props.triangleCoordinate2 }
-                    coordinate3={ props.triangleCoordinate3 }
+                    coordinate1={props.triangleCoordinate1}
+                    coordinate2={props.triangleCoordinate2}
+                    coordinate3={props.triangleCoordinate3}
                 />
             </div>
         </div>
     );
 };
-
-/**
- * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
- * we need to retrieve those data models we created in containerInitializingFirstTime.
- */
-const defaultViewRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length === 0) {
-            const simpleCoordinate = await requestCoordinateFromId(request, runtime, simpleCoordinateComponentId);
-            const triangleCoordinate1 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId1);
-            const triangleCoordinate2 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId2);
-            const triangleCoordinate3 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId3);
-            const viewResponse = (
-                <DefaultView
-                    simpleCoordinate={ simpleCoordinate }
-                    triangleCoordinate1={ triangleCoordinate1 }
-                    triangleCoordinate2={ triangleCoordinate2 }
-                    triangleCoordinate3={ triangleCoordinate3 }
-                />
-            )
-            return { status: 200, mimeType: "fluid/view", value: viewResponse };
-        }
-    };
 
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
@@ -107,7 +85,30 @@ const requestCoordinateFromId = async (request: RequestParser, runtime: IContain
     });
     const coordinate = (await runtime.request(coordinateRequest)).value as Coordinate;
     return coordinate;
-}
+};
+
+/**
+ * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
+ * we need to retrieve those data models we created in containerInitializingFirstTime.
+ */
+const defaultViewRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length === 0) {
+            const simpleCoordinate = await requestCoordinateFromId(request, runtime, simpleCoordinateComponentId);
+            const triangleCoordinate1 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId1);
+            const triangleCoordinate2 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId2);
+            const triangleCoordinate3 = await requestCoordinateFromId(request, runtime, triangleCoordinateComponentId3);
+            const viewResponse = (
+                <DefaultView
+                    simpleCoordinate={simpleCoordinate}
+                    triangleCoordinate1={triangleCoordinate1}
+                    triangleCoordinate2={triangleCoordinate2}
+                    triangleCoordinate3={triangleCoordinate3}
+                />
+            );
+            return { status: 200, mimeType: "fluid/view", value: viewResponse };
+        }
+    };
 
 // We'll use a MountableView so webpack-component-loader can display us, and add our default view request handler.
 const viewRequestHandlers = [

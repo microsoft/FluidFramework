@@ -33,14 +33,18 @@ interface ITriangleViewProps {
 export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
     const canvasRef = React.createRef<HTMLCanvasElement>();
     const rerenderCanvas = () => {
+        // eslint-disable-next-line no-null/no-null
         if (canvasRef.current !== null) {
             const ctx = canvasRef.current.getContext("2d");
+            // eslint-disable-next-line no-null/no-null
             if (ctx !== null) {
                 renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
             }
         }
-    }
+    };
+
     React.useEffect(() => {
+        // eslint-disable-next-line no-null/no-null
         if (canvasRef.current !== null) {
             canvasRef.current.width = 100;
             canvasRef.current.height = 100;
@@ -54,10 +58,10 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
             props.coordinate1.off("coordinateChanged", rerenderCanvas);
             props.coordinate2.off("coordinateChanged", rerenderCanvas);
             props.coordinate3.off("coordinateChanged", rerenderCanvas);
-        }
+        };
     });
 
     return (
-        <canvas className="triangle-canvas" ref={ canvasRef }></canvas>
+        <canvas className="triangle-canvas" ref={canvasRef}></canvas>
     );
-}
+};

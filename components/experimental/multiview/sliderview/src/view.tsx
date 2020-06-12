@@ -32,24 +32,24 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
 
     return (
         <div className="slider-view">
-            <h3 className="slider-label">{ props.label }</h3>
+            <h3 className="slider-label">{props.label}</h3>
             <div>
                 X:
                 <input
                     type="range"
-                    onInput={ (e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
-                    value={ x }
+                    onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value, 10)}
+                    value={x}
                 />
-                { x }
+                {x}
             </div>
             <div>
                 Y:
                 <input
                     type="range"
-                    onInput={ (e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
-                    value={ y }
+                    onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value, 10)}
+                    value={y}
                 />
-                { y }
+                {y}
             </div>
         </div>
     );
