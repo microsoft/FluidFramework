@@ -138,15 +138,15 @@ export interface IGenericNetworkError extends IErrorBase {
 
 /** Types of errors that do not contain any extra information other then error type */
 export type NetworkErrorBasicTypes =
-    ErrorType.authorizationError |
-    ErrorType.fileNotFoundOrAccessDeniedError |
-    ErrorType.outOfStorageError |
-    ErrorType.invalidFileNameError |
-    ErrorType.writeError |
-    ErrorType.offlineError |
-    ErrorType.snapshotTooBig |
-    ErrorType.fluidNotEnabled |
-    ErrorType.unsupportedClientProtocolVersion;
+    | ErrorType.authorizationError
+    | ErrorType.fileNotFoundOrAccessDeniedError
+    | ErrorType.outOfStorageError
+    | ErrorType.invalidFileNameError
+    | ErrorType.writeError
+    | ErrorType.offlineError
+    | ErrorType.snapshotTooBig
+    | ErrorType.fluidNotEnabled
+    | ErrorType.unsupportedClientProtocolVersion;
 
 /** Types of errors that do not contain any extra information other then error type */
 export interface INetworkErrorBasic extends IErrorBase {
