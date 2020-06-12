@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
@@ -354,7 +355,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     private attachDeltaHandler() {
-        // Allows objects to start listening for events if the dds is attached.
+        // Services should already be there in case we are attaching delta handler.
+        assert(this.hasServices());
+        // Allows objects to do any custom processing if it is attached. In attached container, if the dds has
+        // services too, then the dds is attached too and so we will do the processing. However, we don't want
+        // do this in the detached container even if the dds has services.
         if (this.isAttached()) {
             this.doCustomProcessing();
         }
