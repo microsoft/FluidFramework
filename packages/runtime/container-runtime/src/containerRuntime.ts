@@ -601,7 +601,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         private readonly containerScope: IComponent,
     ) {
         super();
-
+        this.setMaxListeners(20);
         this.chunkMap = new Map<string, string[]>(chunks);
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
