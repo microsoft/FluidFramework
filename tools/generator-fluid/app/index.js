@@ -386,7 +386,7 @@ module.exports = class extends Generator {
    */
 
   _isBeginnerScaffolding() {
-    return this.options["s-beginner"] || (this.answers && this.answers.scaffolding === scaffoldingBeginner);
+    return this.options[scaffoldingBeginner] || (this.answers && this.answers.scaffolding === scaffoldingBeginner);
   }
 
   _isReact() {
