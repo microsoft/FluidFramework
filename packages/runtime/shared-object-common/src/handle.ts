@@ -33,12 +33,8 @@ export class SharedObjectComponentHandle implements IComponentHandle {
     /**
      * Whether services have been attached for the associated shared object.
      */
-    public get isAttached(): boolean {
-        // Attached tells if the shared object is attached to parent component. Parent component should also be
-        // attached. It does not matter if the container is live or local.
-        // If the dds was registered to attached component, it should have get attached and isAttached should
-        // be true in that case.
-        return this.value.isAttached();
+    public get hasServices(): boolean {
+        return this.value.hasServices();
     }
 
     /**
@@ -86,7 +82,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
+        if (this.hasServices) {
             handle.attach();
             return;
         }

@@ -460,8 +460,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public isLocal(): boolean {
-        return !this.attached;
+    public isAttached(): boolean {
+        return this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -474,11 +474,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
-        this.attached = true;
-        // This will tell the components/dds that we are live now and that they can do any custom processing on this
-        // action like start generating ops because all upto this point was included in the app summary and from now
-        // on we need to generate ops for changes so that they can be sent over wire once we are connected.
-        this.context.didGoLive();
+        // This will tell the container runtime/components/dds that they should start generating ops from this point on
+        // because all upto this point was included in the app summary and from now on we need to generate ops for
+        // changes so that they can be sent over wire once we are connected.
+        this.emit("forceOpsGeneration");
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
@@ -521,6 +520,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
+            this.attached = true;
+            // Emit container attached event as there might be some need to do something based on this actions
+            // like stop force generation of ops.
+            this.emit("containerAttached");
 
             // Propagate current connection state through the system.
             const connected = this.connectionState === ConnectionState.Connected;

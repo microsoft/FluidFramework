@@ -145,7 +145,7 @@ export class ConsensusOrderedCollection<T = any>
     public async add(value: T): Promise<void> {
         const valueSer = this.serializeValue(value);
 
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
             const addValue = this.deserializeValue(valueSer) as T;
@@ -237,7 +237,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected async complete(acquireId: string) {
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             this.completeCore(acquireId);
             return;
         }
@@ -261,7 +261,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     protected release(acquireId: string) {
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             this.releaseCore(acquireId);
             return;
         }
@@ -374,7 +374,7 @@ export class ConsensusOrderedCollection<T = any>
     private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
         message: TMessage,
     ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-        assert(!this.isLocal());
+        assert(this.shouldGenerateOps());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
         return this.newAckBasedPromise((resolve) => {
@@ -405,7 +405,7 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             // can be undefined if queue is empty
             return this.acquireCore(uuid(), idForLocalUnattachedClient);
         }

@@ -173,9 +173,6 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean);
 
     createSummary(): ISummaryTree;
-
-    // Tells the layers below we are live now.
-    didGoLive(): void;
 }
 
 export interface IMessageScheduler {
@@ -219,6 +216,8 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     readonly scope: IComponent;
 
+    on(event: "forceOpsGeneration" | "containerAttached", listener: () => void): this;
+
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
@@ -233,9 +232,9 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 

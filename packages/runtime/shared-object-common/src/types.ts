@@ -35,25 +35,21 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     register(): void;
 
     /**
-     * Returns whether the given shared object is local. It is local if either it is not attached or
-     * container is not attached to storage.
-     * @returns True if the given shared object is local
-     *
-     */
-    isLocal(): boolean;
-
-    /**
      * Returns whether the given shared object is registered.
      * @returns True if the given shared object is registered
      */
     isRegistered(): boolean;
 
     /**
-     * Returns whether the given shared object is attached to container. It means it is reachable from container.
-     * It does not matter if the container is live or local.
+     * Returns whether the given shared object is attached to storage.
      * @returns True if the given shared object is attached
      */
     isAttached(): boolean;
+
+    /**
+     * True if the shared object has services.
+     */
+    hasServices(): boolean;
 
     /**
      * Gets a form of the object that can be serialized.

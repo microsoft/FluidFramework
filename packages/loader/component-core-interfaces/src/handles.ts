@@ -29,10 +29,9 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     routeContext?: IComponentHandleContext;
 
     /**
-     * Flag indicating whether or not the component is attached to the document. An attached context is
-     * one that is accessible to all users within the collaboration window.
+     * Flag indicating whether or not the entity has services attached.
      */
-    isAttached: boolean;
+    hasServices: boolean;
 
     /**
      * Attaches the context and any bound handles to the container. It means they are reachable from the container.

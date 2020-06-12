@@ -151,7 +151,7 @@ export class ConsensusRegisterCollection<T>
     public async write(key: string, value: T): Promise<boolean> {
         const serializedValue = this.stringify(value);
 
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             // JSON-roundtrip value for local writes to match the behavior of going through the wire
             this.processInboundWrite(key, this.parse(serializedValue), 0, 0, true);
             return true;
@@ -341,7 +341,7 @@ export class ConsensusRegisterCollection<T>
         );
 
         // Asserts for data integrity
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             assert(refSeq === 0 && sequenceNumber === 0, "sequence numbersare expected to be 0 when unattached");
         }
         else if (data.versions.length > 0) {

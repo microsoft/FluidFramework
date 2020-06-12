@@ -181,7 +181,7 @@ export class MapKernel {
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
-     * @param isLocal - To query whether the shared object is in local state
+     * @param shouldGenerateOps - To query whether the shared object should generate ops
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
@@ -189,7 +189,7 @@ export class MapKernel {
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
-        private readonly isLocal: () => boolean,
+        private readonly shouldGenerateOps: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -341,8 +341,8 @@ export class MapKernel {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.shouldGenerateOps()) {
             return;
         }
 
@@ -378,8 +378,8 @@ export class MapKernel {
             null,
         );
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.shouldGenerateOps()) {
             return;
         }
 
@@ -403,8 +403,8 @@ export class MapKernel {
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.shouldGenerateOps()) {
             return successfullyRemoved;
         }
 
@@ -424,8 +424,8 @@ export class MapKernel {
         // Clear the data locally first.
         this.clearCore(true, null);
 
-        // If we are in local state, don't submit the op.
-        if (this.isLocal()) {
+        // If we are not attached, don't submit the op.
+        if (!this.shouldGenerateOps()) {
             return;
         }
 

@@ -28,9 +28,6 @@ export interface IChannelContext {
     isRegistered(): boolean;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
-
-    // Tells the layers below we are live now.
-    didGoLive(): void;
 }
 
 export function createServiceEndpoints(

@@ -182,9 +182,9 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public didGoLive(): void {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "live");
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "live");
+    public doCustomProcessing(): void {
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
     }
 
     public insertCols(colStart: number, count: number) {

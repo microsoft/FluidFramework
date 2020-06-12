@@ -14,7 +14,7 @@ import { IRuntime } from "@fluidframework/container-definitions";
 export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
-    public readonly isAttached = true;
+    public readonly hasServices = true;
 
     constructor(
         public readonly path: string,
@@ -28,7 +28,7 @@ export class ComponentHandleContext implements IComponentHandleContext {
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
+        if (this.hasServices) {
             handle.attach();
             return;
         }

@@ -22,8 +22,8 @@ import { SharedMap } from "@fluidframework/map";
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { TestRootComponent } from "@fluidframework/local-test-utils";
 
-[true, false].forEach((isLocal) => {
-    describe(`Attach/Register/Local Api Tests For ${isLocal ? "Local" : "Live"} Container`, () => {
+[true, false].forEach((isAttachedTest) => {
+    describe(`Attach/Register/Local Api Tests For ${isAttachedTest ? "Attached" : "Detached"} Container`, () => {
         const documentId = "detachedContainerTest";
         const pkg1: IFluidCodeDetails = {
             package: "detachedContainerTestPackage1",
@@ -38,8 +38,8 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let loader: Loader;
 
-        const createTestStatementForLocalLive = (name: string, local: boolean) =>
-            `${name} should be ${local ? "local" : "live"}`;
+        const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
+            `${name} should be ${attached ? "attached" : "detached"}`;
 
         async function createDetachedContainerAndGetRootComponent<T>(pkg: IFluidCodeDetails) {
             const container = await loader.createDetachedContainer(pkg);
@@ -103,7 +103,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         it("Attaching component should not attach unregistered DDS", async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
@@ -112,31 +112,32 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.isLocal(), true, createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
-            assert.strictEqual(channel.isLocal(), true, "Channel should be local");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should not have services");
+            assert.strictEqual(channel.isAttached(), false, "Channel should be detached");
 
             component2RuntimeChannel.attach();
 
-            assert.strictEqual(component2.runtime.isLocal(), isLocal,
-                createTestStatementForLocalLive("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, true, "Component2 should be attached");
+            assert.strictEqual(component2.runtime.isAttached(), isAttachedTest,
+                createTestStatementForAttachedDetached("Component2", isAttachedTest));
+            assert.strictEqual(component2.runtime.isRegistered, true, "Component2 should be attached");
 
             assert.strictEqual(channel.isRegistered(), false,
                 "Channel should not be registered as it was not registered");
-            assert.strictEqual(channel.handle.isAttached, false,
-                "Channel should not be attached as it was not registered");
+            assert.strictEqual(channel.handle.hasServices, false,
+                "Channel should not have services as it was not registered");
         });
 
         it("Attaching component should attach registered DDS", async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
@@ -144,62 +145,62 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should be detached");
 
             // Now register the channel
             (await channel.handle.get() as SharedObject).register();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered");
             component2RuntimeChannel.attach();
 
-            assert.strictEqual(component2.runtime.isLocal(), isLocal,
-                createTestStatementForLocalLive("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, true, "Component2 should be attached");
+            assert.strictEqual(component2.runtime.isAttached(), isAttachedTest,
+                createTestStatementForAttachedDetached("Component2", isAttachedTest));
+            assert.strictEqual(component2.runtime.isRegistered, true, "Component2 should be attached");
 
             // Channel should get attached as it was registered to its component
-            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.hasServices, true, "Channel should be attached");
         });
 
         it("Attaching DDS should attach component", async () => {
             const { container, defaultComponent } =
             await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should be detached");
 
             channel.handle.attach();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered after attaching");
 
             // Channel should get attached as it was registered to its component
-            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.hasServices, true, "Channel should be attached");
 
-            assert.strictEqual(component2.runtime.isLocal(), isLocal,
-                createTestStatementForLocalLive("Component2", false));
-            assert.strictEqual(component2.runtime.isAttached, true, "Component2 should be attached");
+            assert.strictEqual(component2.runtime.isAttached(), isAttachedTest,
+                createTestStatementForAttachedDetached("Component2", isAttachedTest));
+            assert.strictEqual(component2.runtime.isRegistered, true, "Component2 should be attached");
         });
 
         it("Sticking handle in attached dds should attach the DDS", async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
@@ -207,34 +208,34 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should be detached");
 
             component2RuntimeChannel.attach();
 
             const rootOfComponent2 = await component2.runtime.getChannel("root") as SharedMap;
             const testChannelOfComponent2 = await component2.runtime.getChannel("test1");
 
-            assert.strictEqual(rootOfComponent2.handle.isAttached, true,
+            assert.strictEqual(rootOfComponent2.handle.hasServices, true,
                 "Root Channel should get attached as it was registered");
-            assert.strictEqual(testChannelOfComponent2.handle.isAttached, false,
+            assert.strictEqual(testChannelOfComponent2.handle.hasServices, false,
                 "Test Channel should not be attached ");
             rootOfComponent2.set("test1handle", channel.handle);
 
-            assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
+            assert.strictEqual(testChannelOfComponent2.handle.hasServices, true,
                 "Test Channel should be attached now after sticking it in attached dds");
         });
 
         it("Registering DDS in attached component should attach it", async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
@@ -243,26 +244,26 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             const component2 = peerComponent.peerComponent;
             const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should be detached");
 
             component2RuntimeChannel.attach();
 
             (await channel.handle.get() as SharedObject).register();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered");
-            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.hasServices, true, "Channel should be attached");
         });
 
         it("Registering DDS in detached component should not attach it", async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
@@ -270,18 +271,18 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent.peerComponent;
 
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create a channel
             const channel = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel.handle.hasServices, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).register();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered");
-            assert.strictEqual(channel.handle.isAttached, false,
+            assert.strictEqual(channel.handle.hasServices, false,
                 "Channel should not get attached on registering it to unattached component");
         });
 
@@ -289,7 +290,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             async () => {
                 const { container, defaultComponent } =
                     await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-                if (!isLocal) {
+                if (isAttachedTest) {
                     await container.attach(request);
                 }
 
@@ -298,19 +299,19 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
                 const component2 = peerComponent.peerComponent;
                 const component2RuntimeChannel = peerComponent.peerComponentRuntimeChannel;
 
-                assert.strictEqual(component2.runtime.isLocal(), true,
-                    createTestStatementForLocalLive("Component2", true));
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.isAttached(), false,
+                    createTestStatementForAttachedDetached("Component2", false));
+                assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
                 assert.strictEqual(channel1.isRegistered(), false, "Channel should be unregistered");
-                assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+                assert.strictEqual(channel1.handle.hasServices, false, "Channel should be detached");
 
                 // Create second channel
                 const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
                 assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-                assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+                assert.strictEqual(channel2.handle.hasServices, false, "Channel should be detached");
 
                 // Now register both dds to parent component
                 (await channel1.handle.get() as SharedObject).register();
@@ -324,9 +325,9 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
                 // Now attach the component2. Currently this will end up in infinite loop.
                 component2RuntimeChannel.attach();
-                assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
+                assert.strictEqual(testChannel1OfComponent2.handle.hasServices, true,
                     "Test Channel 1 should be attached now after attaching parent component");
-                assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
+                assert.strictEqual(testChannel2OfComponent2.handle.hasServices, true,
                     "Test Channel 2 should be attached now after attaching parent component");
             });
 
@@ -334,7 +335,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             async () => {
                 const { container, defaultComponent } =
                     await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-                if (!isLocal) {
+                if (isAttachedTest) {
                     await container.attach(request);
                 }
 
@@ -342,19 +343,19 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
                 const peerComponent = await createPeerComponent(defaultComponent.context.containerRuntime);
                 const component2 = peerComponent.peerComponent;
 
-                assert.strictEqual(component2.runtime.isLocal(), true,
-                    createTestStatementForLocalLive("Component2", true));
-                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+                assert.strictEqual(component2.runtime.isAttached(), false,
+                    createTestStatementForAttachedDetached("Component2", false));
+                assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
                 // Create first channel
                 const channel1 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
                 assert.strictEqual(channel1.isRegistered(), false, "Channel should be unregistered");
-                assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
+                assert.strictEqual(channel1.handle.hasServices, false, "Channel should be detached");
 
                 // Create second channel
                 const channel2 = component2.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
                 assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-                assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+                assert.strictEqual(channel2.handle.hasServices, false, "Channel should be detached");
 
                 // Now register both dds to parent component
                 (await channel1.handle.get() as SharedObject).register();
@@ -368,9 +369,9 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
                 // Currently it will go in infinite loop.
                 channel1.handle.attach();
-                assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
+                assert.strictEqual(testChannel1OfComponent2.handle.hasServices, true,
                     "Test Channel 1 should be attached now after attaching it");
-                assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
+                assert.strictEqual(testChannel2OfComponent2.handle.hasServices, true,
                     "Test Channel 2 should be attached now after attaching other DDS");
             });
 
@@ -379,33 +380,33 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
             const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component2 = peerComponent1.peerComponent;
-            assert.strictEqual(component2.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component2.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
             const component3 = peerComponent2.peerComponent;
-            assert.strictEqual(component3.runtime.isLocal(), true,
-                createTestStatementForLocalLive("Component2", true));
-            assert.strictEqual(component3.runtime.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component3.runtime.isAttached(), false,
+                createTestStatementForAttachedDetached("Component2", false));
+            assert.strictEqual(component3.runtime.isRegistered, false, "Component2 should be unattached");
 
             // Create first channel from component2
             const channel2 = component2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.handle.hasServices, false, "Channel should be detached");
 
             // Create second channel from component 3
             const channel3 = component3.runtime.createChannel("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel3.handle.hasServices, false, "Channel should be detached");
 
             const testChannelOfComponent2 = await component2.runtime.getChannel("test1") as SharedMap;
             const testChannelOfComponent3 = await component3.runtime.getChannel("test2") as SharedMap;
@@ -415,12 +416,12 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
             // Currently it will go in infinite loop.
             channel2.handle.attach();
-            assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
+            assert.strictEqual(testChannelOfComponent2.handle.hasServices, true,
                 "Test Channel 1 should be attached now after attaching it");
-            assert.strictEqual(testChannelOfComponent3.handle.isAttached, true,
+            assert.strictEqual(testChannelOfComponent3.handle.hasServices, true,
                 "Test Channel 2 should be attached now after attaching other DDS");
-            assert.strictEqual(component2.runtime.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.runtime.isAttached, true, "Component 3 should have get attached");
+            assert.strictEqual(component2.runtime.isRegistered, true, "Component 2 should have get attached");
+            assert.strictEqual(component3.runtime.isRegistered, true, "Component 3 should have get attached");
         });
 
         it("Stick handle of 2 different components and dds in each other and then attaching 1 component should " +
@@ -428,27 +429,27 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
             const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.handle.hasServices, false, "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+            assert.strictEqual(component3.handle.hasServices, false, "Component3 should be unattached");
 
             // Create first channel from component2
             const channel2 = component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2.handle.hasServices, false, "Channel should be detached");
 
             // Create second channel from component 3
             const channel3 = component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel3.handle.hasServices, false, "Channel should be detached");
 
             // component2 POINTS TO component3, channel3
             // component3 POINTS TO component2, channel2
@@ -464,12 +465,12 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             component3.handle.bind(channel2.handle);
 
             component2.handle.attach();
-            assert.strictEqual(channel2.handle.isAttached, true,
+            assert.strictEqual(channel2.handle.hasServices, true,
                 "Test Channel 2 should be attached now after attaching it");
-            assert.strictEqual(channel3.handle.isAttached, true,
+            assert.strictEqual(channel3.handle.hasServices, true,
                 "Test Channel 3 should be attached now after attaching other DDS");
-            assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
+            assert.strictEqual(component2.handle.hasServices, true, "Component 2 should have get attached");
+            assert.strictEqual(component3.handle.hasServices, true, "Component 3 should have get attached");
         });
 
         it("Generate more than 1 dds of a component and then stick handles in different dds and then attaching " +
@@ -477,48 +478,48 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         async () => {
             const { container, defaultComponent } =
                 await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
-            if (!isLocal) {
+            if (isAttachedTest) {
                 await container.attach(request);
             }
 
             // Create another component which returns the runtime channel.
             const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+            assert.strictEqual(component2.handle.hasServices, false, "Component2 should be unattached");
 
             // Create another component which returns the runtime channel.
             const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+            assert.strictEqual(component3.handle.hasServices, false, "Component3 should be unattached");
 
             const component4 = await createPeerComponentForTestRootComponent(defaultComponent);
-            assert.strictEqual(component4.handle.isAttached, false, "Component4 should be unattached");
+            assert.strictEqual(component4.handle.hasServices, false, "Component4 should be unattached");
 
             // Create two channel from component2
             const channel1OfComponent2 =
                 component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel1OfComponent2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent2.handle.hasServices, false, "Channel should be detached");
 
             const channel2OfComponent2 =
                 component2.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2OfComponent2.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2OfComponent2.handle.hasServices, false, "Channel should be detached");
 
             // Create two channel from component 3
             const channel1OfComponent3 =
                 component3.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel1OfComponent3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent3.handle.hasServices, false, "Channel should be detached");
 
             const channel2OfComponent3 =
                 component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel2OfComponent3.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel2OfComponent3.handle.hasServices, false, "Channel should be detached");
 
             // Create one channel from component 4
             const channel1OfComponent4 =
                 component4.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel1OfComponent4.isRegistered(), false, "Channel should be unregistered");
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
+            assert.strictEqual(channel1OfComponent4.handle.hasServices, false, "Channel should be detached");
 
             channel2OfComponent2.set("componet3Handle", component3.handle);
             channel1OfComponent3.set("channel23handle", channel2OfComponent3.handle);
@@ -533,14 +534,14 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             channel1OfComponent2.handle.attach();
 
             // Everything should be attached except channel 1 of component 4
-            assert.strictEqual(channel1OfComponent2.handle.isAttached, true, "Test Channel 12 should be attached");
-            assert.strictEqual(channel2OfComponent2.handle.isAttached, true, "Test Channel 22 should be attached");
-            assert.strictEqual(channel1OfComponent3.handle.isAttached, true, "Test Channel 13 should be attached");
-            assert.strictEqual(channel2OfComponent3.handle.isAttached, true, "Test Channel 23 should be attached");
-            assert.strictEqual(component2.handle.isAttached, true, "Component 2 should have get attached");
-            assert.strictEqual(component3.handle.isAttached, true, "Component 3 should have get attached");
-            assert.strictEqual(component4.handle.isAttached, true, "Component 4 should have get attached");
-            assert.strictEqual(channel1OfComponent4.handle.isAttached, true, "Test Channel 14 should be attached");
+            assert.strictEqual(channel1OfComponent2.handle.hasServices, true, "Test Channel 12 should be attached");
+            assert.strictEqual(channel2OfComponent2.handle.hasServices, true, "Test Channel 22 should be attached");
+            assert.strictEqual(channel1OfComponent3.handle.hasServices, true, "Test Channel 13 should be attached");
+            assert.strictEqual(channel2OfComponent3.handle.hasServices, true, "Test Channel 23 should be attached");
+            assert.strictEqual(component2.handle.hasServices, true, "Component 2 should have get attached");
+            assert.strictEqual(component3.handle.hasServices, true, "Component 3 should have get attached");
+            assert.strictEqual(component4.handle.hasServices, true, "Component 4 should have get attached");
+            assert.strictEqual(channel1OfComponent4.handle.hasServices, true, "Test Channel 14 should be attached");
         });
 
         afterEach(async () => {

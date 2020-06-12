@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/common-utils";
@@ -55,6 +54,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private services: ISharedObjectServices | undefined;
 
+    public forceOpsGeneration: boolean = false;
+
     /**
      * True if register() has been called.
      */
@@ -97,8 +98,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
 
+        this.attachListeners();
+    }
+
+    private attachListeners() {
         this.on("error", (error: any) => {
-            runtime.emit("error", error);
+            this.runtime.emit("error", error);
+        });
+
+        this.runtime.on("forceOpsGeneration", () => {
+            this.forceOpsGeneration = true;
+            this.doCustomProcessing();
+        });
+
+        this.runtime.on("containerAttached", () => {
+            this.forceOpsGeneration = false;
         });
     }
 
@@ -149,7 +163,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Allow derived classes to perform custom processing prior to registering this object
         this.registerCore();
 
-        this.runtime.registerChannel(this);
+        this.runtime.bindChannel(this);
     }
 
     /**
@@ -158,13 +172,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public connect(services: ISharedObjectServices) {
         this.services = services;
         this.attachDeltaHandler();
-    }
-
-    /**
-     * {@inheritDoc ISharedObject.isLocal}
-     */
-    public isLocal(): boolean {
-        return this.services === undefined || this.runtime.isLocal();
     }
 
     /**
@@ -177,18 +184,21 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // if somebody called register on dds explicitly without attaching it which will set
         // this.registered to be true.
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const isRegistered = (!!this.services || this.registered);
-        assert(isRegistered ? true : this.isLocal());
-        return isRegistered;
+        return (!!this.services || this.registered);
     }
 
     /**
      * {@inheritDoc ISharedObject.isAttached}
      */
     public isAttached(): boolean {
-        const isAttached = this.services !== undefined;
-        assert(isAttached ? this.isRegistered() : this.isLocal());
-        return isAttached;
+        return this.services !== undefined && this.runtime.isAttached();
+    }
+
+    /**
+     * {@inheritDoc ISharedObject.hasServices}
+     */
+    public hasServices(): boolean {
+        return this.services !== undefined;
     }
 
     /**
@@ -226,11 +236,26 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract registerCore();
 
     /**
-     * Allows the distributive data type the ability to perform custom processing once an attach has happened.
+     * Allows the distributive data type the ability to perform custom processing.
      * Also called after non-local data type get loaded.
      */
-    public didGoLive() {
+    public doCustomProcessing() {
         return;
+    }
+
+    /**
+     * If the force ops generation option is on and the services are also present, then it returns true.
+     * It also returns true if the dds is attached.
+     */
+    public shouldGenerateOps(): boolean {
+        if (this.isAttached() || (this.forceOpsGeneration && this.hasServices())) {
+            return true;
+        }
+        return false;
+        // if (!(this.forceOpsGeneration || this.isAttached()) || (this.forceOpsGeneration && !this.hasServices())) {
+        //     return false;
+        // }
+        // return true;
     }
 
     /**
@@ -256,7 +281,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @returns Client sequence number
      */
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
-        if (this.isLocal()) {
+        if (!this.shouldGenerateOps()) {
             return -1;
         }
 
@@ -269,7 +294,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * that want to be part of summary but does not generate ops.
      */
     protected dirty(): void {
-        if (this.isLocal()) {
+        if (!this.isAttached()) {
             return;
         }
 
@@ -333,9 +358,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     private attachDeltaHandler() {
-        // Allows objects to start listening for events if the container is not local.
-        if (!this.isLocal()) {
-            this.didGoLive();
+        // Allows objects to start listening for events if the dds is attached.
+        if (this.isAttached()) {
+            this.doCustomProcessing();
         }
 
         // attachDeltaHandler is only called after services is assigned

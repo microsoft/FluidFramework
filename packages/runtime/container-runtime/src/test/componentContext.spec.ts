@@ -55,7 +55,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                false);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -87,7 +88,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 new SummaryTracker(true, "", 0, 0, async () => undefined),
-                attachCb);
+                attachCb,
+                false);
 
             await localComponentContext.realize()
                 .catch((error) => {
@@ -115,7 +117,8 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 summaryTracker,
-                attachCb);
+                attachCb,
+                false);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -180,6 +183,7 @@ describe("Component Context Tests", () => {
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
+                false,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
@@ -212,6 +216,7 @@ describe("Component Context Tests", () => {
                 new BlobCacheStorageService(storage as IDocumentStorageService, Promise.resolve(blobCache)),
                 scope,
                 summaryTracker,
+                false,
             );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;

@@ -510,8 +510,12 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.registry;
     }
 
-    public isLocal(): boolean {
-        return this.context.isLocal();
+    public isAttached(): boolean {
+        if (this.context.isAttached !== undefined) {
+            return this.context.isAttached();
+        }
+        // 0.18 back-compat islocal
+        return !((this.context as any).isLocal() as boolean);
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -578,6 +582,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
+    // Required to force ops generation if signalled by container. Also needed to pass to lower layers
+    // as new components/dds could be created which needs to take this property from container runtime.
+    private forceOpsGeneration: boolean = false;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -592,8 +599,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
-        // useContext - back-compat: 0.14 uploadSummary
-        const useContext: boolean = this.isLocal() ? true : this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = true;
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: this.context.getLoadedFromVersion()?.id,
@@ -619,6 +625,18 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             });
         }
 
+        if (this.context.on !== undefined) {
+            this.context.on("forceOpsGeneration", () => {
+                this.forceOpsGeneration = true;
+                this.emit("forceOpsGeneration");
+            });
+
+            this.context.on("containerAttached", () => {
+                this.forceOpsGeneration = false;
+                this.emit("containerAttached");
+            });
+        }
+
         // Create a context for each of them
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
@@ -627,7 +645,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this,
                 this.storage,
                 this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
+                false);
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -687,12 +706,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
 
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
-    }
-
-    public didGoLive(): void {
-        for (const [, componentContext] of this.contexts) {
-            componentContext.didGoLive();
-        }
     }
 
     public dispose(): void {
@@ -996,7 +1009,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.registerComponent(cr),
+            this.forceOpsGeneration,
             props);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1021,7 +1035,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
-            (cr: IComponentRuntimeChannel) => this.attachComponent(cr),
+            (cr: IComponentRuntimeChannel) => this.registerComponent(cr),
+            this.forceOpsGeneration,
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1108,7 +1123,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts)
             .filter(([key, value]) =>
-                value.isAttached,
+                value.isRegistered,
             )
             .map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
@@ -1176,6 +1191,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
+                    false,
                     [attachMessage.type]);
                 break;
             }
@@ -1230,15 +1246,17 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private attachComponent(componentRuntime: IComponentRuntimeChannel): void {
+    private registerComponent(componentRuntime: IComponentRuntimeChannel): void {
         this.verifyNotClosed();
 
         const context = this.getContext(componentRuntime.id);
-        if (context.isAttached) {
+        if (context.isRegistered) {
             return;
         }
-        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        if (!this.isLocal()) {
+        // If the container is detached, we don't need to send OP or add to pending attach because
+        // we will summarize it while uploading the create new summary and make it known to other
+        // clients but we do need to submit op if container forced us to do so.
+        if (this.forceOpsGeneration || this.isAttached()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1281,7 +1299,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // Iterate over each component and ask it to snapshot
         Array.from(this.contexts)
             .filter(([key, value]) =>
-                value.isAttached,
+                value.isRegistered,
             )
             .map(async ([key, value]) => {
                 const snapshot = value.generateAttachMessage().snapshot;

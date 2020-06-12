@@ -21,7 +21,7 @@ export class ComponentHandle implements IComponentHandle {
     public get IComponentHandleContext() { return this; }
     public get IComponentHandle() { return this; }
 
-    public readonly isAttached = true;
+    public readonly hasServices = true;
     private componentP: Promise<IComponent> | undefined;
 
     constructor(
@@ -49,7 +49,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
+        if (this.hasServices) {
             handle.attach();
             return;
         }

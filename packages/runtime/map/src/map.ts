@@ -145,7 +145,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.shouldGenerateOps(),
             valueTypes,
             this,
         );

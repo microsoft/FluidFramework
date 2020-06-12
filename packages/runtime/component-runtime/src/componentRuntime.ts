@@ -89,6 +89,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             context.getQuorum(),
             context.getAudience(),
             context.snapshotFn,
+            context.forceOpsGeneration ?? false,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -119,8 +120,20 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.componentContext.loader;
     }
 
-    public get isAttached(): boolean {
-        return this._isAttached;
+    public isAttached(): boolean {
+        if (this.componentContext.isAttached !== undefined) {
+            return this.componentContext.isAttached();
+        }
+        // 0.18 back-compat islocal
+        return !((this.componentContext as any).isLocal() as boolean);
+    }
+
+    public get isRegistered(): boolean {
+        return this._isRegistered;
+    }
+
+    public get hasServices(): boolean {
+        return this._isRegistered;
     }
 
     public get path(): string {
@@ -143,7 +156,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private _isAttached: boolean;
+    private _isRegistered: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -160,6 +173,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
+        private forceOpsGeneration: boolean,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
@@ -195,7 +209,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         this.attachListener();
-        this._isAttached = existing;
+        this._isRegistered = existing;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -210,12 +224,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this._disposed = true;
 
         this.emit("dispose");
-    }
-
-    public didGoLive(): void {
-        for (const [, channelContext] of this.contexts) {
-            channelContext.didGoLive();
-        }
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -278,7 +286,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.componentContext,
             this.componentContext.storage,
             (t, content, localOpMetadata) => this.submit(t, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address));
+            (address: string) => this.setChannelDirty(address),
+            this.forceOpsGeneration);
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -298,10 +307,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * If the runtime is not attached we will defer the attach until the runtime attaches.
      * @param channel - channel to be registered.
      */
-    public registerChannel(channel: IChannel): void {
+    public bindChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (this._isAttached) {
-            this.attachChannel(channel);
+        if (this._isRegistered) {
+            this.registerChannel(channel);
             return;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -314,10 +323,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
     }
 
-    public isLocal(): boolean {
-        return this.componentContext.isLocal();
-    }
-
     /**
      * Attaches this runtime to the container
      * This includes the following:
@@ -325,7 +330,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      * 2. Attaching registered channels
      */
     public attach() {
-        if (this._isAttached) {
+        if (this._isRegistered) {
             return;
         }
 
@@ -337,7 +342,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         // Attach the runtime to the container via this callback
-        this.componentContext.attach(this);
+        if (this.componentContext.register !== undefined) {
+            this.componentContext.register(this);
+        } else {
+            // 0.18 back-compat attach
+            (this.componentContext as any).attach(this);
+        }
 
         // Flush the queue to set any pre-existing channels to local
         this.attachChannelQueue.forEach((channel) => {
@@ -346,13 +356,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             channel.attach();
         });
 
-        this._isAttached = true;
+        this._isRegistered = true;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.isAttached) {
+        if (this._isRegistered) {
             handle.attach();
             return;
         }
@@ -539,23 +549,23 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     /**
-     * Attach channel should only be called after the componentRuntime has been attached
+     * Register channel should only be called after the componentRuntime has been registered
      */
-    private attachChannel(channel: IChannel): void {
+    private registerChannel(channel: IChannel): void {
         this.verifyNotClosed();
         // If this handle is already attached no need to attach again.
-        if (channel.handle?.isAttached) {
+        if (channel.handle?.hasServices) {
             return;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
-        assert(this.isAttached, "Component should be attached to attach the channel.");
+        assert(this.isRegistered, "Component should be registered to register the channel.");
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
-        // clients. If the container is attached and component is not attached we will never reach here.
-        if (!this.isLocal()) {
+        // clients but we do need to submit op if container forced us to do so.
+        if (this.forceOpsGeneration || this.isAttached()) {
             // Get the object snapshot and include it in the initial attach
             const snapshot = snapshotChannel(channel);
 
@@ -662,6 +672,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
+        });
+
+        this.componentContext.on("forceOpsGeneration", () => {
+            this.forceOpsGeneration = true;
+            this.emit("forceOpsGeneration");
+        });
+
+        this.componentContext.on("containerAttached", () => {
+            this.forceOpsGeneration = false;
+            this.emit("containerAttached");
         });
     }
 

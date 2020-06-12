@@ -71,8 +71,8 @@ export interface IContainerRuntime extends
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader",
-        listener: () => void): this;
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument" | "leader" | "notleader"
+        | "forceOpsGeneration" | "containerAttached", listener: () => void): this;
     on(event: "connected", listener: (clientId: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(
@@ -131,9 +131,9 @@ export interface IContainerRuntime extends
 
     /**
      * Flag indicating if the given container has been attached to a host service.
-     * False if the container is attached to storage.
+     * True if the container is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Get an absolute url for a provided container-relative request.

@@ -357,7 +357,11 @@ export class MockRuntime extends EventEmitter
         return this.activeDeferred.promise;
     }
 
-    public get isAttached(): boolean {
+    public get isRegistered(): boolean {
+        return true;
+    }
+
+    public get hasServices(): boolean {
         return true;
     }
 
@@ -368,15 +372,11 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public isLocal(): boolean {
+    public isAttached(): boolean {
         return true;
     }
 
-    public didGoLive(): void {
-        return;
-    }
-
-    public registerChannel(channel: IChannel): void {
+    public bindChannel(channel: IChannel): void {
         channel.connect(this.services);
     }
 

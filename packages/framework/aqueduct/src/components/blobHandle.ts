@@ -24,7 +24,7 @@ export class BlobHandle implements IComponentHandle {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentHandle(): IComponentHandle { return this; }
 
-    public get isAttached(): boolean {
+    public get hasServices(): boolean {
         return true;
     }
 

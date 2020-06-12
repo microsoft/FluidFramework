@@ -20,8 +20,8 @@ export class ComponentHandle implements IComponentHandle {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentHandle(): IComponentHandle { return this; }
 
-    public get isAttached(): boolean {
-        return this.routeContext.isAttached;
+    public get hasServices(): boolean {
+        return this.routeContext.hasServices;
     }
 
     constructor(
@@ -52,7 +52,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle) {
-        if (this.isAttached) {
+        if (this.hasServices) {
             handle.attach();
             return;
         }

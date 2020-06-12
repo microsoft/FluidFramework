@@ -165,7 +165,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.isLocal(),
+            () => this.shouldGenerateOps(),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -318,8 +318,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.submitLocalMessage(translated);
     }
 
-    public didGoLive() {
-        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "live");
+    public doCustomProcessing() {
+        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
     }
 
     public addLocalReference(lref) {

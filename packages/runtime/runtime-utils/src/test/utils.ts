@@ -8,7 +8,7 @@ import { ComponentHandle } from "../componentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {
     path: "",
-    isAttached: false,
+    hasServices: false,
     IComponentRouter: undefined as any,
     IComponentHandleContext: undefined as any,
 

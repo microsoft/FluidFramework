@@ -28,17 +28,17 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 
     readonly attributes: IChannelAttributes;
 
+    forceOpsGeneration: boolean;
+
     /**
      * Generates snapshot of the shared object.
      */
     snapshot(): ITree;
 
     /**
-     * True if the data structure is local.
-     * It is local if either it is not attached or container is not attached to storage.
-     * It will be lost on browser tab closure if not attached.
+     * True if the data structure is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * True if the channel has been registered.
@@ -49,9 +49,6 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
      * Enables the channel to send and receive ops
      */
     connect(services: ISharedObjectServices): void;
-
-    // Tells the shared object that we are live now.
-    didGoLive(): void;
 }
 
 /**

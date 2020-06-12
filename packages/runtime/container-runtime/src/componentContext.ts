@@ -71,8 +71,9 @@ export abstract class ComponentContext extends EventEmitter implements
 {
     public readonly isExperimentalComponentContext = true;
 
+    // 0.18 back-compat islocal
     public isLocal(): boolean {
-        return this.containerRuntime.isLocal() || !this.isAttached;
+        return !this.isAttached();
     }
 
     public get documentId(): string {
@@ -158,11 +159,18 @@ export abstract class ComponentContext extends EventEmitter implements
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
-    public get isAttached(): boolean {
-        return this._isAttached;
+    public isAttached(): boolean {
+        return this.containerRuntime.isAttached() && this._isRegistered;
     }
 
+    public get isRegistered(): boolean {
+        return this._isRegistered;
+    }
+
+    // 0.18 back-compat attach
     public readonly attach: (componentRuntime: IComponentRuntimeChannel) => void;
+    public readonly register: (componentRuntime: IComponentRuntimeChannel) => void;
+
     protected componentRuntime: IComponentRuntimeChannel | undefined;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
@@ -176,16 +184,35 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        private _isAttached: boolean,
-        attach: (componentRuntime: IComponentRuntimeChannel) => void,
+        private _isRegistered: boolean,
+        register: (componentRuntime: IComponentRuntimeChannel) => void,
+        public readonly forceOpsGeneration: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
 
+        // 0.18 back-compat attach
         this.attach = (componentRuntime: IComponentRuntimeChannel) => {
-            attach(componentRuntime);
-            this._isAttached = true;
+            register(componentRuntime);
+            this._isRegistered = true;
         };
+
+        this.register = (componentRuntime: IComponentRuntimeChannel) => {
+            register(componentRuntime);
+            this._isRegistered = true;
+        };
+
+        this.attachListeners();
+    }
+
+    private attachListeners() {
+        this.containerRuntime.on("forceOpsGeneration", () => {
+            this.emit("forceOpsGeneration");
+        });
+
+        this.containerRuntime.on("containerAttached", () => {
+            this.emit("containerAttached");
+        });
     }
 
     public dispose(): void {
@@ -224,14 +251,6 @@ export abstract class ComponentContext extends EventEmitter implements
         const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
         return this.containerRuntime._createComponentWithProps(packagePath, props, id);
-    }
-
-    public didGoLive(): void {
-        if (this.componentRuntime?.didGoLive !== undefined) {
-            this.componentRuntime?.didGoLive();
-            return;
-        }
-        throw new Error("ComponentRuntime should contain didGoLive api!!");
     }
 
     public async createComponentWithRealizationFn(
@@ -597,6 +616,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
+        forceOpsGeneration: boolean,
         pkg?: string[],
     ) {
         super(
@@ -610,6 +630,7 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             },
+            forceOpsGeneration,
             pkg);
     }
 
@@ -675,12 +696,13 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
+        forceOpsGeneration: boolean,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, forceOpsGeneration, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

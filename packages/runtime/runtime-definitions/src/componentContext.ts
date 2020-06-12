@@ -192,9 +192,6 @@ export interface IComponentRuntimeChannel extends
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(type: MessageType, content: any, localOpMetadata: unknown);
-
-    // Tells the layers below that we are live now.
-    didGoLive(): void;
 }
 
 export interface ISummaryTracker {
@@ -279,8 +276,9 @@ export interface IComponentContext extends EventEmitter {
      */
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
+    readonly forceOpsGeneration: boolean;
 
-    on(event: "leader" | "notleader", listener: () => void): this;
+    on(event: "leader" | "notleader" | "forceOpsGeneration" | "containerAttached", listener: () => void): this;
 
     /**
      * Returns the current quorum.
@@ -348,10 +346,10 @@ export interface IComponentContext extends EventEmitter {
     bindRuntime(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
-     * Attaches the runtime to the container
+     * Register the runtime to the container
      * @param componentRuntime - runtime to attach
      */
-    attach(componentRuntime: IComponentRuntimeChannel): void;
+    register(componentRuntime: IComponentRuntimeChannel): void;
 
     /**
      * Call by IComponentRuntimeChannel, indicates that a channel is dirty and needs to be part of the summary.
@@ -360,9 +358,9 @@ export interface IComponentContext extends EventEmitter {
     setChannelDirty(address: string): void;
 
     /**
-     * It is false if the container is attached to storage and the component is attached to container.
+     * It is true if the component is attached to storage.
      */
-    isLocal(): boolean;
+    isAttached(): boolean;
 
     /**
      * Get an absolute url to the containe rbased on the provided relativeUrl.

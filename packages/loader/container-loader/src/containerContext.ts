@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
@@ -43,7 +44,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext implements IContainerContext {
+export class ContainerContext extends EventEmitter implements IContainerContext {
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
@@ -183,11 +184,18 @@ export class ContainerContext implements IContainerContext {
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
+        super();
         this.logger = container.subLogger;
+        this.attachListeners();
     }
 
-    public didGoLive(): void {
-        this.runtime?.didGoLive();
+    private attachListeners() {
+        this.container.on("forceOpsGeneration", () => {
+            this.emit("forceOpsGeneration");
+        });
+        this.container.on("containerAttached", () => {
+            this.emit("containerAttached");
+        });
     }
 
     public dispose(error?: Error): void {
@@ -216,8 +224,13 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.stop();
     }
 
+    // 0.18 back-compat islocal
     public isLocal(): boolean {
-        return this.container.isLocal();
+        return !this.isAttached();
+    }
+
+    public isAttached(): boolean {
+        return this.container.isAttached();
     }
 
     public createSummary(): ISummaryTree {
@@ -276,10 +289,5 @@ export class ContainerContext implements IContainerContext {
 
     private async load() {
         this.runtime = await this.runtimeFactory.instantiateRuntime(this);
-        // Check for didGoLive api on runtime for detach flow because we need this api
-        // for detach flow to work properly.
-        if (this.container.isLocal() && this.runtime.didGoLive === undefined) {
-            throw new Error("Container Runtime for detached flow should contain didGoLive api!!");
-        }
     }
 }
