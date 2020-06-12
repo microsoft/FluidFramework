@@ -41,9 +41,6 @@ export interface MergeTreeHeaderMetadata {
     orderedChunkMetadata: MergeTreeHeaderChunkMetadata[],
     sequenceNumber: number,
     minSequenceNumber: number,
-    // TODO: No longer necessary, as we check the blobs directly, but existing clients may need this
-    // remove once all clients are updated.
-    hasTardis?: boolean,
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
@@ -185,7 +182,6 @@ function buildHeaderMetadataForLegecyChunk(
             sequenceNumber: chunk.chunkSequenceNumber,
             totalLength: chunk.totalLengthChars,
             totalSegmentCount: chunk.totalSegmentCount,
-            hasTardis: options?.useNewCatchUpBlobName === true ? undefined : true,
         };
     }
     return undefined;
