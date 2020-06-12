@@ -1,5 +1,5 @@
 ---
-sidebar: auto
+sidebarDepth: 3
 ---
 
 # Using the documentation system effectively
@@ -12,21 +12,60 @@ VuePress is extensible in several ways through plugins both to itself, and to
 to draw from, plus established ways to extend it for our needs. It is written in JavaScript so any Fluid contributor
 should be feel comfortable extending the docs system if needed.
 
+---
+
+**Contents:**
+
+[[toc]]
+
+---
+
+## Building documentation locally
+
+### Generating API documentation
+
+To build the API documentation, do the following from the root of the repository:
+
+```bash
+npm install
+npm run build
+npm run build:docs
+npm run build:gendocs
+```
+
+The `build:docs` script will generate a JSON representation of all the TSDoc comments, and then `build:gendocs` will
+convert that to a tree of markdown files, under `docs/api/`. These files should _not_ be committed to git.
+
+You may run the `build` and `build:docs` scripts from a particular package directory, but `build:gendocs` can only be
+run from the root.
+
+### Building documentation site with Vuepress
+
+To build the docs themselves, you'll need to switch to the `docs/` folder, install the dependencies, and then build the
+site.
+
+```bash
+cd docs
+npm install
+npm start
+```
+
+`npm start` will serve the local documentation from <http://localhost:8080/>.
+
 ## Documentation sources
 
 The Fluid documentation comes from three different sources.
 
 Narrative documentation
-:   The overall structure of the documentation comes from Markdown files in the `docs/` folder.
+: The overall structure of the documentation comes from Markdown files in the `docs/` folder.
 
 Automated API documentation
-:   The contents of the [API](../api/overview.md) section is built from [TSDoc
-    comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) in the source code.
+: The contents of the [API](../api/overview.md) section is built from [TSDoc
+comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) in the source code.
 
 Readmes and other repo files
-:   Some content may be included from outside the docs folder. See [Including files outside the docs
-    folder](#including-files-outside-the-docs-folder) for more information.
-
+: Some content may be included from outside the docs folder. See [Including files outside the docs
+folder](#including-files-outside-the-docs-folder) for more information.
 
 ## Features
 
@@ -74,7 +113,6 @@ for an example.
 Links are resolved as described above for reusable snippets, so you must be careful when using links in files you also
 intend to include within the documentation.
 
-
 ### Syntax formatting and line highlighting <Badge text="VuePress feature" vertical="middle"/>
 
 Code blocks can specify a language to enable syntax highlighting of the block. You can also highlight specific lines in
@@ -82,7 +120,7 @@ the code block.
 
 **Input**
 
-```` markdown
+````markdown
 ```typescript{2-6,9}
 const numericInput = (keyString: string, coord: string) => {
   let valueToSet = Number(keyString);
@@ -131,7 +169,6 @@ const numericInput = (keyString: string, coord: string) => {
   }
 };
 ```
-
 
 ### Info/tip boxes <Badge text="VuePress feature" vertical="middle"/>
 
@@ -211,19 +248,18 @@ Markdown goes here
 
 :::
 
-
 ### Badges <Badge text="VuePress feature" vertical="middle"/>
 
 Badges can be used to flag content. It is implemented as a Vue component, and accepts the following props:
 
-* text - string
-* type - string, optional value: `"tip"|"warning"|"error"`, defaults to `"tip"`
-* vertical - string, optional value: `"top"|"middle"`, defaults to `"top"`
+- text - string
+- type - string, optional value: `"tip"|"warning"|"error"`, defaults to `"tip"`
+- vertical - string, optional value: `"top"|"middle"`, defaults to `"top"`
 
 The following markup renders the badge next to the section header above:
 
 ```jsx
-<Badge text="VuePress feature" vertical="middle"/>
+<Badge text="VuePress feature" vertical="middle" />
 ```
 
 ### Tabbed UI <Badge text="VuePress feature" vertical="middle"/>
@@ -232,18 +268,18 @@ Plugin: <https://github.com/pskordilakis/vuepress-plugin-tabs>
 
 **Input**
 
-```` markdown
+````markdown
 :::: tabs
 ::: tab React
 
 ```jsx
 const rerender = () => {
   // Get our dice value stored in the root.
-  const diceValue = this.root.get<number>("diceValue");
+  const diceValue = this.root.get < number > "diceValue";
 
   ReactDOM.render(
     <div>
-      <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+      <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
       <button onClick={this.rollDice.bind(this)}>Roll</button>
     </div>,
     div
@@ -273,6 +309,7 @@ private createComponentDom(host: HTMLElement) {
   host.appendChild(rollButton);
 }
 ```
+
 :::
 ::::
 ````
@@ -285,11 +322,11 @@ private createComponentDom(host: HTMLElement) {
 ```jsx
 const rerender = () => {
   // Get our dice value stored in the root.
-  const diceValue = this.root.get<number>("diceValue");
+  const diceValue = this.root.get < number > "diceValue";
 
   ReactDOM.render(
     <div>
-      <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+      <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
       <button onClick={this.rollDice.bind(this)}>Roll</button>
     </div>,
     div
@@ -319,22 +356,22 @@ private createComponentDom(host: HTMLElement) {
   host.appendChild(rollButton);
 }
 ```
+
 :::
 ::::
-
 
 ### Varying content by version and audience
 
 Content in the Fluid docs system can vary by _version_ or by _audience_. Several variables are available to use in
 Markdown files to enable this, exposed on the `$themeConfig` object:
 
-| `$themeConfig` member   | Description                                                                      |
-| ----------------------: | -------------------------------------------------------------------------------- |
-| `DOCS_AUDIENCE`         | Will be set to `internal` if the docs are being built for the internal audience. |
-| `THIS_VERSION`          | The version of the documentation **currently being built.** E.g. `0.14`          |
-| `MASTER_BRANCH_VERSION` | The version of the documentation **on the master branch.**  E.g. `0.16`          |
-| `RELEASE_VERSION`       | The current release version of **the Fluid client packages.** E.g. `0.15`        |
-| `N1_VERSION`            | The version immediately prior to the release version. E.g. `0.14`                |
+|   `$themeConfig` member | Description                                                               |
+| ----------------------: | ------------------------------------------------------------------------- |
+|         `DOCS_AUDIENCE` | Can be used to conditionally build docs for different audiences.          |
+|          `THIS_VERSION` | The version of the documentation **currently being built.** E.g. `0.14`   |
+| `MASTER_BRANCH_VERSION` | The version of the documentation **on the master branch.** E.g. `0.16`    |
+|       `RELEASE_VERSION` | The current release version of **the Fluid client packages.** E.g. `0.15` |
+|            `N1_VERSION` | The version immediately prior to the release version. E.g. `0.14`         |
 
 #### Conditional sections in Markdown
 
@@ -361,13 +398,6 @@ This will only render for version 0.15.
 This will render for all versions except 0.15 and 0.16.
 <vue-markdown />
 ```
-
-#### Internal-only navigation
-
-Some entire sections or pages of the documentation should only be included when building for the internal audience.
-The navigation is built dynamically in docs/.vuepress/config.js, and you can wrap any navigation item in the
-`internalOnly` helper function. This will ensure that the navigation item only renders for the internal audience.
-
 
 ### Diagrams with Mermaid
 
@@ -413,7 +443,6 @@ Class01 : int gorilla
 Class08 <--> C2: Cool label
 </mermaid>
 
-
 ### Markdown enhancements
 
 #### Typography <Badge text="markdown-it plugin" vertical="middle"/>
@@ -427,7 +456,6 @@ Em dash: --- `---`
 En dash: -- `--`
 
 Plus/minus: +- `+-`
-
 
 #### Arrows <Badge text="markdown-it plugin" vertical="middle"/>
 
@@ -445,7 +473,6 @@ Plugin: <https://github.com/adam-p/markdown-it-smartarrows>
 
 <==> `<==>`
 
-
 #### Emoji <Badge text="VuePress feature" vertical="middle"/>
 
 Full list of supported emoji: <https://github.com/markdown-it/markdown-it-emoji/blob/master/lib/data/full.json>
@@ -460,7 +487,6 @@ Full list of supported emoji: <https://github.com/markdown-it/markdown-it-emoji/
 
 :tada: :100:
 
-
 #### Definition lists <Badge text="markdown-it plugin" vertical="middle"/>
 
 Plugin: <https://github.com/markdown-it/markdown-it-deflist>
@@ -472,18 +498,18 @@ Extra](https://michelf.ca/projects/php-markdown/extra/#def-list).
 
 ```markdown
 Apple
-:   Pomaceous fruit of plants of the genus Malus in
-    the family Rosaceae.
+: Pomaceous fruit of plants of the genus Malus in
+the family Rosaceae.
 
 Orange
-:   The fruit of an evergreen tree of the genus Citrus.
+: The fruit of an evergreen tree of the genus Citrus.
 ```
 
 **Output**
 
 Apple
-:   Pomaceous fruit of plants of the genus Malus in
-    the family Rosaceae.
+: Pomaceous fruit of plants of the genus Malus in
+the family Rosaceae.
 
 Orange
-:   The fruit of an evergreen tree of the genus Citrus.
+: The fruit of an evergreen tree of the genus Citrus.

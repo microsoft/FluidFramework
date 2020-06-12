@@ -8,19 +8,8 @@ so if you wanted to use Vue, Angular, or [insert your favorite framework here] y
 and extend the `render(...)` function to render using your framework. Looking at how the Dice Roller renders in
 VanillaJS vs. React should help guide you with your View framework.
 
-<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
-
 - [Dice roller - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
 - [Dice roller VanillaJS](https://github.com/microsoft/fluid-tutorial-dice-roller)
-
-</vue-markdown>
-<vue-markdown v-else>
-
-- [Dice roller - React](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-react-tutorial)
-- [Dice roller
-   VanillaJS](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-vanillajs-tutorial)
-
-</vue-markdown>
 
 For the purpose of this Doc I'm going to use the `Dice roller - React` repo as our existing example we are working from.
 
@@ -29,16 +18,15 @@ For the purpose of this Doc I'm going to use the `Dice roller - React` repo as o
 1. Open your Command Prompt (or terminal) and navigate to where you want to create your repo folder
 2. Clone the repo in a folder with a new name. Ideally the name of your new Component.
 
-
-   ```shell
-   git clone {URL FOR TUTORIAL REPO} {NEW FOLDER NAME}
-   ```
+```shell
+git clone {URL FOR TUTORIAL REPO} {NEW FOLDER NAME}
+```
 
 3. Navigate into your new folder
 
-   ````shell
+   ```shell
    cd {NEW FOLDER NAME}
-   ````
+   ```
 
 4. Install dependencies
 
@@ -72,7 +60,7 @@ For the purpose of this Doc I'm going to use the `Dice roller - React` repo as o
 
    You will have permission to pull and branch code locally but will not have permissions to push back or create repos.
    You should feel free to push your code to your own favorite history manager. If you're using **AzureDevOps** create a
-   new empty repo. Follow the instructions of *Push an existing repository from command line* which should look
+   new empty repo. Follow the instructions of _Push an existing repository from command line_ which should look
    something like:
 
    ```shell
