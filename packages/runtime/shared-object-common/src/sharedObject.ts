@@ -252,10 +252,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             return true;
         }
         return false;
-        // if (!(this.forceOpsGeneration || this.isAttached()) || (this.forceOpsGeneration && !this.hasServices())) {
-        //     return false;
-        // }
-        // return true;
     }
 
     /**
