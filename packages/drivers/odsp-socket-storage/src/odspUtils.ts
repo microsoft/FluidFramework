@@ -66,9 +66,6 @@ export function createOdspNetworkError(
         case 507:
             error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, false);
             break;
-        case 501:
-            error = new NonRetryableError(errorMessage, ErrorType.fluidNotEnabled, false);
-            break;
         case offlineFetchFailureStatusCode:
             error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, true);
             break;
