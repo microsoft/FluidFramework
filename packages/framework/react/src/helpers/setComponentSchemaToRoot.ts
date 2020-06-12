@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map";
 import { IFluidSchemaHandles } from "./internalInterface";
 
 /**
@@ -14,7 +14,7 @@ import { IFluidSchemaHandles } from "./internalInterface";
  */
 export function setComponentSchemaToRoot(
     syncedStateId: string,
-    root: ISharedDirectory,
+    root: ISharedMap,
     componentSchemaHandles: IFluidSchemaHandles,
 ): void {
     root.set(`componentSchema-${syncedStateId}`, componentSchemaHandles);

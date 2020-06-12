@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISharedDirectory, ISharedMap } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     IComponentHandle,
@@ -10,6 +10,7 @@ import {
     IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { SharedObject } from "@fluidframework/shared-object-base";
+import { SyncedComponent } from "./syncedComponent";
 
 /**
  * The combined state contains the fluid and view states and the data props
@@ -41,10 +42,6 @@ export interface ICombinedState<
  * The fluid schema that is generated on load and will be stored in the root
  */
 export interface IFluidSchema {
-    /**
-     * (k,v) = (common fluid and view state component keys, respective handles)
-     */
-    componentKeyMap: ISharedMap;
     /**
      * (k,v) = (viewKeys, needsFluidConverter)
      */
@@ -116,24 +113,15 @@ export interface IFluidProps<
      */
     syncedStateId: string;
     /**
-     * The root shared directory that will be used to store the synced state
+     * An instance of the SyncedComponent that this will be rendered in
      */
-    root: ISharedDirectory;
+    syncedComponent: SyncedComponent;
     /**
-     * Data props that are loaded in during the Fluid initialization step. This contains the runtime
-     * and the fluid component map
+     * Data props containing the fluid component map and the runtime
+     * TODO: Move data props out as it can be fetched from synced component but
+     * still needs to be extensible for reducers
      */
-    dataProps: IFluidDataProps;
-    /**
-     * A map of the Fluid state values that need conversion to their view state counterparts and the
-     * respective converters
-     */
-    fluidToView: FluidToViewMap<SV, SF>;
-    /**
-     * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters
-     */
-    viewToFluid?: ViewToFluidMap<SV, SF>;
+    dataProps?: IFluidDataProps;
 }
 
 /**
@@ -145,10 +133,13 @@ export interface IViewConverter<
     SF extends IFluidFunctionalComponentFluidState
     > {
     /**
-     * The corresponding value key within the view state type, only needs to be provided if different
-     * from the fluidKey
+     * The type of object this key in the Fluid state holds
      */
-    stateKey?: keyof SV;
+    type: string;
+    /**
+     * The corresponding value key within the view state type
+     */
+    stateKey: keyof SV;
     /**
      * A callback that takes in the partial view state containing the value that
      * this converter maps to, and returns the corresponding partial fluid state
@@ -182,6 +173,10 @@ export interface IFluidConverter<
     SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState
     > {
+    /**
+     * The type of object this key in the view state holds
+     */
+    type: string;
     /**
      * The corresponding value within the Fluid state
      */
@@ -479,9 +474,9 @@ export interface IFluidReducerProps<
      */
     syncedStateId: string;
     /**
-     * The root shared directory that will be used to store the synced state
+     * An instance of the SyncedComponent that this will be rendered in
      */
-    root: ISharedDirectory;
+    syncedComponent: SyncedComponent;
     /**
      * The Fluid reducer containing all the functions as defined by an extension of the IFluidReducer type.
      * Any mutations to the state, or effects outside of the component involving the state should be done here.
@@ -493,21 +488,10 @@ export interface IFluidReducerProps<
      */
     selector: B;
     /**
-     * A map of the view state values that need conversion to their Fluid state counterparts and the
-     * respective converters. Optional if only using primitive values in both states, no Fluid DDS' are being used, the
-     * Fluid and View state types match, and the values stored in the root do not need to be directly accessed later,
-     * i.e. they are only used for the view state of this
-     * React component
-     */
-    viewToFluid?: ViewToFluidMap<SV, SF>;
-    /**
-     *  A map of the Fluid state values that need conversion to their view state counterparts and the
-     * respective converters. Optional if fluid and view are of the same type
-     */
-    fluidToView: FluidToViewMap<SV, SF>;
-    /**
      * Data props that are loaded in during the Fluid initialization step. This contains the runtime
      * and the fluid component map
+     * TODO: Move data props out as it can be fetched from synced component but
+     * still needs to be extensible for reducers
      */
     dataProps: C;
 }

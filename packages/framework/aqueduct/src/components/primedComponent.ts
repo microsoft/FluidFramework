@@ -32,9 +32,9 @@ import { SharedComponent } from "./sharedComponent";
 export abstract class PrimedComponent<P extends IComponent = object, S = undefined, E extends IEvent = IEvent>
     extends SharedComponent<P, S, E>
 {
-    private internalRoot: ISharedDirectory | undefined;
-    private internalTaskManager: ITaskManager | undefined;
-    private readonly rootDirectoryId = "root";
+    protected internalRoot: ISharedDirectory | undefined;
+    protected internalTaskManager: ITaskManager | undefined;
+    protected readonly rootDirectoryId = "root";
     private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -130,7 +130,7 @@ export abstract class PrimedComponent<P extends IComponent = object, S = undefin
         await this.componentHasInitialized();
     }
 
-    private getUninitializedErrorString(item: string) {
+    protected getUninitializedErrorString(item: string) {
         return `${item} must be initialized before being accessed.`;
     }
 }

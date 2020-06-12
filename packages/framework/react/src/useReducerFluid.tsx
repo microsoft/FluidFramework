@@ -28,6 +28,7 @@ import {
     getFluidStateFromRoot,
     syncStateAndRoot,
 } from "./helpers";
+import { ISyncedStateConfig } from "./syncedComponent";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
@@ -43,19 +44,21 @@ export function useReducerFluid<
         syncedStateId,
         reducer,
         selector,
-        root,
-        viewToFluid,
-        fluidToView,
-        dataProps,
+        syncedComponent,
     } = props;
+    const config = syncedComponent.syncedStateConfig.get(syncedStateId);
+    if (config === undefined) {
+        throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+    }
+    const dataProps = props.dataProps || syncedComponent.dataProps;
     // Get our combined synced state and setState callbacks from the useStateFluid function
     const [viewState, setState] = useStateFluid<SV, SF>({
         syncedStateId,
-        root,
+        syncedComponent,
         dataProps,
-        fluidToView,
-        viewToFluid,
     }, initialViewState);
+    const root = syncedComponent.syncedState;
+    const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
 
     // Dispatch is an in-memory object that will load the reducer actions provided by the user
     // and add updates to the state and root based off of the type of function and

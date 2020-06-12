@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDirectoryValueChanged, ISharedDirectory } from "@fluidframework/map";
+import { IDirectoryValueChanged, ISharedMap } from "@fluidframework/map";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
@@ -41,13 +41,13 @@ export const updateStateAndComponentMap = async <
     fluidComponentMap: FluidComponentMap,
     fromRootUpdate: boolean,
     syncedStateId: string,
-    root: ISharedDirectory,
+    root: ISharedMap,
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (newState: SV, fromRootUpdate?: boolean | undefined) => void,
     rootCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid?: ViewToFluidMap<SV, SF>,
+    viewToFluid: ViewToFluidMap<SV, SF>,
 ) =>
     asyncForEach(
         newHandleList,

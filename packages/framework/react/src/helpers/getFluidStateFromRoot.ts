@@ -7,7 +7,7 @@ import {
     IComponent,
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
-import { ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     IViewConverter,
     FluidComponentMap,
@@ -28,7 +28,7 @@ export function getFluidStateFromRoot<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    root: ISharedDirectory,
+    root: ISharedMap,
     componentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,
 ): SF | undefined {

@@ -4,8 +4,7 @@
  */
 
 import * as React from "react";
-import { ISharedDirectory } from "@fluidframework/map";
-import { Deferred } from "@fluidframework/common-utils";
+import { ISharedMap } from "@fluidframework/map";
 import {
     IFluidProps,
     IFluidFunctionalComponentFluidState,
@@ -22,29 +21,25 @@ import { syncStateAndRoot, initializeState } from "./helpers";
 export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentViewState,
     SF extends IFluidFunctionalComponentFluidState> extends React.Component<IFluidProps<SV, SF>, SV> {
     private readonly _syncedStateId: string;
-    private readonly _root: ISharedDirectory;
+    private readonly _root: ISharedMap;
     private readonly _dataProps: IFluidDataProps;
-    private readonly _viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>;
+    private readonly _viewToFluid: Map<keyof SV, IFluidConverter<SV, SF>>;
     private readonly _fluidToView: Map<keyof SF, IViewConverter<SV, SF>>;
-    private readonly _deferredInitP: Deferred<void>;
-    private _initQueue: Promise<void>;
     constructor(props: IFluidProps<SV, SF>) {
         super(props);
         const {
             syncedStateId,
-            fluidToView,
-            viewToFluid,
-            root,
-            dataProps,
+            syncedComponent,
         } = props;
-
-        this._viewToFluid = viewToFluid;
-        this._fluidToView = fluidToView;
+        const config = syncedComponent.syncedStateConfig.get(syncedStateId);
+        if (config === undefined) {
+            throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+        }
+        this._viewToFluid = config.viewToFluid as any;
+        this._fluidToView = config.fluidToView as any;
         this._syncedStateId = syncedStateId;
-        this._root = root;
-        this._dataProps = dataProps;
-        this._deferredInitP = new Deferred<void>();
-        this._initQueue = this._deferredInitP.promise;
+        this._root = syncedComponent.syncedState;
+        this._dataProps = syncedComponent.dataProps;
     }
 
     public async componentDidMount() {
@@ -57,7 +52,6 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
             this._fluidToView,
             this._viewToFluid,
         );
-        this._deferredInitP.resolve();
     }
 
     /**
@@ -72,12 +66,6 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
         fromRootUpdate?: boolean,
         isLocal?: boolean,
     ) {
-        if (!this._deferredInitP.isCompleted) {
-            this._initQueue = this._initQueue.then(() =>
-                this._setStateFromRoot(newState, fromRootUpdate, isLocal),
-            );
-            return;
-        }
         if (isLocal) {
             super.setState(newState);
         } else if (fromRootUpdate) {
@@ -102,12 +90,6 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
      * @param newState - New state to be set both locally and on the synced root
      */
     public setState(newState: SV) {
-        if (!this._deferredInitP.isCompleted) {
-            this._initQueue = this._initQueue.then(() =>
-                this.setState(newState),
-            );
-            return;
-        }
         syncStateAndRoot(
             false,
             this._syncedStateId,

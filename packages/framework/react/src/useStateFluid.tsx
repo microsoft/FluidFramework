@@ -10,6 +10,7 @@ import {
     IFluidFunctionalComponentFluidState,
 } from "./interface";
 import { initializeState, syncStateAndRoot } from "./helpers";
+import { ISyncedStateConfig } from "./syncedComponent";
 
 /**
  * A wrapper around the useState React hook that combines local and Fluid state updates
@@ -22,12 +23,15 @@ export function useStateFluid<
 ): [SV, (newState: SV, fromRootUpdate?: boolean) => void] {
     const {
         syncedStateId,
-        root,
-        fluidToView,
-        viewToFluid,
-        dataProps,
+        syncedComponent,
     } = props;
-
+    const config = syncedComponent.syncedStateConfig.get(syncedStateId);
+    if (config === undefined) {
+        throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
+    }
+    const root = syncedComponent.syncedState;
+    const dataProps = props.dataProps || syncedComponent.dataProps;
+    const { fluidToView, viewToFluid } = config as ISyncedStateConfig<SV, SF>;
     // Establish the react state and setState functions using the initialViewState passed in
     const [reactState, reactSetState] = React.useState<SV>(initialViewState);
 
@@ -36,7 +40,7 @@ export function useStateFluid<
     // after the async call has finished
     if (!reactState.isInitialized) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        initializeState(
+        initializeState<SV, SF>(
             syncedStateId,
             root,
             dataProps,

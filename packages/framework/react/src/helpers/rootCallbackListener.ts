@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory, IDirectoryValueChanged } from "@fluidframework/map";
+import { ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import {
     FluidComponentMap,
@@ -37,7 +37,7 @@ export const rootCallbackListener = <
 >(
     fluidComponentMap: FluidComponentMap,
     syncedStateId,
-    root: ISharedDirectory,
+    root: ISharedMap,
     runtime: IComponentRuntime,
     state: SV,
     setState: (
@@ -46,7 +46,7 @@ export const rootCallbackListener = <
         isLocal?: boolean
     ) => void,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid?: ViewToFluidMap<SV, SF>,
+    viewToFluid: ViewToFluidMap<SV, SF>,
 ) => (change: IDirectoryValueChanged, local: boolean) => {
     const currentFluidState = getFluidStateFromRoot(
         syncedStateId,

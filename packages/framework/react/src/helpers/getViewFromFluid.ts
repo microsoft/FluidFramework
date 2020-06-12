@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import {
     FluidComponentMap,
@@ -30,7 +30,7 @@ export function getViewFromFluid<
     SF extends IFluidFunctionalComponentFluidState
 >(
     syncedStateId: string,
-    root: ISharedDirectory,
+    root: ISharedMap,
     rootKey: keyof SF,
     fluidComponentMap: FluidComponentMap,
     fluidToView?: Map<keyof SF, IViewConverter<SV, SF>>,

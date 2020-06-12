@@ -4,7 +4,7 @@
  */
 
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { ISharedDirectory, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     FluidComponentMap,
     IFluidFunctionalComponentFluidState,
@@ -41,7 +41,7 @@ export function syncStateAndRoot<
 >(
     fromRootUpdate: boolean,
     syncedStateId,
-    root: ISharedDirectory,
+    root: ISharedMap,
     runtime: IComponentRuntime,
     viewState: SV,
     setState: (
@@ -51,7 +51,7 @@ export function syncStateAndRoot<
     ) => void,
     fluidComponentMap: FluidComponentMap,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid?: ViewToFluidMap<SV, SF>,
+    viewToFluid: ViewToFluidMap<SV, SF>,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the root
     const currentRootState = getFluidStateFromRoot(
@@ -74,23 +74,16 @@ export function syncStateAndRoot<
         throw Error("No schema found stored on the root");
     }
     const {
-        componentKeyMapHandle,
         viewMatchingMapHandle,
         fluidMatchingMapHandle,
     } = componentSchemaHandles;
 
-    const componentKeyMap = fluidComponentMap.get(componentKeyMapHandle.path)
-        ?.component as SharedMap;
     const viewMatchingMap = fluidComponentMap.get(viewMatchingMapHandle.path)
         ?.component as SharedMap;
     const fluidMatchingMap = fluidComponentMap.get(fluidMatchingMapHandle.path)
         ?.component as SharedMap;
 
-    if (
-        componentKeyMap === undefined ||
-        viewMatchingMap === undefined ||
-        fluidMatchingMap === undefined
-    ) {
+    if (viewMatchingMap === undefined || fluidMatchingMap === undefined) {
         throw Error("Failed to fetch shared map DDS' from the schema handles");
     }
 
@@ -104,7 +97,6 @@ export function syncStateAndRoot<
             partialRootState = getFluidFromView(
                 viewState,
                 viewKey as keyof SV,
-                componentKeyMap,
                 viewToFluid,
             );
         } else {

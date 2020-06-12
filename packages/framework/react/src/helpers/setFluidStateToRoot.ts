@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { FluidComponentMap, IViewConverter } from "../interface";
@@ -20,7 +20,7 @@ import { FluidComponentMap, IViewConverter } from "../interface";
  */
 export function setFluidStateToRoot<SV, SF>(
     syncedStateId: string,
-    root: ISharedDirectory,
+    root: ISharedMap,
     runtime: IComponentRuntime,
     componentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
