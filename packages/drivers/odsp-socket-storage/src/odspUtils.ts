@@ -31,7 +31,6 @@ export const fetchIncorrectResponse = 712;
 
 export function createOdspNetworkError(
     errorMessage: string,
-    canRetry: boolean,
     statusCode?: number,
     retryAfterSeconds?: number,
 ): CriticalContainerError {
@@ -51,28 +50,27 @@ export function createOdspNetworkError(
         case 406:
             error = new NetworkErrorBasic(errorMessage, ErrorType.unsupportedClientProtocolVersion, false);
             break;
-        case 500:
-            error = new GenericNetworkError(errorMessage, canRetry);
-            break;
-        case 507:
-            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, canRetry);
-            break;
         case 413:
-            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, canRetry);
+            error = new NonRetryableError(errorMessage, ErrorType.snapshotTooBig, false);
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, canRetry);
+            error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, false);
+            break;
+        case 500:
+            error = new GenericNetworkError(errorMessage, true);
             break;
         case 501:
             error = new NonRetryableError(errorMessage, ErrorType.fluidNotEnabled, false);
             break;
-        case offlineFetchFailureStatusCode:
-            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, canRetry);
+        case 507:
+            error = new NonRetryableError(errorMessage, ErrorType.outOfStorageError, false);
             break;
-
+        case offlineFetchFailureStatusCode:
+            error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, true);
+            break;
         case fetchFailureStatusCode:
         default:
-            error = createGenericNetworkError(errorMessage, canRetry, retryAfterSeconds, statusCode);
+            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, statusCode);
     }
 
     error.online = OnlineStatus[isOnline()];
@@ -85,7 +83,6 @@ export function createOdspNetworkError(
 export function throwOdspNetworkError(
     errorMessage: string,
     statusCode: number,
-    canRetry: boolean,
     response?: Response,
 ) {
     let message = errorMessage;
@@ -97,7 +94,6 @@ export function throwOdspNetworkError(
 
     const networkError = createOdspNetworkError(
         message,
-        canRetry,
         statusCode,
         undefined /* retryAfterSeconds */);
     (networkError as any).sprequestguid = sprequestguid;
@@ -110,7 +106,6 @@ export function throwOdspNetworkError(
 export function errorObjectFromSocketError(socketError: IOdspSocketError) {
     return createOdspNetworkError(
         socketError.message,
-        true,
         socketError.code,
         socketError.retryAfter);
 }
@@ -160,11 +155,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse, true, response);
+            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status} from the server`, response.status, true, response);
+                `Error ${response.status} from the server`, response.status, response);
         }
 
         // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
@@ -184,7 +179,7 @@ export async function fetchHelper(
             };
             return res;
         } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, response);
         }
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
@@ -197,7 +192,6 @@ export async function fetchHelper(
         throwOdspNetworkError(
             `Fetch error: ${error}`,
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            true, // canRetry
             undefined, // response
         );
     });

@@ -37,7 +37,7 @@ export async function fetchJoinSession(
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const token = await getVroomToken(refresh, "JoinSession");
         if (!token) {
-            throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse, true);
+            throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse);
         }
 
         const extraProps = refresh ? { secondAttempt: 1 } : {};

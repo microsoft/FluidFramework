@@ -6,7 +6,7 @@
 import assert from "assert";
 import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
-import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
+import { createOdspNetworkError, throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -16,18 +16,15 @@ describe("Odsp Error", () => {
         headers: { get(name: string): string | null { return "xxx-xxx"; } },
     } as Response;
 
-    function createOdspNetworkError(
+    function createOdspNetworkErrorWithResponse(
         errorMessage: string,
         statusCode: number,
-        canRetry: boolean,
-        includeResponse: boolean,
     ) {
         try {
             throwOdspNetworkError(
                 errorMessage,
                 statusCode,
-                canRetry,
-                includeResponse ? testResponse : undefined,
+                testResponse,
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
@@ -36,11 +33,9 @@ describe("Odsp Error", () => {
     }
 
     it("throwOdspNetworkError first-class properties", async () => {
-        const networkError: CriticalContainerError = createOdspNetworkError(
+        const networkError: CriticalContainerError = createOdspNetworkErrorWithResponse(
             "TestMessage",
             400,
-            true /* canRetry */,
-            true /* includeResponse */,
         );
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
@@ -57,13 +52,13 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid exist", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry */, true /* includeResponse */);
+        const error1: any = createOdspNetworkErrorWithResponse("Error", 400);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry */, false /* includeResponse */);
+        const error1: any = createOdspNetworkError("Error", 400);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
