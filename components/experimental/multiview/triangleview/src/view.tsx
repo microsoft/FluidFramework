@@ -10,28 +10,14 @@ import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-interface IPlotPointViewProps {
-    model: ICoordinate;
-}
-
-export const PlotPointView: React.FC<IPlotPointViewProps> = (props: IPlotPointViewProps) => {
-    const [x, setX] = React.useState(props.model.x);
-    const [y, setY] = React.useState(props.model.y);
-
-    React.useEffect(() => {
-        const onCoordinateChanged = () => {
-            setX(props.model.x);
-            setY(props.model.y);
-        };
-        props.model.on("coordinateChanged", onCoordinateChanged);
-        return () => {
-            props.model.off("coordinateChanged", onCoordinateChanged);
-        };
-    }, [props.model]);
-
-    return (
-        <div className="coordinate-dot" style={{ left: x - 2.5, top: y - 2.5 }}></div>
-    );
+const renderTriangleToCanvas = (ctx: CanvasRenderingContext2D, c1: ICoordinate, c2: ICoordinate, c3: ICoordinate) => {
+    ctx.clearRect(0, 0, 100, 100);
+    ctx.fillStyle = "#ff0000";
+    ctx.beginPath();
+    ctx.moveTo(c1.x, c1.y);
+    ctx.lineTo(c2.x, c2.y);
+    ctx.lineTo(c3.x, c3.y);
+    ctx.fill();
 };
 
 interface ITriangleViewProps {
@@ -41,11 +27,33 @@ interface ITriangleViewProps {
 }
 
 export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
+    const canvasRef = React.createRef<HTMLCanvasElement>();
+    const rerenderCanvas = () => {
+        if (canvasRef.current !== null) {
+            const ctx = canvasRef.current.getContext("2d");
+            if (ctx !== null) {
+                renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
+            }
+        }
+    }
+    React.useEffect(() => {
+        if (canvasRef.current !== null) {
+            canvasRef.current.width = 100;
+            canvasRef.current.height = 100;
+        }
+        rerenderCanvas();
+
+        props.coordinate1.on("coordinateChanged", rerenderCanvas);
+        props.coordinate2.on("coordinateChanged", rerenderCanvas);
+        props.coordinate3.on("coordinateChanged", rerenderCanvas);
+        return () => {
+            props.coordinate1.off("coordinateChanged", rerenderCanvas);
+            props.coordinate2.off("coordinateChanged", rerenderCanvas);
+            props.coordinate3.off("coordinateChanged", rerenderCanvas);
+        }
+    });
+
     return (
-        <div className="plot-view">
-            <PlotPointView model={ props.coordinate1 } />
-            <PlotPointView model={ props.coordinate2 } />
-            <PlotPointView model={ props.coordinate3 } />
-        </div>
+        <canvas className="triangle-canvas" ref={ canvasRef }></canvas>
     );
 }
