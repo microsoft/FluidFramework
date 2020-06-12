@@ -797,17 +797,36 @@ export class ReplayTool {
     }
 
     private compareSnapshots(content: ContainerContent, filename: string) {
+        const packageVersionRegex = new RegExp("\"packageVersion\": [0-9\\.]+","g");
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
-            { encoding: "utf-8" });
-        if (snapshotAsString !== content.snapshotAsString) {
+            { encoding: "utf-8" }).replace(packageVersionRegex, "");
+        const contentString = content.snapshotAsString.replace(packageVersionRegex, "");
+        if (snapshotAsString !== contentString) {
             const fileLines = snapshotAsString.split("\n");
-            const contentLines = content.snapshotAsString;
-            let i = 0;
-            while (fileLines[i] === contentLines[i]) {
-                i++;
+            const contentLines = contentString.split("\n");
+            let line = 0;
+            const maxLines = Math.max(fileLines.length, contentLines.length);
+            while (line < maxLines && fileLines[line] === contentLines[line]) {
+                line++;
             }
-            this.reportError(`Mismatch in snapshot ${filename}.json @ ${i}\n+${fileLines}\n-${contentLines}`);
+
+            const fileLine = fileLines[line];
+            const contentLine = contentLines[line];
+
+            let char = 0;
+            const maxChars = Math.max(fileLine.length, contentLine.length);
+            while (char < maxChars && fileLine.charAt(char) === contentLine.charAt(char)) {
+                char ++;
+            }
+
+            const start = Math.max(0, char - 64);
+            const end = char + 64;
+
+            this.reportError(
+                `Mismatch in snapshot ${filename}.json @${line}:${char}
+                +${fileLine.substr(start, end).trim()}
+                -${contentLine.substr(start, end).trim()}`);
         }
     }
 }
