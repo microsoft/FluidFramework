@@ -69,6 +69,11 @@ export enum ErrorType {
      * The data is corrupted. This indicates a critical error caused by storage.
      */
     dataCorruptionError,
+
+    /*
+     * SPO admin toggle: fluid service is not enabled.
+     */
+    fluidNotEnabled,
 }
 
 /**
@@ -134,7 +139,8 @@ export type NetworkErrorBasicTypes =
     ErrorType.invalidFileNameError |
     ErrorType.writeError |
     ErrorType.offlineError |
-    ErrorType.snapshotTooBig;
+    ErrorType.snapshotTooBig |
+    ErrorType.fluidNotEnabled;
 
 /** Types of errors that do not contain any extra information other then error type */
 export interface INetworkErrorBasic extends IErrorBase {
