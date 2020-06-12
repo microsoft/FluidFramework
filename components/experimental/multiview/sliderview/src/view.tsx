@@ -7,7 +7,10 @@ import React from "react";
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
+import "./style.css";
+
 interface ISliderCoordinateViewProps {
+    label?: string;
     model: ICoordinate;
 }
 
@@ -26,14 +29,19 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
         };
     }, [props.model]);
 
+    const labelElem = props.label !== undefined
+        ? <h3 className="slider-label">{ props.label }</h3>
+        : undefined;
+
     return (
-        <div>
+        <div className="slider-view">
+            { labelElem }
             <div>
                 X:
                 <input
                     type="range"
-                    onInput={(e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
-                    value={x}
+                    onInput={ (e) => props.model.x = parseInt((e.target as HTMLInputElement).value) }
+                    value={ x }
                 />
                 { x }
             </div>
@@ -41,8 +49,8 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
                 Y:
                 <input
                     type="range"
-                    onInput={(e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
-                    value={y}
+                    onInput={ (e) => props.model.y = parseInt((e.target as HTMLInputElement).value) }
+                    value={ y }
                 />
                 { y }
             </div>

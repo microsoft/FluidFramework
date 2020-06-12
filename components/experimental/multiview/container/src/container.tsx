@@ -29,7 +29,7 @@ const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
         <div>
             <div>
                 Simple linking of a single model/view
-                <SliderCoordinateView model={props.model} />
+                <SliderCoordinateView model={props.model} label="Coordinate 1" />
             </div>
             <div>
                 Swapping out an alternative model/view
