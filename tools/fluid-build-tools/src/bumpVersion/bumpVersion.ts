@@ -314,7 +314,6 @@ class ReferenceVersionBag extends VersionBag {
     }
 
     private async getPublishedDependencies(versionSpec: string, dev: boolean) {
-
         const dep = dev ? "devDependencies" : "dependencies";
         const retDep = await exec(`npm view ${versionSpec} ${dep} --json`, this.repoRoot, "look up dependencies");
         // detect if there are no dependencies
@@ -344,49 +343,46 @@ class ReferenceVersionBag extends VersionBag {
         dev: boolean,
         reference?: string
     ) {
-        const pending = [{ pkg, versionRange, dev, reference }];
-        while (pending.length) {
-            const { pkg, versionRange, dev, reference } = pending.pop()!;
+        const entryName = VersionBag.getEntryName(pkg);
+        const rangeSpec = `${pkg.name}@${versionRange}`;
 
-            const entryName = VersionBag.getEntryName(pkg);
-            const rangeSpec = `${pkg.name}@${versionRange}`;
-
-            // Check if we already checked this published package range
-            if (this.publishedPackageRange.has(rangeSpec)) {
-                continue;
-            }
-
-            this.publishedPackageRange.add(rangeSpec);
-
-            let matchedVersion: string | undefined = this.get(entryName);
-            if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
-                matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
-                if (!matchedVersion) {
-                    continue;
-                }
-            }
-            console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
-            this.add(pkg, matchedVersion, dev, reference, true);
-
-            // Get the dependencies
-            const versionSpec = `${pkg.name}@${matchedVersion}`;
-            if (this.publishedPackage.has(versionSpec)) {
-                continue;
-            }
-            this.publishedPackage.add(versionSpec);
-
-            const addPublishedDependencies = async (dev: boolean) => {
-                const dep = await this.getPublishedDependencies(versionSpec, dev);
-                // Add it to pending for processing
-                for (const d in dep) {
-                    const depPkg = this.fullPackageMap.get(d);
-                    if (depPkg) {
-                        pending.push({ pkg: depPkg, versionRange: dep[d], dev, reference: versionSpec });
-                    }
-                }
-            }
-            await Promise.all([addPublishedDependencies(true), addPublishedDependencies(false)]);
+        // Check if we already checked this published package range
+        if (this.publishedPackageRange.has(rangeSpec)) {
+            return;
         }
+
+        this.publishedPackageRange.add(rangeSpec);
+
+        let matchedVersion: string | undefined = this.get(entryName);
+        if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
+            matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
+            if (!matchedVersion) {
+                return;
+            }
+        }
+        console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
+        this.add(pkg, matchedVersion, dev, reference, true);
+
+        // Get the dependencies
+        const versionSpec = `${pkg.name}@${matchedVersion}`;
+        if (this.publishedPackage.has(versionSpec)) {
+            return;
+        }
+        this.publishedPackage.add(versionSpec);
+
+        const pending: Promise<void>[] = [];
+        const addPublishedDependencies = async (dev: boolean) => {
+            const dep = await this.getPublishedDependencies(versionSpec, dev);
+            // Add it to pending for processing
+            for (const d in dep) {
+                const depPkg = this.fullPackageMap.get(d);
+                if (depPkg) {
+                    pending.push(this.collectPublishedPackageDependencies(depPkg, dep[d], dev, versionSpec));
+                }
+            }
+        }
+        await Promise.all([addPublishedDependencies(true), addPublishedDependencies(false)]);
+        await Promise.all(pending);
     }
 
     public printRelease() {
@@ -553,6 +549,7 @@ class BumpVersion {
             depVersions.add(pkg, pkg.version);
         }
 
+        const publishedPackageDependenciesPromises: Promise<void>[] = [];
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -588,11 +585,12 @@ class BumpVersion {
                         }
                         depVersions.add(depBuildPackage, depVersion, dev, reference);
                     } else {
-                        await depVersions.collectPublishedPackageDependencies(depBuildPackage, version, dev, reference);
+                        publishedPackageDependenciesPromises.push(depVersions.collectPublishedPackageDependencies(depBuildPackage, version, dev, reference));
                     }
                 }
             }
         }
+        await Promise.all(publishedPackageDependenciesPromises);
 
         return depVersions;
     }
