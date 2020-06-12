@@ -3,3 +3,8 @@
 **/lib
 **/nyc
 **/*.tsbuildinfo
+
+.vscode
+kubernetes
+verdaccio
+.gitignore
