@@ -8,7 +8,7 @@ import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
-import { writeFileAsync, readJsonAsync } from "../common/utils";
+import { readJsonAsync, writeFileAsync } from "../common/utils";
 import { Package } from "../common/npmPackage";
 import path from "path";
 
