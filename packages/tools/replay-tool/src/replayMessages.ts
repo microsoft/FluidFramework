@@ -797,22 +797,26 @@ export class ReplayTool {
     }
 
     private compareSnapshots(content: ContainerContent, filename: string) {
-        const packageVersionRegex = new RegExp("\"packageVersion\": [0-9\\.]+", "g");
+        // normalize the snapshots
+        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+d+["\\]+/g;
+        const packageVersionPlaceholder = "\"packageVersion\":\"XXX\"";
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
-            { encoding: "utf-8" }).replace(packageVersionRegex, "");
-        const contentString = content.snapshotAsString.replace(packageVersionRegex, "");
+            { encoding: "utf-8" }).replace(packageVersionRegex, packageVersionPlaceholder);
+        const contentString =
+            content.snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder);
+
         if (snapshotAsString !== contentString) {
             const fileLines = snapshotAsString.split("\n");
             const contentLines = contentString.split("\n");
             let line = 0;
-            const maxLines = Math.max(fileLines.length, contentLines.length);
+            const maxLines = Math.max(fileLines.length , contentLines.length);
             while (line < maxLines && fileLines[line] === contentLines[line]) {
                 line++;
             }
 
-            const fileLine = fileLines[line];
-            const contentLine = contentLines[line];
+            const fileLine = fileLines[line] ?? "";
+            const contentLine = contentLines[line] ?? "";
 
             let char = 0;
             const maxChars = Math.max(fileLine.length, contentLine.length);
