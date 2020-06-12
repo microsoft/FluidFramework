@@ -14,6 +14,10 @@ interface IPlotCoordinateViewProps {
     model: ICoordinate;
 }
 
+/**
+ * PlotCoordinateView is a React component that renders the given ICoordinate as a red dot in a rectangle.
+ * For now, it only displays the coordinate, but we could enhance it to allow manipulating the coordinate.
+ */
 export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IPlotCoordinateViewProps) => {
     const [x, setX] = React.useState(props.model.x);
     const [y, setY] = React.useState(props.model.y);

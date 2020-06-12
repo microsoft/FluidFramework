@@ -1,8 +1,6 @@
-# Multiview
+# Multiview container
 
-The **Multiview** package is an example of a variety of techniques around rendering Fluid components.
-
-Although it is presented as a single package, note that each subdirectory could be packaged separately.
+The container package is an example of how a container author might pick and choose multiple views and models and combine them in various ways.
 
 ## Getting Started
 

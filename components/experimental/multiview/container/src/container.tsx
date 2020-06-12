@@ -15,6 +15,8 @@ import { TriangleView } from "@fluid-example/multiview-triangle-view";
 
 import * as React from "react";
 
+import "./style.css";
+
 const simpleCoordinateComponentId = "simpleCoordinate";
 const triangleCoordinateComponentId1 = "triangle1";
 const triangleCoordinateComponentId2 = "triangle2";
@@ -24,6 +26,9 @@ const registryEntries = new Map([
     CoordinateInstantiationFactory.registryEntry,
 ]);
 
+/**
+ * Our default view demos two scenarios - one basic that takes a single coordinate, and one triangle that takes 3.
+ */
 interface IDefaultViewProps {
     simpleCoordinate: ICoordinate;
     triangleCoordinate1: ICoordinate;
@@ -31,16 +36,21 @@ interface IDefaultViewProps {
     triangleCoordinate3: ICoordinate;
 }
 
+/**
+ * In this sample, we (the container author) are choosing to bring along our own view that composes several
+ * component views together.  We could have alternatively built a "base" component to do this composition if we had
+ * preferred - either works fine.
+ */
 const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
     return (
         <div>
             <div>
-                Scenario 1: Linking a single model to multiple views
+                <h2 className="scenario-header">Scenario 1: Linking a single model to multiple views</h2>
                 <SliderCoordinateView model={ props.simpleCoordinate } label="Simple Coordinate" />
                 <PlotCoordinateView model={ props.simpleCoordinate } />
             </div>
             <div>
-                Scenario 2: Using multiple models in a single view
+                <h2 className="scenario-header">Scenario 2: Using multiple models in a single view</h2>
                 <SliderCoordinateView model={ props.triangleCoordinate1 } label="Triangle pt1" />
                 <SliderCoordinateView model={ props.triangleCoordinate2 } label="Triangle pt2" />
                 <SliderCoordinateView model={ props.triangleCoordinate3 } label="Triangle pt3" />
@@ -50,17 +60,14 @@ const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
                     coordinate3={ props.triangleCoordinate3 }
                 />
             </div>
-
-            <div>
-                A nested scenario
-            </div>
-            <div>
-                An anonymous (nested?) scenario
-            </div>
         </div>
     );
 };
 
+/**
+ * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
+ * we need to retrieve those data models we created in containerInitializingFirstTime.
+ */
 const defaultViewRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length === 0) {
@@ -80,6 +87,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
         }
     };
 
+// Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
     const simpleCoordinateComponentRuntime =
         await runtime.createComponent(id, Coordinate.ComponentName);
@@ -91,6 +99,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string)
     return simpleResult.value as ICoordinate;
 };
 
+// Just a little helper, since we're going to request multiple coordinates.
 const requestCoordinateFromId = async (request: RequestParser, runtime: IContainerRuntime, id: string) => {
     const coordinateRequest = new RequestParser({
         url: `${id}`,
@@ -100,6 +109,7 @@ const requestCoordinateFromId = async (request: RequestParser, runtime: IContain
     return coordinate;
 }
 
+// We'll use a MountableView so webpack-component-loader can display us, and add our default view request handler.
 const viewRequestHandlers = [
     mountableViewRequestHandler(MountableView),
     defaultViewRequestHandler,
@@ -110,6 +120,10 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         super(registryEntries, [], viewRequestHandlers);
     }
 
+    /**
+     * Since we're letting the container define the default view it will respond with, it must do whatever setup
+     * it requires to produce that default view.
+     */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const simpleCoordinate = await createAndAttachCoordinate(runtime, simpleCoordinateComponentId);
 
