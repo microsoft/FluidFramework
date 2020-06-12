@@ -1,4 +1,4 @@
-# CodeMirror
+# @fluid-example/codemirror
 
 An experimental implementation of how to take the open source [CodeMirror](https://codemirror.net/) code editor
 and enable real-time coauthoring using the Fluid Framework.

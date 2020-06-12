@@ -1,4 +1,4 @@
-# Draft.js
+# @fluid-example/draft-js
 
 An experimental implementation of how to take Facebook's open source [Draft.js](https://draftjs.org/) rich text editor and
 enable real-time coauthoring using the Fluid Framework.

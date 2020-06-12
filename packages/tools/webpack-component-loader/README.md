@@ -1,4 +1,5 @@
-# `@fluidframework/webpack-component-loader`
+# @fluidframework/webpack-component-loader
+
 This folder contains the webpack-component-loader. This package is meant to be used with the webpack-dev-server and is used by yo fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
@@ -17,10 +18,10 @@ The following environment variables can be defined when running webpack-dev-serv
 
 | modes | description |
 | ---------| ----------- |
-| `docker` | Use docker running routerlicious server for ordering, etc. |
+| `docker` | Use docker running routerlicious server for ordering, etc. You'll need to start this service locally |
 | `r11s`   | Use remote routerlicious server for ordering, etc. |
 | `local`  | Load component in two side-by-side divs using test-driver (default option) |
-| `tinylicous` | Run against a local instance of tinylicious |
+| `tinylicous` | Run against a local instance of tinylicious. You'll need to start this service locally |
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as moment from "moment";
+import { ICollection, MongoManager } from "@fluidframework/server-services-core";
+import moment from "moment";
 
 /**
  * Interface representing information about a logged in user

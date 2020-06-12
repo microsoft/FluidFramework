@@ -1,4 +1,4 @@
-# Container Runtime Definitions
+# @fluidframework/container-runtime-definitions
 
 Interface `IContainerRuntime` specify the container developer API.
 

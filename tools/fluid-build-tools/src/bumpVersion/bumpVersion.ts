@@ -45,6 +45,8 @@ let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
 
+const generatorFluidPackageName = "generator-fluid";
+
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
     let extra = false;
@@ -213,15 +215,18 @@ class VersionBag {
             fatal(`Inconsistent version for ${name} ${version} && ${existing}`);
         }
     }
-    protected internalAdd(pkg: Package, version: string) {
+    protected internalAdd(pkg: Package, version: string, override: boolean = false) {
         const entryName = VersionBag.getEntryName(pkg);
         const existing = this.versionData[entryName];
-        if (existing) {
-            if (existing !== version) {
-                return existing;
+        if (existing !== version) {
+            if (existing) {
+                if (!override) {
+                    return existing;
+                }
+                console.log(`    Overriding ${entryName} ${existing} -> ${version}`);
             }
-        } else {
             this.versionData[entryName] = version;
+            return existing;
         }
     }
     public get(pkgOrMonoRepoName: Package | string) {
@@ -243,6 +248,7 @@ class VersionBag {
  */
 class ReferenceVersionBag extends VersionBag {
     private readonly referenceData = new Map<string, { reference: string, published: boolean }>();
+    private readonly nonDevDep = new Set<string>();
     private readonly publishedPackage = new Set<string>();
     private readonly publishedPackageRange = new Set<string>();
 
@@ -253,23 +259,31 @@ class ReferenceVersionBag extends VersionBag {
     /**
      * Add package and version to the version bag, with option reference to indicate where the reference comes from
      * Will error if there is a conflicting dependency versions, if the references are from the local repo, other wise warn.
-     * 
-     * @param pkg 
-     * @param version 
-     * @param newReference 
+     *
+     * @param pkg
+     * @param version
+     * @param newReference
      */
-    public add(pkg: Package, version: string, newReference?: string, published: boolean = false) {
-        const existing = this.internalAdd(pkg, version);
+    public add(pkg: Package, version: string, dev: boolean = false, newReference?: string, published: boolean = false) {
         const entryName = VersionBag.getEntryName(pkg);
-        if (existing) {
-            const existingReference = this.referenceData.get(entryName);
-            const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
-            if (existingReference?.reference && this.publishedPackage.has(existingReference.reference) && newReference && this.publishedPackage.has(newReference)) {
-                // only warn if the conflict is between two published references (since we can't change it anyways).
-                console.warn(`WARNING: ${message}`);
-            } else {
-                fatal(message);
+        // Override existing we haven't seen a non-dev dependency yet, and it is not a published version or it is not a dev dependency
+        const override = !this.nonDevDep.has(entryName) && (!published || !dev);
+        const existing = this.internalAdd(pkg, version, override);
+
+        if (!dev) {
+            if (existing) {
+                const existingReference = this.referenceData.get(entryName);
+                const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
+                if (existingReference?.reference && this.publishedPackage.has(existingReference.reference) && newReference && this.publishedPackage.has(newReference)) {
+                    // only warn if the conflict is between two published references (since we can't change it anyways).
+                    console.warn(`WARNING: ${message}`);
+                } else {
+                    fatal(message);
+                }
             }
+            this.nonDevDep.add(entryName);
+        } else if (existing) {
+            console.log(`      Ignored mismatched dev dependency ${pkg.name}@${version} vs ${existing}`);
         }
         if (newReference) {
             this.referenceData.set(entryName, { reference: newReference, published });
@@ -300,7 +314,6 @@ class ReferenceVersionBag extends VersionBag {
     }
 
     private async getPublishedDependencies(versionSpec: string, dev: boolean) {
-
         const dep = dev ? "devDependencies" : "dependencies";
         const retDep = await exec(`npm view ${versionSpec} ${dep} --json`, this.repoRoot, "look up dependencies");
         // detect if there are no dependencies
@@ -317,7 +330,7 @@ class ReferenceVersionBag extends VersionBag {
      * Given a package a version range, ask NPM for a list of version that satisfies it, and find the latest version.
      * That version is added to the version bag, and will error on conflict.
      * It then ask NPM for the list of dependency for the matched version, and collect the version as well.
-     * 
+     *
      * @param pkg - the package to begin collection information
      * @param versionRange - the version range to match
      * @param repoRoot - where the repo root is
@@ -327,51 +340,49 @@ class ReferenceVersionBag extends VersionBag {
     public async collectPublishedPackageDependencies(
         pkg: Package,
         versionRange: string,
+        dev: boolean,
         reference?: string
     ) {
-        const pending = [{ pkg, versionRange, reference }];
-        while (pending.length) {
-            const { pkg, versionRange, reference } = pending.pop()!;
+        const entryName = VersionBag.getEntryName(pkg);
+        const rangeSpec = `${pkg.name}@${versionRange}`;
 
-            const entryName = VersionBag.getEntryName(pkg);
-            const rangeSpec = `${pkg.name}@${versionRange}`;
+        // Check if we already checked this published package range
+        if (this.publishedPackageRange.has(rangeSpec)) {
+            return;
+        }
 
-            // Check if we already checked this published package range
-            if (this.publishedPackageRange.has(rangeSpec)) {
-                continue;
+        this.publishedPackageRange.add(rangeSpec);
+
+        let matchedVersion: string | undefined = this.get(entryName);
+        if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
+            matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
+            if (!matchedVersion) {
+                return;
             }
+        }
+        console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
+        this.add(pkg, matchedVersion, dev, reference, true);
 
-            this.publishedPackageRange.add(rangeSpec);
+        // Get the dependencies
+        const versionSpec = `${pkg.name}@${matchedVersion}`;
+        if (this.publishedPackage.has(versionSpec)) {
+            return;
+        }
+        this.publishedPackage.add(versionSpec);
 
-            let matchedVersion: string | undefined = this.get(entryName);
-            if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
-                matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
-                if (!matchedVersion) {
-                    continue;
-                }
-            }
-            console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
-            this.add(pkg, matchedVersion, reference, true);
-
-            // Get the dependencies
-            const versionSpec = `${pkg.name}@${matchedVersion}`;
-            if (this.publishedPackage.has(versionSpec)) {
-                continue;
-            }
-            this.publishedPackage.add(versionSpec);
-            const dep = {
-                ...await this.getPublishedDependencies(versionSpec, true),
-                ...await this.getPublishedDependencies(versionSpec, false),
-            };
-
+        const pending: Promise<void>[] = [];
+        const addPublishedDependencies = async (dev: boolean) => {
+            const dep = await this.getPublishedDependencies(versionSpec, dev);
             // Add it to pending for processing
             for (const d in dep) {
                 const depPkg = this.fullPackageMap.get(d);
                 if (depPkg) {
-                    pending.push({ pkg: depPkg, versionRange: dep[d], reference: versionSpec });
+                    pending.push(this.collectPublishedPackageDependencies(depPkg, dep[d], dev, versionSpec));
                 }
             }
         }
+        await Promise.all([addPublishedDependencies(true), addPublishedDependencies(false)]);
+        await Promise.all(pending);
     }
 
     public printRelease() {
@@ -428,15 +439,15 @@ class BumpVersion {
         this.fullPackageMap = this.repo.createPackageMap();
 
         // TODO: Is there a way to generate this automatically?
-        const generatorPackage = this.fullPackageMap.get("@microsoft/generator-fluid");
-        if (!generatorPackage) { fatal("Unable to find @microsoft/generator-fluid package") };
+        const generatorPackage = this.fullPackageMap.get(generatorFluidPackageName);
+        if (!generatorPackage) { fatal(`Unable to find ${generatorFluidPackageName} package`) };
         this.generatorPackage = generatorPackage;
         this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"));
     }
 
     /**
      * Bump the dependencies of a package based on the what's in the packageMap, and save the package.json
-     * 
+     *
      * @param pkg the package to bump dependency versions
      * @param bumpPackageMap the map of package that needs to bump
      * @param release if we are releasing, only patch the pre-release dependencies
@@ -498,7 +509,7 @@ class BumpVersion {
     }
 
     /**
-     * Determine either we want to bump minor on master or patch version on release/* based on branch name 
+     * Determine either we want to bump minor on master or patch version on release/* based on branch name
      */
     private async getVersionBumpKind(): Promise<VersionBumpType> {
         if (paramReleaseVersion !== undefined) {
@@ -538,6 +549,7 @@ class BumpVersion {
             depVersions.add(pkg, pkg.version);
         }
 
+        const publishedPackageDependenciesPromises: Promise<void>[] = [];
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -546,7 +558,7 @@ class BumpVersion {
             if (pkg === this.generatorPackage) {
                 pendingDepCheck.push(this.templatePackage);
             }
-            for (const { name: dep, version } of pkg.combinedDependencies) {
+            for (const { name: dep, version, dev } of pkg.combinedDependencies) {
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
                     if (MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo)) {
@@ -571,19 +583,20 @@ class BumpVersion {
                                 pendingDepCheck.push(depBuildPackage);
                             }
                         }
-                        depVersions.add(depBuildPackage, depVersion, reference);
+                        depVersions.add(depBuildPackage, depVersion, dev, reference);
                     } else {
-                        await depVersions.collectPublishedPackageDependencies(depBuildPackage, version, reference);
+                        publishedPackageDependenciesPromises.push(depVersions.collectPublishedPackageDependencies(depBuildPackage, version, dev, reference));
                     }
                 }
             }
         }
+        await Promise.all(publishedPackageDependenciesPromises);
 
         return depVersions;
     }
 
     /**
-     * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages 
+     * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages
      * has the same version to the current version in the repo and needs to be bumped as well
      */
     private async collectBumpInfo(releaseName: string) {
@@ -599,7 +612,7 @@ class BumpVersion {
         } else {
             const processMonoRepo = async (monoRepo: MonoRepo) => {
                 await Promise.all(monoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
+                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString(), false)
                 }));
             };
             const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
@@ -622,7 +635,7 @@ class BumpVersion {
 
     /**
      * Bump version of packages in the repo
-     * 
+     *
      * @param versionBump the kind of version bump
      */
     private async bumpRepo(versionBump: VersionChangeType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
@@ -705,8 +718,8 @@ class BumpVersion {
     }
 
     /**
-     * Create a commit with the version bump and return the repo transition state 
-     * 
+     * Create a commit with the version bump and return the repo transition state
+     *
      * @param versionBump the kind of version Bump
      * @param serverNeedBump whether server version needs to be bump
      * @param packageNeedBump the set of packages that needs to be bump
@@ -840,7 +853,7 @@ class BumpVersion {
 
     /**
      * Prompt the user for a yes/no answer.
-     * 
+     *
      * @param message the message for the prompt
      */
     private async prompt(message: string) {
@@ -882,7 +895,7 @@ class BumpVersion {
 
     /**
      * Release a set of packages if needed
-     * 
+     *
      * @param packageNeedBump all the package that needs to be release in this session
      * @param packages the package that to be released now if needed
      */
@@ -904,7 +917,7 @@ class BumpVersion {
             return;
         }
 
-        console.log(`  Releasing ${packages.join(" ")}`);
+        console.log(`  Releasing ${packageToBump.map(pkg => pkg.name).join(" ")}`);
 
         // Tagging release
         for (const pkg of packageToBump) {
@@ -967,7 +980,7 @@ class BumpVersion {
     /**
      * Bump package version of the client monorepo
      * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
-     * 
+     *
      * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
      */
     public async releaseVersion(releaseName: string) {
@@ -1030,12 +1043,12 @@ class BumpVersion {
         }
 
         // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/fluid-build-common"]);
+        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
         await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
         await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);
         await this.releaseMonoRepo(depVersions, this.repo.clientMonoRepo);
-        await this.releasePackage(depVersions, ["@microsoft/generator-fluid", "tinylicious"]);
+        await this.releasePackage(depVersions, [generatorFluidPackageName, "tinylicious"]);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -1114,9 +1127,9 @@ class BumpVersion {
 
     /**
      * Bump cross package/monorepo dependencies
-     * 
+     *
      * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
-     * 
+     *
      * @param repo the repo to operate one
      * @param bumpDepPackages update dependencies to these set of packages to current in repo version
      * @param updateLock whether to update the lock file (by npm i) or not
