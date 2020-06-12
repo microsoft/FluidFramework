@@ -158,7 +158,7 @@ describe("Cell", () => {
         });
     });
 
-    describe("Reconnection flow", () => {
+    describe("SharedCell reconnection flow", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -202,8 +202,8 @@ describe("Cell", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify that the set value is processed by both clients.
-            assert.equal(cell.get(), value, "The local client did not process the set");
-            assert.equal(cell2.get(), value, "The remote client did not process the set");
+            assert.equal(cell.get(), value, "The first client did not process the set");
+            assert.equal(cell2.get(), value, "The second client did not process the set");
 
             // Delete the value from the second SharedCell.
             cell2.delete();
@@ -216,8 +216,8 @@ describe("Cell", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify that the deleted value is processed by both clients.
-            assert.equal(cell.get(), undefined, "The local client did not process the delete");
-            assert.equal(cell2.get(), undefined, "The remote client did not process the delete");
+            assert.equal(cell.get(), undefined, "The first client did not process the delete");
+            assert.equal(cell2.get(), undefined, "The second client did not process the delete");
         });
 
         it("can store ops in disconnected state and resend them on reconnection", async () => {
@@ -236,8 +236,8 @@ describe("Cell", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify that the set value is processed by both clients.
-            assert.equal(cell.get(), value, "The local client did not process the set");
-            assert.equal(cell2.get(), value, "The remote client did not process the set");
+            assert.equal(cell.get(), value, "The first client did not process the set");
+            assert.equal(cell2.get(), value, "The second client did not process the set");
 
             // Disconnect the second client.
             containerRuntime2.connected = false;
@@ -252,8 +252,8 @@ describe("Cell", () => {
             containerRuntimeFactory.processAllMessages();
 
             // Verify that the deleted value is processed by both clients.
-            assert.equal(cell.get(), undefined, "The local client did not process the delete");
-            assert.equal(cell2.get(), undefined, "The remote client did not process the delete");
+            assert.equal(cell.get(), undefined, "The first client did not process the delete");
+            assert.equal(cell2.get(), undefined, "The second client did not process the delete");
         });
     });
 });

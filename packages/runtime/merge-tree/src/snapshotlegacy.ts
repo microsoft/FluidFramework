@@ -45,7 +45,6 @@ export interface SnapshotHeader {
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
-    public static readonly oldCatchupOps = "tardis";
     public static readonly catchupOps = "catchupOps";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -163,8 +162,7 @@ export class SnapshotLegacy {
 
         tree.entries.push({
             mode: FileMode.File,
-            path: this.mergeTree.options?.useNewCatchUpBlobName === true ?
-                SnapshotLegacy.catchupOps : SnapshotLegacy.oldCatchupOps,
+            path: this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: serializer ? serializer.stringify(catchUpMsgs, context, bind) : JSON.stringify(catchUpMsgs),
