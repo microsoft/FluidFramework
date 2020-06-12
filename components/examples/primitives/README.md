@@ -1,4 +1,4 @@
-# Primitives Container
+# @fluid-example/primitives
 
 This is a basic example container giving a UI to different distributed data structures.
 

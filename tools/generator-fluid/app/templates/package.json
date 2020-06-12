@@ -7,13 +7,13 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack && npm run tsc",
+    "build": "npm run webpack && npm run tsc",
     "start": "npm run start:local -- --open",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:tiny": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "jest",
     "tsc": "tsc",
-    "webpack": "npm run build"
+    "webpack": "webpack"
   },
   "dependencies": {
     "@fluidframework/aqueduct": "^0.19.5",

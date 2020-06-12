@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
@@ -27,6 +28,7 @@ describe("Map", () => {
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let containerDeltaEventManager: DocumentDeltaEventManager;
+    let component1: ITestFluidComponent;
     let sharedMap1: ISharedMap;
     let sharedMap2: ISharedMap;
     let sharedMap3: ISharedMap;
@@ -49,7 +51,7 @@ describe("Map", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
 
         const container1 = await createContainer();
-        const component1 = await getComponent("default", container1);
+        component1 = await getComponent("default", container1);
         sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
         const container2 = await createContainer();
@@ -274,6 +276,45 @@ describe("Map", () => {
 
         expectAllAfterValues("testKey3", "value3.3");
         expectAllSize(1);
+    });
+
+    it("should load new map with data from local state and can then process ops", async () => {
+        /**
+         * This tests test the scenario found in the following bug:
+         * https://github.com/microsoft/FluidFramework/issues/2400
+         *
+         * - A SharedMap in local (detached) state set a key.
+         * - The map is then attached so that it is avaible to remote clients.
+         * - One of the remote clients sets a new value to the same key.
+         * - The expected behavior is that the first SharedMap updates the key with the new value. But in the bug
+         *   the first SharedMap stores the key in its pending state even though it does not send out an op. So,
+         *   when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
+         */
+
+        // Create a new map in local (detached) state.
+        const newSharedMap1 = SharedMap.create(component1.runtime);
+
+        // Set a value while in local state.
+        newSharedMap1.set("newKey", "newValue");
+
+        // Now add the handle to an attached map so the new map gets attached too.
+        sharedMap1.set("newSharedMap", newSharedMap1.handle);
+
+        await containerDeltaEventManager.process();
+
+        // The new map should be availble in the remote client and it should contain that key that was
+        // set in local state.
+        const newSharedMap2 = await sharedMap2.get<IComponentHandle<SharedMap>>("newSharedMap").get();
+        assert.equal(newSharedMap2.get("newKey"), "newValue", "The data set in local state is not available in map 2");
+
+        // Set a new value for the same key in the remote map.
+        newSharedMap2.set("newKey", "anotherNewValue");
+
+        await containerDeltaEventManager.process();
+
+        // Verify that the new value is updated in both the maps.
+        assert.equal(newSharedMap2.get("newKey"), "anotherNewValue", "The new value is not updated in map 2");
+        assert.equal(newSharedMap1.get("newKey"), "anotherNewValue", "The new value is not updated in map 1");
     });
 
     afterEach(async () => {

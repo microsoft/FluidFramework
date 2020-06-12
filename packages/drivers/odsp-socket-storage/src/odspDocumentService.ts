@@ -52,8 +52,6 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    public readonly isExperimentalDocumentService = true;
-
     protected updateUsageOpFrequency = startingUpdateUsageOpFrequency;
 
     /**

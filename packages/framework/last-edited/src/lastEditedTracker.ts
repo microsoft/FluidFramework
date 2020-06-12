@@ -25,14 +25,14 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
     }
 
     /**
-     * {@inheritDoc ILastEditedTracker.getLastEditDetails}
+     * {@inheritDoc (IComponentLastEditedTracker:interface).getLastEditDetails}
      */
     public getLastEditDetails(): ILastEditDetails | undefined {
         return this.sharedSummaryBlock.get<ILastEditDetails>(this.lastEditedDetailsKey);
     }
 
     /**
-     * {@inheritDoc ILastEditedTracker.updateLastEditDetails}
+     * {@inheritDoc (IComponentLastEditedTracker:interface).updateLastEditDetails}
      */
     public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
         this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);

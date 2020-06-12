@@ -1,4 +1,4 @@
-# Fluid Debugger #
+# @fluidframework/debugger
 
 Fluid Debugger is useful tool to replay file history. This can be useful as learning tool, as well as tool to investigate corruption or performance issues, or as content recovery tool. It provides read-only document and ability to start with a particular snapshot (or no snapshot at all), and play ops one by one, or in big batches.
 

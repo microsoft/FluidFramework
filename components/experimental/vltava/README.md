@@ -1,4 +1,4 @@
-# Vltava
+# @fluid-example/vltava
 
 ![Vltava-Wikipedia](https://en.wikipedia.org/wiki/Vltava#/media/File:Prague_skyline_view.jpg)
 
