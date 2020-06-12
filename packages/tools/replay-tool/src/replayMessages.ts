@@ -810,7 +810,7 @@ export class ReplayTool {
             const fileLines = snapshotAsString.split("\n");
             const contentLines = contentString.split("\n");
             let line = 0;
-            const maxLines = Math.max(fileLines.length , contentLines.length);
+            const maxLines = Math.max(fileLines.length, contentLines.length);
             while (line < maxLines && fileLines[line] === contentLines[line]) {
                 line++;
             }
