@@ -10,7 +10,6 @@ import { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
  */
 export interface IEnvelope {
     // The target for the envelope
-    // undefined if target is container runtime itself
     address: string;
 
     // The contents of the envelope

@@ -1616,9 +1616,9 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     private reSubmit(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
         switch (type) {
             case ContainerMessageType.ComponentOp:
-                // For Operations, call reSubmitOperation which will find the right component and trigger
+                // For Operations, call resubmitComponentOp which will find the right component and trigger
                 // resubmission on it.
-                this.reSubmitOperation(content, localOpMetadata);
+                this.resubmitComponentOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
                 this.submit(type, content, localOpMetadata);
@@ -1635,13 +1635,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         }
     }
 
-    private reSubmitOperation(content: any, localOpMetadata: unknown) {
+    private resubmitComponentOp(content: any, localOpMetadata: unknown) {
         const envelope = content as IEnvelope;
         const componentContext = this.getContext(envelope.address);
         assert(componentContext, "There should be a component context for the op");
-
-        const innerContents = envelope.contents as { content: any; type: MessageType };
-        componentContext.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+        componentContext.reSubmit(envelope.contents, localOpMetadata);
     }
 
     private subscribeToLeadership() {
