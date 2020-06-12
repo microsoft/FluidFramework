@@ -275,7 +275,6 @@ export class ClickerWithHooks extends SyncedComponent
             "value", {
                 type: "number",
                 stateKey: "value",
-                viewConverter: (state) => state,
             },
         ],
     ]);
@@ -287,7 +286,6 @@ export class ClickerWithHooks extends SyncedComponent
             "value", {
                 type: "number",
                 fluidKey: "value",
-                fluidConverter: (state) => state,
             },
         ],
     ]);
