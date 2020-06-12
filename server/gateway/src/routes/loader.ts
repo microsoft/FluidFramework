@@ -4,16 +4,16 @@
  */
 
 import { parse } from "url";
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
 import { Router } from "express";
-import * as safeStringify from "json-stringify-safe";
-import * as jwt from "jsonwebtoken";
+import safeStringify from "json-stringify-safe";
+import jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
-import * as winston from "winston";
+import winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";

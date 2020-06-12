@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluidframework/aqueduct-react";
+import { CollaborativeTextArea } from "@fluidframework/react-inputs";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 

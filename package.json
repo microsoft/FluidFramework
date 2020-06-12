@@ -22,7 +22,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" && npm run postinstall:lerna",
+    "postinstall": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
@@ -99,7 +99,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.1.30157",
+    "@fluidframework/build-tools": "^0.1.30406",
     "@fluidframework/test-tools": "^0.1.0",
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",
