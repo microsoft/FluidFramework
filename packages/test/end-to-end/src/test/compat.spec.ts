@@ -56,6 +56,9 @@ describe("loader/runtime compatibility", () => {
         return new ContainerRuntimeFactoryWithDefaultComponent(
             type,
             [[type, Promise.resolve(componentFactory as IComponentFactory)]],
+            undefined,
+            undefined,
+            { initialSummarizerDelayMs: 0 },
         );
     };
 
@@ -104,6 +107,31 @@ describe("loader/runtime compatibility", () => {
             const test = ["fluid is", "pretty neat!"];
             this.component._root.set(test[0], test[1]);
             assert.strictEqual(await this.component._root.wait(test[0]), test[1]);
+        });
+
+        it("can summarize", async function() {
+            if (this.container.context.runtime.runtimeOptions.initialSummarizerDelayMs === undefined) {
+                // default initial delay will cause test to time out, so just skip
+                return this.skip();
+            }
+
+            // this will cause summarizer to summarize immediately
+            this.container.serviceConfiguration.summary.maxOps = 1;
+
+            let success = true;
+            this.container.on("error", () => success = false);
+            this.container.on("warning", () => success = false);
+            this.container.on("closed", (error) => success = success && error === undefined);
+
+            // wait for summary ack/nack
+            await new Promise((resolve, reject) => this.container.on("op", (op) => {
+                switch(op.type) {
+                    case "summaryAck": resolve(); break;
+                    case "summaryNack": reject(Error("summaryNack")); break;
+                }
+            }));
+
+            assert.strictEqual(success, true, "container error");
         });
 
         it("can load existing", async function() {
