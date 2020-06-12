@@ -623,7 +623,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         };
 
         const channelContext = this.contexts.get(envelope.address);
-        assert(channelContext);
+        assert(channelContext, "Channel not found");
         channelContext.processOp(transformed, local, localOpMetadata);
 
         return channelContext;
