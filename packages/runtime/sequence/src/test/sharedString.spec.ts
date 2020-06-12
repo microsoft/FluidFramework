@@ -415,7 +415,7 @@ describe("SharedString", () => {
             const simpleMarker2 = sharedString2.getMarkerFromId(id);
             verifyMarker(simpleMarker2);
 
-           // Verify that the marker can be retrieved via label from both the shared strings.
+            // Verify that the marker can be retrieved via label from both the shared strings.
             const textAndMarker1 = sharedString.getTextAndMarkers(label);
             verifyMarker(textAndMarker1.parallelMarkers[0]);
             const textAndMarker2 = sharedString2.getTextAndMarkers(label);
