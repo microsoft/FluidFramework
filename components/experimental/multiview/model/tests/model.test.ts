@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import { OptionPicker } from "..";
+// import { Coordinate } from "..";
 
-describe("OptionPicker", function() {
+describe("Coordinate", function() {
     it("Runs this test", function() {
     });
 });

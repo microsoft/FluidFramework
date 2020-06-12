@@ -4,6 +4,7 @@
  */
 
 import { globals } from "../jest.config";
+import assert from "assert";
 
 describe("CoordinateContainerRuntimeFactory", () => {
     beforeAll(async () => {
@@ -17,8 +18,11 @@ describe("CoordinateContainerRuntimeFactory", () => {
         await page.waitFor(() => window["fluidStarted"]);
     });
 
-    it("The page loads and there's a button with Set Value", async () => {
-        // Validate there is a button that can be clicked
-        await expect(page).toClick("button", { text: "Set Value" });
+    it("The page loads and the expected number of slider controls are present", async () => {
+        const numSliders = await page.evaluate(() => {
+            return document.querySelectorAll("input[type=range]").length;
+        });
+        // 2 sides, 4 slider views, 2 sliders per view
+        assert(numSliders === 16);
     });
 });

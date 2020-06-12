@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import { OptionPickerView } from "..";
+// import { PlotCoordinateView } from "..";
 
-describe("OptionPickerView", function() {
+describe("PlotCoordinateView", function() {
     it("Runs this test", function() {
     });
 });

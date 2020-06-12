@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// import { OptionPickerView } from "..";
+// import { TriangleView } from "..";
 
-describe("OptionPickerView", function() {
+describe("TriangleView", function() {
     it("Runs this test", function() {
     });
 });
