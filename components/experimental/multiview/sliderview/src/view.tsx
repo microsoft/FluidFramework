@@ -7,10 +7,11 @@ import React from "react";
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
+// eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
 interface ISliderCoordinateViewProps {
-    label?: string;
+    label: string;
     model: ICoordinate;
 }
 
@@ -29,13 +30,9 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (props
         };
     }, [props.model]);
 
-    const labelElem = props.label !== undefined
-        ? <h3 className="slider-label">{ props.label }</h3>
-        : undefined;
-
     return (
         <div className="slider-view">
-            { labelElem }
+            <h3 className="slider-label">{ props.label }</h3>
             <div>
                 X:
                 <input

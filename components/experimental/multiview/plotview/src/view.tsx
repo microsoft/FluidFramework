@@ -7,6 +7,9 @@ import React from "react";
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
+// eslint-disable-next-line import/no-unassigned-import
+import "./style.css";
+
 interface IPlotCoordinateViewProps {
     model: ICoordinate;
 }
@@ -27,16 +30,8 @@ export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IP
     }, [props.model]);
 
     return (
-        <div style={{ width: 100, height: 100, position: "relative", border: "1px solid black" }}>
-            <div style={{
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                position: "absolute",
-                left: x - 2.5,
-                top: y - 2.5,
-                backgroundColor: "#f00",
-            }}></div>
+        <div className="plot-view">
+            <div className="coordinate-dot" style={{ left: x - 2.5, top: y - 2.5 }}></div>
         </div>
     );
 };
