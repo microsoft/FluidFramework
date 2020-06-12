@@ -119,7 +119,22 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromSocketError(socketError);
+                    // We have to special-case error types here in terms of what is retrayable.
+                    // These errors have to re retried, we just need new joinSession result to connect to right server:
+                    //    400: Invalid tenant or document id. The WebSocket is connected to a different document
+                    //         Document is full (with retryAfter)
+                    //    404: Invalid document. The document \"local/w1-...\" does not exist
+                    // But this has to stay not-retryable:
+                    //    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
+                    // This one is fine either way
+                    //    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
+                    //         and on join Session path.
+                    //    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
+                    const error = errorObjectFromSocketError(socketError);
+                    if (socketError.code === 400 || socketError.code === 404) {
+                        error.canRetry = true;
+                    }
+                    throw error;
                 }
             }
             throw errorObject;
@@ -183,16 +198,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
                 // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
                 // filter out retryable vs. non-retryable cases.
-                //
-                // Some examples:
-                //    400:
-                //       Invalid tenant or document id. The WebSocket is connected to a different document
-                //       Document is full (with retryAfter)
-                //    401, 403 (TokenExpired): Need to refresh token and retry. They will become fatal on reconnection.
-                //    404: Invalid document. The document \"local/w1-...\" does not exist
-                // Not-retryable:
-                //    406: Unsupported client protocol. Should never get it here, but code recovers correctly if
-                //         it happens.
                 const error = errorObjectFromSocketError(socketError);
                 error.canRetry = true;
 
