@@ -78,9 +78,9 @@ jobs:
           echo TestCoverage=$(testCoverage)
 
     - task: UseNode@1
-      displayName: Use Node 10.x
+      displayName: Use Node 12.x
       inputs: 
-        version: 10.x
+        version: 12.x
 
     - task: Bash@3
       displayName: Strip MIT License

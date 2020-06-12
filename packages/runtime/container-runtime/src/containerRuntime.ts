@@ -400,6 +400,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IComponent = context.scope,
     ): Promise<ContainerRuntime> {
+        // Back-compat: <= 0.18 loader
+        if (context.deltaManager.lastSequenceNumber === undefined) {
+            Object.defineProperty(context.deltaManager, "lastSequenceNumber", {
+                get: () => (context.deltaManager as any).referenceSequenceNumber,
+            });
+        }
+
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot?.blobs[".chunks"];
