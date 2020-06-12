@@ -201,6 +201,14 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
+function assertNever(arg: never, message: string): never {
+    throw new Error(message);
+}
+
+function assertNeverMessageType(messageType: never): never {
+    assertNever(messageType, `Never: unknown message type: ${messageType}`);
+}
+
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
@@ -861,15 +869,26 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
+        // If it's not message for runtime, bail out right away.
+        if (!isRuntimeMessage(messageArg)) {
+            return;
+        }
+
+        // Do shallow copy of message, as methods below will modify it.
+        // There might be multiple container instances receiving same message
+        // We do not need to make deep copy, as each layer will just replace message.content itself,
+        // but would not modify contents details
+        let message = { ...messageArg };
+
         let error: any | undefined;
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
         // messages once a batch has been fully processed.
-        this.scheduleManager.beginOperation(messageArg);
+        this.scheduleManager.beginOperation(message);
 
         try {
-            let message = this.unpackRuntimeMessage(messageArg);
+            message = this.unpackRuntimeMessage(message);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
@@ -905,7 +924,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             error = e;
             throw e;
         } finally {
-            this.scheduleManager.endOperation(error, messageArg);
+            this.scheduleManager.endOperation(error, message);
         }
     }
 
@@ -1550,7 +1569,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         return this.context.submitFn(
             type,
             contents,
-            !middleOfBatch);
+            middleOfBatch);
     }
 
     private submitRuntimeMessage(
@@ -1563,7 +1582,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
         if (legacyFormat) {
             return this.context.submitFn(
-                type as any as MessageType,
+                type === ContainerMessageType.ComponentOp ? MessageType.Operation : type as any as MessageType,
                 contents,
                 batch,
                 appData);
@@ -1624,14 +1643,11 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                // For other types of messages, submit it again but log an error indicating a resubmit
-                // was triggered for it. We should look at the telemetry periodically to determine if
-                // these are valid or not and revisit this as per #2312.
-                this.submit(type, content, localOpMetadata);
-                this.logger.sendErrorEvent({
-                    eventName: "UnexpectedContainerResubmitMessage",
-                    messageType: type,
-                });
+                assertNeverMessageType(type);
+                break;
+            case ContainerMessageType.ChunkedOp:
+                assertNeverMessageType(type as never);
+                break;
         }
     }
 

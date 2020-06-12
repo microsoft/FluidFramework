@@ -30,7 +30,7 @@ function isSchedulerMessage(message: ISequencedDocumentMessage) {
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
-    if (message.type === ContainerMessageType.Attach || message.type === MessageType.Operation) {
+    if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.ComponentOp) {
         return false;
     }
     return true;

@@ -62,7 +62,7 @@ export interface ISharedObjectRegistry {
     get(name: string): ISharedObjectFactory | undefined;
 }
 
-function assertNever(messageType: never): never {
+function assertNeverMessageType(messageType: never): never {
     throw new Error(`Never: unknown message type: ${messageType}`);
 }
 
@@ -603,7 +603,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNever(type);
+                assertNeverMessageType(type);
         }
     }
 
