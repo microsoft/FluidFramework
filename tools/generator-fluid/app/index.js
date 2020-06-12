@@ -12,16 +12,29 @@ const react = "react";
 const scaffoldingBeginner = "beginner";
 const scaffoldingAdvanced = "advanced";
 
+/**
+ * Takes the user inputted component name, converts it to camelCase,
+ * and removes any non-word characters (equal to [^a-zA-Z0-9_])
+ */
+function processComponentNameInput(nameArray) {
+  const capitalize = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  return nameArray
+    .map((value, index) => {
+      return index === 0 ? value : capitalize(value);
+    })
+    .join()
+    .replace(/\W/g, "");
+}
+
 const questions = {
     componentName: {
         type: "input",
         name: "componentName",
         message: "What is the name of your new component?",
         filter: (input) => {
-          // only use the first word
-          const firstWord = input.split(" ")[0];
-          // remove non-word characters
-          return firstWord.replace(/\W/g, "");
+          return processComponentNameInput(input.split(" "));
         },
     },
     viewFramework : {
@@ -78,14 +91,14 @@ module.exports = class extends Generator {
     this.argument(
       "componentName",
       {
-        type: String,
+        type: Array,
         required: false,
         description: "Defines the Component Name"
       });
 
     if (this.options["componentName"]) {
-      // if there is a componentName option we need to strip our non-word characters
-      this.options["componentName"] = this.options["componentName"].replace(/\W/g, "");
+      // if there is a componentName option we need to strip out non-word characters
+      this.options["componentName"] = processComponentNameInput(this.options["componentName"]);
     }
   }
 
@@ -94,7 +107,7 @@ module.exports = class extends Generator {
     this.log("Let us help you get set up. Once we're done, you can start coding!");
     const questionsCollection = [];
     if (this.options.componentName) {
-      this.log(`${chalk.green("?")} ${questions.componentName.message} ${this._componentName()}`)
+      this.log(`${chalk.green("?")} ${questions.componentName.message} ${chalk.blue(this._componentName())}`)
     } else {
       questionsCollection.push(questions.componentName);
     }
