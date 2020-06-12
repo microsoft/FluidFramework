@@ -286,7 +286,7 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "env": {
-                "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
+                "TS_NODE_PROJECT": "${fileDirname}/../tsconfig.json",
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}",
