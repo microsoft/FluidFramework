@@ -48,37 +48,8 @@ const getNav = () => {
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
-        { text: "Ecosystem", link: "/ecosystem/" },
+        // { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/overview" },
-        // {
-        //     text: "🤿 Dive Deeper",z
-        //     items: [
-        //         { text: "How Fluid works", link: "/how/" },
-        //         internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
-        //         internalOnly({ text: "FAQ", link: "/faq/" }),
-        //         internalOnly({ text: "Terminology", link: "/misc/terminology" }),
-        //         internalOnly({ text: "Concepts", link: "/misc/concepts" }),
-        //         internalOnly({
-        //             text: "Contributing",
-        //             items: [
-        //                 { text: "Release process", link: "/contributing/release-process" },
-        //                 { text: "Breaking changes", link: "/contributing/breaking-changes" },
-        //                 { text: "Compatibility", link: "/contributing/compatibility" },
-        //                 { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-        //                 { text: "Documentation system", link: "/contributing/doc-system" },
-        //                 { text: "Building documentation locally", link: "/contributing/building-documentation" },
-        //                 { text: "Miscellaneous", link: "/contributing/misc" },
-        //             ]
-        //         }),
-        //         internalOnly({
-        //             text: "Team",
-        //             items: [
-        //                 { text: "Updates", link: "/team/" },
-        //                 { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-        //             ]
-        //         }),
-        //     ]
-        // },
         {
             text: "Versions",
             items: [
