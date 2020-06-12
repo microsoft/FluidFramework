@@ -200,8 +200,8 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;
         this.maybeWorkbook = createSheetlet({
-            get numRows() { return table.numRows; },
-            get numCols() { return table.numCols; },
+            get rowCount() { return table.numRows; },
+            get colCount() { return table.numCols; },
             loadCellText: (row, col) => {
                 const raw = this.matrix.getItem(row, col);
                 return typeof raw === "object"
