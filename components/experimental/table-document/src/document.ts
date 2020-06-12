@@ -13,7 +13,7 @@ import {
     SparseMatrix,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
-import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
+import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEvent } from "@fluidframework/common-definitions";
 import { CellRange } from "./cellrange";
@@ -199,20 +199,40 @@ export class TableDocument extends PrimedComponent<{}, {}, ITableDocumentEvents>
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;
-        this.maybeWorkbook = createSheetlet({
-            get numRows() { return table.numRows; },
-            get numCols() { return table.numCols; },
-            loadCellText: (row, col) => {
-                const raw = this.matrix.getItem(row, col);
+
+        const producer = {
+            get rowCount() { return table.numRows; },
+            get colCount() { return table.numCols; },
+            getCell: (row, col) => {
+                const raw = table.matrix.getItem(row, col);
                 return typeof raw === "object"
                     ? undefined
                     : raw;
             },
-            loadCellData: (row, col) => this.matrix.getTag(row, col),
-            storeCellData: (row, col, value) => {
-                this.matrix.setTag(row, col, value);
+            openMatrix() { return this; },
+            closeMatrix() { },
+            get matrixProducer() { return this; },
+        };
+
+        const grid = {
+            getCell: (row: number, col: number) => table.matrix.getTag(row, col),
+            write(row: number, col: number, value: any) {
+                table.matrix.setTag(row, col, value);
             },
-        });
+            readOrWrite(row: number, col: number, value: () => any) {
+                const existing = this.getCell(row, col);
+                if (existing !== undefined) {
+                    return existing;
+                }
+
+                this.write(row, col, value());
+            },
+            clear(row: number, col: number) {
+                this.write(row, col, undefined);
+            },
+        };
+
+        this.maybeWorkbook = createSheetletProducer(producer, grid);
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => {

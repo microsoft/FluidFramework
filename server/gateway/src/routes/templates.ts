@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 import { promisify } from "util";
 import { Router } from "express";
-import * as moniker from "moniker";
+import moniker from "moniker";
 import { Provider } from "nconf";
 import { getUserDetails, getVersion } from "../utils";
 import { defaultPartials } from "./partials";

@@ -22,8 +22,8 @@ import {
     TextSegment,
     createGroupOp,
     PropertySet,
-    IMergeTreeDeltaOp,
     MergeTreeTextHelper,
+    IMergeTreeDeltaOp,
     // eslint-disable-next-line import/no-duplicates
 } from "@fluidframework/merge-tree";
 import {

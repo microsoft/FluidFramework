@@ -1,4 +1,4 @@
-# Test Tools
+# @fluidframework/test-tools
 
 Tools to help with testing
 

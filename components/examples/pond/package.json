@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/pond",
   "version": "0.20.0",
-  "description": "Grab bag of fluid scenarios.",
+  "description": "Grab bag of fluid scenarios in one Fluid Container.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

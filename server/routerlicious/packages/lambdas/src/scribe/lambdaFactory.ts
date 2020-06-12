@@ -88,7 +88,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         const term = latestSummary.fromSummary ? latestSummary.term : 1;
         const scribe: IScribe = JSON.parse(document.scribe);
-        const protocolHandler = initializeProtocol(document.documentId, scribe, term);
+        const protocolHandler = initializeProtocol(document.documentId, scribe.protocolState, term);
 
         return new ScribeLambda(
             context,

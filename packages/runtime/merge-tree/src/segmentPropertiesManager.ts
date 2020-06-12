@@ -127,29 +127,7 @@ export class SegmentPropertiesManager {
         }
     }
 
-    public clearPendingProperties() {
-        this.pendingKeyUpdateCount = {};
-        this.pendingRewriteCount = 0;
-    }
-
     public hasPendingProperties() {
         return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount).length > 0;
-    }
-
-    public resetPendingPropertiesToOpDetails(): { props: Properties.PropertySet, combiningOp: ICombiningOp } {
-        let combiningOp: ICombiningOp;
-        if (this.pendingRewriteCount > 0) {
-            this.pendingRewriteCount = 1;
-            combiningOp = {
-                name: "rewrite",
-            };
-        }
-        const props: Properties.PropertySet = {};
-        for (const key of Object.keys(this.pendingKeyUpdateCount)) {
-            this.pendingKeyUpdateCount[key] = 1;
-            const value = this.segment.properties[key];
-            props[key] = value === undefined ? null : value;
-        }
-        return { props, combiningOp };
     }
 }

@@ -55,6 +55,9 @@ export function createOdspNetworkError(
         case invalidFileNameStatusCode:
             error = new NonRetryableError(errorMessage, ErrorType.invalidFileNameError, canRetry);
             break;
+        case 501:
+            error = new NonRetryableError(errorMessage, ErrorType.fluidNotEnabled, false);
+            break;
         case offlineFetchFailureStatusCode:
             error = new NetworkErrorBasic(errorMessage, ErrorType.offlineError, canRetry);
             break;

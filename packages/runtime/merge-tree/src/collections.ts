@@ -96,12 +96,20 @@ export class List<T> {
         }
     }
 
-    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T {
-        for (let entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
+    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
+        const rtn = [];
+        const start = rev ? this.prev : this.next;
+        for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
-                return (entry.data);
+                if (rev) {
+                    // preserve list order when in reverse
+                    rtn.unshift(entry.data);
+                } else {
+                    rtn.push(entry.data);
+                }
             }
         }
+        return rtn;
     }
 
     count(): number {

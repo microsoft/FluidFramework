@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/diceroller",
   "version": "0.20.0",
-  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
+  "description": "Minimal Fluid Container & Component sample to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

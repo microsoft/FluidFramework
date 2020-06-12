@@ -1,8 +1,4 @@
----
-uid: loaders
----
-
-# Literate Fluid Loader
+# @fluid-example/hosts-sample
 
 The Fluid loader is all that is needed to load any Fluid document. This example walks through all the steps to
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
@@ -16,7 +12,7 @@ of code.
 ## Build steps
 
 The first (and hardest) step to get up and running is to authenticate against the Fluid private npm feed. To do so
-navigate to <https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed>, click the "Connect to feed" link,
+navigate to <https://offnet.visualstudio.com/officenet/_packaging?feed=fluid&_a=feed>, click the "Connect to feed" link,
 choose "npm" and then follow the instructions.
 
 Once you've done that getting up and running is simple.

@@ -72,7 +72,7 @@ You can create a simple wrapper page within the docs folder, then include a file
 for an example.
 
 Links are resolved as described above for reusable snippets, so you must be careful when using links in files you also
-intend to also include within the documentation.
+intend to include within the documentation.
 
 
 ### Syntax formatting and line highlighting <Badge text="VuePress feature" vertical="middle"/>
@@ -223,7 +223,7 @@ Badges can be used to flag content. It is implemented as a Vue component, and ac
 The following markup renders the badge next to the section header above:
 
 ```jsx
-<Badge text="VuePress plugin" vertical="middle"/>
+<Badge text="VuePress feature" vertical="middle"/>
 ```
 
 ### Tabbed UI <Badge text="VuePress feature" vertical="middle"/>
@@ -326,22 +326,15 @@ private createComponentDom(host: HTMLElement) {
 ### Varying content by version and audience
 
 Content in the Fluid docs system can vary by _version_ or by _audience_. Several variables are available to use in
-Markdown files to enable this.
+Markdown files to enable this, exposed on the `$themeConfig` object:
 
-| `$themeConfig` variable | Description                                                                      |
+| `$themeConfig` member   | Description                                                                      |
 | ----------------------: | -------------------------------------------------------------------------------- |
 | `DOCS_AUDIENCE`         | Will be set to `internal` if the docs are being built for the internal audience. |
 | `THIS_VERSION`          | The version of the documentation **currently being built.** E.g. `0.14`          |
 | `MASTER_BRANCH_VERSION` | The version of the documentation **on the master branch.**  E.g. `0.16`          |
 | `RELEASE_VERSION`       | The current release version of **the Fluid client packages.** E.g. `0.15`        |
 | `N1_VERSION`            | The version immediately prior to the release version. E.g. `0.14`                |
-
-::: note
-
-Using the `$themeConfig` variable is the only way I could find to reliably pass values to a Markdown file from
-docs/.vuepress/config.js.
-
-:::
 
 #### Conditional sections in Markdown
 

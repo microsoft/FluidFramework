@@ -143,9 +143,11 @@ describe("SharedString", () => {
             sharedString1.insertText(0, "123");
             sharedString1.replaceText(2, 3, "aaa");
 
-            // Disconnect and reconnect the first collection.
-            containerRuntime1.connected = false;
-            containerRuntime1.connected = true;
+            for (let i = 0; i < 10; i++) {
+                // Disconnect and reconnect the first collection.
+                containerRuntime1.connected = false;
+                containerRuntime1.connected = true;
+            }
 
             // Process the messages.
             containerRuntimeFactory.processAllMessages();
