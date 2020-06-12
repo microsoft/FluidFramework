@@ -190,12 +190,15 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     private attachListeners() {
-        this.container.on("forceOpsGeneration", () => {
-            this.emit("forceOpsGeneration");
-        });
-        this.container.on("containerAttached", () => {
-            this.emit("containerAttached");
-        });
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
+            this.container.on("forceOpsGeneration", () => {
+                this.emit("forceOpsGeneration");
+            });
+            this.container.on("containerAttached", () => {
+                this.emit("containerAttached");
+            });
+        }
     }
 
     public dispose(error?: Error): void {

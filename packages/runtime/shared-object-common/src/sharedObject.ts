@@ -107,14 +107,17 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.runtime.emit("error", error);
         });
 
-        this.runtime.on("forceOpsGeneration", () => {
-            this.forceOpsGeneration = true;
-            this.doCustomProcessing();
-        });
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
+            this.runtime.on("forceOpsGeneration", () => {
+                this.forceOpsGeneration = true;
+                this.doCustomProcessing();
+            });
 
-        this.runtime.on("containerAttached", () => {
-            this.forceOpsGeneration = false;
-        });
+            this.runtime.on("containerAttached", () => {
+                this.forceOpsGeneration = false;
+            });
+        }
     }
 
     /**

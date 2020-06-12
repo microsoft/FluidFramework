@@ -632,12 +632,14 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             });
         }
 
-        if (this.context.on !== undefined) {
+        // Only listen to these events if not attached.
+        if (this.context.on !== undefined && !this.isAttached()) {
             this.context.on("forceOpsGeneration", () => {
                 this.forceOpsGeneration = true;
                 this.emit("forceOpsGeneration");
             });
 
+            // Disable force ops generation on container attached event.
             this.context.on("containerAttached", () => {
                 this.forceOpsGeneration = false;
                 this.emit("containerAttached");

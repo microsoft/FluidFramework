@@ -206,13 +206,16 @@ export abstract class ComponentContext extends EventEmitter implements
     }
 
     private attachListeners() {
-        this.containerRuntime.on("forceOpsGeneration", () => {
-            this.emit("forceOpsGeneration");
-        });
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
+            this.containerRuntime.on("forceOpsGeneration", () => {
+                this.emit("forceOpsGeneration");
+            });
 
-        this.containerRuntime.on("containerAttached", () => {
-            this.emit("containerAttached");
-        });
+            this.containerRuntime.on("containerAttached", () => {
+                this.emit("containerAttached");
+            });
+        }
     }
 
     public dispose(): void {

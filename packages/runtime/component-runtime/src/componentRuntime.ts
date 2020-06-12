@@ -674,15 +674,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.emit("notleader");
         });
 
-        this.componentContext.on("forceOpsGeneration", () => {
-            this.forceOpsGeneration = true;
-            this.emit("forceOpsGeneration");
-        });
+        // Only listen to these events if not attached.
+        if (!this.isAttached()) {
+            this.componentContext.on("forceOpsGeneration", () => {
+                this.forceOpsGeneration = true;
+                this.emit("forceOpsGeneration");
+            });
 
-        this.componentContext.on("containerAttached", () => {
-            this.forceOpsGeneration = false;
-            this.emit("containerAttached");
-        });
+            // Disable force ops generation on container attached event.
+            this.componentContext.on("containerAttached", () => {
+                this.forceOpsGeneration = false;
+                this.emit("containerAttached");
+            });
+        }
     }
 
     private verifyNotClosed() {
