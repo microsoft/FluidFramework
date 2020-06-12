@@ -798,7 +798,7 @@ export class ReplayTool {
 
     private compareSnapshots(content: ContainerContent, filename: string) {
         // normalize the snapshots
-        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+d+["\\]+/g;
+        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+.+["\\]+/g;
         const packageVersionPlaceholder = "\"packageVersion\":\"XXX\"";
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
