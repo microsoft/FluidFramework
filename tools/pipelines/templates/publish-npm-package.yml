@@ -4,64 +4,63 @@
 # publish-npm-package template to publish NPM packages/projects
 
 parameters:
-- name: feed
-  type: string
-
-- name: environment
-  type: string
+- name: feeds
+  type: object
 
 - name: pool
   type: object
   default: Shared
 
 jobs:
-- deployment: publish
-  displayName: Publish
-  pool: ${{ parameters.pool }}
-  environment: ${{ parameters.environment }}
-  workspace:
-    clean: all
-  strategy:
-    runOnce:
-        deploy:
-            steps:
-            - download: current
-              artifact: pack
-            - task: Bash@3
-              displayName: Generate .npmrc
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
-                script: |
-                  echo Generating .npmrc for ${{ parameters.feed }}
-                  echo "@fluidframework:registry=${{ parameters.feed }}" >> ./.npmrc
-                  echo "@fluid-example:registry=${{ parameters.feed }}" >> ./.npmrc
-                  echo "always-auth=true" >> ./.npmrc
-            - task: npmAuthenticate@0
-              displayName: npm Authenticate
-              inputs:
-                workingFile: $(Pipeline.Workspace)/pack/.npmrc
-            - task: Bash@3
-              displayName: Publish Packages
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
-                script: |
-                  tag="--tag canary"
-                  if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
-                    tag="--tag next"
-                  elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
-                    tag="--tag latest"
-                  fi
-                  echo Tag: $tag
-                  cp .npmrc ~/.npmrc
-                  t1=0
-                  for f in *.tgz
-                  do 
-                      if ! npm publish $f $tag
-                      then
-                          let t1+=1
+  - ${{ each feed in parameters.feeds }}:
+    - deployment: 
+      displayName: Publish ${{ feed.environment }}
+      pool: ${{ parameters.pool }}
+      environment: ${{ feed.environment }}
+      workspace:
+        clean: all
+      strategy:
+        runOnce:
+            deploy:
+                steps:
+                - download: current
+                  artifact: pack
+                - task: Bash@3
+                  displayName: Generate .npmrc
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    script: |
+                      echo Generating .npmrc for ${{ feed.name }}
+                      echo "@fluidframework:registry=${{ feed.name }}" >> ./.npmrc
+                      echo "@fluid-example:registry=${{ feed.name }}" >> ./.npmrc
+                      echo "always-auth=true" >> ./.npmrc
+                - task: npmAuthenticate@0
+                  displayName: npm Authenticate
+                  inputs:
+                    workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                    customEndPoint: ${{ feed.customEndPoint }}
+                - task: Bash@3
+                  displayName: Publish Packages
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    script: |
+                      tag="--tag canary"
+                      if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
+                        tag="--tag next"
+                      elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
+                        tag="--tag latest"
                       fi
-                  done
-                  rm ~/.npmrc
-                  exit $t1
+                      echo Tag: $tag
+                      cp .npmrc ~/.npmrc
+                      t1=0
+                      for f in *.tgz
+                      do 
+                          if ! npm publish $f $tag
+                          then
+                              let t1+=1
+                          fi
+                      done
+                      rm ~/.npmrc
+                      exit $t1

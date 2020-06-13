@@ -263,7 +263,11 @@ stages:
       displayName: Publish Stage
       jobs:
       - template: publish-npm-package.yml
-        parameters:
-          feed: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
-          environment: fluid-feed
-
+        parameters: 
+          feeds:
+          - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+            environment: fluid-feed
+#          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+            environment: office-feed
+            customEndPoint: Office Packages
