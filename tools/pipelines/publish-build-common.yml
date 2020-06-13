@@ -14,7 +14,7 @@ resources:
       - master
 
 jobs:
-- deployment: publish-build-common
+- deployment: publish
   displayName: Publish build-common
   pool: Shared
   environment: 'fluid-feed'
