@@ -67,4 +67,4 @@ extends:
           
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
-          cp lerna-package-lock.json packages/package-lock.json
+          cp repo-package-lock.json packages/package-lock.json
