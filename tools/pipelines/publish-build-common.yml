@@ -47,7 +47,6 @@ jobs:
                 targetType: 'inline'
                 workingDirectory: $(Pipeline.Workspace)/build/pack
                 script: |
-                  cat .npmrc
                   tag="--tag canary"
                   if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
                     tag="--tag next"
@@ -55,6 +54,7 @@ jobs:
                     tag="--tag latest"
                   fi
                   echo Tag: $tag
+                  cp .npmrc ~/.npmrc
                   t1=0
                   for f in *.tgz
                   do 
@@ -63,6 +63,7 @@ jobs:
                           let t1+=1
                       fi
                   done
+                  rm ~/.npmrc
                   exit $t1
 
 
