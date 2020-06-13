@@ -68,8 +68,6 @@ client. The Fluid runtime will automatically create summaries at opportune momen
 single client, called the "leader." In any given session, there is a single leader, and in the case of Summary ops, the
 leader is responsible for creating them.
 
-[More about leader election](../patterns/leader-election.md)
-
 The Summary op is unique in that it is ignored by connected clients. The Summary op is primarily a message to the Fluid
 server that it needs to store a new summary. If the operation is valid, then the server will commit the summary to
 storage and broadcast an event to the connected clients acknowledging that the summary was stored. In normal operation

@@ -1,7 +1,3 @@
----
-sidebar: auto
----
-
 # Compatibility
 
 Because the Fluid Framework is a platform, maintaining predictable backwards/forwards compatibility is an important part

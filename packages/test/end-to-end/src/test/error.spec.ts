@@ -108,24 +108,23 @@ describe("Errors Types", () => {
     }
 
     it("GenericNetworkError Test_1", async () => {
-        const networkError = createOdspNetworkError("Test Message", false /* canRetry */);
+        const networkError = createOdspNetworkError("Test Message");
         assert.equal(networkError.errorType, ErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
-        assert.equal(networkError.canRetry, false, "canRetry should be preserved");
+        assert.equal(networkError.canRetry, true, "default is canRetry");
     });
 
     it("GenericNetworkError Test_2", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            true /* canRetry */,
             400 /* statusCode */,
             undefined /* retryAfterSeconds */);
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("Error should be a genericNetworkError");
         }
         else {
-            assert.equal(networkError.canRetry, true, "canRetry should be preserved");
+            assert.equal(networkError.canRetry, false, "400 is non-retryable");
             assert.equal(networkError.statusCode, 400, "status code should be preserved");
         }
     });
@@ -133,21 +132,19 @@ describe("Errors Types", () => {
     it("GenericNetworkError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             500 /* statusCode */);
         assertCustomPropertySupport(networkError);
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("Error should be a genericNetworkError");
         }
         else {
-            assert.equal(networkError.canRetry, false, "Error should be critical");
+            assert.equal(networkError.canRetry, true, "500 is retryable");
         }
     });
 
     it("AuthorizationError Test 401", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             401 /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.authorizationError,
             "Error should be an authorizationError");
@@ -157,7 +154,6 @@ describe("Errors Types", () => {
     it("AuthorizationError Test 403", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             403 /* statusCode */);
         if (networkError.errorType !== ErrorType.authorizationError) {
             assert.fail("Error should be an authorizationError");
@@ -171,7 +167,6 @@ describe("Errors Types", () => {
     it("OutOfStorageError Test 507", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             507 /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.outOfStorageError,
             "Error should be an OutOfStorageError");
@@ -181,7 +176,6 @@ describe("Errors Types", () => {
     it("FileNotFoundOrAccessDeniedError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             404 /* statusCode */);
         assertCustomPropertySupport(networkError);
         if (networkError.errorType !== ErrorType.fileNotFoundOrAccessDeniedError) {
@@ -197,7 +191,6 @@ describe("Errors Types", () => {
     it("InvalidFileNameError Test 414", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             414 /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
             "Error should be an InvalidFileNameError");
@@ -207,18 +200,26 @@ describe("Errors Types", () => {
     it("InvalidFileNameError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            false /* canRetry */,
             invalidFileNameStatusCode /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.invalidFileNameError,
             "Error should be an InvalidFileNameError");
         assertCustomPropertySupport(networkError);
     });
 
+    it("ThrottlingError 400 Test", async () => {
+        const networkError = createOdspNetworkError(
+            "Test Message",
+            400 /* statusCode */,
+            100 /* retryAfterSeconds */) as IThrottlingWarning;
+        assertCustomPropertySupport(networkError);
+        assert.equal(networkError.errorType, ErrorType.genericNetworkError, "Error should be a generic");
+        assert.equal(networkError.retryAfterSeconds, undefined, "retryAfterSeconds should not be set");
+    });
+
     it("ThrottlingError Test", async () => {
         const networkError = createOdspNetworkError(
             "Test Message",
-            true /* canRetry */,
-            400 /* statusCode */,
+            undefined,
             100 /* retryAfterSeconds */) as IThrottlingWarning;
         assertCustomPropertySupport(networkError);
         assert.equal(networkError.errorType, ErrorType.throttlingError, "Error should be a throttlingError");
@@ -242,7 +243,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createOdspNetworkError("Test Error", true /* canRetry */);
+        const networkError = createOdspNetworkError("Test Error");
         const error1 = CreateContainerError(networkError);
         const error2 = CreateContainerError(error1);
         assertCustomPropertySupport(error1);

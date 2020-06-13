@@ -74,6 +74,11 @@ export enum ErrorType {
      * SPO admin toggle: fluid service is not enabled.
      */
     fluidNotEnabled,
+
+    /*
+     * Unsupported client protocol
+     */
+    unsupportedClientProtocolVersion,
 }
 
 /**
@@ -110,8 +115,8 @@ export type ContainerWarning =
 export interface IErrorBase {
     readonly errorType: ErrorType;
     readonly message: string;
-    readonly canRetry: boolean;
-    readonly online?: string;
+    canRetry: boolean;
+    online?: string;
     /** Sequence number when error happened */
     sequenceNumber?: number;
 }
@@ -133,14 +138,15 @@ export interface IGenericNetworkError extends IErrorBase {
 
 /** Types of errors that do not contain any extra information other then error type */
 export type NetworkErrorBasicTypes =
-    ErrorType.authorizationError |
-    ErrorType.fileNotFoundOrAccessDeniedError |
-    ErrorType.outOfStorageError |
-    ErrorType.invalidFileNameError |
-    ErrorType.writeError |
-    ErrorType.offlineError |
-    ErrorType.snapshotTooBig |
-    ErrorType.fluidNotEnabled;
+    | ErrorType.authorizationError
+    | ErrorType.fileNotFoundOrAccessDeniedError
+    | ErrorType.outOfStorageError
+    | ErrorType.invalidFileNameError
+    | ErrorType.writeError
+    | ErrorType.offlineError
+    | ErrorType.snapshotTooBig
+    | ErrorType.fluidNotEnabled
+    | ErrorType.unsupportedClientProtocolVersion;
 
 /** Types of errors that do not contain any extra information other then error type */
 export interface INetworkErrorBasic extends IErrorBase {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./agentUploader";
 export * from "./eventHubConsumer";
 export * from "./eventHubProducer";
 export * from "./kafkaFactory";
@@ -17,7 +16,6 @@ export * from "./nodeCodeLoader";
 export * from "./redis";
 export * from "./redisClientManager";
 export * from "./socketIoRedisPublisher";
-export * from "./storage";
 export * from "./tenant";
-export * from "./webServer";
 export * from "./zookeeperClient";
+export * from "@fluidframework/server-services-shared";
