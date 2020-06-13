@@ -1,0 +1,61 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: build   # Name of the pipeline resource
+    source: Build - build-common # Name of the triggering pipeline
+    trigger: 
+      branches:
+      - releases/*
+      - master
+
+jobs:
+- deployment: publish-build-common
+  displayName: Publish build-common
+  pool: Shared
+  environment: 'fluid-feed'
+  strategy:
+    runOnce:
+        deploy:
+            steps:
+            - download: current
+              artifact: pack
+            - task: Bash@3
+              displayName: Generate .npmrc
+              inputs:
+                arguments: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+                script: |
+                  echo "@fluidframework:registry=$1" >> .npmrc
+                  echo "@fluid-example:registry=$1" >> .npmrc
+                  echo "always-auth=true" >> .npmrc
+            - task: npmAuthenticate@0
+              displayName: npm Authenticate
+              inputs:
+                workingFile: .npmrc
+            - task: Bash@3
+              displayName: Publish Packages
+              inputs:
+                script: |
+                  targetType: 'inline'
+                  tag="--tag canary"
+                  if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
+                    tag="--tag next"
+                  elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
+                    tag="--tag latest"
+                  fi
+                  echo Tag: $tag
+                  t1=0
+                  for f in *.tgz
+                  do 
+                      if ! npm publish $f $tag
+                      then
+                          let t1+=1
+                      fi
+                  done
+                  exit $t1
+
+
