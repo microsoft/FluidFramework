@@ -1,3 +1,8 @@
+---
+aliases:
+ - api/index.html
+---
+
 # Fluid Framework API overview
 
 ## Framework

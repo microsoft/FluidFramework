@@ -49,7 +49,7 @@ const getNav = () => {
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
         // { text: "Ecosystem", link: "/ecosystem/" },
-        { text: "API", link: "/api/overview" },
+        { text: "API", link: "/api/overview.md" },
         {
             text: "Versions",
             items: [
