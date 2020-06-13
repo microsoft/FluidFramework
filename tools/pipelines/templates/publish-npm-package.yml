@@ -19,6 +19,8 @@ jobs:
   displayName: Publish
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
+  workspace:
+    clean: all
   strategy:
     runOnce:
         deploy:
