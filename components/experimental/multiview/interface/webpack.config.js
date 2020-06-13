@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
@@ -31,11 +30,6 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: "fluid-example/dice-roller",
             libraryTarget: "umd"
-        },
-        devServer: {
-            publicPath: '/dist',
-            before: (app, server) => fluidRoute.before(app, server, env),
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction
         ? require("./webpack.prod")
