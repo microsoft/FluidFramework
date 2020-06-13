@@ -7,7 +7,7 @@ const fluidRoute = require("@fluidframework/webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
-const pkg = require("./package.json");
+const pkg = require("./package.json.js");
 const componentName = pkg.name.slice(1);
 
 module.exports = env => {
