@@ -22,7 +22,7 @@ jobs:
     runOnce:
         deploy:
             steps:
-            - download: current
+            - download: build
               artifact: pack
             - task: Bash@3
               displayName: Generate .npmrc
