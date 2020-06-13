@@ -31,19 +31,21 @@ jobs:
               displayName: Generate .npmrc
               inputs:
                 targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/build/pack
                 script: |
-                  echo Generating publish script for $(feed)
+                  echo Generating .npmrc for $(feed)
                   echo "@fluidframework:registry=$(feed)" >> ./.npmrc
                   echo "@fluid-example:registry=$(feed)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
             - task: npmAuthenticate@0
               displayName: npm Authenticate
               inputs:
-                workingFile: .npmrc
+                workingFile: $(Pipeline.Workspace)/build/pack/.npmrc
             - task: Bash@3
               displayName: Publish Packages
               inputs:
                 targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/build/pack
                 script: |
                   tag="--tag canary"
                   if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
