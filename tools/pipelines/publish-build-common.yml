@@ -18,6 +18,9 @@ jobs:
   displayName: Publish build-common
   pool: Shared
   environment: 'fluid-feed'
+  variables:
+    - name: feed
+      value: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
   strategy:
     runOnce:
         deploy:
@@ -27,11 +30,12 @@ jobs:
             - task: Bash@3
               displayName: Generate .npmrc
               inputs:
-                arguments: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+                targetType: 'inline'
                 script: |
-                  echo "@fluidframework:registry=$1" >> .npmrc
-                  echo "@fluid-example:registry=$1" >> .npmrc
-                  echo "always-auth=true" >> .npmrc
+                  echo Generating publish script for $(feed)
+                  echo "@fluidframework:registry=$(feed)" >> ./.npmrc
+                  echo "@fluid-example:registry=$(feed)" >> ./.npmrc
+                  echo "always-auth=true" >> ./.npmrc
             - task: npmAuthenticate@0
               displayName: npm Authenticate
               inputs:
@@ -39,8 +43,8 @@ jobs:
             - task: Bash@3
               displayName: Publish Packages
               inputs:
+                targetType: 'inline'
                 script: |
-                  targetType: 'inline'
                   tag="--tag canary"
                   if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
                     tag="--tag next"
