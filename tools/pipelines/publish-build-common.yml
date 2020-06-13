@@ -47,6 +47,7 @@ jobs:
                 targetType: 'inline'
                 workingDirectory: $(Pipeline.Workspace)/build/pack
                 script: |
+                  cat .npmrc
                   tag="--tag canary"
                   if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
                     tag="--tag next"
