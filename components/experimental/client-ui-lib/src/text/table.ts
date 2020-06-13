@@ -610,7 +610,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             // TODO: model error checking
             const segment = segoff.segment;
             if (MergeTree.Marker.is(segment)) {
-                const marker = <MergeTree.Marker>segoff.segment;
+                const marker = segoff.segment;
                 if (marker.hasRangeLabel("table")) {
                     const tableMarker = <ITableMarker>marker;
                     parseTable(tableMarker, nextPos, sharedString, fontInfo);
@@ -667,7 +667,7 @@ function parseRow(
     const rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     const id = rowMarker.getId();
     const endId = endPrefix + id;
-    const endRowMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
+    const endRowMarker = sharedString.getMarkerFromId(endId);
     if (!endRowMarker) {
         console.log(`row parse error: ${rowStartPos}`);
         return undefined;
@@ -717,7 +717,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
 export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
     const id = tableMarker.getId();
     const endId = endPrefix + id;
-    const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
+    const endTableMarker = sharedString.getMarkerFromId(endId);
     const endTablePos = endTableMarker.cachedLength + getPosition(sharedString, endTableMarker);
     let lineBuf = "";
     let lastWasCO = false;
@@ -776,7 +776,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                 lineBuf += " ";
             }
         } else {
-            const textSegment = <MergeTree.TextSegment>segment;
+            const textSegment = segment;
             lineBuf += textSegment.text;
             reqPos = true;
         }
@@ -808,7 +808,7 @@ export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     const id = tableMarker.getId();
     const endId = endPrefix + id;
-    const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
+    const endTableMarker = sharedString.getMarkerFromId(endId);
     const endTablePos = getPosition(sharedString, endTableMarker);
     const table = new Table(tableMarker, endTableMarker);
     tableMarker.table = table;

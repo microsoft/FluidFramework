@@ -295,7 +295,7 @@ function getPrecedingTile(
     while (tilePos > 0) {
         tilePos = tilePos - 1;
         const prevTileInfo = sharedString.findTile(tilePos, label);
-        if (prevTileInfo && filter(<MergeTree.Marker>prevTileInfo.tile)) {
+        if (prevTileInfo && filter(prevTileInfo.tile)) {
             return prevTileInfo;
         }
     }

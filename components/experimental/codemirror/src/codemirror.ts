@@ -174,7 +174,7 @@ class CodemirrorView implements IComponentHTMLView {
                     }
                 } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                     if (TextSegment.is(segment)) {
-                        const textSegment = range.segment as TextSegment;
+                        const textSegment = range.segment;
                         doc.replaceRange(
                             "",
                             doc.posFromIndex(range.position),
@@ -254,13 +254,13 @@ export class CodeMirrorComponent
             this.root.register();
         }
 
-        this.root = await this.runtime.getChannel("root") as ISharedMap;
+        this.root = await this.runtime.getChannel("root");
         this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return new CodemirrorView(this.text!, this.runtime);
+        return new CodemirrorView(this.text, this.runtime);
     }
 }
 
