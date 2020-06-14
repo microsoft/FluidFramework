@@ -204,13 +204,6 @@ stages:
                 mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
               fi
 
-        - task: CopyFiles@2
-          displayName: Copy GenPublish script
-          inputs:
-            SourceFolder: $(Build.SourcesDirectory)/tools/build-server-resources
-            TargetFolder: $(Build.ArtifactStagingDirectory)/pack
-            Contents: gen_publish.sh
-            
         - task: PublishBuildArtifacts@1
           displayName: Publish Artifact - pack
           inputs:
@@ -267,7 +260,8 @@ stages:
           feeds:
           - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
             environment: fluid-feed
-#          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
-            environment: office-feed
-            customEndPoint: Office Packages
+          # only publish release bits
+          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+            - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+              environment: office-feed
+              customEndPoint: Office Packages
