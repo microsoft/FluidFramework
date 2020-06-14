@@ -19,7 +19,7 @@ const versionTest2Name = pkg.name as string;
 
 export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
-    private upgradeToPkg: string = "@fluid-example/version-test-3";
+    private upgradeToPkg: string = "@fluid-internal/version-test-3";
     private upgradeToVersion: string = "0.3.x";
 
     protected async componentHasInitialized() {

@@ -1,6 +1,7 @@
 {
-  "name": "@fluidframework/merge-tree-client-replay",
+  "name": "@fluid-internal/merge-tree-client-replay",
   "version": "0.20.0",
+  "private": true,
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -17,6 +17,6 @@ export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     fluidPackageName,
     new Map([
         [fluidPackageName, Promise.resolve(VersiontestInstantiationFactory)],
-        ["@fluid-example/version-test-1", Promise.resolve(VersiontestInstantiationFactory)],
+        ["@fluid-internal/version-test-1", Promise.resolve(VersiontestInstantiationFactory)],
     ]),
 );

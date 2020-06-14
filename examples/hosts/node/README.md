@@ -1,4 +1,4 @@
-# @fluid-example/node-host
+# @fluid-internal/node-host
 
 ## Fluid Loader for Node.js evironment
 
