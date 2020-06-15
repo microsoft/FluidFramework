@@ -7,21 +7,26 @@ import "mocha";
 
 import { strict as assert } from "assert";
 import { Random } from "best-random";
-import { TestHost } from "@fluidframework/local-test-utils";
+import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import {
+    MockComponentRuntime,
+    MockContainerRuntimeFactory,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { extract, expectSize } from "./utils";
 
 describe("Matrix", () => {
     describe("stress", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
         let matrices: SharedMatrix[];       // Array of matrices under test
-        let hosts: TestHost[];              // Test clients for each matrix
         let trace: string[];                // Repro steps to be printed if a failure is encountered.
 
         /**
          * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
          */
         const expect = async () => {
-            await TestHost.sync(...hosts);
+            containerRuntimeFactory.processAllMessages();
 
             const matrix0 = matrices[0];
             const actual0 = extract(matrix0);
@@ -44,22 +49,27 @@ describe("Matrix", () => {
          */
         async function stress(numClients: number, numOps: number, syncProbability: number, seed: number) {
             try {
+                matrices = [];
                 trace = [];
 
-                // Create TestHosts and matrices for this stress run.
-                const host0 = new TestHost([], [SharedMatrix.getFactory()]);
-                const matrix0 = await host0.createType<SharedMatrix>("matrix", SharedMatrixFactory.Type);
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
 
-                hosts = [host0];
-                matrices = [matrix0];
+                // Create matrices for this stress run.
+                for (let i = 0; i < numClients; i++) {
+                    const componentRuntimeN = new MockComponentRuntime();
+                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
+                    const servicesN: ISharedObjectServices = {
+                        deltaConnection: containerRuntimeN.createDeltaConnection(),
+                        objectStorage: new MockStorage(),
+                    };
 
-                for (let i = 1; i < numClients; i++) {
-                    const hostN = host0.clone();
-                    hosts.push(hostN);
+                    const matrixN = new SharedMatrix(componentRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
+                    matrixN.connect(servicesN);
 
-                    const matrixN = await hostN.getType<SharedMatrix>(matrix0.id);
                     matrices.push(matrixN);
                 }
+
+                const matrix0 = matrices[0];
 
                 // Initialize PRNG with given seed.
                 const float64 = new Random(seed).float64;
@@ -221,10 +231,6 @@ describe("Matrix", () => {
 
                 // Finally, rethrow the original error.
                 throw error;
-            } finally {
-                for (const host of hosts) {
-                    await host.close();
-                }
             }
         }
 
@@ -241,7 +247,7 @@ describe("Matrix", () => {
                 });
         }
 
-        it.skip("stress-loop", async function() {
+        it("stress-loop", async function() {
             console.log("\n*** Begin Stress-Loop ***");
             this.timeout(0);    // Disable timeouts for stress loop
 
