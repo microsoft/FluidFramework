@@ -149,6 +149,8 @@ describe("Document Dirty", () => {
 
             onMarkedClean(containerCompContainerRuntime);
             onMarkedDirty(containerCompContainerRuntime);
+
+            const oldDirtyCount = wasMarkedDirtyCount;
             // Set values in DDSes in disconnected state.
             containerCompMap.set("key", "value");
 
@@ -162,8 +164,10 @@ describe("Document Dirty", () => {
             assert.equal(wasMarkedCleanCount, 1,
                 "Document will have been marked clean on reconnection");
 
+            const oldCleanCount = wasMarkedCleanCount;
+
             // Document should have been marked dirty again due to pending DDS ops
-            assert.equal(wasMarkedDirtyCount, 2,
+            assert.equal(true, oldDirtyCount < wasMarkedDirtyCount,
                 `Document should have been marked dirty again due to pending DDS ops.
                 Dirty count: ${wasMarkedDirtyCount}`);
 
@@ -178,7 +182,7 @@ describe("Document Dirty", () => {
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
                 "Document is cleaned after all ops have been acked");
             // Document will have been marked clean on reconnection
-            assert.equal(wasMarkedCleanCount, 3,
+            assert.equal(true, oldCleanCount < wasMarkedCleanCount,
                 "Document will have been marked clean on reconnection after all ops have been processed, including" +
                 "those pending on nested objects");
         });
@@ -206,6 +210,8 @@ describe("Document Dirty", () => {
             assert.equal(wasMarkedCleanCount, 1,
                 "Document will have been marked clean on reconnection");
 
+            const oldCleanCount = wasMarkedCleanCount;
+
             // Document should have been marked dirty after to overwrite the clean value, so that the final
             // state is dirty
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), true,
@@ -216,7 +222,7 @@ describe("Document Dirty", () => {
             await containerDeltaEventManager.process();
 
             // Document will have been marked clean again on reconnection
-            assert.equal(wasMarkedCleanCount, 2,
+            assert.equal(true, oldCleanCount < wasMarkedCleanCount,
                 `Document will have been marked clean on reconnection. Clean count: ${wasMarkedCleanCount}`);
 
             assert.equal(containerCompContainerRuntime.isDocumentDirty(), false,
