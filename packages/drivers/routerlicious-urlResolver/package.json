@@ -30,8 +30,8 @@
   "dependencies": {
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1007.0",
-    "@fluidframework/server-services-client": "^0.1007.0",
+    "@fluidframework/protocol-definitions": "^0.1007.1",
+    "@fluidframework/server-services-client": "^0.1007.1",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
