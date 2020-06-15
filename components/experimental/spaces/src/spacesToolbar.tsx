@@ -42,9 +42,7 @@ const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
                     key={`componentToolbarButton-${type}`}
                     iconProps={{ iconName: componentEntry.fabricIconName }}
                     onClick={() => {
-                        if (props.addComponent) {
-                            props.addComponent(type);
-                        }
+                        props.addComponent(type);
                         setOpen(false);
                     }}
                 >
