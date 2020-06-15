@@ -7,12 +7,14 @@ import React from "react";
 import "react-grid-layout/css/styles.css";
 import { ISpacesComponentEntry } from "./spacesComponentMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
+import { ISpacesItem } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
     componentMap: Map<string, ISpacesComponentEntry>;
-    storage: ISpacesStorage;
+    storage: ISpacesStorage<ISpacesItem>;
     addComponent(type: string): void;
+    getViewForItem: (item: ISpacesItem) => Promise<JSX.Element | undefined>;
     templates?: string[];
     applyTemplate?(template: string): void;
 }
@@ -23,7 +25,7 @@ interface ISpacesViewProps {
 export const SpacesView: React.FC<ISpacesViewProps> =
     (props: React.PropsWithChildren<ISpacesViewProps>) => {
         // Editable is a view-only concept; SpacesView is the authority.
-        const [editable, setEditable] = React.useState<boolean>(props.storage.componentList.size === 0);
+        const [editable, setEditable] = React.useState<boolean>(props.storage.itemList.size === 0);
 
         return (
             <div className="spaces-view">
@@ -35,7 +37,11 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                     templates={props.templates}
                     applyTemplate={props.applyTemplate}
                 />
-                <SpacesStorageView storage={props.storage} editable={editable} />
+                <SpacesStorageView
+                    getViewForItem={props.getViewForItem}
+                    storage={props.storage}
+                    editable={editable}
+                />
             </div>
         );
     };

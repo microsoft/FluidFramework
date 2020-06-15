@@ -6,7 +6,7 @@
 import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import {
     IProvideComponentFactory,
-    NamedComponentRegistryEntry,
+    NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
@@ -88,10 +88,12 @@ export const spacesComponentMap = new Map<string, ISpacesComponentEntry>([
     ["prosemirror", prosemirrorComponentEntry],
 ]);
 
-export const spacesRegistryEntries: NamedComponentRegistryEntry[] = Array.from(
-    spacesComponentMap.entries(),
-    ([type, componentEntry]) => [type, componentEntry.factory],
-);
+export const spacesRegistryEntries: NamedComponentRegistryEntries = new Map([
+    ClickerInstantiationFactory.registryEntry,
+    [cmfe.type, Promise.resolve(cmfe)],
+    [CollaborativeText.ComponentName, Promise.resolve(CollaborativeText.getFactory())],
+    [pmfe.type, Promise.resolve(pmfe)],
+]);
 
 interface ITemplate {
     [type: string]: Layout[];

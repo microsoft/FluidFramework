@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { IComponent } from "@fluidframework/component-core-interfaces";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 
 import React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
-import { ISpacesStoredComponent, ISpacesStorage } from "./spacesStorage";
+import { ISpacesStoredItem, ISpacesStorage } from "./spacesStorage";
 import "./spacesStorageStyle.css";
 
 interface ISpacesEditButtonProps {
@@ -57,19 +56,19 @@ const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
 interface ISpacesComponentViewProps {
     url: string;
     editable: boolean;
-    getComponent(): Promise<IComponent | undefined>;
+    getItemView(): Promise<JSX.Element | undefined>;
     removeComponent(): void;
 }
 
-const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
+const SpacesItemView: React.FC<ISpacesComponentViewProps> =
     (props: React.PropsWithChildren<ISpacesComponentViewProps>) => {
-        const [component, setComponent] = React.useState<IComponent | undefined>(undefined);
+        const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 
         React.useEffect(() => {
-            props.getComponent()
-                .then(setComponent)
+            props.getItemView()
+                .then(setItemView)
                 .catch((error) => console.error(`Error in getting component`, error));
-        });
+        }, [props.getItemView]);
 
         return (
             <div className="spaces-component-view">
@@ -78,37 +77,37 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
                     <SpacesEditPane url={props.url} removeComponent={props.removeComponent} />
                 }
                 <div className="spaces-embedded-component-wrapper">
-                    {
-                        component &&
-                        <ReactViewAdapter component={component} />
-                    }
+                    { itemView }
                 </div>
             </div>
         );
     };
 
-interface ISpacesStorageViewProps {
-    storage: ISpacesStorage;
+// Stronger typing here maybe?
+interface ISpacesStorageViewProps<T = AsSerializable<any>> {
+    getViewForItem: (item: T) => Promise<JSX.Element | undefined>,
+    storage: ISpacesStorage<T>;
     editable: boolean;
 }
 
 export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
     (props: React.PropsWithChildren<ISpacesStorageViewProps>) => {
-        const [componentMap, setComponentMap] =
-            React.useState<Map<string, ISpacesStoredComponent>>(props.storage.componentList);
+        // Again stronger typing would be good
+        const [itemMap, setItemMap] =
+            React.useState<Map<string, ISpacesStoredItem<AsSerializable<any>>>>(props.storage.itemList);
 
         React.useEffect(() => {
-            const onComponentListChanged = (newMap: Map<string, Layout>) => {
-                setComponentMap(newMap);
+            const onItemListChanged = (newMap: Map<string, Layout>) => {
+                setItemMap(newMap);
             };
-            props.storage.on("componentListChanged", onComponentListChanged);
+            props.storage.on("itemListChanged", onItemListChanged);
             return () => {
-                props.storage.off("componentListChanged", onComponentListChanged);
+                props.storage.off("itemListChanged", onItemListChanged);
             };
         });
 
         // Render nothing if there are no components
-        if (props.storage.componentList.size === 0) {
+        if (props.storage.itemList.size === 0) {
             return <></>;
         }
 
@@ -124,20 +123,22 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             props.storage.updateLayout(key, newItem);
         };
 
-        const components: JSX.Element[] = [];
+        const itemViews: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        componentMap.forEach((model, url) => {
+        itemMap.forEach((model, url) => {
+            const getItemView = async () => props.getViewForItem(model.serializableItemData);
+
             const layout = model.layout;
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
             layout.i = url;
             layouts.push(layout);
-            components.push(
+            itemViews.push(
                 <div key={url} className="spaces-component-view-wrapper">
-                    <SpacesComponentView
+                    <SpacesItemView
                         url={url}
                         editable={props.editable}
-                        getComponent={async () => model.handle.get()}
+                        getItemView={getItemView}
                         removeComponent={() => props.storage.removeItem(url)}
                     />
                 </div>,
@@ -162,7 +163,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
                 onDragStop={onGridChangeEvent}
                 layout={layouts}
             >
-                {components}
+                {itemViews}
             </ReactGridLayout>
         );
     };
