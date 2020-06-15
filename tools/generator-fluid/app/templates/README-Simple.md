@@ -37,6 +37,8 @@ The `index.ts` file is not very interesting and simply defines our exports. We a
 ├── src
 |   ├── component<%= extension %>              // Fluid Component source code
 |   └── index.ts                   // Export file
+├── tests
+|   └── component.test.<%= extension %>         // Fluid Component test
 ├── .gitignore                     // Ignore dist and node_modules
 ├── jest-puppeteer.config.js       // jest-puppeteer configuration
 ├── jest.config.js                 // Jest configuration

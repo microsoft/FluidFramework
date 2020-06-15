@@ -1,6 +1,7 @@
 {
-  "name": "@fluidframework/replay-tool",
+  "name": "@fluid-internal/replay-tool",
   "version": "0.20.0",
+  "private": true,
   "description": "A tool that lets the user to replay ops.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -36,7 +37,7 @@
     "@fluidframework/container-runtime": "^0.20.0",
     "@fluidframework/driver-definitions": "^0.20.0",
     "@fluidframework/file-driver": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1006.1",
+    "@fluidframework/protocol-definitions": "^0.1007.0-0",
     "@fluidframework/replay-driver": "^0.20.0"
   },
   "devDependencies": {

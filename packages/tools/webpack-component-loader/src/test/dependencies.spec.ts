@@ -4,44 +4,38 @@
  */
 
 import assert from "assert";
-import fs from "fs";
 import path from "path";
+import fs from "fs-extra";
 
 describe("Check Dependencies", () => {
-    it("verify no fluid packages", async () => {
+    it("verify no @fluid-internal packages in dependencies", async () => {
         // tslint:disable-next-line: non-literal-fs-path
-        await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules/"));
+        await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules"));
     });
 });
 
-// search all public fluid namespaces dirs, and node_module dirs
-const searchFolders = ["@fluidframework", "node_modules"];
+// Store visited packages so we don't iterate them multiple times
+const visitedPkgDirs: string[] = [];
 
-const verifyNoFluidPackages = async (dir: string, visitedPkgDirs: string[] = []) => {
-    let entries: string[];
-    try {
-        // tslint:disable-next-line: non-literal-fs-path
-        entries = await fs.promises.readdir(dir);
-    } catch {
-        return;
-    }
+const verifyNoFluidPackages = async (dir: string) => {
+    // tslint:disable-next-line: non-literal-fs-path
+    const entries = await fs.promises.opendir(dir);
     const searches: Promise<void>[] = [];
-    for (const entry of entries) {
-        const entryDir = path.join(dir, entry);
-        if (entry.includes("@fluid-")) {
-            assert.fail(entryDir);
-        }
-        // exclude files
-        if (!entry.includes(".")) {
-            if (searchFolders.includes(entry)) {
-                searches.push(verifyNoFluidPackages(entryDir, visitedPkgDirs));
-            } else if (!visitedPkgDirs.includes(entry)) {
-                // only visit other folders once as these will either be packages
-                //  or things like src, and dist that are not relevant
-                visitedPkgDirs.push(entry);
-                console.log(entry);
-                searches.push(verifyNoFluidPackages(entryDir, visitedPkgDirs));
+    for await (const entry of entries) {
+        // If there is a package.json we will look through it to extract information.
+        if (entry.isFile() && entry.name === "package.json") {
+            const fullPath = `${dir}/${entry.name}`;
+            console.log(fullPath);
+            const json = await fs.readJson(fullPath);
+            if (json && json.dependencies) {
+                const dependencyKeys = Object.keys(json.dependencies);
+                if (dependencyKeys && dependencyKeys.includes("@fluid-internal")) {
+                    assert.fail(fullPath);
+                }
             }
+        } else if (entry.isDirectory() && !visitedPkgDirs.includes(entry.name)) {
+            visitedPkgDirs.push(entry.name);
+            searches.push(verifyNoFluidPackages(`${dir}/${entry.name}`));
         }
     }
     await Promise.all(searches);
