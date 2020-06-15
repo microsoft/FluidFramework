@@ -247,7 +247,7 @@ describe("Matrix", () => {
                 });
         }
 
-        it("stress-loop", async function() {
+        it.skip("stress-loop", async function() {
             console.log("\n*** Begin Stress-Loop ***");
             this.timeout(0);    // Disable timeouts for stress loop
 
