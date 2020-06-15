@@ -84,7 +84,7 @@ export function runMergeTreeOperationRunner(
                 minLength,
                 config.operations,
             );
-            seq = applyMessages(seq, messageData, clients, logger);
+            seq = apply(seq, messageData, clients, logger);
             // validate that all the clients match at the end of the round
             logger.validate();
         }

@@ -25,7 +25,7 @@ const versionTest1Name = pkg.name as string;
 export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
     private upgradeManager: UpgradeManager | undefined;
-    private upgradeToPkg: string = "@fluid-example/version-test-2";
+    private upgradeToPkg: string = "@fluid-internal/version-test-2";
     private upgradeToVersion: string = "0.2.x";
     private cdn: string = "http://localhost:8080/file";
 
@@ -90,7 +90,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
             throw Error("component not initialized; no upgrade manager")
         }
         await this.upgradeManager.upgrade({
-            "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` },
+            "config": { "cdn": `${this.cdn}/@fluid-internal/version-test-2` },
             "package": `${this.upgradeToPkg}`
         }, highPriority);
     }
@@ -98,7 +98,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     private quorumProposeCode() {
         this.runtime.getQuorum().propose(
             "code",
-            { "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` }, "package": `${this.upgradeToPkg}` },
+            { "config": { "cdn": `${this.cdn}/@fluid-internal/version-test-2` }, "package": `${this.upgradeToPkg}` },
         );
     }
 }

@@ -16,4 +16,8 @@ describe("Snapshots", function() {
     it("Backward Compat", async () => {
         await processContent(Mode.Compare);
     });
+
+    it("Validate", async () => {
+        await processContent(Mode.Validate);
+    });
 });

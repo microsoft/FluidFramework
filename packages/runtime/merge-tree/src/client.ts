@@ -720,7 +720,12 @@ export class Client {
         assert(segmentGroup === NACKedSegmentGroup, "Segment group not at head of merge tree pending queue");
 
         const opList = [];
-        for (const segment of segmentGroup.segments) {
+        // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
+        // The reason they need them sorted, as they have the same local sequnence number and which means
+        // farther segments will  take into account nearer segements when calcualting their position.
+        // By sorting we ensure the nearer segment will be applied and sequenced before the father segments
+        // so their recalulated positions will be correct.
+        for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
             const segmentSegGroup = segment.segmentGroups.dequeue();
             assert(segmentGroup === segmentSegGroup,
                 "Segment group not at head of segment pending queue");
@@ -744,10 +749,11 @@ export class Client {
                     break;
 
                 case ops.MergeTreeDeltaType.REMOVE:
-                    assert(segment.removedSeq === UnassignedSequenceNumber);
-                    newOp = OpBuilder.createRemoveRangeOp(
-                        segmentPosition,
-                        segmentPosition + segment.cachedLength);
+                    if (segment.localRemovedSeq !== undefined) {
+                        newOp = OpBuilder.createRemoveRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength);
+                    }
                     break;
 
                 default:
