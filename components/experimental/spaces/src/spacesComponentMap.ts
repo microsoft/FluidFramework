@@ -18,8 +18,12 @@ import { Layout } from "react-grid-layout";
 export type ICreateAndAttachComponentFunction =
     <T extends IComponent & IComponentLoadable>(pkg: string, props?: any) => Promise<T>;
 
+interface ISingleHandleItem {
+    handle: IComponentHandle;
+}
+
 const createSingleHandle = (type: string) => {
-    return async (createAndAttachComponent: ICreateAndAttachComponentFunction) => {
+    return async (createAndAttachComponent: ICreateAndAttachComponentFunction): Promise<ISingleHandleItem> => {
         const component = await createAndAttachComponent(type);
         return {
             handle: component.handle,
@@ -27,8 +31,8 @@ const createSingleHandle = (type: string) => {
     };
 };
 
-const getAdaptedViewForHandle = async (serializableObject: any) => {
-    const handle = serializableObject.handle as IComponentHandle;
+const getAdaptedViewForHandle = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle;
     const component = await handle.get();
     return React.createElement(ReactViewAdapter, { component });
 };
@@ -36,38 +40,38 @@ const getAdaptedViewForHandle = async (serializableObject: any) => {
 /**
  * A registry entry, with extra metadata.
  */
-export interface ISpacesItemEntry {
+export interface ISpacesItemEntry<T = any> {
     // Would be good for widgets to bring their own subregistries
     // Try not to hand out createAndAttachComponent
-    create: (createAndAttachComponent: ICreateAndAttachComponentFunction) => Promise<AsSerializable<any>>;
-    // Try to get stronger typing here
-    getView: (serializableObject: any) => Promise<JSX.Element>;
+    create: (createAndAttachComponent: ICreateAndAttachComponentFunction) => Promise<AsSerializable<T>>;
+    // This doesn't actually seem to enforce the param type is serializable in practice.
+    getView: (serializableObject: AsSerializable<T>) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerComponentEntry: ISpacesItemEntry = {
+const clickerComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandle(ClickerInstantiationFactory.type),
     getView: getAdaptedViewForHandle,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorComponentEntry: ISpacesItemEntry = {
+const codemirrorComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandle(cmfe.type),
     getView: getAdaptedViewForHandle,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxComponentEntry: ISpacesItemEntry = {
+const textboxComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandle(CollaborativeText.ComponentName),
     getView: getAdaptedViewForHandle,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorComponentEntry: ISpacesItemEntry = {
+const prosemirrorComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandle(pmfe.type),
     getView: getAdaptedViewForHandle,
     friendlyName: "Rich Text",
