@@ -21,13 +21,14 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run tsfmt && npm run eslint",
-    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluidframework/container-runtime": "^0.20.0",
     "@fluidframework/file-driver": "^0.20.0",
     "@fluidframework/merge-tree": "^0.20.0",
     "@fluidframework/protocol-definitions": "^0.1007.0-0",

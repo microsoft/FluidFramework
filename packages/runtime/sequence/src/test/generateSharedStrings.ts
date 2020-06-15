@@ -17,7 +17,7 @@ export const supportedVersions = new Map<string, any>([
     // so for legacy set it to another name to ensure
     // we keep support
     ["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
-    ["legacyWithCatchUp", {}],
+    ["legacyWithCatchUp", { catchUpBlobName: "catchupOps" }],
     ["v1", { newMergeTreeSnapshotFormat: true }],
 ]);
 
