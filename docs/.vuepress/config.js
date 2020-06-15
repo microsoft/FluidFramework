@@ -217,6 +217,7 @@ const getDocsSidebar = () => {
             title: "Main concepts",
             collapsable: false,
             children: [
+                "guide.md",
                 "dds.md",
                 "components.md",
                 "aqueduct.md",
