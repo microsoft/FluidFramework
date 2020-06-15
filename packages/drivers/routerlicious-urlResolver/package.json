@@ -2,7 +2,7 @@
   "name": "@fluidframework/routerlicious-urlresolver",
   "version": "0.20.0",
   "description": "Url Resolver for routerlicious urls.",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
