@@ -1,11 +1,8 @@
-# Hello World Component Walk Through - The Dice Roller
+# Hello World
 
 Our Hello World example consists of building a collaborative **Dice Roller**.
 
 ![Image 2](./dice-roller-gif.gif)
-
-TODO: ADD something about no view framework and this uses none. but we also have react.
-The Fluid Frameworkis agnostic to any view framework.
 
 ## Setup to Follow Along
 
@@ -211,12 +208,12 @@ corresponding Unicode die face, and returns it.
 
 ::: note Unicode Die Faces
 
-⚀ - 0x2680  
-⚁ - 0x2681  
-⚂ - 0x2682  
-⚃ - 0x2683  
-⚄ - 0x2684  
-⚅ - 0x2685  
+⚀ - 0x2680
+⚁ - 0x2681
+⚂ - 0x2682
+⚃ - 0x2683
+⚄ - 0x2684
+⚅ - 0x2685
 
 :::
 
@@ -243,8 +240,8 @@ rollButton.onclick = () => {
 div.appendChild(rollButton);
 ```
 
-This code creates a new HTML `button` called `rollButton`. We determine what to do when the button is pressed by setting
-a function to the `rollButton.onclick`.
+This code creates a new HTML `button` called `rollButton`. We set a function to `rollButton.onclick` that handles what to
+do when the roll button is clicked.
 
 The function that will execute when the button is clicked **does not** update the `diceSpan` from above. Instead it
 generates a new number between 1-6 then stores that number on our `this.root` `SharedDirectory` under the `diceValueKey`.
