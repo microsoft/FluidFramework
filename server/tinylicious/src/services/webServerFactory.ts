@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import { HttpServer } from "@fluidframework/server-services";
+import { HttpServer } from "@fluidframework/server-services-shared";
 import {
     IWebServer,
     IWebServerFactory,

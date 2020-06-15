@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { readFileSync } from "fs";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -33,6 +34,11 @@ export interface IFileSnapshot {
 }
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
+    public static createFromPath(snapshotPath: string) {
+        const snapshot = JSON.parse(readFileSync(snapshotPath).toString()) as IFileSnapshot;
+        return new FileSnapshotReader(snapshot);
+    }
+
     // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 

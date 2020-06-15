@@ -24,6 +24,7 @@ import {
     INewFileInfo,
     invalidFileNameStatusCode,
     getOrigin,
+    fetchIncorrectResponse,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -57,7 +58,7 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode, false);
+        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
     }
 
     const createFileAndResolveUrl = async () => {
@@ -110,7 +111,7 @@ async function createNewOdspFile(
 
             const content = await fetchResponse.content;
             if (!content || !content.itemId) {
-                throwOdspNetworkError("Could not parse item from Vroom response", fetchResponse.status, false);
+                throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
             }
             return {
                 itemId: content.itemId,
@@ -130,7 +131,7 @@ async function createNewOdspFile(
 
             const content = await fetchResponse.content;
             if (!content || !content.id) {
-                throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
+                throwOdspNetworkError("Could not parse drive item from Vroom response", fetchIncorrectResponse);
             }
             return {
                 itemId: content.id,

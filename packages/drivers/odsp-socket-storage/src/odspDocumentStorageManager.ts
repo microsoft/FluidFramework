@@ -414,10 +414,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersions returned no response", 400, false);
+                throwOdspNetworkError("getVersions returned no response", 400);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersions returned non-array response", 400, false);
+                throwOdspNetworkError("getVersions returned non-array response", 400);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -564,7 +564,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400, false);
+            throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400);
         }
     }
 

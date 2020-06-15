@@ -6,15 +6,18 @@ Check out our [getting started guide](../docs/README.md).
 
 ## Can I run Routerlicious locally?
 
-Yes; see the [Routerlicious documentation](https://github.com/microsoft/FluidFramework/blob/master/server/routerlicious/README.md).
+Yes; see the [Routerlicious
+documentation](https://github.com/microsoft/FluidFramework/blob/master/server/routerlicious/README.md).
 
 ## Why can't I build or start docker?
 
-[Allocate more than 4GB of RAM to Docker and share your harddrive with Docker](https://stackoverflow.microsoft.com/questions/137472/im-getting-docker-build-error-number-137).
+[Allocate more than 4GB of RAM to Docker and share your harddrive with
+Docker](https://stackoverflow.microsoft.com/questions/137472/im-getting-docker-build-error-number-137).
 
 ## Why can't I install Fluid dependencies?
 
-[You're probably having problems with npm and private npm registries](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931).
+[You're probably having problems with npm and private npm
+registries](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931).
 
 ## Is there a set of design principles I can look at?
 
