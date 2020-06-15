@@ -39,7 +39,7 @@
     "@fluidframework/sequence": "^0.20.0",
     "@fluidframework/view-interfaces": "^0.20.0",
     "@uifabric/fluent-theme": "^7.1.3",
-    "office-ui-fabric-react": "^7.28.1",
+    "@fluentui/react": "^7.28.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

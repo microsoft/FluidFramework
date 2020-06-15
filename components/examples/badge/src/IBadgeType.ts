@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import { IIconProps } from "office-ui-fabric-react/lib/Icon";
+import { IIconProps } from "@fluentui/react";
 
 export interface IBadgeType {
     key: string;
