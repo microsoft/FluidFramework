@@ -62,9 +62,9 @@ export interface IFluidCodeResolver {
 }
 
 /**
- * Code WhiteListing Interface
+ * Code AllowListing Interface
  */
-export interface ICodeWhiteList {
+export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
