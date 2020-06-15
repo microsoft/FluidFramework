@@ -54,8 +54,8 @@
     "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/component-runtime-definitions": "^0.20.0",
-    "@fluidframework/protocol-base": "^0.1007.0-0",
-    "@fluidframework/protocol-definitions": "^0.1007.0-0",
+    "@fluidframework/protocol-base": "^0.1007.0",
+    "@fluidframework/protocol-definitions": "^0.1007.0",
     "@fluidframework/runtime-utils": "^0.20.0",
     "@fluidframework/shared-object-base": "^0.20.0",
     "debug": "^4.1.1"
