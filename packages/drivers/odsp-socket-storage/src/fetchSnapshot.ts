@@ -4,7 +4,6 @@
  */
 
 import { IOdspSnapshot } from "./contracts";
-import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspResponse } from "./odspUtils";
@@ -21,7 +20,6 @@ import { IOdspResponse } from "./odspUtils";
 export async function fetchSnapshot(
     snapshotUrl: string,
     token: string | null,
-    storageFetchWrapper: IFetchWrapper,
     versionId: string,
     fetchFullSnapshot: boolean,
 ): Promise<IOdspResponse<IOdspSnapshot>> {

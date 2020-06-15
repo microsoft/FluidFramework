@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
+import sinon from "sinon";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 
 describe("DeltaStorageService", () => {
@@ -19,7 +19,7 @@ describe("DeltaStorageService", () => {
 
     it("Should build the correct sharepoint delta url with auth", async () => {
         const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-            new FetchWrapper(), undefined, async (refresh) => "?access_token=123");
+            undefined, async (refresh) => "?access_token=123");
         const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
@@ -63,22 +63,21 @@ describe("DeltaStorageService", () => {
         };
 
         let deltaStorageService: OdspDeltaStorageService;
+        let stubedFetch: sinon.SinonStub;
         before(() => {
-            const fetchWrapperMock: IFetchWrapper = {
-                get: async (url: string, _: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        resolve({
-                            content: expectedDeltaFeedResponse,
-                            headers: new Map(),
-                        });
-                    }),
-                post: async (url: string, postBody: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        reject("not implemented");
-                    }),
-            };
+            stubedFetch = sinon.stub(global, "fetch");
+            stubedFetch.returns(Promise.resolve(
+                {
+                    content: expectedDeltaFeedResponse,
+                    headers: new Map(),
+                },
+            ));
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                fetchWrapperMock, undefined, async (refresh) => "");
+                undefined, async (refresh) => "");
+        });
+
+        after(() => {
+            stubedFetch.restore();
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -124,22 +123,20 @@ describe("DeltaStorageService", () => {
         };
 
         let deltaStorageService: OdspDeltaStorageService;
+        let stubedFetch: sinon.SinonStub;
         before(() => {
-            const fetchWrapperMock: IFetchWrapper = {
-                get: async (url: string, _: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        resolve({
-                            content: expectedDeltaFeedResponse,
-                            headers: new Map(),
-                        });
-                    }),
-                post: async (url: string, postBody: string, headers: HeadersInit) => new Promise(
-                    (resolve, reject) => {
-                        reject("not implemented");
-                    }),
-            };
+            stubedFetch = sinon.stub(global, "fetch");
+            stubedFetch.returns(Promise.resolve(
+                {
+                    content: expectedDeltaFeedResponse,
+                    headers: new Map(),
+                },
+            ));
             deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                fetchWrapperMock, undefined, async (refresh) => "");
+                undefined, async (refresh) => "");
+        });
+        after(() => {
+            stubedFetch.restore();
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

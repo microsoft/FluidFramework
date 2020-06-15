@@ -146,10 +146,10 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
  * @param requestInit - fetch requestInit
  * @param retryPolicy - how to do retries
  */
-export async function fetchHelper(
+export async function fetchHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-): Promise<IOdspResponse<any>> {
+): Promise<IOdspResponse<T>> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion

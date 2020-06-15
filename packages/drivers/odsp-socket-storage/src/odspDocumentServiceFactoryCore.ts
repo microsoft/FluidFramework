@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/common-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, HostStoragePolicy } from "./contracts";
-import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import {
     LocalPersistentCache,
     createOdspCache,
@@ -100,8 +99,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
-        private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
@@ -126,8 +123,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.getStorageToken,
             this.getWebsocketToken,
             odspLogger,
-            this.storageFetchWrapper,
-            this.deltasFetchWrapper,
             this.getSocketIOClient(),
             cache,
             this.hostPolicy,

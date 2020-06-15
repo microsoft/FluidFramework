@@ -31,7 +31,6 @@ import {
 } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
-import { IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache, startingUpdateUsageOpFrequency, updateUsageOpMultiplier } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
@@ -71,8 +70,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryLogger,
-        storageFetchWrapper: IFetchWrapper,
-        deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
@@ -147,8 +144,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryLogger,
-        private readonly storageFetchWrapper: IFetchWrapper,
-        private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,

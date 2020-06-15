@@ -28,7 +28,6 @@ import {
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
-import { IFetchWrapper } from "./fetchWrapper";
 
 export interface IFileCreateResponse {
     siteUrl: string;
@@ -53,7 +52,6 @@ export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfo: INewFileInfo,
     cache: INonPersistentCache,
-    storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
@@ -87,7 +85,6 @@ export async function createNewFluidFile(
 async function createNewOdspFile(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IFileCreateResponse> {
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
