@@ -1,3 +1,6 @@
 {
-    "git.ignoreLimitWarning": true
+  "editor.rulers": [
+    120
+  ],
+  "git.ignoreLimitWarning": true,
 }

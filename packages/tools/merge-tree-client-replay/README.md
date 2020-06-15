@@ -1,1 +1,1 @@
-# @fluidframework/merge-tree-client-replay
+# @fluid-internal/merge-tree-client-replay

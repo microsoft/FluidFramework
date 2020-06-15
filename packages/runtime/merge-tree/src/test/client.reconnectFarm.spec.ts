@@ -14,6 +14,8 @@ import {
     annotateRange,
     removeRange,
     applyMessages,
+    IMergeTreeOperationRunnerConfig,
+    IConfigRange,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
@@ -26,6 +28,7 @@ function applyMessagesWithReconnect(
 ) {
     let seq = startingSeq;
     const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
+    let minSeq = 0;
     // log and apply all the ops created in the round
     while (messageDatas.length > 0) {
         const [message, sg] = messageDatas.shift();
@@ -36,6 +39,7 @@ function applyMessagesWithReconnect(
             logger.log(message, (c) => {
                 c.applyMsg(message);
             });
+            minSeq = message.minimumSequenceNumber;
         }
     }
 
@@ -46,6 +50,7 @@ function applyMessagesWithReconnect(
                 opData[0],
                 opData[1],
             ));
+        newMsg.minimumSequenceNumber = minSeq;
         // apply message doesn't use the segment group, so just pass undefined
         reconnectMsgs.push([newMsg, undefined]);
     });
@@ -53,10 +58,10 @@ function applyMessagesWithReconnect(
     return applyMessages(seq, reconnectMsgs, clients, logger);
 }
 
-export const defaultOptions = {
+export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
     minLength: 16,
     clients: { min: 2, max: 8 },
-    opsPerRoundRange: { min: 200, max: 800 },
+    opsPerRoundRange: { min: 40, max: 320 },
     rounds: 3,
     operations: [annotateRange, removeRange],
     growthFunc: (input: number) => input * 2,
@@ -69,7 +74,7 @@ describe("MergeTree.Client", () => {
     // Generate a list of single character client names, support up to 69 clients
     const clientNames = generateClientNames();
 
-    doOverRange(opts.clients, opts.growthFunc, (clientCount) => {
+    doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
         // tslint:enable: mocha-no-side-effect-code
         it(`ReconnectFarm_${clientCount}`, async () => {
             const mt = random.engines.mt19937();

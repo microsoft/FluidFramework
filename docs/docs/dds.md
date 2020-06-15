@@ -24,6 +24,10 @@ There are cases, however, where the eventually consistent guarantee is insuffici
 structures are useful. These types of data structures defer applying operations until they're acknowledged by the
 server. This ensures that each client `.pop`s a different value from a stack, for example.
 
+## Creating and storing distributed data structures
+
+### Storing a DDS within another DDS
+
 ## Events
 
 ## Merge behavior
@@ -60,3 +64,5 @@ Map, Directory
 
 ## Quorum data structure
 
+
+!!!include(links.md)!!!
