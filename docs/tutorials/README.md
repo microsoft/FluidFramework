@@ -1,8 +1,13 @@
 ---
-title: Tutorials
+title: Overview
 sidebarDepth: 0
 ---
 
+::: danger
+
+OUTDATED
+
+:::
 
 # Tutorials
 
@@ -13,6 +18,14 @@ ground up, check out [our step-by-step guide](../docs/getting-started.md). You m
 complementary to each other.
 
 :::
+
+---
+
+**Contents:**
+
+[[toc]]
+
+---
 
 ## Dice roller
 
@@ -52,9 +65,9 @@ Sudoku is a collaborative Sudoku game.
 
 <iframe id="sudoku" src="/fluid/sudoku.html"></iframe>
 
-# Other examples
+## Other examples
 
-## Badge
+### Badge
 
 Badge is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.

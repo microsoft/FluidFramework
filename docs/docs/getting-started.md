@@ -1,3 +1,7 @@
+---
+aliases:
+ - docs/index.html
+---
 
 # Getting started
 
@@ -15,10 +19,10 @@ environment](dev-env.md).
 ## Learn the Fluid Framework
 
 People come to the Fluid Framework from a variety of backgrounds and with different learning styles. Whether you prefer
-a more theoretical or a practical approach, we hope you'll find this section helpful.
+a step by step conceptual approach or a practical one, we hope you'll find this documentation helpful.
 
-* If you prefer to **learn by doing**, start with one of our [step-by-step tutorials](../tutorials/README.md).
-* If you prefer to **learn concepts step by step**, start with [our guide to Fluid Framework concepts](hello-world.md).
+[<span class="doc-button">Learn by Reading: Docs</span>](./hello-world.md)
+[<span class="doc-button">Learn by Doing: Tutorials</span>](../tutorials/README.md)
 
 ### TypeScript and JavaScript resources
 

@@ -12,7 +12,7 @@ import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";

@@ -25,7 +25,6 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
-    MessageType,
     ConnectionState,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -552,12 +551,14 @@ export abstract class ComponentContext extends EventEmitter implements
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
-    public reSubmit(type: MessageType, content: any, localOpMetadata: unknown) {
+    public reSubmit(contents: any, localOpMetadata: unknown) {
         strongAssert(this.componentRuntime, "ComponentRuntime must exist when resubmitting ops");
+
+        const innerContents = contents as ComponentMessage;
 
         // back-compat: 0.18 components
         if (this.componentRuntime.reSubmit) {
-            this.componentRuntime.reSubmit(type, content, localOpMetadata);
+            this.componentRuntime.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
         }
     }
 

@@ -1,6 +1,7 @@
 {
-  "name": "getkeys",
+  "name": "@fluid-internal/getkeys",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

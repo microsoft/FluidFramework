@@ -40,6 +40,7 @@
     "vue-markdown": "^2.2.4",
     "vue-tabs-component": "^1.5.0",
     "vuepress": "^1.4.0",
+    "vuepress-plugin-alias": "^1.0.0-beta",
     "vuepress-plugin-check-md": "0.0.2",
     "vuepress-plugin-code-copy": "^1.0.6",
     "vuepress-plugin-container": "^2.1.2",

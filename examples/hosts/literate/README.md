@@ -1,4 +1,4 @@
-# @fluid-example/hosts-sample
+# @fluid-internal/hosts-sample
 
 The Fluid loader is all that is needed to load any Fluid document. This example walks through all the steps to
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide

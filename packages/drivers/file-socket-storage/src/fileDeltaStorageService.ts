@@ -42,7 +42,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
         const readFrom = Math.max(from, 0); // Inclusive
         const readTo = Math.min(to, this.messages.length); // Exclusive
 
-        if (readFrom >= this.messages.length || readTo <= 0) {
+        if (readFrom >= this.messages.length || readTo <= 0 || readFrom >= readTo) {
             return [];
         }
 
