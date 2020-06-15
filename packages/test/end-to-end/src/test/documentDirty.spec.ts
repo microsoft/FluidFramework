@@ -15,7 +15,7 @@ import {
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 describe("Document Dirty", () => {
