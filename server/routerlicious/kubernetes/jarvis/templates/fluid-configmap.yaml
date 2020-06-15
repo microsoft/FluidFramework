@@ -147,12 +147,5 @@ data:
                 "host": "polling-telegraf-service.metric",
                 "port": 8094
             }
-        },
-        "minio": {
-            "endpoint": "{{ .Values.minio.endpoint }}",
-            "port": 9000,
-            "accessKey": "",
-            "secretKey": "",
-            "bucket": "agents"
         }
     }

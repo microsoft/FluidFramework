@@ -108,7 +108,7 @@
 | [@fluidframework/local-test-utils](/packages/server/local-test-utils) | published |
 | [@fluidframework/server-tools-core](/packages/server/tools-core) | published |
 | [@fluid-example/version-test-1](/packages/test/context-reload) | private |
-| [@fluid-example/version-test-2](/packages/test/context-reload/@fluid-example/version-test-2) | private |
+| [@fluid-example/version-test-2](/packages/test/context-reload/@fluid-internal/version-test-2) | private |
 | [@fluid-internal/end-to-end-tests](/packages/test/end-to-end) | published |
 | [@fluid-internal/functional-tests](/packages/test/functional) | published |
 | [@fluidframework/test-snapshots](/packages/test/snapshots) | published |

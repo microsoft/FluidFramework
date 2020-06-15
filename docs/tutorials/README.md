@@ -1,8 +1,13 @@
 ---
-title: Tutorials
+title: Overview
 sidebarDepth: 0
 ---
 
+::: danger
+
+OUTDATED
+
+:::
 
 # Tutorials
 
@@ -14,16 +19,13 @@ complementary to each other.
 
 :::
 
-## Table of Contents
-* Examples
-  * [DiceRoller](./dice-roller.md)
-  * [Sudoku](./sudoku.md)
-  * [Badge](./badge.md)
-* How-To Tutorials
-  * [Write a Visual Component](./visual-component.md)
-  * [Write a Non-Visual Component](./data-component.md)
-  * [Embed a Component Within Another](./embed-components.md)
-  * [Interact Across Components](./cross-component.md)
+---
+
+**Contents:**
+
+[[toc]]
+
+---
 
 ## Dice roller
 
@@ -63,9 +65,9 @@ Sudoku is a collaborative Sudoku game.
 
 <iframe id="sudoku" src="/fluid/sudoku.html"></iframe>
 
-# Other examples
+## Other examples
 
-## Badge
+### Badge
 
 Badge is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.

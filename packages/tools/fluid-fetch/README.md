@@ -1,4 +1,4 @@
-# @fluidframework/fetch-tool
+# @fluid-internal/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
 In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
@@ -83,7 +83,7 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     [defaultComponent]/0fb26504-369f-4234-ad97-0a303d3ec81f/header             | 4
     [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/.attributes        | 72
     [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/header     | 448
-    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/tardis     | 4
+    [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/content/catchupOps | 4
     [defaultComponent]/74577601-3af5-49a1-9ca5-db5d9ee128a8/header             | 180
     [defaultComponent]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/.attributes        | 64
     [defaultComponent]/91ac6df2-dda6-409a-b5e3-be84ce9ab138/header             | 168

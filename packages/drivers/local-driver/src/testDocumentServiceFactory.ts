@@ -18,7 +18,6 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { IExperimentalDocumentStorage } from "@fluidframework/server-services-core";
 import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
 import { createTestDocumentService } from "./testDocumentService";
 
@@ -49,11 +48,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
         if (!this.localDeltaConnectionServer) {
             throw new Error("Provide the localDeltaConnectionServer!!");
         }
-        // eslint-disable-next-line max-len
-        const expDocumentStorage = ((this.localDeltaConnectionServer as LocalDeltaConnectionServer).documentStorage as IExperimentalDocumentStorage);
-        if (!(expDocumentStorage && expDocumentStorage.isExperimentalDocumentStorage)) {
-            throw new Error("Storage has no experimental features!!");
-        }
+        const documentStorage = (this.localDeltaConnectionServer as LocalDeltaConnectionServer).documentStorage;
 
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
@@ -63,7 +58,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;
-        await expDocumentStorage.createDocument(
+        await documentStorage.createDocument(
             tenantId,
             id,
             appSummary,
