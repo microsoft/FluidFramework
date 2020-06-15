@@ -1,3 +1,3 @@
 # @fluidframework/execution-context-loader
 
-This is an implementation of an execution context driver which supports loading containers inside a web worker. 
+This is an implementation of an execution context driver which supports loading containers inside a web worker.
