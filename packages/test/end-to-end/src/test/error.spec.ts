@@ -84,6 +84,8 @@ describe("Errors Types", () => {
         } catch (error) {
             assert.equal(error.errorType, ErrorType.genericError, "Error should be a genericError");
         }
+
+        await testDeltaConnectionServer.webSocketServer.close();
     });
 
     it("GeneralError Logging Test", async () => {
