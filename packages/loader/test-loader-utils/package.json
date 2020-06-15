@@ -3,7 +3,7 @@
   "version": "0.20.0",
   "private": true,
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
