@@ -311,7 +311,7 @@ class Document {
                 ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
                 ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
             ]);
-        const options = {};
+        const options = { catchUpBlobName: "catchupOps" };
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
