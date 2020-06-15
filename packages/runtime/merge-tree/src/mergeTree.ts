@@ -2285,25 +2285,7 @@ export class MergeTree {
         clientId: number, candidateSegment?: ISegment) {
         if (node.isLeaf()) {
             if (pos === 0) {
-                const segment = node;
-                const branchId = this.getBranchId(clientId);
-                const segmentBranchId = this.getBranchId(segment.clientId);
-                const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
-                if (removalInfo.removedSeq
-                    && removalInfo.removedSeq <= refSeq
-                    && removalInfo.removedSeq !== UnassignedSequenceNumber) {
-                    return false;
-                }
-
-                // Local change see everything
-                if (clientId === this.collabWindow.clientId) {
-                    return true;
-                }
-
-                if (node.seq !== UnassignedSequenceNumber) {
-                    // Ensure we merge right. newer segments should come before older segments
-                    return true;
-                }
+                return clientId === this.collabWindow.clientId || node.seq !== UnassignedSequenceNumber;
             }
             return false;
         } else {
