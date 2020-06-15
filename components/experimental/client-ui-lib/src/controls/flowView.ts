@@ -1231,7 +1231,7 @@ function layoutCell(
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
         const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView, nextTable);
+        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView, nextTable as MergeTree.Marker);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
@@ -1473,7 +1473,7 @@ function renderTree(
     } as ILayoutContext;
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const outerTable = startingPosStack.table.items[0];
-        const outerTablePos = flowView.sharedString.getPosition(outerTable);
+        const outerTablePos = flowView.sharedString.getPosition(outerTable as MergeTree.Marker);
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
@@ -3517,7 +3517,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             const tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
-                this.curPG = tilePos.tile;
+                this.curPG = tilePos.tile as MergeTree.Marker;
             }
             this.broadcastPresence();
             this.cursor.updateView(this);
@@ -4490,7 +4490,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story;
+            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
             commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
@@ -5220,7 +5220,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     // TODO: throttle this if local starts moving
     private remoteDragToLocal(remoteDragInfo: IRemoteDragInfo) {
         this.movingInclusion.exclu = remoteDragInfo.exclu;
-        this.movingInclusion.marker = getContainingSegment(this, remoteDragInfo.markerPos).segment;
+        this.movingInclusion.marker = <MergeTree.Marker>getContainingSegment(this, remoteDragInfo.markerPos).segment;
         this.movingInclusion.dx = remoteDragInfo.dx;
         this.movingInclusion.dy = remoteDragInfo.dy;
         this.movingInclusion.onTheMove = remoteDragInfo.onTheMove;

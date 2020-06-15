@@ -100,7 +100,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                         type: "generic",
                         url: baseInclusion.url,
                     };
-                    return incl;
+                    return incl as IGenericBlob;
                 });
         }
     }

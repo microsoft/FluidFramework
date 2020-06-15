@@ -45,7 +45,7 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
 
         // Then render the clicker in our div
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.clicker.render(componentDiv);
+        this.clicker!.render(componentDiv);
     }
 }
 
