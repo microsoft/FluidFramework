@@ -22,7 +22,7 @@ features:
 npm install --global yo generator-fluid
 
 # create a new Fluid Framework project
-yo fluid hellofluid --view-none --beginner
+yo fluid hellofluid --beginner
 
 # start it up
 cd hellofluid
