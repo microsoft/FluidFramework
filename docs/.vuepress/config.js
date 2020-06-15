@@ -126,7 +126,7 @@ const getApiSidebar = () => {
     }];
 
     files.forEach(file => {
-        let packageName = path.basename(file).split(".")[0];
+        const packageName = path.basename(file).split(".")[0];
         let category = "Unknown";
         if (apiMapping.has(packageName)) {
             category = apiMapping.get(packageName);
@@ -135,12 +135,15 @@ const getApiSidebar = () => {
             }
 
             const current = apiCategories.get(category);
-            current.push(packageName);
+            current.push(file);
             apiCategories.set(category, current);
         }
+        // console.log(`${file} ==> ${packageName} ==> ${category}`);
+
     });
 
-    console.log(apiCategories);
+    // console.log(apiCategories);
+    console.log(apiCategories.get("Unknown"));
 
     apiCategories.forEach((value, key) => {
         apiSidebar.push({
