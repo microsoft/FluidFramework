@@ -159,6 +159,7 @@
                     "@fluidframework/agent-scheduler"
                 ],
                 "dirs": [
+                    "packages/distributed-data-structures/",
                     "packages/runtime/"
                 ],
                 "deps": [
