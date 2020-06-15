@@ -28,7 +28,7 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
                 loader: "ts-loader"
             },
@@ -63,6 +63,9 @@ module.exports = env => {
             publicPath: '/dist',
             before: (app, server) => fluidRoute.before(app, server, env),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         }
     }, isProduction
         ? require("./webpack.prod")
