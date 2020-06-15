@@ -35,7 +35,6 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-import { SnapshotLegacy } from "@fluidframework/merge-tree";
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
@@ -121,7 +120,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, document, attributes);
 
-        document.options.catchUpBlobName = document.options.catchUpBlobName ?? SnapshotLegacy.catchupOps;
+        document.options.catchUpBlobName = document.options.catchUpBlobName ?? MergeTree.SnapshotLegacy.catchupOps;
 
         this.client = new MergeTree.Client(
             segmentFromSpec,
