@@ -120,6 +120,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, document, attributes);
 
+        document.options.catchUpBlobName = document.options.catchUpBlobName ?? "tardis";
+
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
