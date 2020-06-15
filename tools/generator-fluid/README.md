@@ -45,6 +45,8 @@ existing web technologies.
 ├── src
 |   ├── component.ts(x)            // Fluid Component source code with view
 |   └── index.ts                   // Export file
+├── tests
+|   └── component.test.ts(x)       // Fluid Component test
 ├── .gitignore                     // Ignore dist and node_modules
 ├── jest-puppeteer.config.js       // jest-puppeteer configuration
 ├── jest.config.js                 // Jest configuration

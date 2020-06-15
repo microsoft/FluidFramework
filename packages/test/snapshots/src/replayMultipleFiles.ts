@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import fs from "fs";
-import { ReplayArgs, ReplayTool } from "@fluidframework/replay-tool";
+import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/common-utils";
 
 const fileLocation: string = "content/snapshotTestContent";

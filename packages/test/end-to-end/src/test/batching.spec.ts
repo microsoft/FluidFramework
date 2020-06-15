@@ -16,7 +16,7 @@ import {
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 
 describe("Batching", () => {

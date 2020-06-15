@@ -15,7 +15,7 @@ import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {

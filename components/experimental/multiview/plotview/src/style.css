@@ -1,0 +1,14 @@
+.plot-view {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    border: 1px solid black;
+}
+
+.coordinate-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    position: absolute;
+    background-color: #f00;
+}
