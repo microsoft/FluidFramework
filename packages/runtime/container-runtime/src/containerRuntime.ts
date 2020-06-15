@@ -73,7 +73,7 @@ import {
     ISignalEnvelop,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -199,14 +199,6 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         default:
             return false;
     }
-}
-
-function assertNever(arg: never, message: string): never {
-    throw new Error(message);
-}
-
-function assertNeverMessageType(messageType: never): never {
-    assertNever(messageType, `Never: unknown message type: ${messageType}`);
 }
 
 export class ScheduleManager {
@@ -1585,7 +1577,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         batch: boolean,
         appData?: any) {
         // Switch in next release
-        const legacyFormat = true;
+        const legacyFormat = false;
 
         if (legacyFormat) {
             return this.context.submitFn(
@@ -1650,10 +1642,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
                 break;
             case ContainerMessageType.ChunkedOp:
-                assertNeverMessageType(type as never);
+                unreachableCase(type as never);
                 break;
         }
     }
