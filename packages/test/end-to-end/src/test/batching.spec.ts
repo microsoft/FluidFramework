@@ -8,7 +8,7 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";
-import { MessageType, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IEnvelope } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
@@ -17,6 +17,7 @@ import {
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@fluid-internal/test-utils";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 
 describe("Batching", () => {
     const id = `fluid-test://localhost/batchingTest`;
@@ -59,7 +60,7 @@ describe("Batching", () => {
 
     function setupBacthMessageListener(component: ITestFluidComponent, receivedMessages: ISequencedDocumentMessage[]) {
         component.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === MessageType.Operation) {
+            if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== "_scheduler") {
                     receivedMessages.push(message);

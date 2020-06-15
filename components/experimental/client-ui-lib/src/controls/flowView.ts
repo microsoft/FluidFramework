@@ -4923,9 +4923,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.viewTileProps();
                 this.hostSearchMenu(this.cursor.pos);
                 break;
-            case CharacterCodes.S:
-                this.collabDocument.save();
-                break;
             case CharacterCodes.Y:
                 this.undoRedoManager.undoOperation();
                 break;
