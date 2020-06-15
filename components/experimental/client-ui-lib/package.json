@@ -67,8 +67,8 @@
     "shape-detector": "^0.2.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@types/debug": "^4.1.5",
     "@types/jsdom": "^12.0.0",
     "@types/mocha": "^5.2.5",
