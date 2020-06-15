@@ -62,7 +62,7 @@ describe("Matrix", () => {
         beforeEach(async () => {
             componentRuntime = new MockComponentRuntime();
             matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
-    
+
             // Attach a new IMatrixConsumer
             consumer = new TestConsumer(matrix);
         });

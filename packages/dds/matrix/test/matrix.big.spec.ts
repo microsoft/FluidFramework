@@ -47,36 +47,36 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
 describe("Big Matrix", function () {
     this.timeout(10000);
 
-    let matrix1: SharedMatrix;
-    let matrix2: SharedMatrix;
-    let componentRuntime1: MockComponentRuntime;
-    let containterRuntimeFactory: MockContainerRuntimeFactory;
-
-    beforeEach(async () => {
-        containterRuntimeFactory = new MockContainerRuntimeFactory();
-
-        // Create and connect the first SharedMatrix.
-        componentRuntime1 = new MockComponentRuntime();
-        const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
-        const services1: ISharedObjectServices = {
-            deltaConnection: containerRuntime1.createDeltaConnection(),
-            objectStorage: new MockStorage(),
-        };
-        matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
-        matrix1.connect(services1);
-
-        // Create and connect the second SharedMatrix.
-        const componentRuntime2 = new MockComponentRuntime();
-        const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
-        const services2: ISharedObjectServices = {
-            deltaConnection: containerRuntime2.createDeltaConnection(),
-            objectStorage: new MockStorage(),
-        };
-        matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
-        matrix2.connect(services2);
-    });
-
     describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
+        let matrix1: SharedMatrix;
+        let matrix2: SharedMatrix;
+        let componentRuntime1: MockComponentRuntime;
+        let containterRuntimeFactory: MockContainerRuntimeFactory;
+
+        beforeEach(async () => {
+            containterRuntimeFactory = new MockContainerRuntimeFactory();
+
+            // Create and connect the first SharedMatrix.
+            componentRuntime1 = new MockComponentRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const services1: ISharedObjectServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1.connect(services1);
+
+            // Create and connect the second SharedMatrix.
+            const componentRuntime2 = new MockComponentRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const services2: ISharedObjectServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2.connect(services2);
+        });
+
         it("create", async () => {
             matrix1.insertRows(0, Const.excelMaxRows);
             matrix1.insertCols(0, Const.excelMaxCols);
@@ -96,9 +96,6 @@ describe("Big Matrix", function () {
             containterRuntimeFactory.processAllMessages();
 
             checkCorners(matrix2);
-
-            const fromSnapshot = await snapshot(matrix1);
-            checkCorners(fromSnapshot);
         });
 
         it("remove populated", async () => {
@@ -119,6 +116,33 @@ describe("Big Matrix", function () {
             containterRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, 0, 0);
+        });
+    });
+
+    describe("local client snapshot", () => {
+        // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
+        // lastSequenceNumber to be updated.
+        // Sp, we test snapshots with local client because MockComponentRuntime has no delta manager and is assigned
+        // one once it is connected.
+
+        let matrix: SharedMatrix;
+
+        beforeEach(async () => {
+            // Create a SharedMatrix in local state.
+            const componentRuntime = new MockComponentRuntime();
+            componentRuntime.local = true;
+            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
+        });
+
+        it("snapshot", async () => {
+            matrix.insertRows(0, Const.excelMaxRows);
+            matrix.insertCols(0, Const.excelMaxCols);
+
+            setCorners(matrix);
+            checkCorners(matrix);
+
+            const fromSnapshot = await snapshot(matrix);
+            checkCorners(fromSnapshot);
         });
     });
 });
