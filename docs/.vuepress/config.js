@@ -219,13 +219,13 @@ const getDocsSidebar = () => {
             collapsable: true,
             children: [
                 "visual-component.md",
-                "data-component.md",
-                "embed-components.md",
-                "cross-component.md",
-                "component-patterns.md",
-                "component-collections.md",
-                "bots.md",
-                "component-best-practices.md",
+                // "data-component.md",
+                // "embed-components.md",
+                // "cross-component.md",
+                // "component-patterns.md",
+                // "component-collections.md",
+                // "bots.md",
+                // "component-best-practices.md",
             ]
         },
         {
