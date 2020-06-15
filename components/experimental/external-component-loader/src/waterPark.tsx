@@ -8,6 +8,7 @@ import {
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
     SpacesStorage,
@@ -42,7 +43,7 @@ const defaultComponents = [
  * available when running on localhost.
  */
 const localComponentUrls = [
-    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
+    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
@@ -53,6 +54,14 @@ const componentUrls = defaultComponents.map((url) => `${url}@${defaultVersionToL
 // When running on localhost, add entries for local component development.
 if (window.location.hostname === "localhost") {
     componentUrls.push(...localComponentUrls);
+}
+
+/**
+ * IWaterparkItem just stores a handle, and will assume that the handle points to something that a ReactViewAdapter
+ * can adapt for rendering purposes.
+ */
+export interface IWaterparkItem {
+    handle: IComponentHandle;
 }
 
 /**
@@ -78,7 +87,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         return WaterPark.factory;
     }
 
-    private storage: SpacesStorage | undefined;
+    private storage: SpacesStorage<IWaterparkItem> | undefined;
     private loader: ExternalComponentLoader | undefined;
 
     public render(element: HTMLElement) {
@@ -86,7 +95,11 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Can't render, storage not found");
         }
         ReactDOM.render(
-            <WaterParkView storage={this.storage} onSelectOption={this.addComponent} />,
+            <WaterParkView
+                storage={this.storage}
+                onSelectOption={this.addComponent}
+                getViewForItem={this.getViewForItem}
+            />,
             element,
         );
     }
@@ -99,7 +112,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        this.storage = await this.root.get<IComponentHandle<SpacesStorage>>(storageKey)?.get();
+        this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
     }
 
@@ -118,20 +131,33 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         if (component.handle === undefined) {
             throw new Error("Can't add, component must have a handle");
         }
-        this.storage.addItem(
-            component.handle,
-            componentUrl,
-        );
+        this.storage.addItem({
+            handle: component.handle,
+        });
+    };
+
+    private readonly getViewForItem = async (item: IWaterparkItem) => {
+        const component = await item.handle.get();
+
+        // This is where a custom view could be provided if desired.
+
+        // Fall back to hoping the component is adaptable
+        if (ReactViewAdapter.canAdapt(component)) {
+            return <ReactViewAdapter component={component} />;
+        }
+
+        return undefined;
     };
 }
 
 interface IWaterParkViewProps {
-    storage: SpacesStorage;
+    storage: SpacesStorage<IWaterparkItem>;
     onSelectOption: (componentUrl: string) => Promise<void>;
+    getViewForItem: (item: IWaterparkItem) => Promise<JSX.Element | undefined>;
 }
 
 export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsWithChildren<IWaterParkViewProps>) => {
-    const [editable, setEditable] = React.useState(props.storage.componentList.size === 0);
+    const [editable, setEditable] = React.useState(props.storage.itemList.size === 0);
     return (
         <>
             <WaterParkToolbar
@@ -139,7 +165,11 @@ export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsW
                 onSelectOption={props.onSelectOption}
                 toggleEditable={() => setEditable(!editable)}
             />
-            <SpacesStorageView storage={props.storage} editable={editable} />
+            <SpacesStorageView
+                getViewForItem={props.getViewForItem}
+                storage={props.storage}
+                editable={editable}
+            />
         </>
     );
 };

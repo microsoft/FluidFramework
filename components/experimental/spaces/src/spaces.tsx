@@ -13,6 +13,7 @@ import {
 import {
     IComponentHandle,
 } from "@fluidframework/component-core-interfaces";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
@@ -32,7 +33,7 @@ const SpacesStorageKey = "spaces-storage";
  * owns the typenames, but the individual types own their own serializable object format.
  */
 export interface ISpacesItem {
-    serializableObject: any;
+    serializableObject: AsSerializable<any>;
     itemType: string;
 }
 

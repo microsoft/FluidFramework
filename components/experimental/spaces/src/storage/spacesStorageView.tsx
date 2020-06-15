@@ -77,7 +77,7 @@ const SpacesItemView: React.FC<ISpacesComponentViewProps> =
                     <SpacesEditPane url={props.url} removeComponent={props.removeComponent} />
                 }
                 <div className="spaces-embedded-component-wrapper">
-                    { itemView }
+                    {itemView}
                 </div>
             </div>
         );
