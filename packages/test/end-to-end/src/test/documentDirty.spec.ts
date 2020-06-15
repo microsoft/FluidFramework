@@ -113,13 +113,18 @@ describe("Document Dirty", () => {
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
         containerDeltaEventManager.registerDocuments(containerComp.runtime);
 
+        await containerDeltaEventManager.process();
+        containerDeltaEventManager.resumeProcessing(containerComp.runtime);
+
+        onMarkedClean(containerCompContainerRuntime);
+        onMarkedDirty(containerCompContainerRuntime);
         wasMarkedDirtyCount = 0;
         wasMarkedCleanCount = 0;
+
     });
 
     describe("Dirty state is updated correctly while in connected state", () => {
         it("marks state as dirty when ops are sent and clean when acks are received", async () => {
-            await containerDeltaEventManager.pauseProcessing();
             containerCompMap.set("key", "value");
             onMarkedClean(containerCompContainerRuntime);
 
@@ -127,10 +132,7 @@ describe("Document Dirty", () => {
                 "Document is dirty after value set");
 
             // Wait for the ops to get processed which should mark the document clean after processing
-            await Promise.all([
-                containerDeltaEventManager.resumeProcessing(),
-                containerDeltaEventManager.process(),
-            ]);
+            await containerDeltaEventManager.process();
 
             // Document will have been marked clean on reconnection
             assert.equal(wasMarkedCleanCount, 1,
@@ -168,7 +170,7 @@ describe("Document Dirty", () => {
 
             // Document should have been marked dirty again due to pending DDS ops
             assert.equal(true, oldDirtyCount < wasMarkedDirtyCount,
-                `Document should have been marked dirty again due to pending DDS ops.
+                `Document should have been marked dirty again due to pending DDS ops and incremented the count.
                 Dirty count: ${wasMarkedDirtyCount}`);
 
             // Document should have been marked dirty after to overwrite the clean value, so that the final
