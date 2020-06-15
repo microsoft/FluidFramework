@@ -176,7 +176,7 @@ model where HTML is combined with script tags.
 
 Because the loader is designed to work in both the browser and in node.js, both of which have different code loading
 mechanisms, the loader takes in an interface which provides the ability to dynamically load a code package. This also
-would allow a host to implement whitelisting, or other access controls, of which code to load.
+would allow a host to implement allowlisting, or other access controls, of which code to load.
 
 The interface for the loader is also simple.
 
@@ -187,7 +187,7 @@ export interface ICodeLoader {
 ```
 
 load takes in a source string. Today this is an npm package. But similar to npm package references is expected to
-grow into git repos, tarballs, CDN links, etc... 
+grow into git repos, tarballs, CDN links, etc...
 
 The IChaincodeFactory is a simple interface that defines the entry point function the loader expects the code
 package to export.
@@ -226,7 +226,7 @@ A mime type is also provided with the request to distinguish the type of object.
 is a Fluid component. Components implement the attach interface which allow them to participate in the web component
 model. But a document could also return different mime types like static images, videos, etc...
 
-The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable 
+The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable
 and provide it a div for it to render.
 
 ```typescript
@@ -247,11 +247,11 @@ switch (response.mimeType) {
 
 #### IComponent interface
 
-The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, 
+The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript,
 a feature detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent`
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
-cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you 
+cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you
 are testing for.  The above checks if the component implements `IComponentHTMLVisual`, and uses it to get the instance
 that implements the rendering capability.
 
