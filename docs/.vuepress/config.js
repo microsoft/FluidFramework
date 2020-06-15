@@ -9,22 +9,15 @@ const process = require("process");
 
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
-const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "internal";
-const THIS_VERSION = process.env.THIS_VERSION || "0.16";
-const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.16";
-const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.15";
-const N1_VERSION = process.env.N1_VERSION || "0.14";
+const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
+const THIS_VERSION = process.env.THIS_VERSION || "0.19";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
+const N1_VERSION = process.env.N1_VERSION || "0.17";
 const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
 const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
-
-const internalOnly = (obj) => {
-    if (DOCS_AUDIENCE !== "internal") {
-        return null;
-    }
-    return obj;
-};
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -52,65 +45,31 @@ const listPages = (dirPath, includeIndex = false) => {
 
 const getNav = () => {
     const nav = [
-        { text: "What is Fluid?", link: "/what-is-fluid" },
-        { text: "Guide", link: "/guide/" },
-        { text: "Tutorials", link: "/examples/" },
-        internalOnly({ text: "Patterns", link: "/patterns/" }),
+        { text: "What is Fluid?", link: "/what-is-fluid.md" },
+        { text: "Docs", link: "/docs/getting-started.md" },
+        { text: "Tutorials", link: "/tutorials/" },
+        // { text: "Ecosystem", link: "/ecosystem/" },
         { text: "API", link: "/api/overview" },
         {
-            text: "🤿 Dive Deeper",
-            items: [
-                { text: "How Fluid works", link: "/how/" },
-                internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
-                internalOnly({ text: "FAQ", link: "/faq/" }),
-                internalOnly({ text: "Terminology", link: "/misc/terminology" }),
-                internalOnly({ text: "Concepts", link: "/misc/concepts" }),
-                internalOnly({
-                    text: "Contributing",
-                    items: [
-                        { text: "Release process", link: "/contributing/release-process" },
-                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
-                        { text: "Compatibility", link: "/contributing/compatibility" },
-                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                        { text: "Documentation system", link: "/contributing/doc-system" },
-                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                        { text: "Miscellaneous", link: "/contributing/misc" },
-                    ]
-                }),
-                internalOnly({
-                    text: "Team",
-                    items: [
-                        { text: "Updates", link: "/team/" },
-                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                    ]
-                }),
-            ]
-        },
-        internalOnly({
             text: "Versions",
             items: [
                 { text: `v${RELEASE_VERSION}`, link: BASE_URL },
                 { text: `v${N1_VERSION}`, link: N1_URL },
                 { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
-        }),
+        },
     ];
 
     function filterFalsy(item) {
-        // console.log(`item: ${item}`);
         if (item) {
             if (item.items) {
-                // console.log("about to recurse!");
                 item.items = item.items.filter(filterFalsy);
             }
         }
         return item;
     }
 
-    // console.log(JSON.stringify(nav));
     const filtered = nav.filter(filterFalsy);
-    // console.log(JSON.stringify(filtered));
-
     return filtered;
 }
 
@@ -242,158 +201,141 @@ const getApiSidebar = () => {
     return apiSidebar;
 };
 
-const getGuideSidebar = () => {
+const getDocsSidebar = () => {
     return [
         {
-            title: "Guide",
+            title: "Installation",
             collapsable: false,
-            path: "./",
-            children: compact([
-                "",
-                "package-feed.md",
-                "spfx.md",
-                "upload.md",
-                internalOnly("yo-fluid"),
-                internalOnly("water-park"),
-            ])
-        },
-        {
-            title: "Distributed Data Structures",
-            collapsable: false,
-            path: "dds",
+            // path: "",
             children: [
-                "SharedDirectory",
-                "SharedMap",
-                "SharedCell",
-                {
-                    title: "Sequences",
-                    path: "sequences",
-                    children: [
-                        "SharedNumberSequence",
-                        "SharedObjectSequence",
-                        "SharedString",
-                        "SparseMatrix",
-                    ],
-                },
-                "consensus",
+                "getting-started.md",
+                "hello-world.md",
+                "create-a-new-fluid-component",
             ]
         },
+        {
+            title: "Main concepts",
+            collapsable: false,
+            children: [
+                "dds.md",
+                "components.md",
+                "aqueduct.md",
+                "component-interfaces.md",
+            ]
+        },
+        {
+            title: "DDS reference",
+            collapsable: false,
+            // path: "dds",
+            children: [
+                // "overview",
+                "SharedDirectory.md",
+                "SharedMap.md",
+                "SharedCounter.md",
+                "SharedCell.md",
+                {
+                    title: "Sequences",
+                    path: "sequences.md",
+                    children: [
+                        "SharedNumberSequence.md",
+                        "SharedObjectSequence.md",
+                        "SharedString.md",
+                    ],
+                },
+                "SharedMatrix.md",
+                "consensus.md",
+            ]
+        },
+        // {
+        //     title: "API",
+        //     path: "../",
+        //     children: getApiSidebar(),
+        // },
         {
             title: "Component model",
             collapsable: false,
             children: [
-                "components.md",
                 "component-design-principles.md",
             ]
         },
         {
-            title: "Advanced",
-            collapsable: false,
+            title: "Guides",
+            collapsable: true,
             children: [
-                "dds-anatomy",
-                "container-and-component-loading",
+                "visual-component.md",
+                "data-component.md",
+                "embed-components.md",
+                "cross-component.md",
+                "component-patterns.md",
+                "component-collections.md",
+                "bots.md",
+                "component-best-practices.md",
+            ]
+        },
+        {
+            title: "Advanced",
+            collapsable: true,
+            children: [
+                "tob.md",
+                "dds-anatomy.md",
+                "container-and-component-loading.md",
+            ]
+        },
+        {
+            title: "Misc",
+            collapsable: false,
+            // path: "",
+            children: [
+                "release-process.md",
+                "breaking-changes.md",
+                "compatibility.md",
+                "doc-system.md",
             ]
         },
     ];
 }
 
-const getExamplesSidebar = () => {
-    return compact([
-        "",
-        "dice-roller",
-        "sudoku",
-        "badge",
-        internalOnly({
-            title: "Components",
-            collapsable: true,
-            children: [
-                "visual-component",
-                "data-component",
-                "embed-components",
-                "cross-component",
-                "component-patterns",
-                "component-collections",
-                "bots",
-                "component-best-practices",
-            ]
-        }),
-        internalOnly({
-            title: "Containers",
-            collapsable: true,
-            children: [
-                "singletons",
-            ]
-        }),
-    ]);
-}
-
-const getTeamSidebar = () => {
+const getTutorialsSidebar = () => {
     return [
         {
-            title: "Team",
+            title: "Tutorials",
             collapsable: false,
+            // path: "",
             children: [
-                ""
+                "",
+                "dice-roller.md",
+                "sudoku.md",
             ]
         },
         {
-            title: "Updates",
+            title: "Examples",
             collapsable: false,
-            children: listPages("../team/")
+            // path: "",
+            children: [
+                "badge.md",
+            ]
         },
+
     ];
 }
 
 const getHowSidebar = () => {
-    return compact([
-        "",
-        "tob",
-        internalOnly("developer-guide"),
-    ]);
-}
-
-const getAdvancedSidebar = () => {
     return [
         "",
-        "loading-deep-dive",
-    ];
-}
-
-const getPatternsSidebar = () => {
-    return [
-        {
-            title: "Patterns",
-            collapsable: false,
-            children: [
-                "leader-election",
-            ]
-        },
     ];
 }
 
 const getAllSidebars = () => {
-    const sidebars = {
-        internal: {
-            "/patterns/": getPatternsSidebar(),
-            "/advanced/": getAdvancedSidebar(),
-            "/team/": getTeamSidebar(),
-        },
-        all: {
-            "/guide/": getGuideSidebar(),
-            "/examples/": getExamplesSidebar(),
-            "/api/": getApiSidebar(),
-            "/how/": getHowSidebar(),
-        }
+    return {
+        "/docs/": getDocsSidebar(),
+        "/tutorials/": getTutorialsSidebar(),
+        "/api/": getApiSidebar(),
+        "/how/": getHowSidebar(),
     };
-
-    return Object.assign({},
-        sidebars.all,
-        DOCS_AUDIENCE === "internal" ? sidebars.internal : {}
-    );
 }
 
 const getThemeConfig = () => {
-    let config = {
+    const config = {
         DOCS_AUDIENCE: DOCS_AUDIENCE,
         THIS_VERSION: THIS_VERSION,
         MASTER_BRANCH_VERSION: MASTER_BRANCH_VERSION,
@@ -406,24 +348,17 @@ const getThemeConfig = () => {
         lastUpdated: false, // "Last Updated",
         docsDir: "docs",
         heroSymbol: permalinkSymbol(),
+        repo: "microsoft/FluidFramework",
         smoothScroll: true,
         sidebarDepth: 1,
         nav: getNav(),
         sidebar: getAllSidebars(),
     };
-    if (DOCS_AUDIENCE === "internal") {
-        config.repo = "microsoft/FluidFramework";
-    }
     return config;
 }
 
 function permalinkSymbol() {
-    const now = new Date(new Date().getTime());
-    const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
-    const end = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 18));
-    const inRange = start < now && now < end;
-    // console.log(`${inRange}: ${start} < ${now} < ${end}`);
-    const symbol = inRange ? "🍀" : "💧";
+    const symbol = "💧";
     return symbol;
 }
 
@@ -443,6 +378,7 @@ module.exports = {
         // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
+        ["alias"],
         ["tabs"],
         ["vuepress-plugin-check-md"],
         // [
@@ -485,6 +421,7 @@ module.exports = {
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
+        toc: { includeLevel: [2, 3, 4] },
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins
@@ -497,35 +434,4 @@ module.exports = {
         }
     },
     themeConfig: getThemeConfig(),
-
-    // The below is basically a clone of the vuepress build command, but supports overridding the "base" parameter in a
-    // kind of hacky way.
-    // extendCli: (cli, options) => {
-    //     cli
-    //         .command("buildbase [targetDir]", "build dir as static site")
-    //         .option("-b, --base <base>", "override the base config option")
-    //         .option("-d, --dest <dest>", "specify build output dir (default: .vuepress/dist)")
-    //         .option("-t, --temp <temp>", "set the directory of the temporary file")
-    //         .option("-c, --cache [cache]", "set the directory of cache")
-    //         .option("-w, --workers <#>", "set the number of worker threads")
-    //         .option("--no-cache", "clean the cache before build")
-    //         .option("--debug", "build in development mode for debugging")
-    //         .option("--silent", "build static site in silent mode")
-    //         .action((sourceDir = ".", commandOptions) => {
-    //             const { debug, silent, workers } = commandOptions
-
-    //             logger.setOptions({ logLevel: silent ? 1 : debug ? 4 : 3 })
-    //             env.setOptions({ isDebug: debug, isTest: process.env.NODE_ENV === "test", workerThreads: workers || 1 })
-
-    //             let buildOptions = {
-    //                 sourceDir: path.resolve(sourceDir),
-    //                 ...options,
-    //                 ...commandOptions
-    //             };
-    //             buildOptions.siteConfig.base = buildOptions.options.base;
-    //             logger.debug("siteConfig", buildOptions.siteConfig);
-
-    //             wrapCommand(build(buildOptions));
-    //         })
-    // },
 }

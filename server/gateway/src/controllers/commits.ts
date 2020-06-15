@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@microsoft/fluid-gitresources";
+import * as resources from "@fluidframework/gitresources";
 // eslint-disable-next-line import/no-unassigned-import
 import "gitgraph.js";
-import * as $ from "jquery";
+import $ from "jquery";
 
 const templateConfig = {
     arrow: {

@@ -126,7 +126,6 @@ export enum ConnectionState {
 }
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    public readonly isExperimentalContainer = true;
     public static version = "^0.1.0";
 
     /**
@@ -395,6 +394,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             {
                 docId: () => this.id,
+                isContainerAttached: () => this.attached,
             });
 
         // Prefix all events in this file with container-loader

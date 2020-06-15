@@ -15,7 +15,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 
 describe("LocalTestServer", () => {
     const id = "fluid-test://localhost/localServerTest";

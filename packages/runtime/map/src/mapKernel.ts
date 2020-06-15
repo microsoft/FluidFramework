@@ -181,6 +181,7 @@ export class MapKernel {
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
+     * @param isLocal - To query whether the shared object is in local state
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
@@ -188,6 +189,7 @@ export class MapKernel {
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
+        private readonly isLocal: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -323,6 +325,7 @@ export class MapKernel {
             throw new Error("Undefined and null keys are not supported");
         }
 
+        // Create a local value and serialize it.
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = makeSerializable(
             localValue,
@@ -330,12 +333,18 @@ export class MapKernel {
             this.runtime.IComponentHandleContext,
             this.handle);
 
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
             true,
             null,
         );
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
 
         const op: IMapSetOperation = {
             key,
@@ -349,6 +358,7 @@ export class MapKernel {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any) {
+        // Create a local value and serialize it.
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
         // TODO ideally we could use makeSerialized in this case as well. But the interval
@@ -360,10 +370,7 @@ export class MapKernel {
             this.runtime.IComponentHandleContext,
             this.handle);
 
-        // This is a special form of serialized valuetype only used for set, containing info for initialization.
-        // After initialization, the serialized form will need to come from the .store of the value type's factory.
-        const serializableValue = { type, value: transformedValue };
-
+        // Set the value locally.
         this.setCore(
             key,
             localValue,
@@ -371,6 +378,14 @@ export class MapKernel {
             null,
         );
 
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
         const op: IMapSetOperation = {
             key,
             type: "set",
@@ -385,13 +400,20 @@ export class MapKernel {
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
+        // Delete the key locally first.
+        const successfullyRemoved = this.deleteCore(key, true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return successfullyRemoved;
+        }
+
         const op: IMapDeleteOperation = {
             key,
             type: "delete",
         };
-
-        const successfullyRemoved = this.deleteCore(op.key, true, null);
         this.submitMapKeyMessage(op);
+
         return successfullyRemoved;
     }
 
@@ -399,11 +421,17 @@ export class MapKernel {
      * Clear all data from the map.
      */
     public clear(): void {
+        // Clear the data locally first.
+        this.clearCore(true, null);
+
+        // If we are in local state, don't submit the op.
+        if (this.isLocal()) {
+            return;
+        }
+
         const op: IMapClearOperation = {
             type: "clear",
         };
-
-        this.clearCore(true, null);
         this.submitMapClearMessage(op);
     }
 

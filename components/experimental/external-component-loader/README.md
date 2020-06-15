@@ -1,4 +1,4 @@
-# External Component Loader
+# @fluidframework/external-component-loader
 
 An experimental implementation of how to use a Container to enable dynamic code loading from a CDN.
 

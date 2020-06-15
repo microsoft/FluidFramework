@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/version-test-1",
+  "name": "@fluid-internal/version-test-1",
   "version": "0.20.0",
   "private": true,
   "description": "Component to test version conversion.",
@@ -11,7 +11,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:compile",
-    "build-v2": "cd @fluid-example/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
+    "build-v2": "cd @fluid-internal/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",

@@ -47,8 +47,6 @@ try {
     threads = require("worker_threads");
 } catch (error) { }
 import { ReplayArgs } from "./replayArgs";
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const packageJson = require("../package.json");
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -239,9 +237,9 @@ class Document {
     }
 
     public async replay(replayTo: number) {
-        this.replayer.replay(replayTo);
+        const fetched = this.replayer.replay(replayTo);
 
-        if (this.documentSeqNumber !== this.currentOp) {
+        if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
             await new Promise((resolve) => {
                 this.resolveC = resolve;
             });
@@ -346,11 +344,11 @@ export class ReplayTool {
     private readonly documentsFromStorageSnapshots: Document[] = [];
     private windiffCount = 0;
     private deltaStorageService: FileDeltaStorageService;
-    private errorCount = 0;
+    private readonly errors: string[] = [];
 
     public constructor(private readonly args: ReplayArgs) { }
 
-    public async Go(): Promise<boolean> {
+    public async Go(): Promise<string[]> {
         this.args.checkArgs();
 
         // Make unhandled exceptions errors, not just warnings
@@ -377,46 +375,49 @@ export class ReplayTool {
 
         process.removeListener("unhandledRejection", listener);
 
-        return this.errorCount === 0;
+        return this.errors;
     }
 
-    private shouldReportError() {
+    private shouldReportError(errorString: string) {
         // Report only first 5 errors
-        this.errorCount++;
+        this.errors.push(errorString);
         const errorsToReport = 5;
-        if (this.errorCount <= errorsToReport) {
+        if (this.errors.length <= errorsToReport) {
             return true;
         }
-        if (this.errorCount === errorsToReport + 1) {
+        if (this.errors.length === errorsToReport + 1) {
             console.error("\n!!! Too many errors - stopped reporting errors !!!");
         }
         return false;
     }
 
     private reportError(description: string, error?: any) {
-        if (this.shouldReportError()) {
-            if (error === undefined) {
-                console.error(description);
-            } else if (error instanceof Error) {
-                console.error(`${description}\n${error.stack}`);
-            } else {
-                console.error(`${description} ${error}`);
-            }
+        let errorString: string;
+        if (error === undefined) {
+            errorString = description;
+        } else if (error instanceof Error) {
+            errorString = `${description}\n${error.stack}`;
+        } else {
+            errorString = `${description} ${error}`;
+        }
+        if (this.shouldReportError(errorString)) {
+            console.error(errorString);
         }
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
+        const errorString = JSON.stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
         // still fails even if error is not propagated / reported properly.
         if (event.eventName === "fluid:telemetry:Container:SnapshotExceptionError") {
-            if (this.errorCount === 0) {
-                this.errorCount++;
+            if (this.errors.length === 0) {
+                this.errors.push(errorString);
             }
             return false;
         }
-        return this.shouldReportError();
+        return this.shouldReportError(errorString);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -449,6 +450,50 @@ export class ReplayTool {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject("--to argument is below snapshot starting op. Nothing to do!");
+            }
+        }
+
+        if (this.args.initalizeFromSnapshotsDir) {
+            for (const node of fs.readdirSync(this.args.initalizeFromSnapshotsDir, { withFileTypes: true })) {
+                let storage;
+                if (node.isDirectory()) {
+                    // Did we load it already as main doc?
+                    if (node.name === this.args.version) {
+                        continue;
+                    }
+
+                    const file = `${this.args.initalizeFromSnapshotsDir}/${node.name}/tree.json`;
+                    if (!fs.existsSync(file)) {
+                        console.error(`${file} does not exist, skipping ${node.name} snapshot`);
+                        continue;
+                    }
+                    storage = new FluidFetchReaderFileSnapshotWriter(this.args.initalizeFromSnapshotsDir, node.name);
+                } else {
+                    if (node.name.startsWith("snapshot_")) {
+                        storage = FileSnapshotReader.createFromPath(
+                            `${this.args.initalizeFromSnapshotsDir}/${node.name}`);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+
+                const doc = new Document(this.args, storage, node.name);
+                try {
+                    await this.loadDoc(doc);
+                    doc.appendToFileName(`_storage_${node.name}`);
+
+                    if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
+                        console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                    } else {
+                        if (this.args.verbose) {
+                            console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                        }
+                        this.documents.push(doc);
+                    }
+                } catch (error) {
+                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                }
             }
         }
 
@@ -752,12 +797,40 @@ export class ReplayTool {
     }
 
     private compareSnapshots(content: ContainerContent, filename: string) {
+        // normalize the snapshots
+        const packageVersionRegex = /["\\]+packageVersion["\\]+:["\\]+.+["\\]+/g;
+        const packageVersionPlaceholder = "\"packageVersion\":\"XXX\"";
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
-            { encoding: "utf-8" });
-        if (snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)
-            !== content.snapshotAsString.replace(new RegExp("0.19.5", "g"), `${packageJson.version}`)) {
-            this.reportError(`Mismatch in snapshot ${filename}.json`);
+            { encoding: "utf-8" }).replace(packageVersionRegex, packageVersionPlaceholder);
+        const contentString =
+            content.snapshotAsString.replace(packageVersionRegex, packageVersionPlaceholder);
+
+        if (snapshotAsString !== contentString) {
+            const fileLines = snapshotAsString.split("\n");
+            const contentLines = contentString.split("\n");
+            let line = 0;
+            const maxLines = Math.max(fileLines.length, contentLines.length);
+            while (line < maxLines && fileLines[line] === contentLines[line]) {
+                line++;
+            }
+
+            const fileLine = fileLines[line] ?? "";
+            const contentLine = contentLines[line] ?? "";
+
+            let char = 0;
+            const maxChars = Math.max(fileLine.length, contentLine.length);
+            while (char < maxChars && fileLine.charAt(char) === contentLine.charAt(char)) {
+                char++;
+            }
+
+            const start = Math.max(0, char - 64);
+            const end = char + 64;
+
+            this.reportError(
+                `Mismatch in snapshot ${filename}.json @${line}:${char}
+                +${fileLine.substr(start, end).trim()}
+                -${contentLine.substr(start, end).trim()}`);
         }
     }
 }

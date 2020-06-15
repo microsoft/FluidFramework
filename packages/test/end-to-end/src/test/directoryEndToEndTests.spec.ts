@@ -16,7 +16,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 
 describe("Directory", () => {
     const id = "fluid-test://localhost/directoryTest";
@@ -549,6 +549,97 @@ describe("Directory", () => {
 
                 expectAllAfterValues("testKey3", "/testSubDir", "value3.3");
                 expectAllSize(1, "/testSubDir");
+            });
+        });
+    });
+
+    describe("Operations in local state", () => {
+        describe("Load new directory with data from local state and process ops", () => {
+            /**
+             * These tests test the scenario found in the following bug:
+             * https://github.com/microsoft/FluidFramework/issues/2400
+             *
+             * - A SharedDirectory in local state performs a set or directory operation.
+             * - A second SharedDirectory is then created from the snapshot of the first one.
+             * - The second SharedDirectory performs the same operation as the first one but with a different value.
+             * - The expected behavior is that the first SharedDirectory updates the key with the new value. But in the
+             *   bug, the first SharedDirectory stores the key in its pending state even though it does not send out an
+             *   an op. So when it gets a remote op with the same key, it ignores it as it has a pending op with the
+             *   same key.
+             */
+
+            it("can process set in local state", async () => {
+                // Create a new directory in local (detached) state.
+                const newDirectory1 = SharedDirectory.create(component1.runtime);
+
+                // Set a value while in local state.
+                newDirectory1.set("newKey", "newValue");
+
+                // Now add the handle to an attached directory so the new directory gets attached too.
+                sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
+
+                await containerDeltaEventManager.process();
+
+                // The new directory should be availble in the remote client and it should contain that key that was
+                // set in local state.
+                const newDirectory2
+                    = await sharedDirectory2.get<IComponentHandle<SharedDirectory>>("newSharedDirectory").get();
+                assert.equal(
+                    newDirectory2.get("newKey"),
+                    "newValue",
+                    "The data set in local state is not available in directory 2");
+
+                // Set a new value for the same key in the remote directory.
+                newDirectory2.set("newKey", "anotherNewValue");
+
+                await containerDeltaEventManager.process();
+
+                // Verify that the new value is updated in both the directories.
+                assert.equal(
+                    newDirectory2.get("newKey"),
+                    "anotherNewValue",
+                    "The new value is not updated in directory 2");
+                assert.equal(
+                    newDirectory1.get("newKey"),
+                    "anotherNewValue",
+                    "The new value is not updated in directory 1");
+            });
+
+            it("can process sub directory ops in local state", async () => {
+                // Create a new directory in local (detached) state.
+                const newDirectory1 = SharedDirectory.create(component1.runtime);
+
+                // Create a sub directory while in local state.
+                const subDirName = "testSubDir";
+                newDirectory1.createSubDirectory(subDirName);
+
+                // Now add the handle to an attached directory so the new directory gets attached too.
+                sharedDirectory1.set("newSharedDirectory", newDirectory1.handle);
+
+                await containerDeltaEventManager.process();
+
+                // The new directory should be availble in the remote client and it should contain that key that was
+                // set in local state.
+                const newDirectory2
+                    = await sharedDirectory2.get<IComponentHandle<SharedDirectory>>("newSharedDirectory").get();
+                assert.ok(
+                    newDirectory2.getSubDirectory(subDirName),
+                    "The subdirectory created in local state is not available in directory 2");
+
+                // Delete the sub directory from the remote client.
+                newDirectory2.deleteSubDirectory(subDirName);
+
+                await containerDeltaEventManager.process();
+
+                // Verify that the sub directory is deleted from both the directories.
+                assert.equal(
+                    newDirectory2.getSubDirectory(subDirName),
+                    undefined,
+                    "The sub directory is not deleted from directory 2");
+                assert.equal(
+                    newDirectory1.getSubDirectory(subDirName),
+                    undefined,
+                    "The sub directory is not deleted from directory 1");
             });
         });
     });

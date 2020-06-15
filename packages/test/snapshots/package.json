@@ -1,6 +1,7 @@
 {
-  "name": "@fluidframework/test-snapshots",
+  "name": "@fluid-internal/test-snapshots",
   "version": "0.20.0",
+  "private": true,
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,7 +23,6 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:mocha": "mocha --experimental-worker --recursive dist/test --exit -r make-promises-safe",
-    "test:sequential": "mocha --recursive dist/test --exit -r make-promises-safe",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -48,11 +48,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1006.1",
-    "@fluidframework/replay-tool": "^0.20.0"
+    "@fluid-internal/replay-tool": "^0.20.0",
+    "@fluidframework/common-utils": "^0.19.1",
+    "@fluidframework/protocol-definitions": "^0.1006.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/build-common": "^0.17.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.17.24",

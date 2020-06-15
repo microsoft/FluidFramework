@@ -13,13 +13,13 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import {
     CreationDocumentServiceFactory,
     CreationDriverUrlResolver,
-} from "@fluidframework/experimental-creation-driver";
+} from "@fluid-internal/experimental-creation-driver";
 import {
     ITestFluidComponent,
     initializeLocalContainer,
     LocalCodeLoader,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 

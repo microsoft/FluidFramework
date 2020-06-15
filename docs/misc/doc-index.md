@@ -9,8 +9,8 @@ uid: doc-index
 ### Overviews
 
 - [What is Fluid?](../what-is-fluid.md)
-- [Fluid Component Model](../guide/components.md)
-- [Anatomy of a DDS](../guide/dds-anatomy.md)
+- [Fluid Component Model](../docs/components.md)
+- [Anatomy of a DDS](../docs/dds-anatomy.md)
 
 ### Tutorials
 

@@ -1,4 +1,4 @@
-# Undo Redo
+# @fluidframework/undo-redo
 
 This package provides and implementation of an in-memory undo redo stack, as well as handlers for the SharedMap, and
 SharedSegmentSequence distributed datastructures.

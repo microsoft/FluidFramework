@@ -1,3 +1,3 @@
-# Sudoku Fluid Component
+# @fluid-example/sudoku
 
 See <../../docs/examples/sudoku-example.md>
