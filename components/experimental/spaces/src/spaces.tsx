@@ -70,8 +70,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Spaces can't render, storage not found");
         }
 
-        const addComponent = (type: string) => {
-            this.createAndStoreComponent(type, { w: 20, h: 5, x: 0, y: 0 })
+        const addItem = (type: string) => {
+            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
                 .catch((error) => {
                     console.error(`Error while creating component: ${type}`, error);
                 });
@@ -81,7 +81,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             <SpacesView
                 componentMap={spacesComponentMap}
                 storage={this.storageComponent}
-                addComponent={addComponent}
+                addItem={addItem}
                 templates={[...Object.keys(templateDefinitions)]}
                 applyTemplate={this.applyTemplate}
                 getViewForItem={this.getViewForItem}
@@ -111,7 +111,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         const templateDefinition = templateDefinitions[template];
         for (const [componentType, layouts] of Object.entries(templateDefinition)) {
             for (const layout of layouts) {
-                componentPromises.push(this.createAndStoreComponent(componentType, layout));
+                componentPromises.push(this.createAndStoreItem(componentType, layout));
             }
         }
         await Promise.all(componentPromises);
@@ -129,14 +129,14 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         if (templateString) {
             const templateItems = JSON.parse(templateString) as ISpacesStoredItem<ISpacesItem>[];
             const promises = templateItems.map(async (templateItem) => {
-                return this.createAndStoreComponent(templateItem.serializableItemData.itemType, templateItem.layout);
+                return this.createAndStoreItem(templateItem.serializableItemData.itemType, templateItem.layout);
             });
 
             await Promise.all(promises);
         }
     }
 
-    private async createAndStoreComponent(type: string, layout: Layout): Promise<string> {
+    private async createAndStoreItem(type: string, layout: Layout): Promise<string> {
         if (this.storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
         }

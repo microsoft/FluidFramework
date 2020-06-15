@@ -10,14 +10,14 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import {
-    ISpacesComponentEntry,
+    ISpacesItemEntry,
 } from "./spacesComponentMap";
 import "./spacesToolbarStyle.css";
 
 initializeIcons();
 
 interface ISpacesToolbarComponentItemProps {
-    componentMap: Map<string, ISpacesComponentEntry>;
+    componentMap: Map<string, ISpacesItemEntry>;
     addComponent(type: string): void;
 }
 
@@ -108,10 +108,10 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
     };
 
 interface ISpacesToolbarProps {
-    componentMap: Map<string, ISpacesComponentEntry>;
+    componentMap: Map<string, ISpacesItemEntry>;
     editable: boolean;
     setEditable: (editable: boolean) => void;
-    addComponent(type: string): void;
+    addItem(type: string): void;
     templates?: string[];
     applyTemplate?(template: string): void;
 }
@@ -142,7 +142,7 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
                 <SpacesToolbarComponentItem
                     key="component"
                     componentMap={props.componentMap}
-                    addComponent={props.addComponent}
+                    addComponent={props.addItem}
                 />,
             );
 

@@ -5,15 +5,15 @@
 
 import React from "react";
 import "react-grid-layout/css/styles.css";
-import { ISpacesComponentEntry } from "./spacesComponentMap";
+import { ISpacesItemEntry } from "./spacesComponentMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
 import { ISpacesItem } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    componentMap: Map<string, ISpacesComponentEntry>;
+    componentMap: Map<string, ISpacesItemEntry>;
     storage: ISpacesStorage<ISpacesItem>;
-    addComponent(type: string): void;
+    addItem(type: string): void;
     getViewForItem: (item: ISpacesItem) => Promise<JSX.Element | undefined>;
     templates?: string[];
     applyTemplate?(template: string): void;
@@ -33,7 +33,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                     editable={editable}
                     setEditable={setEditable}
                     componentMap={props.componentMap}
-                    addComponent={props.addComponent}
+                    addItem={props.addItem}
                     templates={props.templates}
                     applyTemplate={props.applyTemplate}
                 />

@@ -4,10 +4,8 @@
  */
 
 import { IComponent, IComponentHandle, IComponentLoadable } from "@fluidframework/component-core-interfaces";
-import {
-    IProvideComponentFactory,
-    NamedComponentRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+import { AsSerializable } from "@fluidframework/component-runtime-definitions";
+import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
@@ -29,7 +27,7 @@ const createSingleHandle = (type: string) => {
     };
 };
 
-const getAnonymousSingleHandleView = async (serializableObject: any) => {
+const getAdaptedViewForHandle = async (serializableObject: any) => {
     const handle = serializableObject.handle as IComponentHandle;
     const component = await handle.get();
     return React.createElement(ReactViewAdapter, { component });
@@ -38,50 +36,45 @@ const getAnonymousSingleHandleView = async (serializableObject: any) => {
 /**
  * A registry entry, with extra metadata.
  */
-export interface ISpacesComponentEntry {
-    factory: Promise<IProvideComponentFactory>;
+export interface ISpacesItemEntry {
     // Would be good for widgets to bring their own subregistries
     // Try not to hand out createAndAttachComponent
-    create: (createAndAttachComponent: ICreateAndAttachComponentFunction) => Promise<any>;
+    create: (createAndAttachComponent: ICreateAndAttachComponentFunction) => Promise<AsSerializable<any>>;
     // Try to get stronger typing here
     getView: (serializableObject: any) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerComponentEntry: ISpacesComponentEntry = {
-    factory: Promise.resolve(ClickerInstantiationFactory),
+const clickerComponentEntry: ISpacesItemEntry = {
     create: createSingleHandle(ClickerInstantiationFactory.type),
-    getView: getAnonymousSingleHandleView,
+    getView: getAdaptedViewForHandle,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorComponentEntry: ISpacesComponentEntry = {
-    factory: Promise.resolve(cmfe),
+const codemirrorComponentEntry: ISpacesItemEntry = {
     create: createSingleHandle(cmfe.type),
-    getView: getAnonymousSingleHandleView,
+    getView: getAdaptedViewForHandle,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxComponentEntry: ISpacesComponentEntry = {
-    factory: Promise.resolve(CollaborativeText.getFactory()),
+const textboxComponentEntry: ISpacesItemEntry = {
     create: createSingleHandle(CollaborativeText.ComponentName),
-    getView: getAnonymousSingleHandleView,
+    getView: getAdaptedViewForHandle,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorComponentEntry: ISpacesComponentEntry = {
-    factory: Promise.resolve(pmfe),
+const prosemirrorComponentEntry: ISpacesItemEntry = {
     create: createSingleHandle(pmfe.type),
-    getView: getAnonymousSingleHandleView,
+    getView: getAdaptedViewForHandle,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-export const spacesComponentMap = new Map<string, ISpacesComponentEntry>([
+export const spacesComponentMap = new Map<string, ISpacesItemEntry>([
     ["clicker", clickerComponentEntry],
     ["codemirror", codemirrorComponentEntry],
     ["textbox", textboxComponentEntry],
