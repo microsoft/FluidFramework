@@ -20,7 +20,7 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/fluid)
+Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluid)
 
 ## Building and Running
 
@@ -41,46 +41,21 @@ below steps if you'd like to run a local version of the service or need to make 
 * [Node v12.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
 
-### Authorizing to private NPM feed
-
-Routerlicious takes a dependency on a set of common Fluid Framework packages stored in VSTS. We follow the standard
-practices defined at https://docs.npmjs.com/docker-and-private-modules in order to make use of these inside of
-our container builds.
-
-In order to get an access token navigate to https://offnet.visualstudio.com/officenet/_packaging?_a=connect&feed=fluid.
-Then choose NPM and then follow the steps in the "Other" tab. Then store the base64 encoded token in a `NPM_TOKEN`
-environment variable. Be sure to choose the correct permissions for the personal access token.
-
-In Powershell
-```
-[System.Environment]::SetEnvironmentVariable('NPM_TOKEN','[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]',[System.EnvironmentVariableTarget]::User)
-```
-
-In Bash
-```
-$EDITOR ~/.profile
-```
-Add the following line at the bottom of the file 
-```
-     export NPM_TOKEN=[BASE64_ENCODED_PERSONAL_ACCESS_TOKEN]
-```
-
 ### Development
 
-Docker is the preferred method of development. To build the service simply type:
+Docker is the preferred method of development.
 
-In Powershell
+To build the service:
+
 ```
-docker-compose build --build-arg NPM_TOKEN=$env:NPM_TOKEN
-```
-In Bash
-```
-docker-compose build --build-arg NPM_TOKEN=$NPM_TOKEN
+docker-compose build
 ```
 
-And to run
+And to run the service:
 
-`docker-compose up`
+```
+docker-compose up
+```
 
 We also support volume mounting your local drive into the container which provides a faster dev loop.
 
@@ -112,11 +87,7 @@ or
 
 ### Standalone
 
-You can also just run the service directly with Docker. To do so you first need to authenticate to our private
-container registry by following the steps at https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication#individual-login-with-azure-ad
-
-Once you've installed the Azure CLI and authenticated you can auth against our container registry with
-* `az acr login --name prague`
+You can also just run the service directly with Docker. You'll need to connect to our container registry to start.
 
 Docker Compose is used to run the service locally. To start up an instance of the service simply run the following two commands.
 
@@ -140,7 +111,9 @@ If you want to build API documentation locally, see [Building Documentation](htt
 
 ## CI/CD
 
-We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
+Historically: We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/
+
+Coming Soon... a public facing CI/CD loop 
 
 ## Design principals
 
