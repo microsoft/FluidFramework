@@ -11,13 +11,26 @@ describe("DockerNames", () => {
     describe("getRandomName", () => {
         it("generates a random name", async () => {
             const name = getRandomName();
-            assert(typeof(name) === "string");
+            const names = name.split("_");
+            assert(names.length === 2);
+            assert(names[0].length >= 1);
+            assert(names[1].length >= 1);
             assert(name.includes("_"));
         });
 
         it("generates a random name with '-' connector", async () => {
             const name = getRandomName("-");
             assert(name.includes("-"));
+        });
+
+        it("generates a random name with uppercase", async () => {
+            const name = getRandomName("_", true);
+            const [first, last] = name.split("_");
+            const isUpperCase = (str) => {
+                return str === str.toUpperCase();
+            }
+            assert(isUpperCase(first[0]));
+            assert(isUpperCase(last[0]));
         });
     });
     describe("choose", () => {
