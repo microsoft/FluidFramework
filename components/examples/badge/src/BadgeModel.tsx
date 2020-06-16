@@ -10,14 +10,14 @@ import { IComponentHandle } from "@fluidframework/component-core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
-import { IBadgeType, IBadgeModel, IHistory } from "./Badge.types";
+import { IBadgeModel, IBadgeHistory } from "./Badge.types";
 import { defaultItems } from "./helpers";
 import { BadgeClient } from "./BadgeClient";
 
 export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTMLView {
     currentCell: SharedCell;
     optionsMap: SharedMap;
-    historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+    historySequence: SharedObjectSequence<IBadgeHistory>;
 
     public get IComponentHTMLView() { return this; }
 
@@ -43,7 +43,7 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
         this.root.set(this.optionsId, options.handle);
 
         // Create a sequence to store the badge's history
-        const badgeHistory = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
+        const badgeHistory = SharedObjectSequence.create<IBadgeHistory>(this.runtime);
         badgeHistory.insert(0, [{
             value: current.get(),
             timestamp: new Date(),
@@ -60,7 +60,7 @@ export class Badge extends PrimedComponent implements IBadgeModel, IComponentHTM
     protected async componentHasInitialized() {
         this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
         this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
-        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
+        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId).get();
     }
 
     public render(div: HTMLElement) {

@@ -14,25 +14,25 @@ export interface IBadgeType {
     iconProps: IIconProps;
 }
 
-export interface IHistory<T> {
-    value: T;
+export interface IBadgeHistory {
+    value: IBadgeType;
     timestamp: Date;
-}
-
-export interface IBadgeViewProps {
-    options: IBadgeType[];
-    historyItems: IHistory<IBadgeType>[];
-    selectedOption: string | number;
-    addOption: (text: string, color: IColor) => void;
-    changeSelectedOption: (item: IBadgeType) => void;
 }
 
 export interface IBadgeModel {
     currentCell: SharedCell;
     optionsMap: SharedMap;
-    historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+    historySequence: SharedObjectSequence<IBadgeHistory>;
 }
 
 export interface IBadgeClientProps {
     model: IBadgeModel;
+}
+
+export interface IBadgeViewProps {
+    options: IBadgeType[];
+    historyItems: IBadgeHistory[];
+    selectedOption: string | number;
+    addOption: (text: string, color: IColor) => void;
+    changeSelectedOption: (item: IBadgeType) => void;
 }
