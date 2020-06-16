@@ -5,12 +5,23 @@
 
 import assert from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
+    defaultComponentRuntimeRequestHandler,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails, IFluidModule, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IContainerContext,
+    IFluidCodeDetails,
+    IFluidModule,
+    ILoader,
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import {
+    componentRuntimeRequestHandler,
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -52,24 +63,49 @@ describe("loader/runtime compatibility", () => {
     const createRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
+        runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
-        return new ContainerRuntimeFactoryWithDefaultComponent(
-            type,
-            [[type, Promise.resolve(componentFactory as IComponentFactory)]],
-            undefined,
-            undefined,
-            { initialSummarizerDelayMs: 0 },
-        );
+        return {
+            get IRuntimeFactory() { return this; },
+            instantiateRuntime: async (context: IContainerContext) => {
+                const runtime = await ContainerRuntime.load(
+                    context,
+                    [[type, Promise.resolve(componentFactory as IComponentFactory)]],
+                    [componentRuntimeRequestHandler, defaultComponentRuntimeRequestHandler("default")],
+                    runtimeOptions,
+                );
+                if (!runtime.existing) {
+                    const componentRuntime = await runtime.createComponent("default", type);
+                    await componentRuntime.request({ url: "/" });
+                    componentRuntime.attach();
+                }
+                return runtime;
+            },
+        };
     };
 
     const createOldRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
+        runtimeOptions: old.IContainerRuntimeOptions = {},
     ): old.IRuntimeFactory => {
-        return new old.ContainerRuntimeFactoryWithDefaultComponent(
-            type,
-            [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-        );
+        return {
+            get IRuntimeFactory() { return this; },
+            instantiateRuntime: async (context: old.IContainerContext) => {
+                const runtime = await old.ContainerRuntime.load(
+                    context,
+                    [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
+                    [old.componentRuntimeRequestHandler, old.defaultComponentRuntimeRequestHandler("default")],
+                    runtimeOptions,
+                );
+                if (!runtime.existing) {
+                    const componentRuntime = await runtime.createComponent("default", type);
+                    await componentRuntime.request({ url: "/" });
+                    componentRuntime.attach();
+                }
+                return runtime;
+            },
+        };
     };
 
     async function createContainer(
