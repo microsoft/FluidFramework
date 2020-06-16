@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/fetch-tool",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "private": true,
   "description": "",
   "license": "MIT",
@@ -25,17 +25,17 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/driver-definitions": "^0.20.0",
-    "@fluidframework/driver-utils": "^0.20.0",
-    "@fluidframework/fluidapp-odsp-urlresolver": "^0.20.0",
-    "@fluidframework/odsp-driver": "^0.20.0",
-    "@fluidframework/odsp-urlresolver": "^0.20.0",
-    "@fluidframework/odsp-utils": "^0.20.0",
+    "@fluidframework/driver-definitions": "^0.21.0",
+    "@fluidframework/driver-utils": "^0.21.0",
+    "@fluidframework/fluidapp-odsp-urlresolver": "^0.21.0",
+    "@fluidframework/odsp-driver": "^0.21.0",
+    "@fluidframework/odsp-urlresolver": "^0.21.0",
+    "@fluidframework/odsp-utils": "^0.21.0",
     "@fluidframework/protocol-definitions": "^0.1007.1",
-    "@fluidframework/routerlicious-driver": "^0.20.0",
-    "@fluidframework/routerlicious-urlresolver": "^0.20.0",
-    "@fluidframework/runtime-definitions": "^0.20.0",
-    "@fluidframework/tool-utils": "^0.20.0"
+    "@fluidframework/routerlicious-driver": "^0.21.0",
+    "@fluidframework/routerlicious-urlresolver": "^0.21.0",
+    "@fluidframework/runtime-definitions": "^0.21.0",
+    "@fluidframework/tool-utils": "^0.21.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.17.0",

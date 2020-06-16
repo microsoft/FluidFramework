@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/spellchecker-agent",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Spellchecker for sharedString",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -23,10 +23,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.20.0",
-    "@fluidframework/merge-tree": "^0.20.0",
+    "@fluidframework/component-core-interfaces": "^0.21.0",
+    "@fluidframework/merge-tree": "^0.21.0",
     "@fluidframework/protocol-definitions": "^0.1007.1",
-    "@fluidframework/sequence": "^0.20.0",
+    "@fluidframework/sequence": "^0.21.0",
     "request": "^2.88.0"
   },
   "devDependencies": {
