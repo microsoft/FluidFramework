@@ -35,20 +35,19 @@ interface ISpacesEditPaneProps {
 
 const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
-        const itemUrl = `${window.location.href}/${props.url}`;
         return (
             <div className="spaces-edit-pane">
                 <SpacesEditButton clickCallback={props.removeComponent}>❌</SpacesEditButton>
                 <SpacesEditButton
                     clickCallback={() => {
-                        navigator.clipboard.writeText(itemUrl).then(() => {
+                        navigator.clipboard.writeText(props.url).then(() => {
                             console.log("Async: Copying to clipboard was successful!");
                         }, (err) => {
                             console.error("Async: Could not copy text: ", err);
                         });
                     }}
                 >📎</SpacesEditButton>
-                <SpacesEditButton clickCallback={() => window.open(itemUrl, "_blank")}>↗️</SpacesEditButton>
+                <SpacesEditButton clickCallback={() => window.open(props.url, "_blank")}>↗️</SpacesEditButton>
             </div>
         );
     };
@@ -86,6 +85,7 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
 // Stronger typing here maybe?
 interface ISpacesStorageViewProps<T = AsSerializable<any>> {
     getViewForItem: (item: T) => Promise<JSX.Element | undefined>,
+    getUrlForItem: (itemId: string) => string;
     storage: ISpacesStorage<T>;
     editable: boolean;
 }
@@ -136,7 +136,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             itemViews.push(
                 <div key={itemId} className="spaces-component-view-wrapper">
                     <SpacesItemView
-                        url={itemId}
+                        url={props.getUrlForItem(itemId)}
                         editable={props.editable}
                         getItemView={getItemView}
                         removeComponent={() => props.storage.removeItem(itemId)}

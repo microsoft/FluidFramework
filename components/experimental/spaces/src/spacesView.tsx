@@ -15,6 +15,7 @@ interface ISpacesViewProps {
     storage: ISpacesStorage<ISpacesItem>;
     addItem(type: string): void;
     getViewForItem: (item: ISpacesItem) => Promise<JSX.Element | undefined>;
+    getUrlForItem: (itemId: string) => string;
     templates?: string[];
     applyTemplate?(template: string): void;
 }
@@ -39,6 +40,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                 />
                 <SpacesStorageView
                     getViewForItem={props.getViewForItem}
+                    getUrlForItem={props.getUrlForItem}
                     storage={props.storage}
                     editable={editable}
                 />

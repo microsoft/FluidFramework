@@ -12,8 +12,11 @@ import {
 } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { AsSerializable } from "@fluidframework/component-runtime-definitions";
+import { RequestParser } from "@fluidframework/container-runtime";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
@@ -42,6 +45,7 @@ export interface ISpacesItem {
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private storageComponent: SpacesStorage<ISpacesItem> | undefined;
+    private baseUrl: string | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -61,6 +65,27 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     public get IComponentHTMLView() { return this; }
+
+    // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
+    // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
+    // that knows how to getViewForItem().
+    public async request(req: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser({ url: req.url });
+        if (requestParser.pathParts.length > 0) {
+            const itemId = requestParser.pathParts[0];
+            const item = this.storageComponent?.itemList.get(itemId);
+            if (item !== undefined) {
+                const viewForItem = await this.getViewForItem(item.serializableItemData);
+                return {
+                    mimeType: "fluid/view",
+                    status: 200,
+                    value: viewForItem,
+                };
+            }
+        }
+
+        return super.request(req);
+    }
 
     /**
      * Will return a new Spaces View
@@ -85,6 +110,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 templates={[...Object.keys(templateDefinitions)]}
                 applyTemplate={this.applyTemplate}
                 getViewForItem={this.getViewForItem}
+                getUrlForItem={(itemId: string) => `${this.baseUrl}/${itemId}`}
             />,
             div,
         );
@@ -104,6 +130,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     protected async componentHasInitialized() {
         this.storageComponent =
             await this.root.get<IComponentHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
+
+        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 
     private readonly applyTemplate = async (template: string) => {

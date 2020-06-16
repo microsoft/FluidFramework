@@ -39,6 +39,7 @@
     "@fluidframework/aqueduct": "^0.21.0",
     "@fluidframework/component-core-interfaces": "^0.21.0",
     "@fluidframework/container-definitions": "^0.21.0",
+    "@fluidframework/container-runtime": "^0.21.0",
     "@fluidframework/container-runtime-definitions": "^0.21.0",
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/view-adapters": "^0.21.0",

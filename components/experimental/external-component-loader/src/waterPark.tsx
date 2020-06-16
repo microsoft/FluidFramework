@@ -6,8 +6,11 @@
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import {
     IComponentHandle,
+    IRequest,
+    IResponse,
 } from "@fluidframework/component-core-interfaces";
 import { IPackage } from "@fluidframework/container-definitions";
+import { RequestParser } from "@fluidframework/container-runtime";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import {
@@ -89,6 +92,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
 
     private storage: SpacesStorage<IWaterparkItem> | undefined;
     private loader: ExternalComponentLoader | undefined;
+    private baseUrl: string | undefined;
 
     public render(element: HTMLElement) {
         if (this.storage === undefined) {
@@ -99,9 +103,31 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
                 storage={this.storage}
                 onSelectOption={this.addComponent}
                 getViewForItem={this.getViewForItem}
+                getUrlForItem={(itemId: string) => `${this.baseUrl}/${itemId}`}
             />,
             element,
         );
+    }
+
+    // In order to handle direct links to items, we'll link to the Waterpark component with a path of the itemId for
+    // the specific item we want.  We route through Waterpark because it knows how to get a view out of an
+    // IWaterparkItem.
+    public async request(req: IRequest): Promise<IResponse> {
+        const requestParser = new RequestParser({ url: req.url });
+        if (requestParser.pathParts.length > 0) {
+            const itemId = requestParser.pathParts[0];
+            const item = this.storage?.itemList.get(itemId);
+            if (item !== undefined) {
+                const viewForItem = await this.getViewForItem(item.serializableItemData);
+                return {
+                    mimeType: "fluid/view",
+                    status: 200,
+                    value: viewForItem,
+                };
+            }
+        }
+
+        return super.request(req);
     }
 
     protected async componentInitializingFirstTime() {
@@ -114,6 +140,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     protected async componentHasInitialized() {
         this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+        this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 
     /**
@@ -153,6 +180,7 @@ interface IWaterParkViewProps {
     storage: SpacesStorage<IWaterparkItem>;
     onSelectOption: (componentUrl: string) => Promise<void>;
     getViewForItem: (item: IWaterparkItem) => Promise<JSX.Element | undefined>;
+    getUrlForItem: (itemId: string) => string;
 }
 
 export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsWithChildren<IWaterParkViewProps>) => {
@@ -166,6 +194,7 @@ export const WaterParkView: React.FC<IWaterParkViewProps> = (props: React.PropsW
             />
             <SpacesStorageView
                 getViewForItem={props.getViewForItem}
+                getUrlForItem={props.getUrlForItem}
                 storage={props.storage}
                 editable={editable}
             />
