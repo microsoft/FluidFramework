@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { generateStupidName } from "sillyname";
+import generateStupidName from "sillyname";
 
 export function getRandomName(connector = "_", capitalize = false): string {
     let [first, last] = (generateStupidName() as string).split(" ");
