@@ -13,7 +13,7 @@ import { IBadgeClientProps, IBadgeType } from "./Badge.types";
  * the Fluid DDS's are modified.
  */
 
-export const BadgeClient = ({ model }: IBadgeClientProps): JSX.Element => {
+export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }) => {
     // Setters
     const changeSelectedOption = (newItem: IBadgeType): void => {
         if (newItem.key !== model.currentCell.get().key) {
