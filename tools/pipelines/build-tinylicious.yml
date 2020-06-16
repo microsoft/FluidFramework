@@ -16,6 +16,7 @@ trigger:
     - server/tinylicious
     - tools/pipelines/build-tinylicious.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
