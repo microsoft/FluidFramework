@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerRuntimeOptions, RuntimeRequestHandler } from "@fluidframework/container-runtime";
+import {
+    RuntimeRequestHandler,
+} from "@fluidframework/container-runtime";
 import { IComponentDefaultFactoryName } from "@fluidframework/framework-interfaces";
 import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -29,7 +31,6 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
         registryEntries: NamedComponentRegistryEntries,
         providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
-        runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super(
             registryEntries,
@@ -41,7 +42,6 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
                 defaultComponentRuntimeRequestHandler(defaultComponentId),
                 ...requestHandlers,
             ],
-            runtimeOptions,
         );
     }
 

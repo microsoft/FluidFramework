@@ -8,7 +8,6 @@ import {
     componentRuntimeRequestHandler,
     ComponentRegistry,
     ContainerRuntime,
-    IContainerRuntimeOptions,
     RuntimeRequestHandler,
 } from "@fluidframework/container-runtime";
 import {
@@ -42,7 +41,6 @@ export class BaseContainerRuntimeFactory implements
         private readonly registryEntries: NamedComponentRegistryEntries,
         private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
-        private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
@@ -71,7 +69,7 @@ export class BaseContainerRuntimeFactory implements
                 ...this.requestHandlers,
                 componentRuntimeRequestHandler,
             ],
-            this.runtimeOptions,
+            undefined,
             scope);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
