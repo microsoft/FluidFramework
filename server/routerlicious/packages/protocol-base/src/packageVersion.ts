@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/protocol-base";
-export const pkgVersion = "0.1007.1";
+export const pkgVersion = "0.1007.2";
