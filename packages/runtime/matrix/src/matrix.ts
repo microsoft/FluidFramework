@@ -182,7 +182,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    public didAttach(): void {
+    protected didAttach(): void {
         this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
     }

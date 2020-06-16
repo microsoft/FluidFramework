@@ -236,7 +236,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
      * Also called after non-local data type get loaded.
      */
-    public didAttach() {
+    protected didAttach() {
         return;
     }
 
