@@ -34,14 +34,53 @@ pr:
 
 variables:
   testConfig: test:full
-  containerRegistry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
-  fullBaseContainerName: $(containerRegistry)/$(baseContainerName):$(Build.BuildId)
+  fullBaseContainerName: $(baseContainerName):$(Build.BuildId)
+  fullContainerName: $(containerName):$(Build.BuildId)
 
 jobs:
   - job:
     steps:
+      # Component detection
+      - task: npmAuthenticate@0
+        displayName: 'npm Authenticate root .npmrc'
+        inputs:
+          workingFile: .npmrc
+      - task: Npm@1
+        displayName: npm ci
+        inputs:
+          command: 'custom'
+          customCommand: 'ci --ignore-scripts'
+          customRegistry: 'useFeed'
+          customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+      - bash: |
+          # Generate the package/package lock for the lerna project so we would scan it.
+          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+          cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
+          cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
+        displayName: 'Generate Mono repo package json'
+      - task: ComponentGovernanceComponentDetection@0
+        displayName: Component Detection
+        inputs:
+          sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
+          verbosity: Verbose
+          scanType: Register
+          alertWarningLevel: High
+      - task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
+        displayName: 'NOTICE File Generator'
+      - task: CopyFiles@2
+        displayName: 'Copy NOTICE'
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)'
+          Contents: NOTICE.txt
+          TargetFolder: server/routerlicious
+      - bash: |
+          rm server/routerlicious/packages/package.json
+          rm server/routerlicious/packages/package-lock.json
+        displayName: 'Cleanup mono repo package json'
+
+      # Setup
       - task: Bash@3
         displayName: Strip npmrc auth token preamble
         inputs:
@@ -52,7 +91,9 @@ jobs:
       - task: npmAuthenticate@0
         displayName: npm Authenticate
         inputs:
-          workingFile: $(Pipeline.Workspace)/pack/.npmrc
+          workingFile: server/routerlicious/.npmrc
+
+      # Build
       - task: Docker@2
         displayName: Docker build
         inputs:
@@ -61,11 +102,29 @@ jobs:
           buildContext: server/routerlicious
           arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
           tags: $(fullBaseContainerName)
+
+      # Pack
+      - task: Docker@0
+        displayName: 'Packages: NPM Pack'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(fullBaseContainerName) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Packages: Publish Artifact'
+        inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+          ArtifactName: _api-extractor-temp
+          publishLocation: 'Container'
+
+      # Lint
       - task: Docker@0
         displayName: 'Base: Lint'
         inputs:
           action: 'Run a Docker command'
           customCommand: 'run --user root -t $(fullBaseContainerName) npm run lint'
+
+      # Test
       - task: Docker@0
         displayName: 'Base: Test'
         inputs:
@@ -81,10 +140,76 @@ jobs:
           mergeTestResults: true
         condition: succeededOrFailed()
 
+      - task: PublishCodeCoverageResults@1
+        displayName: 'Base: Publish code coverage'
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report/cobertura-coverage.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report'
+
+      # Docs
       - task: Docker@0
         displayName: 'Docs: api-extractor'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(prague.containerRegistry)/$(prague.baseContainerName):$(Build.BuildId) npm run build:docs'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(fullBaseContainerName) npm run build:docs'
 
+      - task: PublishBuildArtifacts@1
+        displayName: 'Docs: Publish Artifact'
+        inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+          ArtifactName: _api-extractor-temp
+          publishLocation: 'Container'
+
+      # Build - Runner
+      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - task: Docker@2
+          displayName: 'Runner: Build'
+          inputs:
+            command: build
+            dockerFile: server/routerlicious/Dockerfile
+            buildContext: server/routerlicious
+            arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+            tags: $(fullContainerName)
+        
+        - task: Docker@2
+          displayName: 'Runner: Push'
+          inputs:
+            containerRegistry: Prague
+            repository: prague
+            command: push
+            tags: $(fullContainerName)
+
+      # Cleanup
+      - task: Docker@0
+        displayName: 'Cleanup: Container prune'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'container prune -f'
+        continueOnError: true
+        condition: succeededOrFailed()
+
+      - task: Docker@0
+        displayName: 'Cleanup: Container prune'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'rmi $(fullContainerName)'
+        continueOnError: true
+        condition: succeededOrFailed()
+
+      - task: Docker@0
+        displayName: 'Cleanup: Runner'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'rmi $(fullContainerName)'
+        continueOnError: true
+        condition: succeededOrFailed()
+
+      - task: Docker@0
+        displayName: 'Cleanup: Runner'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'rmi $(fullBaseContainerName)'
+        continueOnError: true
+        condition: succeededOrFailed()
 
