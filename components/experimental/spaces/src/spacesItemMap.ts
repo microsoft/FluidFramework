@@ -9,6 +9,8 @@ import { NamedComponentRegistryEntries } from "@fluidframework/runtime-definitio
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { CollaborativeText } from "@fluid-example/collaborative-textarea";
+import { Coordinate, CoordinateInstantiationFactory } from "@fluid-example/multiview-coordinate-model";
+import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 
@@ -35,6 +37,12 @@ const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHand
     const handle = serializableObject.handle;
     const component = await handle.get();
     return React.createElement(ReactViewAdapter, { component });
+};
+
+const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IComponentHandle<Coordinate>;
+    const model = await handle.get();
+    return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
 };
 
 /**
@@ -78,11 +86,19 @@ const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     fabricIconName: "FabricTextHighlight",
 };
 
+const sliderCoordinateItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+    create: createSingleHandleItem(CoordinateInstantiationFactory.type),
+    getView: getSliderCoordinateView,
+    friendlyName: "Coordinate",
+    fabricIconName: "NumberSymbol",
+};
+
 export const spacesItemMap = new Map<string, ISpacesItemEntry>([
     ["clicker", clickerItemEntry],
     ["codemirror", codemirrorItemEntry],
     ["textbox", textboxItemEntry],
     ["prosemirror", prosemirrorItemEntry],
+    ["slider-coordinate", sliderCoordinateItemEntry],
 ]);
 
 // This can go away if the item entries have a way to bring their own subregistries.
@@ -91,6 +107,7 @@ export const spacesRegistryEntries: NamedComponentRegistryEntries = new Map([
     [cmfe.type, Promise.resolve(cmfe)],
     [CollaborativeText.ComponentName, Promise.resolve(CollaborativeText.getFactory())],
     [pmfe.type, Promise.resolve(pmfe)],
+    CoordinateInstantiationFactory.registryEntry,
 ]);
 
 interface ITemplate {
