@@ -46,7 +46,7 @@ const defaultComponents = [
  * available when running on localhost.
  */
 const localComponentUrls = [
-    "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
+    // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\todo",
     // "http://localhost:8080/file/C:\\git\\FluidFramework\\components\\experimental\\clicker",
 ];
 
