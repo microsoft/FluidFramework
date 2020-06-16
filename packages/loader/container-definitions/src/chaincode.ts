@@ -200,12 +200,12 @@ export interface IMessageScheduler {
 }
 
 /**
- * The ContainerContext is a proxy standing between The_Container and the Container's IRuntime.
- * This allows The_Container to terminate the connection to the IRuntime.
+ * The ContainerContext is a proxy standing between the ContainerThing and the Container's IRuntime.
+ * This allows the ContainerThing to terminate the connection to the IRuntime.
  *
  * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
  * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and The_Container has created a new ContainerContext.
+ * and the ContainerThing has created a new ContainerContext.
  */
 export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
     /** ??? */

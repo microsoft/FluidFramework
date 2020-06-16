@@ -5,7 +5,7 @@
 
 // tslint:disable: no-unsafe-any
 /**
- * Different error types The_Container may report out to the Host
+ * Different error types the ContainerThing may report out to the Host
  */
 export enum ErrorType {
     /**

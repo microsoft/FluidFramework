@@ -69,7 +69,7 @@ export interface ICodeWhiteList {
 }
 
 /**
- * Events emitted by The_Container "upwards" to the Loader and Host
+ * Events emitted by the ContainerThing "upwards" to the Loader and Host
  */
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
@@ -83,7 +83,7 @@ export interface IContainerEvents extends IEvent {
 }
 
 /**
- * The Host's view of The_Container and its connection to storage
+ * The Host's view of the ContainerThing and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
 
@@ -103,13 +103,13 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     resolvedUrl: IResolvedUrl | undefined;
 
     /**
-     * Flag indicating if this The_Container has been attached to a host service.
-     * False if The_Container is attached to storage.
+     * Flag indicating if this the ContainerThing has been attached to a host service.
+     * False if the ContainerThing is attached to storage.
      */
     isLocal(): boolean;
 
     /**
-     * Attaches The_Container to the Container specified by the given Request.
+     * Attaches the ContainerThing to the Container specified by the given Request.
      *
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
