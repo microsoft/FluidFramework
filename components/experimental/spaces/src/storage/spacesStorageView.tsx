@@ -35,33 +35,33 @@ interface ISpacesEditPaneProps {
 
 const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
-        const componentUrl = `${window.location.href}/${props.url}`;
+        const itemUrl = `${window.location.href}/${props.url}`;
         return (
             <div className="spaces-edit-pane">
                 <SpacesEditButton clickCallback={props.removeComponent}>❌</SpacesEditButton>
                 <SpacesEditButton
                     clickCallback={() => {
-                        navigator.clipboard.writeText(componentUrl).then(() => {
+                        navigator.clipboard.writeText(itemUrl).then(() => {
                             console.log("Async: Copying to clipboard was successful!");
                         }, (err) => {
                             console.error("Async: Could not copy text: ", err);
                         });
                     }}
                 >📎</SpacesEditButton>
-                <SpacesEditButton clickCallback={() => window.open(componentUrl, "_blank")}>↗️</SpacesEditButton>
+                <SpacesEditButton clickCallback={() => window.open(itemUrl, "_blank")}>↗️</SpacesEditButton>
             </div>
         );
     };
 
-interface ISpacesComponentViewProps {
+interface ISpacesItemViewProps {
     url: string;
     editable: boolean;
     getItemView(): Promise<JSX.Element | undefined>;
     removeComponent(): void;
 }
 
-const SpacesItemView: React.FC<ISpacesComponentViewProps> =
-    (props: React.PropsWithChildren<ISpacesComponentViewProps>) => {
+const SpacesItemView: React.FC<ISpacesItemViewProps> =
+    (props: React.PropsWithChildren<ISpacesItemViewProps>) => {
         const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
 
         React.useEffect(() => {
@@ -125,21 +125,21 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
 
         const itemViews: JSX.Element[] = [];
         const layouts: Layout[] = [];
-        itemMap.forEach((model, url) => {
-            const getItemView = async () => props.getViewForItem(model.serializableItemData);
+        itemMap.forEach((item, itemId) => {
+            const getItemView = async () => props.getViewForItem(item.serializableItemData);
 
-            const layout = model.layout;
+            const layout = item.layout;
             // We use separate layout from array because using GridLayout
             // without passing in a new layout doesn't trigger a re-render.
-            layout.i = url;
+            layout.i = itemId;
             layouts.push(layout);
             itemViews.push(
-                <div key={url} className="spaces-component-view-wrapper">
+                <div key={itemId} className="spaces-component-view-wrapper">
                     <SpacesItemView
-                        url={url}
+                        url={itemId}
                         editable={props.editable}
                         getItemView={getItemView}
-                        removeComponent={() => props.storage.removeItem(url)}
+                        removeComponent={() => props.storage.removeItem(itemId)}
                     />
                 </div>,
             );
