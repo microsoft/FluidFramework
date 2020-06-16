@@ -215,15 +215,18 @@ class VersionBag {
             fatal(`Inconsistent version for ${name} ${version} && ${existing}`);
         }
     }
-    protected internalAdd(pkg: Package, version: string) {
+    protected internalAdd(pkg: Package, version: string, override: boolean = false) {
         const entryName = VersionBag.getEntryName(pkg);
         const existing = this.versionData[entryName];
-        if (existing) {
-            if (existing !== version) {
-                return existing;
+        if (existing !== version) {
+            if (existing) {
+                if (!override) {
+                    return existing;
+                }
+                console.log(`    Overriding ${entryName} ${existing} -> ${version}`);
             }
-        } else {
             this.versionData[entryName] = version;
+            return existing;
         }
     }
     public get(pkgOrMonoRepoName: Package | string) {
@@ -245,6 +248,7 @@ class VersionBag {
  */
 class ReferenceVersionBag extends VersionBag {
     private readonly referenceData = new Map<string, { reference: string, published: boolean }>();
+    private readonly nonDevDep = new Set<string>();
     private readonly publishedPackage = new Set<string>();
     private readonly publishedPackageRange = new Set<string>();
 
@@ -260,18 +264,26 @@ class ReferenceVersionBag extends VersionBag {
      * @param version
      * @param newReference
      */
-    public add(pkg: Package, version: string, newReference?: string, published: boolean = false) {
-        const existing = this.internalAdd(pkg, version);
+    public add(pkg: Package, version: string, dev: boolean = false, newReference?: string, published: boolean = false) {
         const entryName = VersionBag.getEntryName(pkg);
-        if (existing) {
-            const existingReference = this.referenceData.get(entryName);
-            const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
-            if (existingReference?.reference && this.publishedPackage.has(existingReference.reference) && newReference && this.publishedPackage.has(newReference)) {
-                // only warn if the conflict is between two published references (since we can't change it anyways).
-                console.warn(`WARNING: ${message}`);
-            } else {
-                fatal(message);
+        // Override existing we haven't seen a non-dev dependency yet, and it is not a published version or it is not a dev dependency
+        const override = !this.nonDevDep.has(entryName) && (!published || !dev);
+        const existing = this.internalAdd(pkg, version, override);
+
+        if (!dev) {
+            if (existing) {
+                const existingReference = this.referenceData.get(entryName);
+                const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(10)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
+                if (existingReference?.reference && this.publishedPackage.has(existingReference.reference) && newReference && this.publishedPackage.has(newReference)) {
+                    // only warn if the conflict is between two published references (since we can't change it anyways).
+                    console.warn(`WARNING: ${message}`);
+                } else {
+                    fatal(message);
+                }
             }
+            this.nonDevDep.add(entryName);
+        } else if (existing) {
+            console.log(`      Ignored mismatched dev dependency ${pkg.name}@${version} vs ${existing}`);
         }
         if (newReference) {
             this.referenceData.set(entryName, { reference: newReference, published });
@@ -302,7 +314,6 @@ class ReferenceVersionBag extends VersionBag {
     }
 
     private async getPublishedDependencies(versionSpec: string, dev: boolean) {
-
         const dep = dev ? "devDependencies" : "dependencies";
         const retDep = await exec(`npm view ${versionSpec} ${dep} --json`, this.repoRoot, "look up dependencies");
         // detect if there are no dependencies
@@ -329,51 +340,49 @@ class ReferenceVersionBag extends VersionBag {
     public async collectPublishedPackageDependencies(
         pkg: Package,
         versionRange: string,
+        dev: boolean,
         reference?: string
     ) {
-        const pending = [{ pkg, versionRange, reference }];
-        while (pending.length) {
-            const { pkg, versionRange, reference } = pending.pop()!;
+        const entryName = VersionBag.getEntryName(pkg);
+        const rangeSpec = `${pkg.name}@${versionRange}`;
 
-            const entryName = VersionBag.getEntryName(pkg);
-            const rangeSpec = `${pkg.name}@${versionRange}`;
+        // Check if we already checked this published package range
+        if (this.publishedPackageRange.has(rangeSpec)) {
+            return;
+        }
 
-            // Check if we already checked this published package range
-            if (this.publishedPackageRange.has(rangeSpec)) {
-                continue;
+        this.publishedPackageRange.add(rangeSpec);
+
+        let matchedVersion: string | undefined = this.get(entryName);
+        if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
+            matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
+            if (!matchedVersion) {
+                return;
             }
+        }
+        console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
+        this.add(pkg, matchedVersion, dev, reference, true);
 
-            this.publishedPackageRange.add(rangeSpec);
+        // Get the dependencies
+        const versionSpec = `${pkg.name}@${matchedVersion}`;
+        if (this.publishedPackage.has(versionSpec)) {
+            return;
+        }
+        this.publishedPackage.add(versionSpec);
 
-            let matchedVersion: string | undefined = this.get(entryName);
-            if (!matchedVersion || !semver.satisfies(matchedVersion, versionRange)) {
-                matchedVersion = await this.getPublishedMatchingVersion(rangeSpec, reference);
-                if (!matchedVersion) {
-                    continue;
-                }
-            }
-            console.log(`    Found ${rangeSpec} => ${matchedVersion}`);
-            this.add(pkg, matchedVersion, reference, true);
-
-            // Get the dependencies
-            const versionSpec = `${pkg.name}@${matchedVersion}`;
-            if (this.publishedPackage.has(versionSpec)) {
-                continue;
-            }
-            this.publishedPackage.add(versionSpec);
-            const dep = {
-                ...await this.getPublishedDependencies(versionSpec, true),
-                ...await this.getPublishedDependencies(versionSpec, false),
-            };
-
+        const pending: Promise<void>[] = [];
+        const addPublishedDependencies = async (dev: boolean) => {
+            const dep = await this.getPublishedDependencies(versionSpec, dev);
             // Add it to pending for processing
             for (const d in dep) {
                 const depPkg = this.fullPackageMap.get(d);
                 if (depPkg) {
-                    pending.push({ pkg: depPkg, versionRange: dep[d], reference: versionSpec });
+                    pending.push(this.collectPublishedPackageDependencies(depPkg, dep[d], dev, versionSpec));
                 }
             }
         }
+        await Promise.all([addPublishedDependencies(true), addPublishedDependencies(false)]);
+        await Promise.all(pending);
     }
 
     public printRelease() {
@@ -540,6 +549,7 @@ class BumpVersion {
             depVersions.add(pkg, pkg.version);
         }
 
+        const publishedPackageDependenciesPromises: Promise<void>[] = [];
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -548,7 +558,7 @@ class BumpVersion {
             if (pkg === this.generatorPackage) {
                 pendingDepCheck.push(this.templatePackage);
             }
-            for (const { name: dep, version } of pkg.combinedDependencies) {
+            for (const { name: dep, version, dev } of pkg.combinedDependencies) {
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
                     if (MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo)) {
@@ -573,13 +583,14 @@ class BumpVersion {
                                 pendingDepCheck.push(depBuildPackage);
                             }
                         }
-                        depVersions.add(depBuildPackage, depVersion, reference);
+                        depVersions.add(depBuildPackage, depVersion, dev, reference);
                     } else {
-                        await depVersions.collectPublishedPackageDependencies(depBuildPackage, version, reference);
+                        publishedPackageDependenciesPromises.push(depVersions.collectPublishedPackageDependencies(depBuildPackage, version, dev, reference));
                     }
                 }
             }
         }
+        await Promise.all(publishedPackageDependenciesPromises);
 
         return depVersions;
     }
@@ -601,7 +612,7 @@ class BumpVersion {
         } else {
             const processMonoRepo = async (monoRepo: MonoRepo) => {
                 await Promise.all(monoRepo.packages.map(pkg => {
-                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString());
+                    return depVersions.collectPublishedPackageDependencies(pkg, publishedVersion.toString(), false)
                 }));
             };
             const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
@@ -906,7 +917,7 @@ class BumpVersion {
             return;
         }
 
-        console.log(`  Releasing ${packages.join(" ")}`);
+        console.log(`  Releasing ${packageToBump.map(pkg => pkg.name).join(" ")}`);
 
         // Tagging release
         for (const pkg of packageToBump) {
@@ -1032,7 +1043,7 @@ class BumpVersion {
         }
 
         // TODO: Don't hard code order
-        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/fluid-build-common"]);
+        await this.releasePackage(depVersions, ["@fluidframework/eslint-config-fluid", "@fluidframework/build-common"]);
         await this.releasePackage(depVersions, ["@fluidframework/common-definitions"]);
         await this.releasePackage(depVersions, ["@fluidframework/common-utils"]);
         await this.releaseMonoRepo(depVersions, this.repo.serverMonoRepo);

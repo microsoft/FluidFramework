@@ -6,7 +6,13 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError, getOrigin } from "./odspUtils";
+import {
+    fetchHelper,
+    fetchIncorrectResponse,
+    getWithRetryForTokenRefresh,
+    throwOdspNetworkError,
+    getOrigin,
+} from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
 /**
@@ -31,7 +37,7 @@ export async function fetchJoinSession(
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const token = await getVroomToken(refresh, "JoinSession");
         if (!token) {
-            throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
+            throwOdspNetworkError("Failed to acquire Vroom token", fetchIncorrectResponse);
         }
 
         const extraProps = refresh ? { secondAttempt: 1 } : {};

@@ -4,6 +4,12 @@ uid: sudoku-example
 sidebarDepth: 2
 ---
 
+::: danger
+
+OUTDATED
+
+:::
+
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
 
@@ -14,20 +20,7 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
-
 First, clone the tutorial repository here: <https://github.com/microsoft/fluid-tutorial-sudoku>.
-
-</vue-markdown>
-<vue-markdown v-else>
-
-First, clone the tutorial repository here:
-   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
-
-Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
-top-right corner of the UI. Follow the resulting instructions to clone the repo.
-
-</vue-markdown>
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
@@ -461,14 +454,7 @@ Now that you have some experience with Fluid, are there other features you could
 you could extend it to display a client name in the cell to show client-specific presence. Or you could use the
 [undo-redo][] package to add undo/redo support!
 
-Or check out [other examples](./README.md).
+Or check out [other tutorials](./README.md).
 
-<!-- Links -->
 
-[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
-[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
-[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
-[SharedDirectory]: ../api/fluid-map.shareddirectory.md
-[SharedMap]: ../api/fluid-map.sharedmap.md
-[undo-redo]: ../api/fluid-undo-redo.md
+!!!include(links.md)!!!

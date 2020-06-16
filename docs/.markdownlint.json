@@ -10,7 +10,6 @@
   "no-multiple-blanks": {
     "maximum": 2
   },
-  "DOCSMD010": false,
   "MD010": false,
   "MD025": false,
   "MD026": false,

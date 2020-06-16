@@ -9,7 +9,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -62,9 +61,9 @@ export interface IFluidCodeResolver {
 }
 
 /**
- * Code WhiteListing Interface
+ * Code AllowListing Interface
  */
-export interface ICodeWhiteList {
+export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -76,7 +75,6 @@ export interface IContainerEvents extends IEvent {
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "pong" | "processTime", listener: (latency: number) => void);
-    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
 }
 
 export interface IContainer extends IEventProvider<IContainerEvents> {

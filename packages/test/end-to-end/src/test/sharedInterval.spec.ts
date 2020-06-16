@@ -24,7 +24,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluidframework/test-utils";
+} from "@fluid-internal/test-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -101,10 +101,7 @@ describe("SharedInterval", () => {
         });
 
         it("replace all is included", async () => {
-            // Temporarily, append a padding character to the initial string to work around #1761:
-            // (See: https://github.com/Microsoft/Prague/issues/1761)
             sharedString.insertText(3, ".");
-
             intervals.add(0, 3, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 3 }]);
 
@@ -113,8 +110,6 @@ describe("SharedInterval", () => {
         });
 
         it("remove all yields empty range", async () => {
-            // Temporarily, appending a padding character to the initial string to work around #1761:
-            // (See: https://github.com/Microsoft/Prague/issues/1761)
             const len = sharedString.getLength();
             intervals.add(0, len - 1, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: len - 1 }]);
@@ -181,9 +176,6 @@ describe("SharedInterval", () => {
             assertIntervals([{ start: 0, end: 1 }]);
         });
 
-        // Uncomment below test to reproduce issue #2479:
-        // https://github.com/microsoft/Prague/issues/2479
-        //
         it("repeated replacement", async () => {
             sharedString.insertText(0, "012");
             intervals.add(0, 2, IntervalType.SlideOnRemove);

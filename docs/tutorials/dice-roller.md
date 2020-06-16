@@ -3,6 +3,12 @@ title: Dice roller
 sidebarDepth: 2
 ---
 
+::: danger
+
+OUTDATED
+
+:::
+
 The Dice roller is a simple Fluid component that uses Fluid's distributed data structures to simulate rolling a die.
 
 ## Set up your dev environment
@@ -19,8 +25,8 @@ Update these instructions.
 First, clone one of the tutorial repositories below. One repository uses React for rendering, and the other uses
 JavaScript directly.
 
-* [Dice roller tutorial - Vanilla JavaScript](https://github.com/microsoft/fluid-tutorial-dice-roller)
-* [Dice roller tutorial - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
+- [Dice roller tutorial - Vanilla JavaScript](https://github.com/microsoft/fluid-tutorial-dice-roller)
+- [Dice roller tutorial - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
@@ -37,15 +43,15 @@ The `src/fluid-components/index.tsx` file is where the component logic lives.
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/fluid-aqueduct.md) provide helper
+`PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/aqueduct.md) provide helper
 functionality. `IComponentHTMLView` from
-[@fluidframework/component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
+[@fluidframework/component-core-interfaces](../api/component-core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
 import {
   PrimedComponent,
-  PrimedComponentFactory,
+  PrimedComponentFactory
 } from "@fluidframework/aqueduct";
 import { IComponentHTMLView } from "@fluidframework/component-core-interfaces";
 
@@ -59,23 +65,23 @@ Below we define our component class `ExampleFluidComponent`.
 
 #### PrimedComponent
 
-Extending [PrimedComponent](../api/fluid-aqueduct.primedcomponent.md) sets up our component with required default
+Extending [PrimedComponent](../api/aqueduct.primedcomponent.md) sets up our component with required default
 behavior as well as additional helpers to make component development easier.
 
 ##### Key benefits
 
-1. Setup a `root` [SharedDirectory](../api/fluid-map.shareddirectory.md) (a Distributed Data Structure) that we can use to
+1. Setup a `root` [SharedDirectory](../api/map.shareddirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
-   * `componentInitializingFirstTime()` - only called the first time a component is initialized
-   * `existing()` - called every time except the first time a component is initialized
-   * `opened()` - called every time a component is initialized. After `create` and `existing`.
+   - `componentInitializingFirstTime()` - only called the first time a component is initialized
+   - `existing()` - called every time except the first time a component is initialized
+   - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
 #### IComponentHTMLView
 
-Implementing the [IComponentHTMLView](../api/fluid-component-core-interfaces.icomponenthtmlview.md) interface
+Implementing the [IComponentHTMLView](../api/component-core-interfaces.icomponenthtmlview.md) interface
 denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
 state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
 have a `render(...)` function. View rendering is explained more below.
@@ -100,7 +106,7 @@ public get IComponentHTMLView() { return this; }
 ### `componentInitializingFirstTime()`
 
 `componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we perform
-setup operations that we only want to happen once.  Since we are using a `PrimedComponent`, we have a `root`
+setup operations that we only want to happen once. Since we are using a `PrimedComponent`, we have a `root`
 SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory like so:
 
 ```typescript
@@ -134,11 +140,11 @@ Once we've created our function we call it once to render the first time.
 ```jsx
 const rerender = () => {
   // Get our dice value stored in the root.
-  const diceValue = this.root.get<number>("diceValue");
+  const diceValue = this.root.get < number > "diceValue";
 
   ReactDOM.render(
     <div>
-      <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+      <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
       <button onClick={this.rollDice.bind(this)}>Roll</button>
     </div>,
     div
@@ -196,7 +202,7 @@ this.root.on("valueChanged", () => {
 ::::
 
 To set the value of the dice after rolling, we use the `set` method on the root, using the same
-key `diceValue` as before.  The helper functions used look like this:
+key `diceValue` as before. The helper functions used look like this:
 
 ```typescript
 private rollDice() {
@@ -217,7 +223,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up front. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the [PrimedComponentFactory](../api/fluid-aqueduct.primedcomponentfactory.md) as a helper to
+In the example below we use the [PrimedComponentFactory](../api/aqueduct.primedcomponentfactory.md) as a helper to
 create our instantiation factory. As properties we pass in our supported distributed data structures. In this scenario
 we don't use any additional distributed data structures, so we pass an empty array.
 
@@ -231,13 +237,13 @@ The second property is an entry point into our component.
 ExampleFluidComponent.load;
 ```
 
-Finally we export this as `fluidExport`.  This export is special - the `@fluidframework/webpack-component-loader` we
+Finally we export this as `fluidExport`. This export is special - the `@fluidframework/webpack-component-loader` we
 are using to load our component knows to look for this particular export to load from.
 
 ```typescript
 export const fluidExport = new PrimedComponentFactory(
   ExampleFluidComponent,
-  [],
+  []
 );
 ```
 
@@ -259,7 +265,7 @@ export const ExampleFluidComponentInstantiationFactory = new PrimedComponentFact
 
 ### `index.ts`
 
-You'll also have a file `./src/index.ts` for the container.  In this file we define a registry of supported components.
+You'll also have a file `./src/index.ts` for the container. In this file we define a registry of supported components.
 This is represented as a `Map<string, IComponentFactory>`. In our scenario we only have one component and therefore
 one factory.
 
@@ -286,7 +292,7 @@ the creation factory. In our case just our one component
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
   componentName,
   new Map([
-    [componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
+    [componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]
   ])
 );
 ```

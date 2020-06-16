@@ -2,7 +2,7 @@
   "name": "@fluidframework/fluidapp-odsp-urlresolver",
   "version": "0.20.0",
   "description": "Url Resolver for fluid app urls.",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
@@ -19,8 +19,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run tsfmt && npm run eslint",
-    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc",
@@ -34,7 +34,7 @@
     "@fluidframework/odsp-driver": "^0.20.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.16.0",
+    "@fluidframework/build-common": "^0.17.0-0",
     "@fluidframework/eslint-config-fluid": "^0.18.0-0",
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

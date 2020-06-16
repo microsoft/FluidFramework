@@ -30,7 +30,7 @@ import {
     toLatestVersion,
     serializeAsMaxSupportedVersion,
 } from "./snapshotChunks";
-import { SnapshotLegacy } from ".";
+import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -109,7 +109,7 @@ export class SnapshotV1 {
         headerChunk.headerMetadata = this.header;
         headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
         const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index) => {
-            const id = index.toString();
+            const id = `${SnapshotLegacy.body}_${index}`;
             this.header.orderedChunkMetadata.push({ id });
             return {
                 mode: FileMode.File,

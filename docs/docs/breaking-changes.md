@@ -1,5 +1,5 @@
 ---
-sidebar: auto
+title: Breaking changes
 ---
 
 !!!include(../../../BREAKING.md)!!!
