@@ -34,6 +34,12 @@ const enum SnapshotPath {
     cells = "cells",
 }
 
+interface ISetOpMetadata {
+    rowHandle: Handle,
+    colHandle: Handle,
+    localSeq: number,
+}
+
 export class SharedMatrix<T extends Serializable = Serializable>
     extends SharedObject
     implements IMatrixProducer<T | undefined | null>,
@@ -168,20 +174,24 @@ export class SharedMatrix<T extends Serializable = Serializable>
     ) {
         this.cells.setCell(rowHandle, colHandle, value);
 
-        const localSeq = this.nextLocalSeq();
+        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
+        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
+        if (!this.isLocal()) {
+            const localSeq = this.nextLocalSeq();
 
-        this.submitLocalMessage({
-            type: MatrixOp.set,
-            row,
-            col,
-            value,
-        }, {
-            rowHandle,
-            colHandle,
-            localSeq,
-        });
+            this.submitLocalMessage({
+                type: MatrixOp.set,
+                row,
+                col,
+                value,
+            }, {
+                rowHandle,
+                colHandle,
+                localSeq,
+            } as ISetOpMetadata);
 
-        this.pending.setCell(rowHandle, colHandle, localSeq);
+            this.pending.setCell(rowHandle, colHandle, localSeq);
+        }
     }
 
     private submitVectorMessage(
@@ -190,21 +200,28 @@ export class SharedMatrix<T extends Serializable = Serializable>
         dimension: SnapshotPath.rows | SnapshotPath.cols,
         message: any,
     ) {
-        // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-        (message).target = dimension;
-
         // Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
         // and the SharedMatrix's cell data.  Instead, we externally bump each MergeTree's 'localSeq' counter
         // for SharedMatrix ops it's not aware of to keep them synchronized.  (For example, when sending a col
         // op, we bump the row's localSeq counter)
+        //
+        // Note that the MergeTree bumps it's internal localSeq even when local, therefore we must do this for
+        // the 'oppositeVector' as well.
         oppositeVector.getCollabWindow().localSeq++;
 
-        this.submitLocalMessage(
-            message,
-            currentVector.peekPendingSegmentGroups(
-                message.type === MergeTreeDeltaType.GROUP
-                    ? message.ops.length
-                    : 1));
+        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
+        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
+        if (!this.isLocal()) {
+            // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
+            (message).target = dimension;
+
+            this.submitLocalMessage(
+                message,
+                currentVector.peekPendingSegmentGroups(
+                    message.type === MergeTreeDeltaType.GROUP
+                        ? message.ops.length
+                        : 1));
+        }
     }
 
     private submitColMessage(message: any) {
@@ -272,6 +289,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected submitLocalMessage(message: any, localOpMetadata?: any) {
+        // TODO: Recommend moving this assertion into SharedObject
+        //       (See https://github.com/microsoft/FluidFramework/issues/2559)
+        assert.equal(this.isLocal(), false);
+
         const cliSeq = super.submitLocalMessage(
             makeHandlesSerializable(
                 message,
@@ -288,6 +309,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
             this.cols.getCollabWindow().localSeq,
         );
 
+        // TODO: The returned 'cliSeq' is no longer used, but we need to return a value until the
+        //       signature of SharedObject.submitLocalMessage changes.
         return cliSeq;
     }
 
@@ -341,7 +364,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 if (local) {
                     // We are receiving the ACK for a local pending set operation.
 
-                    const { rowHandle, colHandle, localSeq } = localOpMetadata as any;
+                    const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const actualLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
