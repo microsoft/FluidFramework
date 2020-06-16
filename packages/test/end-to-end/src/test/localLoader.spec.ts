@@ -131,6 +131,10 @@ describe("LocalLoader", () => {
             containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
         });
 
+        afterEach(async () => {
+            await deltaConnectionServer.webSocketServer.close();
+        });
+
         it("early open / late close", async () => {
             // Create/open both instance of TestComponent before applying ops.
             const container1 = await createContainer(testComponentFactory);
