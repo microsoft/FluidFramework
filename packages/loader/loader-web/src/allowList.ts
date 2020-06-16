@@ -4,13 +4,13 @@
  */
 
 import {
-    ICodeWhiteList, IFluidPackage, IPackageConfig, IResolvedFluidCodeDetails,
+    ICodeAllowList, IFluidPackage, IPackageConfig, IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.
  */
-export class WhiteList implements ICodeWhiteList {
+export class AllowList implements ICodeAllowList {
     public pkg?: IFluidPackage;
     public config?: IPackageConfig;
     public scriptIds?: string[];

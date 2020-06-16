@@ -24,7 +24,7 @@ async function createWebLoader(
     hostConfig: IBaseHostConfig,
     seedPackages?: Iterable<[IFluidCodeDetails, Promise<IFluidModule> | IFluidModule | undefined]>): Promise<Loader> {
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
+    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.allowList);
 
     if (seedPackages !== undefined) {
         for (const [codeDetails, maybeModule] of seedPackages) {
