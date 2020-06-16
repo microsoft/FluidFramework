@@ -82,7 +82,6 @@ export const getTextColor = (c: IColor) => {
 };
 
 export const getButtonStyles = (baseColor: string): IButtonStyles => {
-    console.log(baseColor);
     const color = getColorFromString(baseColor);
     const colorHover = getColorFromHSV({
         h: color.h,
