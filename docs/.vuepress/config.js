@@ -19,12 +19,20 @@ const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
+const packagesToExclude = [
+    "client-api",
+    "experimental-creation-driver",
+    "host-service-interfaces",
+    "iframe-host"
+];
+
 const apiMapping = new Map([
     ["aqueduct", "Framework"],
     ["component-core-interfaces", "Framework"],
     ["framework-interfaces", "Framework"],
     ["undo-redo", "Framework"],
     ["cell", "Distributed Data Structures"],
+    ["counter", "Distributed Data Structures"],
     ["ink", "Distributed Data Structures"],
     ["map", "Distributed Data Structures"],
     ["sequence", "Distributed Data Structures"],
@@ -78,6 +86,10 @@ const listPages = (dirPath, includeIndex = false) => {
     return pages;
 };
 
+const packageFromFilePath = (filepath) => {
+    return path.basename(filepath).split(".")[0];
+}
+
 const getNav = () => {
     const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
@@ -126,24 +138,26 @@ const getApiSidebar = () => {
     }];
 
     for (const file of files) {
-        const packageName = path.basename(file).split(".")[0];
-        let category = "Unknown";
-        if (apiMapping.has(packageName)) {
-            category = apiMapping.get(packageName);
-            if (!apiCategories.has(category)) {
-                apiCategories.set(category, [packageName]);
-                continue;
-            }
+        const packageName = packageFromFilePath(file);
+        if(packagesToExclude.includes(packageName)) {
+            continue;
+        }
 
+        let category = apiMapping.get(packageName) || "Unknown";
+        if (!apiCategories.has(category)) {
+            // console.log(`Creating entry for ${category}`);
+            apiCategories.set(category, [file]);
+        } else {
             const current = apiCategories.get(category);
             current.push(file);
             apiCategories.set(category, current);
         }
-        // console.log(`${file} ==> ${packageName} ==> ${category}`);
     }
 
     // console.log(apiCategories);
-    console.log(apiCategories.get("Unknown"));
+    const unknownCategory = new Set(apiCategories.get("Unknown").map(f => packageFromFilePath(f)));
+    console.log(`Packages with no category:`);
+    console.log(unknownCategory);
 
     apiCategories.forEach((value, key) => {
         apiSidebar.push({
@@ -154,7 +168,7 @@ const getApiSidebar = () => {
     });
 
     return apiSidebar;
-};
+}
 
 const getDocsSidebar = () => {
     return [
@@ -202,11 +216,6 @@ const getDocsSidebar = () => {
                 "consensus.md",
             ]
         },
-        // {
-        //     title: "API",
-        //     path: "../",
-        //     children: getApiSidebar(),
-        // },
         {
             title: "Component model",
             collapsable: false,
@@ -216,7 +225,7 @@ const getDocsSidebar = () => {
         },
         {
             title: "Guides",
-            collapsable: true,
+            collapsable: false,
             children: [
                 "visual-component.md",
                 // "data-component.md",
@@ -239,7 +248,7 @@ const getDocsSidebar = () => {
         },
         {
             title: "Misc",
-            collapsable: false,
+            collapsable: true,
             // path: "",
             children: [
                 "release-process.md",
