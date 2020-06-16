@@ -1,5 +1,11 @@
 # @microsoft/fluid-server-gateway
 
+## What is Gateway?
+Gateway is an example host. It's a simple service that deploys a controller with a Fluid Framework loader and the necessary drivers to connect to
+Routerlicious.
+
+Historically, Gateway was used internally to test the Fluid Framework.
+
 ## Testing changes under gateway
 
 To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
