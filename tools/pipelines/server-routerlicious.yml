@@ -1,0 +1,90 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# server-routerlicious pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - refs/tags/server_v*
+  paths:
+    include:
+    - server/routerlicious
+    - tools/build-server-resources
+    - tools/pipelines/server-routerlicious.yml
+    exclude:
+    - server/routerlicious/kubernetes/routerlicious
+  
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - server/routerlicious
+    - tools/build-server-resources
+    - tools/pipelines/server-routerlicious.yml
+    exclude:
+    - server/routerlicious/kubernetes/routerlicious
+
+variables:
+  testConfig: test:full
+  containerRegistry: prague.azurecr.io
+  containerName: prague-server
+  baseContainerName: $(containerName)-base
+  fullBaseContainerName: $(containerRegistry)/$(baseContainerName):$(Build.BuildId)
+
+jobs:
+  - job:
+    steps:
+      - task: Bash@3
+        displayName: Strip npmrc auth token preamble
+        inputs:
+          targetType: 'inline'
+          script: |
+            # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
+            sed -i '/^; begin auth token/,/^\; end auth token/d;' .npmrc
+      - task: npmAuthenticate@0
+        displayName: npm Authenticate
+        inputs:
+          workingFile: $(Pipeline.Workspace)/pack/.npmrc
+      - task: Docker@2
+        displayName: Docker build
+        inputs:
+          command: build
+          dockerFile: server/routerlicious/Dockerfile
+          buildContext: server/routerlicious
+          arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+          tags: $(fullBaseContainerName)
+      - task: Docker@0
+        displayName: 'Base: Lint'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run --user root -t $(fullBaseContainerName) npm run lint'
+      - task: Docker@0
+        displayName: 'Base: Test'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(fullBaseContainerName) npm run test$(prague.testConfig)'
+        
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*junit-report.xml'
+          searchFolder: $(System.DefaultWorkingDirectory)/server/routerlicious/nyc
+          mergeTestResults: true
+        condition: succeededOrFailed()
+
+      - task: Docker@0
+        displayName: 'Docs: api-extractor'
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(prague.containerRegistry)/$(prague.baseContainerName):$(Build.BuildId) npm run build:docs'
+
+
