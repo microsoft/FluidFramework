@@ -318,10 +318,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.submitLocalMessage(translated);
     }
 
-    public doCustomProcessing() {
-        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "containerBeingAttached");
-    }
-
     public addLocalReference(lref) {
         return this.client.addLocalReference(lref);
     }
@@ -510,9 +506,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected didAttach() {
-        // if we are not local, and we've attached we need to start generating and sending ops
+        // If we are attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
-        if  (!this.isLocal()) {
+        if  (this.isAttached()) {
             this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }
     }

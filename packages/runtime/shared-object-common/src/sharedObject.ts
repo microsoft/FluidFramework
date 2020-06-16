@@ -111,7 +111,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         if (!this.isAttached()) {
             this.runtime.on("containerBeingAttached", () => {
                 this.containerBeingAttached = true;
-                this.doCustomProcessing();
+                this.didAttach();
             });
 
             this.runtime.on("containerAttached", () => {
@@ -233,10 +233,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract registerCore();
 
     /**
-     * Allows the distributive data type the ability to perform custom processing.
+     * Allows the distributive data type the ability to perform custom processing once an attach has happened.
      * Also called after non-local data type get loaded.
      */
-    public doCustomProcessing() {
+    public didAttach() {
         return;
     }
 
@@ -346,7 +346,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // services too, then the dds is attached too and so we will do the processing. However, we don't want
         // do this in the detached container even if the dds has services.
         if (this.isAttached()) {
-            this.doCustomProcessing();
+            this.didAttach();
         }
 
         // attachDeltaHandler is only called after services is assigned
