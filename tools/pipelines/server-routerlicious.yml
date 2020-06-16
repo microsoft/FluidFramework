@@ -42,6 +42,7 @@ variables:
 jobs:
   - job: build
     displayName: Build
+    pool: Default
     steps:
       # Component detection
       - task: npmAuthenticate@0
@@ -102,7 +103,8 @@ jobs:
           dockerFile: server/routerlicious/Dockerfile
           buildContext: server/routerlicious
           arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
-          tags: $(fullBaseContainerName)
+          tags: |
+            $(fullBaseContainerName)
 
       # Pack
       - task: Docker@0
@@ -167,19 +169,14 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Build'
           inputs:
-            command: build
+            command: buildAndPush
+            containerRegistry: Prague
+            repository: prague
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
             arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
-            tags: $(fullContainerName)
-        
-        - task: Docker@2
-          displayName: 'Runner: Push'
-          inputs:
-            containerRegistry: Prague
-            repository: prague
-            command: push
-            tags: $(fullContainerName)
+            tags: |
+              $(fullContainerName)
 
       # Cleanup
       - task: Docker@0
