@@ -1468,7 +1468,9 @@ export class MergeTree {
     }
 
     private zamboniSegments(zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
-        // console.log(`scour line ${segmentsToScour.count()}`);
+        if (!this.collabWindow.collaborating) {
+            return;
+        }
         let clockStart;
         if (MergeTree.options.measureWindowTime) {
             clockStart = clock();
