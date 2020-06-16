@@ -31,25 +31,27 @@ export class SnapshotLoader {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public  initialize(
+    public  async initialize(
         branchId: string,
         services: IObjectStorageService,
-    ): { headerLoadedP: Promise<void>, catchupOpsP: Promise<ISequencedDocumentMessage[]> } {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
-        const headerChunkP =
+        const headerLoadedP =
             services.read(SnapshotLegacy.header).then((header)=>{
                 assert(header);
                 return this.loadHeader(header, branch);
             });
 
         const catchupOpsP =
-            this.loadBodyAndCatchupOps(headerChunkP, services, branch);
+            this.loadBodyAndCatchupOps(headerLoadedP, services, branch);
 
-        return { headerLoadedP: headerChunkP.then(), catchupOpsP };
+        await headerLoadedP;
+
+        return { catchupOpsP };
     }
 
     private async loadBodyAndCatchupOps(

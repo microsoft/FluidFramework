@@ -925,11 +925,11 @@ export class Client {
             handle);
     }
 
-    public load(
+    public async load(
         runtime: IComponentRuntime,
         storage: IObjectStorageService,
         branchId?: string,
-    ): { headerLoadedP: Promise<void>, catchupOpsP: Promise<ISequencedDocumentMessage[]> } {
+    ): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
         return loader.initialize(branchId, storage);

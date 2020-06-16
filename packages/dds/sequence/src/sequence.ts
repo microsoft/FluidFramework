@@ -109,8 +109,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected client: MergeTree.Client;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
-    private readonly loadedDeferredOps:
+    private readonly loadedDeferredOutgoingOps:
         [MergeTree.IMergeTreeOp, MergeTree.SegmentGroup | MergeTree.SegmentGroup[]][] = [];
+    private deferIncomingOps = true;
+    private readonly loadedDeferredIncommingOps: ISequencedDocumentMessage[] = [];
+
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
@@ -323,7 +326,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             message.type === MergeTree.MergeTreeDeltaType.GROUP ? message.ops.length : 1);
 
         if (!this.loadedDeferred.isCompleted) {
-            this.loadedDeferredOps.push([translated, metadata]);
+            this.loadedDeferredOutgoingOps.push([translated, metadata]);
         } else {
             this.submitLocalMessage(translated, metadata);
         }
@@ -485,12 +488,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel.populate(data);
 
         try {
-            const { headerLoadedP, catchupOpsP } = this.client.load(
+            const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
                 branchId);
-
-            await headerLoadedP;
 
             const loadCatchUpOps = catchupOpsP
                 .then((msgs)=>{
@@ -509,13 +510,18 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        let handled = false;
-        if (message.type === MessageType.Operation) {
-            handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
-        }
+        if (this.deferIncomingOps) {
+            assert(!local);
+            this.loadedDeferredIncommingOps.push(message);
+        } else {
+            let handled = false;
+            if (message.type === MessageType.Operation) {
+                handled = this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
+            }
 
-        if (!handled) {
-            this.processMergeTreeMsg(message);
+            if (!handled) {
+                this.processMergeTreeMsg(message);
+            }
         }
     }
 
@@ -610,10 +616,16 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
                 this.loadedDeferred.reject(error);
             } else {
+                this.deferIncomingOps = false;
+                while (this.loadedDeferredIncommingOps.length > 0) {
+                    this.processCore(this.loadedDeferredIncommingOps.shift(), false, undefined);
+                }
                 this.loadedDeferred.resolve();
-                this.loadedDeferredOps.forEach((opData)=>{
+
+                while (this.loadedDeferredOutgoingOps.length > 0) {
+                    const opData = this.loadedDeferredOutgoingOps.shift();
                     this.reSubmitCore(opData[0], opData[1]);
-                });
+                }
             }
         }
     }
