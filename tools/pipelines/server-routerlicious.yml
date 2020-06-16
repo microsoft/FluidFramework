@@ -63,7 +63,7 @@ jobs:
       - task: ComponentGovernanceComponentDetection@0
         displayName: Component Detection
         inputs:
-          sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
+          sourceScanPath: server/routerlicious/packages
           verbosity: Verbose
           scanType: Register
           alertWarningLevel: High
