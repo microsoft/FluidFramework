@@ -4,8 +4,8 @@ uid: SharedNumberSequence
 
 # SharedNumberSequence
 
-- Package: [@fluidframework/sequence](../api/fluid-sequence.md)
-- API documentation: [SharedNumberSequence](../api/fluid-sequence.sharednumbersequence.md)
+- Package: [@fluidframework/sequence](../api/sequence.md)
+- API documentation: [SharedNumberSequence](../api/sequence.sharednumbersequence.md)
 
 The SharedNumberSequence distributed data structure can be used to store sequences of numbers.
 
@@ -21,6 +21,8 @@ const mySequence = SharedNumberSequence.create(this.runtime, id);
 
 ## Related distributed data structures
 
-- [SharedObjectSequence](./SharedObjectSequence.md)
-- [SharedString](./SharedString.md)
-- [SparseMatrix](./SparseMatrix.md)
+- [SharedObjectSequence][]
+- [SharedString][]
+
+
+!!!include(links.md)!!!

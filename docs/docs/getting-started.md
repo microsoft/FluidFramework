@@ -13,7 +13,7 @@ Fluid requires Node.js and npm. !!!include(node-versions.md)!!! To build a Fluid
 editor and a modern web browser.
 
 **If you're new to web development,** follow [the steps here to set up your Fluid Framework development
-environment](dev-env.md).
+environment](./dev-env.md).
 
 
 ## Learn the Fluid Framework
