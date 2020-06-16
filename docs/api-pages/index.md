@@ -1,10 +1,12 @@
-# Fluid Framework API overview
+# API overview
+
+The Fluid Framework packages are grouped into several categories.
 
 ## Framework
 
 Base classes and interfaces for Fluid Framework that implements basic default behavior of components and containers.
 
-## Distributed Data Structure
+## Distributed data structures
 
 Distributed data structures (DDS) that allow real time sharing of states across clients. There are two types of DDS:
 
@@ -23,19 +25,23 @@ Runtime interfaces and implementation.
 Loader for host pages to load a Fluid container, or just a component within the container.
 
 ## Container
+
 The Loader returns a Container object that can be used by the calling host.
 
 ### Lifecycle
+
 APIs that can be used to manage the lifecycle of the container and its connections
 
 * `close()` - Closes the container (socket connections)
 * `on()` - The Container object also emits lifecycle events such as 'connected' and 'error'
 
 ### Container State
+
 Properties that can be used to query container state
 
 * `clientId` - The clientId representing the host/user if connected to delta connection, otherwise undefined
-* `audience` - Information about all connections to the container. Has getMembers() call that exposes IClient information and emits events 'addMember' and 'removeMember'
+* `audience` - Information about all connections to the container. Has getMembers() call that exposes IClient
+  information and emits events 'addMember' and 'removeMember'
 * `connected` - Whether or not the container is connected or not
 * `connectionState` - The current connection state of the container. Disconnected, Connecting, or Connected
 
