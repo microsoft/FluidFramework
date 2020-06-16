@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BadgeInstantiationFactory } from "./BadgeInstantiationFactory";
+import { BadgeInstantiationFactory } from "./InstantiationFactory";
 
 export const fluidExport = BadgeInstantiationFactory;

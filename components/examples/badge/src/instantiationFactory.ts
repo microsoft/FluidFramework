@@ -7,7 +7,7 @@ import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { Badge } from "./Badge";
+import { Badge } from "./BadgeModel";
 
 const BadgeName = "@fluid-example/badge";
 

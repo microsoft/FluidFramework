@@ -11,7 +11,7 @@ import {
     IButtonStyles,
 } from "@fluentui/react";
 import { SharedColors } from "@uifabric/fluent-theme";
-import { IBadgeType } from "./IBadgeType";
+import { IBadgeType } from "./Badge.types";
 
 export const defaultItems: IBadgeType[] = [
     {
@@ -82,6 +82,7 @@ export const getTextColor = (c: IColor) => {
 };
 
 export const getButtonStyles = (baseColor: string): IButtonStyles => {
+    console.log(baseColor);
     const color = getColorFromString(baseColor);
     const colorHover = getColorFromHSV({
         h: color.h,

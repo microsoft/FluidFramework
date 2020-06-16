@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
     ActivityItem,
     DefaultButton,
@@ -22,23 +22,18 @@ import {
     IContextualMenuItem,
 } from "@fluentui/react";
 import { MotionAnimations } from "@uifabric/fluent-theme";
-import { IBadgeType } from "./IBadgeType";
-import { IHistory } from "./IHistory";
+import { IBadgeViewProps, IBadgeType } from "./Badge.types";
 import {
     getItemsFromOptionsMap,
     getRelativeDate,
     getButtonStyles,
 } from "./helpers";
 
+// Initialize icon font used in Fluent UI
 initializeIcons();
 
-export interface IBadgeViewProps {
-    options: IBadgeType[];
-    historyItems: IHistory<IBadgeType>[];
-    selectedOption: string | number;
-    addOption: (text: string, color: IColor) => void;
-    changeSelectedOption: (item: IBadgeType) => void;
-}
+// The BadgeView is completely unaware of the Fluid data structures. It only renders what is currently in Client state
+// and uses Client provided functions to modify Fluid data, which is then fed back into state.
 
 export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
     const {
@@ -49,25 +44,25 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         changeSelectedOption,
     } = props;
 
-    // Find the option that is currently selected
     const currentOption = options.find((option) => option.key === selectedOption);
 
-    // Set up local state for our color picker
-    // Is the color picker visible?
+    // Set up local state for our custom status creator
+
     const [isCustomStatusVisible, setIsCustomStatusVisible] = useState<boolean>(false);
-    // What is the current color of the color picker?
     const [customStatusColor, setCustomStatusColor] = useState<IColor>(
         getColorFromString("#fff"),
     );
-    // What is the current text for the custom color
     const [customStatusText, setCustomStatusText] = useState<string>("");
 
     // Set up event handlers
     const onStatusClick = (_, item: IContextualMenuItem): void => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        item.key === "new"
-            ? setIsCustomStatusVisible(true)
-            : changeSelectedOption(item as IBadgeType);
+        switch (item.key) {
+            case "new":
+                setIsCustomStatusVisible(true);
+                break;
+            default:
+                changeSelectedOption(item as IBadgeType);
+        }
     };
 
     const closeCustomStatus = (): void => {
@@ -79,7 +74,6 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
             addOption(customStatusText, customStatusColor);
             setCustomStatusText("");
         }
-
         closeCustomStatus();
     };
 
@@ -92,7 +86,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         setCustomStatusText(newValue);
     };
 
-    // Create a render function for our history card. This could easily be another component in another file.
+    // Create the content for the history card
     const historyCardContent = (): JSX.Element => {
         // eslint-disable-next-line react/prop-types
         const history = historyItems.map((x, i) => {
@@ -109,8 +103,13 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         return <div style={{ padding: "16px 24px" }}>{history.reverse()}</div>;
     };
 
-    const buttonStyles = getButtonStyles(currentOption.iconProps.style.color);
+    // Only recompute button styles when current option changes
+    const buttonStyles = useMemo(
+        () => getButtonStyles(currentOption.iconProps.style.color),
+        [currentOption],
+    );
 
+    // Render our main view
     return (
         <div
             style={{
