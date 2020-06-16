@@ -32,6 +32,9 @@ module.exports = {
         libraryTarget: "umd"
     },
     devServer: {
-        publicPath: '/dist'
+        publicPath: '/dist',
+        watchOptions: {
+            ignored: "**/node_modules/**",
+        }
     },
 };

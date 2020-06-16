@@ -4,8 +4,8 @@ uid: SharedCell
 
 # SharedCell
 
-- Package: [@fluidframework/cell](../api/fluid-cell.md)
-- API documentation: [SharedCell](../api/fluid-cell.sharedcell.md)
+- Package: [@fluidframework/cell](../api/cell.md)
+- API documentation: [SharedCell](../api/cell.sharedcell.md)
 
 The SharedCell distributed data structure can be used to wrap an Object so that it can be used like a distributed data
 structure.

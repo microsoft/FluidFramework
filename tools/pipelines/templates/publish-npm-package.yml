@@ -1,0 +1,66 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# publish-npm-package template to publish NPM packages/projects
+
+parameters:
+- name: feeds
+  type: object
+
+- name: pool
+  type: object
+  default: Shared
+
+jobs:
+  - ${{ each feed in parameters.feeds }}:
+    - deployment: publish
+      displayName: Publish ${{ feed.environment }}
+      pool: ${{ parameters.pool }}
+      environment: ${{ feed.environment }}
+      workspace:
+        clean: all
+      strategy:
+        runOnce:
+            deploy:
+                steps:
+                - download: current
+                  artifact: pack
+                - task: Bash@3
+                  displayName: Generate .npmrc
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    script: |
+                      echo Generating .npmrc for ${{ feed.name }}
+                      echo "@fluidframework:registry=${{ feed.name }}" >> ./.npmrc
+                      echo "@fluid-example:registry=${{ feed.name }}" >> ./.npmrc
+                      echo "always-auth=true" >> ./.npmrc
+                - task: npmAuthenticate@0
+                  displayName: npm Authenticate
+                  inputs:
+                    workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                    customEndPoint: ${{ feed.customEndPoint }}
+                - task: Bash@3
+                  displayName: Publish Packages
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: $(Pipeline.Workspace)/pack
+                    script: |
+                      tag="--tag canary"
+                      if [[ "$(Build.SourceBranch)" = refs/heads/master ]]; then
+                        tag="--tag next"
+                      elif [[ "$(Build.SourceBranch)" == refs/tags/* ]]; then
+                        tag="--tag latest"
+                      fi
+                      echo Tag: $tag
+                      cp .npmrc ~/.npmrc
+                      t1=0
+                      for f in *.tgz
+                      do 
+                          if ! npm publish $f $tag
+                          then
+                              let t1+=1
+                          fi
+                      done
+                      rm ~/.npmrc
+                      exit $t1

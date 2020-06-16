@@ -4,8 +4,8 @@ uid: SharedObjectSequence
 
 # SharedObjectSequence
 
-- Package: [@fluidframework/sequence](../api/fluid-sequence.md)
-- API documentation: [SharedObjectSequence](../api/fluid-sequence.sharedobjectsequence.md)
+- Package: [@fluidframework/sequence](../api/sequence.md)
+- API documentation: [SharedObjectSequence](../api/sequence.sharedobjectsequence.md)
 
 The SharedObjectSequence distributed data structure can be used to store sequences of objects.
 
@@ -21,6 +21,8 @@ const mySequence = SharedObjectSequence.create(this.runtime, id);
 
 ## Related distributed data structures
 
-- [SharedNumberSequence](./SharedNumberSequence.md)
-- [SharedString](./SharedString.md)
-- [SparseMatrix](./SparseMatrix.md)
+- [SharedNumberSequence][]
+- [SharedString][]
+
+
+!!!include(links.md)!!!
