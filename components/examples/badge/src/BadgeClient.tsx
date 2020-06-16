@@ -50,7 +50,9 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
     };
 
     const getHistoryItems = () => {
-        return model.historySequence.getItems(0);
+        // return history items in reverse order so that newest is first
+        const history = model.historySequence.getItems(0);
+        return history.reverse();
     };
 
     const getSelectedOptionKey = () => {

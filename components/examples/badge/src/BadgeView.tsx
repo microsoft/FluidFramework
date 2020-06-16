@@ -100,7 +100,7 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
             );
         });
 
-        return <div style={{ padding: "16px 24px" }}>{history.reverse()}</div>;
+        return <div style={{ padding: "16px 24px" }}>{history}</div>;
     };
 
     // Only recompute button styles when current option changes
