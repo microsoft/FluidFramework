@@ -111,6 +111,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
 interface PackageJson {
     name: string;
     version: string;
+    private?: boolean;
     dependencies: { [key: string]: string };
     devDependencies: { [key: string]: string };
 }
@@ -156,6 +157,7 @@ async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
     const repoPackageJson: PackageJson = {
         name: `@fluid-internal/${MonoRepoKind[monoRepo.kind].toLowerCase()}`,
         version: monoRepo.version,
+        private: true,
         dependencies: {},
         devDependencies: {},
     };
