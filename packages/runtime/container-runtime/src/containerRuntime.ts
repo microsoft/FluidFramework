@@ -183,6 +183,9 @@ export interface IContainerRuntimeOptions {
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
     enableWorker?: boolean;
+
+    // Delay before first attempt to spawn summarizing container
+    initialSummarizerDelayMs?: number;
 }
 
 interface IRuntimeMessageMetadata {
@@ -708,7 +711,8 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
-            !!this.previousState.reload);
+            !!this.previousState.reload,
+            this.runtimeOptions.initialSummarizerDelayMs);
 
         if (this.context.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
