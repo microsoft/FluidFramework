@@ -33,25 +33,38 @@ export class SnapshotLoader {
 
     public async initialize(
         branchId: string,
-        services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-        const headerP = services.read(SnapshotLegacy.header);
-        const blobsP = services.list("");
-
-        const header = await headerP;
-        assert(header);
+        services: IObjectStorageService,
+    ): Promise<ISequencedDocumentMessage[]> {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
+        const headerChunkP =
+            services.read(SnapshotLegacy.header).then((header)=>{
+                assert(header);
+                return this.loadHeader(header, branch);
+            });
 
-        const headerChunk = this.loadHeader(header, branch);
+        const catchupOpsP =
+            this.loadBodyAndCatchupOps(headerChunkP, services, branch);
 
-        // tslint:disable-next-line: no-suspicious-comment
-        // TODO we shouldn't need to wait on the body being complete to finish initialization.
-        // To fully support this we need to be able to process inbound ops for pending segments.
+        await headerChunkP;
+        if (this.mergeTree.options.mergeTreeInitializeWithSnapshotHeaderOnly !== true) {
+            await catchupOpsP;
+        }
+
+        return catchupOpsP;
+    }
+
+    private async loadBodyAndCatchupOps(
+        headerChunkP: Promise<MergeTreeChunkV1>,
+        services: IObjectStorageService,
+        branch: string,
+    ): Promise<ISequencedDocumentMessage[]> {
+        const blobsP = services.list("");
+        const headerChunk = await headerChunkP;
         await this.loadBody(headerChunk, services);
-
         const blobs = await blobsP;
         if (blobs.length === headerChunk.headerMetadata.orderedChunkMetadata.length + 1) {
             headerChunk.headerMetadata.orderedChunkMetadata.forEach(
