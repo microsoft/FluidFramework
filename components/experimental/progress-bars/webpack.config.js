@@ -21,7 +21,7 @@ module.exports = env => {
         },
         module: {
             rules: [
-                { 
+                {
                     test: /\.tsx?$/,
                     loader: "ts-loader"
                 },
@@ -52,7 +52,10 @@ module.exports = env => {
         },
         devServer: {
             publicPath: '/dist',
-            stats: "minimal"
+            stats: "minimal",
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         }
     }, isProduction
         ? require("./webpack.prod")
