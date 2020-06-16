@@ -2093,7 +2093,7 @@ export class MergeTree {
             // Find the nearest 0 length seg we can insert over, as all other inserts
             // go near to far
             if (backLen === 0) {
-                if (this.breakTie(0, 0, backSeg, this.collabWindow.currentSeq, clientId)) {
+                if (this.breakTie(0, backSeg, clientId)) {
                     startSeg = backSeg;
                 }
                 return true;
@@ -2280,17 +2280,9 @@ export class MergeTree {
     }
 
     // Assume called only when pos == len
-    private breakTie(
-        pos: number, len: number, node: IMergeNode, refSeq: number,
-        clientId: number, candidateSegment?: ISegment) {
-        if (node.isLeaf()) {
-            if (pos === 0) {
-                return clientId === this.collabWindow.clientId || node.seq !== UnassignedSequenceNumber;
-            }
-            return false;
-        } else {
-            return true;
-        }
+    private breakTie(pos: number, node: IMergeNode, clientId: number) {
+        return !node.isLeaf() || pos === 0 &&
+            (clientId === this.collabWindow.clientId || node.seq !== UnassignedSequenceNumber);
     }
 
     // Visit segments starting from node's left siblings, then up to node's parent
@@ -2385,7 +2377,7 @@ export class MergeTree {
                 console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${pos} ${segInfo}`);
             }
 
-            if ((pos < len) || ((pos === len) && this.breakTie(pos, len, child, refSeq, clientId, context.candidateSegment))) {
+            if ((pos < len) || ((pos === len) && this.breakTie(pos, child, clientId))) {
                 // Found entry containing pos
                 found = true;
                 if (!child.isLeaf()) {
