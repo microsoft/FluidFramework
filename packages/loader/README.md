@@ -10,6 +10,8 @@ example of this is the npm package that should be loaded to process operations a
 
 ## Document and channels
 
+??? THIS SEEMS OUT OF DATE / OUT OF CONTEXT ???
+
 The base document channel is 'owned' and run by the chaincode of the loader. It should be versioned and require
 a specific loader version.
 

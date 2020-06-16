@@ -78,6 +78,9 @@ export interface IPackage {
     private?: boolean;
 }
 
+/**
+ * Fluid-specific extensions expected in package.json for Fluid Components
+ */
 export interface IFluidPackage extends IPackage {
     // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {
@@ -125,23 +128,26 @@ export interface IFluidCodeDetails {
     config: IPackageConfig;
 }
 
+/**
+ * ???
+ */
 export interface IRuntimeState {
     snapshot?: ITree,
     state?: unknown,
 }
 
 /**
- * The IRuntime represents an instantiation of a code package within a container.
+ * The IRuntime represents an instantiation of a code package within a Container.
+ * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  */
 export interface IRuntime extends IDisposable {
-
     /**
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
 
     /**
-     * Snapshots the runtime
+     * ???
      */
     snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
@@ -150,7 +156,9 @@ export interface IRuntime extends IDisposable {
      */
     setConnectionState(connected: boolean, clientId?: string);
 
-    // Back-compat: supporting <= 0.16 components
+    /**
+     * Back-compat: supporting <= 0.16 components
+     */
     changeConnectionState?: (value: ConnectionState, clientId?: string) => void;
 
     /**
@@ -163,7 +171,7 @@ export interface IRuntime extends IDisposable {
     stop(): Promise<IRuntimeState>;
 
     /**
-     * Processes the given message
+     * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
@@ -172,11 +180,10 @@ export interface IRuntime extends IDisposable {
      */
     processSignal(message: any, local: boolean);
 
+    /**
+     * ???
+     */
     createSummary(): ISummaryTree;
-}
-
-export interface IMessageScheduler {
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
 export const IMessageScheduler: keyof IProvideMessageScheduler = "IMessageScheduler";
@@ -185,30 +192,69 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
+/**
+ * ???
+ */
+export interface IMessageScheduler {
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+}
+
+/**
+ * The ContainerContext is a proxy standing between The_Container and the Container's IRuntime.
+ * This allows The_Container to terminate the connection to the IRuntime.
+ *
+ * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
+ * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
+ * and The_Container has created a new ContainerContext.
+ */
 export interface IContainerContext extends IMessageScheduler, IProvideMessageScheduler, IDisposable {
+    /** ??? */
     readonly id: string;
+    /** ??? */
     readonly existing: boolean | undefined;
+    /** ??? */
     readonly options: any;
+    /** ??? */
     readonly configuration: IComponentConfiguration;
+    /** ??? */
     readonly clientId: string | undefined;
+    /** ??? */
     readonly clientDetails: IClientDetails;
+    /** ??? */
     readonly parentBranch: string | null;
+    /** ??? */
     readonly blobManager: IBlobManager | undefined;
+    /** ??? */
     readonly storage: IDocumentStorageService | undefined | null;
+    /** ??? */
     readonly connected: boolean;
+    /** ??? */
     readonly branch: string;
+    /** ??? */
     readonly baseSnapshot: ISnapshotTree | null;
+    /** ??? */
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    /** ??? */
     readonly submitSignalFn: (contents: any) => void;
+    /** ??? */
     readonly snapshotFn: (message: string) => Promise<void>;
+    /** ??? */
     readonly closeFn: (error?: CriticalContainerError) => void;
+    /** ??? */
     readonly quorum: IQuorum;
+    /** ??? */
     readonly audience: IAudience | undefined;
+    /** ??? */
     readonly loader: ILoader;
+    /** ??? */
     readonly codeLoader: ICodeLoader;
+    /** ??? */
     readonly logger: ITelemetryLogger;
+    /** ??? */
     readonly serviceConfiguration: IServiceConfiguration | undefined;
+    /** ??? */
     readonly version: string;
+    /** ??? */
     readonly previousRuntimeState: IRuntimeState;
 
     /**
@@ -216,8 +262,11 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     readonly scope: IComponent;
 
+    /** ??? */
     raiseContainerWarning(warning: ContainerWarning): void;
+    /** ??? */
     requestSnapshot(tagMessage: string): Promise<void>;
+    /** ??? */
     reloadContext(): Promise<void>;
 
     /**
@@ -234,8 +283,10 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     isLocal(): boolean;
 
+    /** ??? */
     getLoadedFromVersion(): IVersion | undefined;
 
+    /** ??? */
     createSummary(): ISummaryTree;
 }
 
@@ -245,10 +296,12 @@ export interface IProvideComponentTokenProvider {
     readonly IComponentTokenProvider: IComponentTokenProvider;
 }
 
+/** ??? */
 export interface IComponentTokenProvider extends IProvideComponentTokenProvider {
     intelligence: { [service: string]: any };
 }
 
+/** ??? */
 export interface IFluidModule {
     fluidExport: IComponent;
 }
@@ -258,12 +311,15 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;
 }
+
 /**
- * Exported module definition
+ * Hook for the ContainerContext to load in the proper IRuntime to start up the
+ * running instance of the Container.
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
-     * Instantiates a new chaincode container
+     * Instantiates a new IRuntime for the given IContainerContext to proxy to.
+     * This is the main entrypoint to the "app"-level logic for a Container
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
@@ -275,4 +331,4 @@ declare module "@fluidframework/component-core-interfaces" {
         IProvideComponentTokenProvider &
         IProvideMessageScheduler>> { }
 }
-    /* eslint-enable @typescript-eslint/no-empty-interface */
+/* eslint-enable @typescript-eslint/no-empty-interface */

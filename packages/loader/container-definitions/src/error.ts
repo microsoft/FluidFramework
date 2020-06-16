@@ -4,6 +4,9 @@
  */
 
 // tslint:disable: no-unsafe-any
+/**
+ * Different error types The_Container may report out to the Host
+ */
 export enum ErrorType {
     /**
      * Some error, most likely an exception caught by runtime and propagated to container as critical error
@@ -121,16 +124,25 @@ export interface IErrorBase {
     sequenceNumber?: number;
 }
 
+/**
+ * Generic wrapper for an unrecognized/uncategorized error object
+ */
 export interface IGenericError extends IErrorBase {
     readonly errorType: ErrorType.genericError;
     error?: any;
 }
 
+/**
+ * Warning emitted when requests to storage are being throttled
+ */
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ErrorType.throttlingError;
     readonly retryAfterSeconds: number;
 }
 
+/**
+ * Catch-all for network-related errors without specific handling logic
+ */
 export interface IGenericNetworkError extends IErrorBase {
     readonly errorType: ErrorType.genericNetworkError;
     readonly statusCode?: number;
@@ -153,6 +165,9 @@ export interface INetworkErrorBasic extends IErrorBase {
     readonly errorType: NetworkErrorBasicTypes;
 }
 
+/**
+ * Indicates a potential problem occurred during Summarizing
+ */
 export interface ISummarizingWarning extends IErrorBase {
     readonly errorType: ErrorType.summarizingError;
     /**
@@ -161,6 +176,7 @@ export interface ISummarizingWarning extends IErrorBase {
     readonly logged: boolean;
 }
 
+/** Indicates that data corruption has occurred in the Container */
 export interface IDataCorruptionError extends IErrorBase {
     readonly errorType: ErrorType.dataCorruptionError;
 }

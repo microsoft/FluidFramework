@@ -18,18 +18,33 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * ???
+ */
 export interface IConnectionDetails {
+    /** ??? */
     clientId: string;
+    /** ??? */
     claims: ITokenClaims;
+    /** ??? */
     existing: boolean;
+    /** ??? */
     mode: ConnectionMode;
+    /** ??? */
     parentBranch: string | null;
+    /** ??? */
     version: string;
+    /** ??? */
     initialClients?: ISignalClient[];
+    /** ??? */
     initialMessages?: ISequencedDocumentMessage[];
+    /** ??? */
     initialContents?: IContentMessage[];
+    /** ??? */
     initialSignals?: ISignalMessage[];
+    /** ??? */
     maxMessageSize: number;
+    /** ??? */
     serviceConfiguration: IServiceConfiguration;
 }
 
@@ -59,6 +74,9 @@ export interface IProvideDeltaSender {
     readonly IDeltaSender: IDeltaSender;
 }
 
+/**
+ * ???
+ */
 export interface IDeltaSender extends IProvideDeltaSender {
     /**
      * Submits the given delta returning the client sequence number for the message. Contents is the actual
@@ -70,9 +88,13 @@ export interface IDeltaSender extends IProvideDeltaSender {
      */
     submit(type: MessageType, contents: any, batch: boolean, metadata: any): number;
 
+    /**
+     * ???
+     */
     flush(): void;
 }
 
+/** Events emitted by the Delta Manager */
 export interface IDeltaManagerEvents extends IEvent {
     (event: "prepareSend", listener: (messageBuffer: any[]) => void);
     (event: "submitOp", listener: (message: IDocumentMessage) => void);
@@ -84,38 +106,41 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void);
 }
 
+/**
+ * Manages the transmission of ops between the runtime and storage.
+ */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
-    // The queue of inbound delta messages
+    /** The queue of inbound delta messages */
     inbound: IDeltaQueue<T>;
 
-    // The queue of outbound delta messages
+    /** The queue of outbound delta messages */
     outbound: IDeltaQueue<U[]>;
 
-    // The queue of inbound delta signals
+    /** The queue of inbound delta signals */
     inboundSignal: IDeltaQueue<ISignalMessage>;
 
-    // The current minimum sequence number
+    /** The current minimum sequence number */
     minimumSequenceNumber: number;
 
-    // The last sequence number processed by the delta manager
+    /** The last sequence number processed by the delta manager */
     lastSequenceNumber: number;
 
-    // The initial sequence number set when attaching the op handler
+    /** The initial sequence number set when attaching the op handler */
     initialSequenceNumber: number;
 
-    // Details of client
+    /** Details of client */
     clientDetails: IClientDetails;
 
-    // Protocol version being used to communicate with the service
+    /** Protocol version being used to communicate with the service */
     version: string;
 
-    // Max message size allowed to the delta manager
+    /** Max message size allowed to the delta manager */
     maxMessageSize: number;
 
-    // Service configuration provided by the service.
+    /** Service configuration provided by the service. */
     serviceConfiguration: IServiceConfiguration | undefined;
 
-    // Flag to indicate whether the client can write or not.
+    /** Flag to indicate whether the client can write or not */
     active: boolean;
 
     /**
@@ -132,16 +157,22 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
      */
     readonly?: boolean;
 
+    /** Terminate the connection to storage */
     close(): void;
 
+    /** ??? */
     submitSignal(content: any): void;
 }
 
+/** Events emmitted by a Delta Queue */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push" | "op", listener: (task: T) => void);
     (event: "idle", listener: () => void);
 }
 
+/**
+ * Queue of ops to be sent to or processed from storage
+ */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     /**
      * Flag indicating whether or not the queue was paused
