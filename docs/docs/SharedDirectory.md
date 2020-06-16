@@ -1,9 +1,9 @@
 # SharedDirectory
 
-- Package: [@fluidframework/map](../api/fluid-map.md)
+- Package: [@fluidframework/map](../api/map.md)
 - API documentation:
-  - [SharedDirectory](../api/fluid-map.shareddirectory.md)
-  - [IDirectory](../api/fluid-map.idirectory.md)
+  - [SharedDirectory](../api/map.shareddirectory.md)
+  - [IDirectory](../api/map.idirectory.md)
 
 The SharedDirectory distributed data structure is similar to a [SharedMap][] and can be used to store key-value pairs.
 In addition to the typical Map functionality for getting, setting, and iterating over values, SharedDirectory provides a
@@ -43,7 +43,7 @@ corresponding subdirectory methods.
 ### getWorkingDirectory
 
 To "navigate" the subdirectory structure, `IDirectory` provides a
-[getWorkingDirectory](../api/fluid-map.shareddirectory.getworkingdirectory.md) method which takes a relative path and
+[getWorkingDirectory](../api/map.shareddirectory.getworkingdirectory.md) method which takes a relative path and
 returns the `IDirectory` located at that path if it exists.
 
 !!!include(object-serialization.md)!!!
@@ -54,7 +54,7 @@ they don't overwrite each other.
 
 ## Eventing
 
-[valueChanged](../api/fluid-map.shareddirectory.on_1.md) events additionally provide the absolute path to the
+[valueChanged](../api/map.shareddirectory.on_1.md) events additionally provide the absolute path to the
 subdirectory storing the value that changed.
 
 ## Related distributed data structures
@@ -62,4 +62,4 @@ subdirectory storing the value that changed.
 - [SharedMap][]
 
 <!-- Links -->
-[SharedMap]: ./SharedMap.md
+!!!include(links.md)!!!

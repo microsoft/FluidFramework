@@ -16,6 +16,7 @@ trigger:
     - tools/generator-fluid
     - tools/pipelines/build-generator-fluid.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:
