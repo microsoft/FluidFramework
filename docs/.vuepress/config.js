@@ -23,7 +23,8 @@ const packagesToExclude = [
     "client-api",
     "experimental-creation-driver",
     "host-service-interfaces",
-    "iframe-host"
+    "iframe-host",
+    "index",
 ];
 
 const apiMapping = new Map([
@@ -96,7 +97,7 @@ const getNav = () => {
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
         // { text: "Ecosystem", link: "/ecosystem/" },
-        { text: "API", link: "/api/overview.md" },
+        { text: "API", link: "/api/" },
         {
             text: "Versions",
             items: [
@@ -132,14 +133,14 @@ const getApiSidebar = () => {
     let apiCategories = new Map();
     let apiSidebar = [{
         title: "API Overview",
-        path: "overview",
+        path: "index",
         collapsable: false,
         sidebarDepth: 0
     }];
 
     for (const file of files) {
         const packageName = packageFromFilePath(file);
-        if(packagesToExclude.includes(packageName)) {
+        if (packagesToExclude.includes(packageName)) {
             continue;
         }
 
@@ -155,9 +156,11 @@ const getApiSidebar = () => {
     }
 
     // console.log(apiCategories);
-    const unknownCategory = new Set(apiCategories.get("Unknown").map(f => packageFromFilePath(f)));
-    console.log(`Packages with no category:`);
-    console.log(unknownCategory);
+    if (apiCategories.get("Unknown")) {
+        const unknownCategory = new Set(apiCategories.get("Unknown").map(f => packageFromFilePath(f)));
+        console.log(`Packages with no category:`);
+        console.log(unknownCategory);
+    }
 
     apiCategories.forEach((value, key) => {
         apiSidebar.push({

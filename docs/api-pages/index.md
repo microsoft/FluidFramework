@@ -1,9 +1,4 @@
----
-aliases:
- - api/index.html
----
-
-# Fluid Framework API overview
+# API overview
 
 The Fluid Framework packages are grouped into several categories.
 
