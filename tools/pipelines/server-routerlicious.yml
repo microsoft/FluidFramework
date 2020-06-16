@@ -40,7 +40,8 @@ variables:
   fullContainerName: $(containerName):$(Build.BuildId)
 
 jobs:
-  - job:
+  - job: build
+    displayName: Build
     steps:
       # Component detection
       - task: npmAuthenticate@0
@@ -87,7 +88,7 @@ jobs:
           targetType: 'inline'
           script: |
             # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-            sed -i '/^; begin auth token/,/^\; end auth token/d;' .npmrc
+            sed -i '/^; begin auth token/,/^\; end auth token/d;' server/routerlicious/.npmrc
       - task: npmAuthenticate@0
         displayName: npm Authenticate
         inputs:
@@ -129,7 +130,7 @@ jobs:
         displayName: 'Base: Test'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(fullBaseContainerName) npm run test$(prague.testConfig)'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(fullBaseContainerName) npm run test$(testConfig)'
         
       - task: PublishTestResults@2
         displayName: Publish Test Results
