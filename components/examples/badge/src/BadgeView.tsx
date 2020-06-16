@@ -35,7 +35,7 @@ initializeIcons();
 // The BadgeView is completely unaware of the Fluid data structures. It only renders what is currently in Client state
 // and uses Client provided functions to modify Fluid data, which is then fed back into state.
 
-export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
+export const BadgeView: React.FC<IBadgeViewProps> = (props) => {
     const {
         options,
         historyItems,
