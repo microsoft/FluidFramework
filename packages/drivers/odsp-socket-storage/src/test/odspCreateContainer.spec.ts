@@ -4,8 +4,7 @@
  */
 
 import assert from "assert";
-import sinon from "sinon";
-import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { DebugLogger } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -13,6 +12,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { IOdspResolvedUrl } from "../contracts";
 import { getHashedDocumentId } from "../odspUtils";
+import { mockFetch } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
     const siteUrl = "https://www.localhost.xxx";
@@ -32,24 +32,9 @@ describe("Odsp Create Container Test", () => {
         itemId,
     };
 
-    let stubedFetch: sinon.SinonStub;
-    before(() => {
-        stubedFetch = sinon.stub(global, "fetch");
-        stubedFetch.returns(Promise.resolve(
-            {
-                content: expectedResponse,
-                headers: new Map(),
-            },
-        ));
-    });
-
-    after(() => {
-        stubedFetch.restore();
-    });
-
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-            async (url: string, refresh: boolean) => "token",
-            async (refresh: boolean) => "token");
+        async (url: string, refresh: boolean) => "token",
+        async (refresh: boolean) => "token");
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
         const summary: ISummaryTree = {
@@ -77,7 +62,6 @@ describe("Odsp Create Container Test", () => {
     };
 
     const createService = async (
-        odspDocumentServiceFactory: IDocumentServiceFactory,
         summary: ISummaryTree,
         resolved: IOdspResolvedUrl,
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
@@ -94,10 +78,12 @@ describe("Odsp Create Container Test", () => {
         const resolved = await resolver.resolve(request);
         const docID = getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true, 0);
-        const docService = await odspDocumentServiceFactory.createContainer(
-            summary,
-            resolved,
-            DebugLogger.create("fluid:createContainer"));
+        const docService = await mockFetch(
+            expectedResponse,
+            async () => odspDocumentServiceFactory.createContainer(
+                summary,
+                resolved,
+                DebugLogger.create("fluid:createContainer")));
         const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
@@ -114,14 +100,14 @@ describe("Odsp Create Container Test", () => {
     it("No App Summary", async () => {
         const resolved = await resolver.resolve(request);
         const summary = createSummary(false, true, 0);
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because there was no app summary");
     });
 
     it("Wrong Seq No in Protocol Summary", async () => {
         const resolved = await resolver.resolve(request);
         const summary = createSummary(true, true, 1);
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because seq no was wrong");
     });
 
@@ -129,7 +115,7 @@ describe("Odsp Create Container Test", () => {
         const resolved = await resolver.resolve(request);
         const summary = createSummary(true, true, 0);
 
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because no Item id is there");
     });
 });

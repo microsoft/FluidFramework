@@ -87,7 +87,7 @@ export class OdspDocumentService implements IDocumentService {
                     getStorageToken,
                     await options.newFileInfoPromise,
                     cache,
-                    storageFetchWrapper);
+                    logger);
                 const props = {
                     docId: odspResolvedUrl.hashedDocumentId,
                 };
@@ -102,8 +102,6 @@ export class OdspDocumentService implements IDocumentService {
             getStorageToken,
             getWebsocketToken,
             logger,
-            storageFetchWrapper,
-            deltasFetchWrapper,
             socketIOClientP,
             cache,
             hostPolicy,
@@ -196,7 +194,6 @@ export class OdspDocumentService implements IDocumentService {
         if (!this.storageManager) {
             this.storageManager = new OdspDocumentStorageService(
                 this.odspResolvedUrl,
-                this.storageFetchWrapper,
                 this.getStorageToken,
                 this.logger,
                 true,
@@ -221,7 +218,6 @@ export class OdspDocumentService implements IDocumentService {
 
         const res = new OdspDeltaStorageService(
             urlProvider,
-            this.deltasFetchWrapper,
             this.storageManager?.ops,
             this.getStorageToken,
             this.logger,

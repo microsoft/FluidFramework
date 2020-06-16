@@ -60,8 +60,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             filename: odspResolvedUrl.fileName,
         };
 
+        const logger2 = ChildLogger.create(logger, "OdspDriver");
         const event = PerformanceEvent.start(
-            ChildLogger.create(logger, "OdspDriver"),
+            logger2,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
@@ -72,7 +73,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 this.getStorageToken,
                 newFileParams,
                 this.nonPersistentCache,
-                this.storageFetchWrapper,
+                logger2,
                 createNewSummary);
             const props = {
                 docId: odspResolvedUrl.hashedDocumentId,

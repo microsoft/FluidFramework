@@ -168,7 +168,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}`, storageToken);
 
-                return fetchHelper<IBlob>(url, { headers });
+                return PerformanceEvent.timedExecAsync(
+                    this.logger,
+                    { eventName: "readBlob" },
+                    async () => fetchHelper<IBlob>(url, { headers }),
+                );
             });
             blob = response.content;
         }
@@ -193,8 +197,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const storageToken = await this.getStorageToken(refresh, "GetContent");
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
-
-            const response = await fetchHelper<IBlob>(url, { headers });
+            const response = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "getContent" },
+                async () => fetchHelper<IBlob>(url, { headers }),
+            );
             return response.content.content;
         });
     }
@@ -408,7 +415,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
-            const response = await fetchHelper<IDocumentStorageGetVersionsResponse>(url, { headers });
+            const response = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "getVersions" },
+                async () => fetchHelper<IDocumentStorageGetVersionsResponse>(url, { headers }),
+            );
             const versionsResponse = response.content;
             if (!versionsResponse) {
                 throwOdspNetworkError("getVersions returned no response", 400);
@@ -576,7 +587,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
                 const storageToken = await this.getStorageToken(refresh, "ReadTree");
 
-                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot);
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger);
                 const odspSnapshot: IOdspSnapshot = response.content;
                 // OdspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {

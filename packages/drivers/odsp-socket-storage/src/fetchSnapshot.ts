@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { PerformanceEvent } from "@fluidframework/common-utils";
 import { IOdspSnapshot } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspResponse } from "./odspUtils";
+import { fetchHelper, IOdspResponse } from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -22,6 +24,7 @@ export async function fetchSnapshot(
     token: string | null,
     versionId: string,
     fetchFullSnapshot: boolean,
+    logger: ITelemetryLogger,
 ): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: { [key: string]: string } = {};
@@ -36,7 +39,9 @@ export async function fetchSnapshot(
 
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
-    const fetchResponse = await storageFetchWrapper.get<IOdspSnapshot>(url, versionId, headers);
-
-    return fetchResponse;
+    return PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "fetchSnapshot" },
+        async () => fetchHelper<IOdspSnapshot>(url, headers),
+    );
 }
