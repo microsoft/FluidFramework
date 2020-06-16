@@ -19,12 +19,10 @@
 
 FROM node:12.16.1-slim AS base
 
-# node-gyp dependencies
+# dependencies
 RUN apt-get update && apt-get install -y \
         git \
         yarn
-
-# RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
 
 #############################
 FROM base AS vuepress
