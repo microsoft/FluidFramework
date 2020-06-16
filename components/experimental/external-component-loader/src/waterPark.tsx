@@ -139,9 +139,8 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     private readonly getViewForItem = async (item: IWaterparkItem) => {
         const component = await item.handle.get();
 
-        // This is where a custom view could be provided if desired.
-
-        // Fall back to hoping the component is adaptable
+        // This is where Spaces would do a lookup for how to get the view and call that.
+        // In Waterpark, we'll just assume the handle points to something we can adapt with a ReactViewAdapter.
         if (ReactViewAdapter.canAdapt(component)) {
             return <ReactViewAdapter component={component} />;
         }

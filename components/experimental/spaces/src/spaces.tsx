@@ -161,7 +161,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         const registryEntry = spacesComponentMap.get(item.itemType);
 
         if (registryEntry === undefined) {
-            // Probably would be ok to return undefined instead?
+            // Probably would be ok to return undefined instead
             throw new Error("Cannot get view, unknown widget type");
         }
 
