@@ -11,64 +11,64 @@ import {
 } from "office-ui-fabric-react";
 import {
     ISpacesItemEntry,
-} from "./spacesComponentMap";
+} from "./spacesItemMap";
 import "./spacesToolbarStyle.css";
 
 initializeIcons();
 
-interface ISpacesToolbarComponentItemProps {
-    componentMap: Map<string, ISpacesItemEntry>;
-    addComponent(type: string): void;
+interface ISpacesToolbarAddItemPickerProps {
+    itemMap: Map<string, ISpacesItemEntry>;
+    addItem(type: string): void;
 }
 
-const SpacesToolbarComponentItem: React.FC<ISpacesToolbarComponentItemProps> =
-    (props: React.PropsWithChildren<ISpacesToolbarComponentItemProps>) => {
+const SpacesToolbarAddItemPicker: React.FC<ISpacesToolbarAddItemPickerProps> =
+    (props: React.PropsWithChildren<ISpacesToolbarAddItemPickerProps>) => {
         const [open, setOpen] = React.useState<boolean>(false);
 
-        const componentsButton = (
+        const itemsButton = (
             <Button
                 iconProps={{ iconName: open ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
                 className="spaces-toolbar-top-level-button"
                 onClick={() => setOpen(!open)}
             >
-                {"Add Components"}
+                {"Add Items"}
             </Button>
         );
-        const componentButtonList = Array.from(
-            props.componentMap.entries(),
-            ([type, componentEntry]) =>
+        const itemButtonList = Array.from(
+            props.itemMap.entries(),
+            ([type, itemEntry]) =>
                 <Button
                     className="spaces-toolbar-option-button"
-                    key={`componentToolbarButton-${type}`}
-                    iconProps={{ iconName: componentEntry.fabricIconName }}
+                    key={`toolbarButton-${type}`}
+                    iconProps={{ iconName: itemEntry.fabricIconName }}
                     onClick={() => {
-                        props.addComponent(type);
+                        props.addItem(type);
                         setOpen(false);
                     }}
                 >
-                    {componentEntry.friendlyName}
+                    {itemEntry.friendlyName}
                 </Button>,
         );
 
         return (
             <Collapsible
                 open={open}
-                trigger={componentsButton}
+                trigger={itemsButton}
                 className="spaces-toolbar-tool"
                 openedClassName="spaces-toolbar-tool"
             >
-                {componentButtonList}
+                {itemButtonList}
             </Collapsible>
         );
     };
 
-interface ISpacesToolbarTemplateItemProps {
+interface ISpacesToolbarAddTemplatePickerProps {
     templates: string[];
     applyTemplate(template: string): void;
 }
 
-const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
-    (props: React.PropsWithChildren<ISpacesToolbarTemplateItemProps>) => {
+const SpacesToolbarAddTemplatePicker: React.FC<ISpacesToolbarAddTemplatePickerProps> =
+    (props: React.PropsWithChildren<ISpacesToolbarAddTemplatePickerProps>) => {
         const [open, setOpen] = React.useState<boolean>(false);
         const templateButton = (
             <Button
@@ -84,7 +84,7 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
             templateButtonList.push(
                 <Button
                     className="spaces-toolbar-option-button"
-                    key={`componentToolbarButton-${template}`}
+                    key={`toolbarButton-${template}`}
                     onClick={() => {
                         props.applyTemplate(template);
                         setOpen(false);
@@ -108,7 +108,7 @@ const SpacesToolbarTemplateItem: React.FC<ISpacesToolbarTemplateItemProps> =
     };
 
 interface ISpacesToolbarProps {
-    componentMap: Map<string, ISpacesItemEntry>;
+    itemMap: Map<string, ISpacesItemEntry>;
     editable: boolean;
     setEditable: (editable: boolean) => void;
     addItem(type: string): void;
@@ -139,17 +139,17 @@ export const SpacesToolbar: React.FC<ISpacesToolbarProps> =
 
         if (props.editable) {
             toolbarItems.push(
-                <SpacesToolbarComponentItem
-                    key="component"
-                    componentMap={props.componentMap}
-                    addComponent={props.addItem}
+                <SpacesToolbarAddItemPicker
+                    key="items"
+                    itemMap={props.itemMap}
+                    addItem={props.addItem}
                 />,
             );
 
             if (props.templates !== undefined && props.templates.length > 0 && props.applyTemplate !== undefined) {
                 toolbarItems.push(
-                    <SpacesToolbarTemplateItem
-                        key="template"
+                    <SpacesToolbarAddTemplatePicker
+                        key="templates"
                         templates={props.templates}
                         applyTemplate={props.applyTemplate}
                     />,

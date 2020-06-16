@@ -114,6 +114,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     // IWaterparkItem.
     public async request(req: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser({ url: req.url });
+        // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];
             const item = this.storage?.itemList.get(itemId);
@@ -127,6 +128,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
             }
         }
 
+        // If it's not a direct link to an item, then just do normal request handling.
         return super.request(req);
     }
 
@@ -140,6 +142,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
     protected async componentHasInitialized() {
         this.storage = await this.root.get<IComponentHandle<SpacesStorage<IWaterparkItem>>>(storageKey)?.get();
         this.loader = await this.root.get<IComponentHandle<ExternalComponentLoader>>(loaderKey)?.get();
+        // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 

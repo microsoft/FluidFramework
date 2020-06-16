@@ -5,13 +5,13 @@
 
 import React from "react";
 import "react-grid-layout/css/styles.css";
-import { ISpacesItemEntry } from "./spacesComponentMap";
+import { ISpacesItemEntry } from "./spacesItemMap";
 import { ISpacesStorage, SpacesStorageView } from "./storage";
 import { ISpacesItem } from "./spaces";
 import { SpacesToolbar } from "./spacesToolbar";
 
 interface ISpacesViewProps {
-    componentMap: Map<string, ISpacesItemEntry>;
+    itemMap: Map<string, ISpacesItemEntry>;
     storage: ISpacesStorage<ISpacesItem>;
     addItem(type: string): void;
     getViewForItem: (item: ISpacesItem) => Promise<JSX.Element | undefined>;
@@ -21,7 +21,7 @@ interface ISpacesViewProps {
 }
 
 /**
- * SpacesView is the full view of the Spaces component, including its toolbar and contained components.
+ * SpacesView is the full view of the Spaces component, including its toolbar and contained items.
  */
 export const SpacesView: React.FC<ISpacesViewProps> =
     (props: React.PropsWithChildren<ISpacesViewProps>) => {
@@ -33,7 +33,7 @@ export const SpacesView: React.FC<ISpacesViewProps> =
                 <SpacesToolbar
                     editable={editable}
                     setEditable={setEditable}
-                    componentMap={props.componentMap}
+                    itemMap={props.itemMap}
                     addItem={props.addItem}
                     templates={props.templates}
                     applyTemplate={props.applyTemplate}

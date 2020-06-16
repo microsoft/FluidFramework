@@ -22,7 +22,7 @@ interface ISingleHandleItem {
     handle: IComponentHandle;
 }
 
-const createSingleHandle = (type: string) => {
+const createSingleHandleItem = (type: string) => {
     return async (createAndAttachComponent: ICreateAndAttachComponentFunction): Promise<ISingleHandleItem> => {
         const component = await createAndAttachComponent(type);
         return {
@@ -31,7 +31,7 @@ const createSingleHandle = (type: string) => {
     };
 };
 
-const getAdaptedViewForHandle = async (serializableObject: ISingleHandleItem) => {
+const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHandleItem) => {
     const handle = serializableObject.handle;
     const component = await handle.get();
     return React.createElement(ReactViewAdapter, { component });
@@ -41,50 +41,51 @@ const getAdaptedViewForHandle = async (serializableObject: ISingleHandleItem) =>
  * A registry entry, with extra metadata.
  */
 export interface ISpacesItemEntry<T = any> {
-    // Would be good for widgets to bring their own subregistries
-    // Try not to hand out createAndAttachComponent
+    // Would be better if items to bring their own subregistries, and their own ability to create components
+    // This might be done by integrating these items with the Spaces subcomponent registry?
     create: (createAndAttachComponent: ICreateAndAttachComponentFunction) => Promise<AsSerializable<T>>;
-    // This doesn't actually seem to enforce the param type is serializable in practice.
+    // REVIEW: This doesn't actually seem to enforce the param type is serializable in practice?
     getView: (serializableObject: AsSerializable<T>) => Promise<JSX.Element>;
     friendlyName: string;
     fabricIconName: string;
 }
 
-const clickerComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandle(ClickerInstantiationFactory.type),
-    getView: getAdaptedViewForHandle,
+const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+    create: createSingleHandleItem(ClickerInstantiationFactory.type),
+    getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
 
-const codemirrorComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandle(cmfe.type),
-    getView: getAdaptedViewForHandle,
+const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+    create: createSingleHandleItem(cmfe.type),
+    getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Code",
     fabricIconName: "Code",
 };
 
-const textboxComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandle(CollaborativeText.ComponentName),
-    getView: getAdaptedViewForHandle,
+const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+    create: createSingleHandleItem(CollaborativeText.ComponentName),
+    getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
 
-const prosemirrorComponentEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandle(pmfe.type),
-    getView: getAdaptedViewForHandle,
+const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
+    create: createSingleHandleItem(pmfe.type),
+    getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
 
-export const spacesComponentMap = new Map<string, ISpacesItemEntry>([
-    ["clicker", clickerComponentEntry],
-    ["codemirror", codemirrorComponentEntry],
-    ["textbox", textboxComponentEntry],
-    ["prosemirror", prosemirrorComponentEntry],
+export const spacesItemMap = new Map<string, ISpacesItemEntry>([
+    ["clicker", clickerItemEntry],
+    ["codemirror", codemirrorItemEntry],
+    ["textbox", textboxItemEntry],
+    ["prosemirror", prosemirrorItemEntry],
 ]);
 
+// This can go away if the item entries have a way to bring their own subregistries.
 export const spacesRegistryEntries: NamedComponentRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
     [cmfe.type, Promise.resolve(cmfe)],

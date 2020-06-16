@@ -22,10 +22,10 @@ import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
 import { SpacesView } from "./spacesView";
 import {
-    spacesComponentMap,
+    spacesItemMap,
     spacesRegistryEntries,
     templateDefinitions,
-} from "./spacesComponentMap";
+} from "./spacesItemMap";
 
 const SpacesStorageKey = "spaces-storage";
 
@@ -71,6 +71,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     // that knows how to getViewForItem().
     public async request(req: IRequest): Promise<IResponse> {
         const requestParser = new RequestParser({ url: req.url });
+        // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];
             const item = this.storageComponent?.itemList.get(itemId);
@@ -84,6 +85,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             }
         }
 
+        // If it's not a direct link to an item, then just do normal request handling.
         return super.request(req);
     }
 
@@ -98,13 +100,13 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         const addItem = (type: string) => {
             this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
                 .catch((error) => {
-                    console.error(`Error while creating component: ${type}`, error);
+                    console.error(`Error while creating item: ${type}`, error);
                 });
         };
 
         ReactDOM.render(
             <SpacesView
-                componentMap={spacesComponentMap}
+                itemMap={spacesItemMap}
                 storage={this.storageComponent}
                 addItem={addItem}
                 templates={[...Object.keys(templateDefinitions)]}
@@ -131,18 +133,19 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         this.storageComponent =
             await this.root.get<IComponentHandle<SpacesStorage<ISpacesItem>>>(SpacesStorageKey)?.get();
 
+        // We'll cache this async result on initialization, since we need it synchronously during render.
         this.baseUrl = await this.context.getAbsoluteUrl(this.url);
     }
 
     private readonly applyTemplate = async (template: string) => {
-        const componentPromises: Promise<string>[] = [];
+        const itemPromises: Promise<string>[] = [];
         const templateDefinition = templateDefinitions[template];
-        for (const [componentType, layouts] of Object.entries(templateDefinition)) {
+        for (const [itemType, layouts] of Object.entries(templateDefinition)) {
             for (const layout of layouts) {
-                componentPromises.push(this.createAndStoreItem(componentType, layout));
+                itemPromises.push(this.createAndStoreItem(itemType, layout));
             }
         }
-        await Promise.all(componentPromises);
+        await Promise.all(itemPromises);
     };
 
     public saveLayout(): void {
@@ -169,13 +172,13 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             throw new Error("Can't add item, storage not found");
         }
 
-        const componentMapEntry = spacesComponentMap.get(type);
-        if (componentMapEntry === undefined) {
-            throw new Error("Unknown component, can't add");
+        const itemMapEntry = spacesItemMap.get(type);
+        if (itemMapEntry === undefined) {
+            throw new Error("Unknown item, can't add");
         }
 
-        // Don't really want to hand out createAndAttachComponent here.
-        const serializableObject = await componentMapEntry.create(this.createAndAttachComponent.bind(this));
+        // Don't really want to hand out createAndAttachComponent here, see spacesItemMap.ts for more info.
+        const serializableObject = await itemMapEntry.create(this.createAndAttachComponent.bind(this));
         return this.storageComponent.addItem(
             {
                 serializableObject,
@@ -186,7 +189,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     private readonly getViewForItem = async (item: ISpacesItem) => {
-        const registryEntry = spacesComponentMap.get(item.itemType);
+        const registryEntry = spacesItemMap.get(item.itemType);
 
         if (registryEntry === undefined) {
             // Probably would be ok to return undefined instead

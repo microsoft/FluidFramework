@@ -17,7 +17,7 @@ import { v4 as uuid } from "uuid";
  */
 export interface ISpacesStorage<T> extends EventEmitter {
     /**
-     * The list of components being stored.
+     * The list of items being stored.
      */
     readonly itemList: Map<string, ISpacesStoredItem<AsSerializable<T>>>;
     /**

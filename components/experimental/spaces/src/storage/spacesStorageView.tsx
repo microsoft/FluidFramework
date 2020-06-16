@@ -30,14 +30,14 @@ const SpacesEditButton: React.FC<ISpacesEditButtonProps> =
 
 interface ISpacesEditPaneProps {
     url: string;
-    removeComponent(): void;
+    removeItem(): void;
 }
 
 const SpacesEditPane: React.FC<ISpacesEditPaneProps> =
     (props: React.PropsWithChildren<ISpacesEditPaneProps>) => {
         return (
             <div className="spaces-edit-pane">
-                <SpacesEditButton clickCallback={props.removeComponent}>❌</SpacesEditButton>
+                <SpacesEditButton clickCallback={props.removeItem}>❌</SpacesEditButton>
                 <SpacesEditButton
                     clickCallback={() => {
                         navigator.clipboard.writeText(props.url).then(() => {
@@ -56,7 +56,7 @@ interface ISpacesItemViewProps {
     url: string;
     editable: boolean;
     getItemView(): Promise<JSX.Element | undefined>;
-    removeComponent(): void;
+    removeItem(): void;
 }
 
 const SpacesItemView: React.FC<ISpacesItemViewProps> =
@@ -66,16 +66,16 @@ const SpacesItemView: React.FC<ISpacesItemViewProps> =
         React.useEffect(() => {
             props.getItemView()
                 .then(setItemView)
-                .catch((error) => console.error(`Error in getting component`, error));
+                .catch((error) => console.error(`Error in getting item`, error));
         }, [props.getItemView]);
 
         return (
-            <div className="spaces-component-view">
+            <div className="spaces-item-view">
                 {
                     props.editable &&
-                    <SpacesEditPane url={props.url} removeComponent={props.removeComponent} />
+                    <SpacesEditPane url={props.url} removeItem={props.removeItem} />
                 }
-                <div className="spaces-embedded-component-wrapper">
+                <div className="spaces-embedded-item-wrapper">
                     {itemView}
                 </div>
             </div>
@@ -106,7 +106,7 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             };
         });
 
-        // Render nothing if there are no components
+        // Render nothing if there are no items
         if (props.storage.itemList.size === 0) {
             return <></>;
         }
@@ -134,12 +134,12 @@ export const SpacesStorageView: React.FC<ISpacesStorageViewProps> =
             layout.i = itemId;
             layouts.push(layout);
             itemViews.push(
-                <div key={itemId} className="spaces-component-view-wrapper">
+                <div key={itemId} className="spaces-item-view-wrapper">
                     <SpacesItemView
                         url={props.getUrlForItem(itemId)}
                         editable={props.editable}
                         getItemView={getItemView}
-                        removeComponent={() => props.storage.removeItem(itemId)}
+                        removeItem={() => props.storage.removeItem(itemId)}
                     />
                 </div>,
             );
