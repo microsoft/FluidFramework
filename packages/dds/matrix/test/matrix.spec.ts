@@ -55,7 +55,6 @@ describe("Matrix", () => {
             assert.deepEqual(consumer.extract(), actual, "Matrix must notify IMatrixConsumers of all changes.");
 
             // Ensure ops are ACKed prior to snapshot. Otherwise, unACKed segments won't be included.
-            // containterRuntimeFactory.processAllMessages();
             return snapshot(matrix);
         }
 
@@ -71,7 +70,6 @@ describe("Matrix", () => {
             // Paranoid check that ensures that the SharedMatrix loaded from the snapshot also
             // round-trips through snapshot/load.  (Also, may help detect snapshot/loaded bugs
             // in the event that the test case forgets to call/await `expect()`.)
-            // containterRuntimeFactory.processAllMessages();
             await snapshot(await snapshot(matrix));
 
             // Ensure that IMatrixConsumer observed all changes to matrix.
@@ -608,7 +606,10 @@ describe("Matrix", () => {
         });
     });
 
-    describe("SharedMatrix reconnection", () => {
+    /**
+     * TODO: Enable these tests when reconnection logic is added to SharedMatrix.
+     */
+    describe.skip("SharedMatrix reconnection", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
