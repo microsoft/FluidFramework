@@ -668,16 +668,13 @@ describe("Matrix", () => {
         });
 
         it("can resend unacked ops on reconnection", async () => {
-            // Insert couple of rows in the first shared matrix.
+            // Insert a row and a column in the first shared matrix.
             matrix1.insertCols(0, 1);
             matrix1.insertRows(0, 1);
 
             // Disconnect and reconnect the first client.
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
-
-            // Process the messages.
-            containerRuntimeFactory.processAllMessages();
 
             // Verify that both the matrices have expected content.
             await expect([
@@ -701,15 +698,12 @@ describe("Matrix", () => {
             // Disconnect the first client.
             containerRuntime1.connected = false;
 
-            // Insert couple of rows in the first shared matrix.
+            // Insert a row and a column in the first shared matrix.
             matrix1.insertCols(0, 1);
             matrix1.insertRows(0, 1);
 
             // Reconnect the first client.
             containerRuntime1.connected = true;
-
-            // Process the messages.
-            containerRuntimeFactory.processAllMessages();
 
             // Verify that both the matrices have expected content.
             await expect([
