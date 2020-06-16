@@ -75,7 +75,6 @@ export class Client {
 
     constructor(
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
-        // (See https://github.com/Microsoft/Prague/issues/1791).
         public readonly specToSegment: (spec: ops.IJSONSegment) => ISegment,
         public readonly logger: ITelemetryLogger,
         options?: Properties.PropertySet,

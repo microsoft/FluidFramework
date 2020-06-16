@@ -4,7 +4,7 @@
  */
 
 // TODO: Move this in a seperate package.
-// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@fluidframework/container-definitions";
+// import { ICodeLoader, ICodeAllowList, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -15,7 +15,7 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
-export class NodeWhiteList {
+export class NodeAllowList {
     constructor() {
 
     }
@@ -29,11 +29,11 @@ export class NodeCodeLoader {
     constructor(
         private readonly packageDirectory: string,
         private readonly waitTimeoutMSec: number,
-        private readonly whiteList: any) {
+        private readonly allowList: any) {
     }
 
     public async load<T>(pkg: any): Promise<T> {
-        if (await this.whiteList.testSource(pkg)) {
+        if (await this.allowList.testSource(pkg)) {
             let packageName = "";
             if (typeof pkg.package === "string") {
                 packageName = pkg.package;
