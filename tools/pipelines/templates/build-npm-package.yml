@@ -43,6 +43,10 @@ parameters:
   type: boolean
   default: false
 
+- name: namespace
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -256,12 +260,15 @@ stages:
       displayName: Publish Stage
       jobs:
       - template: publish-npm-package.yml
-        parameters: 
+        parameters:
+          namespace: ${{ parameters.namespace }}
           feeds:
           - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
             environment: fluid-feed
+            internal: true
           # only publish release bits
           - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
             - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
               environment: office-feed
               customEndPoint: Office Packages
+              internal: false
