@@ -89,7 +89,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             context.getQuorum(),
             context.getAudience(),
             context.snapshotFn,
-            context.forceOpsGeneration ?? false,
+            context.containerBeingAttached ?? false,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -120,7 +120,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         return this.componentContext.loader;
     }
 
-    public isAttached(): boolean {
+    public get isAttached(): boolean {
         if (this.componentContext.isAttached !== undefined) {
             return this.componentContext.isAttached();
         }
@@ -129,10 +129,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public get isRegistered(): boolean {
-        return this._isRegistered;
-    }
-
-    public get hasServices(): boolean {
         return this._isRegistered;
     }
 
@@ -158,7 +154,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private _isRegistered: boolean;
     private readonly deferredAttached = new Deferred<void>();
-    private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
+    private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
 
     private constructor(
@@ -173,13 +169,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
-        private forceOpsGeneration: boolean,
+        private containerBeingAttached: boolean,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
-
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         const tree = componentContext.baseSnapshot;
 
         // Must always receive the component type inside of the attributes
@@ -287,7 +283,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.componentContext.storage,
             (t, content, localOpMetadata) => this.submit(t, content, localOpMetadata),
             (address: string) => this.setChannelDirty(address),
-            this.forceOpsGeneration);
+            this.containerBeingAttached);
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -309,20 +305,65 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
      */
     public bindChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (this._isRegistered) {
-            this.registerChannel(channel);
+        if (this.isAttached) {
+            this.attachChannel(channel);
             return;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.bind(channel.handle!);
 
             // If our Component is local then add the channel to the queue
-            if (!this.attachChannelQueue.has(channel.id)) {
-                this.attachChannelQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
+            if (!this.localChannelContextQueue.has(channel.id)) {
+                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
             }
         }
     }
 
+    public attachGraphInternal() {
+        if (this.boundhandles !== undefined) {
+            this.boundhandles.forEach((handle) => {
+                handle.attachGraphInternal();
+            });
+            this.boundhandles = undefined;
+        }
+
+        // Flush the queue to set any pre-existing channels to local
+        this.localChannelContextQueue.forEach((channel) => {
+            // When we are attaching the component we don't need to send attach for the registered services.
+            // This is because they will be captured as part of the Attach component snapshot
+            channel.attach();
+        });
+
+        this.localChannelContextQueue.clear();
+    }
+
+    /**
+     * Attaches this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching registered channels if it becomes attached itself.
+     */
+    public register() {
+        if (this._isRegistered) {
+            return;
+        }
+
+        // Attach the runtime to the container via this callback
+        if (this.componentContext.register !== undefined) {
+            this.componentContext.register(this);
+        } else {
+            // 0.18 back-compat attach
+            (this.componentContext as any).attach(this);
+        }
+
+        this._isRegistered = true;
+        this.deferredAttached.resolve();
+        if (this.isAttached) {
+            this.attachGraphInternal();
+        }
+    }
+
+    // 0.18 back-compat attach
     /**
      * Attaches this runtime to the container
      * This includes the following:
@@ -336,7 +377,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                handle.attach();
+                handle.register();
             });
             this.boundhandles = undefined;
         }
@@ -350,7 +391,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
 
         // Flush the queue to set any pre-existing channels to local
-        this.attachChannelQueue.forEach((channel) => {
+        this.localChannelContextQueue.forEach((channel) => {
             // When we are attaching the component we don't need to send attach for the registered services.
             // This is because they will be captured as part of the Attach component snapshot
             channel.attach();
@@ -358,13 +399,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         this._isRegistered = true;
         this.deferredAttached.resolve();
-        this.attachChannelQueue.clear();
+        this.localChannelContextQueue.clear();
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this._isRegistered) {
-            handle.attach();
+        if (this.isAttached) {
+            handle.attachGraphInternal();
             return;
+        }
+        if (this.isRegistered) {
+            handle.register();
         }
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
@@ -551,21 +595,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     /**
      * Register channel should only be called after the componentRuntime has been registered
      */
-    private registerChannel(channel: IChannel): void {
+    private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+
         // If this handle is already attached no need to attach again.
-        if (channel.handle?.hasServices) {
+        if (channel.handle?.isAttached) {
             return;
         }
-
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channel.handle!.attach();
+        channel.handle!.register();
 
         assert(this.isRegistered, "Component should be registered to register the channel.");
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
-        if (this.forceOpsGeneration || this.isAttached()) {
+        if (this.isAttached) {
             // Get the object snapshot and include it in the initial attach
             const snapshot = snapshotChannel(channel);
 
@@ -675,15 +719,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
 
         // Only listen to these events if not attached.
-        if (!this.isAttached()) {
-            this.componentContext.on("forceOpsGeneration", () => {
-                this.forceOpsGeneration = true;
-                this.emit("forceOpsGeneration");
+        if (!this.isAttached) {
+            this.componentContext.on("containerBeingAttached", () => {
+                this.containerBeingAttached = true;
+                this.attachGraphInternal();
+                this.emit("containerBeingAttached");
             });
 
             // Disable force ops generation on container attached event.
             this.componentContext.on("containerAttached", () => {
-                this.forceOpsGeneration = false;
+                this.containerBeingAttached = false;
                 this.emit("containerAttached");
             });
         }

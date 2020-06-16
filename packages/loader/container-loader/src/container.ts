@@ -474,10 +474,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
-        // This will tell the container runtime/components/dds that they should start generating ops from this point on
-        // because all upto this point was included in the app summary and from now on we need to generate ops for
-        // changes so that they can be sent over wire once we are connected.
-        this.emit("forceOpsGeneration");
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
@@ -488,10 +484,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 [CreateNewHeader.createNew]: {},
             };
         }
-        const createNewResolvedUrl = await this.urlResolver.resolve(request);
-        ensureFluidResolvedUrl(createNewResolvedUrl);
 
         try {
+            // This will tell the container runtime/components/dds that they should start generating ops from this
+            // point on because all upto this point was included in the app summary and from now on we need to
+            // generate ops for changes so that they can be sent over wire once we are connected.
+            this.emit("containerBeingAttached");
+            const createNewResolvedUrl = await this.urlResolver.resolve(request);
+            ensureFluidResolvedUrl(createNewResolvedUrl);
             // Actually go and create the resolved document
             this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),

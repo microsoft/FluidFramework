@@ -64,7 +64,7 @@ export interface IComponentRuntime extends
      */
     isRegistered: boolean;
 
-    on(event: "disconnected" | "dispose" | "leader" | "notleader" | "forceOpsGeneration"
+    on(event: "disconnected" | "dispose" | "leader" | "notleader" | "containerBeingAttached"
     | "containerAttached", listener: () => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
@@ -145,5 +145,5 @@ export interface IComponentRuntime extends
     raiseContainerWarning(warning: ContainerWarning): void;
 
     // Returns if the runtime is attached to storage
-    isAttached(): boolean;
+    isAttached: boolean;
 }

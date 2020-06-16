@@ -21,7 +21,7 @@ import { ISharedObjectRegistry } from "./componentRuntime";
  */
 export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
-    private registered = false;
+    private attached = false;
     private connection: ChannelDeltaConnection | undefined;
     private readonly dirtyFn: () => void;
 
@@ -34,7 +34,7 @@ export class LocalChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
-        forceOpsGeneration: boolean,
+        private readonly containerBeingAttached: boolean,
     ) {
         const factory = registry.get(type);
         if (factory === undefined) {
@@ -42,7 +42,7 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         this.channel = factory.create(runtime, id);
-        this.channel.forceOpsGeneration = forceOpsGeneration;
+        this.channel.containerBeingAttached = this.containerBeingAttached;
 
         this.dirtyFn = () => { dirtyFn(id); };
     }
@@ -57,7 +57,7 @@ export class LocalChannelContext implements IChannelContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         // Connection events are ignored if the component is not yet attached
-        if (!this.registered) {
+        if (!this.attached) {
             return;
         }
 
@@ -66,14 +66,14 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        strongAssert(this.registered, "Local channel must be attached when processing op");
+        strongAssert(this.attached, "Local channel must be attached when processing op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local, localOpMetadata);
     }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
-        strongAssert(this.registered, "Local channel must be attached when resubmitting op");
+        strongAssert(this.attached, "Local channel must be attached when resubmitting op");
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.reSubmit(content, localOpMetadata);
@@ -88,7 +88,7 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public attach(): void {
-        if (this.registered) {
+        if (this.attached) {
             throw new Error("Channel is already registered");
         }
 
@@ -101,6 +101,6 @@ export class LocalChannelContext implements IChannelContext {
         this.connection = services.deltaConnection;
         this.channel.connect(services);
 
-        this.registered = true;
+        this.attached = true;
     }
 }

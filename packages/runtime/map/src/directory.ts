@@ -1039,7 +1039,7 @@ class SubDirectory implements IDirectory {
         );
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return this;
         }
 
@@ -1083,7 +1083,7 @@ class SubDirectory implements IDirectory {
         );
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return this;
         }
 
@@ -1120,7 +1120,7 @@ class SubDirectory implements IDirectory {
         const subDir: IDirectory = this._subdirectories.get(subdirName);
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return subDir;
         }
 
@@ -1156,7 +1156,7 @@ class SubDirectory implements IDirectory {
         const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1194,7 +1194,7 @@ class SubDirectory implements IDirectory {
         const successfullyRemoved = this.deleteCore(key, true, null);
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -1216,7 +1216,7 @@ class SubDirectory implements IDirectory {
         this.clearCore(true, null);
 
         // If we are not attached, don't submit the op.
-        if (!this.directory.shouldGenerateOps()) {
+        if (!this.directory.isAttached()) {
             return;
         }
 

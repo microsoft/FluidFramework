@@ -14,7 +14,8 @@ import { IRuntime } from "@fluidframework/container-definitions";
 export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
-    public readonly hasServices = true;
+    public readonly isAttached = true;
+    public readonly isRegistered = true;
 
     constructor(
         public readonly path: string,
@@ -23,16 +24,16 @@ export class ComponentHandleContext implements IComponentHandleContext {
     ) {
     }
 
-    public attach(): void {
+    public attachGraphInternal(): void {
+        return;
+    }
+
+    public register(): void {
         return;
     }
 
     public bind(handle: IComponentHandle): void {
-        if (this.hasServices) {
-            handle.attach();
-            return;
-        }
-        throw new Error("Cannot bind to an attached handle");
+        return;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

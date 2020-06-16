@@ -165,7 +165,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.runtime,
             this.handle,
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            () => this.shouldGenerateOps(),
+            () => this.isAttached(),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -319,7 +319,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public doCustomProcessing() {
-        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
+        this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "containerBeingAttached");
     }
 
     public addLocalReference(lref) {

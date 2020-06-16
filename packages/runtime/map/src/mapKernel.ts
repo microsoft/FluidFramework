@@ -181,7 +181,7 @@ export class MapKernel {
      * @param runtime - The component runtime the shared object using the kernel will be associated with
      * @param handle - The handle of the shared object using the kernel
      * @param submitMessage - A callback to submit a message through the shared object
-     * @param shouldGenerateOps - To query whether the shared object should generate ops
+     * @param isAttached - To query whether the shared object should generate ops
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
@@ -189,7 +189,7 @@ export class MapKernel {
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
-        private readonly shouldGenerateOps: () => boolean,
+        private readonly isAttached: () => boolean,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
@@ -342,7 +342,7 @@ export class MapKernel {
         );
 
         // If we are not attached, don't submit the op.
-        if (!this.shouldGenerateOps()) {
+        if (!this.isAttached()) {
             return;
         }
 
@@ -379,7 +379,7 @@ export class MapKernel {
         );
 
         // If we are not attached, don't submit the op.
-        if (!this.shouldGenerateOps()) {
+        if (!this.isAttached()) {
             return;
         }
 
@@ -404,7 +404,7 @@ export class MapKernel {
         const successfullyRemoved = this.deleteCore(key, true, null);
 
         // If we are not attached, don't submit the op.
-        if (!this.shouldGenerateOps()) {
+        if (!this.isAttached()) {
             return successfullyRemoved;
         }
 
@@ -425,7 +425,7 @@ export class MapKernel {
         this.clearCore(true, null);
 
         // If we are not attached, don't submit the op.
-        if (!this.shouldGenerateOps()) {
+        if (!this.isAttached()) {
             return;
         }
 

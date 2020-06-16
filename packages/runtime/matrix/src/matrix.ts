@@ -183,8 +183,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     public doCustomProcessing(): void {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "forceOpsGeneration");
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "containerBeingAttached");
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "containerBeingAttached");
     }
 
     public insertCols(colStart: number, count: number) {

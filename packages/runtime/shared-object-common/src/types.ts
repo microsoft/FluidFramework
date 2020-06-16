@@ -47,11 +47,6 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     isAttached(): boolean;
 
     /**
-     * True if the shared object has services.
-     */
-    hasServices(): boolean;
-
-    /**
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object
      */

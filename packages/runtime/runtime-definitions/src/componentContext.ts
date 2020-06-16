@@ -149,10 +149,10 @@ export interface IComponentRuntimeChannel extends
     readonly id: string;
 
     /**
-     * Called to attach the runtime to the container.
+     * Called to register the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
-    attach(): void;
+    register(): void;
 
     /**
      * Retrieves the snapshot used as part of the initial snapshot message
@@ -276,9 +276,9 @@ export interface IComponentContext extends EventEmitter {
      */
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
-    readonly forceOpsGeneration: boolean;
+    readonly containerBeingAttached: boolean;
 
-    on(event: "leader" | "notleader" | "forceOpsGeneration" | "containerAttached", listener: () => void): this;
+    on(event: "leader" | "notleader" | "containerBeingAttached" | "containerAttached", listener: () => void): this;
 
     /**
      * Returns the current quorum.

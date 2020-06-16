@@ -480,7 +480,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         if (!runtime.existing) {
             await Promise.all([
                 runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.register();
                 }),
             ]);
         }

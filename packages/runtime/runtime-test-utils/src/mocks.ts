@@ -361,10 +361,6 @@ export class MockRuntime extends EventEmitter
         return true;
     }
 
-    public get hasServices(): boolean {
-        return true;
-    }
-
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }
@@ -372,7 +368,7 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public isAttached(): boolean {
+    public get isAttached(): boolean {
         return true;
     }
 
@@ -381,6 +377,14 @@ export class MockRuntime extends EventEmitter
     }
 
     public attach(): void {
+        return;
+    }
+
+    public attachGraphInternal(): void {
+        return;
+    }
+
+    public register(): void {
         return;
     }
 

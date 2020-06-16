@@ -160,7 +160,7 @@ export abstract class ComponentContext extends EventEmitter implements
     public get disposed() { return this._disposed; }
 
     public isAttached(): boolean {
-        return this.containerRuntime.isAttached() && this._isRegistered;
+        return this._isRegistered && this.containerRuntime.isAttached();
     }
 
     public get isRegistered(): boolean {
@@ -186,7 +186,7 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         private _isRegistered: boolean,
         register: (componentRuntime: IComponentRuntimeChannel) => void,
-        public readonly forceOpsGeneration: boolean,
+        public readonly containerBeingAttached: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -208,8 +208,8 @@ export abstract class ComponentContext extends EventEmitter implements
     private attachListeners() {
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.containerRuntime.on("forceOpsGeneration", () => {
-                this.emit("forceOpsGeneration");
+            this.containerRuntime.on("containerBeingAttached", () => {
+                this.emit("containerBeingAttached");
             });
 
             this.containerRuntime.on("containerAttached", () => {
@@ -619,7 +619,7 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        forceOpsGeneration: boolean,
+        containerBeingAttached: boolean,
         pkg?: string[],
     ) {
         super(
@@ -633,7 +633,7 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             },
-            forceOpsGeneration,
+            containerBeingAttached,
             pkg);
     }
 
@@ -699,13 +699,13 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
-        forceOpsGeneration: boolean,
+        containerBeingAttached: boolean,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, forceOpsGeneration, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, containerBeingAttached, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

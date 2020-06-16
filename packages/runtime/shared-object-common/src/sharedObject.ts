@@ -55,7 +55,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private services: ISharedObjectServices | undefined;
 
-    public forceOpsGeneration: boolean = false;
+    public containerBeingAttached: boolean = false;
 
     /**
      * True if register() has been called.
@@ -109,13 +109,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.runtime.on("forceOpsGeneration", () => {
-                this.forceOpsGeneration = true;
+            this.runtime.on("containerBeingAttached", () => {
+                this.containerBeingAttached = true;
                 this.doCustomProcessing();
             });
 
             this.runtime.on("containerAttached", () => {
-                this.forceOpsGeneration = false;
+                this.containerBeingAttached = false;
             });
         }
     }
@@ -195,14 +195,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isAttached}
      */
     public isAttached(): boolean {
-        return this.services !== undefined && this.runtime.isAttached();
-    }
-
-    /**
-     * {@inheritDoc ISharedObject.hasServices}
-     */
-    public hasServices(): boolean {
-        return this.services !== undefined;
+        return this.services !== undefined && this.runtime.isAttached;
     }
 
     /**
@@ -248,17 +241,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * If the force ops generation option is on and the services are also present, then it returns true.
-     * It also returns true if the dds is attached.
-     */
-    public shouldGenerateOps(): boolean {
-        if (this.isAttached() || (this.forceOpsGeneration && this.hasServices())) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Derived classes must override this to do custom processing on a remote message.
      * @param message - The message to process
      * @param local - True if the shared object is local
@@ -281,7 +263,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @returns Client sequence number
      */
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): number {
-        if (!this.shouldGenerateOps()) {
+        if (!this.isAttached()) {
             return -1;
         }
 
@@ -359,7 +341,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
     private attachDeltaHandler() {
         // Services should already be there in case we are attaching delta handler.
-        assert(this.hasServices());
+        assert(this.services !== undefined, "Services should be there to attach delta handler");
         // Allows objects to do any custom processing if it is attached. In attached container, if the dds has
         // services too, then the dds is attached too and so we will do the processing. However, we don't want
         // do this in the detached container even if the dds has services.
@@ -369,7 +351,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.services!.deltaConnection.attach({
+        this.services.deltaConnection.attach({
             process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
                 this.process(message, local, localOpMetadata);
             },
@@ -384,7 +366,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.setConnectionState(this.services!.deltaConnection.connected);
+        this.setConnectionState(this.services.deltaConnection.connected);
     }
 
     /**

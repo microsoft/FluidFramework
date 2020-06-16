@@ -135,7 +135,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         if (!runtime.existing) {
             runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
-                    componentRuntime.attach();
+                    componentRuntime.register();
                 })
                 .catch((error: any) => {
                     context.closeFn(CreateContainerError(error));

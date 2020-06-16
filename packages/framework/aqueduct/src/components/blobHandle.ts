@@ -24,7 +24,11 @@ export class BlobHandle implements IComponentHandle {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentHandle(): IComponentHandle { return this; }
 
-    public get hasServices(): boolean {
+    public get isAttached(): boolean {
+        return true;
+    }
+
+    public get isRegistered(): boolean {
         return true;
     }
 
@@ -39,7 +43,12 @@ export class BlobHandle implements IComponentHandle {
         return this.directory.get<string>(this.path);
     }
 
-    public attach(): void {
+    public attachGraphInternal(): void {
+        return;
+    }
+
+    public register(): void {
+        return;
     }
 
     public bind(handle: IComponentHandle) {

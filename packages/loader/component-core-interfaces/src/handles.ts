@@ -31,12 +31,22 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     /**
      * Flag indicating whether or not the entity has services attached.
      */
-    hasServices: boolean;
+    isAttached: boolean;
 
     /**
-     * Attaches the context and any bound handles to the container. It means they are reachable from the container.
+     * Flag indicating if the dds is registered or not.
      */
-    attach(): void;
+    isRegistered: boolean;
+
+    /**
+     * Register the associated dds.
+     */
+    register(): void;
+
+    /**
+     * Runs through the graph and attach the bounded handles.
+     */
+    attachGraphInternal(): void;
 
     /**
      * Binds the given handle to this one or attach the given handle if this handle is attached.

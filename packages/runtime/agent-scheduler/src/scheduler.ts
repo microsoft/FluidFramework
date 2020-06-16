@@ -60,7 +60,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IComponentRouter() { return this; }
 
     private get clientId(): string {
-        if (!this.runtime.isRegistered) {
+        if (!this.runtime.isAttached) {
             return UnattachedClientId;
         }
         const clientId = this.runtime.clientId;
@@ -225,7 +225,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // Probably okay for now to have every client try to do this.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         quorum.on("removeMember", async (clientId: string) => {
-            assert(this.runtime.isRegistered);
+            assert(this.runtime.isAttached);
             // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
                 const leftTasks: string[] = [];
@@ -269,7 +269,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         this.runtime.on("disconnected", () => {
-            if (this.runtime.isRegistered) {
+            if (this.runtime.isAttached) {
                 this.clearRunningTasks();
             }
         });

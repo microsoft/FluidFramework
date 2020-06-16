@@ -20,8 +20,12 @@ export class ComponentHandle implements IComponentHandle {
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentHandle(): IComponentHandle { return this; }
 
-    public get hasServices(): boolean {
-        return this.routeContext.hasServices;
+    public get isAttached(): boolean {
+        return this.routeContext.isAttached;
+    }
+
+    public get isRegistered(): boolean {
+        return this.routeContext.isRegistered;
     }
 
     constructor(
@@ -35,7 +39,7 @@ export class ComponentHandle implements IComponentHandle {
         return this.value;
     }
 
-    public attach(): void {
+    public attachGraphInternal(): void {
         // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
         if (this.isHandleAttached) {
             return;
@@ -43,18 +47,26 @@ export class ComponentHandle implements IComponentHandle {
         this.isHandleAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attach();
+                handle.attachGraphInternal();
             }
 
             this.bound = undefined;
         }
-        this.routeContext.attach();
+        this.routeContext.register();
+        this.routeContext.attachGraphInternal();
+    }
+
+    public register(): void {
+        this.routeContext.register();
     }
 
     public bind(handle: IComponentHandle) {
-        if (this.hasServices) {
-            handle.attach();
+        if (this.isAttached) {
+            handle.attachGraphInternal();
             return;
+        }
+        if (this.isRegistered) {
+            handle.register();
         }
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();

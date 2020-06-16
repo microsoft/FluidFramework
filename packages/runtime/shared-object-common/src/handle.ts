@@ -33,8 +33,15 @@ export class SharedObjectComponentHandle implements IComponentHandle {
     /**
      * Whether services have been attached for the associated shared object.
      */
-    public get hasServices(): boolean {
-        return this.value.hasServices();
+    public get isAttached(): boolean {
+        return this.value.isAttached();
+    }
+
+    /**
+     * Tells whether shared object is registered or not.
+     */
+    public get isRegistered(): boolean {
+        return this.value.isRegistered();
     }
 
     /**
@@ -60,7 +67,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * Attaches all bound handles first (which may in turn attach further handles), then attaches this handle.
      * When attaching the handle, it registers the associated shared object.
      */
-    public attach(): void {
+    public attachGraphInternal(): void {
         // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
         if (this.isHandleAttached) {
             return;
@@ -68,12 +75,17 @@ export class SharedObjectComponentHandle implements IComponentHandle {
         this.isHandleAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attach();
+                handle.attachGraphInternal();
             }
 
             this.bound = undefined;
         }
-        this.routeContext.attach();
+        this.routeContext.register();
+        this.routeContext.attachGraphInternal();
+        this.value.register();
+    }
+
+    public register(): void {
         this.value.register();
     }
 
@@ -82,9 +94,12 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
-        if (this.hasServices) {
-            handle.attach();
+        if (this.isAttached) {
+            handle.attachGraphInternal();
             return;
+        }
+        if (this.isRegistered) {
+            handle.register();
         }
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
