@@ -925,13 +925,14 @@ export class Client {
             handle);
     }
 
-    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+    public load(
+        runtime: IComponentRuntime,
+        storage: IObjectStorageService,
+        branchId?: string,
+    ): { headerLoadedP: Promise<void>, catchupOpsP: Promise<ISequencedDocumentMessage[]> } {
         const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
-        // TODO: Remove return value once new snapshot format is adopted as default.
-        //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        // eslint-disable-next-line no-return-await
-        return await loader.initialize(branchId, storage);
+        return loader.initialize(branchId, storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {

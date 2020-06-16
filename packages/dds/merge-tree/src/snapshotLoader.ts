@@ -31,10 +31,10 @@ export class SnapshotLoader {
         this.logger = ChildLogger.create(logger, "SnapshotLoader");
     }
 
-    public async initialize(
+    public  initialize(
         branchId: string,
         services: IObjectStorageService,
-    ): Promise<ISequencedDocumentMessage[]> {
+    ): { headerLoadedP: Promise<void>, catchupOpsP: Promise<ISequencedDocumentMessage[]> } {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
@@ -49,12 +49,7 @@ export class SnapshotLoader {
         const catchupOpsP =
             this.loadBodyAndCatchupOps(headerChunkP, services, branch);
 
-        await headerChunkP;
-        if (this.mergeTree.options.mergeTreeInitializeWithSnapshotHeaderOnly !== true) {
-            await catchupOpsP;
-        }
-
-        return catchupOpsP;
+        return { headerLoadedP: headerChunkP.then(), catchupOpsP };
     }
 
     private async loadBodyAndCatchupOps(
