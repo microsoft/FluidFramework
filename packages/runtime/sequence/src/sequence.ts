@@ -122,9 +122,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         this.client = new MergeTree.Client(
             segmentFromSpec,
-            ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient", undefined, {
-                collaborating: ()=>this.client.getCollabWindow().collaborating,
-            }),
+            ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
             document.options);
 
         super.on("newListener", (event) => {
@@ -509,7 +507,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected didAttach() {
         // if we are not local, and we've attached we need to start generating and sending ops
-        // so start collaboration and provide a default client id, incase we are not attached
+        // so start collaboration and provide a default client id incase we are not connected
         if  (!this.isLocal()) {
             this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }
