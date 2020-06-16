@@ -4,8 +4,18 @@
 # To build this docker image, run the following command from the root of the repo
 # docker build -f .\docs\Dockerfile --target docs -t fluid:docs .
 
-# To get content out of the image, use this command:
-# rsync dist/ docker/ -rv --delete --exclude '.git' --exclude 'versions'
+# To get content out of the image, use these commands:
+
+# 1. create a temporary writeable image
+# docker create -ti --name dummy fluid:docs bash
+
+# 2. copy out the docs/dist folder
+# docker cp dummy:docs/dist/ docs/
+
+# 3. Remove the temporary image
+# docker rm -f dummy
+
+# rsync docs/dist/ docker/ -rv --delete --exclude '.git' --exclude 'versions'
 
 FROM node:12.16.1-slim AS base
 
@@ -49,6 +59,7 @@ FROM vuepress AS copysrc
 WORKDIR /
 COPY . .
 
+WORKDIR /docs
 # Convert the json to markdown
 RUN npm run build:gendocs
 
