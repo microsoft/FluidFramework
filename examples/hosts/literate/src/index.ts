@@ -12,7 +12,7 @@ import {
     extractPackageIdentifierDetails,
     SemVerCdnCodeResolver,
     WebCodeLoader,
-    WhiteList,
+    AllowList,
 } from "@fluidframework/web-code-loader";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
@@ -66,7 +66,7 @@ export async function start(url: string, code: string): Promise<void> {
     // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
     // the browser as well as the name of the entry point module. It then script includes these files on the page and
     // once loaded makes use of the module entry point name to get access to the module.
-    const codeLoader = new WebCodeLoader(new SemVerCdnCodeResolver(), new WhiteList());
+    const codeLoader = new WebCodeLoader(new SemVerCdnCodeResolver(), new AllowList());
 
     // Finally with all the above objects created we can fully construct the loader
     const loader = new Loader(

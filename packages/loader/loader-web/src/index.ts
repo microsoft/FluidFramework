@@ -5,4 +5,4 @@
 export * from "./semVerCdnCodeResolver";
 export * from "./utils";
 export * from "./webLoader";
-export * from "./whiteList";
+export * from "./allowList";

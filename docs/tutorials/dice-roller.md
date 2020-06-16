@@ -43,9 +43,9 @@ The `src/fluid-components/index.tsx` file is where the component logic lives.
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/fluid-aqueduct.md) provide helper
+`PrimedComponent` and `PrimedComponentFactory` from [@fluidframework/aqueduct](../api/aqueduct.md) provide helper
 functionality. `IComponentHTMLView` from
-[@fluidframework/component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
+[@fluidframework/component-core-interfaces](../api/component-core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
@@ -65,12 +65,12 @@ Below we define our component class `ExampleFluidComponent`.
 
 #### PrimedComponent
 
-Extending [PrimedComponent](../api/fluid-aqueduct.primedcomponent.md) sets up our component with required default
+Extending [PrimedComponent](../api/aqueduct.primedcomponent.md) sets up our component with required default
 behavior as well as additional helpers to make component development easier.
 
 ##### Key benefits
 
-1. Setup a `root` [SharedDirectory](../api/fluid-map.shareddirectory.md) (a Distributed Data Structure) that we can use to
+1. Setup a `root` [SharedDirectory](../api/map.shareddirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
@@ -81,7 +81,7 @@ behavior as well as additional helpers to make component development easier.
 
 #### IComponentHTMLView
 
-Implementing the [IComponentHTMLView](../api/fluid-component-core-interfaces.icomponenthtmlview.md) interface
+Implementing the [IComponentHTMLView](../api/component-core-interfaces.icomponenthtmlview.md) interface
 denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
 state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
 have a `render(...)` function. View rendering is explained more below.
@@ -223,7 +223,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up front. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the [PrimedComponentFactory](../api/fluid-aqueduct.primedcomponentfactory.md) as a helper to
+In the example below we use the [PrimedComponentFactory](../api/aqueduct.primedcomponentfactory.md) as a helper to
 create our instantiation factory. As properties we pass in our supported distributed data structures. In this scenario
 we don't use any additional distributed data structures, so we pass an empty array.
 

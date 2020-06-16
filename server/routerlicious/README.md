@@ -330,3 +330,6 @@ Add a token field to api load call.
 await prague.api.load(id, { encrypted: false, token });
 ```
 Passing an invalid token will fail the load call.
+
+## Verdaccio and the Chaincode CDN
+Coming Soon...

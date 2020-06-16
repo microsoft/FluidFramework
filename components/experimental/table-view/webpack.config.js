@@ -51,7 +51,7 @@ module.exports = env => {
                                 }
                             }
                         ]
-                    },    
+                    },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
                         loader: 'url-loader',
@@ -84,6 +84,9 @@ module.exports = env => {
             devServer: {
                 before: (app, server) => fluidRoute.before(app, server, env),
                 after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+                watchOptions: {
+                    ignored: "**/node_modules/**",
+                }
             },
         },
         isProduction ? require("./webpack.prod") : require("./webpack.dev"));

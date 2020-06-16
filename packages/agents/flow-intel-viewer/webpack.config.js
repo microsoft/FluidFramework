@@ -20,7 +20,7 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
                 loader: "ts-loader"
             }]
@@ -35,7 +35,10 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            publicPath: '/dist'
+            publicPath: '/dist',
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         }
     }, isProduction
         ? require("./webpack.prod")
