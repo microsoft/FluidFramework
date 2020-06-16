@@ -34,6 +34,13 @@ const enum SnapshotPath {
     cells = "cells",
 }
 
+interface ISetOp<T> {
+    type: MatrixOp.set,
+    row: number,
+    col: number,
+    value: T | undefined,
+}
+
 interface ISetOpMetadata {
     rowHandle: Handle,
     colHandle: Handle,
@@ -179,16 +186,20 @@ export class SharedMatrix<T extends Serializable = Serializable>
         if (!this.isLocal()) {
             const localSeq = this.nextLocalSeq();
 
-            this.submitLocalMessage({
+            const op: ISetOp<T> = {
                 type: MatrixOp.set,
                 row,
                 col,
                 value,
-            }, {
+            };
+
+            const metadata: ISetOpMetadata = {
                 rowHandle,
                 colHandle,
                 localSeq,
-            } as ISetOpMetadata);
+            };
+
+            this.submitLocalMessage(op, metadata);
 
             this.pending.setCell(rowHandle, colHandle, localSeq);
         }
