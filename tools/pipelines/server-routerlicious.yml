@@ -42,7 +42,6 @@ variables:
     testConfig: :full
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
     testConfig: :ci
-  
 
 jobs:
   - job: build
@@ -177,22 +176,22 @@ jobs:
           displayName: 'Runner: Build'
           inputs:
             containerRegistry: Prague
-            repository: prague
+            repository: $(containerName)
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
             arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
             tags: |
-              $(BuildId)
+              $(Build.BuildId)
         
         - task: Docker@2
           displayName: 'Runner: Push'
           inputs:
             containerRegistry: Prague
-            repository: prague
+            repository: $(containerName)
             command: push
             tags: |
-              $(BuildId)
+              $(Build.BuildId)
 
       # Cleanup
       - task: Docker@0
