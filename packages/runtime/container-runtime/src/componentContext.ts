@@ -186,16 +186,6 @@ export abstract class ComponentContext extends EventEmitter implements
             attach(componentRuntime);
             this._isAttached = true;
         };
-        this.attachListeners();
-    }
-
-    private attachListeners() {
-        // Only listen to these events if local.
-        if (this.isLocal()) {
-            this.containerRuntime.on("containerBeingAttached", () => {
-                this.emit("containerBeingAttached");
-            });
-        }
     }
 
     public dispose(): void {
@@ -693,6 +683,9 @@ export class LocalComponentContext extends ComponentContext {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.componentRuntime!.getAttachSnapshot();
+        // Fire this event telling dds that we are going live and they can do any
+        // custom processing based on that.
+        this.emit("componentBeingAttached");
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));

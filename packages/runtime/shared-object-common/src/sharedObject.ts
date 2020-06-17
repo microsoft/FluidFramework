@@ -107,7 +107,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         // Only listen to these events if local.
         if (this.isLocal()) {
-            this.runtime.on("containerBeingAttached", () => {
+            this.runtime.on("componentBeingAttached", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
                 this.didAttach();

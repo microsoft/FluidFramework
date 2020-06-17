@@ -660,8 +660,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
         // Only listen to these events if local.
         if (this.isLocal()) {
-            this.componentContext.on("containerBeingAttached", () => {
-                this.emit("containerBeingAttached");
+            this.componentContext.on("componentBeingAttached", () => {
+                this.emit("componentBeingAttached");
             });
         }
     }
