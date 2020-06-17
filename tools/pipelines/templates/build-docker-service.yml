@@ -23,7 +23,7 @@ variables:
     value: Fluid Azure Container Registry
 
 - name: fullContainerTag
-  value: $(containerRegistry)/${{ parameter.containerName }}:$(Build.BuildId)
+  value: $(containerRegistry)/${{ parameters.containerName }}:$(Build.BuildId)
 
 steps:
 # Setup
