@@ -97,6 +97,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             if (!local) {
                 if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
+                    this.emit("stateChanged");
                 }
             }
         });
@@ -110,7 +111,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
                     this.context.getAbsoluteUrl(this.url)
                         .then((url)=>{
                             this._absoluteUrl = url;
-                            this.emit("checkedStateChanged");
+                            this.emit("stateChanged");
                             return undefined;
                         })
                         .catch(()=>{});
@@ -171,7 +172,7 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
 
     public setCheckedState(newState: boolean): void {
         this.root.set(checkedKey, newState);
-        this.emit("checkedStateChanged");
+        this.emit("stateChanged");
     }
 
     public getCheckedState(): boolean {

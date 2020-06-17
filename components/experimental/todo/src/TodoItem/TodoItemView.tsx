@@ -43,7 +43,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
     }
 
     public componentDidMount() {
-        this.props.todoItemModel.on("checkedStateChanged", () => {
+        this.props.todoItemModel.on("stateChanged", () => {
             this.setState({
                 checked: this.props.todoItemModel.getCheckedState(),
                 absoluteUrl: this.props.todoItemModel.absoluteUrl,
@@ -81,12 +81,15 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                         onClick={() => {this.setState({ innerComponentVisible: !this.state.innerComponentVisible }); }}>
                         {this.state.innerComponentVisible ? "▲" : "▼"}
                     </button>
-                    <button
-                        name="OpenSubComponent"
-                        style={this.buttonStyle}
-                        onClick={() => window.open(this.state.absoluteUrl, "_blank")}
-                        hidden={this.state.absoluteUrl === undefined}>↗
-                    </button>
+                    {
+                        this.state.absoluteUrl !== undefined &&
+                        <button
+                            id={this.state.absoluteUrl}
+                            name="OpenSubComponent"
+                            style={this.buttonStyle}
+                            onClick={() => window.open(this.state.absoluteUrl, "_blank")}>↗
+                        </button>
+                    }
                     <button
                         style={this.buttonStyle}
                         onClick={() => alert("Implement Delete")}>X</button>
