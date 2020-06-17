@@ -33,11 +33,13 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
+  repository: prague.azurecr.io
   testConfig: test:full
   containerName: prague-server
   baseContainerName: $(containerName)-base
-  fullBaseContainerName: $(baseContainerName):$(Build.BuildId)
-  fullContainerName: $(containerName):$(Build.BuildId)
+  fullBaseContainerName: $(repository)/$(baseContainerName):$(Build.BuildId)
+  fullRunnerContainerName: $(repository)/$(containerName):$(Build.BuildId)
+  
 
 jobs:
   - job: build
@@ -99,6 +101,7 @@ jobs:
       - task: Docker@2
         displayName: Docker build
         inputs:
+          repository: $(repository)
           command: build
           dockerFile: server/routerlicious/Dockerfile
           buildContext: server/routerlicious
@@ -169,14 +172,22 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Build'
           inputs:
-            command: buildAndPush
-            containerRegistry: Prague
             repository: prague
+            command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
             arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
             tags: |
-              $(fullContainerName)
+              $(fullRunnerContainerName)
+        
+        - task: Docker@2
+          displayName: 'Runner: Push'
+          inputs:
+            containerRegistry: Prague
+            repository: prague
+            command: push
+            tags: |
+              $(fullRunnerContainerName)
 
       # Cleanup
       - task: Docker@0
@@ -188,26 +199,17 @@ jobs:
         condition: succeededOrFailed()
 
       - task: Docker@0
-        displayName: 'Cleanup: Container prune'
+        displayName: 'Cleanup: Runner'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'rmi $(fullContainerName)'
+          customCommand: 'rmi $(fullRunnerContainerName)'
         continueOnError: true
         condition: succeededOrFailed()
 
       - task: Docker@0
-        displayName: 'Cleanup: Runner'
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'rmi $(fullContainerName)'
-        continueOnError: true
-        condition: succeededOrFailed()
-
-      - task: Docker@0
-        displayName: 'Cleanup: Runner'
+        displayName: 'Cleanup: Base'
         inputs:
           action: 'Run a Docker command'
           customCommand: 'rmi $(fullBaseContainerName)'
         continueOnError: true
         condition: succeededOrFailed()
-
