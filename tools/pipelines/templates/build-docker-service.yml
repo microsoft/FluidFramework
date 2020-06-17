@@ -27,7 +27,7 @@ steps:
   lfs: false
   submodules: false
 
-- template: templates/include-generate-notice-steps.yml
+- template: include-generate-notice-steps.yml
   parameters:
     buildDirectory: ${{ parameters.buildDirectory }}
 
