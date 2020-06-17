@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/framework-interfaces",
-  "version": "0.19.7",
+  "version": "0.19.8",
   "description": "Definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/component-core-interfaces": "^0.19.7"
+    "@fluidframework/component-core-interfaces": "^0.19.8"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.16.0",
