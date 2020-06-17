@@ -37,8 +37,8 @@ function reducer(state: {counter: number}, action: { type:string }) {
 
 const initialState = {counter: 0};
 
-export function Counter() {
-    const [state, dispatch] = useFluidReducer("hello-foo", reducer, initialState);
+export function Counter(props: {id:string}) {
+    const [state, dispatch] = useFluidReducer(props.id, reducer, initialState);
     return (
       <>
         Count: {state.counter}
@@ -57,5 +57,6 @@ export const fluidExport = fluidReactComponentFactory(
     <div>
         <HelloWorld />
         <DiceRoller />
-        <Counter />
+        <Counter id={"counter1"} />
+        <Counter id={"counter2"} />
     </div>);

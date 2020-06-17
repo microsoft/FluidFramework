@@ -92,9 +92,14 @@ export function fluidReactComponentFactory(componentName: string, element: JSX.E
                             useReducer: generateUseFluidReducer(root),
                         }
                         ReactDOM.render(
-                            <FluidContext.Provider value={reactContext}>
+                            <>
+                                <h2> Running with Fluid Context </h2>
+                                <FluidContext.Provider value={reactContext}>
+                                    {element}
+                                </FluidContext.Provider>
+                                <h2> Running <b>without</b> Fluid Context </h2>
                                 {element}
-                            </FluidContext.Provider>,
+                            </>,
                             div
                         );
                     }
