@@ -1,5 +1,11 @@
 # Breaking changes
 
+## 0.21 Breaking Changes
+- [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
+
+### createValueType removed from SharedMap and SharedDirectory
+The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecated in 0.20, and is now removed in 0.21.  If `Counter` functionality is required, the `@fluidframework/counter` DDS can be used for counter functionality.
+
 ## 0.20 Breaking Changes
 - [Value types deprecated on SharedMap and SharedDirectory](#Value-types-deprecated-on-sharedmap-and-shareddirectory)
 - [rename @fluidframework/aqueduct-react to @fluidframework/react-inputs](#rename-@fluidframework/aqueduct-react-to-@fluidframework/react-inputs)
