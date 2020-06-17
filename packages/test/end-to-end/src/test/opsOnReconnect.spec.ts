@@ -142,6 +142,9 @@ describe("Ops on Reconnect", () => {
 
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
         containerDeltaEventManager.registerDocuments(firstContainerComp1.runtime);
+
+        // Wait for the attach ops to get processed.
+        await containerDeltaEventManager.process();
     });
 
     describe("Ops on Container reconnect", () => {
@@ -216,8 +219,8 @@ describe("Ops on Reconnect", () => {
         });
     });
 
-    describe("Op ordering on Container reconnect", () => {
-        it("can resend ops in a component in right order on connect", async () => {
+    describe("Ordering of ops that are sent in disconnected state", () => {
+        it("can resend ops in a component in right order on reconnect", async () => {
             firstContainerClientId = firstContainer.clientId;
 
             // Create a second container and set up a listener to store the received map / directory values.
@@ -255,30 +258,34 @@ describe("Ops on Reconnect", () => {
                 expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
-        it("can resend ops in multiple components in right order on connect", async () => {
+        it("can resend ops in multiple components in right order on reconnect", async () => {
+            firstContainerClientId = firstContainer.clientId;
+
             // Create component2 in the first container.
             const firstContainerComp2 =
                 await firstContainerComp1.context.createComponentWithRealizationFn(
                     "component2",
                 ) as unknown as ITestFluidComponent & IComponentLoadable;
-            containerDeltaEventManager.registerDocuments(firstContainerComp2.runtime);
-            firstContainerComp1Map1.set("component2Key", firstContainerComp2.handle);
 
             // Get the maps in component2.
             const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
             const firstContainerComp2Map2 = await firstContainerComp2.getSharedObject<SharedMap>(map2Id);
 
-            firstContainerClientId = firstContainer.clientId;
+            // Set the new component's handle in a map so that a new container has access to it.
+            firstContainerComp1Map1.set("component2Key", firstContainerComp2.handle);
 
             // Create a second container and set up a listener to store the received map / directory values.
             const secondContainerComp1 = await setupSecondContainersComponent();
+
+            // Wait for the set above to get processed.
+            await containerDeltaEventManager.process();
 
             // Get component2 in the second container.
             const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
             const secondContainerComp2 =
                 await secondContainerComp1Map1.get<
                     IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
-            containerDeltaEventManager.registerDocuments(secondContainerComp2.runtime);
+            assert.ok(secondContainerComp2, "Could not get component2 in the second container");
 
             // Disconnect the client.
             documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
@@ -295,6 +302,111 @@ describe("Ops on Reconnect", () => {
             firstContainerComp2Map1.set("key6", "value6");
             firstContainerComp1Map2.set("key7", "value7");
             firstContainerComp2Map2.set("key8", "value8");
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(firstContainer);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            const expectedValues = [
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", undefined /* batch */],
+                ["key7", "value7", undefined /* batch */],
+                ["key8", "value8", undefined /* batch */],
+            ];
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+        });
+    });
+
+    describe("Ordering of ops when disconnecting after ops are sent", () => {
+        it("can resend ops in a component in right order on connect", async () => {
+            firstContainerClientId = firstContainer.clientId;
+
+            // Create a second container and set up a listener to store the received map / directory values.
+            await setupSecondContainersComponent();
+
+            // Set values in each DDS interleaved with each other.
+            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerComp1Map2.set("key2", "value2");
+            firstContainerComp1Directory.set("key3", "value3");
+            firstContainerComp1Map1.set("key4", "value4");
+            firstContainerComp1Map2.set("key5", "value5");
+            firstContainerComp1Directory.set("key6", "value6");
+
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
+
+            // The Container should be in disconnected state.
+            assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(firstContainer);
+
+            // Wait for the ops to get processed by both the containers.
+            await containerDeltaEventManager.process();
+
+            const expectedValues = [
+                ["key1", "value1", undefined /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", undefined /* batch */],
+                ["key4", "value4", undefined /* batch */],
+                ["key5", "value5", undefined /* batch */],
+                ["key6", "value6", undefined /* batch */],
+            ];
+            assert.deepStrictEqual(
+                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+        });
+
+        it("can resend ops in multiple components in right order on connect", async () => {
+            firstContainerClientId = firstContainer.clientId;
+
+            // Create component2 in the first container.
+            const firstContainerComp2 =
+                await firstContainerComp1.context.createComponentWithRealizationFn(
+                    "component2",
+                ) as unknown as ITestFluidComponent & IComponentLoadable;
+
+            // Get the maps in component2.
+            const firstContainerComp2Map1 = await firstContainerComp2.getSharedObject<SharedMap>(map1Id);
+            const firstContainerComp2Map2 = await firstContainerComp2.getSharedObject<SharedMap>(map2Id);
+
+            // Set the new component's handle in a map so that a new container has access to it.
+            firstContainerComp1Map1.set("component2Key", firstContainerComp2.handle);
+
+            // Create a second container and set up a listener to store the received map / directory values.
+            const secondContainerComp1 = await setupSecondContainersComponent();
+
+            // Wait for the set above to get processed.
+            await containerDeltaEventManager.process();
+
+            // Get component2 in the second container.
+            const secondContainerComp1Map1 = await secondContainerComp1.getSharedObject<SharedMap>(map1Id);
+            const secondContainerComp2 =
+                await secondContainerComp1Map1.get<
+                    IComponentHandle<ITestFluidComponent & IComponentLoadable>>("component2Key").get();
+            assert.ok(secondContainerComp2, "Could not get component2 in the second container");
+
+            // Set values in the DDSes across the two components interleaved with each other.
+            firstContainerComp1Map1.set("key1", "value1");
+            firstContainerComp2Map1.set("key2", "value2");
+            firstContainerComp1Map2.set("key3", "value3");
+            firstContainerComp2Map2.set("key4", "value4");
+            firstContainerComp1Map1.set("key5", "value5");
+            firstContainerComp2Map1.set("key6", "value6");
+            firstContainerComp1Map2.set("key7", "value7");
+            firstContainerComp2Map2.set("key8", "value8");
+
+            // Disconnect the client.
+            documentServiceFactory.disconnectClient(firstContainerClientId, "Disconnected for testing");
+
+            // The Container should be in disconnected state.
+            assert.equal(firstContainer.connectionState, ConnectionState.Disconnected);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(firstContainer);
@@ -362,7 +474,8 @@ describe("Ops on Reconnect", () => {
         });
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await deltaConnectionServer.webSocketServer.close();
         receivedValues = [];
     });
 });
