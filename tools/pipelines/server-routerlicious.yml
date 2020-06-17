@@ -35,6 +35,11 @@ pr:
 
 variables:
   skipComponentGovernanceDetection: true
+  pushImage: ${{
+    and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    )}}
   registry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
@@ -171,7 +176,7 @@ stages:
             publishLocation: 'Container'
 
         # Build - Runner
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.pushImage, true) }}:
           - task: Docker@2
             displayName: 'Docker Build - Runner'
             inputs:
@@ -202,7 +207,7 @@ stages:
           continueOnError: true
           condition: succeededOrFailed()
 
-        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - ${{ if eq(variables.pushImage, true) }}:
           - task: Docker@0
             displayName: 'Cleanup: Runner'
             inputs:
