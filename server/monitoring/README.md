@@ -1,4 +1,4 @@
-# fluid-service-monitor
+# @fluid-internal/service-monitor
 
 A Node.js client that tests liveness of Fluid ordering service. The script creates a new Fluid document and checks whether the client join message is sequenced and received.
 
