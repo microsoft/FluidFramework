@@ -459,15 +459,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IValueTypeCreator.createValueType}
-     */
-    public createValueType(key: string, type: string, params: any): this {
-        console.warn("Value types are deprecated.  Use the SharedCounter instead (@fluidframework/counter)");
-        this.root.createValueType(key, type, params);
-        return this;
-    }
-
-    /**
      * Deletes the given key from within this IDirectory.
      * @param key - The key to delete
      * @returns True if the key existed and was deleted, false if it did not exist
