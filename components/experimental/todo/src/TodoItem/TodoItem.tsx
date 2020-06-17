@@ -101,15 +101,16 @@ export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
             }
         });
 
-        if (this.context.connected) {
+        if (!this.context.isLocal()) {
             this._absoluteUrl = await this.context.getAbsoluteUrl(this.url);
         } else {
-            this.context.deltaManager.on(
-                "connect",
+            this.runtime.once(
+                "op",
                 () => {
                     this.context.getAbsoluteUrl(this.url)
                         .then((url)=>{
                             this._absoluteUrl = url;
+                            this.emit("checkedStateChanged");
                             return undefined;
                         })
                         .catch(()=>{});
