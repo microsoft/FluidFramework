@@ -249,6 +249,9 @@ export class LocalValueMaker {
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
+            if (serializable.type === "counter") {
+                this.runtime.logger.sendTelemetryEvent({ eventName: "CounterStillInUse" });
+            }
             const valueType = this.valueTypes.get(serializable.type);
 
             serializable.value = parseHandles(
