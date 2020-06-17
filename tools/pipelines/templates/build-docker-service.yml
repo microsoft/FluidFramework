@@ -13,6 +13,8 @@ parameters:
 
 trigger: none
 
+pool: Shared
+
 variables:
   skipComponentGovernanceDetection: true
   pushImage: ${{
@@ -20,10 +22,12 @@ variables:
             ne(variables['Build.Reason'], 'PullRequest'),
             eq(variables['Build.SourceBranch'], 'refs/heads/master')
         )}}
+  registry: prague.azurecr.io
   containerRegistry:
+  containerTag: ${{ parameters.containerName }}:$(Build.BuildId)
   ${{ if eq(variables.pushImage, true) }}:
     containerRegistry: Fluid Azure Container Registry
-  fullContainerTag: $(containerRegistry)/${{ parameters.containerName }}:$(Build.BuildId)
+    containerTag: $(registry)/$(containerTag)
   
 steps:
 # Setup
