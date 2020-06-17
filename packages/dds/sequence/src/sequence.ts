@@ -535,6 +535,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
+    protected didAttach() {
+        // if we are not local, and we've attached we need to start generating and sending ops
+        // so start collaboration and provide a default client id incase we are not connected
+        if  (!this.isLocal()) {
+            this.client.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+        }
+    }
+
     protected initializeLocalCore() {
         super.initializeLocalCore();
         this.loadFinished();
