@@ -8,11 +8,12 @@ parameters:
 trigger: none
 
 variables:
-  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    - name: containerRegistry
-      value: Fluid Azure Container Registry
 - name: fullContainerTag
-  value: $(containerRegistry)/$(containerName):$(Build.BuildId)
+  value: $(containerRegistry)/$(containerName):$(Build.BuildId)  
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - name: containerRegistry
+    value: Fluid Azure Container Registry
+
 
 steps:
 # Setup
@@ -59,7 +60,7 @@ steps:
 
 # Cleanup
 - task: Docker@0
-  displayName: Docker Cleanup: Container prune
+  displayName: Docker Cleanup - Container prune
   inputs:
     action: Run a Docker command
     customCommand: container prune -f
