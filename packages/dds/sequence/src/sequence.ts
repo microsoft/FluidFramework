@@ -542,7 +542,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
-        assert(!this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
+        assert(this.loadedDeferred.isCompleted, "Snapshot called when not fully loaded");
 
         const minSeq = this.runtime.deltaManager
             ? this.runtime.deltaManager.minimumSequenceNumber
@@ -609,7 +609,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private loadFinished(error?: any) {
-        if (this.loadedDeferred.isCompleted === false) {
+        if (!this.loadedDeferred.isCompleted) {
             // Initialize the interval collections
             this.initializeIntervalCollections();
             if (error) {

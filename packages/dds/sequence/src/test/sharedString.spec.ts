@@ -282,6 +282,7 @@ describe("SharedString", () => {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString.initializeLocal();
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
@@ -293,6 +294,7 @@ describe("SharedString", () => {
             };
 
             sharedString2 = new SharedString(componentRuntime2, "shared-string-2", SharedStringFactory.Attributes);
+            sharedString2.initializeLocal();
             sharedString2.connect(services2);
         });
 
@@ -465,6 +467,7 @@ describe("SharedString", () => {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString.initializeLocal();
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
@@ -475,6 +478,7 @@ describe("SharedString", () => {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
+            sharedString2.initializeLocal();
             sharedString2.connect(services2);
         });
 
