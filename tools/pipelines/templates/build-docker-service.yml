@@ -64,27 +64,28 @@ steps:
 
 
 # Test
-- task: Docker@0
-  displayName: npm run test
-  inputs:
-    action: 'Run a Docker command'
-    customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(fullContainerTag) npm run test'
-  
-- task: PublishTestResults@2
-  displayName: Publish Test Results
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/*junit-report.xml'
-    searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
-    mergeTestResults: true
-  condition: succeededOrFailed()
+- ${{ if eq(parameters.test, true) }}:
+  - task: Docker@0
+    displayName: npm run test
+    inputs:
+      action: 'Run a Docker command'
+      customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(fullContainerTag) npm run test'
+    
+  - task: PublishTestResults@2
+    displayName: Publish Test Results
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*junit-report.xml'
+      searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
+      mergeTestResults: true
+    condition: succeededOrFailed()
 
-- task: PublishCodeCoverageResults@1
-  displayName: Publish Code Coverage
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+  - task: PublishCodeCoverageResults@1
+    displayName: Publish Code Coverage
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
 
 # Push
 - ${{ if eq(variables.pushImage, true) }}:
