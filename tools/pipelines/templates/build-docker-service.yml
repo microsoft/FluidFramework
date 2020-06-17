@@ -8,10 +8,13 @@ parameters:
 trigger: none
 
 variables:
+- name: pushImage
+  value: ${{ or(and(and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/master')), eq(variables['push'], null)), eq(variables['push'], true) }}
+
 - name: containerRegistry
   value:
 
-- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables.pushImage, true) }}:
   - name: containerRegistry
     value: Fluid Azure Container Registry
 
@@ -26,14 +29,13 @@ steps:
   lfs: false
   submodules: false
 
-- task: Npm@1
-  displayName: npm ci
+- task: Bash@3
+  displayName: Strip npmrc auth token preamble
   inputs:
-    command: 'custom'
-    workingDir: ${{ parameters.buildDirectory }}
-    customCommand: 'ci --unsafe-perm'
-    customRegistry: 'useFeed'
-    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+    targetType: 'inline'
+    script: |
+      # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
+      sed -i '/^; begin auth token/,/^\; end auth token/d;' ${{ parameters.buildDirectory }}/.npmrc
 
 - task: npmAuthenticate@0
   displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
@@ -51,7 +53,7 @@ steps:
     tags: |
       $(Build.BuildId)
 
-- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables.pushImage, true) }}:
   - task: Docker@2
     displayName: Docker Push
     inputs:
