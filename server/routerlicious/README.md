@@ -20,7 +20,7 @@ Get up and running quickly using our [Getting Started guide](https://aka.ms/flui
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluid)
+Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Building and Running
 

@@ -30,10 +30,10 @@ This directory contains our reference server implementation. [Routerlicious](./r
 ## Running the Reference Server
 To get started with Routerlicious and the Fluid reference implementation, you must install docker and allocate at least 4gb of RAM. We suggest you use our docker images, as outlined by the [docker compose](./docker-compose.yml) to start. You can run ```npm run start:docker``` from the root directory to try this.
 
-1. Download and install Docker
+1. Download and install [Docker](https://docs.docker.com/desktop/)
 2. Configure Docker to have 4gb of RAM
-3. Find and connect to our container registry (Coming Soon...)
-4. Build and Start the Container (substitute in the path to the )
+3. Find and connect to our Docker Image registry (Coming Soon...)
+4. Build and Start the Container (substitute in the path to the compose file)
   ```
   docker-compose build -f FluidFramework/server/docker-compose.yml
   docker-compose up -f FluidFramework/server/docker-compose.yml
