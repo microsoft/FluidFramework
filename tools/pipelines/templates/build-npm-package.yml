@@ -227,7 +227,7 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/docs/_api-extractor-temp'
+              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
               ArtifactName: '_api-extractor-temp'
               publishLocation: 'Container'
 
