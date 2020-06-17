@@ -15,6 +15,7 @@ import {
     SnapshotType,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { INonPersistentCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import {
     getWithRetryForTokenRefresh,
@@ -40,12 +41,17 @@ const isInvalidFileName = (fileName: string): boolean => {
     return !!fileName.match(invalidCharsRegex);
 };
 
+export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
+    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.filename}`;
+}
+
 /**
  * Creates new fluid file before returning a real resolved url
  */
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfo: INewFileInfo,
+    cache: INonPersistentCache,
     storageFetchWrapper: IFetchWrapper,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
@@ -54,19 +60,28 @@ export async function createNewFluidFile(
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode, false);
     }
 
-    const fileResponse: IFileCreateResponse = await createNewOdspFile(
-        newFileInfo,
-        getStorageToken,
-        storageFetchWrapper,
-        createNewSummary);
-    const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
-    const resolver = new OdspDriverUrlResolver();
+    const createFileAndResolveUrl = async () => {
+        const fileResponse: IFileCreateResponse = await createNewOdspFile(
+            newFileInfo,
+            getStorageToken,
+            storageFetchWrapper,
+            createNewSummary);
+        const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
+        const resolver = new OdspDriverUrlResolver();
 
-    if (newFileInfo.callback) {
-        newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
+        if (newFileInfo.callback) {
+            newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
+        }
+
+        return resolver.resolve({ url: odspUrl });
+    };
+
+    if (createNewSummary) {
+        return createFileAndResolveUrl();
     }
 
-    return resolver.resolve({ url: odspUrl });
+    const key = getKeyFromFileInfo(newFileInfo);
+    return cache.fileUrlCache.addOrGet(key, createFileAndResolveUrl);
 }
 
 /**
