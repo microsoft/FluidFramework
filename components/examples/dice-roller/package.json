@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/diceroller",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Minimal Fluid Container & Component sample to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -17,8 +17,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run tsfmt && npm run eslint",
-    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
@@ -35,17 +35,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.0",
-    "@fluidframework/map": "^0.20.0",
-    "@fluidframework/view-interfaces": "^0.20.0",
+    "@fluidframework/aqueduct": "^0.21.0",
+    "@fluidframework/map": "^0.21.0",
+    "@fluidframework/view-interfaces": "^0.21.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/test-tools": "^0.1.0",
-    "@fluidframework/webpack-component-loader": "^0.20.0",
+    "@fluidframework/webpack-component-loader": "^0.21.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

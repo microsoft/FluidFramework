@@ -19,6 +19,50 @@ const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
+const packagesToExclude = [
+    "client-api",
+    "experimental-creation-driver",
+    "host-service-interfaces",
+    "iframe-host",
+    "index",
+];
+
+const apiMapping = new Map([
+    ["aqueduct", "Framework"],
+    ["component-core-interfaces", "Framework"],
+    ["framework-interfaces", "Framework"],
+    ["undo-redo", "Framework"],
+    ["cell", "Distributed Data Structures"],
+    ["counter", "Distributed Data Structures"],
+    ["ink", "Distributed Data Structures"],
+    ["map", "Distributed Data Structures"],
+    ["sequence", "Distributed Data Structures"],
+    ["matrix", "Distributed Data Structures"],
+    ["ordered-collection", "Distributed Data Structures"],
+    ["register-collection", "Distributed Data Structures"],
+    ["shared-object-base", "Distributed Data Structures"],
+    ["component-runtime", "Runtime"],
+    ["container-runtime", "Runtime"],
+    ["runtime-definitions", "Runtime"],
+    ["container-loader", "Loader"],
+    ["container-definitions", "Loader"],
+    ["execution-context-loader", "Loader"],
+    ["web-code-loader", "Loader"],
+    ["driver-base", "Driver"],
+    ["driver-definitions", "Driver"],
+    ["file-driver", "Driver"],
+    ["iframe-driver", "Driver"],
+    ["replay-driver", "Driver"],
+    ["routerlicious-driver", "Driver"],
+    ["base-host", "Hosts"],
+    ["debugger", "Tools"],
+    ["merge-tree-client-replay", "Tools"],
+    ["replay-tool", "Tools"],
+    ["common-utils", "Miscellaneous"],
+    ["common-definitions", "Internal"],
+    ["driver-utils", "Internal"],
+]);
+
 const compact = (input) => {
     return input.filter(x => x);
 };
@@ -43,13 +87,17 @@ const listPages = (dirPath, includeIndex = false) => {
     return pages;
 };
 
+const packageFromFilePath = (filepath) => {
+    return path.basename(filepath).split(".")[0];
+}
+
 const getNav = () => {
     const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
         // { text: "Ecosystem", link: "/ecosystem/" },
-        { text: "API", link: "/api/overview" },
+        { text: "API", link: "/api/" },
         {
             text: "Versions",
             items: [
@@ -82,124 +130,49 @@ const getApiSidebar = () => {
     const directoryPath = path.join(__dirname, "../api");
     const files = fs.readdirSync(directoryPath);
 
+    let apiCategories = new Map();
     let apiSidebar = [{
         title: "API Overview",
-        path: "overview",
+        path: "",
         collapsable: false,
         sidebarDepth: 0
     }];
 
-    if (files.includes("fluid-aqueduct.md")) {
+    for (const file of files) {
+        const packageName = packageFromFilePath(file);
+        if (packagesToExclude.includes(packageName)) {
+            continue;
+        }
+
+        let category = apiMapping.get(packageName) || "Unknown";
+        if (!apiCategories.has(category)) {
+            // console.log(`Creating entry for ${category}`);
+            apiCategories.set(category, new Set([`${packageName}.md`]));
+        } else {
+            let current = apiCategories.get(category);
+            // let current = new Set();
+            current.add(`${packageName}.md`);
+            apiCategories.set(category, current);
+        }
+    }
+
+    // console.log(apiCategories);
+    const categoryToLog = "Framework";
+    console.log(`Packages with ${categoryToLog} category:`);
+    console.log(apiCategories.get(categoryToLog));
+
+    apiCategories.forEach((value, key) => {
         apiSidebar.push({
-            title: "Framework",
+            title: key,
             sidebarDepth: 2,
-            children: [
-                "fluid-aqueduct",
-                "fluid-aqueduct-react",
-                "fluid-component-core-interfaces",
-                "fluid-framework-interfaces",
-                "fluid-undo-redo",
-            ]
+            children: Array.from(value)
         });
-    }
+    });
 
-    if (files.includes("fluid-cell.md")) {
-        apiSidebar.push({
-            title: "Distributed Data Structures",
-            children: [
-                "fluid-cell",
-                "fluid-ink",
-                "fluid-map",
-                "fluid-ordered-collection",
-                "fluid-register-collection",
-                "fluid-sequence",
-                "fluid-shared-object-base",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-component-runtime.md")) {
-        apiSidebar.push({
-            title: "Runtime",
-            children: [
-                "fluid-component-runtime",
-                "fluid-container-runtime",
-                "fluid-runtime-definitions",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-container-loader.md")) {
-        apiSidebar.push({
-            title: "Loader",
-            children: [
-                "fluid-container-definitions",
-                "fluid-container-loader",
-                "fluid-execution-context-loader",
-                "fluid-web-code-loader",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-driver-base.md")) {
-        apiSidebar.push({
-            title: "Driver",
-            children: [
-                "fluid-driver-base",
-                "fluid-driver-definitions",
-                "fluid-file-driver",
-                "fluid-iframe-driver",
-                "fluid-odsp-driver",
-                "fluid-replay-driver",
-                "fluid-routerlicious-driver",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-base-host.md")) {
-        apiSidebar.push({
-            title: "Sample Hosts",
-            children: [
-                "fluid-base-host",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-debugger.md")) {
-        apiSidebar.push({
-            title: "Tools",
-            children: [
-                "fluid-debugger",
-                "fluid-merge-tree-client-replay",
-                "fluid-replay-tool",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-common-utils.md")) {
-        apiSidebar.push({
-            title: "Miscellaneous",
-            children: [
-                "fluid-common-utils",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-common-definitions.md")) {
-        apiSidebar.push({
-            title: "Internal/Deprecated",
-            children: [
-                "client-api",
-                "fluid-common-definitions",
-                "fluid-driver-utils",
-                "fluid-host-service-interfaces",
-                "fluid-runtime-utils",
-            ]
-        });
-    }
+    console.log(JSON.stringify(apiSidebar));
 
     return apiSidebar;
-};
+}
 
 const getDocsSidebar = () => {
     return [
@@ -217,6 +190,7 @@ const getDocsSidebar = () => {
             title: "Main concepts",
             collapsable: false,
             children: [
+                "guide.md",
                 "dds.md",
                 "components.md",
                 "aqueduct.md",
@@ -246,11 +220,6 @@ const getDocsSidebar = () => {
                 "consensus.md",
             ]
         },
-        // {
-        //     title: "API",
-        //     path: "../",
-        //     children: getApiSidebar(),
-        // },
         {
             title: "Component model",
             collapsable: false,
@@ -260,16 +229,16 @@ const getDocsSidebar = () => {
         },
         {
             title: "Guides",
-            collapsable: true,
+            collapsable: false,
             children: [
                 "visual-component.md",
-                "data-component.md",
-                "embed-components.md",
-                "cross-component.md",
-                "component-patterns.md",
-                "component-collections.md",
-                "bots.md",
-                "component-best-practices.md",
+                // "data-component.md",
+                // "embed-components.md",
+                // "cross-component.md",
+                // "component-patterns.md",
+                // "component-collections.md",
+                // "bots.md",
+                // "component-best-practices.md",
             ]
         },
         {
@@ -283,7 +252,7 @@ const getDocsSidebar = () => {
         },
         {
             title: "Misc",
-            collapsable: false,
+            collapsable: true,
             // path: "",
             children: [
                 "release-process.md",

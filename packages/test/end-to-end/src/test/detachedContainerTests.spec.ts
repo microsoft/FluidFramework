@@ -174,4 +174,8 @@ describe("Detached Container", () => {
             "Value for registration should be same!!");
         assert.strictEqual(testChannel2.isLocal(), testChannel1.isLocal(), "Value for isLocal should persist!!");
     });
+
+    afterEach(async () => {
+        await testDeltaConnectionServer.webSocketServer.close();
+    });
 });

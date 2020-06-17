@@ -34,18 +34,6 @@ describe("Gateway", () => {
         });
 
         describe("Routes", () => {
-            describe("Templates", () => {
-                it("Should return page", () => {
-                    console.log("return page");
-                    return testServer.get("/templates/list").expect(200);
-                });
-            });
-
-            describe("DemoCreator", () => {
-                it("Should return page", () => {
-                    return testServer.get("/democreator").expect(200);
-                });
-            });
 
             describe("Home", () => {
                 it("Should return page", () => {

@@ -5,7 +5,7 @@
 
 import {
     ICodeLoader,
-    ICodeWhiteList,
+    ICodeAllowList,
     IFluidCodeDetails,
     IFluidModule,
     IFluidCodeResolver,
@@ -19,7 +19,7 @@ export class WebCodeLoader implements ICodeLoader {
 
     constructor(
         private readonly codeResolver: IFluidCodeResolver,
-        private readonly whiteList?: ICodeWhiteList) { }
+        private readonly allowList?: ICodeAllowList) { }
 
     public async seedModule(
         source: IFluidCodeDetails,
@@ -66,7 +66,7 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     private async loadModuleFromResolvedCodeDetails(resolved: IResolvedFluidCodeDetails) {
-        if (this.whiteList !== undefined && !(await this.whiteList.testSource(resolved))) {
+        if (this.allowList !== undefined && !(await this.allowList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
 
