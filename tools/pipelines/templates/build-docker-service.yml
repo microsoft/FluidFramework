@@ -29,6 +29,7 @@ variables:
 
 jobs:
   - job: build
+    displayName: Build ${{ parameters.containerName }}
     pool: Shared
     steps:
     # Setup
@@ -77,7 +78,7 @@ jobs:
         displayName: npm run test
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(containerTag) npm run test'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(containerTag) npm run test'
         
       - task: PublishTestResults@2
         displayName: Publish Test Results
