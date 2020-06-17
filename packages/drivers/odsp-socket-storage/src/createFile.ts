@@ -76,6 +76,8 @@ export async function createNewFluidFile(
         return resolver.resolve({ url: odspUrl });
     };
 
+    // Don't do any caching for detached container because we have auto rename on name collisions.
+    // This should be done for create-new too but once partner teams move to detached container flow.
     if (createNewSummary) {
         return createFileAndResolveUrl();
     }
