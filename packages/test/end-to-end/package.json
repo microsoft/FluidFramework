@@ -71,7 +71,6 @@
     "@fluidframework/driver-utils": "^0.21.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@fluidframework/local-driver": "^0.21.0",
-    "@fluidframework/local-test-utils": "^0.21.0",
     "@fluidframework/map": "^0.21.0",
     "@fluidframework/merge-tree": "^0.21.0",
     "@fluidframework/odsp-driver": "^0.21.0",
