@@ -13,8 +13,6 @@ parameters:
 
 trigger: none
 
-pool: Shared
-
 variables:
   skipComponentGovernanceDetection: true
   pushImage: ${{
@@ -28,96 +26,99 @@ variables:
   ${{ if eq(variables.pushImage, true) }}:
     containerRegistry: Fluid Azure Container Registry
     containerTag: $(registry)/$(containerTag)
-  
-steps:
-# Setup
-- checkout: self
-  clean: true
-  fetchDepth: 1
-  lfs: false
-  submodules: false
 
-# Component detection (not pull request)
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-  - template: include-generate-notice-steps.yml
-    parameters:
-      buildDirectory: ${{ parameters.buildDirectory }}
+jobs:
+  - job: build
+    pool: Shared
+    steps:
+    # Setup
+    - checkout: self
+      clean: true
+      fetchDepth: 1
+      lfs: false
+      submodules: false
 
-# Setup
-- ${{ if eq(parameters.authnpmrc, true) }}:
-  - task: Bash@3
-    displayName: Strip npmrc auth token preamble
-    inputs:
-      targetType: 'inline'
-      script: |
-        # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
-        sed -i '/^; begin auth token/,/^\; end auth token/d;' ${{ parameters.buildDirectory }}/.npmrc
+    # Component detection (not pull request)
+    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - template: include-generate-notice-steps.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
 
-  - task: npmAuthenticate@0
-    displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
-    inputs:
-      workingFile: ${{ parameters.buildDirectory }}/.npmrc
+    # Setup
+    - ${{ if eq(parameters.authnpmrc, true) }}:
+      - task: Bash@3
+        displayName: Strip npmrc auth token preamble
+        inputs:
+          targetType: 'inline'
+          script: |
+            # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
+            sed -i '/^; begin auth token/,/^\; end auth token/d;' ${{ parameters.buildDirectory }}/.npmrc
 
-# Build
-- task: Docker@2
-  displayName: Docker Build
-  inputs:
-    containerRegistry: $(containerRegistry)
-    repository: ${{ parameters.containerName }}
-    command: build
-    dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
-    buildContext: ${{ parameters.buildDirectory }}
-    tags: |
-      $(Build.BuildId)
+      - task: npmAuthenticate@0
+        displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
+        inputs:
+          workingFile: ${{ parameters.buildDirectory }}/.npmrc
 
-# Test
-- ${{ if eq(parameters.test, true) }}:
-  - task: Docker@0
-    displayName: npm run test
-    inputs:
-      action: 'Run a Docker command'
-      customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(fullContainerTag) npm run test'
-    
-  - task: PublishTestResults@2
-    displayName: Publish Test Results
-    inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/*junit-report.xml'
-      searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
-      mergeTestResults: true
-    condition: succeededOrFailed()
+    # Build
+    - task: Docker@2
+      displayName: Docker Build
+      inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ parameters.containerName }}
+        command: build
+        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+        buildContext: ${{ parameters.buildDirectory }}
+        tags: |
+          $(Build.BuildId)
 
-  - task: PublishCodeCoverageResults@1
-    displayName: Publish Code Coverage
-    inputs:
-      codeCoverageTool: Cobertura
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+    # Test
+    - ${{ if eq(parameters.test, true) }}:
+      - task: Docker@0
+        displayName: npm run test
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(fullContainerTag) npm run test'
+        
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*junit-report.xml'
+          searchFolder: $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc
+          mergeTestResults: true
+        condition: succeededOrFailed()
 
-# Push
-- ${{ if eq(variables.pushImage, true) }}:
-  - task: Docker@2
-    displayName: Docker Push
-    inputs:
-      containerRegistry: $(containerRegistry)
-      repository: ${{ parameters.containerName }}
-      command: push
-      tags: |
-        $(Build.BuildId)
+      - task: PublishCodeCoverageResults@1
+        displayName: Publish Code Coverage
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
 
-# Cleanup
-- task: Docker@0
-  displayName: Docker Cleanup - Container prune
-  inputs:
-    action: Run a Docker command
-    customCommand: container prune -f
-  continueOnError: true
-  condition: succeededOrFailed()
+    # Push
+    - ${{ if eq(variables.pushImage, true) }}:
+      - task: Docker@2
+        displayName: Docker Push
+        inputs:
+          containerRegistry: $(containerRegistry)
+          repository: ${{ parameters.containerName }}
+          command: push
+          tags: |
+            $(Build.BuildId)
 
-- task: Docker@0
-  displayName: Docker Cleanup - $(fullContainerTag)
-  inputs:
-    action: Run a Docker command
-    customCommand: rmi $(fullContainerTag)
-  continueOnError: true
-  condition: succeededOrFailed()
+    # Cleanup
+    - task: Docker@0
+      displayName: Docker Cleanup - Container prune
+      inputs:
+        action: Run a Docker command
+        customCommand: container prune -f
+      continueOnError: true
+      condition: succeededOrFailed()
+
+    - task: Docker@0
+      displayName: Docker Cleanup - $(fullContainerTag)
+      inputs:
+        action: Run a Docker command
+        customCommand: rmi $(fullContainerTag)
+      continueOnError: true
+      condition: succeededOrFailed()
