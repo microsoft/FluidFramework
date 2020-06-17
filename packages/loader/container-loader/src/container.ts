@@ -1045,8 +1045,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             members,
             proposals,
             values,
-            (key, value) => this.submitContainer(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitContainer(MessageType.Reject, sequenceNumber));
+            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1349,10 +1349,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 return -1;
         }
 
-        return this.submitContainer(type, contents, batch, metadata);
+        return this.submitMessage(type, contents, batch, metadata);
     }
 
-    private submitContainer(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
