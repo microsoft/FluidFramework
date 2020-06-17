@@ -51,6 +51,13 @@ stages:
       displayName: Build
       pool: Default
       steps:
+        # Checkout
+        - checkout: self
+          clean: true
+          fetchDepth: 1
+          lfs: false
+          submodules: false
+
         # Component detection (not pull request)
         - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
           - task: npmAuthenticate@0
