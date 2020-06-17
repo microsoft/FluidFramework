@@ -10,16 +10,10 @@ trigger: none
 variables:
 - name: pushImage
   value: ${{
-    or(
-        eq(variables['push'], true),
         and(
-            eq(variables['push'], null),
-            and(
-                ne(variables['Build.Reason'], 'PullRequest'),
-                eq(variables['Build.SourceBranch'], 'refs/heads/master')
-            )
-        )
-    ) }}
+            ne(variables['Build.Reason'], 'PullRequest'),
+            eq(variables['Build.SourceBranch'], 'refs/heads/master')
+        )}}
 
 - name: containerRegistry
   value:
