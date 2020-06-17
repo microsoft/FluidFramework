@@ -9,20 +9,22 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 /**
- * Abstracts rendering of components via the IComponentHTMLView interface.  Supports React elements, as well as
+ * Abstracts rendering of views via the IComponentHTMLView interface.  Supports React elements, as well as
  * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
- *
- * If the component is none of these, we render an empty <span />
  */
 export class HTMLViewAdapter implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    public static canAdapt(component: IComponent) {
+    /**
+     * Test whether the given component can be successfully adapted by an HTMLViewAdapter.
+     * @param view - the component to test if it is adaptable.
+     */
+    public static canAdapt(view: IComponent) {
         return (
-            React.isValidElement(component)
-            || component.IComponentReactViewable !== undefined
-            || component.IComponentHTMLView !== undefined
-            || component.IComponentHTMLVisual !== undefined
+            React.isValidElement(view)
+            || view.IComponentReactViewable !== undefined
+            || view.IComponentHTMLView !== undefined
+            || view.IComponentHTMLVisual !== undefined
         );
     }
 

@@ -12,21 +12,28 @@ export interface IEmbeddedComponentProps {
 }
 
 /**
- * Abstracts rendering of components as a React component.  Supports React elements, as well as
+ * Abstracts rendering of views as a React component.  Supports React elements, as well as
  * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
  *
  * If the component is none of these, we render nothing.
  */
 export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
-    public static canAdapt(component: IComponent) {
+    /**
+     * Test whether the given component can be successfully adapted by a ReactViewAdapter.
+     * @param view - the component to test if it is adaptable.
+     */
+    public static canAdapt(view: IComponent) {
         return (
-            React.isValidElement(component)
-            || component.IComponentReactViewable !== undefined
-            || component.IComponentHTMLView !== undefined
-            || component.IComponentHTMLVisual !== undefined
+            React.isValidElement(view)
+            || view.IComponentReactViewable !== undefined
+            || view.IComponentHTMLView !== undefined
+            || view.IComponentHTMLVisual !== undefined
         );
     }
 
+    /**
+     * Once we've adapted the view to a React element, we'll retain a reference to render.
+     */
     private readonly element: JSX.Element;
 
     constructor(props: IEmbeddedComponentProps) {
@@ -45,13 +52,13 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
 
         const htmlView = this.props.component.IComponentHTMLView;
         if (htmlView !== undefined) {
-            this.element = <HTMLViewEmbeddedComponent component={htmlView} />;
+            this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
             return;
         }
 
         const htmlVisual = this.props.component.IComponentHTMLVisual;
         if (htmlVisual !== undefined) {
-            this.element = <HTMLVisualEmbeddedComponent component={htmlVisual} />;
+            this.element = <HTMLVisualEmbeddedComponent htmlVisual={htmlVisual} />;
             return;
         }
 
@@ -64,7 +71,7 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
 }
 
 interface IHTMLViewProps {
-    component: IComponentHTMLView;
+    htmlView: IComponentHTMLView;
 }
 
 /**
@@ -82,7 +89,7 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
     public async componentDidMount() {
         // eslint-disable-next-line no-null/no-null
         if (this.ref.current !== null) {
-            this.props.component.render(this.ref.current);
+            this.props.htmlView.render(this.ref.current);
         }
     }
 
@@ -92,7 +99,7 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
 }
 
 interface IHTMLVisualProps {
-    component: IComponentHTMLVisual;
+    htmlVisual: IComponentHTMLVisual;
 }
 
 /**
@@ -110,7 +117,7 @@ class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps> {
     public async componentDidMount() {
         // eslint-disable-next-line no-null/no-null
         if (this.ref.current !== null) {
-            const view = this.props.component.addView();
+            const view = this.props.htmlVisual.addView();
             view.render(this.ref.current);
         }
     }
