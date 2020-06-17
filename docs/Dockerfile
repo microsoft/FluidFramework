@@ -57,7 +57,6 @@ FROM vuepress AS copysrc
 WORKDIR /
 COPY . .
 
-WORKDIR /docs
 # Convert the json to markdown
 RUN npm run build:gendocs
 
