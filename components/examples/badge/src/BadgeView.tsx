@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as React from "react";
+import React, { useState, useMemo } from "react";
 import {
     ActivityItem,
     DefaultButton,
@@ -10,7 +10,6 @@ import {
     DirectionalHint,
     Dialog,
     DialogFooter,
-    DialogType,
     HoverCard,
     HoverCardType,
     Icon,
@@ -21,30 +20,22 @@ import {
     Stack,
     TextField,
     IContextualMenuItem,
-} from "office-ui-fabric-react";
-// eslint-disable-next-line import/no-internal-modules
-import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
-import { IBadgeType } from "./IBadgeType";
-import { IHistory } from "./IHistory";
+} from "@fluentui/react";
+import { MotionAnimations } from "@uifabric/fluent-theme";
+import { IBadgeViewProps, IBadgeType } from "./Badge.types";
 import {
     getItemsFromOptionsMap,
     getRelativeDate,
     getButtonStyles,
 } from "./helpers";
 
-const { useState } = React;
-
-export interface IBadgeViewProps {
-    options: IBadgeType[];
-    historyItems: IHistory<IBadgeType>[];
-    selectedOption: string | number;
-    addOption: (text: string, color: IColor) => void;
-    changeSelectedOption: (item: IBadgeType) => void;
-}
-
+// Initialize icon font used in Fluent UI
 initializeIcons();
 
-export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
+// The BadgeView is completely unaware of the Fluid data structures. It only renders what is currently in Client state
+// and uses Client provided functions to modify Fluid data, which is then fed back into state.
+
+export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => {
     const {
         options,
         historyItems,
@@ -55,46 +46,48 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
 
     const currentOption = options.find((option) => option.key === selectedOption);
 
-    const defaultColor: string = "#fff";
-    const cardPadding: string = "16px 24px";
+    // Set up local state for our custom status creator
 
-    // Set up local state
-    const [isDialogVisible, setIsDialogVisible] = useState<boolean>(false);
-    const [customColor, setCustomColor] = useState<IColor>(
-        getColorFromString(defaultColor),
+    const [isCustomStatusVisible, setIsCustomStatusVisible] = useState<boolean>(false);
+    const [customStatusColor, setCustomStatusColor] = useState<IColor>(
+        getColorFromString("#fff"),
     );
-    const [customText, setCustomText] = useState<string>("");
+    const [customStatusText, setCustomStatusText] = useState<string>("");
 
-    const onClick = (_, item: IContextualMenuItem): void => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        item.key === "new"
-            ? setIsDialogVisible(true)
-            : changeSelectedOption(item as IBadgeType);
-    };
-
-    const closeDialog = (): void => {
-        setIsDialogVisible(false);
-    };
-
-    const onSave = (): void => {
-        if (customText !== "") {
-            addOption(customText, customColor);
-            setCustomText("");
+    // Set up event handlers
+    const onStatusClick = (_, item: IContextualMenuItem): void => {
+        switch (item.key) {
+            case "new":
+                setIsCustomStatusVisible(true);
+                break;
+            default:
+                changeSelectedOption(item as IBadgeType);
         }
-
-        closeDialog();
     };
 
-    const updateColor = (_, colorObj: IColor) => {
-        setCustomColor(colorObj);
+    const closeCustomStatus = (): void => {
+        setIsCustomStatusVisible(false);
     };
 
-    const updateText = (_, newValue: string) => {
-        setCustomText(newValue);
+    const onSaveCustomStatus = (): void => {
+        if (customStatusText !== "") {
+            addOption(customStatusText, customStatusColor);
+            setCustomStatusText("");
+        }
+        closeCustomStatus();
     };
 
-    const onRenderCard = (): JSX.Element => {
-        // Add items to history in reverse order
+    // Handle change events. These could include data validation.
+    const updateCustomStatusColor = (_, colorObj: IColor) => {
+        setCustomStatusColor(colorObj);
+    };
+
+    const updateCustomStatusText = (_, newValue: string) => {
+        setCustomStatusText(newValue);
+    };
+
+    // Create the content for the history card
+    const historyCardContent = (): JSX.Element => {
         // eslint-disable-next-line react/prop-types
         const history = historyItems.map((x, i) => {
             return (
@@ -107,11 +100,16 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
             );
         });
 
-        return <div style={{ padding: cardPadding }}>{history.reverse()}</div>;
+        return <div style={{ padding: "16px 24px" }}>{history}</div>;
     };
 
-    const buttonStyles = getButtonStyles(currentOption.iconProps.style.color);
+    // Only recompute button styles when current option changes
+    const buttonStyles = useMemo(
+        () => getButtonStyles(currentOption.iconProps.style.color),
+        [currentOption],
+    );
 
+    // Render our main view
     return (
         <div
             style={{
@@ -121,7 +119,7 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
         >
             <HoverCard
                 plainCardProps={{
-                    onRenderPlainCard: onRenderCard,
+                    onRenderPlainCard: historyCardContent,
                     directionalHint: DirectionalHint.rightTopEdge,
                 }}
                 type={HoverCardType.plain}
@@ -135,19 +133,16 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
                         isBeakVisible: false,
                         shouldFocusOnMount: true,
                         items: getItemsFromOptionsMap(options),
-                        onItemClick: onClick,
+                        onItemClick: onStatusClick,
                     }}
                     styles={buttonStyles}
                 />
             </HoverCard>
 
             <Dialog
-                hidden={!isDialogVisible}
-                onDismiss={closeDialog}
-                dialogContentProps={{
-                    type: DialogType.normal,
-                    title: "Add a custom status",
-                }}
+                hidden={!isCustomStatusVisible}
+                onDismiss={closeCustomStatus}
+                dialogContentProps={{ title: "Add a custom status" }}
                 modalProps={{
                     isBlocking: false,
                     styles: { main: { maxWidth: 450 } },
@@ -156,17 +151,17 @@ export const BadgeView = (props: IBadgeViewProps): JSX.Element => {
                 <Stack>
                     <TextField
                         placeholder="Custom status name"
-                        onChange={updateText}
+                        onChange={updateCustomStatusText}
                     />
                     <ColorPicker
-                        color={customColor}
-                        onChange={updateColor}
+                        color={customStatusColor}
+                        onChange={updateCustomStatusColor}
                         alphaSliderHidden={true}
                     />
                 </Stack>
                 <DialogFooter>
-                    <PrimaryButton onClick={onSave} text="Save" />
-                    <DefaultButton onClick={closeDialog} text="Cancel" />
+                    <PrimaryButton onClick={onSaveCustomStatus} text="Save" />
+                    <DefaultButton onClick={closeCustomStatus} text="Cancel" />
                 </DialogFooter>
             </Dialog>
         </div>
