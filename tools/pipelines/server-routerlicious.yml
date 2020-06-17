@@ -33,11 +33,11 @@ pr:
     - server/routerlicious/kubernetes/routerlicious
 
 variables:
-  repository: prague.azurecr.io
+  registry: prague.azurecr.io
   containerName: prague-server
   baseContainerName: $(containerName)-base
   baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  fullRunnerContainerTag: $(repository)/$(containerName):$(Build.BuildId)
+  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
   ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     testConfig: :full
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -175,6 +175,7 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Build'
           inputs:
+            containerRegistry: Fluid Azure Container Registry
             repository: $(containerName)
             command: build
             dockerFile: server/routerlicious/Dockerfile
