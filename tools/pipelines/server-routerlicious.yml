@@ -175,7 +175,6 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Build'
           inputs:
-            containerRegistry: Prague
             repository: $(containerName)
             command: build
             dockerFile: server/routerlicious/Dockerfile
@@ -187,7 +186,7 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Push'
           inputs:
-            containerRegistry: Prague
+            containerRegistry: Fluid Azure Container Registry
             repository: $(containerName)
             command: push
             tags: |
