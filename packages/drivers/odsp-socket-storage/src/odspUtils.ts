@@ -162,7 +162,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
         // If the error is 401 or 403 refresh the token and try once more.
-        if (e.statusCode === 401 || e.statusCode === 403) {
+        if (e.errorType === ErrorType.authorizationError) {
             return get(true);
         }
 
