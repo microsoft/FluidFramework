@@ -6,7 +6,14 @@
 import assert from "assert";
 import { CriticalContainerError, ErrorType } from "@fluidframework/container-definitions";
 import { IOdspSocketError } from "../contracts";
-import { createOdspNetworkError, throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
+import {
+    createOdspNetworkError,
+    throwOdspNetworkError,
+    errorObjectFromSocketError,
+    getWithRetryForTokenRefresh,
+    invalidFileNameStatusCode,
+    fetchIncorrectResponse,
+} from "../odspUtils";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -109,5 +116,38 @@ describe("Odsp Error", () => {
             assert.equal(networkError.message, "testMessage");
             assert.equal(networkError.retryAfterSeconds, 10);
         }
+    });
+
+    it("Access Denied retries", async () => {
+        const res = await getWithRetryForTokenRefresh(async (refresh) => {
+            if (refresh) {
+                return 1;
+            } else {
+                throwOdspNetworkError("some error", 401);
+            }
+        });
+        assert.equal(res, 1, "did not successfully retried with new token");
+    });
+
+    it("fetch incorrect response retries", async () => {
+        const res = await getWithRetryForTokenRefresh(async (refresh) => {
+            if (refresh) {
+                return 1;
+            } else {
+                throwOdspNetworkError("some error", fetchIncorrectResponse);
+            }
+        });
+        assert.equal(res, 1, "did not successfully retried with new token");
+    });
+
+    it("Other errors - no retries", async () => {
+        const res = getWithRetryForTokenRefresh(async (refresh) => {
+            if (refresh) {
+                return 1;
+            } else {
+                throwOdspNetworkError("some error", invalidFileNameStatusCode);
+            }
+        });
+        await assert.rejects(res, "did not successfully retried with new token");
     });
 });
