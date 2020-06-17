@@ -133,7 +133,7 @@ const getApiSidebar = () => {
     let apiCategories = new Map();
     let apiSidebar = [{
         title: "API Overview",
-        path: "index",
+        path: "",
         collapsable: false,
         sidebarDepth: 0
     }];
@@ -147,28 +147,29 @@ const getApiSidebar = () => {
         let category = apiMapping.get(packageName) || "Unknown";
         if (!apiCategories.has(category)) {
             // console.log(`Creating entry for ${category}`);
-            apiCategories.set(category, [file]);
+            apiCategories.set(category, new Set([`${packageName}.md`]));
         } else {
-            const current = apiCategories.get(category);
-            current.push(file);
+            let current = apiCategories.get(category);
+            // let current = new Set();
+            current.add(`${packageName}.md`);
             apiCategories.set(category, current);
         }
     }
 
     // console.log(apiCategories);
-    if (apiCategories.get("Unknown")) {
-        const unknownCategory = new Set(apiCategories.get("Unknown").map(f => packageFromFilePath(f)));
-        console.log(`Packages with no category:`);
-        console.log(unknownCategory);
-    }
+    const categoryToLog = "Framework";
+    console.log(`Packages with ${categoryToLog} category:`);
+    console.log(apiCategories.get(categoryToLog));
 
     apiCategories.forEach((value, key) => {
         apiSidebar.push({
             title: key,
             sidebarDepth: 2,
-            children: value
+            children: Array.from(value)
         });
     });
+
+    console.log(JSON.stringify(apiSidebar));
 
     return apiSidebar;
 }

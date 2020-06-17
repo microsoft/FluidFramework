@@ -86,7 +86,7 @@ stages:
 
         - task: UseNode@1
           displayName: Use Node 12.x
-          inputs: 
+          inputs:
             version: 12.x
 
         - task: Bash@3
