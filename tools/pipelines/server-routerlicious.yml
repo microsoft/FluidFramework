@@ -34,7 +34,10 @@ pr:
 
 variables:
   repository: prague.azurecr.io
-  testConfig: test:full
+  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    testConfig: :full
+  - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    testConfig: :ci
   containerName: prague-server
   baseContainerName: $(containerName)-base
   baseContainerTag: $(baseContainerName):$(Build.BuildId)
