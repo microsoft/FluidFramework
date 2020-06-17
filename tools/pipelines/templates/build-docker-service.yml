@@ -77,7 +77,7 @@ jobs:
         displayName: npm run test
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(fullContainerTag) npm run test'
+          customCommand: 'run -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(containerTag) npm run test'
         
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -116,9 +116,9 @@ jobs:
       condition: succeededOrFailed()
 
     - task: Docker@0
-      displayName: Docker Cleanup - $(fullContainerTag)
+      displayName: Docker Cleanup - $(containerTag)
       inputs:
         action: Run a Docker command
-        customCommand: rmi $(fullContainerTag)
+        customCommand: rmi $(containerTag)
       continueOnError: true
       condition: succeededOrFailed()
