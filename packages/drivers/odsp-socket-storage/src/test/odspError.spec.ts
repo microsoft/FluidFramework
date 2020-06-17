@@ -148,6 +148,6 @@ describe("Odsp Error", () => {
                 throwOdspNetworkError("some error", invalidFileNameStatusCode);
             }
         });
-        await assert.rejects(res, "did not successfully retried with new token");
+        await assert.rejects(res, "Other errors should not result in retries!");
     });
 });
