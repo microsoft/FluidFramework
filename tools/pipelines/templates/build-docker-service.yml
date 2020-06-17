@@ -10,7 +10,7 @@ trigger: none
 variables:
 - name: fullContainerTag
   value: $(containerRegistry)/$(containerName):$(Build.BuildId)  
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - name: containerRegistry
     value: Fluid Azure Container Registry
 
@@ -48,7 +48,7 @@ steps:
     tags: |
       $(Build.BuildId)
 
-- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - task: Docker@2
     displayName: Docker Push
     inputs:
