@@ -1,0 +1,76 @@
+
+parameters:
+- name: buildDirectory
+  type: string
+- name: containerName
+  type: string
+
+trigger: none
+pr: none
+
+variables:
+  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    - name: containerRegistry
+      value: Fluid Azure Container Registry
+- name: fullContainerTag
+  value: $(containerRegistry)/$(containerName):$(Build.BuildId)
+
+steps:
+# Setup
+- checkout: self
+  clean: true
+  fetchDepth: 1
+  lfs: false
+  submodules: false
+
+- task: Npm@1
+  displayName: npm ci
+  inputs:
+    command: 'custom'
+    workingDir: ${{ parameters.buildDirectory }}
+    customCommand: 'ci --unsafe-perm'
+    customRegistry: 'useFeed'
+    customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+
+- task: npmAuthenticate@0
+  displayName: 'npm Authenticate ${{ parameters.buildDirectory }}/.npmrc'
+  inputs:
+    workingFile: ${{ parameters.buildDirectory }}/.npmrc
+
+- task: Docker@2
+  displayName: Docker Build
+  inputs:
+    containerRegistry: $(containerRegistry)
+    repository: $(containerName)
+    command: build
+    dockerFile: $(buildDirectory)/Dockerfile
+    buildContext: $(buildDirectory)
+    tags: |
+      $(Build.BuildId)
+
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - task: Docker@2
+    displayName: Docker Push
+    inputs:
+      containerRegistry: $(containerRegistry)
+      repository: $(containerName)
+      command: push
+      tags: |
+        $(Build.BuildId)
+
+# Cleanup
+- task: Docker@0
+  displayName: Docker Cleanup: Container prune
+  inputs:
+    action: Run a Docker command
+    customCommand: container prune -f
+  continueOnError: true
+  condition: succeededOrFailed()
+
+- task: Docker@0
+  displayName: Docker Cleanup - $(baseContainer)
+  inputs:
+    action: Run a Docker command
+    customCommand: rmi $(fullContainerTag)
+  continueOnError: true
+  condition: succeededOrFailed()
