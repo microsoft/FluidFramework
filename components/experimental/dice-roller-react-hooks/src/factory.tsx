@@ -1,24 +1,19 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { IComponentFactory, IComponentContext } from "@fluidframework/runtime-definitions";
-import { AsJsonable, JsonablePrimitive } from "@fluidframework/component-runtime-definitions";
+import { AsJsonable } from "@fluidframework/component-runtime-definitions";
 import { SharedMap, ISharedMap, IDirectoryValueChanged } from "@fluidframework/map";
 
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
-import { FluidMapContext } from "./useFluidMap";
+import { FluidContext, Widen } from "./useFluidMap";
 
 const rootMapKey = "root-map-key";
 
 function generateUseFluidMap(map: ISharedMap) {
-    return function <T = JsonablePrimitive>(key: string, initialValue?: AsJsonable<T>)
-        : [T, <T2 = JsonablePrimitive>(value: AsJsonable<T2>) => void] {
-        const currentValue = map.get(key) ?? initialValue;
+    return function <T>(key: string, initialValue: AsJsonable<T>)
+        : [Widen<T>, React.Dispatch<React.SetStateAction<Widen<T>>>] {
+        const currentValue: Widen<T> = (map.get(key) ?? initialValue) as unknown as Widen<T>;
         const [state, setState] = useState(currentValue);
 
         useEffect(() => {
@@ -33,7 +28,36 @@ function generateUseFluidMap(map: ISharedMap) {
             };
         }, [state]);
 
-        return [state, (value) => map.set(key, value)];
+        const setNewState: React.Dispatch<React.SetStateAction<Widen<T>>> = (value) => map.set(key, value);
+
+        return [state, setNewState];
+    }
+}
+
+function generateUseFluidReducer(map: ISharedMap) {
+    return function <T, U>(key: string, reducer: React.Reducer<Widen<T>, U>, initialState: AsJsonable<T>)
+    : [Widen<T>, React.Dispatch<React.ReducerAction<React.Reducer<Widen<T>, U>>>] {
+        const currentState: Widen<T> = (map.get(key) ?? initialState) as unknown as Widen<T>;
+        const [state, setState] = useState(currentState);
+        const dispatch: React.Dispatch<React.ReducerAction<React.Reducer<Widen<T>, U>>>
+            = (action: any) => {
+                const result = reducer(state, action);
+                map.set(key, result);
+            };
+
+        useEffect(() => {
+            const onValueChanged = (changed: IDirectoryValueChanged, local: boolean) => {
+                if (changed.key === key) {
+                    setState(map.get(key));
+                }
+            };
+            map.on("valueChanged", onValueChanged);
+            return () => {
+                map.off("valueChanged", onValueChanged);
+            };
+        }, [state]);
+
+        return [state, dispatch];
     }
 }
 
@@ -51,11 +75,11 @@ export function fluidReactComponentFactory(componentName: string, element: JSX.E
             rootP = runtime.getChannel(rootMapKey) as Promise<ISharedMap>;
         }
         runtime.registerRequestHandler(async () => {
-            let root: ISharedMap = await rootP;
+            const root = await rootP;
             if (!fluidObj) {
                 fluidObj = {
                     handle: undefined,
-                    get IComponentHandle() { 
+                    get IComponentHandle() {
                         if (!this.handle) {
                             this.handle = new ComponentHandle(this, context.path, runtime.IComponentHandleContext);
                         }
@@ -63,12 +87,16 @@ export function fluidReactComponentFactory(componentName: string, element: JSX.E
                     },
                     get IComponentHTMLView() { return this; },
                     render(div: HTMLElement) {
+                        const reactContext = {
+                            useMap: generateUseFluidMap(root),
+                            useReducer: generateUseFluidReducer(root),
+                        }
                         ReactDOM.render(
-                            <FluidMapContext.Provider value={generateUseFluidMap(root)}>
+                            <FluidContext.Provider value={reactContext}>
                                 {element}
-                            </FluidMapContext.Provider>,
+                            </FluidContext.Provider>,
                             div
-                        )
+                        );
                     }
                 }
             }

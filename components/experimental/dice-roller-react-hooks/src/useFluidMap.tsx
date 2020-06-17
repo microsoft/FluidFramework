@@ -1,29 +1,43 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
+import { AsJsonable } from "@fluidframework/component-runtime-definitions";
 
-import { AsJsonable, JsonablePrimitive } from "@fluidframework/component-runtime-definitions";
+import React, { useContext, useState, useReducer } from "react";
 
-import React, { useContext } from "react";
+export type Widen<T> = T extends number ? number :
+    T extends string ? string :
+    T;
 
-/**
- * React Context object that is used to propagate our function through the React DOM
- */
-export const FluidMapContext = React.createContext(
-    function <T = JsonablePrimitive>(key: string, initialValue?: AsJsonable<T>)
-        : [T, <T2 = JsonablePrimitive>(value: AsJsonable<T2>)=> void] {
-        throw new Error("FluidMapContext must be initialized and cannot use the default value.");
+const DefaultFluidContext = {
+    useMap<T>(key: string, initialValue: AsJsonable<T>)
+    : [Widen<T>, React.Dispatch<React.SetStateAction<Widen<T>>>] {
+        return useState<Widen<T>>(initialValue as unknown as Widen<T>);
+    },
+    useReducer<T, U>(key: string, reducer: React.Reducer<Widen<T>, U>, initialState: AsJsonable<T>)
+    : [Widen<T>, React.Dispatch<React.ReducerAction<React.Reducer<Widen<T>, U>>>] {
+        return useReducer(reducer, initialState as unknown as Widen<T>);
     }
-);
+}
 
 /**
- * React hook for getting and setting from a fluid map.
- * This must be initialized within the context of a fluid using FluidMapContext.
- * @param key - map key
- * @param initialValue - will set the map key value if it's undefined only.
+ * This context will enable developers to easily get a function
+ * with an initialize fluid map.
+ *
+ * The default behavior is simply to use reacts useState.
  */
-export function useFluidMap<T>(key: string, initialValue?: AsJsonable<T>) {
-    const useFluidMap = useContext(FluidMapContext);
-    return useFluidMap(key, initialValue);
+export const FluidContext = React.createContext(DefaultFluidContext);
+
+/**
+ * react hook for getting and setting from a fluid map.
+ * @param key - map key
+ * @param initialValue - will set the map key value if it's undefined
+ */
+export function useFluidState<T>(key: string, initialValue: AsJsonable<T>)
+: [Widen<T>, React.Dispatch<React.SetStateAction<Widen<T>>>] {
+    const context = useContext(FluidContext);
+    return context.useMap(key, initialValue);
+}
+
+export function useFluidReducer<T, U>(key: string, reducer: React.Reducer<Widen<T>, U>, initialState: AsJsonable<T>)
+: [Widen<T>, React.Dispatch<React.ReducerAction<React.Reducer<Widen<T>, U>>>] {
+    const context = useContext(FluidContext);
+    return context.useReducer(key, reducer, initialState);
 }
