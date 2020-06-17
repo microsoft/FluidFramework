@@ -9,13 +9,13 @@ import { TestDocumentServiceFactory } from "@fluidframework/local-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { RouterliciousDocumentServiceFactory, DefaultErrorTracking } from "@fluidframework/routerlicious-driver";
 import { RouteOptions } from "./loader";
-import { SessionStorageDbFactory } from "./sessionStorageTestDb";
+import { LocalSessionStorageDbFactory } from "./localSessionStorageDb";
 
 const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
 export function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
     const deltaConn = deltaConns.get(documentId) ??
-        LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+        LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
     deltaConns.set(documentId, deltaConn);
 
     return MultiDocumentServiceFactory.create([

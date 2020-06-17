@@ -10,10 +10,10 @@ import uuid from "uuid";
 /**
  * A database factory for testing that stores data in the browsers session storage
  */
-export class SessionStorageDbFactory implements ITestDbFactory {
+export class LocalSessionStorageDbFactory implements ITestDbFactory {
     public readonly testDatabase: IDb;
     constructor(namespace: string) {
-        this.testDatabase = new SessionStorageDb(namespace);
+        this.testDatabase = new LocalSessionStorageDb(namespace);
     }
     public async connect(): Promise<IDb> {
         return Promise.resolve(this.testDatabase);
@@ -23,8 +23,8 @@ export class SessionStorageDbFactory implements ITestDbFactory {
 /**
  * A database for testing that stores data in the browsers session storage
  */
-class SessionStorageDb extends EventEmitter implements IDb {
-    private readonly collections = new Map<string, SessionStorageCollection<any>>();
+class LocalSessionStorageDb extends EventEmitter implements IDb {
+    private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
     constructor(private readonly namespace) {
         super();
     }
@@ -33,16 +33,16 @@ class SessionStorageDb extends EventEmitter implements IDb {
     }
     public collection<T>(name: string): ICollection<T> {
         if (!this.collections.has(name)) {
-            this.collections.set(name, new SessionStorageCollection<T>(`${this.namespace}-db`, name));
+            this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
         }
-        return this.collections.get(name) as SessionStorageCollection<T>;
+        return this.collections.get(name) as LocalSessionStorageCollection<T>;
     }
 }
 
 /**
  * A collection for testing that stores data in the browsers session storage
  */
-class SessionStorageCollection<T> implements ICollection<T> {
+class LocalSessionStorageCollection<T> implements ICollection<T> {
     private readonly collectionName: string;
     constructor(namespace, name) {
         this.collectionName = `${namespace}-${name}`;
