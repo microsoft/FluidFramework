@@ -48,7 +48,7 @@ stages:
   displayName: Build Stage
   jobs:
     - job: build
-      displayName: Build
+      displayName: Build - Server
       pool: Default
       steps:
         # Checkout
