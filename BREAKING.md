@@ -1,5 +1,11 @@
 # Breaking changes
 
+## 0.21 Breaking Changes
+- [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
+
+### Removed `@fluidframework/local-test-utils`
+Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
+
 ## 0.20 Breaking Changes
 - [Value types deprecated on SharedMap and SharedDirectory](#Value-types-deprecated-on-sharedmap-and-shareddirectory)
 - [rename @fluidframework/aqueduct-react to @fluidframework/react-inputs](#rename-@fluidframework/aqueduct-react-to-@fluidframework/react-inputs)
