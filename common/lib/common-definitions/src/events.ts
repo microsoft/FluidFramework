@@ -48,7 +48,6 @@ export type TransformedEvent<TThis, E, A extends any[]> =
 // It currently supports up to 10 events which is more than we use anywhere,
 // but could be easily extended to support more, by adding more layers.
 //
-/* eslint-disable max-len */
 export type IEventTransformer<TThis, TEvent extends IEvent> =
     TEvent extends
     {
@@ -168,4 +167,3 @@ export type IEventTransformer<TThis, TEvent extends IEvent> =
     }
     ? TransformedEvent<TThis, E0, A0>
     : TransformedEvent<TThis, string, any[]>;
-/* eslint-enable max-len */

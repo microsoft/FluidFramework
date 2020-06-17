@@ -15,8 +15,9 @@ import { ISharedString } from "@fluidframework/sequence";
 import queue from "async/queue";
 
 import Counter = api.RateCounter;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import clone = require("lodash/clone");
+
+// eslint-disable-next-line import/no-internal-modules
+import clone from "lodash/clone";
 
 let play: boolean = false;
 

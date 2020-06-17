@@ -37,3 +37,4 @@ extends:
     taskBuildDocs: false
     taskLint: false
     taskTest: test
+    namespace: false
