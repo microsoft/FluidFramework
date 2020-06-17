@@ -52,7 +52,7 @@ jobs:
                           cat .npmrc
 
                           echo Deleteing @fluid-internal packages
-                          rm fluid-internal-*
+                          rm -f fluid-internal-*
                     ${{ if eq(parameters.namespace, false) }}:
                       script: |
                         echo Generating .npmrc for ${{ feed.name }}
