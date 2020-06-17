@@ -7,14 +7,12 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
-import { TestHost } from "@fluidframework/local-test-utils";
 import assert from "assert";
-import "mocha";
+import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { htmlFormatter } from "../src";
 import { FlowDocument } from "../src/document";
 import { Layout } from "../src/view/layout";
-
-const flowDocumentFactory = FlowDocument.getFactory();
 
 interface ISnapshotNode {
     node: Node;
@@ -40,21 +38,26 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
 }
 
 describe("Layout", () => {
-    let host: TestHost;
+    const id = "fluid-test://localhost/layoutTest";
+    const codeDetails = {
+        package: "layoutTestPkg",
+        config: {},
+    };
+
     let doc: FlowDocument;
     let root: HTMLElement;
     let layout: Layout;
 
     before(async () => {
-        host = new TestHost([
-            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
-        ]);
+        const deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
+        const container = await initializeLocalContainer(id, loader, codeDetails);
 
-        doc = await host.createAndAttachComponent("test-doc", flowDocumentFactory.type);
-    });
-
-    after(async () => {
-        await host.close();
+        const response = await container.request({ url: "default" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Default component not found`);
+        }
+        doc = response.value;
     });
 
     beforeEach(() => {
