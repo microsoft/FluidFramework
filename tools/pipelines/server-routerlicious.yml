@@ -73,7 +73,7 @@ stages:
           - task: ComponentGovernanceComponentDetection@0
             displayName: Component Detection
             inputs:
-              sourceScanPath: server/routerlicious/packages
+              sourceScanPath: server/routerlicious
               verbosity: Verbose
               scanType: Register
               alertWarningLevel: High
