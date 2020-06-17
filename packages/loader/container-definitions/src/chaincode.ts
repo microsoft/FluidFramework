@@ -216,6 +216,8 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      */
     readonly scope: IComponent;
 
+    on(event: "containerBeingAttached" | "containerAttached", listener: () => void): this;
+
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;

@@ -484,10 +484,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 [CreateNewHeader.createNew]: {},
             };
         }
-        const createNewResolvedUrl = await this.urlResolver.resolve(request);
-        ensureFluidResolvedUrl(createNewResolvedUrl);
 
         try {
+            // This will tell the container runtime/components/dds that the container is getting attached and
+            // they can perform any operation based on this like start generating ops from this
+            // point on because all upto this point was included in the app summary and from now on we need to
+            // generate ops for changes so that they can be sent over wire once we are connected.
+            this.emit("containerBeingAttached");
+
+            const createNewResolvedUrl = await this.urlResolver.resolve(request);
+            ensureFluidResolvedUrl(createNewResolvedUrl);
             // Actually go and create the resolved document
             this.service = await this.serviceFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
@@ -513,7 +519,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this.attached = true;
-
+            // Emit container attached event as there might be some need to do something based on this action
+            // like stopping force generation of ops.
+            this.emit("containerAttached");
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;

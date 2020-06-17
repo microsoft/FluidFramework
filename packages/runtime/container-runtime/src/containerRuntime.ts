@@ -626,6 +626,15 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             });
         }
 
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
+        // 0.18 back-compat event-on
+        // Only listen to these events if local.
+        if (this.context.on !== undefined && this.isLocal()) {
+            this.context.on("containerBeingAttached", () => {
+                this.emit("containerBeingAttached");
+            });
+        }
+
         // Create a context for each of them
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(
