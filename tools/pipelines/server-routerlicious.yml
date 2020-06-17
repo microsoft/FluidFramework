@@ -38,9 +38,7 @@ variables:
   containerName: prague-server
   baseContainerName: $(containerName)-base
   baseContainerTag: $(baseContainerName):$(Build.BuildId)
-  runnerContainerTag: $(containerName):$(Build.BuildId)
-  fullBaseContainerTag: $(repository)/$(baseContainerTag)
-  fullRunnerContainerTag: $(repository)/$(containerTag)
+  fullRunnerContainerTag: $(repository)/$(containerName):$(Build.BuildId)
   
 
 jobs:
@@ -103,20 +101,20 @@ jobs:
       - task: Docker@2
         displayName: Docker build
         inputs:
-          repository: $(repository)
+          repository: $(baseContainerName)
           command: build
           dockerFile: server/routerlicious/Dockerfile
           buildContext: server/routerlicious
           arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
           tags: |
-            $(baseContainerTag)
+            $(Build.BuildId)
 
       # Pack
       - task: Docker@0
         displayName: 'Packages: NPM Pack'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(fullBaseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+          customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
       - task: PublishBuildArtifacts@1
         displayName: 'Packages: Publish Artifact'
@@ -130,14 +128,14 @@ jobs:
         displayName: 'Base: Lint'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -t $(fullBaseContainerTag) npm run lint'
+          customCommand: 'run --user root -t $(baseContainerTag) npm run lint'
 
       # Test
       - task: Docker@0
         displayName: 'Base: Test'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(fullBaseContainerTag) npm run test$(testConfig)'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run test$(testConfig)'
         
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -160,7 +158,7 @@ jobs:
         displayName: 'Docs: api-extractor'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(fullBaseContainerTag) npm run build:docs'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
 
       - task: PublishBuildArtifacts@1
         displayName: 'Docs: Publish Artifact'
@@ -174,13 +172,14 @@ jobs:
         - task: Docker@2
           displayName: 'Runner: Build'
           inputs:
+            containerRegistry: Prague
             repository: prague
             command: build
             dockerFile: server/routerlicious/Dockerfile
             buildContext: server/routerlicious
             arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
             tags: |
-              $(runnerContainerTag)
+              $(BuildId)
         
         - task: Docker@2
           displayName: 'Runner: Push'
@@ -189,7 +188,7 @@ jobs:
             repository: prague
             command: push
             tags: |
-              $(fullRunnerContainerTag)
+              $(BuildId)
 
       # Cleanup
       - task: Docker@0
@@ -212,6 +211,6 @@ jobs:
         displayName: 'Cleanup: Base'
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'rmi $(fullBaseContainerTag)'
+          customCommand: 'rmi $(baseContainerTag)'
         continueOnError: true
         condition: succeededOrFailed()
