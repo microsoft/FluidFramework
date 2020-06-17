@@ -4,8 +4,8 @@ import React from "react";
 import { useFluidReducer, useFluidState } from "./useFluidMap";
 
 export function HelloWorld() {
-    const [value, setValue] = useFluidState("hello", 1);
-    return <button onClick={() => setValue(value + 1)}>{value}</button>;
+    const [value, setValue] = useFluidState("hw-key", "hello");
+    return <button onClick={() => setValue(value === "hello" ? "world" : "hello")}>{value}</button>;
 }
 
 export function DiceRoller() {
@@ -24,29 +24,29 @@ export function DiceRoller() {
     );
 }
 
-function reducer(state: {counter: number}, action: { type:string }) {
+const initialState = { counter: 0 };
+
+function reducer(state: { counter: number }, action: { type: string }) {
     switch (action.type) {
-      case 'increment':
-        return {counter: state.counter + 1};
-      case 'decrement':
-        return {counter: state.counter - 1};
-      default:
-        throw new Error();
+        case 'increment':
+            return { counter: state.counter + 1 };
+        case 'decrement':
+            return { counter: state.counter - 1 };
+        default:
+            throw new Error();
     }
-  }
+}
 
-const initialState = {counter: 0};
-
-export function Counter(props: {id:string}) {
+export function Counter(props: { id: string }) {
     const [state, dispatch] = useFluidReducer(props.id, reducer, initialState);
     return (
-      <>
-        Count: {state.counter}
-        <button onClick={() => dispatch({type: 'decrement'})}>-</button>
-        <button onClick={() => dispatch({type: 'increment'})}>+</button>
-      </>
+        <>
+            Count: {state.counter}
+            <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+            <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+        </>
     );
-  }
+}
 
 /**
  * fluidExport is the entry point of the fluid package. We define our component
@@ -57,6 +57,6 @@ export const fluidExport = fluidReactComponentFactory(
     <div>
         <HelloWorld />
         <DiceRoller />
-        <Counter id={"counter1"} />
-        <Counter id={"counter2"} />
+        <Counter id={"counter1-key"} />
+        <Counter id={"counter2-key"} />
     </div>);
