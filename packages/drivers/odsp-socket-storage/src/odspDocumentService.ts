@@ -92,7 +92,6 @@ export class OdspDocumentService implements IDocumentService {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     await options.newFileInfoPromise,
-                    cache,
                     storageFetchWrapper);
                 const props = {
                     docId: odspResolvedUrl.hashedDocumentId,
