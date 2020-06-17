@@ -8,12 +8,11 @@ parameters:
 trigger: none
 
 variables:
-- name: fullContainerTag
-  value: $(containerRegistry)/$(containerName):$(Build.BuildId)  
 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
   - name: containerRegistry
     value: Fluid Azure Container Registry
-
+- name: fullContainerTag
+  value: $(containerRegistry)/$(containerName):$(Build.BuildId)
 
 steps:
 # Setup
