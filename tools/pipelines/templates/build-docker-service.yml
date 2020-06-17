@@ -8,23 +8,17 @@ parameters:
 trigger: none
 
 variables:
-- name: pushImage
-  value: ${{
+  skipComponentGovernanceDetection: true
+  pushImage: ${{
         and(
             ne(variables['Build.Reason'], 'PullRequest'),
             eq(variables['Build.SourceBranch'], 'refs/heads/master')
         )}}
-
-- name: containerRegistry
-  value:
-
-- ${{ if eq(variables.pushImage, true) }}:
-  - name: containerRegistry
-    value: Fluid Azure Container Registry
-
-- name: fullContainerTag
-  value: $(containerRegistry)/${{ parameters.containerName }}:$(Build.BuildId)
-
+  containerRegistry:
+  ${{ if eq(variables.pushImage, true) }}:
+    containerRegistry: Fluid Azure Container Registry
+  fullContainerTag: $(containerRegistry)/${{ parameters.containerName }}:$(Build.BuildId)
+  
 steps:
 # Setup
 - checkout: self
@@ -32,6 +26,10 @@ steps:
   fetchDepth: 1
   lfs: false
   submodules: false
+
+- template: templates/include-generate-notice-steps.yml
+  parameters:
+    buildDirectory: ${{ parameters.buildDirectory }}
 
 - task: Bash@3
   displayName: Strip npmrc auth token preamble

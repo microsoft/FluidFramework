@@ -50,8 +50,7 @@ parameters:
 trigger: none
 
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
+  skipComponentGovernanceDetection: true
 
 stages:
   - stage: build
