@@ -112,7 +112,7 @@ stages:
 
         # Build
         - task: Docker@2
-          displayName: Docker build
+          displayName: Docker Build - Base
           inputs:
             repository: $(baseContainerName)
             command: build
@@ -124,13 +124,13 @@ stages:
 
         # Pack
         - task: Docker@0
-          displayName: 'Packages: NPM Pack'
+          displayName: Pack
           inputs:
             action: 'Run a Docker command'
             customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
         - task: PublishBuildArtifacts@1
-          displayName: 'Packages: Publish Artifact'
+          displayName: Publish Artifact - pack
           inputs:
             PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
             ArtifactName: pack
@@ -138,14 +138,14 @@ stages:
 
         # Lint
         - task: Docker@0
-          displayName: 'Base: Lint'
+          displayName: npm lint
           inputs:
             action: 'Run a Docker command'
             customCommand: 'run --user root -t $(baseContainerTag) npm run lint'
 
         # Test
         - task: Docker@0
-          displayName: 'Base: Test'
+          displayName: npm run test$(testConfig)
           inputs:
             action: 'Run a Docker command'
             customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run test$(testConfig)'
@@ -160,7 +160,7 @@ stages:
           condition: succeededOrFailed()
 
         - task: PublishCodeCoverageResults@1
-          displayName: 'Base: Publish code coverage'
+          displayName: Publish Code Coverage
           inputs:
             codeCoverageTool: Cobertura
             summaryFileLocation: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report/cobertura-coverage.xml'
@@ -168,7 +168,7 @@ stages:
 
         # Docs
         - task: Docker@0
-          displayName: 'Docs: api-extractor'
+          displayName: npm run build:docs
           inputs:
             action: 'Run a Docker command'
             customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
@@ -183,7 +183,7 @@ stages:
         # Build - Runner
         - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
           - task: Docker@2
-            displayName: 'Runner: Build'
+            displayName: 'Docker Build - Runner'
             inputs:
               containerRegistry: Fluid Azure Container Registry
               repository: $(containerName)
@@ -195,7 +195,7 @@ stages:
                 $(Build.BuildId)
           
           - task: Docker@2
-            displayName: 'Runner: Push'
+            displayName: 'Docker Push - Runner'
             inputs:
               containerRegistry: Fluid Azure Container Registry
               repository: $(containerName)
