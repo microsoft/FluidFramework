@@ -62,7 +62,6 @@ steps:
     tags: |
       $(Build.BuildId)
 
-
 # Test
 - ${{ if eq(parameters.test, true) }}:
   - task: Docker@0
