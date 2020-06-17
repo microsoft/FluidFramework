@@ -7,8 +7,8 @@ import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
 import React from "react";
 
-export interface IEmbeddedComponentProps {
-    component: IComponent;
+export interface IReactViewAdapterProps {
+    view: IComponent;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface IEmbeddedComponentProps {
  *
  * If the component is none of these, we render nothing.
  */
-export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
+export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
     /**
      * Test whether the given component can be successfully adapted by a ReactViewAdapter.
      * @param view - the component to test if it is adaptable.
@@ -36,27 +36,27 @@ export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
      */
     private readonly element: JSX.Element;
 
-    constructor(props: IEmbeddedComponentProps) {
+    constructor(props: IReactViewAdapterProps) {
         super(props);
 
-        if (React.isValidElement(this.props.component)) {
-            this.element = this.props.component;
+        if (React.isValidElement(this.props.view)) {
+            this.element = this.props.view;
             return;
         }
 
-        const reactViewable = this.props.component.IComponentReactViewable;
+        const reactViewable = this.props.view.IComponentReactViewable;
         if (reactViewable !== undefined) {
             this.element = reactViewable.createJSXElement();
             return;
         }
 
-        const htmlView = this.props.component.IComponentHTMLView;
+        const htmlView = this.props.view.IComponentHTMLView;
         if (htmlView !== undefined) {
             this.element = <HTMLViewEmbeddedComponent htmlView={htmlView} />;
             return;
         }
 
-        const htmlVisual = this.props.component.IComponentHTMLVisual;
+        const htmlVisual = this.props.view.IComponentHTMLVisual;
         if (htmlVisual !== undefined) {
             this.element = <HTMLVisualEmbeddedComponent htmlVisual={htmlVisual} />;
             return;
