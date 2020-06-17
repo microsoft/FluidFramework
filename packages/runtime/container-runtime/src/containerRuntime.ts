@@ -1607,7 +1607,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         batch: boolean,
         appData?: any) {
         // Switch in next release
-        const legacyFormat = false;
+        const legacyFormat = true;
 
         if (legacyFormat) {
             return this.context.submitFn(
