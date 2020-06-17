@@ -201,13 +201,14 @@ jobs:
         continueOnError: true
         condition: succeededOrFailed()
 
-      - task: Docker@0
-        displayName: 'Cleanup: Runner'
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'rmi $(fullRunnerContainerTag)'
-        continueOnError: true
-        condition: succeededOrFailed()
+      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - task: Docker@0
+          displayName: 'Cleanup: Runner'
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'rmi $(fullRunnerContainerTag)'
+          continueOnError: true
+          condition: succeededOrFailed()
 
       - task: Docker@0
         displayName: 'Cleanup: Base'
