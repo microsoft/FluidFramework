@@ -277,7 +277,7 @@ export interface IComponentContext extends EventEmitter {
     readonly scope: IComponent;
     readonly summaryTracker: ISummaryTracker;
 
-    on(event: "leader" | "notleader", listener: () => void): this;
+    on(event: "leader" | "notleader" | "containerBeingAttached", listener: () => void): this;
 
     /**
      * Returns the current quorum.
