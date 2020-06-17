@@ -23,7 +23,7 @@ variables:
     value: Fluid Azure Container Registry
 
 - name: fullContainerTag
-  value: $(containerRegistry)/$(containerName):$(Build.BuildId)
+  value: $(containerRegistry)/${{ parameter.containerName }}:$(Build.BuildId)
 
 steps:
 # Setup
@@ -50,10 +50,10 @@ steps:
   displayName: Docker Build
   inputs:
     containerRegistry: $(containerRegistry)
-    repository: $(containerName)
+    repository: ${{ parameters.containerName }}
     command: build
-    dockerFile: $(buildDirectory)/Dockerfile
-    buildContext: $(buildDirectory)
+    dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
+    buildContext: ${{ parameters.buildDirectory }}
     tags: |
       $(Build.BuildId)
 
@@ -62,7 +62,7 @@ steps:
     displayName: Docker Push
     inputs:
       containerRegistry: $(containerRegistry)
-      repository: $(containerName)
+      repository: ${{ parameters.containerName }}
       command: push
       tags: |
         $(Build.BuildId)
@@ -77,7 +77,7 @@ steps:
   condition: succeededOrFailed()
 
 - task: Docker@0
-  displayName: Docker Cleanup - $(baseContainer)
+  displayName: Docker Cleanup - $(fullContainerTag)
   inputs:
     action: Run a Docker command
     customCommand: rmi $(fullContainerTag)
