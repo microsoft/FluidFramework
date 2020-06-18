@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-document",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "description": "Chaincode component containing a table's data",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -44,22 +44,22 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.1",
+    "@fluidframework/aqueduct": "^0.20.2",
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/component-core-interfaces": "^0.20.1",
-    "@fluidframework/component-runtime-definitions": "^0.20.1",
-    "@fluidframework/merge-tree": "^0.20.1",
+    "@fluidframework/component-core-interfaces": "^0.20.2",
+    "@fluidframework/component-runtime-definitions": "^0.20.2",
+    "@fluidframework/merge-tree": "^0.20.2",
     "@fluidframework/protocol-definitions": "^0.1007.1",
-    "@fluidframework/runtime-definitions": "^0.20.1",
-    "@fluidframework/sequence": "^0.20.1",
+    "@fluidframework/runtime-definitions": "^0.20.2",
+    "@fluidframework/sequence": "^0.20.2",
     "@tiny-calc/micro": "0.0.0-alpha.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@fluid-internal/test-utils": "^0.20.1",
+    "@fluid-internal/test-utils": "^0.20.2",
     "@fluidframework/build-common": "^0.17.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/local-test-utils": "^0.20.1",
+    "@fluidframework/local-test-utils": "^0.20.2",
     "@fluidframework/server-local-server": "^0.1007.1",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",
