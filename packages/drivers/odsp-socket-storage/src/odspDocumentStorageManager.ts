@@ -86,6 +86,20 @@ interface ObtainSnapshotPerfProps {
     method: "cache" | "network"
 }
 
+// An implementation of Promise.race that gives you the winner of the promise race
+async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{index: number, value: T}> {
+    let raceComplete = false;
+
+    return new Promise((resolve, reject) => {
+        promises.forEach((p, index) => {
+            if (!raceComplete) {
+                p.then((v) => resolve({ index, value: v })).catch(reject);
+                raceComplete = true;
+            }
+        });
+    });
+}
+
 export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -341,17 +355,18 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
-                        let obtainSnapshotPerfProps: ObtainSnapshotPerfProps;
-                        cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+
+                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        cachedSnapshot = promiseRaceWinner.value;
+
+                        const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
+                            method: promiseRaceWinner.index === 0 ? "cache" : "network",
+                        };
+
                         if (cachedSnapshot === undefined) {
-                            obtainSnapshotPerfProps = { method: "network" };
                             cachedSnapshot = await snapshotP;
-                        } else {
-                            // This block isn't quite accurate, it is possible that the fetched snapshot (snapshotP)
-                            // could have beat the cached snapshot lookup (cachedSnapshotP) and be incorrectly marked
-                            // as a cache hit.
-                            obtainSnapshotPerfProps = { method: "cache" };
                         }
+
                         obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
