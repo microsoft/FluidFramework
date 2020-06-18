@@ -6,6 +6,7 @@ NOTE: There is a lot of assumption made in the tool about the commands parsing a
 
 `fluid-layer-check` is a tool to make sure the dependencies between Fluid Framework packages are properly layered.  It also can be used to generate .dot file to generate a visual graph using GraphViz.
 
+
 ## Setup
 
 In this directory:
