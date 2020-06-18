@@ -97,7 +97,12 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{index:
               resolve({ index, value: v });
               raceComplete = true;
             }
-        }).catch(reject);
+        }).catch((reason) => {
+            if (!raceComplete) {
+                reject(reason);
+                raceComplete = true;
+            }
+        });
     });
 });
 }
