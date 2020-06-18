@@ -2,11 +2,13 @@
 parameters:
 - name: buildDirectory
   type: string
+
 - name: containerName
   type: string
+
 - name: test
   type: boolean
-  default: false
+
 - name: authnpmrc
   type: boolean
   default: true
@@ -16,10 +18,11 @@ trigger: none
 variables:
   skipComponentGovernanceDetection: true
   pushImage: ${{
-        and(
-            ne(variables['Build.Reason'], 'PullRequest'),
-            eq(variables['Build.SourceBranch'], 'refs/heads/master')
-        )}}
+    and(
+      ne(variables['Build.Reason'], 'PullRequest'),
+      eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    )}}
+  generateNotice: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   registry: prague.azurecr.io
   baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildId)
   ${{ if eq(variables.pushImage, false) }}:
@@ -42,7 +45,7 @@ jobs:
       submodules: false
 
     # Component detection (not pull request)
-    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    - ${{ if eq(variables.generateNotice, true) }}:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
