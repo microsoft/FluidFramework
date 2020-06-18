@@ -62,7 +62,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param logger - a logger that can capture performance and diagnostic information
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-     * @param socketIOClientP - promise to the socket io library required by the driver
+     * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      * @param newFileInfoPromise - promise to supply info needed to create a new file.
      */
@@ -73,7 +73,7 @@ export class OdspDocumentService implements IDocumentService {
         logger: ITelemetryLogger,
         storageFetchWrapper: IFetchWrapper,
         deltasFetchWrapper: IFetchWrapper,
-        socketIOClientP: Promise<SocketIOClientStatic>,
+        socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
     ): Promise<IDocumentService> {
@@ -107,7 +107,7 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             storageFetchWrapper,
             deltasFetchWrapper,
-            socketIOClientP,
+            socketIoClientFactory,
             cache,
             hostPolicy,
         );
@@ -140,7 +140,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param logger - a logger that can capture performance and diagnostic information
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
-     * @param socketIOClientP - promise to the socket io library required by the driver
+     * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      */
     constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
@@ -149,7 +149,7 @@ export class OdspDocumentService implements IDocumentService {
         logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
-        private readonly socketIOClientP: Promise<SocketIOClientStatic>,
+        private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
     ) {
@@ -252,7 +252,7 @@ export class OdspDocumentService implements IDocumentService {
             // For ODC, we just use the token from joinsession
             const socketTokenPromise = this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh);
             const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([this.joinSession(), socketTokenPromise, this.socketIOClientP]);
+                await Promise.all([this.joinSession(), socketTokenPromise, this.socketIoClientFactory()]);
 
             // This check exists because of a typescript bug.
             // Issue: https://github.com/microsoft/TypeScript/issues/33752
