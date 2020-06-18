@@ -137,7 +137,7 @@ stages:
           displayName: npm lint
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run --user root -t $(baseContainerTag) npm run lint'
+            customCommand: 'run -t $(baseContainerTag) npm run lint'
 
         # Test
         - task: Docker@0
