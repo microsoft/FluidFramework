@@ -39,6 +39,9 @@ resources:
       - release/*
       - master
 
+# no PR triggers
+pr: none
+
 stages:
 - stage: download
   displayName: Download
