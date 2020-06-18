@@ -73,7 +73,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             // createInnerComponent will create the model component for the chosen option.  We then need to get the
             // view component out of it (for now).  Preferably, we would instead take the returned model and feed it
             // into our own view component of our choosing.
-            return <ReactViewAdapter component={this.state.innerComponent} />;
+            return <ReactViewAdapter view={this.state.innerComponent} />;
         }
     }
 }
