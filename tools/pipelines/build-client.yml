@@ -64,8 +64,7 @@ extends:
       inputs:
         targetType: 'inline'
         script: |
-          # Copy the lerna package lock so we would scan it.
-          
+          # Generate the package/package lock for the lerna project so we would scan it.
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json

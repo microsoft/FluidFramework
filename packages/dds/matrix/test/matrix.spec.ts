@@ -6,56 +6,47 @@
 import "mocha";
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
-import { TestHost } from "@fluidframework/local-test-utils";
-import { Serializable } from "@fluidframework/component-runtime-definitions";
-import { MockEmptyDeltaConnection, MockComponentRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { Serializable, ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import {
+    MockComponentRuntime,
+    MockContainerRuntimeFactory,
+    MockContainerRuntimeFactoryForReconnection,
+    MockContainerRuntimeForReconnection,
+    MockEmptyDeltaConnection,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
-// Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
-// equivalent, and then returns the 2nd matrix.
-async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
-    // Create a snapshot
-    const objectStorage = new MockStorage(matrix.snapshot());
-
-    // Load the snapshot into a newly created 2nd SharedMatrix.
-    const componentRuntime = new MockComponentRuntime();
-    // We only want to test local state of the DDS.
-    componentRuntime.local = true;
-    const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
-    await matrix2.load(/*branchId: */ null as any, {
-        deltaConnection: new MockEmptyDeltaConnection(),
-        objectStorage
-    });
-
-    // Vet that the 2nd matrix is equivalent to the original.
-    expectSize(matrix2, matrix.rowCount, matrix.colCount);
-    assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
-
-    return matrix2;
-}
-
 describe("Matrix", () => {
-    let host1: TestHost;    // Note: Single client tests also require two clients to externally observe
-    let host2: TestHost;    //       when all ops have processed with `TestHost.sync()`.
-
-    before(async () => {
-        host1 = new TestHost([], [SharedMatrix.getFactory()]);
-        host2 = host1.clone();
-    });
-
-    after(async () => {
-        await Promise.all([host1.close(), host2.close()]);
-    });
-
     describe("local client", () => {
-        let matrix: SharedMatrix<number>;       // SharedMatrix under test
+        let componentRuntime: MockComponentRuntime;
+        let matrix: SharedMatrix<number>;
         let consumer: TestConsumer<undefined | null | number>;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
-        async function sync() {
-            await TestHost.sync(host1, host2);
+        // Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
+        // equivalent, and then returns the 2nd matrix.
+        async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
+            // Create a snapshot
+            const objectStorage = new MockStorage(matrix.snapshot());
+
+            // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
+            const componentRuntime = new MockComponentRuntime();
+            componentRuntime.local = true;
+
+            // Load the snapshot into a newly created 2nd SharedMatrix.
+            const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+            await matrix2.load(/*branchId: */ null as any, {
+                deltaConnection: new MockEmptyDeltaConnection(),
+                objectStorage
+            });
+
+            // Vet that the 2nd matrix is equivalent to the original.
+            expectSize(matrix2, matrix.rowCount, matrix.colCount);
+            assert.deepEqual(extract(matrix), extract(matrix2), 'Matrix must round-trip through snapshot/load.');
+
+            return matrix2;
         }
 
         async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
@@ -63,19 +54,13 @@ describe("Matrix", () => {
             assert.deepEqual(actual, expected, "Matrix must match expected.");
             assert.deepEqual(consumer.extract(), actual, "Matrix must notify IMatrixConsumers of all changes.");
 
-            // Ensure ops are ACKed prior to snapshot.  Otherwise, unACKed segments won't be included.
-            await sync();
+            // Ensure ops are ACKed prior to snapshot. Otherwise, unACKed segments won't be included.
             return snapshot(matrix);
         }
 
-        before(async () => {
-            host1 = new TestHost([], [SharedMatrix.getFactory()]);
-            host2 = host1.clone();
-        });
-
         beforeEach(async () => {
-            // Create a new matrix for each test case
-            matrix = await host1.createType(uuid(), SharedMatrixFactory.Type);
+            componentRuntime = new MockComponentRuntime();
+            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
 
             // Attach a new IMatrixConsumer
             consumer = new TestConsumer(matrix);
@@ -85,7 +70,6 @@ describe("Matrix", () => {
             // Paranoid check that ensures that the SharedMatrix loaded from the snapshot also
             // round-trips through snapshot/load.  (Also, may help detect snapshot/loaded bugs
             // in the event that the test case forgets to call/await `expect()`.)
-            await sync();
             await snapshot(await snapshot(matrix));
 
             // Ensure that IMatrixConsumer observed all changes to matrix.
@@ -282,14 +266,15 @@ describe("Matrix", () => {
         })
     });
 
-    describe("2 clients", () => {
+    describe("Connected with two clients", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
         let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let containterRuntimeFactory: MockContainerRuntimeFactory;
 
         const expect = async (expected?: readonly (readonly any[])[]) => {
-            await TestHost.sync(host1, host2);
+            containterRuntimeFactory.processAllMessages();
 
             const actual1 = extract(matrix1);
             const actual2 = extract(matrix2);
@@ -306,10 +291,28 @@ describe("Matrix", () => {
         };
 
         beforeEach(async () => {
-            matrix1 = await host1.createType(uuid(), SharedMatrixFactory.Type);
+            containterRuntimeFactory = new MockContainerRuntimeFactory();
+
+            // Create and connect the first SharedMatrix.
+            const componentRuntime1 = new MockComponentRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const services1: ISharedObjectServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1.connect(services1);
             consumer1 = new TestConsumer(matrix1);
 
-            matrix2 = await host2.getType(matrix1.id);
+            // Create and connect the second SharedMatrix.
+            const componentRuntime2 = new MockComponentRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const services2: ISharedObjectServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2.connect(services2);
             consumer2 = new TestConsumer(matrix2);
         });
 
@@ -600,6 +603,127 @@ describe("Matrix", () => {
                     ["B", "A", 2, 3]
                 ]);
             });
+        });
+    });
+
+    /**
+     * TODO: Enable these tests when reconnection logic is added to SharedMatrix.
+     */
+    describe.skip("SharedMatrix reconnection", () => {
+        let matrix1: SharedMatrix;
+        let matrix2: SharedMatrix;
+        let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+        let containerRuntime2: MockContainerRuntimeForReconnection;
+
+        const expect = async (expected?: readonly (readonly any[])[]) => {
+            containerRuntimeFactory.processAllMessages();
+
+            const actual1 = extract(matrix1);
+            const actual2 = extract(matrix2);
+
+            assert.deepEqual(actual1, actual2);
+
+            if (expected !== undefined) {
+                assert.deepEqual(actual1, expected);
+            }
+
+            for (const consumer of [consumer1, consumer2]) {
+                assert.deepEqual(consumer.extract(), actual1, "Matrix must notify IMatrixConsumers of all changes.");
+            }
+        };
+
+        beforeEach(async () => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+            // Create and connect the first SharedMatrix.
+            const componentRuntime1 = new MockComponentRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const services1: ISharedObjectServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1.connect(services1);
+            consumer1 = new TestConsumer(matrix1);
+
+            // Create and connect the second SharedMatrix.
+            const componentRuntime2 = new MockComponentRuntime();
+            containerRuntime2 = containerRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const services2: ISharedObjectServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2.connect(services2);
+            consumer2 = new TestConsumer(matrix2);
+        });
+
+        afterEach(async () => {
+            await expect();
+
+            matrix1.closeMatrix(consumer1);
+            matrix2.closeMatrix(consumer2);
+        });
+
+        it("can resend unacked ops on reconnection", async () => {
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertCols(0, 1);
+            matrix1.insertRows(0, 1);
+
+            // Disconnect and reconnect the first client.
+            containerRuntime1.connected = false;
+            containerRuntime1.connected = true;
+
+            // Verify that both the matrices have expected content.
+            await expect([
+                [undefined]
+            ]);
+
+            // Set a cell in the second shared matrix.
+            matrix2.setCell(0, 0, "2nd");
+
+            // Disconnect and reconnect the second client.
+            containerRuntime2.connected = false;
+            containerRuntime2.connected = true;
+
+            // Verify that both the matrices have expected content.
+            await expect([
+                ["2nd"],
+            ]);
+        });
+
+        it("can store ops in disconnected state and resend them on reconnection", async () => {
+            // Disconnect the first client.
+            containerRuntime1.connected = false;
+
+            // Insert a row and a column in the first shared matrix.
+            matrix1.insertCols(0, 1);
+            matrix1.insertRows(0, 1);
+
+            // Reconnect the first client.
+            containerRuntime1.connected = true;
+
+            // Verify that both the matrices have expected content.
+            await expect([
+                [undefined]
+            ]);
+
+            // Disconnect the second client.
+            containerRuntime2.connected = false;
+
+            // Set a cell in the second shared matrix.
+            matrix2.setCell(0, 0, "2nd");
+
+            // Reconnect the second client.
+            containerRuntime2.connected = true;
+
+            // Verify that both the matrices have expected content.
+            await expect([
+                ["2nd"],
+            ]);
         });
     });
 });

@@ -5,12 +5,23 @@
 
 import assert from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultComponent,
+    defaultComponentRuntimeRequestHandler,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails, IFluidModule, ILoader, IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    IContainerContext,
+    IFluidCodeDetails,
+    IFluidModule,
+    ILoader,
+    IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import {
+    componentRuntimeRequestHandler,
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -52,21 +63,49 @@ describe("loader/runtime compatibility", () => {
     const createRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
+        runtimeOptions: IContainerRuntimeOptions = { initialSummarizerDelayMs: 0 },
     ): IRuntimeFactory => {
-        return new ContainerRuntimeFactoryWithDefaultComponent(
-            type,
-            [[type, Promise.resolve(componentFactory as IComponentFactory)]],
-        );
+        return {
+            get IRuntimeFactory() { return this; },
+            instantiateRuntime: async (context: IContainerContext) => {
+                const runtime = await ContainerRuntime.load(
+                    context,
+                    [[type, Promise.resolve(componentFactory as IComponentFactory)]],
+                    [componentRuntimeRequestHandler, defaultComponentRuntimeRequestHandler("default")],
+                    runtimeOptions,
+                );
+                if (!runtime.existing) {
+                    const componentRuntime = await runtime.createComponent("default", type);
+                    await componentRuntime.request({ url: "/" });
+                    componentRuntime.attach();
+                }
+                return runtime;
+            },
+        };
     };
 
     const createOldRuntimeFactory = (
         type: string,
         componentFactory: IComponentFactory | old.IComponentFactory,
+        runtimeOptions: old.IContainerRuntimeOptions = {},
     ): old.IRuntimeFactory => {
-        return new old.ContainerRuntimeFactoryWithDefaultComponent(
-            type,
-            [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
-        );
+        return {
+            get IRuntimeFactory() { return this; },
+            instantiateRuntime: async (context: old.IContainerContext) => {
+                const runtime = await old.ContainerRuntime.load(
+                    context,
+                    [[type, Promise.resolve(componentFactory as old.IComponentFactory)]],
+                    [old.componentRuntimeRequestHandler, old.defaultComponentRuntimeRequestHandler("default")],
+                    runtimeOptions,
+                );
+                if (!runtime.existing) {
+                    const componentRuntime = await runtime.createComponent("default", type);
+                    await componentRuntime.request({ url: "/" });
+                    componentRuntime.attach();
+                }
+                return runtime;
+            },
+        };
     };
 
     async function createContainer(
@@ -104,6 +143,32 @@ describe("loader/runtime compatibility", () => {
             const test = ["fluid is", "pretty neat!"];
             this.component._root.set(test[0], test[1]);
             assert.strictEqual(await this.component._root.wait(test[0]), test[1]);
+        });
+
+        it("can summarize", async function() {
+            if (this.container.context.runtime.runtimeOptions.initialSummarizerDelayMs === undefined) {
+                // default initial delay will cause test to time out, so just skip
+                return this.skip();
+            }
+
+            // this will cause summarizer to summarize immediately
+            this.container.serviceConfiguration.summary.maxOps = 1;
+
+            let success = true;
+            this.container.on("error", () => success = false);
+            this.container.on("warning", () => success = false);
+            this.container.on("closed", (error) => success = success && error === undefined);
+
+            // wait for summary ack/nack
+            await new Promise((resolve, reject) => this.container.on("op", (op) => {
+                if (op.type === "summaryAck") {
+                    resolve();
+                } else if (op.type === "summaryNack") {
+                    reject("summaryNack");
+                }
+            }));
+
+            assert.strictEqual(success, true, "container error");
         });
 
         it("can load existing", async function() {

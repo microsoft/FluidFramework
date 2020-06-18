@@ -123,11 +123,16 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
     return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
 }
 
+/**
+ * This API should be used with pretty much all network calls (fetch, webSocket connection) in order
+ * to correctly handle expired tokens. It relies on callback fetching token, and be able to refetch
+ * token on failure. Only specific cases get retry call with refresh = true, all other / unknonw errors
+ * simply propagate to caller
+ */
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
         // If the error is 401 or 403 refresh the token and try once more.
-        // fetchIncorrectResponse indicates some error on the wire, retry once.
-        if (e.statusCode === 401 || e.statusCode === 403 || e.statusCode === fetchIncorrectResponse) {
+        if (e.errorType === ErrorType.authorizationError || e.statusCode === fetchIncorrectResponse) {
             return get(true);
         }
 

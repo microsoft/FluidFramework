@@ -548,6 +548,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public readonly summaryCollection: SummaryCollection;
     private stopped = false;
     private readonly stopDeferred = new Deferred<void>();
+    private _disposed: boolean = false;
 
     private readonly innerHandle: IComponentHandle<this>;
 
@@ -698,8 +699,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.runtime.deltaManager.lastSequenceNumber,
             initialAttempt,
             this.immediateSummary,
-            (description: string) =>
-                this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true)),
+            (description: string) => {
+                if (!this._disposed) {
+                    this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
+                }
+            },
         );
         this.runningSummarizer = runningSummarizer;
 
@@ -734,6 +738,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * properties.
      */
     public dispose() {
+        this._disposed = true;
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;

@@ -1,7 +1,11 @@
 # Breaking changes
 
 ## 0.21 Breaking Changes
+- [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
 - [createValueType removed from SharedMap and SharedDirectory](#createValueType-removed-from-SharedMap-and-SharedDirectory)
+
+### Removed `@fluidframework/local-test-utils`
+Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
 
 ### createValueType removed from SharedMap and SharedDirectory
 The `createValueType()` method on `SharedMap` and `SharedDirectory` was deprecated in 0.20, and is now removed in 0.21.  If `Counter` functionality is required, the `@fluidframework/counter` DDS can be used for counter functionality.

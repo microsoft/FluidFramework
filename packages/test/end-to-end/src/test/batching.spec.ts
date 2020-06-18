@@ -209,7 +209,8 @@ describe("Batching", () => {
         assert.equal(component2BatchMessages.length, 0, "Incorrect number of messages received on remote client");
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await deltaConnectionServer.webSocketServer.close();
         component1BatchMessages = [];
         component2BatchMessages = [];
     });

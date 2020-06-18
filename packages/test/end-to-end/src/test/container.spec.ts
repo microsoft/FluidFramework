@@ -261,4 +261,8 @@ describe("Container", () => {
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
+
+    afterEach(async () => {
+        await testDeltaConnectionServer.webSocketServer.close();
+    });
 });
