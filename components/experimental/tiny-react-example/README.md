@@ -1,8 +1,6 @@
-# @fluid-example/diceroller
+# @fluid-example/tiny-react
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and 
-persists the value in the root SharedDirectory. The Fluid Container is defined index.ts, the component is
-defined in main.tsx.
+This is an
 
 ## Getting Started
 

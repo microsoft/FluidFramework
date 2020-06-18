@@ -107,6 +107,7 @@ class InternalFluidReactComponentFactory implements IComponentFactory {
     }
 }
 
-export const createTinyFluidReactComponentFactory = (componentName: string, element: JSX.Element) => {
+export const createTinyFluidReactComponentFactory =
+(componentName: string, element: JSX.Element): IComponentFactory => {
     return new InternalFluidReactComponentFactory(componentName, element);
 };

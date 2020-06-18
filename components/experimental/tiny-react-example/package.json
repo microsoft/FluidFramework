@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/dice-roller-react-hooks",
+  "name": "@fluid-example/tiny-react-example",
   "version": "0.21.0",
-  "description": "Example of using fancy special react hooks.",
+  "description": "Example component build off of @fluidframework/tiny-react",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

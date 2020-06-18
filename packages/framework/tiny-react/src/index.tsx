@@ -10,3 +10,4 @@ export {
     generateUseFluidState,
 } from "./FluidContext";
 export { useFluidReducer, useFluidState } from "./hooks";
+export { IComponentFactory } from "@fluidframework/runtime-definitions";
