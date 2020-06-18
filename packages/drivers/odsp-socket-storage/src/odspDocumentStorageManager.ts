@@ -80,6 +80,12 @@ function convertOdspTree(tree: ITree) {
     return gitTree;
 }
 
+// Properties to associate with a snapshot fetch
+interface ObtainSnapshotPerfProps {
+    // Did the snapshot come from the cache or network?
+    method: "cache" | "network"
+}
+
 export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -335,30 +341,30 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
-                        let snapshotFetchMethod: string;
+                        let obtainSnapshotPerfProps: ObtainSnapshotPerfProps;
                         cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
                         if (cachedSnapshot === undefined) {
-                            snapshotFetchMethod = "network";
+                            obtainSnapshotPerfProps = { method: "network" };
                             cachedSnapshot = await snapshotP;
                         } else {
                             // This block isn't quite accurate, it is possible that the fetched snapshot (snapshotP)
                             // could have beat the cached snapshot lookup (cachedSnapshotP) and be incorrectly marked
                             // as a cache hit.
-                            snapshotFetchMethod = "cache";
+                            obtainSnapshotPerfProps = { method: "cache" };
                         }
-                        obtainSnapshotEvent.end({ method: snapshotFetchMethod });
+                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
-                        let snapshotFetchMethod: string;
+                        let obtainSnapshotPerfProps: ObtainSnapshotPerfProps;
                         cachedSnapshot = await cachedSnapshotP;
                         if (cachedSnapshot === undefined) {
-                            snapshotFetchMethod = "network";
+                            obtainSnapshotPerfProps = { method: "network" };
                             cachedSnapshot = await this.fetchSnapshot(options, refresh);
                         } else {
-                            snapshotFetchMethod = "cache";
+                            obtainSnapshotPerfProps = { method: "cache" };
                         }
-                        obtainSnapshotEvent.end({ method: snapshotFetchMethod });
+                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     }
                 }
 
