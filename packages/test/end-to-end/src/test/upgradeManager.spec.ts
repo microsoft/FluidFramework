@@ -4,15 +4,15 @@
  */
 
 import * as assert from "assert";
+import { initializeLocalContainer, LocalCodeLoader } from "@fluid-internal/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
-import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
-import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
+import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
 
 class TestComponent extends PrimedComponent {
     public static readonly type = "@fluid-example/test-component";
@@ -37,10 +37,20 @@ describe("UpgradeManager", () => {
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let documentServiceFactory: TestDocumentServiceFactory;
     let containerDeltaEventManager: DocumentDeltaEventManager;
 
     async function createContainer(factory: IComponentFactory): Promise<Container> {
-        const loader: ILoader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer);
+        const urlResolver = new TestResolver();
+        const codeLoader: ICodeLoader = new LocalCodeLoader([[codeDetails, factory]]);
+        const loader = new Loader(
+            urlResolver,
+            documentServiceFactory,
+            codeLoader,
+            {},
+            {},
+            new Map<string, IProxyLoaderFactory>());
+
         return initializeLocalContainer(id, loader, codeDetails);
     }
 
@@ -54,6 +64,7 @@ describe("UpgradeManager", () => {
 
     beforeEach(async () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
+        documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
         containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
     });
 
@@ -129,6 +140,8 @@ describe("UpgradeManager", () => {
         const quorumCount = (container: Container) =>
             Array.from(container.getQuorum().getMembers().values()).filter(
                 (c) => c.client.details.capabilities.interactive).length;
+
+        // we expect UpgradeManager not to initiate upgrade (within test timeout) unless there is <= 1 client connected
         const upgradeP = new Promise<void>((resolve, reject) => {
             upgradeManager.on("upgradeInProgress", () => quorumCount(containers[0]) === 1 ? resolve() : reject());
         });
@@ -136,7 +149,8 @@ describe("UpgradeManager", () => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
 
-        (containers[1] as any).serviceFactory.disconnectClient(containers[1].clientId, "test");
+        // disconnect one client, which should initiate upgrade
+        documentServiceFactory.disconnectClient(containers[1].clientId, "test");
 
         await upgradeP;
     });
