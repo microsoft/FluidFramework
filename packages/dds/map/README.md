@@ -1,7 +1,5 @@
 # @fluidframework/map
 
-The @fluidframework/map package contains
-
 ## SharedMap
 
 The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and
@@ -18,13 +16,9 @@ const myMap = SharedMap.create(this.runtime, id);
 
 ### Usage
 
-Unlike JavaScript Maps, a SharedMap's keys must be strings. The value must only be plain JS objects, `SharedObject`
-handles, or value types, including another distributed data structure. Thus, you can use nested SharedMaps and other
-distributed data structures to construct a Fluid data model.
+Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value must only be plain JS objects or handles (e.g. to another DDS or component).
 
-SharedMap keys are _last write wins_; this behavior works well with few infrequent writers and many readers. In cases
-with many frequent writers it's best to design your use of the map such that each writer writes to its own keys/maps, so
-they don't overwrite each other.
+In collaborative scenarios, the value is settled with a policy of _last write wins_.
 
 #### `.wait()`
 
@@ -33,7 +27,7 @@ when the key becomes available.
 
 ### Eventing
 
-`SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications.  You should register for these events and respond appropriately as the data is modified.  `valueChanged` will be emitted in response to a `set`, `delete`, or modification of a value type, and provide the key and previous value that was stored at that key.  `clear` will be emitted in response to a `clear`.
+`SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications.  You should register for these events and respond appropriately as the data is modified.  `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key.  `clear` will be emitted in response to a `clear`.
 
 ## SharedDirectory and IDirectory
 
