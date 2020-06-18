@@ -130,7 +130,6 @@ export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEnt
 export interface ISnapshotTreeBaseEntry {
     path: string;
     type: string;
-    mode: string;
 }
 
 export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {

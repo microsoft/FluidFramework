@@ -786,7 +786,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
 
             const baseEntry: ISnapshotTreeBaseEntry = {
-                mode: "100644",
                 path: encodeURIComponent(key),
                 type: getGitType(summaryObject),
             };
