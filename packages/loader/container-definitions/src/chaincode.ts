@@ -175,6 +175,12 @@ export interface IRuntime extends IDisposable {
     createSummary(): ISummaryTree;
 }
 
+export enum ContainerState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
 export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
@@ -215,8 +221,6 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
-
-    on(event: "containerBeingAttached" | "containerAttached", listener: () => void): this;
 
     raiseContainerWarning(warning: ContainerWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
