@@ -11,7 +11,7 @@ export interface ICollaborativeInputProps {
      */
     sharedString: SharedString;
     /**
-     * Whether spellCheck should be enabled.  Defaults to false.
+     * Whether spellCheck should be enabled.  Defaults to true.
      */
     spellCheck?: boolean;
     className?: string;
