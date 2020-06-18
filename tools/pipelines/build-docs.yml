@@ -14,25 +14,25 @@ variables:
 
 resources:
   pipelines:
-  - pipeline: common_definitions # Build - common-definitions
+  - pipeline: common_definitions
     source: Build - common-definitions
     trigger:
       branches:
       - release/*
       - master
-  - pipeline: common_utils # Build - common-utils
+  - pipeline: common_utils
     source: Build - common-utils
     trigger:
       branches:
       - release/*
       - master
-  - pipeline: client # Build - client packages
+  - pipeline: client
     source: Build - client packages
     trigger:
       branches:
       - release/*
       - master
-  - pipeline: server # server-routerlicious
+  - pipeline: server
     source: server-routerlicious
     trigger:
       branches:
@@ -42,81 +42,75 @@ resources:
 # no PR triggers
 pr: none
 
-stages:
-- stage: download
-  displayName: Download
-  jobs:
-    - job: download
-      displayName: Download artifacts
-      pool: Default
-      steps:
-      - checkout: none
-      - download: common_definitions
-        artifact: _api-extractor-temp
-      - download: common_utils
-        artifact: _api-extractor-temp
-      - download: client
-        artifact: _api-extractor-temp
-      - download: server
-        artifact: _api-extractor-temp
+jobs:
+  - job: build
+    displayName: Build
+    pool: Default
+    workspace:
+      clean: all
+    steps:
+    - checkout: self
+      clean: true
 
-- stage: build
-  displayName: Build
-  jobs:
-    - job: build
-      displayName: Build
-      pool: Default
-      steps:
-      - checkout: self
-        clean: true
+    # Download the api-extractor outputs
+    - download: common_definitions
+      artifact: _api-extractor-temp
+    - download: common_utils
+      artifact: _api-extractor-temp
+    - download: client
+      artifact: _api-extractor-temp
+    - download: server
+      artifact: _api-extractor-temp
 
-      - task: CopyFiles@2
-        displayName: 'Copy _api-extractor-temp'
-        enabled: true
-        inputs:
-          SourceFolder: $(Pipeline.Workspace)
-          Contents: '**/*.api.json'
-          TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-          OverWrite: false
-          flattenFolders: true
-          CleanTargetFolder: true
+    # Copy and merge the api-extractor outputs to a central location
+    - task: CopyFiles@2
+      displayName: 'Copy _api-extractor-temp'
+      enabled: true
+      inputs:
+        SourceFolder: $(Pipeline.Workspace)
+        Contents: '**/*.api.json'
+        TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
+        OverWrite: false
+        flattenFolders: true
+        CleanTargetFolder: true
 
-      - task: npmAuthenticate@0
-        displayName: 'npm Authenticate root .npmrc'
-        inputs:
-          workingFile: .npmrc
+    - task: npmAuthenticate@0
+      displayName: 'npm Authenticate root .npmrc'
+      inputs:
+        workingFile: .npmrc
 
-      - task: Npm@1
-        displayName: npm ci
-        inputs:
-          command: 'custom'
-          customCommand: 'ci --ignore-scripts'
-          customRegistry: 'useFeed'
-          customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+    - task: Npm@1
+      displayName: npm ci
+      inputs:
+        command: 'custom'
+        customCommand: 'ci --ignore-scripts'
+        customRegistry: 'useFeed'
+        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-      - task: Docker@2
-        displayName: 'Build docs site via docker image'
-        inputs:
-          repository: $(containerName)
-          command: build
-          dockerFile: docs/Dockerfile
-          buildContext: $(Build.SourcesDirectory)
-          arguments: '--target $(DOCKERTARGET) --build-arg DOCSGITPASSWORD=$(DOCSGITPASSWORD) --build-arg VUEPRESS_BASE=$(VUEPRESS_BASE) --build-arg THIS_VERSION=$(THIS_VERSION) --build-arg MASTER_BRANCH_VERSION=$(MASTER_BRANCH_VERSION) --build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg N1_VERSION=$(N1_VERSION)'
-          tags: |
-            $(Build.BuildId)
+    # Build the docs site
+    - task: Docker@2
+      displayName: 'Build docs site via docker image'
+      inputs:
+        repository: $(containerName)
+        command: build
+        dockerFile: docs/Dockerfile
+        buildContext: $(Build.SourcesDirectory)
+        arguments: '--target $(DOCKERTARGET) --build-arg DOCSGITPASSWORD=$(DOCSGITPASSWORD) --build-arg VUEPRESS_BASE=$(VUEPRESS_BASE) --build-arg THIS_VERSION=$(THIS_VERSION) --build-arg MASTER_BRANCH_VERSION=$(MASTER_BRANCH_VERSION) --build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg N1_VERSION=$(N1_VERSION)'
+        tags: |
+          $(Build.BuildId)
 
-      - task: Docker@0
-        displayName: 'Copy built docs from container'
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'run --rm -v $(System.DefaultWorkingDirectory)/fluid-docs:/usr/src/fluid-docs -t $(containerName):$(Build.BuildId) cp -R docs/dist /usr/src/fluid-docs'
-          azureContainerRegistry: Fluid Azure Container Registry
+    - task: Docker@0
+      displayName: 'Copy built docs from container'
+      inputs:
+        action: 'Run a Docker command'
+        customCommand: 'run --rm -v $(System.DefaultWorkingDirectory)/fluid-docs:/usr/src/fluid-docs -t $(containerName):$(Build.BuildId) cp -R docs/dist /usr/src/fluid-docs'
 
-      - publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
-        artifact: fluid-docs
+    # Publish the static site as a pipeline artifact
+    - publish: $(System.DefaultWorkingDirectory)/fluid-docs/dist
+      artifact: fluid-docs
 
-      - task: Docker@0
-        displayName: 'Remove docker image'
-        inputs:
-          action: 'Run a Docker command'
-          customCommand: 'rmi $(containerName):$(Build.BuildId)'
+    - task: Docker@0
+      displayName: 'Remove docker image'
+      inputs:
+        action: 'Run a Docker command'
+        customCommand: 'rmi $(containerName):$(Build.BuildId)'
