@@ -42,3 +42,13 @@ The `Loader` can be also be retrieved via `.getLoader()`.
 ```typescript
 const loader = await baseHost.getLoader();
 ```
+
+## initializeContainerCode()
+
+If the full facilities of a `BaseHost` aren't needed, the helper `initializeContainerCode()` can be used directly to initialize a container with code.
+
+```typescript
+await initializeContainerCode(container, codeDetails);
+```
+
+After this promise resolves, the container will be initialized, though the context change may not have occurred yet.
