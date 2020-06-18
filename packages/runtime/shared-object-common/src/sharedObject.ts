@@ -107,15 +107,12 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.runtime.emit("error", error);
         });
 
-        // Only listen to these events if not attached.
+        // Only listen to these events if local.
         if (!this.isAttached()) {
-            this.runtime.on("containerBeingAttached", () => {
-                this.containerBeingAttached = true;
+            this.runtime.on("collaborating", () => {
+                // Calling this will let the dds to do any custom processing based on attached
+                // like starting generating ops.
                 this.didAttach();
-            });
-
-            this.runtime.on("containerAttached", () => {
-                this.containerBeingAttached = false;
             });
         }
     }

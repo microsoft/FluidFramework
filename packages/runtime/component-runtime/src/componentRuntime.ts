@@ -569,6 +569,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             }
         }
 
+        // Fire this event telling dds that we are going live and they can do any
+        // custom processing based on that.
+        this.emit("collaborating");
+
         return entries;
     }
 
@@ -711,6 +715,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.componentContext.on("leader", () => {
             this.emit("leader");
         });

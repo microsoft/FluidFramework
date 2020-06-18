@@ -25,6 +25,7 @@ import {
     CriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
+    ContainerState,
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,
@@ -222,7 +223,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    private attached = false;
+    private attachmentState = ContainerState.Detached;
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -460,8 +461,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
-        return this.attached;
+    public isLocal(): boolean {
+        return this.attachmentState === ContainerState.Detached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -471,6 +472,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Inbound queue for ops should be empty
         assert(!this.deltaManager.inbound.length);
+
+        // Set the state as attaching as we are starting the process of attaching container.
+        this.attachmentState = ContainerState.Attaching;
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -486,10 +490,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         try {
-            // This will tell the container runtime/components/dds that they should start generating ops from this
-            // point on because all upto this point was included in the app summary and from now on we need to
-            // generate ops for changes so that they can be sent over wire once we are connected.
-            this.emit("containerBeingAttached");
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
             // Actually go and create the resolved document
@@ -516,7 +516,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-
+            this.attachmentState = ContainerState.Attached;
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -876,7 +876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.storageService = await this.getDocumentStorageService();
-        this.attached = true;
+        this.attachmentState = ContainerState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined

@@ -716,6 +716,7 @@ export class LocalComponentContext extends ComponentContext {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entries = this.componentRuntime!.getAttachSnapshot();
+
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
