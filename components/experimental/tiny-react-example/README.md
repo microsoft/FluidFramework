@@ -1,6 +1,7 @@
-# @fluid-example/tiny-react
+# @fluid-example/tiny-react-example
 
-This is an
+This is an example that uses `@fluidframework/tiny-react`. It has three React functions that use the `useFluidState`
+and `useFluidReducer` hooks to modify Fluid state.
 
 ## Getting Started
 
