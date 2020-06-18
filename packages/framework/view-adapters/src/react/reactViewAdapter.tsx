@@ -8,6 +8,9 @@ import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-i
 import React from "react";
 
 export interface IReactViewAdapterProps {
+    /**
+     * The view to adapt into a React component.
+     */
     view: IComponent;
 }
 
