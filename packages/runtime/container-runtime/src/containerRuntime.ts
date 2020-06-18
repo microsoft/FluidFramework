@@ -524,10 +524,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
 
     public isAttached(): boolean {
         if (this.context.isAttached !== undefined) {
-            return (this.context.isAttached() || this.containerBeingAttached);
+            return this.context.isAttached();
         }
         // 0.18 back-compat islocal
-        return (!((this.context as any).isLocal() as boolean) || this.containerBeingAttached);
+        return !((this.context as any).isLocal() as boolean);
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -594,9 +594,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
-    // Required to force ops generation if signalled by container. Also needed to pass to lower layers
-    // as new components/dds could be created which needs to take this property from container runtime.
-    private containerBeingAttached: boolean = false;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -634,20 +631,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
-            });
-        }
-
-        // Only listen to these events if not attached.
-        if (this.context.on !== undefined && !this.isAttached()) {
-            this.context.on("containerBeingAttached", () => {
-                this.containerBeingAttached = true;
-                this.emit("containerBeingAttached");
-            });
-
-            // Disable force ops generation on container attached event.
-            this.context.on("containerAttached", () => {
-                this.containerBeingAttached = false;
-                this.emit("containerAttached");
             });
         }
 
@@ -1024,7 +1007,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.registerComponent(cr),
-            this.containerBeingAttached,
             props);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1050,7 +1032,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.lastSequenceNumber),
             (cr: IComponentRuntimeChannel) => this.registerComponent(cr),
-            this.containerBeingAttached,
             undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
@@ -1270,7 +1251,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // If the container is detached, we don't need to send OP or add to pending attach because
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
-        if (this.containerBeingAttached || this.isAttached()) {
+        if (this.isAttached()) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);

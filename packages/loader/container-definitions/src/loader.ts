@@ -71,7 +71,7 @@ export interface ICodeWhiteList {
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected" | "contextChanged", listener: (clientId: string) => void);
-    (event: "disconnected" | "joining" | "containerBeingAttached" | "containerAttached", listener: () => void);
+    (event: "disconnected" | "joining", listener: () => void);
     (event: "closed", listener: (error?: CriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);

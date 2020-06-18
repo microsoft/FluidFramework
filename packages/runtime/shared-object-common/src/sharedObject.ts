@@ -55,8 +55,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      */
     private services: ISharedObjectServices | undefined;
 
-    public containerBeingAttached: boolean = false;
-
     /**
      * True if register() has been called.
      */

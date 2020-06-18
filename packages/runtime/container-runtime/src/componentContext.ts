@@ -186,7 +186,6 @@ export abstract class ComponentContext extends EventEmitter implements
         public readonly summaryTracker: SummaryTracker,
         private _isRegistered: boolean,
         register: (componentRuntime: IComponentRuntimeChannel) => void,
-        public readonly containerBeingAttached: boolean,
         protected pkg?: readonly string[],
     ) {
         super();
@@ -201,21 +200,6 @@ export abstract class ComponentContext extends EventEmitter implements
             register(componentRuntime);
             this._isRegistered = true;
         };
-
-        this.attachListeners();
-    }
-
-    private attachListeners() {
-        // Only listen to these events if not attached.
-        if (!this.isAttached()) {
-            this.containerRuntime.on("containerBeingAttached", () => {
-                this.emit("containerBeingAttached");
-            });
-
-            this.containerRuntime.on("containerAttached", () => {
-                this.emit("containerAttached");
-            });
-        }
     }
 
     public dispose(): void {
@@ -619,7 +603,6 @@ export class RemotedComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
-        containerBeingAttached: boolean,
         pkg?: string[],
     ) {
         super(
@@ -633,7 +616,6 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             },
-            containerBeingAttached,
             pkg);
     }
 
@@ -699,13 +681,12 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntimeChannel) => void,
-        containerBeingAttached: boolean,
         /**
          * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
          */
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, containerBeingAttached, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

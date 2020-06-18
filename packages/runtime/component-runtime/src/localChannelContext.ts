@@ -34,7 +34,6 @@ export class LocalChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any, localOpMetadata: unknown) => number,
         dirtyFn: (address: string) => void,
-        private readonly containerBeingAttached: boolean,
     ) {
         const factory = registry.get(type);
         if (factory === undefined) {
@@ -42,7 +41,6 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         this.channel = factory.create(runtime, id);
-        this.channel.containerBeingAttached = this.containerBeingAttached;
 
         this.dirtyFn = () => { dirtyFn(id); };
     }

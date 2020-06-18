@@ -461,8 +461,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.removeAllListeners();
     }
 
-    public isLocal(): boolean {
-        return this.attachmentState === ContainerState.Detached;
+    public isAttached(): boolean {
+        return this.attachmentState !== ContainerState.Detached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -520,10 +520,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
-            this.attached = true;
-            // Emit container attached event as there might be some need to do something based on this actions
-            // like stop force generation of ops.
-            this.emit("containerAttached");
 
             // Propagate current connection state through the system.
             const connected = this.connectionState === ConnectionState.Connected;

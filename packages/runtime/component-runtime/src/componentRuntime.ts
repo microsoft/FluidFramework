@@ -89,7 +89,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             context.getQuorum(),
             context.getAudience(),
             context.snapshotFn,
-            context.containerBeingAttached ?? false,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -169,7 +168,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
-        private containerBeingAttached: boolean,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
@@ -282,8 +280,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             this.componentContext,
             this.componentContext.storage,
             (t, content, localOpMetadata) => this.submit(t, content, localOpMetadata),
-            (address: string) => this.setChannelDirty(address),
-            this.containerBeingAttached);
+            (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -722,21 +719,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
         });
-
-        // Only listen to these events if not attached.
-        if (!this.isAttached) {
-            this.componentContext.on("containerBeingAttached", () => {
-                this.containerBeingAttached = true;
-                this.attachGraphInternal();
-                this.emit("containerBeingAttached");
-            });
-
-            // Disable force ops generation on container attached event.
-            this.componentContext.on("containerAttached", () => {
-                this.containerBeingAttached = false;
-                this.emit("containerAttached");
-            });
-        }
     }
 
     private verifyNotClosed() {

@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IComponent,
@@ -44,7 +43,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
+export class ContainerContext implements IContainerContext {
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,
@@ -187,19 +186,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ) {
         super();
         this.logger = container.subLogger;
-        this.attachListeners();
-    }
-
-    private attachListeners() {
-        // Only listen to these events if not attached.
-        if (!this.isAttached()) {
-            this.container.on("containerBeingAttached", () => {
-                this.emit("containerBeingAttached");
-            });
-            this.container.on("containerAttached", () => {
-                this.emit("containerAttached");
-            });
-        }
     }
 
     public dispose(error?: Error): void {

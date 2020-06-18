@@ -28,8 +28,6 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 
     readonly attributes: IChannelAttributes;
 
-    containerBeingAttached: boolean;
-
     /**
      * Generates snapshot of the shared object.
      */
