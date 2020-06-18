@@ -1,7 +1,10 @@
 import React from "react";
 
-import { createTinyFluidReactComponentFactory } from "./factory";
-import { useFluidReducer, useFluidState } from "./hooks";
+import {
+    createTinyFluidReactComponentFactory,
+    useFluidState,
+    useFluidReducer,
+} from "@fluidframework/tiny-react";
 
 export function HelloWorld() {
     const [value, setValue] = useFluidState("hw-key", "hello");
