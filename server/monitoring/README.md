@@ -37,7 +37,7 @@ npm run docker:start
 
 Pushing to registry
 ```
-docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t prague.azurecr.io/monitoring .
+docker build -t prague.azurecr.io/monitoring .
 docker push prague.azurecr.io/monitoring
 ```
 

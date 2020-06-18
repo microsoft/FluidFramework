@@ -1,6 +1,5 @@
 # gitrest
 
-[![GitRest Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/8/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=8)
 
 Provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.
 
@@ -8,19 +7,17 @@ Provides a REST API to a GitHub repository. It's API is based off of GitHub's RE
 
 Because nodegit is built as a native module it's simplest to build and run historian from within a Docker container.
 
-To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../routerlicious/README.md#authorizing-to-private-npm-feed)
-
 We reuse our production container for this purpose. In development mode this does a double build (once in the
 container build and a second time when mounting your source directory). Future work may want to create a development
 specific container.
 
 You can build the container by running.
 
-`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t gitrest .`
+`docker build -t gitrest .`
 
 And then mount it for development by running.
 
-`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 -e NPM_TOKEN=${NPM_TOKEN} gitrest /bin/bash`
+`docker run -it -v "$(pwd):/home/node/server" -p 3000:3000 gitrest /bin/bash`
 
 If you want to debug and test
 
