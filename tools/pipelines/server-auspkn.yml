@@ -14,6 +14,7 @@ trigger:
     - service/admin
     - tools/pipelines/server-admin.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
   
 pr:
   branches:
@@ -24,7 +25,7 @@ pr:
     - service/admin
     - tools/pipelines/server-admin.yml
     - tools/pipelines/templates/build-docker-service.yml
-  
+
 extends:
   template: templates/build-docker-service.yml
   parameters:
