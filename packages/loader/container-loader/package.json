@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-loader",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "description": "Fluid container loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -53,10 +53,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.20.1",
-    "@fluidframework/driver-definitions": "^0.20.1",
-    "@fluidframework/driver-utils": "^0.20.1",
+    "@fluidframework/component-core-interfaces": "^0.20.2",
+    "@fluidframework/container-definitions": "^0.20.2",
+    "@fluidframework/driver-definitions": "^0.20.2",
+    "@fluidframework/driver-utils": "^0.20.2",
     "@fluidframework/protocol-base": "^0.1007.1",
     "@fluidframework/protocol-definitions": "^0.1007.1",
     "@types/double-ended-queue": "^2.1.0",
@@ -68,7 +68,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@fluid-internal/test-loader-utils": "^0.20.1",
+    "@fluid-internal/test-loader-utils": "^0.20.2",
     "@fluidframework/build-common": "^0.17.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@microsoft/api-extractor": "^7.7.2",

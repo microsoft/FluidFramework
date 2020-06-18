@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/local-web-host",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -25,15 +25,15 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.1",
-    "@fluidframework/base-host": "^0.20.1",
-    "@fluidframework/component-core-interfaces": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.20.1",
-    "@fluidframework/container-loader": "^0.20.1",
-    "@fluidframework/local-driver": "^0.20.1",
-    "@fluidframework/runtime-definitions": "^0.20.1",
+    "@fluidframework/aqueduct": "^0.20.2",
+    "@fluidframework/base-host": "^0.20.2",
+    "@fluidframework/component-core-interfaces": "^0.20.2",
+    "@fluidframework/container-definitions": "^0.20.2",
+    "@fluidframework/container-loader": "^0.20.2",
+    "@fluidframework/local-driver": "^0.20.2",
+    "@fluidframework/runtime-definitions": "^0.20.2",
     "@fluidframework/server-local-server": "^0.1007.1",
-    "@fluidframework/view-adapters": "^0.20.1",
+    "@fluidframework/view-adapters": "^0.20.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
