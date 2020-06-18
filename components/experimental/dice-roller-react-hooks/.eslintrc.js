@@ -7,5 +7,7 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
-    "rules": {}
+    "rules": {
+        "@typescript-eslint/strict-boolean-expressions": "off",
+    }
 }

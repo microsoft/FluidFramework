@@ -1,6 +1,6 @@
-import { fluidReactComponentFactory } from "./factory";
-
 import React from "react";
+
+import { fluidReactComponentFactory } from "./factory";
 import { useFluidReducer, useFluidState } from "./useFluidMap";
 
 export function HelloWorld() {
@@ -12,7 +12,7 @@ export function HelloWorld() {
 export function DiceRoller() {
     const [value, setValue] = useFluidState("dice-key", 1);
     const getDiceChar = (): string => {
-        return String.fromCodePoint(0x267F + value)
+        return String.fromCodePoint(0x267F + value);
     };
     const roll = () => {
         setValue(Math.floor(Math.random() * 6) + 1);
@@ -29,9 +29,9 @@ const initialState = { counter: 0 };
 
 function reducer(state: { counter: number }, action: { type: string }) {
     switch (action.type) {
-        case 'increment':
+        case "increment":
             return { counter: state.counter + 1 };
-        case 'decrement':
+        case "decrement":
             return { counter: state.counter - 1 };
         default:
             throw new Error();
@@ -43,8 +43,8 @@ export function Counter(props: { id: string }) {
     return (
         <>
             Count: {state.counter}
-            <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
-            <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+            <button onClick={() => dispatch({ type: "decrement" })}>-</button>
+            <button onClick={() => dispatch({ type: "increment" })}>+</button>
         </>
     );
 }
