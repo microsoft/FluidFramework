@@ -116,33 +116,27 @@ describe("UpgradeManager", () => {
 
     it("2 clients low priority is delayed", async () => {
         const clients = 2;
-        let expected = false;
         const containersP = Array(clients).fill(undefined).map(async () => createContainer(TestComponent.getFactory()));
-        const components = await Promise.all(containersP.map(
+
+        await Promise.all(containersP.map(
             async (containerP) => (containerP).then(
                 async (container) => getComponent<TestComponent>("default", container))));
 
         const containers = await Promise.all(containersP);
 
-        containerDeltaEventManager.registerDocuments(...components.map((c) => c._runtime));
-        await containerDeltaEventManager.process();
-
         const upgradeManager = new UpgradeManager((containers[0] as any).context.runtime);
 
+        const quorumCount = (container: Container) =>
+            Array.from(container.getQuorum().getMembers().values()).filter(
+                (c) => c.client.details.capabilities.interactive).length;
         const upgradeP = new Promise<void>((resolve, reject) => {
-            upgradeManager.on("upgradeInProgress", () => expected ? resolve() : reject());
+            upgradeManager.on("upgradeInProgress", () => quorumCount(containers[0]) === 1 ? resolve() : reject());
         });
 
-        await containerDeltaEventManager.process();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         upgradeManager.upgrade(codeDetails);
-        await containerDeltaEventManager.process();
 
-        (containers[1] as any).submitMessage("leave", containers[1].clientId);
-
-        expected = true;
-        await containerDeltaEventManager.process();
-        containers[1].close();
+        (containers[1] as any).serviceFactory.disconnectClient(containers[1].clientId, "test");
 
         await upgradeP;
     });
