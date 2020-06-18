@@ -19,7 +19,7 @@ import {
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@fluidframework/shared-object-base";
 import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup } from "@fluidframework/merge-tree";
 import { debug } from "./debug";
 import { MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
@@ -38,7 +38,7 @@ interface ISetOp<T> {
     type: MatrixOp.set,
     row: number,
     col: number,
-    value: T | undefined,
+    value: T,
 }
 
 interface ISetOpMetadata {
@@ -218,7 +218,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
         //
         // Note that the MergeTree bumps it's internal localSeq even when local, therefore we must do this for
         // the 'oppositeVector' as well.
-        oppositeVector.getCollabWindow().localSeq++;
+        const oppositeWindow = oppositeVector.getCollabWindow();
+
+        oppositeWindow.localSeq = Math.max(
+            oppositeWindow.localSeq,
+            currentVector.getCollabWindow().localSeq);
 
         // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
         // Do not queue a message or track the pending op, as there will never be an ACK, etc.
@@ -334,7 +338,40 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        // TODO: Resend pending ops on reconnect
+        switch (content.target) {
+            case SnapshotPath.cols:
+                this.submitColMessage(this.cols.regeneratePendingOp(
+                    content as IMergeTreeOp,
+                    localOpMetadata as SegmentGroup | SegmentGroup[]));
+                break;
+            case SnapshotPath.rows:
+                this.submitRowMessage(this.rows.regeneratePendingOp(
+                    content as IMergeTreeOp,
+                    localOpMetadata as SegmentGroup | SegmentGroup[]));
+                break;
+            default: {
+                assert(content.type === MatrixOp.set);
+
+                const setOp = content as ISetOp<T>;
+                const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
+
+                if (this.isCurrentlyPendingLocalWrite(rowHandle, colHandle, localSeq)) {
+                    const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
+                    const col = this.cols.getPositionForResubmit(colHandle, localSeq);
+
+                    if (row >= 0 && col >= 0) {
+                        this.setCellCore(
+                            row,
+                            col,
+                            setOp.value,
+                            rowHandle,
+                            colHandle,
+                        );
+                    }
+                }
+                break;
+            }
+        }
     }
 
     protected onDisconnect() {
@@ -374,20 +411,11 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
                 if (local) {
                     // We are receiving the ACK for a local pending set operation.
-
                     const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
-
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const actualLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
-
-                    // Note while we're awaiting the local set, it's possible for the row/col to be locally
-                    // removed and the row/col handles recycled.  If this happens, the actualCliSeq will be
-                    // 'undefined' or > 'cliSeq'.
-                    assert(!(actualLocalSeq < localSeq));
 
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
-                    if (actualLocalSeq === localSeq) {
+                    if (this.isCurrentlyPendingLocalWrite(rowHandle, colHandle, localSeq)) {
                         this.pending.setCell(rowHandle, colHandle, undefined);
                     }
                 } else {
@@ -462,6 +490,20 @@ export class SharedMatrix<T extends Serializable = Serializable>
             }
         }
     };
+
+    private isCurrentlyPendingLocalWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const actualLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
+
+        // Note while we're awaiting the local set, it's possible for the row/col to be locally
+        // removed and the row/col handles recycled.  If this happens, the actualCliSeq will be
+        // 'undefined' or > 'cliSeq'.
+        assert(!(actualLocalSeq < localSeq));
+
+        // If this is the most recent write to the cell by the local client, remove our
+        // entry from 'pendingCliSeqs' to resume allowing remote writes.
+        return actualLocalSeq === localSeq;
+    }
 
     public toString() {
         let s = `client:${this.runtime.clientId}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;

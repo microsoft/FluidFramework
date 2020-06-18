@@ -681,33 +681,26 @@ export class Client {
             position taking into account local segments that were modified,
             after the current segment.
 
-            TODO: Consider embeding this infomation into the tree for
-            more efficent look up of pending segment positions.
+            TODO: Consider embedding this information into the tree for
+            more efficient look up of pending segment positions.
         */
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            if (seg !== segment) {
-                // segment isn't local, so count it
-                if (seg.localSeq === undefined && seg.localRemovedSeq === undefined) {
-                    if (seg.removedSeq === undefined) {
-                        segmentPosition += seg.cachedLength;
-                        return true;
-                    }
-                }
-                // segment is remove locally before this op, so skip it
-                if (seg.localRemovedSeq !== undefined) {
-                    if (seg.localRemovedSeq <= localSeq) {
-                        return true;
-                    }
-                }
-                // segment is inserted locally before this op, so count it
-                if (seg.localSeq <= localSeq) {
-                    segmentPosition += seg.cachedLength;
-                    return true;
-                }
-                return true;
+            // If we've found the desired segment, halt the walk.
+            if (seg === segment) {
+                return false;
             }
-            return false;
+
+            // Otherwise, count the segment if it has been locally inserted and has not been removed
+            // wrt. 'localSeq'.
+            if ((seg.localSeq === undefined || seg.localSeq <= localSeq)                // Is inserted
+                && (seg.removedSeq === undefined || seg.localRemovedSeq > localSeq)     // Not removed
+            ) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
         });
+
         return segmentPosition;
     }
 

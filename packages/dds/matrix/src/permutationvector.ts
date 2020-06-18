@@ -138,6 +138,18 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset;
     }
 
+    public getPositionForResubmit(handle: Handle, localSeq: number) {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq);
+
+        const currentPosition = this.handles.indexOf(handle);
+        if (currentPosition < 0) {
+            return -1;
+        }
+
+        const { segment, offset } = this.getContainingSegment(currentPosition);
+        return this.findReconnectionPostition(segment, localSeq) + offset;
+    }
+
     // Constructs an ITreeEntry for the cell data.
     public snapshot(runtime: IComponentRuntime, handle: IComponentHandle): ITree {
         return {
