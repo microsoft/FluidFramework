@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# server-admin pipeline
+# server-gitrest pipeline
 
 name: $(Build.BuildId)
 
@@ -11,8 +11,8 @@ trigger:
     - master
   paths:
     include:
-    - service/admin
-    - tools/pipelines/server-admin.yml
+    - service/gitrest
+    - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
   
@@ -22,13 +22,14 @@ pr:
     - master
   paths:
     include:
-    - service/admin
-    - tools/pipelines/server-admin.yml
+    - service/gitrest
+    - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
-  
+
 extends:
   template: templates/build-docker-service.yml
   parameters:
-    buildDirectory: server/admin
-    containerName: admin
-    test: false
+    buildDirectory: server/gitrest
+    containerName: gitrest
+    test: true
+

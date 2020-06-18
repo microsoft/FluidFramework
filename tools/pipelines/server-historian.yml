@@ -11,24 +11,25 @@ trigger:
     - master
   paths:
     include:
-    - service/admin
-    - tools/pipelines/server-admin.yml
+    - service/historian
+    - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-  
+
 pr:
   branches:
     include:
     - master
   paths:
     include:
-    - service/admin
-    - tools/pipelines/server-admin.yml
+    - service/historian
+    - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
-  
+
 extends:
   template: templates/build-docker-service.yml
   parameters:
-    buildDirectory: server/admin
-    containerName: admin
-    test: false
+    buildDirectory: server/historian
+    containerName: historian
+    test: true
+
