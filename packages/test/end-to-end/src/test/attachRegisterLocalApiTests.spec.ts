@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IRequest } from "@fluidframework/component-core-interfaces";
+import { IRequest, IComponentLoadable } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -19,20 +19,16 @@ import {
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { TestRootComponent } from "@fluidframework/local-test-utils";
 
 [true, false].forEach((isLocal) => {
     describe(`Attach/Register/Local Api Tests For ${isLocal ? "Local" : "Live"} Container`, () => {
         const documentId = "detachedContainerTest";
-        const pkg1: IFluidCodeDetails = {
+        const codeDetails: IFluidCodeDetails = {
             package: "detachedContainerTestPackage1",
             config: {},
         };
-        const pkg2: IFluidCodeDetails = {
-            package: "detachedContainerTestPackage2",
-            config: {},
-        };
+        const mapId1 = "mapId1";
+        const mapId2 = "mapId2";
 
         let request: IRequest;
         let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -41,11 +37,11 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         const createTestStatementForLocalLive = (name: string, local: boolean) =>
             `${name} should be ${local ? "local" : "live"}`;
 
-        async function createDetachedContainerAndGetRootComponent<T>(pkg: IFluidCodeDetails) {
-            const container = await loader.createDetachedContainer(pkg);
+        async function createDetachedContainerAndGetRootComponent() {
+            const container = await loader.createDetachedContainer(codeDetails);
             // Get the root component from the detached container.
             const response = await container.request({ url: "/" });
-            const defaultComponent = response.value as T;
+            const defaultComponent = response.value;
             return {
                 container,
                 defaultComponent,
@@ -65,24 +61,12 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             };
         };
 
-        const createPeerComponentForTestRootComponent = async (
-            component: TestRootComponent,
-        ) => {
-            const peerComponentRuntimeChannel = await component.createComponentWithRealizationFn(["default"]);
-            const peerComponent =
-                (await peerComponentRuntimeChannel.request({ url: "/" })).value as TestRootComponent;
-            return peerComponent;
-        };
-
         function createTestLoader(urlResolver: IUrlResolver): Loader {
-            const factory: TestFluidComponentFactory = new TestFluidComponentFactory([]);
-            const testComponentFactory = new PrimedComponentFactory(
-                TestRootComponent.type,
-                TestRootComponent,
-                [SharedMap.getFactory()],
-                {},
-            );
-            const codeLoader = new LocalCodeLoader([[pkg1, factory], [pkg2, testComponentFactory]]);
+            const factory: TestFluidComponentFactory = new TestFluidComponentFactory([
+                [mapId1, SharedMap.getFactory()],
+                [mapId2, SharedMap.getFactory()],
+            ]);
+            const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
             const documentServiceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             return new Loader(
                 urlResolver,
@@ -102,7 +86,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Attaching component should not attach unregistered DDS", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -135,7 +119,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Attaching component should attach registered DDS", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -168,7 +152,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Attaching DDS should attach component", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -198,7 +182,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Sticking handle in attached dds should attach the DDS", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -233,7 +217,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Registering DDS in attached component should attach it", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -261,7 +245,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
 
         it("Registering DDS in detached component should not attach it", async () => {
             const { container, defaultComponent } =
-                await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                await createDetachedContainerAndGetRootComponent();
             if (!isLocal) {
                 await container.attach(request);
             }
@@ -288,7 +272,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         it("Stick handle of 2 dds in each other and then attaching component should attach both DDS",
             async () => {
                 const { container, defaultComponent } =
-                    await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                    await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
@@ -333,7 +317,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
         it("Stick handle of 2 dds in each other and then attaching 1 DDS should attach other DDS",
             async () => {
                 const { container, defaultComponent } =
-                    await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                    await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
@@ -378,7 +362,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             "attach other DDS and component with correct recursion",
             async () => {
                 const { container, defaultComponent } =
-                    await createDetachedContainerAndGetRootComponent<ITestFluidComponent>(pkg1);
+                    await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
@@ -427,26 +411,28 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             "attach other components and dds with correct recursion",
             async () => {
                 const { container, defaultComponent } =
-                    await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
+                    await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
 
                 // Create another component which returns the runtime channel.
-                const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-                assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+                const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component2 = peerComponent1.peerComponent as ITestFluidComponent & IComponentLoadable;
+                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
 
                 // Create another component which returns the runtime channel.
-                const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-                assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+                const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component3 = peerComponent2.peerComponent as ITestFluidComponent & IComponentLoadable;
+                assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
 
                 // Create first channel from component2
-                const channel2 = component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                const channel2 = await component2.getSharedObject<SharedMap>(mapId1);
                 assert.strictEqual(channel2.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
                 // Create second channel from component 3
-                const channel3 = component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                const channel3 = await component3.getSharedObject<SharedMap>(mapId2);
                 assert.strictEqual(channel3.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
@@ -476,47 +462,47 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             "1 handle should attach entire graph",
             async () => {
                 const { container, defaultComponent } =
-                    await createDetachedContainerAndGetRootComponent<TestRootComponent>(pkg2);
+                    await createDetachedContainerAndGetRootComponent();
                 if (!isLocal) {
                     await container.attach(request);
                 }
 
                 // Create another component which returns the runtime channel.
-                const component2 = await createPeerComponentForTestRootComponent(defaultComponent);
-                assert.strictEqual(component2.handle.isAttached, false, "Component2 should be unattached");
+                const peerComponent1 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component2 = peerComponent1.peerComponent as ITestFluidComponent & IComponentLoadable;
+                assert.strictEqual(component2.runtime.isAttached, false, "Component2 should be unattached");
 
                 // Create another component which returns the runtime channel.
-                const component3 = await createPeerComponentForTestRootComponent(defaultComponent);
-                assert.strictEqual(component3.handle.isAttached, false, "Component3 should be unattached");
+                // Create another component which returns the runtime channel.
+                const peerComponent2 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component3 = peerComponent2.peerComponent as ITestFluidComponent & IComponentLoadable;
+                assert.strictEqual(component3.runtime.isAttached, false, "Component3 should be unattached");
 
-                const component4 = await createPeerComponentForTestRootComponent(defaultComponent);
-                assert.strictEqual(component4.handle.isAttached, false, "Component4 should be unattached");
+                // Create another component which returns the runtime channel.
+                const peerComponent3 = await createPeerComponent(defaultComponent.context.containerRuntime);
+                const component4 = peerComponent3.peerComponent as ITestFluidComponent & IComponentLoadable;
+                assert.strictEqual(component4.runtime.isAttached, false, "Component4 should be unattached");
 
                 // Create two channel from component2
-                const channel1OfComponent2 =
-                    component2.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                const channel1OfComponent2 = await component2.getSharedObject<SharedMap>(mapId1);
                 assert.strictEqual(channel1OfComponent2.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent2.handle.isAttached, false, "Channel should be detached");
 
-                const channel2OfComponent2 =
-                    component2.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                const channel2OfComponent2 = await component2.getSharedObject<SharedMap>(mapId2);
                 assert.strictEqual(channel2OfComponent2.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2OfComponent2.handle.isAttached, false, "Channel should be detached");
 
                 // Create two channel from component 3
-                const channel1OfComponent3 =
-                    component3.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                const channel1OfComponent3 = await component3.getSharedObject<SharedMap>(mapId1);
                 assert.strictEqual(channel1OfComponent3.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent3.handle.isAttached, false, "Channel should be detached");
 
-                const channel2OfComponent3 =
-                    component3.createType<SharedMap>("test2", "https://graph.microsoft.com/types/map");
+                const channel2OfComponent3 = await component3.getSharedObject<SharedMap>(mapId2);
                 assert.strictEqual(channel2OfComponent3.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel2OfComponent3.handle.isAttached, false, "Channel should be detached");
 
                 // Create one channel from component 4
-                const channel1OfComponent4 =
-                    component4.createType<SharedMap>("test1", "https://graph.microsoft.com/types/map");
+                const channel1OfComponent4 = await component4.getSharedObject<SharedMap>(mapId1);
                 assert.strictEqual(channel1OfComponent4.isRegistered(), false, "Channel should be unregistered");
                 assert.strictEqual(channel1OfComponent4.handle.isAttached, false, "Channel should be detached");
 

@@ -57,7 +57,7 @@ export class VltavaView extends React.Component<IVltavaViewProps, IVltavaViewSta
     async componentDidMount() {
         const component = await this.props.dataModel.getDefaultComponent();
         this.setState({
-            view: <ReactViewAdapter component={component} />,
+            view: <ReactViewAdapter view={component} />,
         });
     }
 

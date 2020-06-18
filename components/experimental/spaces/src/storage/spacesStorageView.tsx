@@ -80,7 +80,7 @@ const SpacesComponentView: React.FC<ISpacesComponentViewProps> =
                 <div className="spaces-embedded-component-wrapper">
                     {
                         component &&
-                        <ReactViewAdapter component={component} />
+                        <ReactViewAdapter view={component} />
                     }
                 </div>
             </div>
