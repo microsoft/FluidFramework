@@ -18,7 +18,7 @@ export interface ICollaborativeInputProps {
     style?: React.CSSProperties;
 }
 
-interface ICollaborativeInputState {
+export interface ICollaborativeInputState {
     selectionEnd: number;
     selectionStart: number;
 }

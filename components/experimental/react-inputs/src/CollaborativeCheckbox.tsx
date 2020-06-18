@@ -18,7 +18,7 @@ export interface ICollaborativeCheckboxProps {
     style?: React.CSSProperties;
 }
 
-interface ICollaborativeCheckboxState {
+export interface ICollaborativeCheckboxState {
     checked: boolean;
 }
 

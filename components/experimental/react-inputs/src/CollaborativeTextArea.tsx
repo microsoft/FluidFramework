@@ -18,7 +18,7 @@ export interface ICollaborativeTextAreaProps {
     style?: React.CSSProperties;
 }
 
-interface ICollaborativeTextAreaState {
+export interface ICollaborativeTextAreaState {
     selectionEnd: number;
     selectionStart: number;
     text: string;
