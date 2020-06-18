@@ -1,7 +1,7 @@
 import React from "react";
 
-import { fluidReactComponentFactory } from "./factory";
-import { useFluidReducer, useFluidState } from "./useFluidMap";
+import { createTinyFluidReactComponentFactory } from "./factory";
+import { useFluidReducer, useFluidState } from "./hooks";
 
 export function HelloWorld() {
     const [value, setValue] = useFluidState("hw-key", "hello");
@@ -53,7 +53,7 @@ export function Counter(props: { id: string }) {
  * fluidExport is the entry point of the fluid package. We define our component
  * as a component that can be created in the container.
  */
-export const fluidExport = fluidReactComponentFactory(
+export const fluidExport = createTinyFluidReactComponentFactory(
     "pretty-cool-example",
     <div>
         <HelloWorld />
