@@ -21,15 +21,17 @@ variables:
             eq(variables['Build.SourceBranch'], 'refs/heads/master')
         )}}
   registry: prague.azurecr.io
-  containerRegistry:
-  containerTag: ${{ parameters.containerName }}:$(Build.BuildId)
+  baseContainerTag: ${{ parameters.containerName }}:${{ variables['Build.BuildId' ] }}
+  ${{ if eq(variables.pushImage, false) }}:
+    containerRegistry:
+    containerTag: $(baseContainerTag)
   ${{ if eq(variables.pushImage, true) }}:
     containerRegistry: Fluid Azure Container Registry
-    containerTag: $(registry)/$(containerTag)
+    containerTag: $(registry)/$(baseContainerTag)
 
 jobs:
   - job: build
-    displayName: Build ${{ parameters.containerName }}
+    displayName: Build Container - ${{ parameters.containerName }}
     pool: Shared
     steps:
     # Setup
