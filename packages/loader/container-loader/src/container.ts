@@ -517,8 +517,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this.attachmentState = ContainerState.Attached;
-            // Emit container attached event as there might be some need to do something based on this action.
-            this.emit("containerAttached");
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
