@@ -232,6 +232,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
         );
     }
 
+    protected didAttach() {
+        // if we are not local, and we've attached we need to start generating and sending ops
+        // so start collaboration and provide a default client id incase we are not connected
+        if (!this.isLocal()) {
+            this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+            this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+        }
+    }
+
     protected onConnect() {
         assert.equal(this.rows.getCollabWindow().collaborating, this.cols.getCollabWindow().collaborating);
 

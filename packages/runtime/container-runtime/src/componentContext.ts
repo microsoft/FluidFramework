@@ -183,6 +183,16 @@ export abstract class ComponentContext extends EventEmitter implements
             attach(componentRuntime);
             this._isAttached = true;
         };
+        this.attachListeners();
+    }
+
+    private attachListeners() {
+        // Only listen to these events if local.
+        if (this.isLocal()) {
+            this.containerRuntime.on("containerBeingAttached", () => {
+                this.emit("containerBeingAttached");
+            });
+        }
     }
 
     public dispose(): void {

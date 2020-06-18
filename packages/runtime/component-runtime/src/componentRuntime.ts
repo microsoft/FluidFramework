@@ -647,12 +647,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     private attachListener() {
+        this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.componentContext.on("leader", () => {
             this.emit("leader");
         });
         this.componentContext.on("notleader", () => {
             this.emit("notleader");
         });
+        // Only listen to these events if local.
+        if (this.isLocal()) {
+            this.componentContext.on("containerBeingAttached", () => {
+                this.emit("containerBeingAttached");
+            });
+        }
     }
 
     private verifyNotClosed() {

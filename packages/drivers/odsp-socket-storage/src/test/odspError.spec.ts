@@ -122,7 +122,7 @@ describe("Odsp Error", () => {
             if (refresh) {
                 return 1;
             } else {
-                throwOdspNetworkError("some error", 401, false);
+                throwOdspNetworkError("some error", 401);
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");
@@ -133,7 +133,7 @@ describe("Odsp Error", () => {
             if (refresh) {
                 return 1;
             } else {
-                throwOdspNetworkError("some error", invalidFileNameStatusCode, false);
+                throwOdspNetworkError("some error", invalidFileNameStatusCode);
             }
         });
         await assert.rejects(res, "did not successfully retried with new token");

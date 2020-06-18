@@ -97,9 +97,22 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, undefined, { sharedObjectId: uuid() });
 
+        this.attachListeners();
+    }
+
+    private attachListeners() {
         this.on("error", (error: any) => {
-            runtime.emit("error", error);
+            this.runtime.emit("error", error);
         });
+
+        // Only listen to these events if local.
+        if (this.isLocal()) {
+            this.runtime.on("containerBeingAttached", () => {
+                // Calling this will let the dds to do any custom processing based on attached
+                // like starting generating ops.
+                this.didAttach();
+            });
+        }
     }
 
     /**
@@ -333,8 +346,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     private attachDeltaHandler() {
-        // Allows objects to start listening for events
-        this.didAttach();
+        // Allows objects to start listening for events if not local
+        if (!this.isLocal()) {
+            this.didAttach();
+        }
 
         // attachDeltaHandler is only called after services is assigned
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
