@@ -371,7 +371,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
 
                         const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
-                            method: promiseRaceWinner.index === 0 ? "cache" : "network",
+                            method: promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network",
                         };
                         obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     } else {
@@ -379,13 +379,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         // while the first caller is awaiting later async code in this block.
 
                         cachedSnapshot = await cachedSnapshotP;
-                        if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
-                        }
 
                         const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
                             method: cachedSnapshot !== undefined ? "cache" : "network",
                         };
+
+                        if (cachedSnapshot === undefined) {
+                            cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                        }
+
                         obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     }
                 }
