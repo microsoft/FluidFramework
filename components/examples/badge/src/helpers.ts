@@ -9,7 +9,7 @@ import {
     getColorFromHSV,
     getColorFromString,
     IButtonStyles,
-} from "@fluentui/react";
+} from "office-ui-fabric-react";
 import { SharedColors } from "@uifabric/fluent-theme";
 import { IBadgeType } from "./Badge.types";
 

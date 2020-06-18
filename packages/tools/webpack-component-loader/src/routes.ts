@@ -40,7 +40,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
         case "tinylicious": {
             Axios.get(tinyliciousUrls.hostUrl).then().catch((err) => {
-                throw new Error("Tinylicious isn't running. Start the Fluid Framework Tinylicious server");
+                throw new Error(`
+
+                You're running the Webpack-Component-Loader with Tinylicious.
+                Tinylicious isn't running. Start the Fluid Framework Tinylicious server.
+                `);
             });
             break;
         }

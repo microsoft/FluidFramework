@@ -3,31 +3,31 @@
 * Licensed under the MIT License.
 */
 
-import { TagName } from "@fluid-example/flow-util-lib";
-import { Marker, ReferenceType } from "@fluidframework/merge-tree";
-import { TestHost } from "@fluidframework/local-test-utils";
 import assert from "assert";
-import "mocha";
+import { TagName } from "@fluid-example/flow-util-lib";
+import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { Marker, ReferenceType } from "@fluidframework/merge-tree";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { FlowDocument } from "../src/document";
 
-const flowDocumentFactory = FlowDocument.getFactory();
-
 describe("FlowDocument", () => {
-    let host: TestHost;
+    const id = "fluid-test://localhost/flowDocumentTest";
+    const codeDetails = {
+        package: "flowDocumentTestPkg",
+        config: {},
+    };
     let doc: FlowDocument;
 
-    before(async () => {
-        host = new TestHost([
-            [flowDocumentFactory.type ?? "flowDocument", Promise.resolve(flowDocumentFactory)],
-        ]);
-    });
-
-    after(async () => {
-        await host.close();
-    });
-
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent("test-doc", flowDocumentFactory.type);
+        const deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const loader = createLocalLoader([[codeDetails, FlowDocument.getFactory()]], deltaConnectionServer);
+        const container = await initializeLocalContainer(id, loader, codeDetails);
+
+        const response = await container.request({ url: "default" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Default component not found`);
+        }
+        doc = response.value;
     });
 
     function expect(expected: string) {
