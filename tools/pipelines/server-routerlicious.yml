@@ -17,6 +17,7 @@ trigger:
     - tools/build-server-resources
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
   

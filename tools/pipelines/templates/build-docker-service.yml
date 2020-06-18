@@ -21,7 +21,7 @@ variables:
             eq(variables['Build.SourceBranch'], 'refs/heads/master')
         )}}
   registry: prague.azurecr.io
-  baseContainerTag: ${{ parameters.containerName }}:${{ variables['Build.BuildId' ] }}
+  baseContainerTag: ${{ parameters.containerName }}:$(Build.BuildId)
   ${{ if eq(variables.pushImage, false) }}:
     containerRegistry:
     containerTag: $(baseContainerTag)
