@@ -5,7 +5,8 @@ import { useFluidReducer, useFluidState } from "./useFluidMap";
 
 export function HelloWorld() {
     const [value, setValue] = useFluidState("hw-key", "hello");
-    return <button onClick={() => setValue(value === "hello" ? "world" : "hello")}>{value}</button>;
+    const handleClick = () => setValue(value === "hello" ? "world" : "hello");
+    return <button onClick={handleClick}>{value}</button>;
 }
 
 export function DiceRoller() {
