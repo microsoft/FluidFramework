@@ -10,7 +10,7 @@ import ReactDOM from "react-dom";
 
 /**
  * Abstracts rendering of views via the IComponentHTMLView interface.  Supports React elements, as well as
- * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
+ * components that implement IComponentReactViewable or IComponentHTMLView.
  */
 export class HTMLViewAdapter implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -24,7 +24,6 @@ export class HTMLViewAdapter implements IComponentHTMLView {
             React.isValidElement(view)
             || view.IComponentReactViewable !== undefined
             || view.IComponentHTMLView !== undefined
-            || view.IComponentHTMLVisual !== undefined
         );
     }
 
@@ -33,12 +32,6 @@ export class HTMLViewAdapter implements IComponentHTMLView {
      * the React cases.  This also doubles as a way for us to know if we are mounted or not.
      */
     private containerNode: HTMLElement | undefined;
-
-    /**
-     * If the view is an IComponentHTMLVisual we will create and persist one IComponentHTMLView from it, which
-     * we will retain across rendering/removal.
-     */
-    private viewFromVisual: IComponentHTMLView | undefined;
 
     /**
      * @param view - The view to adapt into an IComponentHTMLView
@@ -56,20 +49,9 @@ export class HTMLViewAdapter implements IComponentHTMLView {
             return;
         }
 
-        const htmlVisual = this.view.IComponentHTMLVisual;
-        if (htmlVisual !== undefined) {
-            if (this.viewFromVisual === undefined) {
-                // This is the first time we're trying to render, so get a view.
-                this.viewFromVisual = htmlVisual.addView();
-            }
-            this.viewFromVisual.render(elm, options);
-            return;
-        }
-
         // The ReactDOM.render calls won't work if the adapted component is from a separate bundle.
         // This is the usage scenario in webpack-component-loader currently, so prioritizing these below
-        // IComponentHTMLView and IComponentHTMLVisual temporarily, so that we have the best chance of
-        // cross-bundle adaptation.
+        // IComponentHTMLView temporarily, so that we have the best chance of cross-bundle adaptation.
         if (React.isValidElement(this.view)) {
             ReactDOM.render(this.view, elm);
             return;
@@ -114,13 +96,6 @@ export class HTMLViewAdapter implements IComponentHTMLView {
         const htmlView = this.view.IComponentHTMLView;
         if (htmlView !== undefined && htmlView.remove !== undefined) {
             htmlView.remove();
-            this.containerNode = undefined;
-            return;
-        }
-
-        const htmlVisual = this.view.IComponentHTMLVisual;
-        if (htmlVisual !== undefined && this.viewFromVisual !== undefined && this.viewFromVisual.remove !== undefined) {
-            this.viewFromVisual.remove();
             this.containerNode = undefined;
             return;
         }
