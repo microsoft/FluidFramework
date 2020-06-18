@@ -91,13 +91,15 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{index:
     let raceComplete = false;
 
     return new Promise((resolve, reject) => {
-        promises.forEach((p, index) => {
-            if (!raceComplete) {
-                p.then((v) => resolve({ index, value: v })).catch(reject);
-                raceComplete = true;
+      promises.forEach((p, index) => {
+        p.then((v) => {
+          if (!raceComplete) {
+              resolve({ index, value: v });
+              raceComplete = true;
             }
-        });
+        }).catch(reject);
     });
+});
 }
 
 export class OdspDocumentStorageService implements IDocumentStorageService {
