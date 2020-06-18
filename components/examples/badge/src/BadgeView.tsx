@@ -20,7 +20,7 @@ import {
     Stack,
     TextField,
     IContextualMenuItem,
-} from "@fluentui/react";
+} from "office-ui-fabric-react";
 import { MotionAnimations } from "@uifabric/fluent-theme";
 import { IBadgeViewProps, IBadgeType } from "./Badge.types";
 import {
