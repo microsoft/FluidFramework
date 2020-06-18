@@ -25,8 +25,8 @@ import { errorObjectFromSocketError } from "./odspUtils";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 // How long to wait before disconnecting the socket after the last reference is removed
-// This allows reconnection after receiving a nack to be smooth
-const socketReferenceBufferTime = 2000;
+// This allows multiplexing scenarios and reconnections after receiving a nack to be smoother
+const socketReferenceBufferTime = 5000;
 
 class SocketReference {
     public references: number = 1;
