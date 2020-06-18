@@ -89,8 +89,7 @@ describe("Component Creation Tests", () => {
             containerRuntime = {
                 IComponentRegistry: globalRegistry,
                 notifyComponentInstantiated: (c) => {},
-                isLocal: () => false,
-                on: (event, listener) => {},
+                isAttached: () => true,
             } as ContainerRuntime;
             summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
         });

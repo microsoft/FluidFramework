@@ -164,7 +164,8 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             assert.strictEqual(component2.runtime.isRegistered, true, "Component2 should be attached");
 
             // Channel should get attached as it was registered to its component
-            assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+            assert.strictEqual(channel.handle.isAttached, isAttachedTest,
+                createTestStatementForAttachedDetached("Component2", isAttachedTest));
         });
 
         it("Attaching DDS should attach component", async () => {
@@ -186,7 +187,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             assert.strictEqual(channel.isRegistered(), false, "Channel should be unregistered");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-            channel.handle.register();
+            channel.handle.attachGraphInternal();
             assert.strictEqual(channel.isRegistered(), true, "Channel should be registered after attaching");
 
             // Channel should get attached as it was registered to its component
@@ -368,7 +369,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
                 testChannel2OfComponent2.set("test1handle", channel1.handle);
 
                 // Currently it will go in infinite loop.
-                channel1.handle.register();
+                channel1.handle.attachGraphInternal();
                 assert.strictEqual(testChannel1OfComponent2.handle.isAttached, true,
                     "Test Channel 1 should be attached now after attaching it");
                 assert.strictEqual(testChannel2OfComponent2.handle.isAttached, true,
@@ -415,7 +416,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             testChannelOfComponent3.set("channel2handle", channel2.handle);
 
             // Currently it will go in infinite loop.
-            channel2.handle.register();
+            channel2.handle.attachGraphInternal();
             assert.strictEqual(testChannelOfComponent2.handle.isAttached, true,
                 "Test Channel 1 should be attached now after attaching it");
             assert.strictEqual(testChannelOfComponent3.handle.isAttached, true,
@@ -464,7 +465,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             component3.handle.bind(component2.handle);
             component3.handle.bind(channel2.handle);
 
-            component2.handle.register();
+            component2.handle.attachGraphInternal();
             assert.strictEqual(channel2.handle.isAttached, true,
                 "Test Channel 2 should be attached now after attaching it");
             assert.strictEqual(channel3.handle.isAttached, true,
@@ -531,7 +532,7 @@ import { TestRootComponent } from "@fluidframework/local-test-utils";
             // Channel 2 of component 3 points to its parent component 3.
             // Channel 1 of component 4 points to its parent component 4.
             // Component 3 points to component 4.
-            channel1OfComponent2.handle.register();
+            channel1OfComponent2.handle.attachGraphInternal();
 
             // Everything should be attached except channel 1 of component 4
             assert.strictEqual(channel1OfComponent2.handle.isAttached, true, "Test Channel 12 should be attached");

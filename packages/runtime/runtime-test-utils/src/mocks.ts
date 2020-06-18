@@ -369,7 +369,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public get isAttached(): boolean {
-        return true;
+        return false;
     }
 
     public bindChannel(channel: IChannel): void {
