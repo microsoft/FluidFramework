@@ -184,7 +184,6 @@ export class ContainerContext implements IContainerContext {
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
-        super();
         this.logger = container.subLogger;
     }
 

@@ -182,11 +182,6 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     }
 
-    protected didAttach(): void {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
-    }
-
     public insertCols(colStart: number, count: number) {
         this.insert(this.cols, SnapshotPath.cols, colStart, count);
     }
@@ -241,7 +236,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
     protected didAttach() {
         // if we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
-        if  (!this.isLocal()) {
+        if  (this.isAttached()) {
             this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
             this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
         }

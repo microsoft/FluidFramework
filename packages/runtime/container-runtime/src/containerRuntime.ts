@@ -642,8 +642,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this,
                 this.storage,
                 this.containerScope,
-                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber),
-                false);
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -1186,7 +1185,6 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                     new BlobCacheStorageService(this.storage, flatBlobsP),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-                    false,
                     [attachMessage.type]);
                 break;
             }

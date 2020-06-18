@@ -632,7 +632,7 @@ describe("Detached Container", () => {
 
         // Fire attach op
         const testChannel = component.runtime.createChannel(testChannelId, SharedMap.getFactory().type);
-        testChannel.handle.attach();
+        testChannel.handle.register();
         await containerP;
         await defPromise.promise;
     });
@@ -663,7 +663,7 @@ describe("Detached Container", () => {
         peerComponentRuntimeChannel = await (component.context.containerRuntime as IContainerRuntime)
             .createComponentWithRealizationFn([testComponentType]);
         // Fire attach op
-        peerComponentRuntimeChannel.attach();
+        peerComponentRuntimeChannel.register();
         await containerP;
         await defPromise.promise;
     });
