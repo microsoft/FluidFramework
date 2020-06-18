@@ -335,30 +335,30 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
-                        let snapshotCameFromCache: boolean;
+                        let snapshotFetchMethod: string;
                         cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
                         if (cachedSnapshot === undefined) {
-                            snapshotCameFromCache = false;
+                            snapshotFetchMethod = "network";
                             cachedSnapshot = await snapshotP;
                         } else {
                             // This block isn't quite accurate, it is possible that the fetched snapshot (snapshotP)
                             // could have beat the cached snapshot lookup (cachedSnapshotP) and be incorrectly marked
                             // as a cache hit.
-                            snapshotCameFromCache = true;
+                            snapshotFetchMethod = "cache";
                         }
-                        obtainSnapshotEvent.end({ cached: snapshotCameFromCache });
+                        obtainSnapshotEvent.end({ method: snapshotFetchMethod });
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
-                        let snapshotCameFromCache: boolean;
+                        let snapshotFetchMethod: string;
                         cachedSnapshot = await cachedSnapshotP;
                         if (cachedSnapshot === undefined) {
-                            snapshotCameFromCache = false;
+                            snapshotFetchMethod = "network";
                             cachedSnapshot = await this.fetchSnapshot(options, refresh);
                         } else {
-                            snapshotCameFromCache = true;
+                            snapshotFetchMethod = "cache";
                         }
-                        obtainSnapshotEvent.end({ cached: snapshotCameFromCache });
+                        obtainSnapshotEvent.end({ method: snapshotFetchMethod });
                     }
                 }
 
