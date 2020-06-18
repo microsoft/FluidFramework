@@ -27,6 +27,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -206,15 +207,14 @@ describe("Detached Container", () => {
     });
 
     it("Fire ops during container attach for shared string", async () => {
-        const ops = [{ pos1: 0, seg: "c", type: 0 }, { pos1: 1, seg: "b", type: 0 }];
+        const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred();
         const container = await loader.createDetachedContainer(pkg);
         // eslint-disable-next-line @typescript-eslint/unbound-method
         container.deltaManager.submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.content.contents.ops.length, 2, "2 ops should be there");
             assert.strictEqual(contents.contents.content.address,
                 sharedStringId, "Address should be shared string");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops),
+            assert.strictEqual(JSON.stringify(contents.contents.content.contents),
                 JSON.stringify(ops), "Ops should be equal");
             defPromise.resolve();
             return 0;
@@ -231,7 +231,6 @@ describe("Detached Container", () => {
 
         // Fire op after the summary is taken and before it is attached.
         testChannel1.insertText(0, "b");
-        testChannel1.insertText(0, "c");
         await containerP;
 
         await defPromise.promise;
@@ -492,8 +491,13 @@ describe("Detached Container", () => {
         container.deltaManager.submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.content.address,
                 sparseMatrixId, "Address should be sparse matrix");
-            assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[1].seg),
-                JSON.stringify(seg), "Seg should be same");
+            if (contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
+                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[0].seg),
+                    JSON.stringify(seg), "Seg should be same");
+            } else {
+                assert.strictEqual(JSON.stringify(contents.contents.content.contents.ops[1].seg),
+                    JSON.stringify(seg), "Seg should be same");
+            }
             defPromise.resolve();
             return 0;
         };
