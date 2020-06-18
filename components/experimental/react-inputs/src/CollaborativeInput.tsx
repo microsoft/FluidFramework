@@ -6,13 +6,19 @@ import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
 export interface ICollaborativeInputProps {
+    /**
+     * The SharedString that will store the input value.
+     */
     sharedString: SharedString;
+    /**
+     * Whether spellCheck should be enabled.  Defaults to false.
+     */
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
 }
 
-export interface ICollaborativeInputState {
+interface ICollaborativeInputState {
     selectionEnd: number;
     selectionStart: number;
 }
