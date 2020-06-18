@@ -323,6 +323,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (refresh) {
                     cachedSnapshot = await this.fetchSnapshot(options, refresh);
                 } else {
+                    const obtainSnapshotEvent = PerformanceEvent.start(this.logger, { eventName: "ObtainSnapshot" });
                     const cachedSnapshotP = this.cache.persistedCache.get(
                         {
                             file: this.fileEntry,
@@ -334,17 +335,30 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
+                        let snapshotCameFromCache: boolean;
                         cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
                         if (cachedSnapshot === undefined) {
+                            snapshotCameFromCache = false;
                             cachedSnapshot = await snapshotP;
+                        } else {
+                            // This block isn't quite accurate, it is possible that the fetched snapshot (snapshotP)
+                            // could have beat the cached snapshot lookup (cachedSnapshotP) and be incorrectly marked
+                            // as a cache hit.
+                            snapshotCameFromCache = true;
                         }
+                        obtainSnapshotEvent.end({ cached: snapshotCameFromCache });
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
+                        let snapshotCameFromCache: boolean;
                         cachedSnapshot = await cachedSnapshotP;
                         if (cachedSnapshot === undefined) {
+                            snapshotCameFromCache = false;
                             cachedSnapshot = await this.fetchSnapshot(options, refresh);
+                        } else {
+                            snapshotCameFromCache = true;
                         }
+                        obtainSnapshotEvent.end({ cached: snapshotCameFromCache });
                     }
                 }
 
