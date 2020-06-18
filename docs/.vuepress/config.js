@@ -251,6 +251,14 @@ const getDocsSidebar = () => {
             ]
         },
         {
+            title: "Connect with us",
+            collapsable: true,
+            children: [
+                "connect-with-us.md",
+                "community-calls.md",
+            ]
+        },
+        {
             title: "Misc",
             collapsable: true,
             // path: "",
