@@ -1,4 +1,4 @@
-# @microsoft/fluid-server-gateway
+# @fluidframework/server-gateway
 
 ## What is Gateway?
 Gateway is an example host. It's a simple service that deploys a controller with a Fluid Framework loader and the necessary drivers to connect to
