@@ -65,7 +65,7 @@ export interface IComponentRuntime extends
     isAttached: boolean;
 
     on(
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "componentBeingAttached",
+        event: "disconnected" | "dispose" | "leader" | "notleader" | "collaborating",
         listener: () => void,
     ): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;

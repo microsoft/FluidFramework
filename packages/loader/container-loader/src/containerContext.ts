@@ -160,7 +160,7 @@ export class ContainerContext implements IContainerContext {
     private runtime: IRuntime | undefined;
 
     private _disposed = false;
-    public containerBeingAttached: boolean = false;
+
     public get disposed() {
         return this._disposed;
     }
@@ -214,7 +214,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public isLocal(): boolean {
-        return !this.containerBeingAttached && this.container.isLocal();
+        return this.container.isLocal();
     }
 
     public createSummary(): ISummaryTree {

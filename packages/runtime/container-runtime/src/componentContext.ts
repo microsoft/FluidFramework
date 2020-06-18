@@ -685,7 +685,7 @@ export class LocalComponentContext extends ComponentContext {
         const entries = this.componentRuntime!.getAttachSnapshot();
         // Fire this event telling dds that we are going live and they can do any
         // custom processing based on that.
-        this.emit("componentBeingAttached");
+        this.emit("collaborating");
         const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
