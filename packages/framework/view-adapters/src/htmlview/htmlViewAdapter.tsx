@@ -9,20 +9,22 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 /**
- * Abstracts rendering of components via the IComponentHTMLView interface.  Supports React elements, as well as
+ * Abstracts rendering of views via the IComponentHTMLView interface.  Supports React elements, as well as
  * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
- *
- * If the component is none of these, we render an empty <span />
  */
 export class HTMLViewAdapter implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    public static canAdapt(component: IComponent) {
+    /**
+     * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
+     * @param view - the view to test if it is adaptable.
+     */
+    public static canAdapt(view: IComponent) {
         return (
-            React.isValidElement(component)
-            || component.IComponentReactViewable !== undefined
-            || component.IComponentHTMLView !== undefined
-            || component.IComponentHTMLVisual !== undefined
+            React.isValidElement(view)
+            || view.IComponentReactViewable !== undefined
+            || view.IComponentHTMLView !== undefined
+            || view.IComponentHTMLVisual !== undefined
         );
     }
 
@@ -33,25 +35,28 @@ export class HTMLViewAdapter implements IComponentHTMLView {
     private containerNode: HTMLElement | undefined;
 
     /**
-     * If the component is an IComponentHTMLVisual we will create and persist one IComponentHTMLView from it, which
+     * If the view is an IComponentHTMLVisual we will create and persist one IComponentHTMLView from it, which
      * we will retain across rendering/removal.
      */
     private viewFromVisual: IComponentHTMLView | undefined;
 
-    constructor(private readonly component: IComponent) { }
+    /**
+     * @param view - The view to adapt into an IComponentHTMLView
+     */
+    constructor(private readonly view: IComponent) { }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
         this.containerNode = elm;
 
-        const htmlView = this.component.IComponentHTMLView;
+        const htmlView = this.view.IComponentHTMLView;
         if (htmlView !== undefined) {
             htmlView.render(elm, options);
             return;
         }
 
-        const htmlVisual = this.component.IComponentHTMLVisual;
+        const htmlVisual = this.view.IComponentHTMLVisual;
         if (htmlVisual !== undefined) {
             if (this.viewFromVisual === undefined) {
                 // This is the first time we're trying to render, so get a view.
@@ -65,12 +70,12 @@ export class HTMLViewAdapter implements IComponentHTMLView {
         // This is the usage scenario in webpack-component-loader currently, so prioritizing these below
         // IComponentHTMLView and IComponentHTMLVisual temporarily, so that we have the best chance of
         // cross-bundle adaptation.
-        if (React.isValidElement(this.component)) {
-            ReactDOM.render(this.component, elm);
+        if (React.isValidElement(this.view)) {
+            ReactDOM.render(this.view, elm);
             return;
         }
 
-        const reactViewable = this.component.IComponentReactViewable;
+        const reactViewable = this.view.IComponentReactViewable;
         if (reactViewable !== undefined) {
             ReactDOM.render(reactViewable.createJSXElement(), elm);
             return;
@@ -80,13 +85,16 @@ export class HTMLViewAdapter implements IComponentHTMLView {
         // In that case, we render nothing.
     }
 
+    /**
+     * Performs cleanup on the view and removes it from the DOM.
+     */
     public remove() {
         if (this.containerNode === undefined) {
             // Then we are already unmounted.
             return;
         }
 
-        if (React.isValidElement(this.component)) {
+        if (React.isValidElement(this.view)) {
             // Not ideal - this will also remove the component from the DOM.  But not sure how else to enter into
             // componentWillUnmount handling which is what we really want.
             ReactDOM.unmountComponentAtNode(this.containerNode);
@@ -94,7 +102,7 @@ export class HTMLViewAdapter implements IComponentHTMLView {
             return;
         }
 
-        const reactViewable = this.component.IComponentReactViewable;
+        const reactViewable = this.view.IComponentReactViewable;
         if (reactViewable !== undefined) {
             // Not ideal - this will also remove the component from the DOM.  But not sure how else to enter into
             // componentWillUnmount handling which is what we really want.
@@ -103,14 +111,14 @@ export class HTMLViewAdapter implements IComponentHTMLView {
             return;
         }
 
-        const htmlView = this.component.IComponentHTMLView;
+        const htmlView = this.view.IComponentHTMLView;
         if (htmlView !== undefined && htmlView.remove !== undefined) {
             htmlView.remove();
             this.containerNode = undefined;
             return;
         }
 
-        const htmlVisual = this.component.IComponentHTMLVisual;
+        const htmlVisual = this.view.IComponentHTMLVisual;
         if (htmlVisual !== undefined && this.viewFromVisual !== undefined && this.viewFromVisual.remove !== undefined) {
             this.viewFromVisual.remove();
             this.containerNode = undefined;

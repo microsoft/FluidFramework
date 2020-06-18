@@ -128,7 +128,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             odspLogger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
-            this.getSocketIOClient(),
+            this.getSocketIOClient,
             cache,
             this.hostPolicy,
         );
