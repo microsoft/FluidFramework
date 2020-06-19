@@ -10,10 +10,25 @@ const licenseId = 'MIT';
 const author = 'Microsoft';
 const repository = 'microsoft/FluidFramework';
 
-function isValidPrivatePackageName(name: string): boolean {
+function packageShouldBePrivate(name: string): boolean {
+    // See https://github.com/microsoft/FluidFramework/issues/2625
+    if (name === "@fluid-internal/client-api") {
+        return false;
+    }
+    
     return (
-        name === "root" ||
+        name === "root" || // minirepo roots
         name.startsWith("@fluid-internal"));
+}
+
+function packageShouldNotBePrivate(name: string): boolean {
+    // See https://github.com/microsoft/FluidFramework/issues/2642
+    if (name === "@fluidframework/server-gateway") {
+        return false;
+    }
+
+    return (
+        name.startsWith("@fluidframework"));
 }
 
 export const handlers: Handler[] = [
@@ -49,14 +64,6 @@ export const handlers: Handler[] = [
 
             if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
                 ret.push(`not sorted`);
-            }
-
-            if ((json.private === true) !== isValidPrivatePackageName(json.name)) {
-                ret.push(`package should be marked private iff it's under the @fluid-internal scope`)
-            }
-
-            if (!json.private && Object.keys(json.dependencies ?? {}).some((d) => d.startsWith("@fluid-internal"))) {
-                ret.push(`published package should not depend on an internal package`);
             }
 
             if (ret.length > 0) {
@@ -95,5 +102,40 @@ export const handlers: Handler[] = [
 
             return { resolved: resolved };
         }
+    },
+    {
+        name: "npm-private-packages",
+        match: /(^|\/)package\.json/i,
+        handler: file => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return 'Error parsing JSON file: ' + file;
+            }
+
+            const ret = [];
+
+            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
+                ret.push(`not sorted`);
+            }
+
+            if (json.private && packageShouldNotBePrivate(json.name)) {
+                ret.push(`package ${json.name} should not be marked private`)
+            }
+
+            if (!json.private && packageShouldBePrivate(json.name)) {
+                ret.push(`package ${json.name} should be marked private`)
+            }
+
+            const deps = Object.keys(json.dependencies ?? {});
+            if (!json.private && deps.some(packageShouldBePrivate)) {
+                ret.push(`published package should not depend on an internal package`);
+            }
+
+            if (ret.length > 0) {
+                return `Package.json ${ret.join(', ')}`;
+            }
+        },
     },
 ];
