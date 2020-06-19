@@ -144,7 +144,7 @@ itself.
 The implementation is as follows:
 
 ```typescript
-public createJSXElement(props?: any): JSX.Element {
+public createJSXElement(): JSX.Element {
     if (this.puzzle) {
         return (
             <SudokuView
@@ -415,7 +415,7 @@ for storing the presence data, and a function to update the map with presence da
 1. Replace the `createJSXElement` method with the following code:
 
    ```ts
-   public createJSXElement(props?: any): JSX.Element {
+   public createJSXElement(): JSX.Element {
        if (this.puzzle) {
            return (
                <SudokuView

@@ -18,7 +18,7 @@ import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
@@ -79,7 +79,7 @@ class ProgressBarView implements IComponentHTMLView {
 // The "model" side of a progress bar
 export class ProgressBar extends EventEmitter implements
     IComponentLoadable,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentRouter {
     public handle: ComponentHandle;
 
@@ -95,11 +95,12 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public get IComponentLoadable() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
 
-    public addView(scope?: IComponent) {
-        return new ProgressBarView(this);
+    public render(elm: HTMLElement) {
+        const view = new ProgressBarView(this);
+        view.render(elm);
     }
 
     public changeValue(newValue: number) {

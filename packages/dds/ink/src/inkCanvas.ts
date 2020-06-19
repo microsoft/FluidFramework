@@ -133,7 +133,7 @@ export class InkCanvas {
             thickness: 7,
         };
 
-        this.redraw();
+        this.setSize(canvas.width, canvas.height);
     }
 
     public setPenColor(color: IColor) {
@@ -158,10 +158,17 @@ export class InkCanvas {
     }
 
     public setSize(width: number, height: number) {
-        this.canvas.width = width;
-        this.canvas.height = height;
+        // Scale the canvas size to match the physical pixel to avoid blurriness
+        const scale = window.devicePixelRatio;
+        this.canvas.width = Math.floor(width * scale);
+        this.canvas.height = Math.floor(height * scale);
+        // Set CSS pixel size as is
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
+        // Scale the context to bring back coordinate system in CSS pixels
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.scale(scale, scale);
+
         this.redraw();
     }
 
@@ -179,7 +186,10 @@ export class InkCanvas {
 
     private handlePointerMove(evt: PointerEvent) {
         if (this.localActiveStrokeMap.has(evt.pointerId)) {
-            this.appendPointerEventToStroke(evt);
+            const evts = (evt as any)?.getCoalescedEvents() ?? [evt] as PointerEvent[];
+            for (const e of evts) {
+                this.appendPointerEventToStroke(e);
+            }
         }
     }
 
