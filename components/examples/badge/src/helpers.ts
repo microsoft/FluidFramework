@@ -10,6 +10,51 @@ import {
     getColorFromString,
     IButtonStyles,
 } from "office-ui-fabric-react";
+import { SharedColors } from "@uifabric/fluent-theme";
+import { IBadgeType } from "./Badge.types";
+
+export const defaultItems: IBadgeType[] = [
+    {
+        key: "drafting",
+        text: "Drafting",
+        iconProps: {
+            iconName: "Edit",
+            style: {
+                color: SharedColors.cyanBlue10,
+            },
+        },
+    },
+    {
+        key: "reviewing",
+        text: "Reviewing",
+        iconProps: {
+            iconName: "Chat",
+            style: {
+                color: SharedColors.orange20,
+            },
+        },
+    },
+    {
+        key: "complete",
+        text: "Complete",
+        iconProps: {
+            iconName: "Completed",
+            style: {
+                color: SharedColors.green10,
+            },
+        },
+    },
+    {
+        key: "archived",
+        text: "Archived",
+        iconProps: {
+            iconName: "Archive",
+            style: {
+                color: SharedColors.magenta10,
+            },
+        },
+    },
+];
 
 export const getItemsFromOptionsMap = (options: IContextualMenuItem[]) => {
     const mapItems = [...options];

@@ -5,10 +5,13 @@
 
 import "mocha";
 
-import { v4 as uuid } from "uuid";
-import { TestHost } from "@fluidframework/local-test-utils";
-import { Serializable } from "@fluidframework/component-runtime-definitions";
-import { MockEmptyDeltaConnection, MockComponentRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { ISharedObjectServices, Serializable } from "@fluidframework/component-runtime-definitions";
+import {
+    MockComponentRuntime,
+    MockContainerRuntimeFactory,
+    MockEmptyDeltaConnection,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
 import { expectSize, setCorners, checkCorners } from "./utils";
 
@@ -24,10 +27,11 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     // Create a snapshot
     const objectStorage = new MockStorage(matrix.snapshot());
 
-    // Load the snapshot into a newly created 2nd SharedMatrix.
+    // Create a local ComponentRuntime since we only want to load the snapshot for a local client.
     const componentRuntime = new MockComponentRuntime();
-    // We only want to test local state of the DDS.
     componentRuntime.local = true;
+
+    // Load the snapshot into a newly created 2nd SharedMatrix.
     const matrix2 = new SharedMatrix<T>(componentRuntime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
@@ -43,36 +47,41 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
 describe("Big Matrix", function () {
     this.timeout(10000);
 
-    let host1: TestHost;    // Note: Single client tests also require two clients to externally observe
-    let host2: TestHost;    //       when all ops have processed with `TestHost.sync()`.
-
-    async function sync() {
-        await TestHost.sync(host1, host2);
-    }
-
-    before(async () => {
-        host1 = new TestHost([], [SharedMatrix.getFactory()]);
-        host2 = host1.clone();
-    });
-
-    after(async () => {
-        await Promise.all([host1.close(), host2.close()]);
-    });
-
-    let matrix1: SharedMatrix;
-    let matrix2: SharedMatrix;
-
-    beforeEach(async () => {
-        matrix1 = await host1.createType(uuid(), SharedMatrixFactory.Type);
-        matrix2 = await host2.getType(matrix1.id);
-    });
-
     describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
+        let matrix1: SharedMatrix;
+        let matrix2: SharedMatrix;
+        let componentRuntime1: MockComponentRuntime;
+        let containterRuntimeFactory: MockContainerRuntimeFactory;
+
+        beforeEach(async () => {
+            containterRuntimeFactory = new MockContainerRuntimeFactory();
+
+            // Create and connect the first SharedMatrix.
+            componentRuntime1 = new MockComponentRuntime();
+            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(componentRuntime1);
+            const services1: ISharedObjectServices = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix1 = new SharedMatrix(componentRuntime1, "matrix1", SharedMatrixFactory.Attributes);
+            matrix1.connect(services1);
+
+            // Create and connect the second SharedMatrix.
+            const componentRuntime2 = new MockComponentRuntime();
+            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(componentRuntime2);
+            const services2: ISharedObjectServices = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            matrix2 = new SharedMatrix(componentRuntime2, "matrix2", SharedMatrixFactory.Attributes);
+            matrix2.connect(services2);
+        });
+
         it("create", async () => {
             matrix1.insertRows(0, Const.excelMaxRows);
             matrix1.insertCols(0, Const.excelMaxCols);
 
-            await sync();
+            containterRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
         });
@@ -84,11 +93,9 @@ describe("Big Matrix", function () {
             setCorners(matrix1);
             checkCorners(matrix1);
 
-            await sync();
-            checkCorners(matrix2);
+            containterRuntimeFactory.processAllMessages();
 
-            const fromSnapshot = await snapshot(matrix1);
-            checkCorners(fromSnapshot);
+            checkCorners(matrix2);
         });
 
         it("remove populated", async () => {
@@ -98,15 +105,44 @@ describe("Big Matrix", function () {
             setCorners(matrix1);
             checkCorners(matrix1);
 
-            await sync();
+            containterRuntimeFactory.processAllMessages();
+
             checkCorners(matrix2);
 
             matrix1.removeRows(0, matrix1.rowCount);
             matrix1.removeCols(0, matrix1.colCount);
             expectSize(matrix1, 0, 0);
 
-            await sync();
+            containterRuntimeFactory.processAllMessages();
+
             expectSize(matrix2, 0, 0);
+        });
+    });
+
+    describe("local client snapshot", () => {
+        // MergeTree client expects a either no delta manager or a real delta manager with minimumSequenceNumber and
+        // lastSequenceNumber to be updated.
+        // Sp, we test snapshots with local client because MockComponentRuntime has no delta manager and is assigned
+        // one once it is connected.
+
+        let matrix: SharedMatrix;
+
+        beforeEach(async () => {
+            // Create a SharedMatrix in local state.
+            const componentRuntime = new MockComponentRuntime();
+            componentRuntime.local = true;
+            matrix = new SharedMatrix(componentRuntime, "matrix1", SharedMatrixFactory.Attributes);
+        });
+
+        it("snapshot", async () => {
+            matrix.insertRows(0, Const.excelMaxRows);
+            matrix.insertCols(0, Const.excelMaxCols);
+
+            setCorners(matrix);
+            checkCorners(matrix);
+
+            const fromSnapshot = await snapshot(matrix);
+            checkCorners(fromSnapshot);
         });
     });
 });

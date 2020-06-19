@@ -30,7 +30,7 @@ import * as MergeTree from "@fluidframework/merge-tree";
 import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedComponentFactory, SharedComponent } from "@fluidframework/component-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 
@@ -417,13 +417,11 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
     }
 }
 
-export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter,
-    IComponentHTMLVisual {
+export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
 
     public handle: ComponentHandle;
     public endMarker: IMathMarkerInst;
@@ -442,11 +440,6 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
         super();
         this.handle = new ComponentHandle(this, leafId, context);
         this.initialize(inCombinedText);
-    }
-
-    public addView(scope?: IComponent) {
-        console.warn("Instead of using {mathView = mathInstance.addView(scope)}, consider using {mathView = new MathView(mathInstance, scope)}");
-        return new MathView(this, scope);
     }
 
     public insertText(text: string, pos: number) {

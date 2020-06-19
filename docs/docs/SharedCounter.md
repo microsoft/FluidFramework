@@ -2,6 +2,6 @@
 title: SharedCounter
 ---
 
-!!!include(../../../packages/runtime/counter/README.md)!!!
+!!!include(../../../packages/dds/counter/README.md)!!!
 
-_From <https://github.com/microsoft/FluidFramework/blob/master/packages/runtime/counter/README.md>._
+_From <https://github.com/microsoft/FluidFramework/blob/master/packages/dds/counter/README.md>._

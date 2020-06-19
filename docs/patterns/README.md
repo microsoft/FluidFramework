@@ -1,6 +1,0 @@
----
----
-
-# Patterns
-
-## NOT YET WRITTEN
