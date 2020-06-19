@@ -88,21 +88,9 @@ interface ObtainSnapshotPerfProps {
 
 // An implementation of Promise.race that gives you the winner of the promise race
 async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{index: number, value: T}> {
-    let raceComplete = false;
-
     return new Promise((resolve, reject) => {
       promises.forEach((p, index) => {
-        p.then((v) => {
-          if (!raceComplete) {
-              resolve({ index, value: v });
-              raceComplete = true;
-            }
-        }).catch((reason) => {
-            if (!raceComplete) {
-                reject(reason);
-                raceComplete = true;
-            }
-        });
+        p.then((v) => resolve({ index, value: v })).catch(reject);
     });
 });
 }
