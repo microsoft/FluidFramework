@@ -10,10 +10,8 @@ import * as path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
 import { Handler } from "./common";
-import { handler as htmlCopyrightFileHeaderHandler } from "./handlers/htmlCopyrightFileHeader";
-import { handler as dockerfileCopyrightFileHeaderHandler } from "./handlers/dockerfileCopyrightFileHeader";
-import { handler as scriptfileCopyrightFileHeaderHandler } from "./handlers/scriptfileCopyrightFileHeader";
-import { handler as npmPackageContentsHandler } from "./handlers/npmPackageContents";
+import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFileHeader";
+import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackageContents";
 import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
 
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
@@ -54,10 +52,8 @@ if (program.path) {
  * declared file handlers
  */
 const handlers: Handler[] = [
-    htmlCopyrightFileHeaderHandler,
-    dockerfileCopyrightFileHeaderHandler,
-    scriptfileCopyrightFileHeaderHandler,
-    npmPackageContentsHandler,
+    ...copyrightFileHeaderHandlers,
+    ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
 ];
 
