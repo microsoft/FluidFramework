@@ -14,7 +14,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframework/test-utils";
 
 describe("SharedCounter", () => {
     const id = "fluid-test://localhost/counterTest";
