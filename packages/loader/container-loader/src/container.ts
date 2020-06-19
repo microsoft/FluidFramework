@@ -1339,20 +1339,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
-        /*
-        Back-compat: enable this change in some future version, when switching ContainerRuntime's legacyFormat to false
-        Old containers may send MessageType.ChunkedOp messages.
-
         switch (type) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
+            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
                 break;
             default:
                 this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
                 return -1;
         }
-        */
         return this.submitMessage(type, contents, batch, metadata);
     }
 

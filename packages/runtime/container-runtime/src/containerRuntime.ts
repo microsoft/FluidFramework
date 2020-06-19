@@ -1607,7 +1607,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         batch: boolean,
         appData?: any) {
         // Switch in next release
-        // Note: uncomment validation code in Container.submitContainerMessage() when switching it
+        // Note: remove hard-coded cases of legacy op types in Container.submitContainerMessage() when switching it
         const legacyFormat = true;
 
         if (legacyFormat) {
