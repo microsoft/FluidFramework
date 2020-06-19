@@ -9,7 +9,13 @@ import * as child_process from "child_process";
 import * as path from "path";
 import { EOL as newline } from "os";
 import program from "commander";
-import sortPackageJson from "sort-package-json";
+import { Handler } from "./common";
+import { handler as htmlCopyrightFileHeaderHandler } from "./handlers/htmlCopyrightFileHeader";
+import { handler as dockerfileCopyrightFileHeaderHandler } from "./handlers/dockerfileCopyrightFileHeader";
+import { handler as scriptfileCopyrightFileHeaderHandler } from "./handlers/scriptfileCopyrightFileHeader";
+import { handler as npmPackageContentsHandler } from "./handlers/npmPackageContents";
+import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
+
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
 /**
@@ -45,211 +51,14 @@ if (program.path) {
 }
 
 /**
- * helper functions and constants
- */
-const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
-const licenseId = 'MIT';
-const author = 'Microsoft';
-const serverPath = "server/routerlicious/";
-const serverDockerfilePath = `${serverPath}Dockerfile`
-
-function getDockerfileCopyText(packageFilePath: string) {
-    const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
-    return `COPY ${packageDir}/package*.json ${packageDir}/`;
-}
-
-function readFile(file: string) {
-    return fs.readFileSync(file, { encoding: "utf8" });
-}
-
-function writeFile(file: string, data: string) {
-    fs.writeFileSync(file, data, { encoding: "utf8" });
-}
-
-const localMap = new Map();
-function getOrAddLocalMap(key: string, getter: () => Buffer) {
-    if (!localMap.has(key)) {
-        localMap.set(key, getter());
-    }
-    return localMap.get(key);
-}
-
-interface Handler {
-    name: string,
-    match: RegExp,
-    handler: (file: string) => string | undefined,
-    resolver: (file: string) => { resolved: boolean, message?: string };
-};
-/**
  * declared file handlers
- * each handler has a name for filtering and a match regex for matching which files it should resolve
- * the handler function returns an error message or undefined/null for success
- * the resolver function (optional) can attempt to resolve the failed validation
  */
 const handlers: Handler[] = [
-    {
-        name: "html-copyright-file-header",
-        match: /(^|\/)[^\/]+\.html$/i,
-        handler: file => {
-            const content = readFile(file);
-            if (!/<!--[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
-                !/<!--[\s\S]*Licensed under the MIT License./i.test(content)) {
-                return "Html file missing copyright header";
-            }
-        },
-        resolver: file => {
-            const prevContent = readFile(file);
-
-            const newContent = '<!-- ' + copyrightText.replace(newline, ' -->' + newline + '<!-- ') + ' -->' + newline + newline + prevContent;
-
-            writeFile(file, newContent);
-
-            return { resolved: true };
-        }
-    },
-    {
-        name: "dockerfile-copyright-file-header",
-        match: /(^|\/)Dockerfile$/i,
-        handler: file => {
-            const content = readFile(file);
-            if (!/#[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content) ||
-                !/#[\s\S]*Licensed under the MIT License./i.test(content)) {
-                return 'Dockerfile missing copyright header';
-            }
-        },
-        resolver: file => {
-            const prevContent = readFile(file);
-
-            // prepend copyright header to existing content
-            const newContent = '# ' + copyrightText.replace(newline, newline + '# ') + newline + newline + prevContent;
-
-            writeFile(file, newContent);
-
-            return { resolved: true };
-        }
-    },
-    {
-        name: "js-ts-copyright-file-header",
-        match: /(^|\/)[^\/]+\.[jt]sx?$/i,
-        handler: file => {
-            const content = readFile(file);
-            if (!/(\/\/|[\s\S]*\*)[\s\S]*Copyright \(c\) Microsoft Corporation. All rights reserved./i.test(content)
-                || !/(\/\/|[\s\S]*\*)[\s\S]*Licensed under the MIT License./i.test(content)) {
-                return 'JavaScript/TypeScript file missing copyright header';
-            }
-        },
-        resolver: file => {
-            const prevContent = readFile(file);
-
-            // prepend copyright header to existing content
-            const separator = prevContent.startsWith('\r') || prevContent.startsWith('\n') ? newline : newline + newline;
-            const newContent = '/*!' + newline + ' * ' + copyrightText.replace(newline, newline + ' * ') + newline + ' */' + separator + prevContent;
-
-            writeFile(file, newContent);
-
-            return { resolved: true };
-        }
-    },
-    {
-        name: "npm-package-author-license-sort",
-        match: /(^|\/)package\.json/i,
-        handler: file => {
-            let json;
-            try {
-                json = JSON.parse(readFile(file));
-            } catch (err) {
-                return 'Error parsing JSON file: ' + file;
-            }
-
-            const missing = [];
-
-            if (json.author !== author) {
-                missing.push(`${author} author entry`);
-            }
-
-            if (json.license !== licenseId) {
-                missing.push(`${licenseId} license entry`);
-            }
-
-            const ret = [];
-            if (missing.length > 0) {
-                ret.push(`missing ${missing.join(' and ')}`);
-            }
-
-            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
-                ret.push(`not sorted`);
-            }
-
-            if (ret.length > 0) {
-                return `Package.json ${ret.join(', ')}`;
-            }
-        },
-        resolver: file => {
-            let json;
-            try {
-                json = JSON.parse(readFile(file));
-            } catch (err) {
-                return { resolved: false, message: 'Error parsing JSON file: ' + file };
-            }
-
-            let resolved = true;
-
-            if (!json.author) {
-                json.author = author;
-            } else if (json.author !== author) {
-                resolved = false;
-            }
-
-            if (!json.license) {
-                json.license = licenseId;
-            } else if (json.license !== licenseId) {
-                resolved = false;
-            }
-
-            writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
-
-            return { resolved: resolved };
-        }
-    },
-    {
-        name: "dockerfile-packages",
-        match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
-        handler: file => {
-            // strip server path since all paths are relative to server directory
-            const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
-
-            const dockerfileContents = getOrAddLocalMap(
-                "dockerfileContents",
-                () => fs.readFileSync(serverDockerfilePath),
-            );
-
-            if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
-                return "Routerlicious Dockerfile missing COPY command for this package";
-            }
-        },
-        resolver: file => {
-            const dockerfileCopyText = getDockerfileCopyText(file);
-
-            // add to Dockerfile
-            let dockerfileContents = readFile(serverDockerfilePath);
-
-            if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
-                // regex basically find the last of 3 or more consecutive COPY package lines
-                const endOfCopyLinesRegex = /(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
-                const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
-                const localNewline = regexMatch.groups!.newline;
-                let insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
-
-                dockerfileContents = dockerfileContents.substring(0, insertIndex)
-                    + dockerfileCopyText + localNewline
-                    + dockerfileContents.substring(insertIndex, dockerfileContents.length);
-
-                writeFile(serverDockerfilePath, dockerfileContents);
-            }
-
-            return { resolved: true };
-        }
-    }
+    htmlCopyrightFileHeaderHandler,
+    dockerfileCopyrightFileHeaderHandler,
+    scriptfileCopyrightFileHeaderHandler,
+    npmPackageContentsHandler,
+    dockerfilePackageHandler,
 ];
 
 // route files to their handlers by regex testing their full paths
