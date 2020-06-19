@@ -15,7 +15,7 @@ import {
     LocalCodeLoader,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
