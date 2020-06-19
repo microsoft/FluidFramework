@@ -212,20 +212,21 @@ export class SharedMatrix<T extends Serializable = Serializable>
         message: any,
     ) {
         // Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
-        // and the SharedMatrix's cell data.  Instead, we externally bump each MergeTree's 'localSeq' counter
-        // for SharedMatrix ops it's not aware of to keep them synchronized.  (For example, when sending a col
-        // op, we bump the row's localSeq counter)
-        //
-        // Note that the MergeTree bumps it's internal localSeq even when local, therefore we must do this for
-        // the 'oppositeVector' as well.
+        // and the SharedMatrix's cell data.  Instead, we externally advance each MergeTree's 'localSeq' counter
+        // for each submitted op it not aware of to keep them synchronized.
+        const localSeq = currentVector.getCollabWindow().localSeq;
         const oppositeWindow = oppositeVector.getCollabWindow();
 
-        oppositeWindow.localSeq = Math.max(
-            oppositeWindow.localSeq,
-            currentVector.getCollabWindow().localSeq);
+        // Normally, creating the message will have bumped the current vector's localSeq, making it exactly
+        // 1 greater than the opposite vector's localSeq.  However, in the case that the op was regenerated for
+        // resubmission, the localSeq of the vectors will already be equal.
 
-        // If the SharedMatrix is local, it will by synchronized via a Snapshot when initially connected.
-        // Do not queue a message or track the pending op, as there will never be an ACK, etc.
+        assert(((localSeq - oppositeWindow.localSeq) >>> 0) <= 1);  // Coercion to unsigned vets delta is exactly 0 or 1
+
+        oppositeWindow.localSeq = localSeq;
+
+        // If the SharedMatrix is local, it's initial state will be submitted via a Snapshot when initially
+        // connected.  Do not queue a message or track the pending op, as there will never be an ACK, etc.
         if (!this.isLocal()) {
             // Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
             (message).target = dimension;
@@ -355,19 +356,20 @@ export class SharedMatrix<T extends Serializable = Serializable>
                 const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
-                if (this.isCurrentlyPendingLocalWrite(rowHandle, colHandle, localSeq)) {
+                // If there are more pending local writes to the same row/col handle, it is important
+                // to skip resubmitting this op since it is possible the row/col handle has been recycled
+                // and now refers to a different position than when this op was originally submitted.
+                if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
                     const row = this.rows.getPositionForResubmit(rowHandle, localSeq);
                     const col = this.cols.getPositionForResubmit(colHandle, localSeq);
 
-                    if (row >= 0 && col >= 0) {
-                        this.setCellCore(
-                            row,
-                            col,
-                            setOp.value,
-                            rowHandle,
-                            colHandle,
-                        );
-                    }
+                    this.setCellCore(
+                        row,
+                        col,
+                        setOp.value,
+                        rowHandle,
+                        colHandle,
+                    );
                 }
                 break;
             }
@@ -415,7 +417,7 @@ export class SharedMatrix<T extends Serializable = Serializable>
 
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
-                    if (this.isCurrentlyPendingLocalWrite(rowHandle, colHandle, localSeq)) {
+                    if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
                         this.pending.setCell(rowHandle, colHandle, undefined);
                     }
                 } else {
@@ -433,6 +435,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
                             assert(rowHandle >= Handle.valid
                                 && colHandle >= Handle.valid);
 
+                            // If there is a pending (unACKed) local write to the same cell, skip the current op
+                            // since it "happened before" the pending write.
                             if (this.pending.getCell(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
@@ -491,7 +495,15 @@ export class SharedMatrix<T extends Serializable = Serializable>
         }
     };
 
-    private isCurrentlyPendingLocalWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
+    /**
+     * Returns true if the latest pending write to the cell indicated by the given row/col handles
+     * matches the given 'localSeq'.
+     *
+     * A return value of `true` indicates that there are no later local operations queued that will
+     * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
+     * with a different value as well as row/col removals that might recycled the given row/col handles.
+     */
+    private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const actualLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
 
@@ -500,8 +512,8 @@ export class SharedMatrix<T extends Serializable = Serializable>
         // 'undefined' or > 'cliSeq'.
         assert(!(actualLocalSeq < localSeq));
 
-        // If this is the most recent write to the cell by the local client, remove our
-        // entry from 'pendingCliSeqs' to resume allowing remote writes.
+        // If this is the most recent write to the cell by the local client, the stored localSeq
+        // will be an exact match for the given 'localSeq'.
         return actualLocalSeq === localSeq;
     }
 

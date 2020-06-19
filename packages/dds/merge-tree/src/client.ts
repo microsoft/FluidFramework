@@ -685,13 +685,16 @@ export class Client {
             more efficient look up of pending segment positions.
         */
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            // If we've found the desired segment, halt the walk.
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
             if (seg === segment) {
                 return false;
             }
 
-            // Otherwise, count the segment if it has been locally inserted and has not been removed
-            // wrt. 'localSeq'.
+            // Otherwise, advance segmentPosition if the segment has been inserted and not removed
+            // with respect to the given 'localSeq'.
+            //
+            // Note that all ACKed / remote ops are applied and we only need concern ourself with
+            // determining if locally pending ops fall before/after the given 'localSeq'.
             if ((seg.localSeq === undefined || seg.localSeq <= localSeq)                // Is inserted
                 && (seg.removedSeq === undefined || seg.localRemovedSeq > localSeq)     // Not removed
             ) {

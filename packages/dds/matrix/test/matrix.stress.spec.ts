@@ -28,6 +28,7 @@ describe("Matrix", () => {
          * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
          */
         const expect = async () => {
+            // Reconnect any disconnected clients before processing pending ops.
             for (let matrixIndex = 0; matrixIndex < runtimes.length; matrixIndex++) {
                 const runtime = runtimes[matrixIndex];
                 if (!runtime.connected) {
@@ -36,9 +37,11 @@ describe("Matrix", () => {
                 }
             }
 
+            // Broadcast and process all pending messages across all matrices.
             trace?.push("await expect();");
             containerRuntimeFactory.processAllMessages();
 
+            // Verify that all matrices have converged on the same final state.
             const matrix0 = matrices[0];
             const actual0 = extract(matrix0);
 
@@ -53,8 +56,13 @@ describe("Matrix", () => {
         };
 
         /**
-         * Performs a stress run using the given parameters.  'syncProbability' is the probability
-         * that the clients will drain their queue of incoming messages and check for convergence.
+         * Performs a stress run using the given parameters.
+         *
+         * 'syncProbability' is the probability that the clients will drain their queue of incoming messages
+         * and check for convergence.
+         *
+         * 'disconnectProbability' is the probability that a client will disconnect, forcing it to regenerate
+         * and resubmit any pending local operations on the next sync.
          *
          * 'seed' is the 32-bit integer used to seed the PRNG.
          */
