@@ -24,7 +24,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluidframwork/test-utils";
+} from "@fluidframework/test-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,

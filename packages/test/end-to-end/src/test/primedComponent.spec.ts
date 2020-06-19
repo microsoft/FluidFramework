@@ -10,7 +10,7 @@ import { IFluidCodeDetails, ILoader } from "@fluidframework/container-definition
 import { Container } from "@fluidframework/container-loader";
 import { ISharedDirectory } from "@fluidframework/map";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluidframwork/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 
 const PrimedType = "@fluidframework/primedComponent";
 

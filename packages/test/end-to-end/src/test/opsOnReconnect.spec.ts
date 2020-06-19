@@ -19,7 +19,7 @@ import {
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluidframwork/test-utils";
+} from "@fluidframework/test-utils";
 
 describe("Ops on Reconnect", () => {
     const id = `fluid-test://localhost/opsOnReconnectTest`;

@@ -18,7 +18,7 @@ import {
 import { TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { LocalCodeLoader } from "@fluidframwork/test-utils";
+import { LocalCodeLoader } from "@fluidframework/test-utils";
 
 describe("Container", () => {
     const id = "fluid-test://localhost/containerTest";

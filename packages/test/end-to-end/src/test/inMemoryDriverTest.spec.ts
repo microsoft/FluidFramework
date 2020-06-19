@@ -19,7 +19,7 @@ import {
     initializeLocalContainer,
     LocalCodeLoader,
     TestFluidComponentFactory,
-} from "@fluidframwork/test-utils";
+} from "@fluidframework/test-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
