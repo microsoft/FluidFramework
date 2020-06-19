@@ -232,7 +232,7 @@ and provide it a div for it to render.
 ```typescript
 switch (response.mimeType) {
     case "fluid/component":
-        // Check if the component is viewable
+        // Check if the component is a view
         const component = response.value as IComponent;
         const view = component.IComponentHTMLView;
         if (!view) {
