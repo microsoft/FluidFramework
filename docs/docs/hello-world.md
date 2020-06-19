@@ -4,7 +4,14 @@ Our Hello World example consists of building a collaborative **Dice Roller**.
 
 ![Image 2](./dice-roller-gif.gif)
 
-## Setup to Follow Along
+---
+
+[[toc]]
+
+---
+
+
+## Setup to follow along
 
 This code walk through mirrors the `yo fluid` generator beginner scaffolding. If
 you want to follow along simply perform the following steps.
@@ -28,7 +35,7 @@ cd helloworld
 code .
 ```
 
-## Directory Structure
+## Directory structure
 
 The generator creates the following folder structure. All of our logic
 lives in the `./src/component.ts` file and this is the file we will spend
@@ -50,7 +57,7 @@ the remainder of the doc understanding.
 └── webpack.config.js              // Webpack configuration
 ```
 
-## Component Code Deep Dive
+## Component code deep dive
 
 Below is the entirety of our newly created HelloWorld component. We will go through it section by section.
 
@@ -82,7 +89,7 @@ const diceValueKey = "diceValue";
 
 This is a variable we will use as the key for storing our dice value later.
 
-### `class` Setup
+### Component `class` setup
 
 ```typescript
 export class HelloWorld extends PrimedComponent implements IComponentHTMLView {
@@ -107,7 +114,7 @@ public get IComponentHTMLView() { return this; }
 To learn more about Fluid `IComponent` interfaces check out
 [Fluid component interfaces](./component-interfaces.md);
 
-### `factory` setup
+### Component `factory` setup
 
 ```typescript
 /**
@@ -130,7 +137,7 @@ new instances.
 The third parameter `[]` is where we would add additional Distributed Data Structure types. In this example we will just
 use the `root` `SharedDirectory`.
 
-### Component Setup
+### Component setup
 
 ```typescript
 /**
@@ -158,7 +165,7 @@ of 4 we could set the initial value to `4`.
 
 :::
 
-### `render`
+### The `render` function
 
 ```typescript
 /**

@@ -19,12 +19,15 @@ import * as ReactDOM from "react-dom";
 export class MountableView implements IComponentMountableView {
     public get IComponentMountableView() { return this; }
 
-    public static canMount(viewProvider: IComponent) {
+    /**
+     * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableViewClass.canMount}
+     */
+    public static canMount(view: IComponent) {
         return (
-            React.isValidElement(viewProvider)
-            || viewProvider.IComponentReactViewable !== undefined
-            || viewProvider.IComponentHTMLView !== undefined
-            || viewProvider.IComponentHTMLVisual !== undefined
+            React.isValidElement(view)
+            || view.IComponentReactViewable !== undefined
+            || view.IComponentHTMLView !== undefined
+            || view.IComponentHTMLVisual !== undefined
         );
     }
 
@@ -46,12 +49,18 @@ export class MountableView implements IComponentMountableView {
      */
     private reactView: JSX.Element | undefined;
 
-    constructor(private readonly viewProvider: IComponent) {
-        if (!MountableView.canMount(this.viewProvider)) {
+    /**
+     * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableViewClass.new}
+     */
+    constructor(private readonly view: IComponent) {
+        if (!MountableView.canMount(this.view)) {
             throw new Error("Unmountable view type");
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableView.mount}
+     */
     public mount(container: HTMLElement) {
         if (this.containerElement !== undefined) {
             throw new Error("Already mounted");
@@ -61,9 +70,9 @@ export class MountableView implements IComponentMountableView {
 
         // Try to get an IComponentHTMLView if we don't have one already.
         if (this.htmlView === undefined) {
-            this.htmlView = this.viewProvider.IComponentHTMLView;
+            this.htmlView = this.view.IComponentHTMLView;
             if (this.htmlView === undefined) {
-                this.htmlView = this.viewProvider.IComponentHTMLVisual?.addView();
+                this.htmlView = this.view.IComponentHTMLVisual?.addView();
             }
         }
         // Render with IComponentHTMLView if possible.
@@ -79,10 +88,10 @@ export class MountableView implements IComponentMountableView {
         // IComponentHTMLVisual temporarily, so that we have the best chance of cross-bundle adaptation.
         // Try to get a React view if we don't have one already.
         if (this.reactView === undefined) {
-            if (React.isValidElement(this.viewProvider)) {
-                this.reactView = this.viewProvider;
+            if (React.isValidElement(this.view)) {
+                this.reactView = this.view;
             } else {
-                this.reactView = this.viewProvider.IComponentReactViewable?.createJSXElement();
+                this.reactView = this.view.IComponentReactViewable?.createJSXElement();
             }
         }
         // Render with React if possible.
@@ -95,6 +104,9 @@ export class MountableView implements IComponentMountableView {
         throw new Error("Failed to mount");
     }
 
+    /**
+     * {@inheritDoc @fluidframework/view-interfaces#IComponentMountableView.unmount}
+     */
     public unmount() {
         // Do nothing if we are already unmounted.
         if (this.containerElement === undefined) {

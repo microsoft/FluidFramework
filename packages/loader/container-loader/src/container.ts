@@ -1338,6 +1338,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+        switch (type) {
+            case MessageType.Operation:
+            case MessageType.RemoteHelp:
+            case MessageType.Summarize:
+            case "attach": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+            case "chunkedOp": // legacy, to be removed with ContainerRuntime's legacyFormat set to false
+                break;
+            default:
+                this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
+                return -1;
+        }
+        return this.submitMessage(type, contents, batch, metadata);
+    }
+
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
@@ -1428,7 +1443,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
+            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: CriticalContainerError) => this.close(error),
@@ -1466,7 +1481,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             (warning: ContainerWarning) => this.raiseContainerWarning(warning),
-            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
+            (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (error?: CriticalContainerError) => this.close(error),

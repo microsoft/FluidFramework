@@ -42,7 +42,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
-import { strongAssert } from "@fluidframework/runtime-utils";
+import { strongAssert, unreachableCase } from "@fluidframework/runtime-utils";
 import { IChannel, IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -60,10 +60,6 @@ export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
     get(name: string): ISharedObjectFactory | undefined;
-}
-
-function assertNeverMessageType(messageType: never): never {
-    throw new Error(`Never: unknown message type: ${messageType}`);
 }
 
 /**
@@ -603,7 +599,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
         }
     }
 

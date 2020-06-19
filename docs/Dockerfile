@@ -1,14 +1,27 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+# To build this docker image, run the following command from the root of the repo
+# docker build -f .\docs\Dockerfile --target docs -t fluid:docs .
+
+# To get content out of the image, use these commands:
+
+# 1. create a temporary writeable image
+# docker create -ti --name dummy fluid:docs bash
+
+# 2. copy out the docs/dist folder
+# docker cp dummy:docs/dist/ docs/
+
+# 3. Remove the temporary image
+# docker rm -f dummy
+
+# rsync docs/dist/ docker/ -rv --delete --exclude '.git' --exclude 'versions'
+
 FROM node:12.16.1-slim AS base
 
-# node-gyp dependencies
+# dependencies
 RUN apt-get update && apt-get install -y \
-        g++ \
         git \
-        make \
-        python \
         yarn
 
 RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
@@ -65,6 +78,10 @@ ARG RELEASE_VERSION
 RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
 # set the environment variable right before running the build
 RUN VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
+
+# We want / to be the working dir when we use the image to extract the built docs
+# Without this the working dir is /docs, which doesn't match the local environment
+WORKDIR /
 
 #############################
 FROM docs AS docpublish

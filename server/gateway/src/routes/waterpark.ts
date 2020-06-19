@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@fluidframework/container-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { extractPackageIdentifierDetails, SemVerCdnCodeResolver } from "@fluidframework/web-code-loader";
@@ -19,10 +18,8 @@ import { IAlfred } from "../interfaces";
 import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkgJson = require("../../package.json") as IPackage;
 const defaultChaincode =
-    `@fluidframework/external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
+    `@fluidframework/external-component-loader@^0.20.0-0`;
 
 export function create(
     config: Provider,

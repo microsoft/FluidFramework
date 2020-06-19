@@ -110,6 +110,7 @@ export class DocumentDeltaEventManager {
      */
     public async pauseProcessing(...docs: IDocumentDeltaEvent[]) {
         await this.pauseAndValidateDocs(...docs);
+        this.isNormalProcessingPaused = true;
     }
 
     /**
@@ -123,7 +124,6 @@ export class DocumentDeltaEventManager {
 
     private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
         await Promise.all(Array.from(this.documents).map(DocumentDeltaEventManager.pauseDocument));
-        this.isNormalProcessingPaused = true;
 
         if (docs && docs.length > 0) {
             docs.forEach((doc) => {

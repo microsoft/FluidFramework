@@ -16,6 +16,7 @@ trigger:
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/publish-npm-package.yml
 
 pr:
   branches:

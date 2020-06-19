@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { merge } from "lodash";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IServiceConfiguration } from "@fluidframework/protocol-definitions";
 import {
@@ -180,7 +181,7 @@ export class LocalOrderer implements IOrderer {
         scribeContext: IContext = new LocalContext(logger),
         deliContext: IContext = new LocalContext(logger),
         clientTimeout: number = ClientSequenceTimeout,
-        serviceConfiguration = DefaultServiceConfiguration,
+        serviceConfiguration: Partial<IServiceConfiguration> = {},
         scribeNackOnSummarizeException = false,
     ) {
         const documentDetails = await setup.documentP();
@@ -202,7 +203,7 @@ export class LocalOrderer implements IOrderer {
             scribeContext,
             deliContext,
             clientTimeout,
-            serviceConfiguration,
+            merge({}, DefaultServiceConfiguration, serviceConfiguration),
             scribeNackOnSummarizeException);
     }
 

@@ -43,212 +43,232 @@ parameters:
   type: boolean
   default: false
 
+- name: namespace
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
+  skipComponentGovernanceDetection: true
 
-jobs:
-  # Job - Build
-  - job: Build
-    pool: ${{ parameters.poolBuild }}
-    variables:
-    - name: testCoverage
-      value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
-    steps:
-    # Setup
-    - checkout: self
-      clean: true
-      fetchDepth: 1
-      lfs: ${{ parameters.checkoutSubmodules }}
-      submodules: ${{ parameters.checkoutSubmodules }}
+stages:
+  - stage: build
+    displayName: Build Stage
+    jobs:
+      # Job - Build
+      - job: Build
+        pool: ${{ parameters.poolBuild }}
+        variables:
+        - name: testCoverage
+          value: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+        steps:
+        # Setup
+        - checkout: self
+          clean: true
+          fetchDepth: 1
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
 
-    - task: Bash@3
-      displayName: Parameters
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Show all task group conditions
+        - task: Bash@3
+          displayName: Parameters
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Show all task group conditions
 
-          echo Build=${{ parameters.taskBuild }}
-          echo Lint=${{ parameters.taskLint }}
-          echo Test=${{ parameters.taskTest }}
-          echo BuildDoc=${{ parameters.taskBuildDocs }}
-          echo TestCoverage=$(testCoverage)
+              echo Build=${{ parameters.taskBuild }}
+              echo Lint=${{ parameters.taskLint }}
+              echo Test=${{ parameters.taskTest }}
+              echo BuildDoc=${{ parameters.taskBuildDocs }}
+              echo TestCoverage=$(testCoverage)
 
-    - task: UseNode@1
-      displayName: Use Node 12.x
-      inputs: 
-        version: 12.x
+        - task: UseNode@1
+          displayName: Use Node 12.x
+          inputs: 
+            version: 12.x
 
-    - task: Bash@3
-      displayName: Strip MIT License
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
-          perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
-          git status
+        - task: Bash@3
+          displayName: Strip MIT License
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              sed -i '/^.*Licensed under the MIT License.$/d' `find -type f | grep -v '^\.\/\.'`
+              perl -i -0pe 's/,\n.*"license": "MIT"//g' `find | grep package.json`
+              git status
 
-    # Install
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --unsafe-perm'
-        customRegistry: 'useFeed'
-        customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
-
-    # Set version
-    - task: Bash@3
-      displayName: Set Package Version
-      env:
-        VERSION_BUILDBRANCH: $(Build.SourceBranch)
-        VERSION_BUILDNUMBER: $(Build.BuildNumber)
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          # expect lerna.json and package.json be in the current working directory
-
-          echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
-          echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-
-          version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
-          echo COMPUTED_VERSION=$version
-
-          if [ "$version" == '' ]; then
-            exit -1
-          fi
-
-          if [ -f "lerna.json" ]; then
-            npx lerna version $version --no-git-tag-version --no-push --yes
-          else
-            npm version --no-git-tag-version $version -f --allow-same-version
-          fi
-
-    # Build
-    - ${{ if ne(parameters.taskBuild, 'false') }}:
-      - task: Npm@1
-        displayName: npm run ${{ parameters.taskBuild }}
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.buildDirectory }}
-          customCommand: 'run ${{ parameters.taskBuild }}'
-
-    # Lint
-    - ${{ if ne(parameters.taskLint, false) }}:
-      - task: Npm@1
-        displayName: npm run lint
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.buildDirectory }}
-          customCommand: 'run lint'
-
-    # Test
-    - ${{ if ne(parameters.taskTest, 'false') }}:
-      # Test - No coverage
-      - ${{ if ne(variables['testCoverage'], true) }}:
+        # Install
         - task: Npm@1
-          displayName: npm run ${{ parameters.taskTest }}
+          displayName: npm ci
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ${{ parameters.taskTest }}'
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useFeed'
+            customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
 
-      # Test - With coverage
-      - ${{ if eq(variables['testCoverage'], true) }}:
-        - task: Npm@1
-          displayName: npm run ci:test:coverage
+        # Set version
+        - task: Bash@3
+          displayName: Set Package Version
+          env:
+            VERSION_BUILDBRANCH: $(Build.SourceBranch)
+            VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ci:test:coverage'
-        - task: PublishCodeCoverageResults@1
-          displayName: Publish Code Coverage
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              # expect lerna.json and package.json be in the current working directory
+
+              echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
+              echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+
+              version=`node $(Build.SourcesDirectory)/tools/build-server-resources/build-version.js`
+              echo COMPUTED_VERSION=$version
+
+              if [ "$version" == '' ]; then
+                exit -1
+              fi
+
+              if [ -f "lerna.json" ]; then
+                npx lerna version $version --no-git-tag-version --no-push --yes
+              else
+                npm version --no-git-tag-version $version -f --allow-same-version
+              fi
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Lint
+        - ${{ if ne(parameters.taskLint, false) }}:
+          - task: Npm@1
+            displayName: npm run lint
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run lint'
+
+        # Test
+        - ${{ if ne(parameters.taskTest, 'false') }}:
+          # Test - No coverage
+          - ${{ if ne(variables['testCoverage'], true) }}:
+            - task: Npm@1
+              displayName: npm run ${{ parameters.taskTest }}
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ${{ parameters.taskTest }}'
+
+          # Test - With coverage
+          - ${{ if eq(variables['testCoverage'], true) }}:
+            - task: Npm@1
+              displayName: npm run ci:test:coverage
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ci:test:coverage'
+            - task: PublishCodeCoverageResults@1
+              displayName: Publish Code Coverage
+              inputs:
+                codeCoverageTool: Cobertura
+                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
+                reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
+              condition: succeededOrFailed()
+
+          # Test - Upload results
+          - task: PublishTestResults@2
+            displayName: Publish Test Results
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/*junit-report.xml'
+              searchFolder: ${{ parameters.buildDirectory }}/nyc
+              mergeTestResults: true
+            condition: succeededOrFailed()
+
+        # Pack
+        - task: Bash@3
+          displayName: npm pack
           inputs:
-            codeCoverageTool: Cobertura
-            summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
-            reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
-          condition: succeededOrFailed()
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              mkdir $(Build.ArtifactStagingDirectory)/pack/
+              if [ -f "lerna.json" ]; then
+                npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+                npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+              else
+                npm pack --unsafe-perm
+                mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+              fi
 
-      # Test - Upload results
-      - task: PublishTestResults@2
-        displayName: Publish Test Results
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*junit-report.xml'
-          searchFolder: ${{ parameters.buildDirectory }}/nyc
-          mergeTestResults: true
-        condition: succeededOrFailed()
+        - task: PublishBuildArtifacts@1
+          displayName: Publish Artifact - pack
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+            ArtifactName: 'pack'
+            publishLocation: 'Container'
 
-    # Pack
-    - task: Bash@3
-      displayName: npm pack
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          mkdir $(Build.ArtifactStagingDirectory)/pack/
-          if [ -f "lerna.json" ]; then
-            npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-            npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-          else
-            npm pack --unsafe-perm
-            mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
-          fi
+        # Docs
+        - ${{ if ne(parameters.taskBuildDocs, false) }}:
+          - task: Npm@1
+            displayName: npm run build:docs
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run build:docs'
 
-    - task: CopyFiles@2
-      displayName: Copy GenPublish script
-      inputs:
-        SourceFolder: $(Build.SourcesDirectory)/tools/build-server-resources
-        TargetFolder: $(Build.ArtifactStagingDirectory)/pack
-        Contents: gen_publish.sh
-        
-    - task: PublishBuildArtifacts@1
-      displayName: Publish Artifact - pack
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-        ArtifactName: 'pack'
-        publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - _api-extractor-temp
+            inputs:
+              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              ArtifactName: '_api-extractor-temp'
+              publishLocation: 'Container'
 
-    # Docs
-    - ${{ if ne(parameters.taskBuildDocs, false) }}:
-      - task: Npm@1
-        displayName: npm run build:docs
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.buildDirectory }}
-          customCommand: 'run build:docs'
+      # Job - Component detection
+      - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+        - job: CG
+          displayName: Component Detection
+          pool: ${{ parameters.poolCG }}
+          steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            lfs: false
+            submodules: false
 
-      - task: PublishBuildArtifacts@1
-        displayName: Publish Artifact - _api-extractor-temp
-        inputs:
-          PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-          ArtifactName: '_api-extractor-temp'
-          publishLocation: 'Container'
+          - ${{ parameters.preCG }}
 
-  # Job - Component detection
+          - task: ComponentGovernanceComponentDetection@0
+            displayName: Component Detection
+            inputs:
+              sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
+              verbosity: Verbose
+              scanType: Register
+              alertWarningLevel: High
+
+  # Publish stage
   - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-    - job: CG
-      displayName: Component Detection
-      pool: ${{ parameters.poolCG }}
-      steps:
-      - checkout: self
-        clean: true
-        fetchDepth: 1
-        lfs: false
-        submodules: false
+    - stage: publish
+      dependsOn: build
+      displayName: Publish Stage
+      jobs:
+      - template: publish-npm-package.yml
+        parameters:
+          namespace: ${{ parameters.namespace }}
+          feeds:
+          - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+            environment: fluid-feed
+            internal: true
+          # only publish release bits
+          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+            - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+              environment: office-feed
+              customEndPoint: Office Packages
+              internal: false
 
-      - ${{ parameters.preCG }}
-
-      - task: ComponentGovernanceComponentDetection@0
-        displayName: Component Detection
-        inputs:
-          sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-          verbosity: Verbose
-          scanType: Register
-          alertWarningLevel: High
