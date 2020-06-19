@@ -25,7 +25,6 @@ import {
     CriticalContainerError,
     ContainerWarning,
     IThrottlingWarning,
-    ContainerState,
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,
@@ -126,6 +125,12 @@ export enum ConnectionState {
     Connected,
 }
 
+enum ContainerAttachState {
+    Detached = "Detached",
+    Attaching = "Attaching",
+    Attached = "Attached",
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -222,7 +227,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    private attachmentState = ContainerState.Detached;
+    private attachState = ContainerAttachState.Detached;
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -395,7 +400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             {
                 docId: () => this.id,
-                isContainerAttached: () => this.attached,
+                containerAttachState: () => this.attachState,
             });
 
         // Prefix all events in this file with container-loader
@@ -462,7 +467,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public isLocal(): boolean {
-        return this.attachmentState === ContainerState.Detached;
+        return this.attachState === ContainerAttachState.Detached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -474,7 +479,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.deltaManager.inbound.length);
 
         // Set the state as attaching as we are starting the process of attaching container.
-        this.attachmentState = ContainerState.Attaching;
+        this.attachState = ContainerAttachState.Attaching;
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const appSummary: ISummaryTree = this.context.createSummary();
@@ -516,7 +521,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // This we can probably just pass the storage service to the blob manager - although ideally
             // there just isn't a blob manager
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-            this.attachmentState = ContainerState.Attached;
+            this.attachState = ContainerAttachState.Attached;
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -872,7 +877,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.storageService = await this.getDocumentStorageService();
-        this.attachmentState = ContainerState.Attached;
+        this.attachState = ContainerAttachState.Attached;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
