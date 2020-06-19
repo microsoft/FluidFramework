@@ -1,4 +1,7 @@
 import { EOL as newline } from "os";
+import fs from "fs";
+import replace from "replace-in-file";
+import path from "path";
 import sortPackageJson from "sort-package-json";
 import {
   Handler,
@@ -31,10 +34,37 @@ function packageShouldNotBePrivate(name: string): boolean {
         name.startsWith("@fluidframework"));
 }
 
+type IReadmeInfo = {
+    exists: false;
+    filePath: string;
+} | {
+    exists: true;
+    filePath: string;
+    title: string;
+}
+
+function getReadmeInfo(dir: string): IReadmeInfo {
+    const filePath = path.join(dir, "README.md");
+    if (!fs.existsSync(filePath)) {
+        return { exists: false, filePath };
+    }
+
+    const readme = readFile(filePath);
+    const lines = readme.split(/\r?\n/);
+    const titleMatches = /^# (.+)$/.exec(lines[0]); // e.g. # @fluidframework/build-tools
+    const title = titleMatches?.[1] ?? "";
+    return {
+        exists: true,
+        filePath,
+        title,
+    };
+}
+
+const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
     {
         name: "npm-package-metadata-and-sorting",
-        match: /(^|\/)package\.json/i,
+        match,
         handler: file => {
             let json;
             try {
@@ -101,11 +131,11 @@ export const handlers: Handler[] = [
             writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
             return { resolved: resolved };
-        }
+        },
     },
     {
         name: "npm-private-packages",
-        match: /(^|\/)package\.json/i,
+        match,
         handler: file => {
             let json;
             try {
@@ -136,6 +166,59 @@ export const handlers: Handler[] = [
             if (ret.length > 0) {
                 return `Package.json ${ret.join(', ')}`;
             }
+        },
+    },
+    {
+        name: "npm-package-readmes",
+        match,
+        handler: file => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return 'Error parsing JSON file: ' + file;
+            }
+
+            const packageName = json.name;
+            const packageDir = path.dirname(file);
+            const readmeInfo: IReadmeInfo = getReadmeInfo(packageDir);
+
+            if (!readmeInfo.exists) {
+                return (`Package directory ${packageDir} contains no README.md`);
+            }
+            else if (readmeInfo.title !== packageName) {
+                // These packages don't follow the convention of starting the readme with "# PackageName"
+                const skip = ["root", "fluid-docs"].some((skipMe) => packageName === skipMe);
+                if (!skip) {
+                    return (`Readme in package directory ${packageDir} should begin with heading "${json.name}"`);
+                }
+            }
+        },
+        resolver: file => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return { resolved: false, message: 'Error parsing JSON file: ' + file };
+            }
+
+            const packageName = json.name;
+            const packageDir = path.dirname(file);
+            const readmeInfo: IReadmeInfo = getReadmeInfo(packageDir);
+            const expectedTitle = `# ${json.name}`;
+
+            if (!readmeInfo.exists) {
+                writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
+            }
+            else if (readmeInfo.title !== packageName) {
+                replace.sync({
+                    files: readmeInfo.filePath,
+                    from: /^(.*)/,
+                    to: expectedTitle,
+                });
+            }
+
+            return { resolved: true };
         },
     },
 ];
