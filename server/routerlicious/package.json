@@ -1,6 +1,7 @@
 {
   "name": "root",
   "private": true,
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
