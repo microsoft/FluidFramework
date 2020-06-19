@@ -85,7 +85,7 @@ function routeToHandlers(file: string) {
 }
 
 let lineReader: readline.Interface;
-let relPath = "";
+let pathToGitRoot = "";
 if (program.stdin) {
     // prepare to read standard input line by line
     process.stdin.setEncoding('utf8');
@@ -94,7 +94,7 @@ if (program.stdin) {
         terminal: false
     });
 } else {
-    relPath = child_process.execSync("git rev-parse --show-cdup", { encoding: "utf8" }).trim();
+    pathToGitRoot = child_process.execSync("git rev-parse --show-cdup", { encoding: "utf8" }).trim();
     const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard", "--full-name"]);
     lineReader = readline.createInterface({
         input: p.stdout,
@@ -105,7 +105,7 @@ if (program.stdin) {
 let count = 0;
 let processed = 0;
 lineReader.on('line', line => {
-    const filePath = path.join(relPath, line).trim();
+    const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
     if (pathRegex.test(line) && fs.existsSync(filePath)) {
         count++;
         if (exclusions.every(value => !value.test(line))) {
