@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { TextSegment } from "@fluidframework/merge-tree";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { FlowDocument } from "../src/document";
