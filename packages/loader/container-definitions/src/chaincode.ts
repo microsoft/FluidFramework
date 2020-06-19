@@ -175,12 +175,6 @@ export interface IRuntime extends IDisposable {
     createSummary(): ISummaryTree;
 }
 
-export enum ContainerState {
-    Detached = "Detached",
-    Attaching = "Attaching",
-    Attached = "Attached",
-}
-
 export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
