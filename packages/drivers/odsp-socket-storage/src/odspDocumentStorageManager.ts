@@ -80,6 +80,21 @@ function convertOdspTree(tree: ITree) {
     return gitTree;
 }
 
+// Properties to associate with a snapshot fetch
+interface ObtainSnapshotPerfProps {
+    // Did the snapshot come from the cache or network?
+    method: "cache" | "network"
+}
+
+// An implementation of Promise.race that gives you the winner of the promise race
+async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number, value: T }> {
+    return new Promise((resolve, reject) => {
+        promises.forEach((p, index) => {
+            p.then((v) => resolve({ index, value: v })).catch(reject);
+        });
+    });
+}
+
 export class OdspDocumentStorageService implements IDocumentStorageService {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -323,6 +338,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (refresh) {
                     cachedSnapshot = await this.fetchSnapshot(options, refresh);
                 } else {
+                    const obtainSnapshotEvent = PerformanceEvent.start(this.logger, { eventName: "ObtainSnapshot" });
                     const cachedSnapshotP = this.cache.persistedCache.get(
                         {
                             file: this.fileEntry,
@@ -334,17 +350,33 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(options, refresh);
-                        cachedSnapshot = await Promise.race([cachedSnapshotP, snapshotP]);
+
+                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        cachedSnapshot = promiseRaceWinner.value;
+
                         if (cachedSnapshot === undefined) {
                             cachedSnapshot = await snapshotP;
                         }
+
+                        const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
+                            method: promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network",
+                        };
+                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
+
                         cachedSnapshot = await cachedSnapshotP;
+
+                        const obtainSnapshotPerfProps: ObtainSnapshotPerfProps = {
+                            method: cachedSnapshot !== undefined ? "cache" : "network",
+                        };
+
                         if (cachedSnapshot === undefined) {
                             cachedSnapshot = await this.fetchSnapshot(options, refresh);
                         }
+
+                        obtainSnapshotEvent.end(obtainSnapshotPerfProps);
                     }
                 }
 
