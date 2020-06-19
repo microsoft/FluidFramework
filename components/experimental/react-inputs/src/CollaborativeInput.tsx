@@ -6,7 +6,13 @@ import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
 export interface ICollaborativeInputProps {
+    /**
+     * The SharedString that will store the input value.
+     */
     sharedString: SharedString;
+    /**
+     * Whether spellCheck should be enabled.  Defaults to true.
+     */
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
