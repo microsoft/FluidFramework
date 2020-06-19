@@ -25,6 +25,7 @@ export const handler: Handler = {
     name: "dockerfile-packages",
     match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
     handler: file => {
+        console.log("########################################################");
         // strip server path since all paths are relative to server directory
         const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
 

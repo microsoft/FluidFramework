@@ -3,8 +3,9 @@ import {
   Handler,
   readFile,
   writeFile,
-  copyrightText,
 } from "../common";
+
+const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
 
 export const handlers: Handler[] = [
     {

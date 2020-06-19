@@ -4,13 +4,21 @@ import {
   Handler,
   readFile,
   writeFile,
-  licenseId,
-  author,
 } from "../common";
+
+const licenseId = 'MIT';
+const author = 'Microsoft';
+const repository = 'microsoft/FluidFramework';
+
+function isValidPrivatePackageName(name: string): boolean {
+    return (
+        name === "root" ||
+        name.startsWith("@fluid-internal"));
+}
 
 export const handlers: Handler[] = [
     {
-        name: "npm-package-author-license-sort",
+        name: "npm-package-metadata-and-sorting",
         match: /(^|\/)package\.json/i,
         handler: file => {
             let json;
@@ -30,13 +38,25 @@ export const handlers: Handler[] = [
                 missing.push(`${licenseId} license entry`);
             }
 
+            if (json.repository !== repository) {
+                missing.push(`${repository} repository entry`);
+            }
+
             const ret = [];
             if (missing.length > 0) {
-                ret.push(`missing ${missing.join(' and ')}`);
+                ret.push(`missing or incorrect ${missing.join(' and ')}`);
             }
 
             if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
                 ret.push(`not sorted`);
+            }
+
+            if ((json.private === true) !== isValidPrivatePackageName(json.name)) {
+                ret.push(`package should be marked private iff it's under the @fluid-internal scope`)
+            }
+
+            if (!json.private && Object.keys(json.dependencies ?? {}).some((d) => d.startsWith("@fluid-internal"))) {
+                ret.push(`published package should not depend on an internal package`);
             }
 
             if (ret.length > 0) {
@@ -62,6 +82,12 @@ export const handlers: Handler[] = [
             if (!json.license) {
                 json.license = licenseId;
             } else if (json.license !== licenseId) {
+                resolved = false;
+            }
+
+            if (!json.repository) {
+                json.repository = repository;
+            } else if (json.repository !== repository) {
                 resolved = false;
             }
 

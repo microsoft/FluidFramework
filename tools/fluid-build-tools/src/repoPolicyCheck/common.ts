@@ -20,7 +20,3 @@ export function readFile(file: string) {
 export function writeFile(file: string, data: string) {
   fs.writeFileSync(file, data, { encoding: "utf8" });
 }
-
-export const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
-export const licenseId = 'MIT';
-export const author = 'Microsoft';

@@ -3,6 +3,7 @@
   "version": "0.21.0",
   "private": true,
   "description": "",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/fluidFetch.js",
