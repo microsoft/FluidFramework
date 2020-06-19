@@ -172,7 +172,7 @@ export class WaterPark extends PrimedComponent implements IComponentHTMLView {
         // This is where Spaces would do a lookup for how to get the view and call that.
         // In Waterpark, we'll just assume the handle points to something we can adapt with a ReactViewAdapter.
         if (ReactViewAdapter.canAdapt(component)) {
-            return <ReactViewAdapter component={component} />;
+            return <ReactViewAdapter view={component} />;
         }
 
         return undefined;

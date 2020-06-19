@@ -36,7 +36,7 @@ const createSingleHandleItem = (type: string) => {
 const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHandleItem) => {
     const handle = serializableObject.handle;
     const component = await handle.get();
-    return React.createElement(ReactViewAdapter, { component });
+    return React.createElement(ReactViewAdapter, { view: component });
 };
 
 const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
