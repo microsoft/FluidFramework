@@ -17,17 +17,27 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
+        let contents: { drive: string; item: string; site: string } | undefined;
         if (fluidOfficeServers.includes(server)) {
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            const contents = await initializeFluidOffice(reqUrl);
-            if (!contents) {
+            contents = await initializeFluidOffice(reqUrl);
+        } else if (server === "www.office.com") {
+            const drive = reqUrl.searchParams.get("drive");
+            const item = reqUrl.searchParams.get("item");
+            const site = reqUrl.searchParams.get("siteUrl");
+            if (!drive || !item || !site) {
                 return undefined;
             }
-            const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
-            const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
-            return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
+            contents = { drive, item, site };
+        } else {
+            return undefined;
         }
-        return undefined;
+        if (!contents) {
+            return undefined;
+        }
+        const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+        const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
+        return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
     }
 
     // TODO: Issue-2109 Implement detach container api or put appropriate comment.
