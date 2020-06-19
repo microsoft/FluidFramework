@@ -221,4 +221,32 @@ export const handlers: Handler[] = [
             return { resolved: true };
         },
     },
+    {
+        name: "npm-package-folder-name",
+        match,
+        handler: file => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return 'Error parsing JSON file: ' + file;
+            }
+
+            const packageName = json.name;
+            const packageDir = path.dirname(file);
+            const [, scopedName] = packageName.split("/") as [string, string];
+            const nameWithoutScope = scopedName ?? packageName;
+            const folderName = path.basename(packageDir);
+
+            // We expect the foldername to match the tail of the package name
+            // Full match isn't required for cases where the package name is prefixed with names from earlier in the path
+            if (!nameWithoutScope.toLowerCase().endsWith(folderName.toLowerCase())) {
+                // These packages don't follow the convention of the dir matching the tail of the package name
+                const skip = ["root", "chaincode-loader"].some((skipMe) => packageName === skipMe);
+                if (!skip) {
+                    return `Containing folder ${folderName} for package ${packageName} should be named similarly to the package`;
+                }
+            }
+        },
+    },
 ];
