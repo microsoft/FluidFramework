@@ -52,7 +52,6 @@
   "devDependencies": {
     "@fluid-internal/experimental-creation-driver": "^0.20.2",
     "@fluid-internal/test-loader-utils": "^0.20.2",
-    "@fluid-internal/test-utils": "^0.20.2",
     "@fluidframework/agent-scheduler": "^0.20.2",
     "@fluidframework/aqueduct": "^0.20.2",
     "@fluidframework/base-host": "^0.20.2",
@@ -84,6 +83,7 @@
     "@fluidframework/sequence": "^0.20.2",
     "@fluidframework/server-local-server": "^0.1007.1",
     "@fluidframework/shared-object-base": "^0.20.2",
+    "@fluidframework/test-utils": "^0.20.2",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.17.24",

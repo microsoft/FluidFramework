@@ -10,7 +10,7 @@ import { Container } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager } from "@fluidframework/local-driver";
 import { IAgentScheduler } from "@fluidframework/runtime-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframwork/test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";

@@ -16,7 +16,7 @@ import {
     initializeLocalContainer,
     ITestFluidComponent,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframwork/test-utils";
 
 describe("Batching", () => {
     const id = `fluid-test://localhost/batchingTest`;

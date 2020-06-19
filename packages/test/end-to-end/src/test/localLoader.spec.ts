@@ -19,7 +19,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframwork/test-utils";
 
 const counterKey = "count";
 

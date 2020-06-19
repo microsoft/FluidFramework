@@ -15,7 +15,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframwork/test-utils";
 
 describe("Cell", () => {
     const id = "fluid-test://localhost/cellTest";

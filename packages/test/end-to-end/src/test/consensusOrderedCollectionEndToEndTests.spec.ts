@@ -23,7 +23,7 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-} from "@fluid-internal/test-utils";
+} from "@fluidframwork/test-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
