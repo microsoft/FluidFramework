@@ -2,9 +2,13 @@
 
 ## 0.21 Breaking Changes
 - [Removed `@fluidframework/local-test-utils`](#removed-`@fluidframework/local-test-utils`)
+- [IComponentHTMLVisual deprecated](#IComponentHTMLVisual-deprecated)
 
 ### Removed `@fluidframework/local-test-utils`
 Removed this package so classes like `TestHost` are no longer supported. Please contact us if there were dependencies on this or if any assistance in required to get rid of it.
+
+### IComponentHTMLVisual deprecated
+The `IComponentHTMLVisual` interface is deprecated and will be removed in an upcoming release.  For multiview scenarios, instead use a pattern like the one demonstrated in the sample in /components/experimental/multiview.  This sample demonstrates how to create multiple views for a component.
 
 ## 0.20 Breaking Changes
 - [Value types deprecated on SharedMap and SharedDirectory](#Value-types-deprecated-on-sharedmap-and-shareddirectory)

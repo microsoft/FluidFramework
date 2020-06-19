@@ -10,7 +10,6 @@ import {
     IRequest,
     IResponse,
     IComponentHandle,
-    IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@fluidframework/component-runtime";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -25,7 +24,7 @@ import { IComponentContext, IComponentFactory } from "@fluidframework/runtime-de
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,
@@ -203,7 +202,7 @@ class CodemirrorView implements IComponentHTMLView {
  */
 export class CodeMirrorComponent
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
@@ -213,7 +212,7 @@ export class CodeMirrorComponent
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
@@ -258,9 +257,10 @@ export class CodeMirrorComponent
         this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
-    public addView(scope: IComponent): IComponentHTMLView {
+    public render(elm: HTMLElement): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return new CodemirrorView(this.text!, this.runtime);
+        const codemirrorView = new CodemirrorView(this.text!, this.runtime);
+        codemirrorView.render(elm);
     }
 }
 

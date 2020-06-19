@@ -4,7 +4,7 @@
  */
 
 import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
-import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
@@ -48,7 +48,7 @@ export class WebflowView implements IComponentHTMLView {
         }
     }
 
-    public render(elm: HTMLElement, options: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement): void {
         this.root = template.clone();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
