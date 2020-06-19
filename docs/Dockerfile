@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y \
         git \
         yarn
 
+RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
+
 #############################
 FROM base AS vuepress
 # Use pre-release version of vuepress with a perf fix
@@ -76,6 +78,10 @@ ARG RELEASE_VERSION
 RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
 # set the environment variable right before running the build
 RUN VUEPRESS_BASE=$(cat /root/vuepress_base); npm run build:ci
+
+# We want / to be the working dir when we use the image to extract the built docs
+# Without this the working dir is /docs, which doesn't match the local environment
+WORKDIR /
 
 #############################
 FROM docs AS docpublish
