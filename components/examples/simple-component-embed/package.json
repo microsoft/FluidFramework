@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/simple-component-embed",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "Simple component embed container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -31,13 +31,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/clicker": "^0.20.2",
-    "@fluidframework/aqueduct": "^0.20.2",
-    "@fluidframework/view-interfaces": "^0.20.2"
+    "@fluid-example/clicker": "^0.20.3",
+    "@fluidframework/aqueduct": "^0.20.3",
+    "@fluidframework/view-interfaces": "^0.20.3"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/webpack-component-loader": "^0.20.2",
+    "@fluidframework/webpack-component-loader": "^0.20.3",
     "@types/node": "^10.17.24",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

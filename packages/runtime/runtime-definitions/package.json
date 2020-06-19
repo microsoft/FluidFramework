@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-definitions",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "Fluid Runtime definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
-    "@fluidframework/component-core-interfaces": "^0.20.2",
-    "@fluidframework/container-definitions": "^0.20.2",
-    "@fluidframework/driver-definitions": "^0.20.2",
+    "@fluidframework/component-core-interfaces": "^0.20.3",
+    "@fluidframework/container-definitions": "^0.20.3",
+    "@fluidframework/driver-definitions": "^0.20.3",
     "@fluidframework/protocol-definitions": "^0.1007.1",
     "@types/node": "^10.17.24"
   },

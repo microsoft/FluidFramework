@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/react",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "Base components and hooks for building Fluid React components",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,13 +26,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.20.2",
+    "@fluidframework/aqueduct": "^0.20.3",
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.20.2",
-    "@fluidframework/component-runtime-definitions": "^0.20.2",
-    "@fluidframework/map": "^0.20.2",
-    "@fluidframework/shared-object-base": "^0.20.2",
+    "@fluidframework/component-core-interfaces": "^0.20.3",
+    "@fluidframework/component-runtime-definitions": "^0.20.3",
+    "@fluidframework/map": "^0.20.3",
+    "@fluidframework/shared-object-base": "^0.20.3",
     "react": "^16.10.2"
   },
   "devDependencies": {
