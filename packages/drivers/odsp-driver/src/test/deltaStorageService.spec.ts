@@ -69,16 +69,16 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            return mockFetch(expectedDeltaFeedResponse, async () => {
-                const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
-                assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
+            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
+                return deltaStorageService.get(2, 8);
+            });
+            assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
                 assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                     "First element of feed response has invalid sequence number");
                 assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
                     "Second element of feed response has invalid sequence number");
                 assert.equal(actualDeltaFeedResponse[1].type, "noop",
                     "Second element of feed response has invalid op type");
-            });
         });
     });
 
@@ -119,16 +119,16 @@ describe("DeltaStorageService", () => {
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            return mockFetch(expectedDeltaFeedResponse, async () => {
-                const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
-                assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
-                assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
-                    "First element of feed response has invalid sequence number");
-                assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
-                    "Second element of feed response has invalid sequence number");
-                assert.equal(actualDeltaFeedResponse[1].type, "noop",
-                    "Second element of feed response has invalid op type");
+            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
+                return deltaStorageService.get(2, 8);
             });
+            assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
+            assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
+                "First element of feed response has invalid sequence number");
+            assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
+                "Second element of feed response has invalid sequence number");
+            assert.equal(actualDeltaFeedResponse[1].type, "noop",
+                "Second element of feed response has invalid op type");
         });
     });
 });
