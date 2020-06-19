@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# server-admin pipeline
+# server-gitssh pipeline
 
 name: $(Build.BuildId)
 
@@ -11,7 +11,7 @@ trigger:
     - master
   paths:
     include:
-    - service/gitssh
+    - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml
 
@@ -21,7 +21,7 @@ pr:
     - master
   paths:
     include:
-    - service/gitssh
+    - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml
 

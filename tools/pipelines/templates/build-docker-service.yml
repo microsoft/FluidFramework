@@ -13,6 +13,14 @@ parameters:
   type: boolean
   default: true
 
+- name: lint
+  type: boolean
+  default: false
+
+- name: containerBaseDir
+  type: string
+  default: /home/node/server
+
 trigger: none
 
 variables:
@@ -77,13 +85,21 @@ jobs:
         tags: |
           $(Build.BuildId)
 
+    # Lint
+    - ${{ if eq(parameters.lint, true) }}:
+      - task: Docker@0
+        displayName: npm run lint
+        inputs:
+          action: 'Run a Docker command'
+          customCommand: 'run -t $(containerTag) npm run lint'
+
     # Test
     - ${{ if eq(parameters.test, true) }}:
       - task: Docker@0
         displayName: npm run test
         inputs:
           action: 'Run a Docker command'
-          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:/home/node/server/nyc -t $(containerTag) npm run test'
+          customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(containerTag) npm run test'
         
       - task: PublishTestResults@2
         displayName: Publish Test Results
