@@ -13,7 +13,11 @@ import {
     TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import {
+    ContainerMessageType,
+    isRuntimeMessage,
+    unpackRuntimeMessage,
+} from "@fluidframework/container-runtime";
 import { ComponentMessageType } from "@fluidframework/component-runtime";
 
 const noClientName = "No Client";
@@ -478,8 +482,9 @@ function processOp(
     if (message.type === ContainerMessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
         processComponentAttachOp(attachMessage, dataType);
-    } else if (message.type === MessageType.Operation) {
-        let envelop = message.contents as IEnvelope;
+    } else if (isRuntimeMessage(message)) {
+        const runtimeMessage = unpackRuntimeMessage(message);
+        let envelop = runtimeMessage.contents as IEnvelope;
         // TODO: Legacy?
         if (envelop && typeof envelop === "string") {
             envelop = JSON.parse(envelop);
@@ -497,7 +502,7 @@ function processOp(
                 objectType = objectType.substring(objectTypePrefix.length);
             }
             dataType.set(getObjectId(address, attachMessage.id), objectType);
-        } else if (innerContent.type === MessageType.Operation) {
+        } else if (innerContent.type === ComponentMessageType.ChannelOp) {
             const innerEnvelop = innerContent.content as IEnvelope;
             const innerContent2 = innerEnvelop.contents as {
                 type?: string;

@@ -10,7 +10,7 @@ import { IFluidCodeDetails, IProxyLoaderFactory } from "@fluidframework/containe
 import { Container, Loader } from "@fluidframework/container-loader";
 import { DocumentDeltaEventManager, TestDocumentServiceFactory, TestResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { MessageType, ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ConnectionState } from "@fluidframework/protocol-definitions";
 import { IEnvelope } from "@fluidframework/runtime-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SharedString } from "@fluidframework/sequence";
@@ -20,6 +20,11 @@ import {
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@fluid-internal/test-utils";
+import {
+    ContainerMessageType,
+    isRuntimeMessage,
+    unpackRuntimeMessage,
+} from "@fluidframework/container-runtime";
 
 describe("Ops on Reconnect", () => {
     const id = `fluid-test://localhost/opsOnReconnectTest`;
@@ -95,8 +100,12 @@ describe("Ops on Reconnect", () => {
 
     async function setupSecondContainersComponent(): Promise<ITestFluidComponent> {
         const secondContainer = await createContainer();
-        secondContainer.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === MessageType.Operation) {
+        secondContainer.on("op", (containerMessage: ISequencedDocumentMessage) => {
+            if (!isRuntimeMessage(containerMessage)) {
+                return;
+            }
+            const message = unpackRuntimeMessage(containerMessage);
+            if (message.type === ContainerMessageType.ComponentOp) {
                 const envelope = message.contents as IEnvelope;
                 if (envelope.address !== "_scheduler") {
                     // The client ID of firstContainer should have changed on disconnect.
