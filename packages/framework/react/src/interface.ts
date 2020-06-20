@@ -10,7 +10,7 @@ import {
     IComponent,
 } from "@fluidframework/component-core-interfaces";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { SyncedComponent } from "./syncedComponent";
+import { SyncedComponent } from "./fluidComponent";
 
 /**
  * The combined state contains the fluid and view states and the data props
@@ -219,6 +219,8 @@ export interface IFluidFunctionalComponentViewState
      */
     fluidComponentMap?: FluidComponentMap;
 }
+
+export type IFluidReactState = IFluidFunctionalComponentFluidState & IFluidFunctionalComponentViewState;
 
 export const instanceOfIComponentLoadable = (
     object: any,

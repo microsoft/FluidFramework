@@ -28,7 +28,7 @@ import {
     getFluidState,
     syncState,
 } from "./helpers";
-import { ISyncedStateConfig } from "./syncedComponent";
+import { ISyncedStateConfig } from "./fluidComponent";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,

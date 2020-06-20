@@ -46,7 +46,7 @@ export const syncedStateCallbackListener = <
         isLocal?: boolean
     ) => void,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid: ViewToFluidMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ) => (change: IDirectoryValueChanged, local: boolean) => {
     const currentFluidState = getFluidState(
         syncedStateId,

@@ -22,9 +22,10 @@ import { generateComponentSchema, setComponentSchema, getComponentSchema } from 
 import { IComponentSynced } from "./componentSynced";
 
 export interface ISyncedStateConfig<SV, SF> {
-    fluidToView: FluidToViewMap<SV, SF>;
-    viewToFluid: ViewToFluidMap<SV, SF>;
     syncedStateId: string;
+    defaultViewState: SV;
+    fluidToView: FluidToViewMap<SV, SF>;
+    viewToFluid?: ViewToFluidMap<SV, SF>;
 }
 
 export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
@@ -108,7 +109,7 @@ export abstract class SyncedComponent<
         this.internalSyncedState = SharedMap.create(this.runtime);
         this.root.set("syncedState", this.internalSyncedState.handle);
         for (const stateConfig of this.syncedStateConfig.values()) {
-            const { syncedStateId, fluidToView, viewToFluid } = stateConfig;
+            const { syncedStateId, fluidToView, viewToFluid, defaultViewState } = stateConfig;
             // Add the SharedMap to store the fluid state
             const storedFluidState = SharedMap.create(this.runtime);
             // Add it to the fluid component map so that it will have a listener added to it once
@@ -148,6 +149,7 @@ export abstract class SyncedComponent<
             // Generate our schema and store it, so that we don't need to parse our maps each time
             const componentSchema = generateComponentSchema(
                 this.runtime,
+                defaultViewState,
                 fluidToView,
                 viewToFluid,
             );

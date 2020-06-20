@@ -51,7 +51,7 @@ export async function initializeState<
         isLocal?: boolean
     ) => void,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid: ViewToFluidMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ): Promise<void> {
     state.isInitialized = true;
     state.syncedStateId = syncedStateId;

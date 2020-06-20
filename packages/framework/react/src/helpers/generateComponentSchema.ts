@@ -26,8 +26,9 @@ export function generateComponentSchema<
     SF extends IFluidFunctionalComponentFluidState
 >(
     runtime: IComponentRuntime,
+    defaultViewState: SV,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid: ViewToFluidMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ): IFluidSchema {
     // matching primitives w/ the same key in view and fluid
     // true if needs converter or is component, false if not
@@ -44,9 +45,13 @@ export function generateComponentSchema<
             viewKey,
             viewConverter,
         } = value;
-        const fluidConverter = viewToFluid.get(viewKey);
+        const fluidConverter = viewToFluid?.get(viewKey);
         if (fluidConverter === undefined) {
-            throw Error(`Failed to find fluid converter for key ${viewKey}`);
+            if (defaultViewState[viewKey] !== undefined && typeof (defaultViewState[viewKey]) !== type) {
+                throw Error(`Failed to find fluid converter for key ${viewKey}`);
+            } else {
+                break;
+            }
         }
         if (type === fluidConverter.type) {
             fluidMatchingMap.set(fluidStateKey as string, false);
@@ -57,26 +62,28 @@ export function generateComponentSchema<
         }
     }
 
-    for (const viewStateKey of viewToFluid.keys()) {
-        const value = viewToFluid.get(viewStateKey);
-        if (!value) {
-            throw Error("Cannot find viewToFluid value");
-        }
-        const {
-            type,
-            fluidKey,
-            fluidConverter,
-        } = value;
-        const viewConverter = fluidToView.get(fluidKey);
-        if (viewConverter === undefined) {
-            throw Error(`Failed to find view converter for key ${fluidKey}`);
-        }
-        if (type === viewConverter.type) {
-            viewMatchingMap.set(viewStateKey as string, false);
-        } else if (fluidConverter !== undefined) {
-            viewMatchingMap.set(viewStateKey as string, true);
-        } else {
-            throw Error(`Failed to find fluid converter for view key ${viewStateKey}`);
+    if (viewToFluid !== undefined) {
+        for (const viewStateKey of viewToFluid.keys()) {
+            const value = viewToFluid.get(viewStateKey);
+            if (!value) {
+                throw Error("Cannot find viewToFluid value");
+            }
+            const {
+                type,
+                fluidKey,
+                fluidConverter,
+            } = value;
+            const viewConverter = fluidToView.get(fluidKey);
+            if (viewConverter === undefined) {
+                throw Error(`Failed to find view converter for key ${fluidKey}`);
+            }
+            if (type === viewConverter.type) {
+                viewMatchingMap.set(viewStateKey as string, false);
+            } else if (fluidConverter !== undefined) {
+                viewMatchingMap.set(viewStateKey as string, true);
+            } else {
+                throw Error(`Failed to find fluid converter for view key ${viewStateKey}`);
+            }
         }
     }
 

@@ -7,9 +7,8 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    FluidReactComponent,
-    IFluidFunctionalComponentFluidState,
-    IFluidFunctionalComponentViewState,
+    SimpleReactComponent,
+    IFluidReactState,
     FluidToViewMap,
     SyncedComponent,
     ViewToFluidMap,
@@ -35,6 +34,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
                 syncedStateId: "clicker",
                 fluidToView: this.fluidToView,
                 viewToFluid: this.viewToFluid,
+                defaultViewState: {},
             },
         );
     }
@@ -61,7 +61,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
     // We also mark the "incremented" event as we want to update the React state when the counter
     // is incremented to display the new value
     // We also establish the relationship that "counter" in our Fluid state maps to "counter" in our React state
-    private readonly fluidToView: FluidToViewMap<CounterViewState, CounterFluidState> = new Map([
+    private readonly fluidToView: FluidToViewMap<CounterState, CounterState> = new Map([
         [
             "counter", {
                 type: SharedCounter.name,
@@ -72,7 +72,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
         ],
     ]);
 
-    private readonly viewToFluid: ViewToFluidMap<CounterViewState, CounterFluidState> = new Map([
+    private readonly viewToFluid: ViewToFluidMap<CounterState, CounterState> = new Map([
         [
             "counter", {
                 type: SharedCounter.name,
@@ -84,17 +84,13 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
 
 // ----- REACT STUFF -----
 
-interface CounterState {
+interface CounterState extends IFluidReactState {
     counter?: SharedCounter;
 }
 
-type CounterViewState = IFluidFunctionalComponentViewState & CounterState;
-type CounterFluidState = IFluidFunctionalComponentFluidState & CounterState;
-
-class CounterReactView extends FluidReactComponent<CounterViewState, CounterFluidState> {
+class CounterReactView extends SimpleReactComponent<CounterState> {
     constructor(props) {
         super(props);
-        this.state = {};
     }
 
     render() {

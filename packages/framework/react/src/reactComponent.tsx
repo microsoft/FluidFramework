@@ -40,6 +40,7 @@ export abstract class FluidReactComponent<SV extends IFluidFunctionalComponentVi
         this._syncedStateId = syncedStateId;
         this._syncedState = syncedComponent.syncedState;
         this._dataProps = syncedComponent.dataProps;
+        this.state = config.defaultViewState;
     }
 
     public async componentDidMount() {

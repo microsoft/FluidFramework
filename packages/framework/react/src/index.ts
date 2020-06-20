@@ -4,8 +4,9 @@
  */
 
 export * from "./reactComponent";
+export * from "./simpleReactComponent";
 export * from "./useStateFluid";
 export * from "./useReducerFluid";
 export * from "./createContextFluid";
 export * from "./interface";
-export * from "./syncedComponent";
+export * from "./fluidComponent";

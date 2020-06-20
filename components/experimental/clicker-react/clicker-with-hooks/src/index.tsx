@@ -212,6 +212,7 @@ export class ClickerWithHooks extends SyncedComponent
                 syncedStateId: "counter-functional",
                 fluidToView: this.functionalFluidToView,
                 viewToFluid: this.functionalViewToFluid,
+                defaultViewState: {},
             },
         );
 

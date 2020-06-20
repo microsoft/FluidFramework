@@ -51,7 +51,7 @@ export function syncState<
     ) => void,
     fluidComponentMap: FluidComponentMap,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid: ViewToFluidMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ) {
     // Use the provided fluid state if it is available, or use the one fetched from the synced state
     const currentFluidState = getFluidState(

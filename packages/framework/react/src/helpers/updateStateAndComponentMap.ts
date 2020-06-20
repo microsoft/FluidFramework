@@ -48,7 +48,7 @@ export const updateStateAndComponentMap = async <
     setState: (newState: SV, isSyncedStateUpdate?: boolean) => void,
     syncedStateCallback: (change: IDirectoryValueChanged, local: boolean) => void,
     fluidToView: FluidToViewMap<SV, SF>,
-    viewToFluid: ViewToFluidMap<SV, SF>,
+    viewToFluid?: ViewToFluidMap<SV, SF>,
 ) =>
     asyncForEach(
         newHandleList,
