@@ -86,12 +86,12 @@ interface ObtainSnapshotPerfProps {
 }
 
 // An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{index: number, value: T}> {
+async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number, value: T }> {
     return new Promise((resolve, reject) => {
-      promises.forEach((p, index) => {
-        p.then((v) => resolve({ index, value: v })).catch(reject);
+        promises.forEach((p, index) => {
+            p.then((v) => resolve({ index, value: v })).catch(reject);
+        });
     });
-});
 }
 
 export class OdspDocumentStorageService implements IDocumentStorageService {

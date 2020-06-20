@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { initializeLocalContainer, LocalCodeLoader } from "@fluid-internal/test-utils";
+import { initializeLocalContainer, LocalCodeLoader } from "@fluidframework/test-utils";
 import { PrimedComponent, PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { UpgradeManager } from "@fluidframework/base-host";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";

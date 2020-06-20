@@ -249,6 +249,9 @@ export class LocalValueMaker {
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
+            if (serializable.type === "counter") {
+                console.error("The Counter value type has been deprecated. Please use the SharedCounter DDS instead.");
+            }
             const valueType = this.valueTypes.get(serializable.type);
 
             serializable.value = parseHandles(
