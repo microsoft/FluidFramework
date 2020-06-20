@@ -1339,7 +1339,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
-        switch (type) {
+        const outboundMessageType: string = type;
+        switch (outboundMessageType) {
             case MessageType.Operation:
             case MessageType.RemoteHelp:
             case MessageType.Summarize:
