@@ -16,8 +16,6 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
-    "debug:package-audit": "node --inspect-brk dist/packageAudit/packageAudit.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../.. && git ls-files -co --exclude-standard --full-name | node tools/fluid-build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -s",
@@ -41,6 +39,7 @@
     "@types/lodash.isequal": "^4.5.5",
     "@types/node": "^11.9.4",
     "@types/rimraf": "^2.0.3",
-    "@types/semver": "^7.1.0"
+    "@types/semver": "^7.1.0",
+    "replace-in-file": "^6.0.0"
   }
 }
