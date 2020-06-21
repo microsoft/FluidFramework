@@ -43,7 +43,7 @@ export class Clicker extends SyncedComponent {
 }
 
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    "clicker-counter",
+    "clicker-react-impure",
     Clicker,
     [SharedCounter.getFactory()],
     {},

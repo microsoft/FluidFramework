@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("clickerReactNonunified", () => {
+describe("clickerReactImpure", () => {
     const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
             const clickerElements = document.getElementsByClassName("value");
