@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("clickerCommon", () => {
+describe("clickerContext", () => {
 
     beforeAll(async () => {
         // Wait for the page to load first before running any tests

@@ -1,12 +1,12 @@
 # clicker-react
 
-**Clicker-React** contains five different Clicker Fluid components that use the new experimental Fluid React component and hooks. These can be found in the @fluidframeworks/react package.
+**Clicker-React** contains six different Clicker Fluid components that use the new experimental Fluid React component and hooks. These can be found in the @fluidframeworks/react package.
 
 They all achieve the same end result, but use different extensions of concepts that should be familiar to any React developer.
 
 1) The simplest component in this folder, and the best place to start. is **clicker-simple-react**. It has no dependencies to any other packages in this folder, and serves as an example of the simplest component you can build that still has full React functionality, but now has a synced state instead of only a local one.
 
-Clicker here is a UnifiedFluidReactComponent, an extension of FluidReactComponent and React.Component. The React state is now powered using a synced Fluid SharedMap. It allows you to use synced state updates the same way you would use local state updates in React. React view developers can access state, setState, and any lifecycle methods, but all state updates will be automatically applied to all connected clients, in sync. This is the easiest component for any Fluid newcomer to start with as there are no exposed Distributed Data Structures, Fluid component lifecyle methods, handles, or any event listeners.
+Clicker here is a UnifiedFluidReactComponent, an extension of FluidReactComponent and React.Component. The React state is now powered using a synced Fluid SharedMap. It allows you to use synced state updates the same way you would use local state updates in React. React view developers can access state, setState, and any lifecycle methods, but all state updates will be automatically applied to all connected clients, in sync. This is the easiest component for any Fluid newcomer to start with as there are no exposed Distributed Data Structures, Fluid component lifecycle methods, handles, or any event listeners.
 
 i.e. in React, reading the counter value would be done by state.value and incrementing it would be done by setState({value: state.value + 1}). Now, we can expect the same state.value to be incremented without any event listening for the change
 
