@@ -34,6 +34,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/clicker-definitions": "^0.20.0",
     "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/component-runtime-definitions": "^0.20.0",

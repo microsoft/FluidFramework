@@ -3,36 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { SyncedComponent } from "@fluidframework/react";
+import {
+    PrimedComponentFactory,
+} from "@fluidframework/aqueduct";
+import {
+    FluidReactComponent,
+    SyncedComponent,
+} from "@fluidframework/react";
+import {
+    primitiveToDdsFluidToView,
+} from "@fluid-example/clicker-common";
+import { ICounterFluidState, ICounterViewState } from "@fluid-example/clicker-definitions";
+import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { CounterReactView } from "./view";
 
-// A Clicker example that does not use any specific DDS and just applies primitives on a SharedMap to sync state
-
+/**
+ * Clicker example that uses a SharedCounter as its DDS
+ */
 export class Clicker extends SyncedComponent implements IComponentHTMLView {
     constructor(props) {
         super(props);
-        // Define the value on the synced state so that it is registered for synced
-        // React view updates on all clients.
+
         this.syncedStateConfig.set(
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView: new Map([
-                    [
-                        "value", {
-                            type: "number",
-                            viewKey: "value",
-                        },
-                    ],
-                ]),
-                defaultViewState: { value: 0 },
+                fluidToView: primitiveToDdsFluidToView,
+                defaultViewState: {},
             },
         );
     }
+
     public get IComponentHTMLView() { return this; }
 
     public render(element: HTMLElement) {
@@ -47,10 +50,23 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
     }
 }
 
+class CounterReactView extends FluidReactComponent<ICounterViewState, ICounterFluidState> {
+    render() {
+        return (
+            <div>
+                <span>
+                    {this.state.value}
+                </span>
+                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
+            </div>
+        );
+    }
+}
+
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    "clicker-simple-react",
+    "clicker-counter",
     Clicker,
-    [],
+    [SharedCounter.getFactory()],
     {},
 );
 export const fluidExport = ClickerInstantiationFactory;

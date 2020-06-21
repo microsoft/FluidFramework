@@ -6,24 +6,13 @@
 import {
     FluidToViewMap,
     ViewToFluidMap,
-    IFluidReactState,
-    IFluidFunctionalComponentViewState,
-    IFluidFunctionalComponentFluidState,
 } from "@fluidframework/react";
-import { SharedCounter, ISharedCounter } from "@fluidframework/counter";
-
-export interface ICounterState extends IFluidReactState {
-    value: number;
-}
-
-export interface ICounterViewState extends IFluidFunctionalComponentViewState {
-    value: number;
-}
-
-export interface ICounterFluidState
-    extends IFluidFunctionalComponentFluidState {
-    counter?: ISharedCounter;
-}
+import { SharedCounter } from "@fluidframework/counter";
+import {
+    ICounterState,
+    ICounterFluidState,
+    ICounterViewState,
+} from "@fluid-example/clicker-definitions";
 
 export const primitiveFluidToView: FluidToViewMap<ICounterState,ICounterState> = new Map([
     [
@@ -73,14 +62,26 @@ export const ddsViewToFluid: ViewToFluidMap<ICounterViewState,ICounterFluidState
     ],
 ]);
 
-export const fluidToView: FluidToViewMap<ICounterFluidState,ICounterFluidState> = new Map([
+export const primitiveToDdsFluidToView: FluidToViewMap<ICounterViewState,ICounterFluidState> = new Map([
     [
         "counter", {
             type: SharedCounter.name,
-            viewKey: "counter",
+            viewKey: "value",
             viewConverter: (syncedState) => syncedState,
             sharedObjectCreate: SharedCounter.create,
             listenedEvents: ["incremented"],
+        },
+    ],
+]);
+
+export const ddsToPrimitiveViewToFluid: ViewToFluidMap<ICounterViewState,ICounterFluidState> = new Map([
+    [
+        "value", {
+            type: SharedCounter.name,
+            fluidKey: "counter",
+            fluidConverter: () => {
+                return {};
+            },
         },
     ],
 ]);

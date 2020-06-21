@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@fluid-example/clicker-common": "^0.20.0",
+    "@fluid-example/clicker-definitions": "^0.20.0",
     "@fluidframework/aqueduct": "^0.20.0",
     "@fluidframework/component-core-interfaces": "^0.20.0",
     "@fluidframework/counter": "^0.20.0",

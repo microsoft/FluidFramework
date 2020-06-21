@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    PrimedComponentFactory,
-} from "@fluidframework/aqueduct";
-import {
-    UnifiedReactComponent,
-    SyncedComponent,
-} from "@fluidframework/react";
-import {
-    ICounterFluidState,
-    fluidToView,
-} from "@fluid-example/clicker-common";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { UnifiedFluidReactComponent, SyncedComponent } from "@fluidframework/react";
+import { ddsFluidToView } from "@fluid-example/clicker-common";
+import { ICounterFluidState } from "@fluid-example/clicker-definitions";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
@@ -30,7 +23,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView,
+                fluidToView: ddsFluidToView,
                 defaultViewState: {},
             },
         );
@@ -50,7 +43,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
     }
 }
 
-class CounterReactView extends UnifiedReactComponent<ICounterFluidState> {
+class CounterReactView extends UnifiedFluidReactComponent<ICounterFluidState> {
     render() {
         return (
             <div>

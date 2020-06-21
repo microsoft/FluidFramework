@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidReducer, IFluidDataProps, FluidStateUpdateFunction } from "@fluidframework/react";
-import { ICounterViewState, ICounterFluidState } from ".";
+import {
+    IActionReducer,
+} from "@fluid-example/clicker-definitions";
 
 export const ActionReducer: IActionReducer = {
     increment: {
@@ -19,16 +20,3 @@ export const ActionReducer: IActionReducer = {
         },
     },
 };
-
-export interface IActionReducer
-    extends IFluidReducer<
-    ICounterViewState,
-    ICounterFluidState,
-    IFluidDataProps
-    > {
-    increment: FluidStateUpdateFunction<
-    ICounterViewState,
-    ICounterFluidState,
-    IFluidDataProps
-    >;
-}

@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/clicker-react",
+  "name": "@fluid-example/clicker-react-nonunified",
   "version": "0.20.0",
   "description": "Minimal Fluid component sample to implement a collaborative counter.",
   "repository": "microsoft/FluidFramework",
