@@ -7,29 +7,29 @@ import {
     PrimedComponentFactory,
 } from "@fluidframework/aqueduct";
 import {
-    SimpleReactComponent,
-    IFluidReactState,
+    UnifiedReactComponent,
     SyncedComponent,
 } from "@fluidframework/react";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import {
+    ICounterState,
+    primitiveFluidToView,
+} from "@fluid-example/clicker-common";
+
+// A Clicker example that does not use any specific DDS
 
 export class Clicker extends SyncedComponent implements IComponentHTMLView {
     constructor(props) {
         super(props);
+        // Define the value on the synced state so that it is registered for synced
+        // React view updates on all clients.
         this.syncedStateConfig.set(
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView: new Map([
-                    [
-                        "value", {
-                            type:  "number",
-                            viewKey: "value",
-                        },
-                    ],
-                ]),
+                fluidToView: primitiveFluidToView,
                 defaultViewState: { value: 0 },
             },
         );
@@ -48,11 +48,7 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
     }
 }
 
-interface CounterState extends IFluidReactState {
-    value: number;
-}
-
-class CounterReactView extends SimpleReactComponent<CounterState> {
+class CounterReactView extends UnifiedReactComponent<ICounterState> {
     render() {
         return (
             <div>

@@ -9,61 +9,39 @@ import {
 import {
     IFluidProps,
     IFluidReducerProps,
-    IFluidFunctionalComponentViewState,
     useStateFluid,
     useReducerFluid,
     createContextFluid,
-    FluidStateUpdateFunction,
     IFluidDataProps,
-    IFluidFunctionalComponentFluidState,
-    IFluidReducer,
-    FluidToViewMap,
-    ViewToFluidMap,
     IFluidContextProps,
     SyncedComponent,
 } from "@fluidframework/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
+import {
+    ICounterState,
+    ICounterViewState,
+    ICounterFluidState,
+    IActionReducer,
+    ActionReducer,
+    primitiveFluidToView,
+    primitiveViewToFluid,
+    ddsFluidToView,
+    ddsViewToFluid,
+} from "@fluid-example/clicker-common";
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const ClickerWithHooksName = pkg.name as string;
-
-// ----- REACT STUFF -----
-
-interface CounterState {
-    value: number;
-}
-
 // // ---- React Functional Component w/ useState ----
 
-interface ICounterFunctionalViewState
-    extends IFluidFunctionalComponentViewState,
-    CounterState {}
-interface ICounterFunctionalFluidState
-    extends IFluidFunctionalComponentFluidState,
-    CounterState {}
-
-function CounterReactFunctional(
-    props: IFluidProps<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    >,
-) {
+function CounterReactFunctional(props: IFluidProps<ICounterState,ICounterState>) {
     // Declare a new state variable, which we'll call "count"
-    const [state, setState] = useStateFluid<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    >(props, { value: 0 });
+    const [state, setState] = useStateFluid<ICounterState,ICounterState>(props, { value: 0 });
 
     return (
         <div>
-            <span
-                className="clickerWithHooks-value-class-functional"
-                id={`clickerWithHooks-functional-value-${Date.now().toString()}`}
-            >
+            <span>
                 {`Functional Component: ${state.value}`}
             </span>
             <button
@@ -79,45 +57,10 @@ function CounterReactFunctional(
 
 // ---- React Functional Component w/ useReducer ----
 
-interface ICounterReducerViewState extends IFluidFunctionalComponentViewState {
-    value: number;
-}
-
-interface ICounterReducerFluidState
-    extends IFluidFunctionalComponentFluidState {
-    counter: SharedCounter;
-}
-
-interface IActionReducer
-    extends IFluidReducer<
-    ICounterReducerViewState,
-    ICounterReducerFluidState,
-    IFluidDataProps
-    > {
-    increment: FluidStateUpdateFunction<
-    ICounterReducerViewState,
-    ICounterReducerFluidState,
-    IFluidDataProps
-    >;
-}
-
-const ActionReducer: IActionReducer = {
-    increment: {
-        function: (state, step: number) => {
-            state.fluidState?.counter.increment(step);
-            state.viewState.value =
-                state.fluidState !== undefined
-                    ? state.fluidState.counter.value
-                    : state.viewState.value;
-            return { state };
-        },
-    },
-};
-
 function CounterReactFunctionalReducer(
     props: IFluidReducerProps<
-    ICounterReducerViewState,
-    ICounterReducerFluidState,
+    ICounterViewState,
+    ICounterFluidState,
     IActionReducer,
     {},
     IFluidDataProps
@@ -127,10 +70,7 @@ function CounterReactFunctionalReducer(
 
     return (
         <div>
-            <span
-                className="clickerWithHooks-value-class-reducer"
-                id={`clickerWithHooks-reducer-value-${Date.now().toString()}`}
-            >
+            <span>
                 {`Functional Reducer Component: ${state.viewState.value}`}
             </span>
             <button
@@ -153,8 +93,8 @@ function CounterReactFunctionalReducer(
 
 function CounterReactFunctionalContext(
     props: IFluidContextProps<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState,
+    ICounterState,
+    ICounterState,
     IFluidDataProps
     >,
 ) {
@@ -210,8 +150,8 @@ export class ClickerWithHooks extends SyncedComponent
             "counter-functional",
             {
                 syncedStateId: "counter-functional",
-                fluidToView: this.functionalFluidToView,
-                viewToFluid: this.functionalViewToFluid,
+                fluidToView: primitiveFluidToView,
+                viewToFluid: primitiveViewToFluid,
                 defaultViewState: {},
             },
         );
@@ -220,8 +160,9 @@ export class ClickerWithHooks extends SyncedComponent
             "counter-reducer",
             {
                 syncedStateId: "counter-reducer",
-                fluidToView: this.reducerFluidToView,
-                viewToFluid: this.reducerViewToFluid,
+                fluidToView: ddsFluidToView,
+                viewToFluid: ddsViewToFluid,
+                defaultViewState: { value: 0 },
             },
         );
 
@@ -229,17 +170,13 @@ export class ClickerWithHooks extends SyncedComponent
             "counter-context",
             {
                 syncedStateId: "counter-context",
-                fluidToView: this.functionalFluidToView,
-                viewToFluid: this.functionalViewToFluid,
+                fluidToView: primitiveFluidToView,
+                viewToFluid: primitiveViewToFluid,
+                defaultViewState: {},
             },
         );
     }
 
-    // #region IComponentHTMLView
-
-    /**
-     * Will return a new ClickerWithHooks view
-     */
     public render(div: HTMLElement) {
         ReactDOM.render(
             <div>
@@ -267,72 +204,10 @@ export class ClickerWithHooks extends SyncedComponent
         );
         return div;
     }
-
-    private readonly functionalFluidToView: FluidToViewMap<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    > = new Map([
-        [
-            "value", {
-                type: "number",
-                viewKey: "value",
-            },
-        ],
-    ]);
-    private readonly functionalViewToFluid: ViewToFluidMap<
-    ICounterFunctionalViewState,
-    ICounterFunctionalFluidState
-    > = new Map([
-        [
-            "value", {
-                type: "number",
-                fluidKey: "value",
-            },
-        ],
-    ]);
-
-    private readonly reducerFluidToView: FluidToViewMap<
-    ICounterReducerViewState,
-    ICounterReducerFluidState
-    > = new Map([
-        [
-            "counter", {
-                type: SharedCounter.name,
-                viewKey: "value",
-                viewConverter: (
-                    syncedState: Partial<ICounterReducerFluidState>,
-                ) => {
-                    return {
-                        value: syncedState.counter?.value,
-                    };
-                },
-                sharedObjectCreate: SharedCounter.create,
-                listenedEvents: ["incremented"],
-            },
-        ],
-    ]);
-
-    private readonly reducerViewToFluid: ViewToFluidMap<
-    ICounterReducerViewState,
-    ICounterReducerFluidState
-    > = new Map([
-        [
-            "value", {
-                type: "number",
-                fluidKey: "counter",
-                fluidConverter: () => {
-                    return {};
-                },
-            },
-        ],
-    ]);
-
-    // #endregion IComponentHTMLView
 }
 
-// ----- FACTORY SETUP -----
 export const ClickerWithHooksInstantiationFactory = new PrimedComponentFactory(
-    ClickerWithHooksName,
+    "clicker-functional",
     ClickerWithHooks,
     [SharedCounter.getFactory()],
     {},
