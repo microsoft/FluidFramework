@@ -21,16 +21,17 @@ export interface ISignalEnvelop {
     address?: string;
 
     // The contents of the envelope
-    contents: any;
+    contents: {
+        type: string;
+        content: any;
+    };
 }
 
 /**
  * Represents ISignalMessage with its type.
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-
     type: string;
-
 }
 
 /**

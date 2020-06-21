@@ -9,7 +9,7 @@ const process = require("process");
 
 const INCLUDE_PATH = ".vuepress/includes/";
 const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
-const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "internal";
+const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || "";
 const THIS_VERSION = process.env.THIS_VERSION || "0.19";
 const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.19";
 const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.18";
@@ -19,12 +19,49 @@ const RELEASE_URL = BASE_URL;
 const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
 const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
-const internalOnly = (obj) => {
-    if (DOCS_AUDIENCE !== "internal") {
-        return null;
-    }
-    return obj;
-};
+const packagesToExclude = [
+    "client-api",
+    "experimental-creation-driver",
+    "host-service-interfaces",
+    "iframe-host",
+    "index",
+];
+
+const apiMapping = new Map([
+    ["aqueduct", "Framework"],
+    ["component-core-interfaces", "Framework"],
+    ["framework-interfaces", "Framework"],
+    ["undo-redo", "Framework"],
+    ["cell", "Distributed Data Structures"],
+    ["counter", "Distributed Data Structures"],
+    ["ink", "Distributed Data Structures"],
+    ["map", "Distributed Data Structures"],
+    ["sequence", "Distributed Data Structures"],
+    ["matrix", "Distributed Data Structures"],
+    ["ordered-collection", "Distributed Data Structures"],
+    ["register-collection", "Distributed Data Structures"],
+    ["shared-object-base", "Distributed Data Structures"],
+    ["component-runtime", "Runtime"],
+    ["container-runtime", "Runtime"],
+    ["runtime-definitions", "Runtime"],
+    ["container-loader", "Loader"],
+    ["container-definitions", "Loader"],
+    ["execution-context-loader", "Loader"],
+    ["web-code-loader", "Loader"],
+    ["driver-base", "Driver"],
+    ["driver-definitions", "Driver"],
+    ["file-driver", "Driver"],
+    ["iframe-driver", "Driver"],
+    ["replay-driver", "Driver"],
+    ["routerlicious-driver", "Driver"],
+    ["base-host", "Hosts"],
+    ["debugger", "Tools"],
+    ["merge-tree-client-replay", "Tools"],
+    ["replay-tool", "Tools"],
+    ["common-utils", "Miscellaneous"],
+    ["common-definitions", "Internal"],
+    ["driver-utils", "Internal"],
+]);
 
 const compact = (input) => {
     return input.filter(x => x);
@@ -50,42 +87,17 @@ const listPages = (dirPath, includeIndex = false) => {
     return pages;
 };
 
+const packageFromFilePath = (filepath) => {
+    return path.basename(filepath).split(".")[0];
+}
+
 const getNav = () => {
     const nav = [
         { text: "What is Fluid?", link: "/what-is-fluid.md" },
         { text: "Docs", link: "/docs/getting-started.md" },
         { text: "Tutorials", link: "/tutorials/" },
-        { text: "Ecosystem", link: "/ecosystem/" },
-        { text: "API", link: "/api/overview" },
-        // {
-        //     text: "🤿 Dive Deeper",
-        //     items: [
-        //         { text: "How Fluid works", link: "/how/" },
-        //         internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
-        //         internalOnly({ text: "FAQ", link: "/faq/" }),
-        //         internalOnly({ text: "Terminology", link: "/misc/terminology" }),
-        //         internalOnly({ text: "Concepts", link: "/misc/concepts" }),
-        //         internalOnly({
-        //             text: "Contributing",
-        //             items: [
-        //                 { text: "Release process", link: "/contributing/release-process" },
-        //                 { text: "Breaking changes", link: "/contributing/breaking-changes" },
-        //                 { text: "Compatibility", link: "/contributing/compatibility" },
-        //                 { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-        //                 { text: "Documentation system", link: "/contributing/doc-system" },
-        //                 { text: "Building documentation locally", link: "/contributing/building-documentation" },
-        //                 { text: "Miscellaneous", link: "/contributing/misc" },
-        //             ]
-        //         }),
-        //         internalOnly({
-        //             text: "Team",
-        //             items: [
-        //                 { text: "Updates", link: "/team/" },
-        //                 { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-        //             ]
-        //         }),
-        //     ]
-        // },
+        // { text: "Ecosystem", link: "/ecosystem/" },
+        { text: "API", link: "/api/" },
         {
             text: "Versions",
             items: [
@@ -118,124 +130,49 @@ const getApiSidebar = () => {
     const directoryPath = path.join(__dirname, "../api");
     const files = fs.readdirSync(directoryPath);
 
+    let apiCategories = new Map();
     let apiSidebar = [{
         title: "API Overview",
-        path: "overview",
+        path: "",
         collapsable: false,
         sidebarDepth: 0
     }];
 
-    if (files.includes("fluid-aqueduct.md")) {
+    for (const file of files) {
+        const packageName = packageFromFilePath(file);
+        if (packagesToExclude.includes(packageName)) {
+            continue;
+        }
+
+        let category = apiMapping.get(packageName) || "Unknown";
+        if (!apiCategories.has(category)) {
+            // console.log(`Creating entry for ${category}`);
+            apiCategories.set(category, new Set([`${packageName}.md`]));
+        } else {
+            let current = apiCategories.get(category);
+            // let current = new Set();
+            current.add(`${packageName}.md`);
+            apiCategories.set(category, current);
+        }
+    }
+
+    // console.log(apiCategories);
+    const categoryToLog = "Framework";
+    console.log(`Packages with ${categoryToLog} category:`);
+    console.log(apiCategories.get(categoryToLog));
+
+    apiCategories.forEach((value, key) => {
         apiSidebar.push({
-            title: "Framework",
+            title: key,
             sidebarDepth: 2,
-            children: [
-                "fluid-aqueduct",
-                "fluid-aqueduct-react",
-                "fluid-component-core-interfaces",
-                "fluid-framework-interfaces",
-                "fluid-undo-redo",
-            ]
+            children: Array.from(value)
         });
-    }
+    });
 
-    if (files.includes("fluid-cell.md")) {
-        apiSidebar.push({
-            title: "Distributed Data Structures",
-            children: [
-                "fluid-cell",
-                "fluid-ink",
-                "fluid-map",
-                "fluid-ordered-collection",
-                "fluid-register-collection",
-                "fluid-sequence",
-                "fluid-shared-object-base",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-component-runtime.md")) {
-        apiSidebar.push({
-            title: "Runtime",
-            children: [
-                "fluid-component-runtime",
-                "fluid-container-runtime",
-                "fluid-runtime-definitions",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-container-loader.md")) {
-        apiSidebar.push({
-            title: "Loader",
-            children: [
-                "fluid-container-definitions",
-                "fluid-container-loader",
-                "fluid-execution-context-loader",
-                "fluid-web-code-loader",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-driver-base.md")) {
-        apiSidebar.push({
-            title: "Driver",
-            children: [
-                "fluid-driver-base",
-                "fluid-driver-definitions",
-                "fluid-file-driver",
-                "fluid-iframe-driver",
-                "fluid-odsp-driver",
-                "fluid-replay-driver",
-                "fluid-routerlicious-driver",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-base-host.md")) {
-        apiSidebar.push({
-            title: "Sample Hosts",
-            children: [
-                "fluid-base-host",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-debugger.md")) {
-        apiSidebar.push({
-            title: "Tools",
-            children: [
-                "fluid-debugger",
-                "fluid-merge-tree-client-replay",
-                "fluid-replay-tool",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-common-utils.md")) {
-        apiSidebar.push({
-            title: "Miscellaneous",
-            children: [
-                "fluid-common-utils",
-            ]
-        });
-    }
-
-    if (files.includes("fluid-common-definitions.md")) {
-        apiSidebar.push({
-            title: "Internal/Deprecated",
-            children: [
-                "client-api",
-                "fluid-common-definitions",
-                "fluid-driver-utils",
-                "fluid-host-service-interfaces",
-                "fluid-runtime-utils",
-            ]
-        });
-    }
+    console.log(JSON.stringify(apiSidebar));
 
     return apiSidebar;
-};
+}
 
 const getDocsSidebar = () => {
     return [
@@ -245,7 +182,6 @@ const getDocsSidebar = () => {
             // path: "",
             children: [
                 "getting-started.md",
-                "dev-env.md",
                 "hello-world.md",
                 "create-a-new-fluid-component",
             ]
@@ -254,6 +190,7 @@ const getDocsSidebar = () => {
             title: "Main concepts",
             collapsable: false,
             children: [
+                "guide.md",
                 "dds.md",
                 "components.md",
                 "aqueduct.md",
@@ -266,28 +203,23 @@ const getDocsSidebar = () => {
             // path: "dds",
             children: [
                 // "overview",
-                "SharedDirectory",
-                "SharedMap",
-                "SharedCounter",
-                "SharedCell",
+                "SharedDirectory.md",
+                "SharedMap.md",
+                "SharedCounter.md",
+                "SharedCell.md",
                 {
                     title: "Sequences",
-                    path: "sequences",
+                    path: "sequences.md",
                     children: [
                         "SharedNumberSequence.md",
                         "SharedObjectSequence.md",
                         "SharedString.md",
                     ],
                 },
-                "SharedMatrix",
+                "SharedMatrix.md",
                 "consensus.md",
             ]
         },
-        // {
-        //     title: "API",
-        //     path: "../",
-        //     children: getApiSidebar(),
-        // },
         {
             title: "Component model",
             collapsable: false,
@@ -296,122 +228,83 @@ const getDocsSidebar = () => {
             ]
         },
         {
-            title: "Advanced guides",
+            title: "Guides",
+            collapsable: false,
+            children: [
+                "visual-component.md",
+                // "data-component.md",
+                // "embed-components.md",
+                // "cross-component.md",
+                // "component-patterns.md",
+                // "component-collections.md",
+                // "bots.md",
+                // "component-best-practices.md",
+            ]
+        },
+        {
+            title: "Advanced",
             collapsable: true,
             children: [
-                "dds-anatomy",
-                "container-and-component-loading",
+                "tob.md",
+                "dds-anatomy.md",
+                "container-and-component-loading.md",
             ]
         },
         {
             title: "Misc",
-            collapsable: false,
+            collapsable: true,
             // path: "",
             children: [
                 "release-process.md",
+                "breaking-changes.md",
+                "compatibility.md",
+                "doc-system.md",
             ]
         },
-
     ];
 }
 
 const getTutorialsSidebar = () => {
-    return compact([
-        "",
-        "dice-roller",
-        "sudoku",
-        "badge",
-        internalOnly({
-            title: "Components",
-            collapsable: true,
-            children: [
-                "visual-component",
-                "data-component",
-                "embed-components",
-                "cross-component",
-                "component-patterns",
-                "component-collections",
-                "bots",
-                "component-best-practices",
-            ]
-        }),
-        internalOnly({
-            title: "Containers",
-            collapsable: true,
-            children: [
-                "singletons",
-            ]
-        }),
-    ]);
-}
-
-const getTeamSidebar = () => {
     return [
         {
-            title: "Team",
+            title: "Tutorials",
             collapsable: false,
+            // path: "",
             children: [
-                ""
+                "",
+                "dice-roller.md",
+                "sudoku.md",
             ]
         },
         {
-            title: "Updates",
+            title: "Examples",
             collapsable: false,
-            children: listPages("../team/")
+            // path: "",
+            children: [
+                "badge.md",
+            ]
         },
+
     ];
 }
 
 const getHowSidebar = () => {
-    return compact([
-        "",
-        "tob",
-        internalOnly("developer-guide"),
-    ]);
-}
-
-const getAdvancedSidebar = () => {
     return [
         "",
-        "loading-deep-dive",
-    ];
-}
-
-const getPatternsSidebar = () => {
-    return [
-        {
-            title: "Patterns",
-            collapsable: false,
-            children: [
-                "leader-election",
-            ]
-        },
     ];
 }
 
 const getAllSidebars = () => {
-    const sidebars = {
-        internal: {
-            "/patterns/": getPatternsSidebar(),
-            "/advanced/": getAdvancedSidebar(),
-            "/team/": getTeamSidebar(),
-        },
-        all: {
-            "/docs/": getDocsSidebar(),
-            "/tutorials/": getTutorialsSidebar(),
-            "/api/": getApiSidebar(),
-            "/how/": getHowSidebar(),
-        }
+    return {
+        "/docs/": getDocsSidebar(),
+        "/tutorials/": getTutorialsSidebar(),
+        "/api/": getApiSidebar(),
+        "/how/": getHowSidebar(),
     };
-
-    return Object.assign({},
-        sidebars.all,
-        DOCS_AUDIENCE === "internal" ? sidebars.internal : {}
-    );
 }
 
 const getThemeConfig = () => {
-    let config = {
+    const config = {
         DOCS_AUDIENCE: DOCS_AUDIENCE,
         THIS_VERSION: THIS_VERSION,
         MASTER_BRANCH_VERSION: MASTER_BRANCH_VERSION,
@@ -424,24 +317,17 @@ const getThemeConfig = () => {
         lastUpdated: false, // "Last Updated",
         docsDir: "docs",
         heroSymbol: permalinkSymbol(),
+        repo: "microsoft/FluidFramework",
         smoothScroll: true,
         sidebarDepth: 1,
         nav: getNav(),
         sidebar: getAllSidebars(),
     };
-    if (DOCS_AUDIENCE === "internal") {
-        config.repo = "microsoft/FluidFramework";
-    }
     return config;
 }
 
 function permalinkSymbol() {
-    const now = new Date(new Date().getTime());
-    const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
-    const end = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 18));
-    const inRange = start < now && now < end;
-    // console.log(`${inRange}: ${start} < ${now} < ${end}`);
-    const symbol = inRange ? "🍀" : "💧";
+    const symbol = "💧";
     return symbol;
 }
 
@@ -461,6 +347,7 @@ module.exports = {
         // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
+        ["alias"],
         ["tabs"],
         ["vuepress-plugin-check-md"],
         // [
@@ -516,35 +403,4 @@ module.exports = {
         }
     },
     themeConfig: getThemeConfig(),
-
-    // The below is basically a clone of the vuepress build command, but supports overridding the "base" parameter in a
-    // kind of hacky way.
-    // extendCli: (cli, options) => {
-    //     cli
-    //         .command("buildbase [targetDir]", "build dir as static site")
-    //         .option("-b, --base <base>", "override the base config option")
-    //         .option("-d, --dest <dest>", "specify build output dir (default: .vuepress/dist)")
-    //         .option("-t, --temp <temp>", "set the directory of the temporary file")
-    //         .option("-c, --cache [cache]", "set the directory of cache")
-    //         .option("-w, --workers <#>", "set the number of worker threads")
-    //         .option("--no-cache", "clean the cache before build")
-    //         .option("--debug", "build in development mode for debugging")
-    //         .option("--silent", "build static site in silent mode")
-    //         .action((sourceDir = ".", commandOptions) => {
-    //             const { debug, silent, workers } = commandOptions
-
-    //             logger.setOptions({ logLevel: silent ? 1 : debug ? 4 : 3 })
-    //             env.setOptions({ isDebug: debug, isTest: process.env.NODE_ENV === "test", workerThreads: workers || 1 })
-
-    //             let buildOptions = {
-    //                 sourceDir: path.resolve(sourceDir),
-    //                 ...options,
-    //                 ...commandOptions
-    //             };
-    //             buildOptions.siteConfig.base = buildOptions.options.base;
-    //             logger.debug("siteConfig", buildOptions.siteConfig);
-
-    //             wrapCommand(build(buildOptions));
-    //         })
-    // },
 }

@@ -16,18 +16,18 @@ However, this is purely powered using a SharedMap. To start adding your own Shar
 
 If you'd like to have separate view and Fluid states, where the view has no Fluid objects even though the syncing logic is being powered by DDS', please look at example 3 where we achieve this using UnifiedFluidReactComponent's parent class, FluidReactComponent.
 
-2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing mutiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
+2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing multiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
 
-2) **clicker-react-nonunified** now introduces the concept of separate view and Fluid states. This allows the view to be built without interacting with any Fluid shared objects, while still capitalizing on the unique syncing logic of each DDS. This is possible due to the introduction of the viewToFluid map, where users can set up logic to trigger Fluid updates based off of view state changes.
+3) **clicker-react-nonunified** now introduces the concept of separate view and Fluid states. This allows the view to be built without interacting with any Fluid shared objects, while still capitalizing on the unique syncing logic of each DDS. This is possible due to the introduction of the viewToFluid map, where users can set up logic to trigger Fluid updates based off of view state changes.
 
-3) **clicker-functional** brings with it our support for React hooks! In this case, we use the useStateFluid hook to achieve the same goal as our first example, but now as a functional component.
+4) **clicker-functional** brings with it our support for React hooks! In this case, we use the useStateFluid hook to achieve the same goal as our first example, but now as a functional component.
 
-4) **clicker-reducer** shows how Clicker could be written in a scalable manner by using the useReducerFluid hook. Here, we set up a reducer that allows the view to dispatch the action to increment the counter, rather than directly interact with it. This shows how Fluid components could scale with more complex data store requirements.
+5) **clicker-reducer** shows how Clicker could be written in a scalable manner by using the useReducerFluid hook. Here, we set up a reducer that allows the view to dispatch the action to increment the counter, rather than directly interact with it. This shows how Fluid components could scale with more complex data store requirements.
 
-5) Finally, **clicker-context** shows how we can pass Fluid context across multiple component layers without needing to do prop drilling by using the createContextFluid hook.
+6) Finally, **clicker-context** shows how we can pass Fluid context across multiple component layers without needing to do prop drilling by using the createContextFluid hook.
 
 **clicker-common** contains the maps and reducers that these views consumer.
-**clicker-definitions** contains the interfaces the views consumer.
-**clicker-common** has no dependencies on the views or components themselves, allowing them to be developed as a standalone package.
+**clicker-definitions** contains the interfaces the views, reducers, and maps the different Clicker implementations consume.
+**clicker-common** has no dependencies on the views or components themselves, allowing them to be developed as a standalone package. The only thing linking the view and this together are the definitions.
 
 All of these examples showcase different tools that a user can take advantage of to build their Fluid components. These tools can be intermixed at will, as in React components themselves. For example, views can hold a UnifiedFluidReactComponent, FluidReactComponent, and a FunctionalReactComponent side-by-side. Furthermore, these views can also be introduced in any Fluid component that is being powered by a PrimedComponentFactory.

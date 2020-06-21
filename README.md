@@ -7,16 +7,12 @@ applications.
 
 You may be here because you want to...
 
-- [Learn more about what Fluid is]()
-- [Build a Fluid component]()
+- Learn more about the Fluid Framework
+- Build a Fluid component
 
-All of these are documented at <https://aka.ms/fluid>.
+Relevant documentation and guides can be found at <https://aka.ms/fluid>.
 
-### Coming soon...
-
-* Engage with other Fluid users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
-* Help each other in the [Fluid Community Discord]() **(community channel not yet created)**
-* Join the discussion on Twitter **(hashtag not established yet)**
+Got questions? Engage with other Fluid Framework users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/fluidframework)
 
 ## Code Structure
 
@@ -30,20 +26,17 @@ Here's the breakdown of the repo:
   * [Packages](./packages)
   * [Example Components](./components/examples)
   * [Experimental Components](./components/experimental)
-  * [Example host](./examples/hosts/iframe-host)
+  * [Example Hosts](./examples/hosts)
 * Reference Fluid Ordering Service ("Routerlicious") Minirepo ([dir](./server/routerlicious) | [lerna.json](server/routerlicious/lerna.json))
   * [Packages](./server/routerlicious/packages)
 * Common Packages
   * [Common Definitions](./common/lib/common-definitions)
   * [Common Utils](./common/lib/common-utils)
-* Auxiliary Microservices supporting Routerlicious
+* Auxiliary Microservice Packages (supporting Routerlicious)
   * [Server dir](./server) (excluding [Routerlicious](./server/routerlicious) itself)
 * Internal/Misc Packages
   * [Build Common](./common/build/build-common)
   * [ESlint Config](./common/build/eslint-config-fluid)
-  * Other Example Hosts
-    * [Electron Host](./examples/hosts/electron-host)
-    * [Literate](./examples/hosts/literate)
   * [Docs](./docs)
   * [Tools](./tools)
 
@@ -150,3 +143,6 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
 the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
 with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

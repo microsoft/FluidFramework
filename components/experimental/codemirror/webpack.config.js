@@ -22,7 +22,7 @@ module.exports = env => {
         },
         module: {
             rules: [
-                { 
+                {
                     test: /\.tsx?$/,
                     loader: "ts-loader"
                 },
@@ -50,6 +50,9 @@ module.exports = env => {
             stats: "minimal",
             before: fluidRoute.before,
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+            watchOptions: {
+                ignored: "**/node_modules/**",
+            }
         }
     }, isProduction
         ? require("./webpack.prod")

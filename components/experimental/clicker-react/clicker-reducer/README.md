@@ -1,10 +1,6 @@
-# @fluidframework/clicker-with-hooks
+# @fluidframework/clicker-reducer
 
-**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
-classes.
-
-**Clicker with Hooks** contains 3 different implementations of Clicker using the useFluidState, useFluidReducer, and createFluidContext hooks respectively
+**clicker-reducer** shows how Clicker could be written in a scalable manner by using the useReducerFluid hook. Here, we set up a reducer that allows the view to dispatch the action to increment the counter, rather than directly interact with it. This shows how Fluid components could scale with more complex data store requirements.
 
 ## Getting Started
 

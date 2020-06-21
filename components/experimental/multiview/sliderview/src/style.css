@@ -1,0 +1,9 @@
+.slider-view {
+    width: 200px;
+    border: 1px solid black;
+    font-family: sans-serif;
+}
+
+.slider-label {
+    margin: 0;
+}

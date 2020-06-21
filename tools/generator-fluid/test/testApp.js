@@ -13,7 +13,7 @@ describe("Yo fluid", function () {
     this.timeout(10000);
 
     describe("Unit", () => {
-        describe("View - React", () => {
+        describe("View - React - advanced", () => {
             let runContext;
             let oldCwd;
             before(() => {
@@ -21,7 +21,8 @@ describe("Yo fluid", function () {
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         componentName: "foobar",
-                        viewFramework: "react"
+                        viewFramework: "react",
+                        scaffolding: "advanced",
                     });
                 return runContext;
             });
@@ -56,7 +57,7 @@ describe("Yo fluid", function () {
             });
         });
 
-        describe("View - None", () => {
+        describe("View - React - beginner", () => {
             let runContext;
             let oldCwd;
             before(() => {
@@ -64,7 +65,50 @@ describe("Yo fluid", function () {
                 runContext = helpers.run(path.join(__dirname, "../app/index.js"))
                     .withPrompts({
                         componentName: "foobar",
-                        viewFramework: "none"
+                        viewFramework: "react",
+                        scaffolding: "beginner",
+                    });
+                return runContext;
+            });
+
+            it("Produces the expected files", () => {
+                const expectedFiles = [
+                    "src/component.tsx",
+                    "src/index.ts",
+                    ".gitignore",
+                    ".npmrc",
+                    "jest-puppeteer.config.js",
+                    "jest.config.js",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/component.ts",
+                    "src/view.ts",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
+            });
+        });
+
+        describe("View - None - advanced", () => {
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        componentName: "foobar",
+                        viewFramework: "none",
+                        scaffolding: "advanced",
                     });
                 return runContext;
             });
@@ -75,6 +119,49 @@ describe("Yo fluid", function () {
                     "src/index.ts",
                     "src/interface.ts",
                     "src/view.ts",
+                    ".gitignore",
+                    ".npmrc",
+                    "jest-puppeteer.config.js",
+                    "jest.config.js",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/component.tsx",
+                    "src/view.tsx",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
+
+            after(() => {
+                process.chdir(oldCwd);
+                runContext.cleanTestDirectory();
+            });
+        });
+
+        
+        describe("View - None - beginner", () => {
+            let runContext;
+            let oldCwd;
+            before(() => {
+                oldCwd = process.cwd();
+                runContext = helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        componentName: "foobar",
+                        viewFramework: "none",
+                        scaffolding: "beginner",
+                    });
+                return runContext;
+            });
+
+            it("Produces the expected files", () => {
+                const expectedFiles = [
+                    "src/component.ts",
+                    "src/index.ts",
                     ".gitignore",
                     ".npmrc",
                     "jest-puppeteer.config.js",

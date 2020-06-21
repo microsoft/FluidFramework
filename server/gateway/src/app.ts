@@ -327,15 +327,10 @@ export function create(
     });
 
     app.use(routes.api);
-    app.use("/templates", routes.templates);
     app.use("/loader", routes.loader);
     app.use("/loaderFramed", routes.loaderFramed);
-    app.use("/frontpage", routes.frontpage);
     app.use("/waterpark", routes.waterpark);
-    app.use("/fastloader", routes.fastLoader);
-    app.use("/democreator", routes.demoCreator);
     app.use("/versions", routes.versions);
-    app.use("/fork", routes.fork);
     app.use("/token", routes.token);
     app.use(routes.home);
 

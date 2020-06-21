@@ -1,10 +1,8 @@
-# @fluidframework/clicker-with-hooks
+# @fluid-example/clicker-common
 
-**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
-classes.
-
-**Clicker with Hooks** contains 3 different implementations of Clicker using the useFluidState, useFluidReducer, and createFluidContext hooks respectively
+**clicker-common** contains the maps and reducers that these views consumer.
+**clicker-definitions** contains the interfaces the views, reducers, and maps the different Clicker implementations consume.
+**clicker-common** has no dependencies on the views or components themselves, allowing them to be developed as a standalone package. The only thing linking the view and this together are the definitions.
 
 ## Getting Started
 

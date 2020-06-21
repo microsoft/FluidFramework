@@ -34,7 +34,7 @@ export class EmbeddedComponentWrapper
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
         if (component) {
-            const element = <ReactViewAdapter component={component} />;
+            const element = <ReactViewAdapter view={component} />;
             this.setState({ element });
         }
     }

@@ -6,7 +6,13 @@ import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
 export interface ICollaborativeTextAreaProps {
+    /**
+     * The SharedString that will store the text from the textarea.
+     */
     sharedString: SharedString;
+    /**
+     * Whether spellCheck should be enabled.  Defaults to false.
+     */
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
@@ -19,9 +25,7 @@ export interface ICollaborativeTextAreaState {
 }
 
 /**
- * Given a cell will provide an editable component
- * This produces a single line content editable box. It's single line because doing
- * multiple lines means you have to manage line breaks which is hard.
+ * Given a SharedString will produce a collaborative textarea.
  */
 export class CollaborativeTextArea
     extends React.Component<ICollaborativeTextAreaProps, ICollaborativeTextAreaState> {
@@ -112,7 +116,7 @@ export class CollaborativeTextArea
         });
     }
 
-    public setCaretPosition(newStart: number, newEnd: number) {
+    private setCaretPosition(newStart: number, newEnd: number) {
         if (this.ref.current) {
             this.ref.current.selectionStart = newStart;
             this.ref.current.selectionEnd = newEnd;

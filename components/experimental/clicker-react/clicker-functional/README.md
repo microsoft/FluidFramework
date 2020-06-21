@@ -1,10 +1,6 @@
-# @fluidframework/clicker-with-hooks
+# @fluidframework/clicker-functional
 
-**Clicker** is a Fluid Component that displays a number with a button. Pressing the button
-increments the counter. This is a basic example component using the interface model and stock
-classes.
-
-**Clicker with Hooks** contains 3 different implementations of Clicker using the useFluidState, useFluidReducer, and createFluidContext hooks respectively
+**clicker-functional** brings with it our support for React hooks! In this case, we use the useStateFluid hook to achieve the same goal as **clicker-simple-react**, but now as a functional component.
 
 ## Getting Started
 
