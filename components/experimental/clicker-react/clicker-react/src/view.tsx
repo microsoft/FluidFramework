@@ -4,10 +4,10 @@
  */
 
 import * as React from "react";
-import { UnifiedFluidReactComponent } from "@fluidframework/react";
+import { PureFluidReactComponent } from "@fluidframework/react";
 import { ICounterFluidState } from "@fluid-example/clicker-definitions";
 
-export class CounterReactView extends UnifiedFluidReactComponent<ICounterFluidState> {
+export class CounterReactView extends PureFluidReactComponent<ICounterFluidState> {
     render() {
         return (
             <div>

@@ -1,6 +1,6 @@
 # @fluid-example/clicker-react
 
-**clicker-react** uses a UnifiedFluidReactComponent and introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing multiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
+**clicker-react** uses a PureFluidReactComponent and introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing multiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
 
 ## Getting Started
 

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { UnifiedFluidReactComponent, IFluidReactState } from "@fluidframework/react";
+import { PureFluidReactComponent, IFluidReactState } from "@fluidframework/react";
 import * as React from "react";
 
 interface ICounterState extends IFluidReactState {
     value: number;
 }
 
-export class CounterReactView extends UnifiedFluidReactComponent<ICounterState> {
+export class CounterReactView extends PureFluidReactComponent<ICounterState> {
     render() {
         return (
             <div>

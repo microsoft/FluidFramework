@@ -7,7 +7,7 @@ import { IFluidReactState } from "./interface";
 import { FluidReactComponent } from "./reactComponent";
 
 /**
- * A unified React component where there the Fluid state and view state are the same
+ * A PureFluidReactComponent is a FluidReactComponent where there the Fluid state and view state are the same
  * i.e. There are no DDS/SharedObjects being used and no cross-component relationships
  */
-export abstract class UnifiedFluidReactComponent<S extends IFluidReactState> extends FluidReactComponent<S, S> { }
+export abstract class PureFluidReactComponent<S extends IFluidReactState> extends FluidReactComponent<S, S> { }

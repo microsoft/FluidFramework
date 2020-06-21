@@ -4,7 +4,7 @@
  */
 
 export * from "./reactComponent";
-export * from "./unifiedReactComponent";
+export * from "./pureReactComponent";
 export * from "./useStateFluid";
 export * from "./useReducerFluid";
 export * from "./createContextFluid";

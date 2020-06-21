@@ -2,13 +2,23 @@
 
 **clicker-react** contains six different Clicker Fluid components that use the new experimental Fluid React component and hooks. These can be found in the **@fluidframeworks/react** package.
 
-They all achieve the same end result, but use different extensions of concepts that should be familiar to any React developer.
+They all achieve the same end result, but use different extensions of concepts that should be analogous to any React developer.
 
-**All of these examples showcase different tools that a user can take advantage of to build their Fluid components. These tools can be intermixed at will, similar to how functional and classical React components are inter-mixable. For example, views can hold a UnifiedFluidReactComponent, FluidReactComponent, and a FunctionalReactComponent side-by-side. You can also have them live alongside any existing non-Fluid React component, allowing Fluid powered views to be injected into existing React applications today, using the power of context. Furthermore, these views can also be introduced in any Fluid component that is being powered by a PrimedComponentFactory and use any DDS that the developer wants to power the views with. This allows developers to pick their tool based on the complexity of the component they are building, while remaining extensible for future demands.**
+React.PureComponent &rarr; PureFluidReactComponent
+React.Component &rarr; FluidReactComponent
+useState &rarr; useStateFluid
+useReducer &rarr; useReducerFluid
+createContext &rarr; createContextFluid
+
+While some are almost identical in appearance to their React counterparts, i.e. useState and useStateFluid, others are slightly different in their interface design from their React counterparts, to account for additional Fluid behavior. But the scenarios in which they are used, and the manner in which they are used are analogous.
+
+i.e. PureFluidReactComponent is a child class of FluidReactComponent's behavior that allows developers to build using a simpler basic component unit, similar to the relationship between React.Component and React.PureComponent. useReducerFluid is likewise built for larger applications to help manage their data when useStateFluid is not sufficient, similar to when developers decide to use useReducer over useState.
+
+**All of these examples showcase different tools that a user can take advantage of to build their Fluid components. These tools can be intermixed at will, similar to how functional and classical React components are inter-mixable. For example, views can hold a PureFluidReactComponent, FluidReactComponent, and a FunctionalReactComponent side-by-side. You can also have them live alongside any existing non-Fluid React component, allowing Fluid powered views to be injected into existing React applications today, using the power of context. Furthermore, these views can also be introduced in any Fluid component that is being powered by a PrimedComponentFactory and use any DDS that the developer wants to power the views with. This allows developers to pick their tool based on the complexity of the component they are building, while remaining extensible for future demands.**
 
 1) The simplest component in this folder, and the best place to start. is **clicker-simple-react**. It has no dependencies to any other packages in this folder, and serves as an example of the simplest component you can build that still has full React functionality, but now has a synced state instead of only a local one.
 
-Clicker here is a UnifiedFluidReactComponent, an extension of FluidReactComponent and React.Component. The React state is now powered using a synced Fluid SharedMap. It allows you to use synced state updates the same way you would use local state updates in React. React view developers can access state, setState, and any lifecycle methods, but all state updates will be automatically applied to all connected clients, in sync. This is the easiest component for any Fluid newcomer to start with as there are no exposed Distributed Data Structures, Fluid component lifecycle methods, handles, or any event listeners.
+Clicker here is a PureFluidReactComponent, an extension of FluidReactComponent and React.Component. The React state is now powered using a synced Fluid SharedMap. It allows you to use synced state updates the same way you would use local state updates in React. React view developers can access state, setState, and any lifecycle methods, but all state updates will be automatically applied to all connected clients, in sync. This is the easiest component for any Fluid newcomer to start with as there are no exposed Distributed Data Structures, Fluid component lifecycle methods, handles, or any event listeners.
 
 i.e. in React, reading the counter value would be done by state.value and incrementing it would be done by setState({value: state.value + 1}). Now, we can expect the same state.value to be incremented without any event listening for the change
 
@@ -16,11 +26,11 @@ Similarly, the SharedCounter's value can be read using state.counter.value and i
 
 However, this is purely powered using a SharedMap and is simply setting the primitive values on it. If your scenarios involve two people actively manipulating the values simultaneously, you will start seeing bugs. For these, we need to start replacing primitives in our state with SharedObjects, i.e. a SharedCounter for Clicker, SharedString for any strings, etc.
 
-To start adding your own SharedObjects to this map, **you can still use a UnifiedFluidReactComponent**. Simply define the SharedObject needed in the fluidToView map, add it to the factory, and pass its Create function as seen in example 2.
+To start adding your own SharedObjects to this map, **you can still use a PureFluidReactComponent**. Simply define the SharedObject needed in the fluidToView map, add it to the factory, and pass its Create function as seen in example 2.
 
-If you'd like to have separate view and Fluid states, where the view has no Fluid objects even though the syncing logic is being powered by DDS', please look at example 3 where we achieve this using UnifiedFluidReactComponent's parent class, FluidReactComponent.
+If you'd like to have separate view and Fluid states, where the view has no Fluid objects even though the syncing logic is being powered by DDS', please look at example 3 where we achieve this using PureFluidReactComponent's parent class, FluidReactComponent.
 
-2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing multiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
+2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same PureFluidReactComponent from before, but now introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing multiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
 
 3) **clicker-react-nonunified** now introduces the concept of separate view and Fluid states. This allows the view to be built without interacting with any Fluid shared objects, while still capitalizing on the unique syncing logic of each DDS. This is possible due to the introduction of the viewToFluid map, where users can set up logic to trigger Fluid updates based off of view state changes.
 
