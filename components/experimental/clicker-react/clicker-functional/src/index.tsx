@@ -7,7 +7,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SyncedComponent } from "@fluidframework/react";
-import { primitiveFluidToView, primitiveViewToFluid } from "@fluid-example/clicker-common";
+import { ddsToPrimitiveFluidToView, primitiveToDdsViewToFluid } from "@fluid-example/clicker-common";
+import { SharedCounter } from "@fluidframework/counter";
 
 import { CounterReactFunctional } from "./view";
 
@@ -19,8 +20,8 @@ export class Clicker extends SyncedComponent {
             "counter-functional",
             {
                 syncedStateId: "counter-functional",
-                fluidToView: primitiveFluidToView,
-                viewToFluid: primitiveViewToFluid,
+                fluidToView: ddsToPrimitiveFluidToView,
+                viewToFluid: primitiveToDdsViewToFluid,
                 defaultViewState: { value: 0 },
             },
         );
@@ -43,7 +44,7 @@ export class Clicker extends SyncedComponent {
 export const ClickerFactory = new PrimedComponentFactory(
     "clicker-functional",
     Clicker,
-    [],
+    [SharedCounter.getFactory()],
     {},
 );
 export const fluidExport = ClickerFactory;

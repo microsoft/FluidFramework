@@ -33,7 +33,7 @@ describe("clickerReactNonunified", () => {
         await expect(page).toClick("button", { text: "+" });
     });
 
-    it("Clicking the button updates both users", async (done) => {
+    it("Clicking the button updates both users", async () => {
         // Validate both users have 0 as their value
         const preValue = await getValue(0);
         expect(preValue).toEqual("0");
@@ -43,18 +43,14 @@ describe("clickerReactNonunified", () => {
         // Click the button
         await expect(page).toClick("button", { text: "+" });
 
-        // Add timeout delay as this example only uses primitives on a SharedMap, not a counter
-        setTimeout(async () => {
-            // Validate both users have 1 as their value
-            const postValue = await getValue(0);
-            expect(postValue).toEqual("1");
-            const postValue2 = await getValue(1);
-            expect(postValue2).toEqual("1");
-            done();
-        }, 500);
+        // Validate both users have 1 as their value
+        const postValue = await getValue(0);
+        expect(postValue).toEqual("1");
+        const postValue2 = await getValue(1);
+        expect(postValue2).toEqual("1");
     });
 
-    it("Clicking the button after refresh updates both users", async (done) => {
+    it("Clicking the button after refresh updates both users", async () => {
         await page.reload({ waitUntil: ["load"] });
         await page.waitFor(() => window["fluidStarted"]);
 
@@ -67,14 +63,10 @@ describe("clickerReactNonunified", () => {
         // Click the button
         await expect(page).toClick("button", { text: "+" });
 
-        // Add timeout delay as this example only uses primitives on a SharedMap, not a counter
-        setTimeout(async () => {
-            // Validate both users have 1 as their value
-            const postValue = await getValue(0);
-            expect(postValue).toEqual("1");
-            const postValue2 = await getValue(1);
-            expect(postValue2).toEqual("1");
-            done();
-        }, 500);
+        // Validate both users have 1 as their value
+        const postValue = await getValue(0);
+        expect(postValue).toEqual("1");
+        const postValue2 = await getValue(1);
+        expect(postValue2).toEqual("1");
     });
 });
