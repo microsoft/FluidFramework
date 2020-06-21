@@ -6,7 +6,7 @@
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IComponentRuntime } from "@fluidframework/component-runtime-definitions";
 import { IComponentHandle } from "@fluidframework/component-core-interfaces";
-import { FluidComponentMap, IViewConverter } from "../interface";
+import { FluidComponentMap, IViewConverter, IFluidConverter } from "../interface";
 
 /**
  * Store the Fluid state onto the shared synced state
@@ -24,7 +24,9 @@ export function setFluidState<SV, SF>(
     runtime: IComponentRuntime,
     componentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
+    newViewState: SV,
     newFluidState?: SF,
+    viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
 ): IComponentHandle {
     const storedStateHandle = syncedState.get<IComponentHandle>(
         `syncedState-${syncedStateId}`,
@@ -45,8 +47,7 @@ export function setFluidState<SV, SF>(
     for (const key of fluidToView.keys()) {
         const fluidKey = key as string;
         const syncedStateKey = fluidToView?.get(fluidKey as keyof SF)?.rootKey;
-        const createCallback = fluidToView?.get(fluidKey as keyof SF)
-            ?.sharedObjectCreate;
+        const createCallback = fluidToView?.get(fluidKey as keyof SF)?.sharedObjectCreate;
         if (createCallback) {
             if (storedState.get(fluidKey) === undefined) {
                 const sharedObject = createCallback(runtime);
@@ -76,6 +77,16 @@ export function setFluidState<SV, SF>(
                 ? newFluidState[fluidKey]
                 : storedState.get(fluidKey);
             storedState.set(fluidKey, value);
+        }
+    }
+    if (viewToFluid !== undefined && newFluidState !== undefined) {
+        for (const key of viewToFluid.keys()) {
+            const viewKey = key as string;
+            const fluidConverter = viewToFluid?.get(viewKey as keyof SV)?.fluidConverter;
+            if (fluidConverter) {
+                const value = fluidConverter(newViewState, newFluidState);
+                storedState.set(viewKey, value);
+            }
         }
     }
     syncedState.set(`syncedState-${syncedStateId}`, storedState.handle);

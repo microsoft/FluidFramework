@@ -87,6 +87,8 @@ export const syncedStateCallbackListener = <
                 change.key as keyof SF,
                 fluidComponentMap,
                 fluidToView,
+                state,
+                currentFluidState,
             );
             state[stateKey as string] = newPartialState[stateKey];
             state.fluidComponentMap = fluidComponentMap;

@@ -97,6 +97,7 @@ export function syncState<
             partialRootState = getFluidFromView(
                 viewState,
                 viewKey as keyof SV,
+                currentFluidState,
                 viewToFluid,
             );
         } else {
@@ -124,6 +125,7 @@ export function syncState<
                 fluidKey as keyof SF,
                 fluidComponentMap,
                 fluidToView,
+                combinedViewState,
                 combinedFluidState,
             );
         } else {
@@ -147,7 +149,9 @@ export function syncState<
             runtime,
             fluidComponentMap,
             fluidToView,
+            combinedViewState,
             combinedFluidState,
+            viewToFluid,
         );
     }
     setState(combinedViewState, isSyncedStateUpdate, true);

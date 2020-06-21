@@ -14,13 +14,13 @@ Similarly, the SharedCounter's value can be read using state.counter.value and i
 
 However, this is purely powered using a SharedMap. To start adding your own SharedObjects to this map, you can still use a UnifiedFluidReactComponent. Simply define the one needed in the fluidToView map and pass its Create function as seen in example 2.
 
-If you'd like to have separate view and Fluid states, where the view has no Fluid objects but the latter does, please look at example 4 where we achieve this using the useReducerFluid hook.
+If you'd like to have separate view and Fluid states, where the view has no Fluid objects even though the syncing logic is being powered by DDS', please look at example 3 where we achieve this using UnifiedFluidReactComponent's parent class, FluidReactComponent.
 
-2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state.. We still have all of our state, setState functionality from before. And our counter still updates in sync with everyone and triggers automatic re-renders when others update it.
+2) **clicker-react** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state. This is made available by setting a fluidToView map on our syncedStateConfig. We still have all of our state, setState functionality from before, but now it has SharedCounter's logic for allowing mutiple people to simultaneously increment. And our counter still triggers automatic React re-renders when others update it.
 
-2) **clicker-react-nonunified** would be the next component to look at for a Fluid newcomer. It still uses the same UnifiedFluidReactComponent from before, but now introduces using a SharedCounter on the state.. We still have all of our state, setState functionality from before. And our counter still updates in sync with everyone and triggers automatic re-renders when others update it.
+2) **clicker-react-nonunified** now introduces the concept of separate view and Fluid states. This allows the view to be built without interacting with any Fluid shared objects, while still capitalizing on the unique syncing logic of each DDS. This is possible due to the introduction of the viewToFluid map, where users can set up logic to trigger Fluid updates based off of view state changes.
 
-3) **clicker-functional** now introduces our support for React hooks! In this case, we use the useStateFluid hook to achieve the same goal as our earlier examples, but now as a functional component
+3) **clicker-functional** brings with it our support for React hooks! In this case, we use the useStateFluid hook to achieve the same goal as our first example, but now as a functional component.
 
 4) **clicker-reducer** shows how Clicker could be written in a scalable manner by using the useReducerFluid hook. Here, we set up a reducer that allows the view to dispatch the action to increment the counter, rather than directly interact with it. This shows how Fluid components could scale with more complex data store requirements.
 

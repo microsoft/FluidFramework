@@ -33,6 +33,7 @@ export function getViewFromFluid<
     fluidKey: keyof SF,
     fluidComponentMap: FluidComponentMap,
     fluidToView: Map<keyof SF, IViewConverter<SV, SF>>,
+    viewState: SV,
     combinedFluidState?: Partial<SF>,
 ): Partial<SV> {
     const componentState = getFluidState(
@@ -55,7 +56,7 @@ export function getViewFromFluid<
     if (viewConverter) {
         const partialFluidState: Partial<SF> = {};
         partialFluidState[fluidKey] = value;
-        return viewConverter(partialFluidState, fluidComponentMap);
+        return viewConverter(viewState, partialFluidState, fluidComponentMap);
     } else {
         const partialViewState: Partial<SV> = {};
         const valueAsIComponentHandle = (value as IComponent).IComponentHandle;

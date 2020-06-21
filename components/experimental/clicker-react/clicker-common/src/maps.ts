@@ -37,11 +37,9 @@ export const ddsFluidToView: FluidToViewMap<ICounterViewState,ICounterFluidState
         "counter", {
             type: SharedCounter.name,
             viewKey: "value",
-            viewConverter: (
-                syncedState: Partial<ICounterFluidState>,
-            ) => {
+            viewConverter: (viewState, fluidState, fluidComponentMap) => {
                 return {
-                    value: syncedState.counter?.value,
+                    value: fluidState.counter?.value,
                 };
             },
             sharedObjectCreate: SharedCounter.create,
@@ -55,8 +53,8 @@ export const ddsViewToFluid: ViewToFluidMap<ICounterViewState,ICounterFluidState
         "value", {
             type: "number",
             fluidKey: "counter",
-            fluidConverter: () => {
-                return {};
+            fluidConverter: (viewState, fluidState) => {
+                return fluidState;
             },
         },
     ],
@@ -79,8 +77,9 @@ export const ddsToPrimitiveViewToFluid: ViewToFluidMap<ICounterViewState,ICounte
         "value", {
             type: SharedCounter.name,
             fluidKey: "counter",
-            fluidConverter: () => {
-                return {};
+            fluidConverter: (viewState, fluidState) => {
+                fluidState.counter?.increment(1);
+                return fluidState.counter?.value;
             },
         },
     ],

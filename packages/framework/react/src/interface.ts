@@ -145,6 +145,7 @@ export interface IViewConverter<
      * this converter maps to, and returns the corresponding partial view state
      */
     viewConverter?: (
+        viewState: SV,
         fluidState: Partial<SF>,
         fluidComponentMap: FluidComponentMap
     ) => Partial<SV>;
@@ -183,9 +184,10 @@ export interface IFluidConverter<
     fluidKey: keyof SF;
     /**
      * A callback that takes in the partial view state containing the value that
-     * this converter maps to, and returns the corresponding partial Fluid state
+     * this converter maps to, and optionally returns a value. This value will be automatically set on the synced state
+     * under the view key this converter maps to
      */
-    fluidConverter?: (viewState: Partial<SV>) => Partial<SF>;
+    fluidConverter?: (viewState: SV, fluidState: Partial<SF>) => any;
 }
 
 /**

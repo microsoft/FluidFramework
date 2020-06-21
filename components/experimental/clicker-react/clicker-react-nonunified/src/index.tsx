@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/react";
 import {
     primitiveToDdsFluidToView,
+    ddsToPrimitiveViewToFluid,
 } from "@fluid-example/clicker-common";
 import { ICounterFluidState, ICounterViewState } from "@fluid-example/clicker-definitions";
 import { SharedCounter } from "@fluidframework/counter";
@@ -31,7 +32,8 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
             {
                 syncedStateId: "clicker",
                 fluidToView: primitiveToDdsFluidToView,
-                defaultViewState: {},
+                viewToFluid: ddsToPrimitiveViewToFluid,
+                defaultViewState: { value: 0 },
             },
         );
     }

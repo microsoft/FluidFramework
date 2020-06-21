@@ -23,18 +23,16 @@ export function getFluidFromView<
 >(
     state: SV,
     viewKey: keyof SV,
+    fluidState: SF,
     viewToFluid?: Map<keyof SV, IFluidConverter<SV, SF>>,
 ): Partial<SF> {
-    const value = state[viewKey];
     const fluidConverter =
         viewToFluid && viewToFluid.get(viewKey)?.fluidConverter;
     if (fluidConverter) {
-        const partialViewState: Partial<SV> = {};
-        partialViewState[viewKey] = value;
-        return fluidConverter(partialViewState);
+        return fluidConverter(state, fluidState);
     } else {
         const partialFluidState: Partial<SF> = {};
-        partialFluidState[viewKey as string] = value;
+        partialFluidState[viewKey as string] = state[viewKey];
         return partialFluidState;
     }
 }
