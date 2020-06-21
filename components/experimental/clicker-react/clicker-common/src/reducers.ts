@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IActionReducer,
-} from "@fluid-example/clicker-definitions";
+import { IClickerReducer } from "@fluid-example/clicker-definitions";
 
-export const ActionReducer: IActionReducer = {
+export const ClickerReducer: IClickerReducer = {
     increment: {
         function: (state, step: number) => {
             const counter = state.fluidState?.counter;

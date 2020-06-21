@@ -507,7 +507,7 @@ export interface IFluidContextProps<SV, SF, C> extends IFluidProps<SV, SF> {
     /**
      * The additional data that will be passed through the Fluid context
      */
-    reactContext: Partial<C>;
+    reactContext?: C;
 }
 
 /**

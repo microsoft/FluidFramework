@@ -34,6 +34,7 @@
     "@fluidframework/map": "^0.21.0",
     "@fluidframework/runtime-definitions": "^0.21.0",
     "@fluidframework/shared-object-base": "^0.21.0",
+    "@fluidframework/view-interfaces": "^0.21.0",
     "react": "^16.10.2"
   },
   "devDependencies": {

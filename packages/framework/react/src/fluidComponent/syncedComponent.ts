@@ -12,6 +12,7 @@ import {
     ISharedDirectory,
 } from "@fluidframework/map";
 import { ITaskManager } from "@fluidframework/runtime-definitions";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 import {
     FluidToViewMap,
@@ -34,13 +35,12 @@ export abstract class SyncedComponent<
     P extends IComponent = object,
     S = undefined,
     E extends IEvent = IEvent
-    > extends PrimedComponent<P, S, E> implements IComponentSynced {
+    > extends PrimedComponent<P, S, E> implements IComponentSynced, IComponentHTMLView {
     public syncedStateConfig: SyncedStateConfig = new Map();
     protected fluidComponentMap: FluidComponentMap = new Map();
     protected internalSyncedState: SharedMap | undefined;
-    public get IComponentSynced() {
-        return this;
-    }
+    public get IComponentSynced() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async initializeInternal(props?: any): Promise<void> {
         // Initialize task manager.
@@ -103,6 +103,10 @@ export abstract class SyncedComponent<
             runtime: this.runtime,
             fluidComponentMap: this.fluidComponentMap,
         };
+    }
+
+    public render(element: HTMLElement) {
+        throw Error("Render function was not implemented");
     }
 
     private async initializeStateFirstTime() {

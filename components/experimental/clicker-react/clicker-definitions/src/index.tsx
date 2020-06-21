@@ -26,15 +26,6 @@ export interface ICounterFluidState
     counter?: ISharedCounter;
 }
 
-export interface IActionReducer
-    extends IFluidReducer<
-    ICounterViewState,
-    ICounterFluidState,
-    IFluidDataProps
-    > {
-    increment: FluidStateUpdateFunction<
-    ICounterViewState,
-    ICounterFluidState,
-    IFluidDataProps
-    >;
+export interface IClickerReducer extends IFluidReducer<ICounterViewState,ICounterFluidState,IFluidDataProps> {
+    increment: FluidStateUpdateFunction<ICounterViewState,ICounterFluidState,IFluidDataProps>;
 }

@@ -3,27 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-    PrimedComponentFactory,
-} from "@fluidframework/aqueduct";
-import {
-    FluidReactComponent,
-    SyncedComponent,
-} from "@fluidframework/react";
-import {
-    primitiveToDdsFluidToView,
-    ddsToPrimitiveViewToFluid,
-} from "@fluid-example/clicker-common";
-import { ICounterFluidState, ICounterViewState } from "@fluid-example/clicker-definitions";
-import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { PrimedComponentFactory } from "@fluidframework/aqueduct";
+import { SyncedComponent } from "@fluidframework/react";
+import { ddsToPrimitiveFluidToView, primitiveToDdsViewToFluid } from "@fluid-example/clicker-common";
+import { SharedCounter } from "@fluidframework/counter";
+
+import { CounterReactView } from "./view";
 
 /**
- * Clicker example that uses a SharedCounter as its DDS
+ * Clicker example that uses a SharedCounter as its DDS but never expose it to the view
  */
-export class Clicker extends SyncedComponent implements IComponentHTMLView {
+export class Clicker extends SyncedComponent {
     constructor(props) {
         super(props);
 
@@ -31,14 +23,12 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
             "clicker",
             {
                 syncedStateId: "clicker",
-                fluidToView: primitiveToDdsFluidToView,
-                viewToFluid: ddsToPrimitiveViewToFluid,
+                fluidToView: ddsToPrimitiveFluidToView,
+                viewToFluid: primitiveToDdsViewToFluid,
                 defaultViewState: { value: 0 },
             },
         );
     }
-
-    public get IComponentHTMLView() { return this; }
 
     public render(element: HTMLElement) {
         ReactDOM.render(
@@ -49,19 +39,6 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
             element,
         );
         return element;
-    }
-}
-
-class CounterReactView extends FluidReactComponent<ICounterViewState, ICounterFluidState> {
-    render() {
-        return (
-            <div>
-                <span>
-                    {this.state.value}
-                </span>
-                <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
-            </div>
-        );
     }
 }
 

@@ -1,0 +1,21 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as React from "react";
+import { UnifiedFluidReactComponent } from "@fluidframework/react";
+import { ICounterFluidState } from "@fluid-example/clicker-definitions";
+
+export class CounterReactView extends UnifiedFluidReactComponent<ICounterFluidState> {
+    render() {
+        return (
+            <div>
+                <span>
+                    {this.state.counter?.value}
+                </span>
+                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
+            </div>
+        );
+    }
+}

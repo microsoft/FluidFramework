@@ -4,18 +4,17 @@
  */
 
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
-import { UnifiedFluidReactComponent, SyncedComponent } from "@fluidframework/react";
+import { SyncedComponent } from "@fluidframework/react";
 import { ddsFluidToView } from "@fluid-example/clicker-common";
-import { ICounterFluidState } from "@fluid-example/clicker-definitions";
 import { SharedCounter } from "@fluidframework/counter";
-import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { CounterReactView } from "./view";
 
 /**
  * Clicker example that uses a SharedCounter as its DDS
  */
-export class Clicker extends SyncedComponent implements IComponentHTMLView {
+export class Clicker extends SyncedComponent {
     constructor(props) {
         super(props);
 
@@ -29,8 +28,6 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
         );
     }
 
-    public get IComponentHTMLView() { return this; }
-
     public render(element: HTMLElement) {
         ReactDOM.render(
             <CounterReactView
@@ -40,19 +37,6 @@ export class Clicker extends SyncedComponent implements IComponentHTMLView {
             element,
         );
         return element;
-    }
-}
-
-class CounterReactView extends UnifiedFluidReactComponent<ICounterFluidState> {
-    render() {
-        return (
-            <div>
-                <span>
-                    {this.state.counter?.value}
-                </span>
-                <button onClick={() => { this.state.counter?.increment(1); }}>+</button>
-            </div>
-        );
     }
 }
 
