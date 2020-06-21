@@ -11,7 +11,7 @@ export class CounterReactView extends UnifiedFluidReactComponent<ICounterFluidSt
     render() {
         return (
             <div>
-                <span>
+                <span className="value">
                     {this.state.counter?.value}
                 </span>
                 <button onClick={() => { this.state.counter?.increment(1); }}>+</button>

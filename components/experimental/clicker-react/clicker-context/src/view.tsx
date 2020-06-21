@@ -13,7 +13,7 @@ export function View() {
     }
     return (
         <div>
-            <span>
+            <span className="value">
                 {state.value}
             </span>
             <button

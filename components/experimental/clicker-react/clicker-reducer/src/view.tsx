@@ -20,7 +20,7 @@ export function CounterReactFunctionalReducer(
 
     return (
         <div>
-            <span>
+            <span className="value">
                 {state.viewState.value}
             </span>
             <button onClick={() => dispatch.increment.function(state, 1)}>

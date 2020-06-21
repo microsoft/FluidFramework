@@ -14,7 +14,7 @@ export class CounterReactView extends UnifiedFluidReactComponent<ICounterState> 
     render() {
         return (
             <div>
-                <span>
+                <span className="value">
                     {this.state.value}
                 </span>
                 <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>

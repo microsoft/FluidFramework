@@ -11,7 +11,7 @@ export function CounterReactFunctional(props: IFluidProps<ICounterState,ICounter
     const [state, setState] = useStateFluid<ICounterState,ICounterState>(props, { value: 0 });
     return (
         <div>
-            <span>
+            <span className="value">
                 {state.value}
             </span>
             <button

@@ -10,7 +10,7 @@ export class CounterReactView extends FluidReactComponent<ICounterViewState, ICo
     render() {
         return (
             <div>
-                <span>
+                <span className="value">
                     {this.state.value}
                 </span>
                 <button onClick={() => { this.setState({ value: this.state.value + 1 }); }}>+</button>
