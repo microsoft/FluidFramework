@@ -1,9 +1,9 @@
 {
   "name": "@fluid-internal/test-loader-utils",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "private": true,
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
@@ -18,20 +18,20 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "lint": "npm run tsfmt && npm run eslint",
-    "lint:fix": "npm run tsfmt:fix && npm run eslint:fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/driver-definitions": "^0.20.0",
-    "@fluidframework/protocol-definitions": "^0.1006.1"
+    "@fluidframework/driver-definitions": "^0.21.0",
+    "@fluidframework/protocol-definitions": "^0.1008.0-0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.17.0-0",
-    "@fluidframework/eslint-config-fluid": "^0.18.0-0",
+    "@fluidframework/build-common": "^0.17.0",
+    "@fluidframework/eslint-config-fluid": "^0.18.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^5.2.0",

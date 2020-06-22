@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@fluidframework/component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
+import { ICodeAllowList, IProxyLoaderFactory, IFluidCodeResolver } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
@@ -25,8 +25,8 @@ export interface IBaseHostConfig {
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 
-    // White List for the code loader
-    whiteList?: ICodeWhiteList;
+    // Allow List for the code loader
+    allowList?: ICodeAllowList;
 
     // The code resolver
     codeResolver: IFluidCodeResolver;

@@ -1,0 +1,262 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import "mocha";
+
+import { strict as assert } from "assert";
+import { Random } from "best-random";
+import { ISharedObjectServices } from "@fluidframework/component-runtime-definitions";
+import {
+    MockComponentRuntime,
+    MockContainerRuntimeFactory,
+    MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { SharedMatrix, SharedMatrixFactory } from "../src";
+import { extract, expectSize } from "./utils";
+
+describe("Matrix", () => {
+    describe("stress", () => {
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
+        let matrices: SharedMatrix[];       // Array of matrices under test
+        let trace: string[];                // Repro steps to be printed if a failure is encountered.
+
+        /**
+         * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
+         */
+        const expect = async () => {
+            containerRuntimeFactory.processAllMessages();
+
+            const matrix0 = matrices[0];
+            const actual0 = extract(matrix0);
+
+            for (let i = 1; i < matrices.length; i++) {
+                const matrixN = matrices[i];
+                const actualN = extract(matrixN);
+                assert.deepEqual(actual0, actualN);
+
+                // Vet that empty matrices have identical dimensions (see notes on `expectSize`).
+                expectSize(matrixN, matrix0.rowCount, matrix0.colCount);
+            }
+        };
+
+        /**
+         * Performs a stress run using the given parameters.  'syncProbability' is the probability
+         * that the clients will drain their queue of incoming messages and check for convergence.
+         *
+         * 'seed' is the 32-bit integer used to seed the PRNG.
+         */
+        async function stress(numClients: number, numOps: number, syncProbability: number, seed: number) {
+            try {
+                matrices = [];
+                trace = [];
+
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
+
+                // Create matrices for this stress run.
+                for (let i = 0; i < numClients; i++) {
+                    const componentRuntimeN = new MockComponentRuntime();
+                    const containerRuntimeN = containerRuntimeFactory.createContainerRuntime(componentRuntimeN);
+                    const servicesN: ISharedObjectServices = {
+                        deltaConnection: containerRuntimeN.createDeltaConnection(),
+                        objectStorage: new MockStorage(),
+                    };
+
+                    const matrixN = new SharedMatrix(componentRuntimeN, `matrix-${i}`, SharedMatrixFactory.Attributes);
+                    matrixN.connect(servicesN);
+
+                    matrices.push(matrixN);
+                }
+
+                const matrix0 = matrices[0];
+
+                // Initialize PRNG with given seed.
+                const float64 = new Random(seed).float64;
+
+                // Returns a pseudorandom 32b integer in the range [0 .. max).
+                const int32 = (max = 0x7FFFFFFF) => (float64() * max) | 0;
+
+                // Returns an array with 'n' random values, each in the range [0 .. 100).
+                const values = (n: number) => new Array(n)
+                    .fill(0)
+                    .map(() => int32(100));
+
+                // Invokes 'setCells()' on the matrix w/the given index and logs the command to the trace.
+                const setCells = (matrixIndex: number, row: number, col: number, colCount: number, values: any[]) => {
+                    const matrix = matrices[matrixIndex];
+                    trace?.push(`matrix${matrixIndex + 1}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* colCount: */ ${colCount}, ${JSON.stringify(values)});    // rowCount: ${matrix.rowCount} colCount: ${matrix.colCount} stride: ${matrix.colCount} length: ${values.length}`);
+                    matrix.setCells(row, col, colCount, values);
+                }
+
+                // Initialize with [0..5] row and [0..5] cols, filling the cells.
+                {
+                    const rowCount = int32(5);
+                    if (rowCount > 0) {
+                        trace?.push(`matrix1.insertRows(0,${rowCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        matrix0.insertRows(0, rowCount);
+                    }
+
+                    const colCount = int32(5);
+                    if (colCount > 0) {
+                        trace?.push(`matrix1.insertCols(0,${colCount});    // rowCount: ${matrix0.rowCount}, colCount: ${matrix0.colCount}`);
+                        matrix0.insertCols(0, colCount);
+                    }
+
+                    if (colCount > 0 && rowCount > 0) {
+                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, colCount,
+                            new Array(colCount * rowCount).fill(0).map((_, index) => index));
+                    }
+                }
+
+                // Loop for the prescribed number of iterations, randomly mutating one of matrices with one
+                // of the following operations:
+                //
+                //    * insert or remove rows
+                //    * insert or remove cols
+                //    * set a range of cells
+                //
+                // Following each operation, there is a `syncProbability` chance that clients will exchange
+                // ops and vet convergence.
+                for (let i = 0; i < numOps; i++) {
+                    // Choose a client to perform the operation.
+                    const matrixIndex = int32(matrices.length);
+                    const matrix = matrices[matrixIndex];
+
+                    const { rowCount, colCount } = matrix;
+                    const row = int32(rowCount);
+                    const col = int32(colCount);
+
+                    switch(int32(7)) {
+                        case 0: {
+                            // remove 1 or more rows (if any exist)
+                            if (rowCount > 0) {
+                                // 10% probability of removing multiple rows.
+                                const numRemoved = float64() < 0.1
+                                    ? int32(rowCount - row - 1) + 1
+                                    : 1;
+
+                                trace?.push(`matrix${matrixIndex + 1}.removeRows(${row},${numRemoved});    // rowCount: ${matrix.rowCount - numRemoved}, colCount: ${matrix.colCount}`);
+                                matrix.removeRows(row, numRemoved);
+                            }
+                            break;
+                        }
+
+                        case 1: {
+                            // remove 1 or more cols (if any exist)
+                            if (colCount > 0) {
+                                // 10% probability of removing multiple cols.
+                                const numRemoved = float64() < 0.1
+                                    ? int32(colCount - col - 1) + 1
+                                    : 1;
+
+                                trace?.push(`matrix${matrixIndex + 1}.removeCols(${col},${numRemoved});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount - numRemoved}`);
+                                matrix.removeCols(col, numRemoved);
+                            }
+                            break;
+                        }
+
+                        case 2: {
+                            // insert 1 or more rows (20% probability of inserting 2-4 rows).
+                            const numInserted = float64() < 0.2
+                                ? int32(3) + 1
+                                : 1;
+
+                            trace?.push(`matrix${matrixIndex + 1}.insertRows(${row},${numInserted});    // rowCount: ${matrix.rowCount + numInserted}, colCount: ${matrix.colCount}`);
+                            matrix.insertRows(row, numInserted);
+
+                            // 90% probability of filling the newly inserted row with values.
+                            if (float64() < 0.9) {
+                                if (colCount > 0) {
+                                    setCells(matrixIndex, row, /* col: */ 0, matrix.colCount,
+                                        values(matrix.colCount * numInserted));
+                                }
+                            }
+                            break;
+                        }
+
+                        case 3: {
+                            // insert 1 or more cols (20% probability of inserting 2-4 cols).
+                            const numInserted = float64() < 0.2
+                                ? int32(3) + 1
+                                : 1;
+
+                            trace?.push(`matrix${matrixIndex + 1}.insertCols(${col},${numInserted});    // rowCount: ${matrix.rowCount}, colCount: ${matrix.colCount + numInserted}`);
+                            matrix.insertCols(col, numInserted);
+
+                            // 90% probability of filling the newly inserted col with values.
+                            if (float64() < 0.9) {
+                                if (rowCount > 0) {
+                                    setCells(matrixIndex, /* row: */ 0, col, numInserted,
+                                        values(matrix.rowCount * numInserted));
+                                }
+                            }
+                            break;
+                        }
+
+                        default: {
+                            // set a range of cells (if matrix is non-empty)
+                            if (rowCount > 0 && colCount > 0) {
+                                const stride = int32(colCount - col - 1) + 1;
+                                const length = (int32(rowCount - row - 1) + 1) * stride;
+                                setCells(matrixIndex, row, col, stride, values(length));
+                            }
+                            break;
+                        }
+                    }
+
+                    // Clients periodically exchanging ops, at which point we verify they have converged
+                    // on the same state.
+                    if (float64() < syncProbability) {
+                        trace?.push("await expect();");
+                        await expect();
+                    }
+                }
+
+                // Test is finished.  Drain pending ops and vet that clients converged.
+                await expect();
+            } catch (error) {
+                // If an error occurs, dump the repro instructions.
+                for (const s of trace) {
+                    console.log(s);
+                }
+
+                // Append an 'await expect();' to the log.
+                console.log("await expect();");
+
+                // Also dump the current state of the matrices.
+                for (const m of matrices) {
+                    console.log(m.toString());
+                }
+
+                // Finally, rethrow the original error.
+                throw error;
+            }
+        }
+
+        for (const { numClients, numOps, syncProbability, seed } of [
+            { numClients: 2, numOps: 200, syncProbability: 0.3, seed: 0x84d43a0a },
+            { numClients: 3, numOps: 200, syncProbability: 0.1, seed: 0x655c763b },
+            { numClients: 5, numOps: 200, syncProbability: 0.0, seed: 0x2f98736d },
+        ]) {
+            it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
+                async function () {
+                    this.timeout(10000);
+
+                    await stress(numClients, numOps, syncProbability, seed);
+                });
+        }
+
+        it.skip("stress-loop", async function() {
+            console.log("\n*** Begin Stress-Loop ***");
+            this.timeout(0);    // Disable timeouts for stress loop
+
+            const start = Date.now();
+            while (true) {
+                await stress(/* numClients: */ 5, /* numOps: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
+                console.log(matrices[0].toString());
+                console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
+            }
+        });
+    });
+});

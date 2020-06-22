@@ -32,10 +32,11 @@ import {
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
-import * as scribe from "@fluidframework/server-tools-core";
 import { ISharedObjectFactory } from "@fluidframework/shared-object-base";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@fluidframework/view-interfaces";
 import Axios from "axios";
+
+import * as scribe from "./tools-core";
 
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import

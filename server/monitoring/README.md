@@ -1,4 +1,4 @@
-# fluid-service-monitor
+# @fluid-internal/service-monitor
 
 A Node.js client that tests liveness of Fluid ordering service. The script creates a new Fluid document and checks whether the client join message is sequenced and received.
 
@@ -37,7 +37,7 @@ npm run docker:start
 
 Pushing to registry
 ```
-docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t prague.azurecr.io/monitoring .
+docker build -t prague.azurecr.io/monitoring .
 docker push prague.azurecr.io/monitoring
 ```
 

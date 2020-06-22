@@ -111,10 +111,4 @@ We'll return to interfaces shortly, when we discuss how Fluid components can ren
 the `@fluidframework/aqueduct` package makes it easy to create Fluid components.
 
 
-[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
-[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
-[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
-[SharedDirectory]: ../api/fluid-map.shareddirectory.md
-[SharedMap]: ../api/fluid-map.sharedmap.md
-[undo-redo]: ../api/fluid-undo-redo.md
+!!!include(links.md)!!!

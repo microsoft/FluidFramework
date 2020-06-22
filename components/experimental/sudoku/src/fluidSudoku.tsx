@@ -99,7 +99,7 @@ export class FluidSudoku extends PrimedComponent
         });
     }
 
-    public createJSXElement(props?: any): JSX.Element {
+    public createJSXElement(): JSX.Element {
         if (this.puzzle) {
             return (
                 <SudokuView

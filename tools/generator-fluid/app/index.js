@@ -74,7 +74,7 @@ module.exports = class extends Generator {
       {
         description: "Sets None as Default View",
       });
-    
+
     // Adding two options to specify the scaffolding inline
     this.option(
       scaffoldingBeginner,
@@ -273,8 +273,18 @@ module.exports = class extends Generator {
     // Update the usage of the component name
     const variableStatement = file.getVariableStatement("fluidExport");
     const varDec = variableStatement.getDeclarations()[0];
-    varDec.set({
-      initializer: `${this._componentClassName()}.factory`,
+    const initializer = `new ContainerRuntimeFactoryWithDefaultComponent(
+        ${this._componentClassName()}.ComponentName,
+        new Map([
+            [${this._componentClassName()}.ComponentName, Promise.resolve(${this._componentClassName()}.factory)],
+            // Add another component here to create it within the container
+        ]))`
+    varDec.set({initializer});
+
+    // Formatting is needed for this file because the above initializer set won't set the indent correctly
+    file.formatText({
+        ensureNewLineAtEndOfFile: true,
+        indentSize: 4,
     });
 
     file.save();

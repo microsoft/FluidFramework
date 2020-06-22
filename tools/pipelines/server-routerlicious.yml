@@ -1,0 +1,244 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# server-routerlicious pipeline
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - master
+    - release/*
+    - refs/tags/server_v*
+  paths:
+    include:
+    - server/routerlicious
+    - tools/build-server-resources
+    - tools/pipelines/server-routerlicious.yml
+    - tools/pipelines/templates/publish-npm-package.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
+    exclude:
+    - server/routerlicious/kubernetes/routerlicious
+  
+pr:
+  branches:
+    include:
+    - master
+    - release/*
+  paths:
+    include:
+    - server/routerlicious
+    - tools/build-server-resources
+    - tools/pipelines/server-routerlicious.yml
+    exclude:
+    - server/routerlicious/kubernetes/routerlicious
+
+variables:
+  skipComponentGovernanceDetection: true
+  pushImage: ${{
+    and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    )}}
+  registry: prague.azurecr.io
+  containerName: prague-server
+  baseContainerName: $(containerName)-base
+  baseContainerTag: $(baseContainerName):$(Build.BuildId)
+  fullRunnerContainerTag: $(registry)/$(containerName):$(Build.BuildId)
+  ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    testConfig: :full
+  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    testConfig: :ci
+
+stages:
+- stage: build
+  displayName: Build Stage
+  jobs:
+    - job: build
+      displayName: Build - Server
+      pool: Default
+      steps:
+        # Checkout
+        - checkout: self
+          clean: true
+          lfs: false
+          submodules: false
+
+        # Component detection (not pull request)
+        - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          - task: npmAuthenticate@0
+            displayName: 'npm Authenticate root .npmrc'
+            inputs:
+              workingFile: .npmrc
+          - task: Npm@1
+            displayName: npm ci
+            inputs:
+              command: 'custom'
+              customCommand: 'ci --ignore-scripts'
+              customRegistry: 'useFeed'
+              customFeed: '0a22f611-6a4a-4416-a1bb-53ed7284aa21/f56654ac-3b25-4f5c-bd34-2c1b79e8cfa6'
+          - bash: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp server/routerlicious/repo-package.json server/routerlicious/packages/package.json
+              cp server/routerlicious/repo-package-lock.json server/routerlicious/packages/package-lock.json
+            displayName: 'Generate Mono repo package json'
+          - template: templates/include-generate-notice-steps.yml
+            parameters:
+              buildDirectory: server/routerlicious
+          - bash: |
+              rm server/routerlicious/packages/package.json
+              rm server/routerlicious/packages/package-lock.json
+            displayName: 'Cleanup mono repo package json'
+
+        # Setup
+        - task: Bash@3
+          displayName: Strip npmrc auth token preamble
+          inputs:
+            targetType: 'inline'
+            script: |
+              # In order to simplify the build and use the npm authenticate task we strip the auth token preamble from the npmrc
+              sed -i '/^; begin auth token/,/^\; end auth token/d;' server/routerlicious/.npmrc
+        - task: npmAuthenticate@0
+          displayName: npm Authenticate
+          inputs:
+            workingFile: server/routerlicious/.npmrc
+
+        # Build
+        - task: Docker@2
+          displayName: Docker Build - Base
+          inputs:
+            repository: $(baseContainerName)
+            command: build
+            dockerFile: server/routerlicious/Dockerfile
+            buildContext: server/routerlicious
+            arguments: --target base --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)
+            tags: |
+              $(Build.BuildId)
+
+        # Pack
+        - task: Docker@0
+          displayName: Pack
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+
+        - task: PublishBuildArtifacts@1
+          displayName: Publish Artifact - pack
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/pack'
+            ArtifactName: pack
+            publishLocation: 'Container'
+
+        # Lint
+        - task: Docker@0
+          displayName: npm lint
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run -t $(baseContainerTag) npm run lint'
+
+        # Test
+        - task: Docker@0
+          displayName: npm run test$(testConfig)
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/server/routerlicious/nyc:/usr/src/server/nyc -t $(baseContainerTag) npm run test$(testConfig)'
+          
+        - task: PublishTestResults@2
+          displayName: Publish Test Results
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*junit-report.xml'
+            searchFolder: $(System.DefaultWorkingDirectory)/server/routerlicious/nyc
+            mergeTestResults: true
+          condition: succeededOrFailed()
+
+        - task: PublishCodeCoverageResults@1
+          displayName: Publish Code Coverage
+          inputs:
+            codeCoverageTool: Cobertura
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report/cobertura-coverage.xml'
+            reportDirectory: '$(System.DefaultWorkingDirectory)/server/routerlicious/nyc/**/report'
+
+        # Docs
+        - task: Docker@0
+          displayName: npm run build:docs
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'run --user root -v $(System.DefaultWorkingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run build:docs'
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Docs: Publish Artifact'
+          inputs:
+            PathtoPublish: '$(System.DefaultWorkingDirectory)/_api-extractor-temp'
+            ArtifactName: _api-extractor-temp
+            publishLocation: 'Container'
+
+        # Build - Runner
+        - ${{ if eq(variables.pushImage, true) }}:
+          - task: Docker@2
+            displayName: 'Docker Build - Runner'
+            inputs:
+              containerRegistry: Fluid Azure Container Registry
+              repository: $(containerName)
+              command: build
+              dockerFile: server/routerlicious/Dockerfile
+              buildContext: server/routerlicious
+              arguments: '--target runner --build-arg VERSION_BUILDNUMBER=$(Build.BuildId) --build-arg VERSION_BUILDBRANCH=$(Build.SourceBranch)'
+              tags: |
+                $(Build.BuildId)
+          
+          - task: Docker@2
+            displayName: 'Docker Push - Runner'
+            inputs:
+              containerRegistry: Fluid Azure Container Registry
+              repository: $(containerName)
+              command: push
+              tags: |
+                $(Build.BuildId)
+
+        # Cleanup
+        - task: Docker@0
+          displayName: 'Cleanup: Container prune'
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'container prune -f'
+          continueOnError: true
+          condition: succeededOrFailed()
+
+        - ${{ if eq(variables.pushImage, true) }}:
+          - task: Docker@0
+            displayName: 'Cleanup: Runner'
+            inputs:
+              action: 'Run a Docker command'
+              customCommand: 'rmi $(fullRunnerContainerTag)'
+            continueOnError: true
+            condition: succeededOrFailed()
+
+        - task: Docker@0
+          displayName: 'Cleanup: Base'
+          inputs:
+            action: 'Run a Docker command'
+            customCommand: 'rmi $(baseContainerTag)'
+          continueOnError: true
+          condition: succeededOrFailed()
+
+# Publish stage
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+  - stage: publish
+    dependsOn: build
+    displayName: Publish Stage
+    jobs:
+    - template: templates/publish-npm-package.yml
+      parameters:
+        feeds:
+        - name: https://offnet.pkgs.visualstudio.com/officenet/_packaging/fluid/npm/registry/
+          environment: fluid-feed
+          internal: false
+        # only publish release bits
+        - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+          - name: https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+            environment: office-feed
+            customEndPoint: Office Packages
+            internal: false

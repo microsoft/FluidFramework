@@ -60,7 +60,7 @@ Narrative documentation
 : The overall structure of the documentation comes from Markdown files in the `docs/` folder.
 
 Automated API documentation
-: The contents of the [API](../api/overview.md) section is built from [TSDoc
+: The contents of the [API](../api/) section is built from [TSDoc
 comments](https://api-extractor.com/pages/tsdoc/doc_comment_syntax/) in the source code.
 
 Readmes and other repo files
@@ -100,10 +100,10 @@ a single level of the folder hierarchy, or simply avoid relative links in reusab
 
 You can include files located anywhere in the repo using the same `!!!include()` syntax. The path to the file in the
 repo must be specified relative to `docs/.vuepress/includes`. For example, if you want to include the readme file at
-`packages/runtime/sequence/readme.md`, for example, you would specify the include path like so:
+`packages/dds/sequence/readme.md`, for example, you would specify the include path like so:
 
 ```markdown
-!!!innclude(../../../packages/runtime/sequence/readme.md)!!!
+!!!innclude(../../../dds/sequence/readme.md)!!!
 ```
 
 You can create a simple wrapper page within the docs folder, then include a file from the repo within it. See
