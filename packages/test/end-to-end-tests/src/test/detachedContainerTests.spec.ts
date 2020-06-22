@@ -20,7 +20,6 @@ import { v4 as uuid } from "uuid";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred } from "@fluidframework/common-utils";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -276,8 +275,7 @@ describe("Detached Container", () => {
                 testChannelId, "Channel id should match");
             assert.strictEqual(contents.contents.content.type,
                 SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.type,
-                MessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(contents.contents.type, "attach", "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
@@ -307,8 +305,7 @@ describe("Detached Container", () => {
                 peerComponentRuntimeChannel.id, "Component id should match");
             assert.strictEqual(contents.type,
                 testComponentType, "Component type should match");
-            assert.strictEqual(type,
-                MessageType.Attach, "Op should be an attach op");
+            assert.strictEqual(type, "attach", "Op should be an attach op");
             defPromise.resolve();
             return 0;
         };
