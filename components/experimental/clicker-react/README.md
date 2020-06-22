@@ -1,6 +1,6 @@
 # Clicker React
 
-**clicker-react** contains six different Clicker Fluid components that use the new experimental Fluid React component and hooks. These can be found in the **@fluidframeworks/react** package.
+**clicker-react** contains six different Clicker Fluid components that use the new experimental Fluid React component and hooks. These can be found in the **@fluidframework/react** package.
 
 They all achieve the same end result, but use different extensions of concepts that should be analogous to any React developer.
 
@@ -58,4 +58,4 @@ i.e. PureFluidReactComponent is a child class of FluidReactComponent's behavior 
 **clicker-common** has no dependencies on the views or components themselves, allowing them to be developed as a standalone package. The only thing linking the view and this together are the definitions.
 
 TODO:
-**createContextFluid** - There is also a createContextFluid hook in the Fluid-React library that is analogous to the createContext React hook. However, this still needs to be developed further before it is ready for consumption. For now, please look **clicker-context** to use the useReducerFluid and React.createContext functions to achieve a similar goal.
+**createContextFluid** - There is also a createContextFluid hook in the Fluid-React library that is analogous to the createContext React hook. However, this still needs to be developed further before it is ready for consumption. For now, please look at **clicker-context** to see how to use the useReducerFluid and React.createContext functions to achieve a similar goal.
