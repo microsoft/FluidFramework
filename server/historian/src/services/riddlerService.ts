@@ -45,12 +45,6 @@ export class RiddlerService implements ITenantService {
     }
 
     private async verifyToken(tenantId: string, token: string): Promise<void> {
-        // Remove this when clients are updated to 0.22
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!token) {
-            return;
-        }
-
         const cachedToken = await this.cache.exists(token).catch((error) => {
             winston.error(`Error fetching token from cache`, error);
             return false;
@@ -73,6 +67,7 @@ export class RiddlerService implements ITenantService {
                 },
                 json: true,
             });
+
         this.cache.set(token).catch((error) => {
             winston.error(`Error caching token to redis`, error);
         });
