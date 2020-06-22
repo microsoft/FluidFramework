@@ -2,7 +2,6 @@
   "name": "@fluid-example/monaco",
   "version": "0.21.0",
   "description": "Monaco code editor",
-  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",

@@ -2,7 +2,6 @@
   "name": "@fluidframework/gitresources",
   "version": "0.1008.0",
   "description": "Git resource definitions",
-  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",

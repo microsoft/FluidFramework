@@ -2,7 +2,6 @@
   "name": "@fluidframework/test-tools",
   "version": "0.1.0",
   "description": "Fluid test tools",
-  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/getTestPort.js",

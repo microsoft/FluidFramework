@@ -2,7 +2,6 @@
   "name": "@fluidframework/build-tools",
   "version": "0.1.0",
   "description": "Fluid Build tool",
-  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/fluidBuild.js",
