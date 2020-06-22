@@ -152,14 +152,11 @@ export const handlers: Handler[] = [
 
             const ret = [];
 
-            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
-                ret.push(`not sorted`);
-            }
-
             if (json.private && packageShouldNotBePrivate(json.name)) {
                 ret.push(`package ${json.name} should not be marked private`)
             }
 
+            // Falsey check is correct since packages publish by default  (i.e. missing "private" field means false)
             if (!json.private && packageShouldBePrivate(json.name)) {
                 ret.push(`package ${json.name} should be marked private`)
             }
