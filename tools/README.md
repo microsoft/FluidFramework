@@ -4,7 +4,7 @@ _Details coming soon..._
 
 [build-server-resources](./build-server-resources/README.md)
 
-[fluid-build-tools](./fluid-build-tools/README.md)
+[build-tools](./build-tools/README.md)
 
 [fluidpreview-intercept](./fluidpreview-intercept/README.md)
 

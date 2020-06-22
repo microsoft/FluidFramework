@@ -5,6 +5,7 @@
   "keywords": [
     "yeoman-generator"
   ],
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "app/index.js",

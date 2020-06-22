@@ -39,6 +39,17 @@ resources:
       - release/*
       - master
 
+trigger:
+  branches:
+  - release/*
+  - master
+  path:
+    exclude:
+    - packages
+    - server/routerlicious
+    - common/lib/common-utils
+    - common/lib/common-definitions
+
 # no PR triggers
 pr: none
 

@@ -53,7 +53,7 @@
   "dependencies": {
     "@fluidframework/component-core-interfaces": "^0.21.0",
     "@fluidframework/component-runtime-definitions": "^0.21.0",
-    "@fluidframework/protocol-definitions": "^0.1007.1",
+    "@fluidframework/protocol-definitions": "^0.1008.0-0",
     "@fluidframework/runtime-definitions": "^0.21.0"
   },
   "devDependencies": {
