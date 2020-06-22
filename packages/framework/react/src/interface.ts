@@ -288,7 +288,7 @@ export interface FluidEffectFunction<
      * The function defined here will take the combined state and apply some
      * logic that does not cause any state update changes
      */
-    function: (oldState: ICombinedState<SV, SF, C>, ...args: any) => void;
+    function: (oldState?: ICombinedState<SV, SF, C>, ...args: any) => void;
 }
 
 export const instanceOfEffectFunction = <
@@ -313,7 +313,7 @@ export interface FluidAsyncEffectFunction<
      * async logic that does not cause any state update changes
      */
     asyncFunction: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => Promise<void>;
 }
@@ -341,7 +341,7 @@ export interface FluidStateUpdateFunction<
      * to load in are returned by the function.
      */
     function: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => IStateUpdateResult<SV, SF, C>;
 }
@@ -369,7 +369,7 @@ export interface FluidAsyncStateUpdateFunction<
      * component handles to load in will be returned by the function when it finishes.
      */
     asyncFunction: (
-        oldState: ICombinedState<SV, SF, C>,
+        oldState?: ICombinedState<SV, SF, C>,
         ...args: any
     ) => Promise<IStateUpdateResult<SV, SF, C>>;
 }
@@ -417,7 +417,7 @@ export interface FluidSelectorFunction<
      * It will also return any new component handles that will be needed for other users to render the view value
      */
     function: (
-        state: ICombinedState<SV, SF, C>
+        state?: ICombinedState<SV, SF, C>
     ) => {
         result: any | undefined;
         newComponentHandles?: IComponentHandle[];
@@ -437,8 +437,8 @@ export interface FluidComponentSelectorFunction<
      * handle if we need to fetch a component from the fluidComponentMap
      */
     function: (
-        state: ICombinedState<SV, SF, C>,
-        handle: IComponentHandle<any>
+        handle: IComponentHandle<any>,
+        state?: ICombinedState<SV, SF, C>,
     ) => {
         result: IComponent | undefined;
         newComponentHandles?: IComponentHandle[];
@@ -497,7 +497,7 @@ export interface IFluidReducerProps<
      * TODO: Move data props out as it can be fetched from synced component but
      * still needs to be extensible for reducers
      */
-    dataProps: C;
+    dataProps?: C;
 }
 
 /**
@@ -562,3 +562,31 @@ export interface FluidContext<
      */
     setState: (newState: SV) => void;
 }
+
+export interface ISyncedStateConfig<SV, SF> {
+    /**
+     * Unique ID to use for storing the component's synced state in the SyncedComponent's syncedState SharedMap
+     */
+    syncedStateId: string;
+    /**
+     * The backup default view that any view with this ID will use prior to Fluid state initializing, this can be
+     * overridden by the view developer themselves
+     */
+    defaultViewState: SV;
+    /**
+     * A map of the Fluid state values that need conversion to their view state counterparts and the
+     * respective converters
+     */
+    fluidToView: FluidToViewMap<SV, SF>;
+    /**
+     * A map of the view state values that need conversion to their Fluid state counterparts and the
+     * respective converters
+     */
+    viewToFluid?: ViewToFluidMap<SV, SF>;
+}
+
+    /**
+     * The configurations that define the relationships between Fluid and view states for
+     * views that are rendered in a SyncedComponent
+     */
+export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;

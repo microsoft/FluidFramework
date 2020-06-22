@@ -39,10 +39,6 @@ export class Clicker extends SyncedComponent {
                 <CounterReactFunctionalReducer
                     syncedStateId={"counter-reducer"}
                     syncedComponent={this}
-                    dataProps={{
-                        fluidComponentMap: this.fluidComponentMap,
-                        runtime: this.runtime,
-                    }}
                     reducer={ClickerReducer}
                     selector={{}}
                 />

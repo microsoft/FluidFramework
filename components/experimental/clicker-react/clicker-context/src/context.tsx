@@ -4,11 +4,11 @@
  */
 
 import * as React from "react";
-import { ICounterState } from "@fluid-example/clicker-definitions";
+import { ICounterViewState, IClickerReducer } from "@fluid-example/clicker-definitions";
 
 export interface IPrimedContext {
-    state?: ICounterState,
-    setState?: (newState: ICounterState) => void,
+    state?: ICounterViewState,
+    dispatch?: IClickerReducer,
 }
 
 export const PrimedContext: React.Context<IPrimedContext> = React.createContext({});

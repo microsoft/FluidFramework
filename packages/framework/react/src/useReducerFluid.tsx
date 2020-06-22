@@ -20,6 +20,7 @@ import {
     IFluidReducer,
     IFluidSelector,
     ICombinedState,
+    ISyncedStateConfig,
 } from "./interface";
 import { useStateFluid } from "./useStateFluid";
 import {
@@ -28,7 +29,6 @@ import {
     getFluidState,
     syncState,
 } from "./helpers";
-import { ISyncedStateConfig } from "./fluidComponent";
 
 export function useReducerFluid<
     SV extends IFluidFunctionalComponentViewState,
@@ -50,7 +50,7 @@ export function useReducerFluid<
     if (config === undefined) {
         throw Error(`Failed to find configuration for synced state ID: ${syncedStateId}`);
     }
-    const dataProps = props.dataProps || syncedComponent.dataProps;
+    const dataProps = props.dataProps || syncedComponent.dataProps as C;
     // Get our combined synced state and setState callbacks from the useStateFluid function
     const [viewState, setState] = useStateFluid<SV, SF>({
         syncedStateId,
@@ -67,8 +67,8 @@ export function useReducerFluid<
     // but with the updates to synced state also handled
     const dispatch = React.useCallback(
         (
-            dispatchState: ICombinedState<SV, SF, C>,
             type: keyof A,
+            dispatchState?: ICombinedState<SV, SF, C>,
             ...args: any
         ) => {
             // Retrieve the current state that is stored on the synced state for this component ID
@@ -85,15 +85,15 @@ export function useReducerFluid<
             }
             const combinedDispatchFluidState: SF = {
                 ...currentFluidState,
-                ...dispatchState.fluidState,
+                ...dispatchState?.fluidState,
             };
             const combinedDispatchViewState: SV = {
                 ...viewState,
-                ...dispatchState.viewState,
+                ...dispatchState?.viewState,
             };
             const combinedDispatchDataProps: C = {
                 ...dataProps,
-                ...dispatchState.dataProps,
+                ...dispatchState?.dataProps,
             };
             const combinedDispatchState = {
                 fluidState: combinedDispatchFluidState,
@@ -251,14 +251,14 @@ export function useReducerFluid<
                 asyncFunction: (
                     dispatchState: ICombinedState<SV, SF, C>,
                     ...args: any
-                ) => dispatch(dispatchState, functionName, ...args),
+                ) => dispatch(functionName, dispatchState, ...args),
             };
         } else {
             combinedReducer[functionName] = {
                 function: (
                     dispatchState: ICombinedState<SV, SF, C>,
                     ...args: any
-                ) => dispatch(dispatchState, functionName, ...args),
+                ) => dispatch(functionName, dispatchState, ...args),
             };
         }
     });
@@ -272,8 +272,8 @@ export function useReducerFluid<
     // Fetch can also be used to retrieve data from these components as they will also be available as a parameter.
     const fetch = React.useCallback(
         (
-            fetchState: ICombinedState<SV, SF, C>,
             type: keyof B,
+            fetchState?: ICombinedState<SV, SF, C>,
             handle?: IComponentHandle,
         ) => {
             // Retrieve the current state that is stored on the syncedState for this component ID
@@ -290,15 +290,15 @@ export function useReducerFluid<
             }
             const combinedFetchFluidState: SF = {
                 ...currentFluidState,
-                ...fetchState.fluidState,
+                ...fetchState?.fluidState,
             };
             const combinedFetchViewState: SV = {
                 ...viewState,
-                ...fetchState.viewState,
+                ...fetchState?.viewState,
             };
             const combinedFetchDataProps: C = {
                 ...dataProps,
-                ...fetchState.dataProps,
+                ...fetchState?.dataProps,
             };
             const combinedFetchState = {
                 fluidState: combinedFetchFluidState,
@@ -379,7 +379,7 @@ export function useReducerFluid<
             function: (
                 fetchState: ICombinedState<SV, SF, C>,
                 handle?: IComponentHandle,
-            ) => fetch(fetchState, functionName, handle),
+            ) => fetch(functionName, fetchState, handle),
         };
     });
 

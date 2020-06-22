@@ -14,22 +14,9 @@ import {
 import { ITaskManager } from "@fluidframework/runtime-definitions";
 import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
-import {
-    FluidToViewMap,
-    ViewToFluidMap,
-    FluidComponentMap,
-} from "../interface";
+import { FluidComponentMap, SyncedStateConfig } from "../interface";
 import { generateComponentSchema, setComponentSchema, getComponentSchema } from "../helpers";
 import { IComponentSynced } from "./componentSynced";
-
-export interface ISyncedStateConfig<SV, SF> {
-    syncedStateId: string;
-    defaultViewState: SV;
-    fluidToView: FluidToViewMap<SV, SF>;
-    viewToFluid?: ViewToFluidMap<SV, SF>;
-}
-
-export type SyncedStateConfig = Map<string, ISyncedStateConfig<any, any>>;
 
 export abstract class SyncedComponent<
     P extends IComponent = object,

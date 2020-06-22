@@ -23,10 +23,10 @@ export function CounterReactFunctionalReducer(
             <span className="value">
                 {state.viewState.value}
             </span>
-            <button onClick={() => dispatch.increment.function(state, 1)}>
+            <button onClick={() => dispatch.increment.function()}>
                 +
             </button>
-            <button onClick={() => dispatch.increment.function(state, 2)}>
+            <button onClick={() => dispatch.incrementTwo.function()}>
                 ++
             </button>
         </div>

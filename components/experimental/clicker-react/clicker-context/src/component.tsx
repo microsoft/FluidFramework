@@ -7,14 +7,18 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { PrimedComponentFactory } from "@fluidframework/aqueduct";
 import { SyncedComponent } from "@fluidframework/react";
-import { ddsToPrimitiveFluidToView, primitiveToDdsViewToFluid } from "@fluid-example/clicker-common";
+import {
+    ClickerReducer,
+    ddsFluidToView,
+    ddsViewToFluid,
+} from "@fluid-example/clicker-common";
 import { SharedCounter } from "@fluidframework/counter";
-
 import { Container } from "./container";
 
 /**
  * Clicker example that uses SyncedComponent to fill the value of a PrimedContext. The view itself does not have
- * any Fluid references, even though it is powered using a SharedCounter
+ * any Fluid references, even though it is powered using a SharedCounter. This is achieved using the useReducerFluid
+ * hook in conjunction with React's own createContext and useContext
  */
 export class Clicker extends SyncedComponent {
     constructor(props) {
@@ -24,8 +28,8 @@ export class Clicker extends SyncedComponent {
             "counter-context",
             {
                 syncedStateId: "counter-context",
-                fluidToView: ddsToPrimitiveFluidToView,
-                viewToFluid: primitiveToDdsViewToFluid ,
+                fluidToView:  ddsFluidToView,
+                viewToFluid: ddsViewToFluid,
                 defaultViewState: { value: 0 },
             },
         );
@@ -36,6 +40,8 @@ export class Clicker extends SyncedComponent {
                 <Container
                     syncedStateId={"counter-context"}
                     syncedComponent={this}
+                    reducer={ClickerReducer}
+                    selector={{}}
                 />,
             div,
         );

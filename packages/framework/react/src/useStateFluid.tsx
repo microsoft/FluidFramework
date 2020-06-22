@@ -8,9 +8,9 @@ import {
     IFluidFunctionalComponentViewState,
     IFluidProps,
     IFluidFunctionalComponentFluidState,
+    ISyncedStateConfig,
 } from "./interface";
 import { initializeState, syncState } from "./helpers";
-import { ISyncedStateConfig } from "./fluidComponent";
 
 /**
  * A wrapper around the useState React hook that combines local and Fluid state updates

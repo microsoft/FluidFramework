@@ -7,8 +7,8 @@ import * as React from "react";
 import { PrimedContext } from "./context";
 
 export function View() {
-    const { state, setState } = React.useContext(PrimedContext);
-    if (state === undefined || setState === undefined) {
+    const { state, dispatch } = React.useContext(PrimedContext);
+    if (state === undefined || dispatch === undefined) {
         throw Error("Context was not initialized.");
     }
     return (
@@ -16,10 +16,11 @@ export function View() {
             <span className="value">
                 {state.value}
             </span>
-            <button
-                onClick={() => setState({ value: state.value + 1 })}
-            >
-                {"+"}
+            <button onClick={() => dispatch.increment.function()}>
+                +
+            </button>
+            <button onClick={() => dispatch.incrementTwo.function()}>
+                ++
             </button>
         </div>
     );

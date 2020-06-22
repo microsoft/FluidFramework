@@ -28,4 +28,5 @@ export interface ICounterFluidState
 
 export interface IClickerReducer extends IFluidReducer<ICounterViewState,ICounterFluidState,IFluidDataProps> {
     increment: FluidStateUpdateFunction<ICounterViewState,ICounterFluidState,IFluidDataProps>;
+    incrementTwo: FluidStateUpdateFunction<ICounterViewState,ICounterFluidState,IFluidDataProps>;
 }

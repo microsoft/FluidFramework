@@ -43,11 +43,11 @@ i.e. PureFluidReactComponent is a child class of FluidReactComponent's behavior 
 
 5) **clicker-reducer** shows how Clicker could be written in a scalable manner by using the useReducerFluid hook. Here, we set up a reducer that allows the view to dispatch the action to increment the counter, rather than directly interact with it. This shows how Fluid components could scale with more complex data store requirements.
 
-6) Finally, **clicker-context** shows how we can pass use React.Context in combination with our createFluidContext hook to completely abstract away any Fluid dependency from the view itself. **This allows a React developer to inject a Fluid-powered application into any existing React application, as long as there is some higher layer that primes the context.** To show how this can be applied in real-world applications with multiple component/container layers, this example is broken up into four parts:
+6) Finally, **clicker-context** shows how we can pass use React.Context in combination with our useFluidReducer hook to completely abstract away any Fluid dependency from the view itself. **This allows a React developer to inject a Fluid-powered application into any existing React application, as long as there is some higher layer that primes the context and passes the reducer dispatch functions.** To show how this can be applied in real-world applications with multiple component/container layers, this example is broken up into four parts:
 
     - **component.tsx** - This contains the Fluid component itself and will normally be the code will run as part of a production application's data store initializing procedure. From here it can pass the syncedComponent reference to the container.
 
-    - **container.tsx** - This contains the priming code for the context. It now calls our createFluidContext to prepare our synced state and synced setState values. These are then passed into the context provider for our PrimedContext.
+    - **container.tsx** - This contains the priming code for the context. It now calls our useFluidReducer hook to prepare our synced state and dispatch functions. These are then passed into the context provider for our PrimedContext.
 
     - **context.tsx** - This stores the PrimedContext constant so that it can be referenced throughout the app
 
@@ -56,3 +56,6 @@ i.e. PureFluidReactComponent is a child class of FluidReactComponent's behavior 
 **clicker-common** contains the maps and reducers that these views consumer.
 **clicker-definitions** contains the interfaces the views, reducers, and maps the different Clicker implementations consume.
 **clicker-common** has no dependencies on the views or components themselves, allowing them to be developed as a standalone package. The only thing linking the view and this together are the definitions.
+
+TODO:
+**createContextFluid** - There is also a createContextFluid hook in the Fluid-React library that is analogous to the createContext React hook. However, this still needs to be developed further before it is ready for consumption. For now, please look **clicker-context** to use the useReducerFluid and React.createContext functions to achieve a similar goal.

@@ -4,23 +4,25 @@
  */
 
 import * as React from "react";
-import { IFluidDataProps, IFluidContextProps, createContextFluid } from "@fluidframework/react";
-import { ICounterState } from "@fluid-example/clicker-definitions";
+import { IFluidDataProps, IFluidReducerProps, useReducerFluid } from "@fluidframework/react";
+import { ICounterViewState, ICounterFluidState, IClickerReducer } from "@fluid-example/clicker-definitions";
 
 import { PrimedContext } from "./context";
 import { View } from "./view";
 
 export function Container(
-    props: IFluidContextProps<
-    ICounterState,
-    ICounterState,
+    props: IFluidReducerProps<
+    ICounterViewState,
+    ICounterFluidState,
+    IClickerReducer,
+    {},
     IFluidDataProps
     >,
 ) {
-    const { state, setState } = createContextFluid<ICounterState, ICounterState, IFluidDataProps>(props, { value: 0 });
+    const [ state, dispatch ] = useReducerFluid(props, { value: 0 });
 
     return (
-        <PrimedContext.Provider value={ { state, setState } }>
+        <PrimedContext.Provider value={ { state: state.viewState, dispatch } }>
             <View />
         </PrimedContext.Provider>
     );
