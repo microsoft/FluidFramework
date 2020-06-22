@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-snapshots",
-  "version": "0.20.3",
+  "version": "0.20.4",
   "private": true,
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
@@ -48,7 +48,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-internal/replay-tool": "^0.20.3",
+    "@fluid-internal/replay-tool": "^0.20.4",
     "@fluidframework/common-utils": "^0.19.1",
     "@fluidframework/protocol-definitions": "^0.1007.1"
   },

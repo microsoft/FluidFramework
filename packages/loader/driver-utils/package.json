@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "0.20.3",
+  "version": "0.20.4",
   "description": "Collection of utility functions for Fluid drivers",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,9 +48,9 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.20.3",
-    "@fluidframework/container-definitions": "^0.20.3",
-    "@fluidframework/driver-definitions": "^0.20.3",
+    "@fluidframework/component-core-interfaces": "^0.20.4",
+    "@fluidframework/container-definitions": "^0.20.4",
+    "@fluidframework/driver-definitions": "^0.20.4",
     "@fluidframework/gitresources": "^0.1007.1",
     "@fluidframework/protocol-base": "^0.1007.1",
     "@fluidframework/protocol-definitions": "^0.1007.1"
