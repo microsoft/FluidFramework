@@ -7,7 +7,7 @@ import { parse } from "querystring";
 import { IComponent } from "@fluidframework/component-core-interfaces";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@fluidframework/view-interfaces";
+import { IComponentHTMLView } from "@fluidframework/view-interfaces";
 
 /**
  * The initializeChaincode method takes in a document and a desired npm package and establishes a code quorum
@@ -44,19 +44,11 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
         return;
     }
 
-    // Check if the component is viewable
     const component = response.value as IComponent;
-    // First try to get it as a view
-    let renderable: IComponentHTMLView | undefined = component.IComponentHTMLView;
-    if (renderable === undefined) {
-        // Otherwise get the visual, which is a view factory
-        const visual: IComponentHTMLVisual | undefined = component.IComponentHTMLVisual;
-        if (visual !== undefined) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable !== undefined) {
-        renderable.render(div, { display: "block" });
+    // Try to render the component if it is a view
+    const view: IComponentHTMLView | undefined = component.IComponentHTMLView;
+    if (view !== undefined) {
+        view.render(div, { display: "block" });
     }
 }
 

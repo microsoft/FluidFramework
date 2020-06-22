@@ -4,7 +4,7 @@
  */
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISequencedDocumentMessage, MessageType, IQuorum } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, IQuorum } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
@@ -18,7 +18,7 @@ function isSchedulerMessage(message: ISequencedDocumentMessage) {
         if (attachMessage.id === schedulerId) {
             return true;
         }
-    } else if (message.type === MessageType.Operation) {
+    } else if (message.type === ContainerMessageType.ComponentOp) {
         const envelope = message.contents as IEnvelope;
         if (envelope.address === schedulerId) {
             return true;

@@ -7,9 +7,8 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import * as api from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
-import { IFetchWrapper } from "./fetchWrapper";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./odspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -17,7 +16,6 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private readonly deltaFeedUrlProvider: () => Promise<string>,
-        private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger?: ITelemetryLogger,
@@ -44,7 +42,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
-            const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
+            const response = await fetchHelper<IDeltaStorageGetResponse>(url, { headers });
             const deltaStorageResponse = response.content;
             if (this.logger) {
                 this.logger.sendTelemetryEvent({

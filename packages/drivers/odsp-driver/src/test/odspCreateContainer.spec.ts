@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
-import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/component-core-interfaces";
 import { DebugLogger } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { IFetchWrapper } from "../fetchWrapper";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { IOdspResolvedUrl } from "../contracts";
 import { getHashedDocumentId } from "../odspUtils";
+import { mockFetch } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
     const siteUrl = "https://www.localhost.xxx";
@@ -22,33 +22,19 @@ describe("Odsp Create Container Test", () => {
     let resolver: OdspDriverUrlResolver;
     let request: IRequest;
 
-    const getOdspDocumentServiceFactory = (itemId: string) => {
-        const expectedResponse: any = {
-            context: "http://sp.devinstall/_api/v2.1/$metadata#",
-            sequenceNumber: 1,
-            sha: "shaxxshaxx",
-            itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
-            driveId,
-            itemId,
-        };
-
-        const fetchWrapperMock: IFetchWrapper = {
-            get: async (url: string, _: string, headers: HeadersInit) => {
-                throw new Error("not implemented");
-            },
-            post: async (url: string, postBody: string, headers: HeadersInit) =>
-                ({
-                    content: expectedResponse,
-                    headers: new Map(),
-                }),
-        };
-
-        const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-            async (url: string, refresh: boolean) => "token",
-            async (refresh: boolean) => "token",
-            fetchWrapperMock);
-        return odspDocumentServiceFactory;
+    const itemId = "fakeItemId";
+    const expectedResponse: any = {
+        context: "http://sp.devinstall/_api/v2.1/$metadata#",
+        sequenceNumber: 1,
+        sha: "shaxxshaxx",
+        itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
+        driveId,
+        itemId,
     };
+
+    const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
+        async (url: string, refresh: boolean) => "token",
+        async (refresh: boolean) => "token");
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean, sequenceNumber: number) => {
         const summary: ISummaryTree = {
@@ -76,7 +62,6 @@ describe("Odsp Create Container Test", () => {
     };
 
     const createService = async (
-        odspDocumentServiceFactory: IDocumentServiceFactory,
         summary: ISummaryTree,
         resolved: IOdspResolvedUrl,
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
@@ -91,14 +76,14 @@ describe("Odsp Create Container Test", () => {
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const itemId = "fakeItemId";
         const docID = getHashedDocumentId(driveId, itemId);
-        const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 0);
-        const docService = await odspDocumentServiceFactory.createContainer(
-            summary,
-            resolved,
-            DebugLogger.create("fluid:createContainer"));
+        const docService = await mockFetch(
+            expectedResponse,
+            async () => odspDocumentServiceFactory.createContainer(
+                summary,
+                resolved,
+                DebugLogger.create("fluid:createContainer")));
         const finalResolverUrl = docService.resolvedUrl as IOdspResolvedUrl;
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
         assert.strictEqual(finalResolverUrl.itemId, itemId, "ItemId should match");
@@ -114,29 +99,23 @@ describe("Odsp Create Container Test", () => {
 
     it("No App Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const itemId = "fakeItemId";
-        const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(false, true, 0);
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because there was no app summary");
     });
 
     it("Wrong Seq No in Protocol Summary", async () => {
         const resolved = await resolver.resolve(request);
-        const itemId = "fakeItemId";
-        const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 1);
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because seq no was wrong");
     });
 
     it("No item id in response from server", async () => {
         const resolved = await resolver.resolve(request);
-        const itemId = "";
-        const odspDocumentServiceFactory = getOdspDocumentServiceFactory(itemId);
         const summary = createSummary(true, true, 0);
 
-        await assert.rejects(createService(odspDocumentServiceFactory, summary, resolved),
+        await assert.rejects(createService(summary, resolved),
             "Doc service should not be created because no Item id is there");
     });
 });

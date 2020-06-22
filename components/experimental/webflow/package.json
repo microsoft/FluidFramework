@@ -29,6 +29,7 @@
     "start:single": "webpack-dev-server --config webpack.config.js --package package.json --env.single true",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
@@ -76,10 +77,10 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@fluid-internal/test-utils": "^0.21.0",
     "@fluidframework/build-common": "^0.17.0",
     "@fluidframework/eslint-config-fluid": "^0.18.0",
-    "@fluidframework/server-local-server": "^0.1007.1",
+    "@fluidframework/server-local-server": "^0.1008.0-0",
+    "@fluidframework/test-utils": "^0.21.0",
     "@fluidframework/webpack-component-loader": "^0.21.0",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^5.2.5",

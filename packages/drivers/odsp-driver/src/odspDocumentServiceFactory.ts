@@ -5,7 +5,6 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { HostStoragePolicy } from "./contracts";
-import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { IPersistedCache } from "./odspCache";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
@@ -20,16 +19,12 @@ export class OdspDocumentServiceFactory
     constructor(
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh: boolean) => Promise<string | null>,
-        storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
     ) {
         super(
             getStorageToken,
             getWebsocketToken,
-            storageFetchWrapper,
-            deltasFetchWrapper,
             async () => getSocketIo(),
             persistedCache,
             hostPolicy,

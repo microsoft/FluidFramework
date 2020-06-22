@@ -17,11 +17,6 @@ If you want to run this container follow the following steps:
 Similar to the `@fluid-example/clicker` but renders two clickers. One using the `this.root`
 SharedDirectory and the other using a newly created SharedMap that is stored on the root.
 
-### [ClickerWithInitialValue](./src/internal-components/clickerWithInitialValue.tsx)
-
-Another clicker example but one that allows for optional initial state to be passed into
-the component.
-
 ### [ExampleUsingProviders](./src/internal-components/exampleUsingProviders.tsx)
 
 An example that uses Container Providers to get an render current user information. This information
