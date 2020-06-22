@@ -6,7 +6,7 @@
 import assert from "assert";
 import { getGitType } from "@fluidframework/protocol-base";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/common-utils";
 import {
@@ -199,6 +199,20 @@ function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
         sequenceNumber: 1,
         sha: snapshotTree.id,
         type: SnapshotType.Container,
+        ops: [{
+            op: {
+                clientId: null,
+                clientSequenceNumber: -1,
+                contents: null,
+                minimumSequenceNumber: 0,
+                referenceSequenceNumber: -1,
+                sequenceNumber: 1,
+                timestamp: Date.now(),
+                traces: [],
+                type: MessageType.NoOp,
+            },
+            sequenceNumber: 1,
+        }],
     };
     return snapshot;
 }
