@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fetchWrapper";
 export * from "./odspDocumentServiceFactory";
 export * from "./odspDeltaStorageService";
 export * from "./odspDocumentService";

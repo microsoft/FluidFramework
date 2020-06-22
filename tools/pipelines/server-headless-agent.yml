@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-# server-auspkn pipeline
+# server-headless-agent pipeline
 
 name: $(Build.BuildId)
 
@@ -11,8 +11,8 @@ trigger:
     - master
   paths:
     include:
-    - server/auspkn
-    - tools/pipelines/server-admin.yml
+    - server/headless-agent
+    - tools/pipelines/server-headless-agent.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
   
@@ -22,14 +22,13 @@ pr:
     - master
   paths:
     include:
-    - server/auspkn
-    - tools/pipelines/server-admin.yml
+    - server/headless-agent
+    - tools/pipelines/server-headless-agent.yml
     - tools/pipelines/templates/build-docker-service.yml
-
+  
 extends:
   template: templates/build-docker-service.yml
   parameters:
-    buildDirectory: server/auspkn
-    containerName: auspkn
-    test: true
-    authnpmrc: false
+    buildDirectory: server/headless-agent
+    containerName: headless-agent
+    test: false

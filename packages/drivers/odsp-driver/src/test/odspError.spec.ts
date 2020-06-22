@@ -129,6 +129,17 @@ describe("Odsp Error", () => {
         assert.equal(res, 1, "did not successfully retried with new token");
     });
 
+    it("Access Denied retries", async () => {
+        const res = getWithRetryForTokenRefresh(async (refresh) => {
+            if (refresh) {
+                return 1;
+            } else {
+                throwOdspNetworkError("some error", invalidFileNameStatusCode);
+            }
+        });
+        await assert.rejects(res, "did not successfully retried with new token");
+    });
+
     it("fetch incorrect response retries", async () => {
         const res = await getWithRetryForTokenRefresh(async (refresh) => {
             if (refresh) {
