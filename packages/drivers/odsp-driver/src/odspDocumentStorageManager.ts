@@ -388,51 +388,58 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const odspSnapshot: IOdspSnapshot = cachedSnapshot;
 
                 const { trees, blobs, ops, sha } = odspSnapshot;
-                const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
-                    let appCommit: string | undefined;
                     this.initTreesCache(trees);
+                }
+                if (blobs) {
+                    this.initBlobsCache(blobs);
+                }
+
+                if (this.hostPolicy.summarizerClient && trees && blobs) {
+                    const blobsIdToPathMap: Map<string, string> = new Map();
+                    let appCommit: string | undefined;
+                    let appTree: string | undefined;
+
                     for (const [key, treeVal] of this.treesCache.entries()) {
-                        if (appCommit) {
-                            break;
-                        }
-                        for (const entry of treeVal.entries) {
-                            if (entry.type === "commit" && entry.path === ".app") {
-                                // This is the unacked handle of the latest summary generated.
-                                appCommit = idFromSpoEntry(entry);
-                                break;
+                        if (!appCommit && !appTree) {
+                            for (const entry of treeVal.entries) {
+                                if (entry.path === ".app") {
+                                    if (entry.type === "commit") {
+                                        // This is the unacked handle of the latest summary generated.
+                                        appCommit = idFromSpoEntry(entry);
+                                    }
+                                    if (entry.type === "tree") {
+                                        appTree = idFromSpoEntry(entry);
+                                    }
+                                    break;
+                                }
                             }
+                            assert(appCommit || appTree); // .app commit or tree should be first entry in first entry.
                         }
-                        assert(appCommit); // .app commit should be first entry in first entry.
                         for (const entry of treeVal.entries) {
                             if (entry.type === "blob") {
                                 blobsIdToPathMap.set(idFromSpoEntry(entry), key === appCommit ? `/.app/${entry.path}` : `/${entry.path}`);
                             }
                         }
                     }
-                }
 
-                if (blobs) {
-                    this.initBlobsCache(blobs);
-                    if (!this.hostPolicy.summarizerClient) {
-                        // Populate the cache with paths from id-to-path mapping.
-                        for (const blob of this.blobCache.values()) {
-                            const path = blobsIdToPathMap.get(idFromSpoEntry(blob));
-                            // If this is the first container that was created for the service, it cannot be
-                            // the summarizing container (becauase the summarizing container is always created
-                            // after the main container). In this case, we do not need to do any hashing
-                            if (path) {
-                                // Schedule the hashes for later, but keep track of the tasks
-                                // to ensure they finish before they might be used
-                                const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
-                                    this.blobsShaToPathCache.set(hash, path);
-                                });
-                                this.blobsCachePendingHashes.add(hashP);
-                                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                                hashP.finally(() => {
-                                    this.blobsCachePendingHashes.delete(hashP);
-                                });
-                            }
+                    // Populate the cache with paths from id-to-path mapping.
+                    for (const blob of this.blobCache.values()) {
+                        const path = blobsIdToPathMap.get(idFromSpoEntry(blob));
+                        // If this is the first container that was created for the service, it cannot be
+                        // the summarizing container (becauase the summarizing container is always created
+                        // after the main container). In this case, we do not need to do any hashing
+                        if (path) {
+                            // Schedule the hashes for later, but keep track of the tasks
+                            // to ensure they finish before they might be used
+                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                                this.blobsShaToPathCache.set(hash, path);
+                            });
+                            this.blobsCachePendingHashes.add(hashP);
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            hashP.finally(() => {
+                                this.blobsCachePendingHashes.delete(hashP);
+                            });
                         }
                     }
                 }

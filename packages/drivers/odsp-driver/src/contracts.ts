@@ -241,3 +241,12 @@ export interface HostStoragePolicy {
 export interface HostStoragePolicyInternal extends HostStoragePolicy {
     summarizerClient?: boolean;
 }
+
+export interface ICreateFileResponse {
+    "@odata.context": string;
+    driveId: string;
+    id: string;
+    itemId: string;
+    itemUrl: string;
+    sequenceNumber: number;
+}

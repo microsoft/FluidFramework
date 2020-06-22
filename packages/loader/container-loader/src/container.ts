@@ -631,7 +631,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Ensure connection to web socket
         // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-        this.connectToDeltaStream().catch(() => { });
+        this.connectToDeltaStream(args).catch(() => { });
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
