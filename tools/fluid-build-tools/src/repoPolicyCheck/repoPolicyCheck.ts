@@ -11,7 +11,7 @@ import { EOL as newline } from "os";
 import program from "commander";
 import { Handler } from "./common";
 import { handlers as copyrightFileHeaderHandlers } from "./handlers/copyrightFileHeader";
-import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackageContents";
+import { handlers as npmPackageContentsHandlers } from "./handlers/npmPackages";
 import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackages";
 
 const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
