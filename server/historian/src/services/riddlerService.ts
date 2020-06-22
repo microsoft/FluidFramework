@@ -4,10 +4,12 @@
  */
 
 import * as request from "request-promise-native";
+import * as winston from "winston";
 import { ITenant, ITenantService } from "./definitions";
+import { RedisTenantCache } from "./redisTenantCache";
 
 export class RiddlerService implements ITenantService {
-    constructor(private readonly endpoint: string) {
+    constructor(private readonly endpoint: string, private readonly cache: RedisTenantCache) {
     }
 
     public async getTenant(tenantId: string, token: string): Promise<ITenant> {
@@ -16,6 +18,16 @@ export class RiddlerService implements ITenantService {
     }
 
     private async getTenantDetails(tenantId: string): Promise<ITenant> {
+        const cachedDetail = await this.cache.get(tenantId).catch((error) => {
+            winston.error(`Error fetching tenant details from cache`, error);
+            // eslint-disable-next-line no-null/no-null
+            return null;
+        });
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (cachedDetail) {
+            winston.info(`Resolving tenant details from cache`);
+            return JSON.parse(cachedDetail) as ITenant;
+        }
         const details = await request.get(
             `${this.endpoint}/api/tenants/${tenantId}`,
             {
@@ -26,12 +38,26 @@ export class RiddlerService implements ITenantService {
                 json: true,
             }) as ITenant;
 
+        this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
+            winston.error(`Error caching tenant details to redis`, error);
+        });
         return details;
     }
 
     private async verifyToken(tenantId: string, token: string): Promise<void> {
+        // Remove this when clients are updated to 0.22
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!token) {
+            return;
+        }
+
+        const cachedToken = await this.cache.exists(token).catch((error) => {
+            winston.error(`Error fetching token from cache`, error);
+            return false;
+        });
+
+        if (cachedToken) {
+            winston.info(`Resolving token from cache`);
             return;
         }
 
@@ -47,5 +73,8 @@ export class RiddlerService implements ITenantService {
                 },
                 json: true,
             });
+        this.cache.set(token).catch((error) => {
+            winston.error(`Error caching token to redis`, error);
+        });
     }
 }
