@@ -1,1 +1,1 @@
-# @fluid-internal/test-utils
+# @fluidframework/test-utils
