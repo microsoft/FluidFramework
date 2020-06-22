@@ -36,7 +36,8 @@ function packageShouldNotBePrivate(name: string): boolean {
     }
 
     return (
-        name.startsWith("@fluidframework"));
+        name.startsWith("@fluidframework") ||
+        name.startsWith("@fluid-example"));
 }
 
 type IReadmeInfo = {
