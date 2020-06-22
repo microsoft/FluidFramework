@@ -1,3 +1,3 @@
 # @fluidframework/server-services
 
-Service dependencies for [Fluid reference service](../rounterlicious).
+Service dependencies for [Fluid reference service](../routerlicious).
