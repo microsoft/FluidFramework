@@ -3,6 +3,7 @@
   "version": "0.21.0",
   "private": true,
   "description": "Sample Fluid container host",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",

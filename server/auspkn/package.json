@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Unpkg like implementation that works with historian",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/www.js",
