@@ -1,4 +1,9 @@
-import * as fs from "fs";
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import fs from "fs";
 import {
   Handler,
   readFile,
@@ -25,7 +30,6 @@ export const handler: Handler = {
     name: "dockerfile-packages",
     match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
     handler: file => {
-        console.log("########################################################");
         // strip server path since all paths are relative to server directory
         const dockerfileCopyText = getDockerfileCopyText(file.replace(serverPath, ""));
 

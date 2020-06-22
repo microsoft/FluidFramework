@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EOL as newline } from "os";
 import fs from "fs";
 import replace from "replace-in-file";
