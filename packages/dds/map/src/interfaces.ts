@@ -121,7 +121,7 @@ export interface IValueTypeCreator {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IValueTypeCreator {
+export interface IDirectory extends Map<string, any> {
     /**
      * The absolute path of the directory.
      */
@@ -227,7 +227,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any>, IValueTypeCreator {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     /**
      * Retrieves the given key from the map.
      * @param key - Key to retrieve from

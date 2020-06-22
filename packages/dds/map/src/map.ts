@@ -224,15 +224,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
-   * {@inheritDoc IValueTypeCreator.createValueType}
-   */
-    public createValueType(key: string, type: string, params: any): this {
-        console.warn("Value types are deprecated.  Use the SharedCounter instead (@fluidframework/counter)");
-        this.kernel.createValueType(key, type, params);
-        return this;
-    }
-
-    /**
    * {@inheritDoc MapKernel.delete}
    */
     public delete(key: string): boolean {

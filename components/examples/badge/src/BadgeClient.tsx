@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as React from "react";
-import { IColor } from "@fluentui/react";
+import { IColor } from "office-ui-fabric-react";
 import { BadgeView } from "./BadgeView";
 import { IBadgeClientProps, IBadgeType } from "./Badge.types";
 

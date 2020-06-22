@@ -73,7 +73,7 @@ import {
     ISignalEnvelop,
     NamedComponentRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { ComponentSerializer, SummaryTracker } from "@fluidframework/runtime-utils";
+import { ComponentSerializer, SummaryTracker, unreachableCase } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -117,6 +117,11 @@ export interface IChunkedOp {
     contents: string;
 
     originalType: MessageType | ContainerMessageType;
+}
+
+export interface ContainerRuntimeMessage {
+    contents: any;
+    type: ContainerMessageType;
 }
 
 interface ISummaryTreeWithStats {
@@ -192,7 +197,7 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
         case ContainerMessageType.ComponentOp:
         case ContainerMessageType.ChunkedOp:
@@ -204,12 +209,25 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
-function assertNever(arg: never, message: string): never {
-    throw new Error(message);
-}
-
-function assertNeverMessageType(messageType: never): never {
-    assertNever(messageType, `Never: unknown message type: ${messageType}`);
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    if (message.type === MessageType.Operation) {
+        // legacy op format?
+        if (message.contents.address !== undefined && message.contents.type === undefined) {
+            message.type = ContainerMessageType.ComponentOp;
+        } else {
+            // new format
+            const innerContents = message.contents as ContainerRuntimeMessage;
+            assert(innerContents.type !== undefined);
+            message.type = innerContents.type;
+            message.contents = innerContents.contents;
+        }
+        assert(isRuntimeMessage(message));
+    } else {
+        // Legacy format, but it's already "unpacked",
+        // i.e. message.type is actually ContainerMessageType.
+        // Nothing to do in such case.
+    }
+    return message;
 }
 
 export class ScheduleManager {
@@ -899,7 +917,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         this.scheduleManager.beginOperation(message);
 
         try {
-            message = this.unpackRuntimeMessage(message);
+            message = unpackRuntimeMessage(message);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
@@ -1589,6 +1607,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         batch: boolean,
         appData?: any) {
         // Switch in next release
+        // Note: remove hard-coded cases of legacy op types in Container.submitContainerMessage() when switching it
         const legacyFormat = true;
 
         if (legacyFormat) {
@@ -1598,33 +1617,13 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 batch,
                 appData);
         } else {
+            const payload: ContainerRuntimeMessage = { type, contents };
             return this.context.submitFn(
                 MessageType.Operation,
-                { type, contents },
+                payload,
                 batch,
                 appData);
         }
-    }
-
-    private unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-        if (message.type === MessageType.Operation) {
-            // legacy op format?
-            if (message.contents.address !== undefined && message.contents.type === undefined) {
-                message.type = ContainerMessageType.ComponentOp;
-            } else {
-                // new format
-                const innerContents = message.contents as { contents: any; type: ContainerMessageType };
-                assert(innerContents.type !== undefined);
-                message.type = innerContents.type;
-                message.contents = innerContents.contents;
-            }
-            assert(isRuntimeMessage(message));
-        } else {
-            // Legacy format, but it's already "unpacked",
-            // i.e. message.type is actually ContainerMessageType.
-            // Nothing to do in such case.
-        }
-        return message;
     }
 
     /**
@@ -1654,10 +1653,10 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
                 this.submit(type, content, localOpMetadata);
                 break;
             default:
-                assertNeverMessageType(type);
+                unreachableCase(type);
                 break;
             case ContainerMessageType.ChunkedOp:
-                assertNeverMessageType(type as never);
+                unreachableCase(type as never);
                 break;
         }
     }

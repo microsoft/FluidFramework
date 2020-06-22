@@ -8,7 +8,7 @@ window.performance.mark = window.performance.mark || (() => { });
 window.performance.measure = window.performance.measure || (() => { });
 
 import assert from "assert";
-import { createLocalLoader, initializeLocalContainer } from "@fluid-internal/test-utils";
+import { createLocalLoader, initializeLocalContainer } from "@fluidframework/test-utils";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { htmlFormatter } from "../src";
 import { FlowDocument } from "../src/document";

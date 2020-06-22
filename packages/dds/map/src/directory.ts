@@ -459,15 +459,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * {@inheritDoc IValueTypeCreator.createValueType}
-     */
-    public createValueType(key: string, type: string, params: any): this {
-        console.warn("Value types are deprecated.  Use the SharedCounter instead (@fluidframework/counter)");
-        this.root.createValueType(key, type, params);
-        return this;
-    }
-
-    /**
      * Deletes the given key from within this IDirectory.
      * @param key - The key to delete
      * @returns True if the key existed and was deleted, false if it did not exist
@@ -1043,54 +1034,6 @@ class SubDirectory implements IDirectory {
         if (this.directory.isLocal()) {
             return this;
         }
-
-        const op: IDirectorySetOperation = {
-            key,
-            path: this.absolutePath,
-            type: "set",
-            value: serializableValue,
-        };
-        this.submitKeyMessage(op);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc IValueTypeCreator.createValueType}
-     */
-    public createValueType(key: string, type: string, params: any): this {
-        // Create a local value and serialize it.
-        const localValue = this.directory.localValueMaker.makeValueType(
-            type,
-            this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
-            params,
-        );
-
-        // TODO ideally we could use makeSerialized in this case as well. But the interval
-        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
-        // may be possible to remove custom value type serialization entirely.
-        const transformedValue = params
-            ? JSON.parse(this.runtime.IComponentSerializer.stringify(
-                params,
-                this.runtime.IComponentHandleContext,
-                this.directory.handle))
-            : params;
-
-        // Set the value locally.
-        this.setCore(
-            key,
-            localValue,
-            true,
-            null,
-        );
-
-        // If we are in local state, don't submit the op.
-        if (this.directory.isLocal()) {
-            return this;
-        }
-
-        // This is a special form of serialized valuetype only used for set, containing info for initialization.
-        // After initialization, the serialized form will need to come from the .store of the value type's factory.
-        const serializableValue = { type, value: transformedValue };
 
         const op: IDirectorySetOperation = {
             key,
