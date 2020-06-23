@@ -13,7 +13,8 @@ import {
 } from "@fluidframework/component-core-interfaces";
 
 export class ComponentHandle implements IComponentHandle {
-    private isHandleAttached: boolean = false;
+    // This is used to break the recursion while attaching the graph.
+    private isGraphAttached: boolean = false;
     private bound: Set<IComponentHandle> | undefined;
 
     public get IComponentRouter(): IComponentRouter { return this; }
@@ -22,10 +23,6 @@ export class ComponentHandle implements IComponentHandle {
 
     public get isAttached(): boolean {
         return this.routeContext.isAttached;
-    }
-
-    public get isRegistered(): boolean {
-        return this.routeContext.isRegistered;
     }
 
     constructor(
@@ -39,40 +36,34 @@ export class ComponentHandle implements IComponentHandle {
         return this.value;
     }
 
-    public attachGraphInternal(): void {
+    public attachGraph(): void {
         // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
-        if (this.isHandleAttached) {
+        if (this.isGraphAttached) {
             return;
         }
-        this.isHandleAttached = true;
+        this.isGraphAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attachGraphInternal();
+                handle.attachGraph();
             }
 
             this.bound = undefined;
         }
-        this.routeContext.register();
-        this.routeContext.attachGraphInternal();
-    }
-
-    public register(): void {
-        this.routeContext.register();
+        this.routeContext.attachGraph();
     }
 
     public bind(handle: IComponentHandle) {
         if (this.isAttached) {
-            handle.attachGraphInternal();
+            handle.attachGraph();
             return;
         }
-        if (this.isRegistered) {
-            handle.register();
-        }
+
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }
 
         this.bound.add(handle);
+        this.isGraphAttached = false;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

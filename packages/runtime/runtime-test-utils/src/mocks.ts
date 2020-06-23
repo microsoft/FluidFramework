@@ -380,7 +380,7 @@ export class MockRuntime extends EventEmitter
         return;
     }
 
-    public attachGraphInternal(): void {
+    public attachGraph(): void {
         return;
     }
 
@@ -457,6 +457,10 @@ export class MockRuntime extends EventEmitter
     }
 
     public getAttachSnapshot(): ITreeEntry[] {
+        return [];
+    }
+
+    public getAttachSnapshotV2(): ITreeEntry[] {
         return [];
     }
 

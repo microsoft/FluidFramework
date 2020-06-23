@@ -222,9 +222,12 @@ export class ContainerContext implements IContainerContext {
         return this.container.isAttached();
     }
 
-    public createSummary(): ISummaryTree {
+    public createSummary(isContainerAttaching: boolean): ISummaryTree {
         if (!this.runtime) {
             throw new Error("Runtime should be there to take summary");
+        }
+        if (this.runtime.createSummaryV2 !== undefined) {
+            return this.runtime.createSummaryV2(isContainerAttaching);
         }
         return this.runtime.createSummary();
     }

@@ -15,7 +15,6 @@ export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
     public readonly isAttached = true;
-    public readonly isRegistered = true;
 
     constructor(
         public readonly path: string,
@@ -24,11 +23,7 @@ export class ComponentHandleContext implements IComponentHandleContext {
     ) {
     }
 
-    public attachGraphInternal(): void {
-        return;
-    }
-
-    public register(): void {
+    public attachGraph(): void {
         return;
     }
 

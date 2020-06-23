@@ -152,6 +152,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private _isRegistered: boolean;
+    private isGraphAttached: boolean = false;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -316,10 +317,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         }
     }
 
-    public attachGraphInternal() {
+    public attachGraph() {
+        if (this.isGraphAttached) {
+            return;
+        }
+        this.isGraphAttached = true;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                handle.attachGraphInternal();
+                handle.attachGraph();
             });
             this.boundhandles = undefined;
         }
@@ -332,6 +337,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
         });
 
         this.localChannelContextQueue.clear();
+        this.register();
     }
 
     /**
@@ -355,8 +361,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         this._isRegistered = true;
         this.deferredAttached.resolve();
+        // If this has become attached due to registration, then attach the bounded graph too.
         if (this.isAttached) {
-            this.attachGraphInternal();
+            this.attachGraph();
         }
     }
 
@@ -374,7 +381,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
-                handle.register();
+                handle.attachGraph();
             });
             this.boundhandles = undefined;
         }
@@ -401,17 +408,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
 
     public bind(handle: IComponentHandle): void {
         if (this.isAttached) {
-            handle.attachGraphInternal();
+            handle.attachGraph();
             return;
         }
-        if (this.isRegistered) {
-            handle.register();
-        }
+
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
 
         this.boundhandles.add(handle);
+        this.isGraphAttached = false;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -550,7 +556,20 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
     }
 
     public getAttachSnapshot(): ITreeEntry[] {
+        return this.getAttachSnapshotV2(true);
+    }
+
+    public getAttachSnapshotV2(isContainerAttaching: boolean): ITreeEntry[] {
         const entries: ITreeEntry[] = [];
+
+        // If container is attaching right now, then attach the graph of this component and fire
+        // collaborating event so that dds could not start generating ops for any changes.
+        if (isContainerAttaching) {
+            this.attachGraph();
+            // Fire this event telling dds that we are going live and they can do any
+            // custom processing based on that.
+            this.emit("collaborating");
+        }
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
@@ -565,10 +584,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
                 entries.push(new TreeTreeEntry(objectId, snapshot));
             }
         }
-
-        // Fire this event telling dds that we are going live and they can do any
-        // custom processing based on that.
-        this.emit("collaborating");
 
         return entries;
     }
@@ -604,7 +619,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntimeC
             return;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        channel.handle!.register();
+        channel.handle!.attachGraph();
 
         assert(this.isRegistered, "Component should be registered to register the channel.");
         // If the container is detached, we don't need to send OP or add to pending attach because

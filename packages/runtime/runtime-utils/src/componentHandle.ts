@@ -22,7 +22,6 @@ export class ComponentHandle implements IComponentHandle {
     public get IComponentHandle() { return this; }
 
     public readonly isAttached = true;
-    public readonly isRegistered = true;
     private componentP: Promise<IComponent> | undefined;
 
     constructor(
@@ -45,11 +44,7 @@ export class ComponentHandle implements IComponentHandle {
         return this.componentP;
     }
 
-    public attachGraphInternal(): void {
-        return;
-    }
-
-    public register(): void {
+    public attachGraph(): void {
         return;
     }
 

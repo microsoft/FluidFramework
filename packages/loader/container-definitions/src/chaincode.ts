@@ -173,6 +173,8 @@ export interface IRuntime extends IDisposable {
     processSignal(message: any, local: boolean);
 
     createSummary(): ISummaryTree;
+
+    createSummaryV2(isContainerAttaching: boolean): ISummaryTree;
 }
 
 export enum ContainerState {
@@ -242,7 +244,7 @@ export interface IContainerContext extends IMessageScheduler, IProvideMessageSch
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    createSummary(): ISummaryTree;
+    createSummary(isContainerAttaching: boolean): ISummaryTree;
 }
 
 export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";

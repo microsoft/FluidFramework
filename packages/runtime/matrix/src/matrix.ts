@@ -234,12 +234,10 @@ export class SharedMatrix<T extends Serializable = Serializable>
     }
 
     protected didAttach() {
-        // if we are not local, and we've attached we need to start generating and sending ops
+        // We've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
-        if  (this.isAttached()) {
-            this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
-            this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
-        }
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId ?? "attached");
     }
 
     protected onConnect() {

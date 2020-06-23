@@ -61,7 +61,7 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
             localComponentContext.bindRuntime(new MockRuntime());
-            const attachMessage = localComponentContext.generateAttachMessage();
+            const attachMessage = localComponentContext.generateAttachMessage(false);
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
 
@@ -123,7 +123,7 @@ describe("Component Context Tests", () => {
             localComponentContext.realize();
             localComponentContext.bindRuntime(new MockRuntime());
 
-            const attachMessage = localComponentContext.generateAttachMessage();
+            const attachMessage = localComponentContext.generateAttachMessage(false);
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
             const contents = JSON.parse(blob.contents) as IComponentAttributes;
             const componentAttributes: IComponentAttributes = {

@@ -34,19 +34,9 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     isAttached: boolean;
 
     /**
-     * Flag indicating if the dds is registered or not.
-     */
-    isRegistered: boolean;
-
-    /**
-     * Register the associated dds.
-     */
-    register(): void;
-
-    /**
      * Runs through the graph and attach the bounded handles.
      */
-    attachGraphInternal(): void;
+    attachGraph(): void;
 
     /**
      * Binds the given handle to this one or attach the given handle if this handle is attached.

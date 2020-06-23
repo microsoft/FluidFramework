@@ -68,6 +68,10 @@ export class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public createSummary(): ISummaryTree {
+        return this.createSummaryV2(true);
+    }
+
+    public createSummaryV2(isContainerAttaching: boolean): ISummaryTree {
         return {
             tree: {},
             type: SummaryType.Tree,

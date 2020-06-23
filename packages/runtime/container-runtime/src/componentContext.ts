@@ -561,7 +561,7 @@ export abstract class ComponentContext extends EventEmitter implements
         return packagePath;
     }
 
-    public abstract generateAttachMessage(): IAttachMessage;
+    public abstract generateAttachMessage(isContainerAttaching: boolean): IAttachMessage;
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -619,7 +619,7 @@ export class RemotedComponentContext extends ComponentContext {
             pkg);
     }
 
-    public generateAttachMessage(): IAttachMessage {
+    public generateAttachMessage(isContainerAttaching: boolean): IAttachMessage {
         throw new Error("Cannot attach remote component");
     }
 
@@ -689,14 +689,19 @@ export class LocalComponentContext extends ComponentContext {
         super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
-    public generateAttachMessage(): IAttachMessage {
+    public generateAttachMessage(isContainerAttaching: boolean): IAttachMessage {
         const componentAttributes: IComponentAttributes = {
             pkg: JSON.stringify(this.pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const entries = this.componentRuntime!.getAttachSnapshot();
+        if (this.componentRuntime === undefined) {
+            throw new Error("Cannot generate snapshot without component runtime!!");
+        }
+
+        const entries = this.componentRuntime.getAttachSnapshotV2 !== undefined ?
+            this.componentRuntime.getAttachSnapshotV2(isContainerAttaching) :
+            this.componentRuntime.getAttachSnapshot();
 
         const snapshot: ITree = { entries, id: null };
 

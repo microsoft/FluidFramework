@@ -47,6 +47,9 @@ class ProxyRuntime implements IRuntime {
     createSummary(): ISummaryTree {
         throw new Error("Method not implemented.");
     }
+    createSummaryV2(): ISummaryTree {
+        throw new Error("Method not implemented.");
+    }
 }
 
 class ProxyChaincode implements IRuntimeFactory {

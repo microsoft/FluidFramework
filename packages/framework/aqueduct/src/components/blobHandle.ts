@@ -28,10 +28,6 @@ export class BlobHandle implements IComponentHandle {
         return true;
     }
 
-    public get isRegistered(): boolean {
-        return true;
-    }
-
     constructor(
         public readonly path: string,
         private readonly directory: ISharedDirectory,
@@ -43,11 +39,7 @@ export class BlobHandle implements IComponentHandle {
         return this.directory.get<string>(this.path);
     }
 
-    public attachGraphInternal(): void {
-        return;
-    }
-
-    public register(): void {
+    public attachGraph(): void {
         return;
     }
 

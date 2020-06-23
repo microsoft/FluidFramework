@@ -9,14 +9,10 @@ import { ComponentHandle } from "../componentHandle";
 export const mockHandleContext: IComponentHandleContext = {
     path: "",
     isAttached: false,
-    isRegistered: false,
     IComponentRouter: undefined as any,
     IComponentHandleContext: undefined as any,
 
-    attachGraphInternal: () => {
-        throw new Error("Method not implemented.");
-    },
-    register: () => {
+    attachGraph: () => {
         throw new Error("Method not implemented.");
     },
     bind: () => {

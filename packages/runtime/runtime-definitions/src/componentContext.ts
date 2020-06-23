@@ -159,6 +159,8 @@ export interface IComponentRuntimeChannel extends
      */
     getAttachSnapshot(): ITreeEntry[];
 
+    getAttachSnapshotV2(isContainerAttaching: boolean): ITreeEntry[];
+
     /**
      * Processes the op.
      */

@@ -20,7 +20,8 @@ import { ISharedObject } from "./types";
  * and loads shared object.
  */
 export class SharedObjectComponentHandle implements IComponentHandle {
-    private isHandleAttached: boolean = false;
+    // This is used to break the recursion while attaching the graph.
+    private isGraphAttached: boolean = false;
     /**
      * The set of handles to other shared objects that should be registered before this one.
      */
@@ -35,13 +36,6 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      */
     public get isAttached(): boolean {
         return this.value.isAttached();
-    }
-
-    /**
-     * Tells whether shared object is registered or not.
-     */
-    public get isRegistered(): boolean {
-        return this.value.isRegistered();
     }
 
     /**
@@ -67,25 +61,20 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * Attaches all bound handles first (which may in turn attach further handles), then attaches this handle.
      * When attaching the handle, it registers the associated shared object.
      */
-    public attachGraphInternal(): void {
-        // If this handle is already in attaching state in the graph or marked as attached, no need to attach again.
-        if (this.isHandleAttached) {
+    public attachGraph(): void {
+        // If this handle is already in attaching state in the graph, no need to attach again.
+        if (this.isGraphAttached) {
             return;
         }
-        this.isHandleAttached = true;
+        this.isGraphAttached = true;
         if (this.bound !== undefined) {
             for (const handle of this.bound) {
-                handle.attachGraphInternal();
+                handle.attachGraph();
             }
 
             this.bound = undefined;
         }
-        this.routeContext.register();
-        this.routeContext.attachGraphInternal();
-        this.value.register();
-    }
-
-    public register(): void {
+        this.routeContext.attachGraph();
         this.value.register();
     }
 
@@ -95,17 +84,15 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      */
     public bind(handle: IComponentHandle): void {
         if (this.isAttached) {
-            handle.attachGraphInternal();
+            handle.attachGraph();
             return;
-        }
-        if (this.isRegistered) {
-            handle.register();
         }
         if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }
 
         this.bound.add(handle);
+        this.isGraphAttached = false;
     }
 
     /**

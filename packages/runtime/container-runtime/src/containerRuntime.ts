@@ -1250,7 +1250,7 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
         // we will summarize it while uploading the create new summary and make it known to other
         // clients but we do need to submit op if container forced us to do so.
         if (this.isAttached()) {
-            const message = context.generateAttachMessage();
+            const message = context.generateAttachMessage(false);
 
             this.pendingAttach.set(componentRuntime.id, message);
             this.submit(MessageType.Attach, message);
@@ -1284,25 +1284,34 @@ export class ContainerRuntime extends EventEmitter implements IContainerRuntime,
     }
 
     public createSummary(): ISummaryTree {
+        return this.createSummaryV2(true);
+    }
+
+    public createSummaryV2(isContainerAttaching: boolean): ISummaryTree {
         const summaryTree: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
         };
 
-        // Iterate over each component and ask it to snapshot
-        Array.from(this.contexts)
-            .filter(([key, value]) =>
-                value.isRegistered,
-            )
-            .map(async ([key, value]) => {
-                const snapshot = value.generateAttachMessage().snapshot;
-                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                    snapshot,
-                    `/${encodeURIComponent(key)}`,
-                    true,
-                );
-                summaryTree.tree[key] = treeWithStats.summaryTree;
-            });
+        // We need to do this twice because it could be possible that on attaching graph of some components
+        // more components gets registered.
+        for (let i = 0; i < 2; ++i) {
+            // Iterate over each component and ask it to snapshot
+            Array.from(this.contexts)
+                .filter(([key, value]) =>
+                    // Take summary of registered components and whose summary is not taken already.
+                    value.isRegistered && !summaryTree.tree[key],
+                )
+                .map(async ([key, value]) => {
+                    const snapshot = value.generateAttachMessage(isContainerAttaching).snapshot;
+                    const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                        snapshot,
+                        `/${encodeURIComponent(key)}`,
+                        true,
+                    );
+                    summaryTree.tree[key] = treeWithStats.summaryTree;
+                });
+        }
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {
                 content: JSON.stringify([...this.chunkMap]),

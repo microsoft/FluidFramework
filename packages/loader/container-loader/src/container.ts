@@ -473,11 +473,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Inbound queue for ops should be empty
         assert(!this.deltaManager.inbound.length);
 
-        // Set the state as attaching as we are starting the process of attaching container.
-        this.attachmentState = ContainerState.Attaching;
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const appSummary: ISummaryTree = this.context.createSummary();
+        const appSummary: ISummaryTree = this.context.createSummary(true);
+
+        // Set the state as attaching as we are starting the process of attaching container.
+        this.attachmentState = ContainerState.Attaching;
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
