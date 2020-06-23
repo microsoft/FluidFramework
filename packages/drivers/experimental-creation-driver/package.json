@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/experimental-creation-driver",
-  "version": "0.20.4",
+  "version": "0.20.5",
   "private": true,
   "description": "A driver that imitates actual driver but stores everthing in memory.",
   "repository": "microsoft/FluidFramework",
@@ -54,9 +54,9 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.18.1",
     "@fluidframework/common-utils": "^0.19.1",
-    "@fluidframework/component-core-interfaces": "^0.20.4",
-    "@fluidframework/driver-definitions": "^0.20.4",
-    "@fluidframework/driver-utils": "^0.20.4",
+    "@fluidframework/component-core-interfaces": "^0.20.5",
+    "@fluidframework/driver-definitions": "^0.20.5",
+    "@fluidframework/driver-utils": "^0.20.5",
     "@fluidframework/protocol-definitions": "^0.1007.1",
     "uuid": "^3.3.2"
   },
