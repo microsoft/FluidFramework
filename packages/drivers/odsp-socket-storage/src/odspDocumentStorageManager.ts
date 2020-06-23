@@ -527,8 +527,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     // back-compat: 0.14 uploadSummary
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
-        assert(this.hostPolicy.summarizerClient);
-
         this.checkSnapshotUrl();
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
